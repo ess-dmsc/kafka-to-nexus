@@ -135,8 +135,7 @@ void Master::run() {
   auto const KafkaMessage = pollForMessage();
   if (KafkaMessage.first == KafkaW::PollStatus::Message) {
     Logger->debug("Command received");
-    auto const NewState = this->handleCommand(KafkaMessage.second);
-    moveToNewState(NewState);
+    moveToNewState(this->handleCommand(KafkaMessage.second));
   }
 
   // Doesn't stop immediately when commanded to.

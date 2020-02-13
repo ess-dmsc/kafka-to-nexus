@@ -40,8 +40,7 @@ generateKafkaMsg(char const *DataPtr, size_t const Size, int64_t Offset = 0,
 
 std::pair<PollStatus, Msg>
 generateEmptyKafkaMsg(PollStatus Status) {
-  FileWriter::Msg KafkaMessage;
-  return {Status,std::move(KafkaMessage)};
+  return {Status, FileWriter::Msg()};
 }
 
 std::pair<PollStatus, Msg> generateKafkaMsgWithValidFlatbuffer(
