@@ -58,7 +58,7 @@ public:
   /// process the message
   /// \param KafkaMessage the received message
   void processMessage(
-      std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
+      std::pair<KafkaW::PollStatus, Msg> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.
@@ -110,7 +110,7 @@ private:
                  std::chrono::milliseconds StopTime,
                  std::string const &TopicName);
 
-  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll();
+  std::pair<KafkaW::PollStatus, Msg> poll();
 
   /// Checks whether current message means we've now reached the stop offsets
   bool stopOffsetsNowReached(int32_t NewMessagePartition,

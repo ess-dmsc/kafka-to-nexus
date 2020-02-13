@@ -37,7 +37,7 @@ void CommandListener::start() {
   }
 }
 
-std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> CommandListener::poll() {
+std::pair<KafkaW::PollStatus, Msg> CommandListener::poll() {
   return consumer->poll();
 }
 

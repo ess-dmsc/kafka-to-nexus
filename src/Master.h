@@ -64,8 +64,8 @@ private:
   virtual void startWriting(StartCommandInfo const &StartInfo);
   virtual void requestStopWriting(StopCommandInfo const &StopInfo);
   virtual bool hasWritingStopped();
-  virtual std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> pollForMessage();
+  virtual std::pair<KafkaW::PollStatus, Msg> pollForMessage();
   virtual void moveToNewState(FileWriterState const &NewState);
-  virtual FileWriterState handleCommand(std::unique_ptr<Msg> CommandMessage);
+  virtual FileWriterState handleCommand(Msg const &CommandMessage);
 };
 } // namespace FileWriter
