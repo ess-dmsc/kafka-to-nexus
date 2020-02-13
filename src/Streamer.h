@@ -57,8 +57,7 @@ public:
   /// \param MessageProcessor instance of the policy that describe how to
   /// process the message
   /// \param KafkaMessage the received message
-  void processMessage(
-      std::pair<KafkaW::PollStatus, Msg> &KafkaMessage);
+  void processMessage(std::pair<KafkaW::PollStatus, Msg> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.

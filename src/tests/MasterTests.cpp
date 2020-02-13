@@ -124,8 +124,7 @@ public:
   bool WritingStopped = false;
 
 private:
-  std::pair<KafkaW::PollStatus, Msg>
-  pollForMessage() override {
+  std::pair<KafkaW::PollStatus, Msg> pollForMessage() override {
     auto const Status = StoredMessage.first;
     StoredMessage.first = KafkaW::PollStatus::Empty;
     if (Status == KafkaW::PollStatus::Message) {

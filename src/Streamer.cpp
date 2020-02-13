@@ -284,9 +284,9 @@ void Streamer::process() {
   // Consume message
   auto KafkaMessage = poll();
   if (haveReachedStopOffsets(KafkaMessage.second.MetaData.Partition,
-      KafkaMessage.second.MetaData.Offset)) {
+                             KafkaMessage.second.MetaData.Offset)) {
     RunStatus.store(StreamerStatus::HAS_FINISHED);
-      return;
+    return;
   }
 
   if (KafkaMessage.first != KafkaW::PollStatus::Message) {

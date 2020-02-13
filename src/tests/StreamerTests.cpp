@@ -26,9 +26,10 @@ using KafkaW::PollStatus;
 using trompeloeil::_;
 using namespace FileWriter;
 
-std::pair<PollStatus, Msg>
-generateKafkaMsg(char const *DataPtr, size_t const Size, int64_t Offset = 0,
-                 int32_t Partition = 0) {
+std::pair<PollStatus, Msg> generateKafkaMsg(char const *DataPtr,
+                                            size_t const Size,
+                                            int64_t Offset = 0,
+                                            int32_t Partition = 0) {
   FileWriter::Msg Message = FileWriter::Msg(DataPtr, Size);
   Message.MetaData = FileWriter::MessageMetaData{
       std::chrono::milliseconds(0),
@@ -38,8 +39,7 @@ generateKafkaMsg(char const *DataPtr, size_t const Size, int64_t Offset = 0,
   return {PollStatus::Message, std::move(Message)};
 }
 
-std::pair<PollStatus, Msg>
-generateEmptyKafkaMsg(PollStatus Status) {
+std::pair<PollStatus, Msg> generateEmptyKafkaMsg(PollStatus Status) {
   return {Status, FileWriter::Msg()};
 }
 
