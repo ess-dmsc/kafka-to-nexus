@@ -34,7 +34,7 @@ set(UnitTests_SRC
         StreamerTests.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
-    DataMessageWriterTests.cpp)
+    DataMessageWriterTests.cpp MetaDataQueryTests.cpp)
 
 set(UnitTests_INC
         StreamerTestMocks.h

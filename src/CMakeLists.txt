@@ -95,7 +95,9 @@ set(kafka_to_nexus_SRC
         Metrics/CarbonSink.cpp
         Status/StatusReporterBase.cpp
         DataMessageWriter.cpp
-        WriteMessage.cpp)
+        WriteMessage.cpp
+        PartitionStream.cpp
+        TopicStream.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -152,7 +154,11 @@ set(kafka_to_nexus_INC
         Status/StatusReporterBase.h
         DataMessageWriter.h
         ThreadedExecutor.h
-        WriteMessage.h)
+        WriteMessage.h
+        PartitionStream.h
+        KafkaW/MetaDataQuery.h
+        KafkaW/MetaDataQueryImpl.h
+        TopicStream.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT

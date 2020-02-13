@@ -12,9 +12,13 @@
 #include <librdkafka/rdkafkacpp.h>
 #include <map>
 #include <string>
+#include <chrono>
 
 namespace KafkaW {
 
+  using duration = std::chrono::system_clock::duration;
+  using std::chrono_literals::operator""s;
+  using std::chrono_literals::operator""ms;
 /// Collect options used to connect to the broker.
 struct BrokerSettings {
   BrokerSettings() = default;
@@ -23,6 +27,8 @@ struct BrokerSettings {
   int MetadataTimeoutMS = 2000;
   int OffsetsForTimesTimeoutMS = 2000;
   int ConsumerCloseTimeoutMS = 5000;
+  duration MinMetadataTimeout{100ms};
+  duration MaxMetadataTimeout{10s};
   std::map<std::string, std::string> KafkaConfiguration = {
       {"metadata.request.timeout.ms", "2000"}, // 2 Secs
       {"socket.timeout.ms", "2000"},

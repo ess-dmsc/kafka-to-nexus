@@ -215,3 +215,35 @@ public:
               override);
   MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
 };
+
+class MockConf : public RdKafka::Conf {
+public:
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, std::string const&, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::DeliveryReportCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::OAuthBearerTokenRefreshCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::EventCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::Conf const*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::PartitionerCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::PartitionerKeyPointerCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::SocketCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::OpenCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::RebalanceCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::OffsetCommitCb*, std::string&), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::SslCertificateVerifyCb*, std::string&), override);
+  MAKE_CONST_MOCK2(get, Conf::ConfResult(std::string const&, std::string&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::DeliveryReportCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::OAuthBearerTokenRefreshCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::EventCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::PartitionerCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::PartitionerKeyPointerCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::SocketCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::OpenCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::RebalanceCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::OffsetCommitCb*&), override);
+  MAKE_CONST_MOCK1(get, Conf::ConfResult(RdKafka::SslCertificateVerifyCb*&), override);
+  MAKE_MOCK0(dump, std::list<std::string>*(), override);
+  MAKE_MOCK3(set, Conf::ConfResult(std::string const&, RdKafka::ConsumeCb*, std::string&), override);
+  MAKE_MOCK0(c_ptr_global, rd_kafka_conf_s*(), override);
+  MAKE_MOCK0(c_ptr_topic, rd_kafka_topic_conf_s*(), override);
+  MAKE_MOCK5(set_ssl_cert, Conf::ConfResult(RdKafka::CertificateType,RdKafka::CertificateEncoding,const void*, size_t,std::string&), override);
+};

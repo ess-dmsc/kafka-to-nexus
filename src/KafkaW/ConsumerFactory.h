@@ -15,4 +15,5 @@
 namespace KafkaW {
 std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
                                          const std::string &Broker);
+  std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings);
 } // namespace KafkaW
