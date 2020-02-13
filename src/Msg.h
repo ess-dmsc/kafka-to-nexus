@@ -35,7 +35,7 @@ struct Msg {
     Size = Other.Size;
     MetaData = Other.MetaData;
     DataPtr = std::make_unique<char[]>(Size);
-    std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Other.DataPtr.get(), Size);
+    std::memcpy(DataPtr.get(), Other.DataPtr.get(), Size);
     return *this;
   }
 
