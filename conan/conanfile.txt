@@ -1,10 +1,10 @@
 [requires]
-gtest/1.8.1@bincrafters/stable
+gtest/1.10.0
 fmt/6.1.2
-h5cpp/0.3.1@ess-dmsc/stable
+h5cpp/0.3.3@ess-dmsc/stable
 librdkafka/1.2.0@ess-dmsc/stable
 jsonformoderncpp/3.6.1@vthiery/stable
-streaming-data-types/65e23a1@ess-dmsc/stable
+streaming-data-types/c670575@ess-dmsc/stable
 CLI11/1.8.0@cliutils/stable
 trompeloeil/v36@rollbear/stable
 spdlog-graylog/1.5.0-dm1@ess-dmsc/stable

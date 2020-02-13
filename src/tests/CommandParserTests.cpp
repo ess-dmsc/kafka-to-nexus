@@ -14,7 +14,7 @@
 class CommandParserHappyStartTests : public testing::Test {
 public:
   FileWriter::StartCommandInfo StartInfo;
-  std::string Good_Command{R"""(
+  std::string GoodCommand{R"""(
 {
   "cmd": "FileWriter_new",
   "job_id": "qw3rty",
@@ -31,7 +31,7 @@ public:
   // cppcheck-suppress unusedFunction
   void SetUp() override {
     StartInfo = FileWriter::CommandParser::extractStartInformation(
-        nlohmann::json::parse(Good_Command));
+        nlohmann::json::parse(GoodCommand));
   }
 };
 
