@@ -235,21 +235,6 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
   auto TopicPartitions = offsetsForTimesForTopic(Topic, StartTime);
   assignToPartitions(Topic, TopicPartitions);
 }
-  
-  void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId, int64_t Offset) {
-    Logger->info("Consumer::addPartitionAtOffset()  topic: {},  partitionId: {}, offset: {}", Topic,
-                 PartitionId, Offset);
-    auto TopicPartition = std::unique_ptr<RdKafka::TopicPartition>(RdKafka::TopicPartition::create(Topic, PartitionId, Offset));
-    auto ReturnCode = KafkaConsumer->assign({TopicPartition.get(), });
-    if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-      Logger->error("Could not assign to {}", Topic);
-      throw std::runtime_error(fmt::format(
-                                           "Could not assign topic-partition of topic {}, RdKafka error: \"{}\"", Topic,
-                                           err2str(ReturnCode)));
-    }
-    CurrentTopic = Topic;
-    CurrentNumberOfPartitions = 1;
-  }
 
 int64_t Consumer::getHighWatermarkOffset(std::string const &Topic,
                                          int32_t Partition) {
