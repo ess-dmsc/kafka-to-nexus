@@ -5,7 +5,7 @@ h5cpp/0.3.3@ess-dmsc/stable
 librdkafka/1.2.0@ess-dmsc/stable
 jsonformoderncpp/3.6.1@vthiery/stable
 streaming-data-types/c670575@ess-dmsc/stable
-CLI11/1.8.0@cliutils/stable
+CLI11/1.9.0@cliutils/stable
 trompeloeil/v36@rollbear/stable
 spdlog/1.4.2@bincrafters/stable
 date/4b46deb@ess-dmsc/stable
