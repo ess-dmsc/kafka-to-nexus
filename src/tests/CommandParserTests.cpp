@@ -10,59 +10,75 @@
 #include "CommandParser.h"
 #include <chrono>
 #include <gtest/gtest.h>
+#include <pl72_run_start_generated.h>
 
 class CommandParserHappyStartTests : public testing::Test {
 public:
   FileWriter::StartCommandInfo StartInfo;
-  std::string GoodCommand{R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "broker": "somehost:1234",
-  "start_time": 123456789000,
-  "stop_time": 123456790000,
-  "service_id": "filewriter1",
-  "nexus_structure": { }
-})"""};
+
+  std::string InstrumentNameInput = "TEST";
+  std::string RunNameInput = "42";
+  std::string NexusStructureInput = "{}";
+  std::string JobIDInput = "qw3rty";
+  std::string ServiceIDInput = "filewriter1";
+  std::string BrokerInput = "somehost:1234";
+  std::string FilenameInput = "a-dummy-name-01.h5";
+  uint64_t StartTimeInput = 123456789000;
+  uint64_t StopTimeInput = 123456790000;
 
   // cppcheck-suppress unusedFunction
   void SetUp() override {
+    flatbuffers::FlatBufferBuilder Builder;
+
+    const auto InstrumentNameOffset = Builder.CreateString(InstrumentNameInput);
+    const auto RunIDOffset = Builder.CreateString(RunNameInput);
+    const auto NexusStructureOffset = Builder.CreateString(NexusStructureInput);
+    const auto JobIDOffset = Builder.CreateString(JobIDInput);
+    const auto ServiceIDOffset = Builder.CreateString(ServiceIDInput);
+    const auto BrokerOffset = Builder.CreateString(BrokerInput);
+    const auto FilenameOffset = Builder.CreateString(FilenameInput);
+
+    auto messageRunStart =
+        CreateRunStart(Builder, StartTimeInput, StopTimeInput, RunIDOffset,
+                       InstrumentNameOffset, NexusStructureOffset, JobIDOffset,
+                       BrokerOffset, ServiceIDOffset, FilenameOffset);
+
+    FinishRunStartBuffer(Builder, messageRunStart);
+    auto MessageBuffer = Builder.Release();
+
     StartInfo = FileWriter::CommandParser::extractStartInformation(
-        nlohmann::json::parse(GoodCommand));
+        MessageBuffer.data(), MessageBuffer.size());
   }
 };
 
 TEST_F(CommandParserHappyStartTests, IfJobIDPresentThenExtractedCorrectly) {
-  ASSERT_EQ("qw3rty", StartInfo.JobID);
+  ASSERT_EQ(JobIDInput, StartInfo.JobID);
 }
 
 TEST_F(CommandParserHappyStartTests, IfFilenamePresentThenExtractedCorrectly) {
-  ASSERT_EQ("a-dummy-name-01.h5", StartInfo.Filename);
+  ASSERT_EQ(FilenameInput, StartInfo.Filename);
 }
 
 TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
-  ASSERT_EQ("somehost:1234", StartInfo.BrokerInfo.HostPort);
+  ASSERT_EQ(JobIDInput, StartInfo.BrokerInfo.HostPort);
   ASSERT_EQ(1234u, StartInfo.BrokerInfo.Port);
 }
 
 TEST_F(CommandParserHappyStartTests,
        IfNexusStructurePresentThenExtractedCorrectly) {
-  ASSERT_EQ("{}", StartInfo.NexusStructure);
+  ASSERT_EQ(NexusStructureInput, StartInfo.NexusStructure);
 }
 
 TEST_F(CommandParserHappyStartTests, IfStartPresentThenExtractedCorrectly) {
-  ASSERT_EQ(std::chrono::milliseconds{123456789000}, StartInfo.StartTime);
+  ASSERT_EQ(std::chrono::milliseconds{StartTimeInput}, StartInfo.StartTime);
 }
 
 TEST_F(CommandParserHappyStartTests, IfStopPresentThenExtractedCorrectly) {
-  ASSERT_EQ(std::chrono::milliseconds{123456790000}, StartInfo.StopTime);
+  ASSERT_EQ(std::chrono::milliseconds{StopTimeInput}, StartInfo.StopTime);
 }
 
 TEST_F(CommandParserHappyStartTests, IfServiceIdPresentThenExtractedCorrectly) {
-  ASSERT_EQ("filewriter1", StartInfo.ServiceID);
+  ASSERT_EQ(ServiceIDInput, StartInfo.ServiceID);
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
