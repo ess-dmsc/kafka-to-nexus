@@ -55,7 +55,7 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<KafkaW::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage->first, PollStatus::Message);
+    ASSERT_EQ(ConsumedMessage.first, PollStatus::Message);
   }
 }
 
@@ -78,7 +78,7 @@ TEST_F(
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<KafkaW::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage->first, PollStatus::Empty);
+    ASSERT_EQ(ConsumedMessage.first, PollStatus::Empty);
   }
 }
 
@@ -99,7 +99,7 @@ TEST_F(ConsumerTests,
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<KafkaW::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage->first, PollStatus::EndOfPartition);
+    ASSERT_EQ(ConsumedMessage.first, PollStatus::EndOfPartition);
   }
 }
 
@@ -120,7 +120,7 @@ TEST_F(ConsumerTests,
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<KafkaW::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage->first, PollStatus::Error);
+    ASSERT_EQ(ConsumedMessage.first, PollStatus::Error);
   }
 }
 

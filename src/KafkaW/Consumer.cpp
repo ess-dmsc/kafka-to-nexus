@@ -235,6 +235,21 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
   auto TopicPartitions = offsetsForTimesForTopic(Topic, StartTime);
   assignToPartitions(Topic, TopicPartitions);
 }
+  
+  void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId, int64_t Offset) {
+    Logger->info("Consumer::addPartitionAtOffset()  topic: {},  partitionId: {}, offset: {}", Topic,
+                 PartitionId, Offset);
+    auto TopicPartition = std::unique_ptr<RdKafka::TopicPartition>(RdKafka::TopicPartition::create(Topic, PartitionId, Offset));
+    auto ReturnCode = KafkaConsumer->assign({TopicPartition.get(), });
+    if (ReturnCode != RdKafka::ERR_NO_ERROR) {
+      Logger->error("Could not assign to {}", Topic);
+      throw std::runtime_error(fmt::format(
+                                           "Could not assign topic-partition of topic {}, RdKafka error: \"{}\"", Topic,
+                                           err2str(ReturnCode)));
+    }
+    CurrentTopic = Topic;
+    CurrentNumberOfPartitions = 1;
+  }
 
 int64_t Consumer::getHighWatermarkOffset(std::string const &Topic,
                                          int32_t Partition) {
@@ -310,41 +325,34 @@ std::shared_ptr<RdKafka::Metadata> Consumer::metadataCall() {
   }
 }
 
-std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
+std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
   auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
       KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
-  auto DataToReturn =
-      std::make_unique<std::pair<PollStatus, FileWriter::Msg>>();
 
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-      DataToReturn->first = PollStatus::Message;
+      // PollStatus::Message;
       // extract data
-      DataToReturn->second = FileWriter::Msg::owned(
+      auto RetMsg = FileWriter::Msg(
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
-      DataToReturn->second.MetaData = FileWriter::MessageMetaData{
+      RetMsg.MetaData = FileWriter::MessageMetaData{
           std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
           KafkaMsg->timestamp().type, KafkaMsg->offset(),
           KafkaMsg->partition()};
-
-      return DataToReturn;
+      return {PollStatus::Message, std::move(RetMsg)};
     } else {
-      DataToReturn->first = PollStatus::Empty;
-      return DataToReturn;
+      return {PollStatus::Empty, FileWriter::Msg()};
     }
   case RdKafka::ERR__TIMED_OUT:
     // No message or event within time out - this is usually normal (see
     // librdkafka docs)
-    DataToReturn->first = PollStatus::TimedOut;
-    return DataToReturn;
+    return {PollStatus::TimedOut, FileWriter::Msg()};
   case RdKafka::ERR__PARTITION_EOF:
-    DataToReturn->first = PollStatus::EndOfPartition;
-    return DataToReturn;
+    return {PollStatus::EndOfPartition, FileWriter::Msg()};
   default:
     // Everything else is an error
-    DataToReturn->first = PollStatus::Error;
-    return DataToReturn;
+    return {PollStatus::Error, FileWriter::Msg()};
   }
 }
 } // namespace KafkaW

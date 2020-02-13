@@ -250,10 +250,10 @@ Streamer::createFlatBufferMessage(char const *Data, size_t Size) {
 }
 
 void Streamer::processMessage(
-    std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
+    std::pair<KafkaW::PollStatus, Msg> &KafkaMessage) {
 
   if (auto const FBMessage = createFlatBufferMessage(
-          KafkaMessage->second.data(), KafkaMessage->second.size())) {
+          KafkaMessage.second.data(), KafkaMessage.second.size())) {
     if (!messageSourceIsValid(FBMessage->getSourceHash())) {
       // TODO count unknown source name
       return;
@@ -274,12 +274,12 @@ void Streamer::processMessage(
   }
 }
 
-std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Streamer::poll() {
+std::pair<KafkaW::PollStatus, Msg> Streamer::poll() {
   if (Consumer == nullptr && ConsumerInitialised.valid()) {
     auto ready = ifConsumerIsReadyThenAssignIt();
     if (!ready) {
       // Not ready, so try again on next poll
-      return nullptr;
+      return {KafkaW::PollStatus::Empty, Msg()};
     }
   }
 
@@ -293,15 +293,12 @@ std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Streamer::poll() {
 
 void Streamer::process() {
   // Consume message
-  if (auto KafkaMessage = poll()) {
+  auto KafkaMessage = poll();
+  if (KafkaMessage.first == KafkaW::PollStatus::Message) {
     // Check stop offsets
-    if (haveReachedStopOffsets(KafkaMessage->second.MetaData.Partition,
-                               KafkaMessage->second.MetaData.Offset)) {
+    if (haveReachedStopOffsets(KafkaMessage.second.MetaData.Partition,
+                               KafkaMessage.second.MetaData.Offset)) {
       RunStatus.store(StreamerStatus::HAS_FINISHED);
-      return;
-    }
-
-    if (!messageHasPayload(KafkaMessage->first)) {
       return;
     }
 

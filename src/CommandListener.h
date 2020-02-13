@@ -25,7 +25,7 @@ public:
   virtual void start();
 
   /// Check for new command packets and return one if there is.
-  virtual std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll();
+  virtual std::pair<KafkaW::PollStatus, Msg> poll();
 
 private:
   MainOpt &config;

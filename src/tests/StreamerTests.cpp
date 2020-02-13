@@ -26,31 +26,25 @@ using KafkaW::PollStatus;
 using trompeloeil::_;
 using namespace FileWriter;
 
-std::unique_ptr<std::pair<PollStatus, Msg>>
+std::pair<PollStatus, Msg>
 generateKafkaMsg(char const *DataPtr, size_t const Size, int64_t Offset = 0,
                  int32_t Partition = 0) {
-  FileWriter::Msg Message = FileWriter::Msg::owned(DataPtr, Size);
+  FileWriter::Msg Message = FileWriter::Msg(DataPtr, Size);
   Message.MetaData = FileWriter::MessageMetaData{
       std::chrono::milliseconds(0),
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_CREATE_TIME,
       Offset, Partition};
-  std::pair<PollStatus, FileWriter::Msg> NewPair(PollStatus::Message,
-                                                 std::move(Message));
-  return std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
-      std::move(NewPair));
+  return {PollStatus::Message, std::move(Message)};
 }
 
-std::unique_ptr<std::pair<PollStatus, Msg>>
+std::pair<PollStatus, Msg>
 generateEmptyKafkaMsg(PollStatus Status) {
   FileWriter::Msg KafkaMessage;
-  std::pair<PollStatus, FileWriter::Msg> NewPair(Status,
-                                                 std::move(KafkaMessage));
-  return std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
-      std::move(NewPair));
+  return {Status,std::move(KafkaMessage)};
 }
 
-std::unique_ptr<std::pair<PollStatus, Msg>> generateKafkaMsgWithValidFlatbuffer(
+std::pair<PollStatus, Msg> generateKafkaMsgWithValidFlatbuffer(
     std::string const &SourceName = "test_source", int32_t Value = 42,
     int64_t Offset = 0, int32_t Partition = 0) {
 

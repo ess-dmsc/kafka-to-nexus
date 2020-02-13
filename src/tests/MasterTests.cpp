@@ -102,8 +102,8 @@ class CommandListenerStandIn : public CommandListener {
 public:
   explicit CommandListenerStandIn(MainOpt &Config) : CommandListener(Config){};
   void start() override{};
-  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll() override {
-    return nullptr;
+  std::pair<KafkaW::PollStatus, Msg> poll() override {
+    return {KafkaW::PollStatus::Empty, Msg()};
   };
 };
 
@@ -115,8 +115,9 @@ public:
       : Master(Opt, std::move(CmdListener), std::move(JobCreator),
                std::move(Reporter)) {}
   void injectMessage(KafkaW::PollStatus Status, Msg Message) {
+    auto Temp = std::pair<KafkaW::PollStatus,Msg>(Status, std::move(Message));
     StoredMessage.first = Status;
-    StoredMessage.second = std::move(Message);
+    StoredMessage.second = Message;
   }
 
   MAKE_MOCK1(startWriting, void(StartCommandInfo const &), override);
@@ -124,15 +125,15 @@ public:
   bool WritingStopped = false;
 
 private:
-  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>>
+  std::pair<KafkaW::PollStatus, Msg>
   pollForMessage() override {
     auto const Status = StoredMessage.first;
     StoredMessage.first = KafkaW::PollStatus::Empty;
     if (Status == KafkaW::PollStatus::Message) {
-      return std::make_unique<std::pair<KafkaW::PollStatus, Msg>>(
+      return std::pair<KafkaW::PollStatus, Msg>(
           Status, std::move(StoredMessage.second));
     }
-    return nullptr;
+    return {KafkaW::PollStatus::Empty, Msg()};
   }
   std::pair<KafkaW::PollStatus, Msg> StoredMessage{KafkaW::PollStatus::Empty,
                                                    Msg()};
@@ -166,7 +167,7 @@ public:
 TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
   MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
   Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg::owned(StartCommand.c_str(), StartCommand.size()));
+                        Msg(StartCommand.c_str(), StartCommand.size()));
 
   REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
@@ -176,7 +177,7 @@ TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
 TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
   MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
   Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg::owned(StartCommand.c_str(), StartCommand.size()));
+                        Msg(StartCommand.c_str(), StartCommand.size()));
   REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
 
