@@ -63,9 +63,10 @@ template <class KafkaHandle>
   return ReturnSet;
 }
 
+namespace {
 const RdKafka::TopicMetadata *
-findTopic(const std::string &Topic,
-          const RdKafka::Metadata *KafkaMetadata) {
+findKafkaTopic(const std::string &Topic,
+               const RdKafka::Metadata *KafkaMetadata) {
   auto Topics = KafkaMetadata->topics();
   auto Iterator =
       std::find_if(Topics->cbegin(), Topics->cend(),
@@ -76,6 +77,7 @@ findTopic(const std::string &Topic,
     throw MetadataException("Topic \"" + Topic + "\" not listed by broker.");
   }
   return *Iterator;
+}
 }
 
 template <class KafkaHandle>
@@ -90,7 +92,7 @@ std::set<int> getPartitionsForTopicImpl(std::string Broker, std::string Topic, d
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException("Failed to query broker for available partitions. Error code was: " + std::to_string(ReturnCode));
   }
-  auto TopicMetaData = findTopic(Topic, MetadataPtr);
+  auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
   std::set<int> ReturnSet;
   for (auto const &Partition : *TopicMetaData->partitions()) {
     ReturnSet.emplace(Partition->id());

@@ -29,12 +29,18 @@ public:
   void setStopTime(time_point Stop);
   bool hasFinished();
 protected:
+  Metrics::Metric KafkaTimeouts{"timeouts", "Timeouts when polling for messages."};
+  Metrics::Metric KafkaErrors{"errors", "Errors received when polling for messages.", Metrics::Severity::ERROR};
+  Metrics::Metric MessagesReceived{"received", "Number of messages received from broker."};
+  Metrics::Metric MessagesProcessed{"processed", "Number of messages queued up for writing."};
+  Metrics::Metric BadOffsets{"bad_offsets", "Number of messages received with bad offsets."};
+  Metrics::Metric BadTimestamps{"bad_timestamps", "Number of messages received with bad timestamps."};
+
+  void pollForMessage();
   std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
   std::atomic_bool HasFinished{false};
   SrcToDst DataMap;
-  Metrics::Registrar Registrar;
   time_point StopTime;
   std::int64_t CurrentOffset{0};
-  const std::chrono::system_clock::duration PollTime{500ms};
   ThreadedExecutor Executor; //Must be last
 };

@@ -13,6 +13,7 @@ public:
       UNUSED_ARG(Settings)};
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
+  IMPLEMENT_MOCK3(addPartitionAtOffset);
   IMPLEMENT_MOCK1(topicPresent);
   IMPLEMENT_MOCK1(queryTopicPartitions);
   IMPLEMENT_MOCK0(poll);
