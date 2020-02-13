@@ -3,7 +3,7 @@ gtest/1.10.0
 fmt/6.1.2
 h5cpp/0.3.3@ess-dmsc/stable
 librdkafka/1.2.0@ess-dmsc/stable
-jsonformoderncpp/3.7.0
+jsonformoderncpp/3.7.3@vthiery/stable
 streaming-data-types/c670575@ess-dmsc/stable
 CLI11/1.9.0@cliutils/stable
 trompeloeil/v36@rollbear/stable
