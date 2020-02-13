@@ -118,8 +118,6 @@ private:
 
   bool haveReachedStopOffsets(int32_t Partition, int64_t Offset);
 
-  static bool messageHasPayload(KafkaW::PollStatus MessageStatus);
-
   bool messageSourceIsValid(FlatbufferMessage::SrcHash SourceHash) const;
 
   bool messageTimestampInRange(std::uint64_t Timestamp) const;

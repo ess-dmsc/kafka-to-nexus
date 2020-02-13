@@ -210,17 +210,6 @@ bool Streamer::haveReachedStopOffsets(int32_t Partition, int64_t Offset) {
   return false;
 }
 
-bool Streamer::messageHasPayload(KafkaW::PollStatus MessageStatus) {
-  if (MessageStatus == KafkaW::PollStatus::Error) {
-    // TODO count Kafka error
-    return false;
-  }
-
-  return !(MessageStatus == KafkaW::PollStatus::Empty ||
-           MessageStatus == KafkaW::PollStatus::EndOfPartition ||
-           MessageStatus == KafkaW::PollStatus::TimedOut);
-}
-
 bool Streamer::messageSourceIsValid(
     FlatbufferMessage::SrcHash SourceHash) const {
   return MessageProcessor->canHandleSource(SourceHash);
