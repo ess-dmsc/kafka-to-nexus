@@ -283,16 +283,16 @@ std::pair<KafkaW::PollStatus, Msg> Streamer::poll() {
 void Streamer::process() {
   // Consume message
   auto KafkaMessage = poll();
-  if (KafkaMessage.first == KafkaW::PollStatus::Message) {
-    // Check stop offsets
-    if (haveReachedStopOffsets(KafkaMessage.second.MetaData.Partition,
-                               KafkaMessage.second.MetaData.Offset)) {
-      RunStatus.store(StreamerStatus::HAS_FINISHED);
+  if (haveReachedStopOffsets(KafkaMessage.second.MetaData.Partition,
+      KafkaMessage.second.MetaData.Offset)) {
+    RunStatus.store(StreamerStatus::HAS_FINISHED);
       return;
-    }
-
-    processMessage(KafkaMessage);
   }
+
+  if (KafkaMessage.first != KafkaW::PollStatus::Message) {
+    return;
+  }
+  processMessage(KafkaMessage);
 }
 
 // cppcheck-suppress unusedFunction; used by unit tests.
