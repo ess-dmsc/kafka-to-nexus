@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "CommandParser.h"
+#include <6s4t_run_stop_generated.h>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <pl72_run_start_generated.h>
@@ -34,6 +35,23 @@ flatbuffers::DetachedBuffer buildRunStartMessage(
                      BrokerOffset, ServiceIDOffset, FilenameOffset);
 
   FinishRunStartBuffer(Builder, messageRunStart);
+  return Builder.Release();
+}
+
+flatbuffers::DetachedBuffer buildRunStopMessage(uint64_t StopTime,
+                                                std::string const &RunName,
+                                                std::string const &JobID,
+                                                std::string const &ServiceID) {
+  flatbuffers::FlatBufferBuilder Builder;
+
+  const auto RunIDOffset = Builder.CreateString(RunName);
+  const auto JobIDOffset = Builder.CreateString(JobID);
+  const auto ServiceIDOffset = Builder.CreateString(ServiceID);
+
+  auto messageRunStop = CreateRunStop(Builder, StopTime, RunIDOffset,
+                                      JobIDOffset, ServiceIDOffset);
+
+  FinishRunStopBuffer(Builder, messageRunStop);
   return Builder.Release();
 }
 
@@ -103,8 +121,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
                    MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error)
-      << "Expect throw due to empty JobID in run start message";
+               std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
@@ -116,8 +133,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
                    MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error)
-      << "Expect throw due to empty Filename in run start message";
+               std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
@@ -129,172 +145,107 @@ TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
                    MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error)
-      << "Expect throw due to empty NexusStructure in run start message";
+               std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, IfStopCommandPassedToStartMethodThenThrows) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "qw3rty",
-  "service_id": "filewriter1"
-})""");
+  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                           JobIDInput, ServiceIDInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   nlohmann::json::parse(Command)),
+                   MessageBuffer.data(), MessageBuffer.size()),
                std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, IfNoBrokerThenThrows) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "nexus_structure": { }
-})""");
+  std::string const EmptyBroker;
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+      ServiceIDInput, EmptyBroker, FilenameInput, StartTimeInput,
+      StopTimeInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   nlohmann::json::parse(Command)),
+                   MessageBuffer.data(), MessageBuffer.size()),
                std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, IfBrokerIsWrongFormThenThrows) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "broker": "1234:somehost",
-  "nexus_structure": { }
-})""");
+  std::string const BrokerInvalidFormat = "1234:somehost";
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+      ServiceIDInput, BrokerInvalidFormat, FilenameInput, StartTimeInput,
+      StopTimeInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   nlohmann::json::parse(Command)),
+                   MessageBuffer.data(), MessageBuffer.size()),
                std::runtime_error);
 }
 
 TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "broker": "localhost:9092",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "nexus_structure": { }
-})""");
+  // Start time from flatbuffer is 0 if not supplied when message constructed
+  uint64_t const NoStartTime = 0;
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+      ServiceIDInput, BrokerInput, FilenameInput, NoStartTime, StopTimeInput);
 
   auto FakeCurrentTime = std::chrono::milliseconds{987654321};
 
   auto StartInfo = FileWriter::CommandParser::extractStartInformation(
-      nlohmann::json::parse(Command), FakeCurrentTime);
+      MessageBuffer.data(), MessageBuffer.size(), FakeCurrentTime);
 
   ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
 }
 
-TEST(CommandParserStartTests, IfNoStopTimeThenSetToZero) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "broker": "localhost:9092",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "nexus_structure": { }
-})""");
-
-  auto StartInfo = FileWriter::CommandParser::extractStartInformation(
-      nlohmann::json::parse(Command));
-
-  ASSERT_EQ(std::chrono::milliseconds::zero(), StartInfo.StopTime);
-}
-
 TEST(CommandParserStartTests, IfNoServiceIdThenIsBlank) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "broker": "localhost:9092",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "nexus_structure": { }
-})""");
+  std::string const EmptyServiceID;
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+      EmptyServiceID, BrokerInput, FilenameInput, StartTimeInput,
+      StopTimeInput);
 
   auto StartInfo = FileWriter::CommandParser::extractStartInformation(
-      nlohmann::json::parse(Command));
+      MessageBuffer.data(), MessageBuffer.size());
 
   ASSERT_EQ("", StartInfo.ServiceID);
 }
 
 TEST(CommandParserSadStopTests, IfNoJobIdThenThrows) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_stop"
-})""");
+  std::string const EmptyJobID;
+  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                           EmptyJobID, ServiceIDInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStopInformation(
-                   nlohmann::json::parse(Command)),
+                   MessageBuffer.data(), MessageBuffer.size()),
                std::runtime_error);
 }
 
 TEST(CommandParserHappyStopTests, IfJobIdPresentThenExtractedCorrectly) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "qw3rty"
-})""");
+  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                           JobIDInput, ServiceIDInput);
 
   auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      nlohmann::json::parse(Command));
+      MessageBuffer.data(), MessageBuffer.size());
 
-  ASSERT_EQ("qw3rty", StopInfo.JobID);
+  ASSERT_EQ(JobIDInput, StopInfo.JobID);
 }
 
 TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "qw3rty",
-  "stop_time": 123456790000
-})""");
+  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                           JobIDInput, ServiceIDInput);
 
   auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      nlohmann::json::parse(Command));
+      MessageBuffer.data(), MessageBuffer.size());
 
-  ASSERT_EQ(std::chrono::milliseconds{123456790000}, StopInfo.StopTime);
-}
-
-TEST(CommandParserStopTests, IfNoStopTimeThenSetToZero) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "qw3rty"
-})""");
-
-  auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      nlohmann::json::parse(Command));
-
-  ASSERT_EQ(std::chrono::milliseconds::zero(), StopInfo.StopTime);
+  ASSERT_EQ(std::chrono::milliseconds{StopTimeInput}, StopInfo.StopTime);
 }
 
 TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "qw3rty"
-})""");
+  std::string const EmptyServiceID;
+  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                           JobIDInput, EmptyServiceID);
 
   auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      nlohmann::json::parse(Command));
+      MessageBuffer.data(), MessageBuffer.size());
 
   ASSERT_EQ("", StopInfo.ServiceID);
 }
