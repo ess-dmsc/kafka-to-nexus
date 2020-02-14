@@ -1,39 +1,36 @@
-FROM ubuntu:18.04
+FROM screamingudder/alpine-build-node:1.8.2
 
 ARG http_proxy
 ARG https_proxy
 ARG local_conan_server
 
-# Replace the default profile and remotes with the ones from our Ubuntu build node
-ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/master/files/default_profile" "/root/.conan/profiles/default"
-COPY ./conan ../kafka_to_nexus_src/conan
+USER root
+WORKDIR /home/root
+
+COPY ./conan kafka_to_nexus_src/conan
+
+# Dirty hack to override flatbuffers/1.11.0 with 1.10 as a bug means 1.11 doesn't build on alpine
+# Fixed at HEAD, so can be removed when we have 1.12
+RUN sed '10iflatbuffers/1.10.0@google/stable' kafka_to_nexus_src/conan/conanfile.txt
+
+RUN apk add --no-cache ninja
 
 # Install packages - We don't want to purge kafkacat and tzdata after building
-RUN export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update -y \
-    && apt-get --no-install-recommends -y install gcc-8 g++-8 make git python3 python3-pip cmake python3-setuptools autoconf libtool automake kafkacat tzdata \
-    && apt-get -y autoremove  \
-    && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/* \
-    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8 \
-    && pip3 install --upgrade pip \
-    && pip3 install conan \
+# --build=boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
+RUN if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
     && mkdir kafka_to_nexus \
-    && conan config install http://github.com/ess-dmsc/conan-configuration.git \
-    && if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
     && cd kafka_to_nexus \
-    && conan install --build=outdated ../kafka_to_nexus_src/conan/conanfile.txt
+    && conan install --build=outdated --build=boost_build ../kafka_to_nexus_src/conan/conanfile.txt
 
 COPY ./cmake ../kafka_to_nexus_src/cmake
 COPY ./src ../kafka_to_nexus_src/src
 COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
 
 RUN cd kafka_to_nexus \
-    && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
-    && make -j2 kafka-to-nexus \
+    && cmake -GNinja -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
+    && ninja kafka-to-nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
-    && apt purge -y git python3 python3-pip cmake python3-setuptools autoconf libtool automake \
     && rm -rf ../../kafka_to_nexus_src/* \
     && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 
