@@ -7,6 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <gtest/gtest.h>
+#include <memory>
+
 #include "CommandListener.h"
 #include "JobCreator.h"
 #include "Master.h"
@@ -14,33 +17,17 @@
 #include "Status/StatusReporter.h"
 #include "helpers/FakeStreamMaster.h"
 #include "helpers/KafkaWMocks.h"
-#include <gtest/gtest.h>
-#include <memory>
+#include "helpers/RunStartStopHelpers.h"
 
 using namespace FileWriter;
 
-std::string StartCommand{R"""({
-    "cmd": "filewriter_new",
-    "broker": "localhost:9092",
-    "job_id": "1234",
-    "file_attributes": {"file_name": "output_file1.nxs"},
-    "nexus_structure": { }
-  })"""};
-
-std::string StopCommand{R"""({
-    "cmd": "filewriter_stop",
-    "job_id": "1234"
-  })"""};
-
-TEST(ParseCommandTests, IfCommandStringIsParseableThenDoesNotThrow) {
-  ASSERT_NO_THROW(parseCommand(StartCommand));
-}
-
-TEST(ParseCommandTests, IfCommandStringIsNotParseableThenThrows) {
-  ASSERT_THROW(parseCommand("{Invalid: JSON"), std::runtime_error);
-}
+auto const MessageBuffer = buildRunStartMessage(
+    InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+    ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
+    StopTimeInput);
 
 TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
+
   FileWriterState CurrentState = States::Idle();
   auto const NewState =
       getNextState(StartCommand, std::chrono::milliseconds{0}, CurrentState);
