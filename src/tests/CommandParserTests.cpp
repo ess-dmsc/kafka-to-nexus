@@ -251,31 +251,22 @@ TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
 }
 
 TEST(CommandParserStopTests, IfServiceIdPresentThenExtractedCorrectly) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "qw3rty",
-  "service_id": "filewriter1"
-})""");
+  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                           JobIDInput, ServiceIDInput);
 
   auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      nlohmann::json::parse(Command));
+      MessageBuffer.data(), MessageBuffer.size());
 
-  ASSERT_EQ("filewriter1", StopInfo.ServiceID);
+  ASSERT_EQ(ServiceIDInput, StopInfo.ServiceID);
 }
 
 TEST(CommandParserSadStopTests, IfStartCommandPassedToStopMethodThenThrows) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "nexus_structure": { }
-})""");
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+      ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
+      StopTimeInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStopInformation(
-                   nlohmann::json::parse(Command)),
+                   MessageBuffer.data(), MessageBuffer.size()),
                std::runtime_error);
 }
