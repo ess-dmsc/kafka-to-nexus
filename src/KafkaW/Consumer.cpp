@@ -317,7 +317,6 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-      // PollStatus::Message;
       // extract data
       auto RetMsg = FileWriter::Msg(
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
