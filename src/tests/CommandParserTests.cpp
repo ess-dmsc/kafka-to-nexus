@@ -12,39 +12,52 @@
 #include <gtest/gtest.h>
 #include <pl72_run_start_generated.h>
 
+namespace {
+flatbuffers::DetachedBuffer buildRunStartMessage(
+    std::string const &InstrumentName, std::string const &RunName,
+    std::string const &NexusStructure, std::string const &JobID,
+    std::string const &ServiceID, std::string const &Broker,
+    std::string const &Filename, uint64_t StartTime, uint64_t StopTime) {
+  flatbuffers::FlatBufferBuilder Builder;
+
+  const auto InstrumentNameOffset = Builder.CreateString(InstrumentName);
+  const auto RunIDOffset = Builder.CreateString(RunName);
+  const auto NexusStructureOffset = Builder.CreateString(NexusStructure);
+  const auto JobIDOffset = Builder.CreateString(JobID);
+  const auto ServiceIDOffset = Builder.CreateString(ServiceID);
+  const auto BrokerOffset = Builder.CreateString(Broker);
+  const auto FilenameOffset = Builder.CreateString(Filename);
+
+  auto messageRunStart =
+      CreateRunStart(Builder, StartTime, StopTime, RunIDOffset,
+                     InstrumentNameOffset, NexusStructureOffset, JobIDOffset,
+                     BrokerOffset, ServiceIDOffset, FilenameOffset);
+
+  FinishRunStartBuffer(Builder, messageRunStart);
+  return Builder.Release();
+}
+
+std::string const InstrumentNameInput = "TEST";
+std::string const RunNameInput = "42";
+std::string const NexusStructureInput = "{}";
+std::string const JobIDInput = "qw3rty";
+std::string const ServiceIDInput = "filewriter1";
+std::string const BrokerInput = "somehost:1234";
+std::string const FilenameInput = "a-dummy-name-01.h5";
+uint64_t const StartTimeInput = 123456789000;
+uint64_t const StopTimeInput = 123456790000;
+} // namespace
+
 class CommandParserHappyStartTests : public testing::Test {
 public:
   FileWriter::StartCommandInfo StartInfo;
 
-  std::string InstrumentNameInput = "TEST";
-  std::string RunNameInput = "42";
-  std::string NexusStructureInput = "{}";
-  std::string JobIDInput = "qw3rty";
-  std::string ServiceIDInput = "filewriter1";
-  std::string BrokerInput = "somehost:1234";
-  std::string FilenameInput = "a-dummy-name-01.h5";
-  uint64_t StartTimeInput = 123456789000;
-  uint64_t StopTimeInput = 123456790000;
-
   // cppcheck-suppress unusedFunction
   void SetUp() override {
-    flatbuffers::FlatBufferBuilder Builder;
-
-    const auto InstrumentNameOffset = Builder.CreateString(InstrumentNameInput);
-    const auto RunIDOffset = Builder.CreateString(RunNameInput);
-    const auto NexusStructureOffset = Builder.CreateString(NexusStructureInput);
-    const auto JobIDOffset = Builder.CreateString(JobIDInput);
-    const auto ServiceIDOffset = Builder.CreateString(ServiceIDInput);
-    const auto BrokerOffset = Builder.CreateString(BrokerInput);
-    const auto FilenameOffset = Builder.CreateString(FilenameInput);
-
-    auto messageRunStart =
-        CreateRunStart(Builder, StartTimeInput, StopTimeInput, RunIDOffset,
-                       InstrumentNameOffset, NexusStructureOffset, JobIDOffset,
-                       BrokerOffset, ServiceIDOffset, FilenameOffset);
-
-    FinishRunStartBuffer(Builder, messageRunStart);
-    auto MessageBuffer = Builder.Release();
+    auto MessageBuffer = buildRunStartMessage(
+        InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+        ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
+        StopTimeInput);
 
     StartInfo = FileWriter::CommandParser::extractStartInformation(
         MessageBuffer.data(), MessageBuffer.size());
@@ -82,65 +95,42 @@ TEST_F(CommandParserHappyStartTests, IfServiceIdPresentThenExtractedCorrectly) {
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  },
-  "broker": "localhost:9092",
-  "nexus_structure": { }
-})""");
+  std::string const EmptyJobID;
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, EmptyJobID,
+      ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
+      StopTimeInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   nlohmann::json::parse(Command)),
-               std::runtime_error);
-}
-
-TEST(CommandParserSadStartTests, ThrowsIfNoFileAttributes) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "broker": "localhost:9092",
-  "nexus_structure": { }
-})""");
-
-  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   nlohmann::json::parse(Command)),
-               std::runtime_error);
+                   MessageBuffer.data(), MessageBuffer.size()),
+               std::runtime_error)
+      << "Expect throw due to empty JobID in run start message";
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "broker": "localhost:9092",
-  "file_attributes": {
-  },
-  "nexus_structure": { }
-})""");
+  std::string const EmptyFilename;
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+      ServiceIDInput, BrokerInput, EmptyFilename, StartTimeInput,
+      StopTimeInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   nlohmann::json::parse(Command)),
-               std::runtime_error);
+                   MessageBuffer.data(), MessageBuffer.size()),
+               std::runtime_error)
+      << "Expect throw due to empty Filename in run start message";
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
-  std::string Command(R"""(
-{
-  "cmd": "FileWriter_new",
-  "job_id": "qw3rty",
-  "broker": "localhost:9092",
-  "file_attributes": {
-    "file_name": "a-dummy-name-01.h5"
-  }
-})""");
+  std::string const EmptyNexusStructure;
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, EmptyNexusStructure, JobIDInput,
+      ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
+      StopTimeInput);
 
   ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   nlohmann::json::parse(Command)),
-               std::runtime_error);
+                   MessageBuffer.data(), MessageBuffer.size()),
+               std::runtime_error)
+      << "Expect throw due to empty NexusStructure in run start message";
 }
 
 TEST(CommandParserSadStartTests, IfStopCommandPassedToStartMethodThenThrows) {
