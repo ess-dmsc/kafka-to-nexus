@@ -115,7 +115,6 @@ public:
       : Master(Opt, std::move(CmdListener), std::move(JobCreator),
                std::move(Reporter)) {}
   void injectMessage(KafkaW::PollStatus Status, Msg Message) {
-    auto Temp = std::pair<KafkaW::PollStatus,Msg>(Status, std::move(Message));
     StoredMessage.first = Status;
     StoredMessage.second = Message;
   }
@@ -125,8 +124,7 @@ public:
   bool WritingStopped = false;
 
 private:
-  std::pair<KafkaW::PollStatus, Msg>
-  pollForMessage() override {
+  std::pair<KafkaW::PollStatus, Msg> pollForMessage() override {
     auto const Status = StoredMessage.first;
     StoredMessage.first = KafkaW::PollStatus::Empty;
     if (Status == KafkaW::PollStatus::Message) {

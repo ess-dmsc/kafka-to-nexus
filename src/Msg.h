@@ -27,15 +27,19 @@ struct MessageMetaData {
 
 struct Msg {
   Msg() = default;
-  Msg(Msg &&Other) : DataPtr(std::move(Other.DataPtr)), Size(Other.Size), MetaData(Other.MetaData) {}
-  Msg(char const *Data, size_t Bytes) : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
+  Msg(Msg &&Other)
+      : DataPtr(std::move(Other.DataPtr)), Size(Other.Size),
+        MetaData(Other.MetaData) {}
+  Msg(char const *Data, size_t Bytes)
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
   }
-  Msg& operator=(Msg const& Other) {
+  Msg &operator=(Msg const &Other) {
     Size = Other.Size;
     MetaData = Other.MetaData;
     DataPtr = std::make_unique<char[]>(Size);
-    std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Other.DataPtr.get(), Size);
+    std::memcpy(DataPtr.get(), Other.DataPtr.get(), Size);
+    return *this;
   }
 
   char const *data() const {

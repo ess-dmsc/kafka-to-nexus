@@ -210,17 +210,6 @@ bool Streamer::haveReachedStopOffsets(int32_t Partition, int64_t Offset) {
   return false;
 }
 
-bool Streamer::messageHasPayload(KafkaW::PollStatus MessageStatus) {
-  if (MessageStatus == KafkaW::PollStatus::Error) {
-    // TODO count Kafka error
-    return false;
-  }
-
-  return !(MessageStatus == KafkaW::PollStatus::Empty ||
-           MessageStatus == KafkaW::PollStatus::EndOfPartition ||
-           MessageStatus == KafkaW::PollStatus::TimedOut);
-}
-
 bool Streamer::messageSourceIsValid(
     FlatbufferMessage::SrcHash SourceHash) const {
   return MessageProcessor->canHandleSource(SourceHash);
@@ -294,16 +283,16 @@ std::pair<KafkaW::PollStatus, Msg> Streamer::poll() {
 void Streamer::process() {
   // Consume message
   auto KafkaMessage = poll();
-  if (KafkaMessage.first == KafkaW::PollStatus::Message) {
-    // Check stop offsets
-    if (haveReachedStopOffsets(KafkaMessage.second.MetaData.Partition,
-                               KafkaMessage.second.MetaData.Offset)) {
-      RunStatus.store(StreamerStatus::HAS_FINISHED);
-      return;
-    }
-
-    processMessage(KafkaMessage);
+  if (haveReachedStopOffsets(KafkaMessage.second.MetaData.Partition,
+                             KafkaMessage.second.MetaData.Offset)) {
+    RunStatus.store(StreamerStatus::HAS_FINISHED);
+    return;
   }
+
+  if (KafkaMessage.first != KafkaW::PollStatus::Message) {
+    return;
+  }
+  processMessage(KafkaMessage);
 }
 
 // cppcheck-suppress unusedFunction; used by unit tests.
