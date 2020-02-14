@@ -72,15 +72,15 @@ Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
   Logger->info("getFileWriterProcessId: {}", Config.ServiceID);
 }
 
-FileWriterState Master::handleCommand(std::unique_ptr<Msg> CommandMessage) {
-  std::string Message = {CommandMessage->data(), CommandMessage->size()};
+FileWriterState Master::handleCommand(Msg const &CommandMessage) {
+  std::string Message = {CommandMessage.data(), CommandMessage.size()};
 
   // If Kafka message does not contain a timestamp then use current time.
   auto TimeStamp = getCurrentTimeStampMS();
 
-  if (CommandMessage->MetaData.TimestampType !=
+  if (CommandMessage.MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
-    TimeStamp = CommandMessage->MetaData.Timestamp;
+    TimeStamp = CommandMessage.MetaData.Timestamp;
   } else {
     Logger->info("Command doesn't contain timestamp, so using current time.");
   }
@@ -123,20 +123,19 @@ void Master::moveToNewState(FileWriterState const &NewState) {
   }
 }
 
-std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Master::pollForMessage() {
+std::pair<KafkaW::PollStatus, Msg> Master::pollForMessage() {
   auto KafkaMessage = CmdListener->poll();
-  if (KafkaMessage->first == KafkaW::PollStatus::Message) {
+  if (KafkaMessage.first == KafkaW::PollStatus::Message) {
     return KafkaMessage;
   }
-  return nullptr;
+  return {KafkaW::PollStatus::Empty, Msg()};
 }
 
 void Master::run() {
-  if (auto const KafkaMessage = pollForMessage()) {
+  auto const KafkaMessage = pollForMessage();
+  if (KafkaMessage.first == KafkaW::PollStatus::Message) {
     Logger->debug("Command received");
-    auto const NewState = this->handleCommand(
-        std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
-    moveToNewState(NewState);
+    moveToNewState(this->handleCommand(KafkaMessage.second));
   }
 
   // Doesn't stop immediately when commanded to.

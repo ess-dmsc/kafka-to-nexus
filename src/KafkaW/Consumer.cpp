@@ -310,41 +310,33 @@ std::shared_ptr<RdKafka::Metadata> Consumer::metadataCall() {
   }
 }
 
-std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
+std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
   auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
       KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
-  auto DataToReturn =
-      std::make_unique<std::pair<PollStatus, FileWriter::Msg>>();
 
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-      DataToReturn->first = PollStatus::Message;
       // extract data
-      DataToReturn->second = FileWriter::Msg::owned(
+      auto RetMsg = FileWriter::Msg(
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
-      DataToReturn->second.MetaData = FileWriter::MessageMetaData{
+      RetMsg.MetaData = FileWriter::MessageMetaData{
           std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
           KafkaMsg->timestamp().type, KafkaMsg->offset(),
           KafkaMsg->partition()};
-
-      return DataToReturn;
+      return {PollStatus::Message, std::move(RetMsg)};
     } else {
-      DataToReturn->first = PollStatus::Empty;
-      return DataToReturn;
+      return {PollStatus::Empty, FileWriter::Msg()};
     }
   case RdKafka::ERR__TIMED_OUT:
     // No message or event within time out - this is usually normal (see
     // librdkafka docs)
-    DataToReturn->first = PollStatus::TimedOut;
-    return DataToReturn;
+    return {PollStatus::TimedOut, FileWriter::Msg()};
   case RdKafka::ERR__PARTITION_EOF:
-    DataToReturn->first = PollStatus::EndOfPartition;
-    return DataToReturn;
+    return {PollStatus::EndOfPartition, FileWriter::Msg()};
   default:
     // Everything else is an error
-    DataToReturn->first = PollStatus::Error;
-    return DataToReturn;
+    return {PollStatus::Error, FileWriter::Msg()};
   }
 }
 } // namespace KafkaW

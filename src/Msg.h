@@ -26,10 +26,20 @@ struct MessageMetaData {
 };
 
 struct Msg {
-  static Msg owned(char const *Data, size_t Bytes) {
-    auto TempDataPtr = std::make_unique<char[]>(Bytes);
-    std::memcpy(reinterpret_cast<void *>(TempDataPtr.get()), Data, Bytes);
-    return {std::move(TempDataPtr), Bytes, MessageMetaData()};
+  Msg() = default;
+  Msg(Msg &&Other) noexcept
+      : DataPtr(std::move(Other.DataPtr)), Size(Other.Size),
+        MetaData(Other.MetaData) {}
+  Msg(char const *Data, size_t Bytes)
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
+    std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
+  }
+  Msg &operator=(Msg const &Other) {
+    Size = Other.Size;
+    MetaData = Other.MetaData;
+    DataPtr = std::make_unique<char[]>(Size);
+    std::memcpy(DataPtr.get(), Other.DataPtr.get(), Size);
+    return *this;
   }
 
   char const *data() const {
