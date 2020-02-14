@@ -1,0 +1,80 @@
+{
+  "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
+  "job_id": "e094c12a-cd4b-11e8-93f1-484d7e9b68dc",
+  "use_hdf_swmr": true,
+  "file_attributes": {
+    "file_name": "output_file_multiple_modules.nxs"
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "entry",
+        "children": [
+          {
+            "type": "group",
+            "name": "instrument",
+            "children": [],
+            "attributes": [
+              {
+                "name": "NX_class",
+                "values": "NXinstrument"
+              }
+            ]
+          },
+          {
+            "type": "group",
+            "name": "sample",
+            "children": [
+              {
+                "type": "group",
+                "name": "dataset1",
+                "children": [
+                  {
+                    "type": "stream",
+                    "stream": {
+                      "source": "test_source_1",
+                      "topic": "TEST_sampleEnv",
+                      "writer_module": "f142"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "group",
+                "name": "dataset2",
+                "children": [
+                  {
+                    "type": "stream",
+                    "stream": {
+                      "source": "test_source_2",
+                      "topic": "TEST_sampleEnv",
+                      "writer_module": "f142_test"
+                    }
+                  }
+                ]
+              }
+            ],
+            "attributes": [
+              {
+                "name": "NX_class",
+                "values": "NXsample"
+              },
+              {
+                "name": "has_link",
+                "values": false
+              }
+            ]
+          }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXentry"
+          }
+        ]
+      }
+    ]
+  }
+}

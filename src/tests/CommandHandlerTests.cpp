@@ -90,7 +90,7 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
   auto Settings = FileWriter::extractStreamInformationFromJsonForSource(Info);
 
   ASSERT_EQ("my_test_topic", Settings.Topic);
-  ASSERT_EQ("f142", Settings.Module);
+  ASSERT_EQ("f142", Settings.ModuleName);
   ASSERT_EQ("my_test_pv", Settings.Source);
 }
 

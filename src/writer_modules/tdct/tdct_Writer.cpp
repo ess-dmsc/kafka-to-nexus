@@ -24,7 +24,7 @@ namespace tdct {
 
 // Register the file writing part of this module
 static WriterModule::Registry::Registrar<tdct_Writer>
-    RegisterSenvWriter("tdct", "chopper_tdc_writer");
+    RegisterSenvWriter("tdct", "tdct");
 
 void tdct_Writer::parse_config(std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
