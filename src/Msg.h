@@ -27,7 +27,7 @@ struct MessageMetaData {
 
 struct Msg {
   Msg() = default;
-  Msg(Msg &&Other)
+  Msg(Msg &&Other) noexcept
       : DataPtr(std::move(Other.DataPtr)), Size(Other.Size),
         MetaData(Other.MetaData) {}
   Msg(char const *Data, size_t Bytes)
