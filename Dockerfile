@@ -1,4 +1,4 @@
-FROM screamingudder/alpine-build-node:1.8.2
+FROM screamingudder/alpine-build-node:2.0.0
 
 ARG http_proxy
 ARG https_proxy
@@ -12,8 +12,6 @@ COPY ./conan kafka_to_nexus_src/conan
 # Dirty hack to override flatbuffers/1.11.0 with 1.10 as a bug means 1.11 doesn't build on alpine
 # Fixed at HEAD, so can be removed when we have 1.12
 RUN sed -i '10iflatbuffers/1.10.0@google/stable' kafka_to_nexus_src/conan/conanfile.txt
-
-RUN apk add --no-cache ninja binutils-gold
 
 # Install packages - We don't want to purge kafkacat and tzdata after building
 # explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
