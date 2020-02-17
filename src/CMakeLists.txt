@@ -96,8 +96,8 @@ set(kafka_to_nexus_SRC
         Status/StatusReporterBase.cpp
         DataMessageWriter.cpp
         WriteMessage.cpp
-        PartitionStream.cpp
-        TopicStream.cpp)
+    Stream/Partition.cpp
+    Stream/Topic.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -155,10 +155,10 @@ set(kafka_to_nexus_INC
         DataMessageWriter.h
         ThreadedExecutor.h
         WriteMessage.h
-        PartitionStream.h
+    Stream/Partition.h
         KafkaW/MetaDataQuery.h
         KafkaW/MetaDataQueryImpl.h
-        TopicStream.h)
+    Stream/Topic.h Stream/PartitionFilter.cpp Stream/PartitionFilter.h Stream/SourceFilter.cpp Stream/SourceFilter.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
