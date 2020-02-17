@@ -3,8 +3,6 @@ FROM screamingudder/alpine-build-node:2.0.0
 ARG http_proxy
 ARG https_proxy
 ARG local_conan_server
-# Set to "yes" to upload conan packages to local_conan_server
-ARG upload_conan_packages
 
 USER root
 WORKDIR /home/root
@@ -24,8 +22,6 @@ RUN if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc
     && cd kafka_to_nexus \
     && conan install "boost_build/1.69.0@bincrafters/stable" --build \
     && conan install --build=outdated ../kafka_to_nexus_src/conan/conanfile.txt
-
-RUN if [ ! -z "$local_conan_server" && ! -z "$upload_conan_packages" ]; then conan upload '*' --all -c --remote ess-dmsc-local; fi
 
 COPY ./cmake kafka_to_nexus_src/cmake
 COPY ./src kafka_to_nexus_src/src
