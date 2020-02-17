@@ -13,7 +13,7 @@ COPY ./conan kafka_to_nexus_src/conan
 # Fixed at HEAD, so can be removed when we have 1.12
 RUN sed -i '10iflatbuffers/1.10.0@google/stable' kafka_to_nexus_src/conan/conanfile.txt
 
-RUN apk add --no-cache ninja
+RUN apk add --no-cache ninja binutils-gold
 
 # Install packages - We don't want to purge kafkacat and tzdata after building
 # explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
