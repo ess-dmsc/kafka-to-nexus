@@ -57,6 +57,16 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage
 
   pipeline_builder.stage("${container.key}: Dependencies") {
+    if (container.key == "alpine") {
+      // Dirty hack to override flatbuffers/1.11.0 with 1.10 as a bug means 1.11 doesn't build on alpine
+      // Fixed at HEAD, so can be removed when flatbuffers 1.12 is released
+      // Explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
+      container.sh """
+        sed -i '10iflatbuffers/1.10.0@google/stable' ${pipeline_builder.project}/conan/conanfile.txt
+        conan install "boost_build/1.69.0@bincrafters/stable" --build
+      """
+    }
+
     def conan_remote = "ess-dmsc-local"
     if (container.key == no_graylog) {
       container.sh """
