@@ -33,6 +33,6 @@ RUN cd kafka_to_nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
     && rm -rf ../../kafka_to_nexus_src/* \
-    && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
+    && rm -rf /tmp/* /var/tmp/* /home/root/kafka_to_nexus/src /home/root/kafka_to_nexus_src /conan/.conan/
 
 CMD ["/docker_launch.sh"]
