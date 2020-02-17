@@ -134,6 +134,8 @@ def build_filewriter_image(request):
             build_args["https_proxy"] = os.environ["https_proxy"]
         if "local_conan_server" in os.environ:
             build_args["local_conan_server"] = os.environ["local_conan_server"]
+        if "upload_conan_packages" in os.environ:
+            build_args["upload_conan_packages"] = os.environ["upload_conan_packages"]
         image, logs = client.images.build(
             path="../", tag="kafka-to-nexus:latest", rm=False, buildargs=build_args
         )

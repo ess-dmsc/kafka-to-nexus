@@ -16,6 +16,8 @@ Requires Python 3.6+.
 
 * Stop and remove any containers that may interfere with the system tests, e.g IOC or Kafka containers and containers from previous runs. To stop and remove all containers use `docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)`
 
+* If you have a local conan server then set environment variable `local_conan_server=<ADDRESS OF SERVER>`, if there are binaries for conan packages on the server this makes a huge difference in time taken to build the file writer docker image.
+
 * Run `python -m pytest -s .` from the `system-tests/` directory
 
 * Optionally use `--local-build <PATH_TO_BUILD_DIR>` to run against a local build of the file writer rather than rebuilding in a docker container. Note that the build directory is the one containing the `bin` directory.
