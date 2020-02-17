@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "DataMessageWriter.h"
+#include "Stream/MessageWriter.h"
 #include "WriterModuleBase.h"
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
@@ -23,13 +23,13 @@ public:
   MAKE_MOCK1(write, void(FileWriter::FlatbufferMessage const&), override);
 };
 
-class DataMessageWriterStandIn : public DataMessageWriter {
+class DataMessageWriterStandIn : public MessageWriter {
 public:
-  DataMessageWriterStandIn(Metrics::Registrar const& Registrar) : DataMessageWriter(Registrar){}
-  using DataMessageWriter::WritesDone;
-  using DataMessageWriter::WriteErrors;
-  using DataMessageWriter::Executor;
-  using DataMessageWriter::ModuleErrorCounters;
+  DataMessageWriterStandIn(Metrics::Registrar const& Registrar) : MessageWriter(Registrar){}
+  using MessageWriter::WritesDone;
+  using MessageWriter::WriteErrors;
+  using MessageWriter::Executor;
+  using MessageWriter::ModuleErrorCounters;
 };
 
 class DataMessageWriterTest : public ::testing::Test {
@@ -43,7 +43,7 @@ using trompeloeil::_;
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1);
   FileWriter::FlatbufferMessage Msg;
-  WriteMessage SomeMessage(reinterpret_cast<WriteMessage::DstId>(&WriterModule), Msg);
+  Message SomeMessage(reinterpret_cast<Message::DstId>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.addMessage(SomeMessage);
@@ -57,7 +57,7 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
 TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1).THROW(WriterModule::WriterException("Some error."));
   FileWriter::FlatbufferMessage Msg;
-  WriteMessage SomeMessage(reinterpret_cast<WriteMessage::DstId>(&WriterModule), Msg);
+  Message SomeMessage(reinterpret_cast<Message::DstId>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.Executor.SendWork([&Writer](){
@@ -91,7 +91,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
   std::array<char,9> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
   setExtractorModule<xxxFbReader>("xxxx");
   FileWriter::FlatbufferMessage Msg(SomeData.data(), SomeData.size());
-  WriteMessage SomeMessage(reinterpret_cast<WriteMessage::DstId>(&WriterModule), Msg);
+  Message SomeMessage(reinterpret_cast<Message::DstId>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.Executor.SendWork([&Writer](){

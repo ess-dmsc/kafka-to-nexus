@@ -10,10 +10,12 @@
 /// \brief Do the actual file writing.
 ///
 
-#include "DataMessageWriter.h"
+#include "MessageWriter.h"
 #include "WriterModuleBase.h"
 
-using ModuleHash = DataMessageWriter::ModuleHash;
+namespace Stream {
+
+using ModuleHash = MessageWriter::ModuleHash;
 
 ModuleHash generateSrcHash(std::string Source, std::string FlatbufferId) {
   return std::hash<std::string>{}(Source + FlatbufferId);
@@ -22,7 +24,7 @@ ModuleHash generateSrcHash(std::string Source, std::string FlatbufferId) {
 static const ModuleHash UnknownModuleHash{
     generateSrcHash("Unknown source", "Unknown fb.-id")};
 
-DataMessageWriter::DataMessageWriter(Metrics::Registrar const &MetricReg)
+MessageWriter::MessageWriter(Metrics::Registrar const &MetricReg)
     : Registrar(MetricReg.getNewRegistrar("writer")) {
   Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
   Registrar.registerMetric(WriteErrors,
@@ -33,12 +35,12 @@ DataMessageWriter::DataMessageWriter(Metrics::Registrar const &MetricReg)
                            {Metrics::LogTo::LOG_MSG});
 }
 
-void DataMessageWriter::addMessage(WriteMessage Msg) {
+void MessageWriter::addMessage(Message Msg) {
   Executor.SendWork([=]() { writeMsgImpl(Msg.DestId, Msg.FbMsg); });
 }
 
-void DataMessageWriter::writeMsgImpl(intptr_t ModulePtr,
-                                     FileWriter::FlatbufferMessage const &Msg) {
+void MessageWriter::writeMsgImpl(intptr_t ModulePtr,
+                                 FileWriter::FlatbufferMessage const Msg) {
   try {
     reinterpret_cast<WriterModule::Base *>(ModulePtr)->write(Msg);
     WritesDone++;
@@ -65,3 +67,5 @@ void DataMessageWriter::writeMsgImpl(intptr_t ModulePtr,
     Log->critical("Unknown file writing error: {}", E.what());
   }
 }
+
+} // namespace Stream

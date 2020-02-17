@@ -7,11 +7,18 @@
 #include "FlatbufferMessage.h"
 #include <memory>
 
-class WriteMessage {
+namespace Stream {
+
+class Message {
 public:
   using DstId = intptr_t;
-  WriteMessage() = default;
-  WriteMessage(DstId DestinationId, FileWriter::FlatbufferMessage const &Msg);
+
+  Message() = default;
+
+  Message(DstId DestinationId, FileWriter::FlatbufferMessage const &Msg);
+
   FileWriter::FlatbufferMessage FbMsg;
   DstId DestId{0};
 };
+
+} //namespace Stream

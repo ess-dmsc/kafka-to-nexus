@@ -94,8 +94,8 @@ set(kafka_to_nexus_SRC
         Metrics/LogSink.cpp
         Metrics/CarbonSink.cpp
         Status/StatusReporterBase.cpp
-        DataMessageWriter.cpp
-        WriteMessage.cpp
+    Stream/MessageWriter.cpp
+    Stream/Message.cpp
     Stream/Partition.cpp
     Stream/Topic.cpp)
 
@@ -152,9 +152,9 @@ set(kafka_to_nexus_INC
         Status/StatusReporter.h
         Status/StatusReporter.cpp
         Status/StatusReporterBase.h
-        DataMessageWriter.h
+    Stream/MessageWriter.h
         ThreadedExecutor.h
-        WriteMessage.h
+    Stream/Message.h
     Stream/Partition.h
         KafkaW/MetaDataQuery.h
         KafkaW/MetaDataQueryImpl.h

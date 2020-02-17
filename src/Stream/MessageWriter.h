@@ -15,21 +15,26 @@
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
 #include "ThreadedExecutor.h"
-#include "WriteMessage.h"
+#include "Message.h"
 #include "WriterModuleBase.h"
 #include "logger.h"
 #include <map>
 #include <thread>
 
-class DataMessageWriter {
+namespace Stream {
+
+class MessageWriter {
 public:
-  DataMessageWriter(Metrics::Registrar const &MetricReg);
-  void addMessage(WriteMessage Msg);
+  MessageWriter(Metrics::Registrar const &MetricReg);
+
+  void addMessage(Message Msg);
+
   using ModuleHash = size_t;
 
 protected:
   void writeMsgImpl(intptr_t ModulePtr,
-                    FileWriter::FlatbufferMessage const &Msg);
+                    FileWriter::FlatbufferMessage const Msg);
+
   SharedLogger Log{getLogger()};
   Metrics::Metric WritesDone{"writes_done",
                              "Number of completed writes to HDF file."};
@@ -40,3 +45,5 @@ protected:
   Metrics::Registrar Registrar;
   ThreadedExecutor Executor; // Must be last
 };
+
+} // namespace Stream
