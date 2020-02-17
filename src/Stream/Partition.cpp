@@ -98,8 +98,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
     return;
   }
   auto CurrentFilter = MsgFilters.find(FbMsg.getSourceHash());
-  if (CurrentFilter != MsgFilters.end()) {
-    CurrentFilter->second.filterMessage(std::move(FbMsg));
+  if (CurrentFilter != MsgFilters.end() and CurrentFilter->second.filterMessage(std::move(FbMsg))) {
     MessagesProcessed++;
     if (CurrentFilter->second.hasFinished()) {
       MsgFilters.erase(CurrentFilter->first);
