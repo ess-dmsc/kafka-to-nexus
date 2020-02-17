@@ -10,11 +10,10 @@ WORKDIR /home/root
 COPY ./conan kafka_to_nexus_src/conan
 
 # Dirty hack to override flatbuffers/1.11.0 with 1.10 as a bug means 1.11 doesn't build on alpine
-# Fixed at HEAD, so can be removed when we have 1.12
+# Fixed at HEAD, so can be removed when flatbuffers 1.12 is released
 RUN sed -i '10iflatbuffers/1.10.0@google/stable' kafka_to_nexus_src/conan/conanfile.txt
 
-# Install packages - We don't want to purge kafkacat and tzdata after building
-# explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
+# Explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
 RUN if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
     && mkdir kafka_to_nexus \
     && cd kafka_to_nexus \
