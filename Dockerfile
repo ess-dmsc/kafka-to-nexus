@@ -35,5 +35,5 @@ RUN cd kafka_to_nexus \
     && rm -rf ../../kafka_to_nexus_src/* \
     && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 
-COPY ./docker_launch.sh ../docker_launch.sh
+COPY ./docker_launch.sh ../../docker_launch.sh
 CMD ["/docker_launch.sh"]
