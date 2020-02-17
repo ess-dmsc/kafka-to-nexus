@@ -28,8 +28,7 @@ struct MessageMetaData {
 struct Msg {
   Msg() = default;
   Msg(Msg &&Other)
-      : DataPtr(std::move(Other.DataPtr)), Size(Other.Size),
-        MetaData(Other.MetaData) {}
+      : MetaData(Other.MetaData), DataPtr(std::move(Other.DataPtr)), Size(Other.Size) {}
   Msg(char const *Data, size_t Bytes)
       : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
@@ -58,11 +57,10 @@ struct Msg {
   MessageMetaData getMetaData() const {
     return MetaData;
   }
-
+  MessageMetaData MetaData;
 protected:
   std::unique_ptr<char[]> DataPtr{nullptr};
   size_t Size{0};
-  MessageMetaData MetaData;
 };
 
 } // namespace FileWriter

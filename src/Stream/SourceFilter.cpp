@@ -11,40 +11,62 @@
 
 namespace Stream {
 
-SourceFilter::SourceFilter(time_point StartTime,
-                                         MessageWriter *Destination) : Start(StartTime), Dest(Destination) {
+SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
+                           MessageWriter *Destination) : Start(StartTime),
+                                                         Stop(StopTime),
+                                                         Dest(Destination) {
 
+}
+
+SourceFilter::~SourceFilter() {
+  if (BufferedMessage.isValid()) {
+    sendMessage(BufferedMessage);
+    BufferedMessage = FileWriter::FlatbufferMessage();
+  }
 }
 
 void SourceFilter::setStopTime(time_point StopTime) {
   Stop = StopTime;
-  StopTimeIsSet = true;
 }
 
 bool SourceFilter::hasFinished() {
   return IsDone;
 }
 
-void SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
-  if (CMode == TimePoint::BEFORE_WRITE_TIME) {
-    if (InMsg.getTimestamp() < Start) {
-      if (BufferedMessage.isValid() and BufferedMessage.getTimestamp() < InMsg.getTimestamp()) {
-        BufferedMessage = std::move(InMsg);
-      }
-    } else {
-      if (BufferedMessage.isValid()) {
-        sendMessage(BufferedMessage);
-      }
-      sendMessage(InMsg);
-      CMode = TimePoint::IS_WRITE_TIME;
-    }
-  } else if (CMode == TimePoint::IS_WRITE_TIME) {
-    sendMessage(InMsg);
-    if (StopTimeIsSet and InMsg.getTimestamp() > Stop) {
-      CMode = TimePoint::AFTER_WRITE_TIME;
-      IsDone = true;
-    }
+int64_t toNanoSec(time_point Time) {
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+      Time.time_since_epoch()).count();
+}
+
+bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
+  if (InMsg.getTimestamp() == CurrentTimeStamp) {
+    return false;
+  } else if (InMsg.getTimestamp() < CurrentTimeStamp or
+             not BufferedMessage.isValid()) {
+    //Log ERROR
+    return false;
   }
+  CurrentTimeStamp = InMsg.getTimestamp();
+
+  if (CurrentTimeStamp < toNanoSec(Start)) {
+    BufferedMessage = std::move(InMsg);
+    return false;
+  } else if (CurrentTimeStamp > toNanoSec(Start) and
+             CurrentTimeStamp < toNanoSec(Stop)) {
+    if (BufferedMessage.isValid()) {
+      sendMessage(BufferedMessage);
+      BufferedMessage = FileWriter::FlatbufferMessage();
+    }
+    sendMessage(InMsg);
+    return true;
+  }
+  if (BufferedMessage.isValid()) {
+    sendMessage(BufferedMessage);
+    BufferedMessage = FileWriter::FlatbufferMessage();
+  }
+  sendMessage(InMsg);
+  IsDone = true;
+  return true;
 }
 
 } // namespace Stream

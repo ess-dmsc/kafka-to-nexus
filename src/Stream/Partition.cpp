@@ -13,10 +13,18 @@
 namespace Stream {
 
 Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer,
-                     SrcToDst Map,
+                     SrcToDst Map, MessageWriter *Writer,
                      Metrics::Registrar RegisterMetric,
-                     time_point Stop) : ConsumerPtr(
-    std::move(Consumer)), DataMap(Map), StopTime(Stop), StopTester(StopTime, 30s) {
+                     time_point Start, time_point Stop) : ConsumerPtr(
+    std::move(Consumer)), StopTester(Stop, 30s) {
+
+  for (auto &SrcDestPair : Map) {
+    if (MsgFilters.find(SrcDestPair.first) == MsgFilters.end()) {
+      MsgFilters[SrcDestPair.first] = SourceFilter(Start, Stop, Writer);
+    }
+    MsgFilters[SrcDestPair.first].addDestinationId(SrcDestPair.second);
+  }
+
   RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
   RegisterMetric.registerMetric(KafkaErrors, {Metrics::LogTo::CARBON,
                                               Metrics::LogTo::LOG_MSG});
@@ -35,7 +43,10 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer,
 
 void Partition::setStopTime(time_point Stop) {
   Executor.SendWork([=]() {
-    StopTime = Stop;
+    StopTester.setStopTime(Stop);
+    for (auto & Filter : MsgFilters) {
+      Filter.second.setStopTime(Stop);
+    }
   });
 }
 

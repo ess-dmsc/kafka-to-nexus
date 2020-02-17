@@ -21,4 +21,4 @@ public:
   DstId DestId{0};
 };
 
-} //namespace Stream
+} //namespace Stream

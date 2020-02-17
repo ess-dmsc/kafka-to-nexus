@@ -83,8 +83,8 @@ Topic::createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
     auto Consumer = KafkaW::createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
     ConsumerThreads.emplace_back(
-        std::make_unique<Partition>(std::move(Consumer), SrcToDst(),
-                                    CRegistrar));
+        std::make_unique<Partition>(std::move(Consumer), SrcToDst(), nullptr,
+                                    CRegistrar, BeginConsumeTime));
   }
 }
 

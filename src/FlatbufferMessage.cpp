@@ -12,6 +12,13 @@
 
 namespace FileWriter {
 
+FlatbufferMessage::FlatbufferMessage(char const *BufferPtr, size_t Size)
+    : DataPtr(std::make_unique<char[]>(Size)),
+      DataSize(Size) {
+  std::memcpy(DataPtr.get(), BufferPtr, DataSize);
+  extractPacketInfo();
+}
+
 FlatbufferMessage::FlatbufferMessage(FileWriter::Msg const &KafkaMessage)
     : DataPtr(std::make_unique<char[]>(KafkaMessage.size())),
       DataSize(KafkaMessage.size()) {

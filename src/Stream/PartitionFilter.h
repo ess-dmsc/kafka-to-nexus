@@ -19,6 +19,9 @@ using duration = std::chrono::system_clock::duration;
 class PartitionFilter {
 public:
   PartitionFilter(time_point StopAtTime, duration ErrorTimeOut);
+  void setStopTime(time_point Stop) {
+    StopTime = Stop;
+  }
   bool shouldStopPartition(KafkaW::PollStatus LastPollStatus);
 protected:
   bool HasError{false};

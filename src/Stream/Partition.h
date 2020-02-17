@@ -17,6 +17,7 @@
 #include "KafkaW/Consumer.h"
 #include "PartitionFilter.h"
 #include "SourceFilter.h"
+#include "Stream/MessageWriter.h"
 
 namespace Stream {
 
@@ -30,9 +31,9 @@ class Partition {
 public:
   Partition() = default;
 
-  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
+  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map, MessageWriter *Writer,
             Metrics::Registrar RegisterMetric,
-            time_point Stop = time_point::max());
+            time_point Start, time_point Stop = time_point::max());
 
   void setStopTime(time_point Stop);
 
@@ -64,8 +65,6 @@ protected:
 
   std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
   std::atomic_bool HasFinished{false};
-  SrcToDst DataMap;
-  time_point StopTime;
   std::int64_t CurrentOffset{0};
   ThreadedExecutor Executor; //Must be last
   PartitionFilter StopTester;

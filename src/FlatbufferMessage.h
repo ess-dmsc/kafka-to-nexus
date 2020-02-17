@@ -56,15 +56,18 @@ public:
   /// Constructor is used in unit testing code to simplify set-up.
   FlatbufferMessage() = default;
 
+  [[deprecated("Do not use anymore.")]]
+  FlatbufferMessage(char const *BufferPtr, size_t Size);
+
   /// \brief Creates a flatbuffer message, verifies the message and extracts metadata.
   ///
-  /// \param KafkaMessage The Kafka used to create the Flatbuffer message.
+  /// \param KafkaMessage The Kafka message used to create the Flatbuffer message.
   /// \note Will make a copy of the data in the Kafka message.
   FlatbufferMessage(FileWriter::Msg const &KafkaMessage);
 
   /// \brief Creates a flatbuffer message, verifies the message and extracts metadata.
   ///
-  /// \param KafkaMessage The Kafka used to create the Flatbuffer message.
+  /// \param KafkaMessage The copy constructor.
   /// \note Will make a copy of the data in the Kafka message.
   FlatbufferMessage(FlatbufferMessage const &Message);
 
