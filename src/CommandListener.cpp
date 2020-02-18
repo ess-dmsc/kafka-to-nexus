@@ -23,7 +23,7 @@ void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings =
       config.StreamerConfiguration.BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;
-  BrokerSettings.Address = config.CommandBrokerURI.HostAndPort;
+  BrokerSettings.Address = config.CommandBrokerURI.HostPort;
   consumer = KafkaW::createConsumer(BrokerSettings, BrokerSettings.Address);
   if (consumer->topicPresent(config.CommandBrokerURI.Topic))
     consumer->addTopic(config.CommandBrokerURI.Topic);

@@ -27,7 +27,7 @@ void URI::parse(const std::string &URIString) {
     throw std::runtime_error("Unable to extract host from the URI: \"" +
                              URIString + "\".");
   }
-  HostAndPort = Matches[6].str();
+  HostPort = Matches[6].str();
   if (Matches[10].matched) {
     Port = static_cast<uint32_t>(std::stoi(Matches[10].str()));
   }

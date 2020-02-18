@@ -34,7 +34,7 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
 #ifdef HAVE_GRAYLOG_LOGGER
     auto GraylogSink = std::make_shared<spdlog::sinks::graylog_sink_mt>(
         LoggingLevel,
-        GraylogURI.HostAndPort.substr(0, GraylogURI.HostAndPort.find(':')),
+        GraylogURI.HostPort.substr(0, GraylogURI.HostPort.find(':')),
         GraylogURI.Port);
     GraylogSink->set_pattern("[%l] [processID: %P]: %v");
     sinks.push_back(GraylogSink);
@@ -42,7 +42,7 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
     spdlog::log(
         spdlog::level::err,
         "ERROR not compiled with support for graylog_logger. Would have used{}",
-        GraylogURI.HostAndPort);
+        GraylogURI.HostPort);
 #endif
   }
   auto ConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();

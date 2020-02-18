@@ -29,7 +29,7 @@ struct URI {
 
   /// \brief If port was specified (or already non-zero before `URI::parse`) it
   /// contains `host:port`.
-  std::string HostAndPort;
+  std::string HostPort;
 
   /// \brief The port number if specified, or zero to indicate that the port is
   /// not specified.
@@ -39,6 +39,6 @@ struct URI {
   std::string Topic;
 
   /// The URI string <host>:<port>/<topic>
-  std::string getURIString() const { return HostAndPort + "/" + Topic; }
+  std::string getURIString() const { return HostPort + "/" + Topic; }
 };
 } // namespace uri
