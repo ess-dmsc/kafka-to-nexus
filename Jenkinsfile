@@ -91,14 +91,14 @@ builders = pipeline_builder.createBuilders { container ->
     if (container.key != release_os && container.key != no_graylog) {
       def coverage_on
       if (container.key == test_and_coverage_os) {
-        coverage_on = '-DCOV=1'
+        coverage_on = '-DCOV=ON'
       } else {
         coverage_on = ''
       }
 
       def doxygen_on
       if (container.key == clangformat_os) {
-        doxygen_on = '-DRUN_DOXYGEN=TRUE'
+        doxygen_on = '-DRUN_DOXYGEN=ON'
       } else {
         doxygen_on = ''
       }
@@ -149,7 +149,7 @@ builders = pipeline_builder.createBuilders { container ->
         cd build
         . ./activate_run.sh
         ./bin/UnitTests -- --gtest_output=xml:${test_output}
-        make coverage
+        ninja coverage
         lcov --directory . --capture --output-file coverage.info
         lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
       """
@@ -261,7 +261,7 @@ builders = pipeline_builder.createBuilders { container ->
         container.sh """
           cd build
           pwd
-          make docs 2> ${test_output}
+          ninja docs 2> ${test_output}
         """
         container.copyFrom("build/${test_output}", '.')
         archiveArtifacts "${test_output}"
