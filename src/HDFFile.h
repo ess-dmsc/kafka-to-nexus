@@ -33,7 +33,6 @@ public:
   ~HDFFile();
 
   void init(const std::string &Filename, nlohmann::json const &NexusStructure,
-            nlohmann::json const &ConfigFile,
             std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR);
 
   void init(const std::string &NexusStructure,
