@@ -13,15 +13,14 @@
 #include <chrono>
 
 namespace FileWriter {
-using std::chrono_literals::operator""ms;
+
 /// Contains configuration parameters for the Streamer
 struct StreamerOptions {
-  using clock = std::chrono::system_clock;
   KafkaW::BrokerSettings BrokerSettings;
-  clock::time_point StartTime{clock::time_point::min()};
-  clock::time_point StopTime{clock::time_point::max()};
-  clock::duration BeforeStartTime{1000ms};
-  clock::duration AfterStopTime{1000ms};
+  std::chrono::milliseconds StartTimestamp{0};
+  std::chrono::milliseconds StopTimestamp{0};
+  std::chrono::milliseconds BeforeStartTime{1000};
+  std::chrono::milliseconds AfterStopTime{1000};
 };
 
 } // namespace FileWriter
