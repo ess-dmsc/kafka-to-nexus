@@ -155,6 +155,19 @@ builders = pipeline_builder.createBuilders { container ->
       container.copyFrom('build', '.')
       junit "build/${test_output}"
 
+      step([
+          $class: 'CoberturaPublisher',
+          autoUpdateHealth: true,
+          autoUpdateStability: true,
+          coberturaReportFile: 'build/coverage.xml',
+          failUnhealthy: false,
+          failUnstable: false,
+          maxNumberOfBuilds: 0,
+          onlyStable: false,
+          sourceEncoding: 'ASCII',
+          zoomCoverageChart: true
+      ])
+
       withCredentials([
         string(
           credentialsId: 'kafka-to-nexus-codecov-token',
