@@ -106,7 +106,7 @@ builders = pipeline_builder.createBuilders { container ->
       container.sh """
         cd build
         . ./activate_run.sh
-        cmake ${coverage_on} ${doxygen_on} ../${pipeline_builder.project}
+        cmake ${coverage_on} ${doxygen_on} -GNinja ../${pipeline_builder.project}
       """
     } else {
       def graylog_cmake_option
@@ -120,6 +120,7 @@ builders = pipeline_builder.createBuilders { container ->
         cd build
         . ./activate_run.sh
         cmake \
+          -GNinja \
           -DCMAKE_BUILD_TYPE=Release \
           -DCONAN=MANUAL \
           -DCMAKE_SKIP_RPATH=FALSE \
