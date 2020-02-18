@@ -168,19 +168,16 @@ builders = pipeline_builder.createBuilders { container ->
           zoomCoverageChart: true
       ])
 
-      withCredentials([
-        string(
-          credentialsId: 'kafka-to-nexus-codecov-token',
-          variable: 'TOKEN'
-        )
-      ]) {
-        container.sh """
-          cd ${pipeline_builder.project}
-          export WORKSPACE='.'
-          export JENKINS_URL=${JENKINS_URL}
-          /home/jenkins/.local/bin/codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.xml
-        """
-      }  // withCredentials
+      post {
+        success {
+          script {
+            if (env.CHANGE_ID) {
+              publishCoverageGithub(filepath:'build/coverage.xml', coverageXmlType: 'cobertura', comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.65' ], coverageRateType: 'Line')
+            }
+          }
+        }
+      }
+
     } else if (container.key != release_os && container.key != no_graylog) {
       def test_dir
       test_dir = 'bin'
