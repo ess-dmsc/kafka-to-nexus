@@ -150,8 +150,6 @@ builders = pipeline_builder.createBuilders { container ->
         . ./activate_run.sh
         ./bin/UnitTests -- --gtest_output=xml:${test_output}
         ninja coverage
-        lcov --directory . --capture --output-file coverage.info
-        lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
       """
 
       container.copyFrom('build', '.')
@@ -167,8 +165,8 @@ builders = pipeline_builder.createBuilders { container ->
           cd ${pipeline_builder.project}
           export WORKSPACE='.'
           export JENKINS_URL=${JENKINS_URL}
-          python3.6 -m pip install --user codecov
-          python3.6 -m codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.info
+          python3 -m pip install --user codecov
+          python3 -m codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.xml
         """
       }  // withCredentials
     } else if (container.key != release_os && container.key != no_graylog) {
@@ -211,7 +209,7 @@ builders = pipeline_builder.createBuilders { container ->
       try {
         // Do black format of python scripts
         container.sh """
-          python3.6 -m pip install --user black
+          python3 -m pip install --user black
           /home/jenkins/.local/bin/black --version
           cd ${project}
           /home/jenkins/.local/bin/black system-tests

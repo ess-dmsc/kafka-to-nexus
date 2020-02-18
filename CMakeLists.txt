@@ -19,7 +19,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
 if(CMAKE_COMPILER_IS_GNUCXX AND COV)
   include(CodeCoverage)
-  setup_target_for_coverage(coverage UnitTests coverage)
+  append_coverage_compiler_flags()
+  setup_target_for_coverage_gcovr_xml(NAME coverage
+                                       EXECUTABLE UnitTests
+                                       EXCLUDE src/tests
+                                       DEPENDENCIES UnitTests)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_COVERAGE}")
 endif()
 
