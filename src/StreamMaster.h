@@ -15,7 +15,10 @@
 #include "EventLogger.h"
 #include "MainOpt.h"
 #include <atomic>
-#include <thread>
+#include "ThreadedExecutor.h"
+#include "Stream/Topic.h"
+#include <set>
+#include "Metrics/Registrar.h"
 
 namespace FileWriter {
 class Streamer;
@@ -32,21 +35,8 @@ public:
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
 class StreamMaster : public IStreamMaster {
 public:
-  /// \brief Builder method for StreamMaster.
-  ///
-  /// \param Broker The Kafka broker for the consumers.
-  /// \param FileWriterTask The file-writer.
-  /// \param Options The general application settings.
-  /// \param Producer The Kafka producer used for reporting.
-  /// \return
-  static std::unique_ptr<StreamMaster>
-  createStreamMaster(const std::string &Broker,
-                     std::unique_ptr<FileWriterTask> FileWriterTask,
-                     const MainOpt &Options);
-
   StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
-               std::string const &ServiceID,
-               std::map<std::string, Streamer> Streams);
+               std::string const &ServiceID, FileWriter::StreamerOptions Settings, Metrics::Registrar Registrar);
   ~StreamMaster() override;
   StreamMaster(const StreamMaster &) = delete;
   StreamMaster(StreamMaster &&) = delete;
@@ -65,14 +55,6 @@ public:
   /// last message to be written in nanoseconds.
   void setStopTime(const std::chrono::milliseconds &StopTime) override;
 
-  /// \brief Sets the write duration for the streams.
-  ///
-  /// \param Duration The duration to set.
-  void setTopicWriteDuration(std::chrono::milliseconds Duration);
-
-  /// Start writing the streams.
-  void start();
-
   bool isDoneWriting() override;
 
   /// \brief Get the unique job id associated with the streamer (and hence
@@ -82,25 +64,18 @@ public:
   std::string getJobId() const override;
 
 private:
-  /// \brief Process the messages in the specified stream.
-  ///
-  /// \param Stream The stream that will consume messages.
-  void processStream(Streamer &Stream);
-
-  /// \brief Main loop that handles the writer process for each stream.
-  void run();
-
-  /// \brief Stops the streamers and prepares for being removed.
-  void doStop();
-
+  void getTopicNames();
+  void initStreams(std::set<std::string> KnownTopicNames);
+  std::chrono::system_clock::duration CurrentMetadataTimeOut;
   std::atomic<bool> StreamersRemaining{true};
-  std::map<std::string, Streamer> Streamers;
-  std::thread WriteThread;
-  std::atomic<bool> Stop{false};
+  std::vector<Stream::Topic> Streamers;
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
-  std::chrono::milliseconds TopicWriteDuration{1000};
+  Metrics::Registrar StreamMetricRegistrar;
+  Stream::MessageWriter WriterThread;
   std::string ServiceId;
+  FileWriter::StreamerOptions KafkaSettings;
   SharedLogger Logger = getLogger();
+  ThreadedExecutor Executor; // Must be last
 };
 
 } // namespace FileWriter

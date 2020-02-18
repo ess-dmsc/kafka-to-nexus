@@ -153,25 +153,12 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
-  Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
-  Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
-
-  Logger->info("Start time: {}ms",
-               Settings.StreamerConfiguration.StartTimestamp.count());
-  if (Settings.StreamerConfiguration.StopTimestamp.count() > 0) {
-    Logger->info("Stop time: {}ms",
-                 Settings.StreamerConfiguration.StopTimestamp.count());
-  }
+  Settings.StreamerConfiguration.StartTime = StartInfo.StartTime;
+  Settings.StreamerConfiguration.StopTime = StartInfo.StopTime;
 
   Logger->info("Write file with job_id: {}", Task->jobID());
-  auto s = StreamMaster::createStreamMaster(StartInfo.BrokerInfo.HostPort,
-                                            std::move(Task), Settings);
-  if (Settings.topic_write_duration.count() != 0) {
-    s->setTopicWriteDuration(Settings.topic_write_duration);
-  }
-  s->start();
-
-  return s;
+  return std::make_unique<StreamMaster>(std::move(Task),
+                                 Settings.ServiceID, Settings.StreamerConfiguration);
 }
 
 void JobCreator::addStreamSourceToWriterModule(

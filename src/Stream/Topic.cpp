@@ -13,10 +13,9 @@
 
 namespace Stream {
 
-Topic::Topic(KafkaW::BrokerSettings Settings, std::string Topic,
-             time_point StartTime,
-             Metrics::Registrar &RegisterMetric) : BeginConsumeTime(
-    StartTime), CurrentMetadataTimeOut(Settings.MinMetadataTimeout), Registrar(
+Topic::Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map, MessageWriter *Writer,
+             Metrics::Registrar &RegisterMetric, time_point StartTime, time_point StopTime) : DataMap(Map), WriterPtr(Writer), StartConsumeTime(
+    StartTime), StopConsumeTime(StopTime), CurrentMetadataTimeOut(Settings.MinMetadataTimeout), Registrar(
     RegisterMetric.getNewRegistrar(Topic)) {
   Executor.SendWork([=]() {
     CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
@@ -58,7 +57,7 @@ void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
   std::vector<std::pair<int, int64_t>> PartitionOffsetList;
   try {
     PartitionOffsetList = KafkaW::getOffsetForTime(Settings.Address, Topic,
-                                                   Partitions, BeginConsumeTime,
+                                                   Partitions, StartConsumeTime,
                                                    CurrentMetadataTimeOut);
   } catch (std::exception &E) {
     CurrentMetadataTimeOut *= 2;
@@ -83,8 +82,8 @@ Topic::createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
     auto Consumer = KafkaW::createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
     ConsumerThreads.emplace_back(
-        std::make_unique<Partition>(std::move(Consumer), SrcToDst(), nullptr,
-                                    CRegistrar, BeginConsumeTime));
+        std::make_unique<Partition>(std::move(Consumer), DataMap, WriterPtr,
+                                    CRegistrar, StartConsumeTime, StopConsumeTime));
   }
 }
 

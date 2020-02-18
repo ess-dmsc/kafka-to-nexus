@@ -33,7 +33,7 @@ void signal_handler(int Signal) {
 std::unique_ptr<Status::StatusReporter>
 createStatusReporter(MainOpt const &MainConfig) {
   KafkaW::BrokerSettings BrokerSettings;
-  BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
+  BrokerSettings.Address = MainConfig.KafkaStatusURI.HostAndPort;
   auto StatusProducer = std::make_shared<KafkaW::Producer>(BrokerSettings);
   auto StatusProducerTopic = std::make_unique<KafkaW::ProducerTopic>(
       StatusProducer, MainConfig.KafkaStatusURI.Topic);

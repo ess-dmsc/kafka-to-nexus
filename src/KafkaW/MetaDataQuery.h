@@ -52,8 +52,8 @@ std::set<int> getPartitionsForTopic(std::string Broker, std::string Topic, durat
 // \param[in] TimeOut   The amount of time to wait for the meta-data call to complete.
 // \returns             A set of topic names.
 // \throws MetadataException if a failure occurs.
-//std::set<std::string> getTopicList(std::string Broker, duration TimeOut) {
-//  return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut);
-//}
+std::set<std::string> getTopicList(std::string Broker, duration TimeOut) {
+  return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut);
+}
 
 }  // namespace KafkaW

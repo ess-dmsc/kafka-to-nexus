@@ -88,7 +88,7 @@ std::set<int> getPartitionsForTopicImpl(std::string Broker, std::string Topic, d
                                                              nullptr, ErrorStr));
   auto TimeOutInMs = std::chrono::duration_cast<std::chrono::milliseconds>(TimeOut).count();
   RdKafka::Metadata *MetadataPtr{nullptr};
-  auto ReturnCode  = Handle->metadata(false, TopicObj.get(), &MetadataPtr, TimeOutInMs);
+  auto ReturnCode  = Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException("Failed to query broker for available partitions. Error code was: " + std::to_string(ReturnCode));
   }
@@ -101,9 +101,23 @@ std::set<int> getPartitionsForTopicImpl(std::string Broker, std::string Topic, d
   return ReturnSet;
 }
 
-//template <class KafkaHandle>
-//std::set<std::string> getTopicListImpl(std::string Broker, duration TimeOut) {
-//  return {};
-//}
+template <class KafkaHandle>
+std::set<std::string> getTopicListImpl(std::string Broker, duration TimeOut) {
+  auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
+  std::string ErrorStr;
+  auto TimeOutInMs = std::chrono::duration_cast<std::chrono::milliseconds>(TimeOut).count();
+  RdKafka::Metadata *MetadataPtr{nullptr};
+  auto ReturnCode  = Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
+  if (ReturnCode != RdKafka::ERR_NO_ERROR) {
+    throw MetadataException("Failed to query broker for available partitions. Error code was: " + std::to_string(ReturnCode));
+  }
+  auto Topics = MetadataPtr->topics();
+  std::set<std::string> TopicNames;
+  for (auto const &CTopic : *Topics) {
+    TopicNames.emplace(CTopic->topic());
+  }
+  delete MetadataPtr;
+  return TopicNames;
+}
 
 }  //namespace KafkaW

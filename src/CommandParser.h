@@ -22,13 +22,14 @@
 namespace FileWriter {
 
 struct StartCommandInfo {
+  using clock = std::chrono::system_clock;
   std::string JobID;
   std::string Filename;
   std::string NexusStructure;
   std::string ServiceID;
   uri::URI BrokerInfo{"localhost:9092"};
-  std::chrono::milliseconds StartTime{0};
-  std::chrono::milliseconds StopTime{0};
+  clock::time_point StartTime{clock::time_point::min()};
+  clock::time_point StopTime{clock::time_point::max()};
 };
 
 struct StopCommandInfo {

@@ -34,13 +34,12 @@ json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
 }
 } // namespace
 
-std::map<std::string, std::shared_ptr<DemuxTopic>> &FileWriterTask::demuxers() {
-  return TopicNameToDemuxerMap;
+std::vector<Source> &FileWriterTask::sources() {
+  return SourceToModuleMap;
 }
 
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
-  TopicNameToDemuxerMap.clear();
   try {
     File.close();
   } catch (std::exception const &E) {
@@ -59,15 +58,7 @@ void FileWriterTask::setFilename(std::string const &Prefix,
 }
 
 void FileWriterTask::addSource(Source &&Source) {
-  if (swmrEnabled()) {
-    Source.HDFFileForSWMR = &File;
-  }
-
-  TopicNameToDemuxerMap.emplace(Source.topic(),
-                                std::make_shared<DemuxTopic>(Source.topic()));
-
-  // Add the source to the demuxer for its topic
-  TopicNameToDemuxerMap[Source.topic()]->addSource(std::move(Source));
+  SourceToModuleMap.push_back(std::move(Source));
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,

@@ -15,20 +15,23 @@
 #include "ThreadedExecutor.h"
 #include "logger.h"
 #include "Metrics/Registrar.h"
+#include "Stream/MessageWriter.h"
 
 namespace Stream {
 
 class Topic {
 public:
-  Topic(KafkaW::BrokerSettings Settings, std::string Topic,
-        time_point StartTime, Metrics::Registrar &RegisterMetric);
+  Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric, time_point StartTime, time_point StopTime = std::chrono::system_clock::time_point::max());
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
   ~Topic() = default;
 
 protected:
-  time_point BeginConsumeTime;
+  SrcToDst DataMap;
+  MessageWriter *WriterPtr;
+  time_point StartConsumeTime;
+  time_point StopConsumeTime;
   std::chrono::system_clock::duration CurrentMetadataTimeOut;
   Metrics::Registrar Registrar;
 

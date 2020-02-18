@@ -44,7 +44,7 @@ TEST_F(CommandParserHappyStartTests, IfFilenamePresentThenExtractedCorrectly) {
 }
 
 TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
-  ASSERT_EQ("somehost:1234", StartInfo.BrokerInfo.HostPort);
+  ASSERT_EQ("somehost:1234", StartInfo.BrokerInfo.HostAndPort);
   ASSERT_EQ(1234u, StartInfo.BrokerInfo.Port);
 }
 

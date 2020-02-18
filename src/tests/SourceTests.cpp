@@ -10,7 +10,6 @@
 #include "helpers/SetExtractorModule.h"
 #include "helpers/StubWriterModule.h"
 #include <FlatbufferMessage.h>
-#include <ProcessMessageResult.h>
 #include <Source.h>
 #include <fb_metadata_extractors/ev42/ev42_Extractor.h>
 #include <flatbuffers/flatbuffers.h>
