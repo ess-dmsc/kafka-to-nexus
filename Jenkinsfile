@@ -136,7 +136,7 @@ builders = pipeline_builder.createBuilders { container ->
     container.sh """
     cd build
     . ./activate_run.sh
-    make -j4 all
+    ninja all
     """
   }  // stage
 
@@ -351,7 +351,7 @@ def get_macos_pipeline() {
           }
 
           try {
-            sh "make -j4 all UnitTests"
+            sh "ninja all UnitTests"
             sh ". ./activate_run.sh && ./bin/UnitTests"
           } catch (e) {
             failure_function(e, 'MacOSX / build+test failed')

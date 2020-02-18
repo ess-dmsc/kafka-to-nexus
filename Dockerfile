@@ -1,4 +1,4 @@
-FROM screamingudder/alpine-build-node:2.0.0
+FROM screamingudder/alpine-build-node:2.0.1
 
 ARG http_proxy
 ARG https_proxy
@@ -15,7 +15,6 @@ COPY ./docker_launch.sh ../../docker_launch.sh
 # Install kafkacat to use in detecting when Kafka broker is ready
 # Explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
 RUN sed -i '10iflatbuffers/1.10.0@google/stable' kafka_to_nexus_src/conan/conanfile.txt \
-    && apk del graphviz doxygen valgrind vim flex-dev \
     && apk add --no-cache kafkacat \
     && if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
     && mkdir kafka_to_nexus \
