@@ -1,7 +1,7 @@
 [requires]
 gtest/1.10.0
 fmt/6.0.0
-h5cpp/0.3.3@ess-dmsc/stable
+h5cpp/2cfb0ad@ess-dmsc/stable
 librdkafka/1.2.0@ess-dmsc/stable
 jsonformoderncpp/3.7.3@vthiery/stable
 streaming-data-types/c670575@ess-dmsc/stable
