@@ -179,7 +179,7 @@ builders = pipeline_builder.createBuilders { container ->
         def comment_text = "**Code Coverage**\n                                           Lines    Exec  Cover\n${coverage_summary}\n*For more detail see Cobertura report in Jenkins interface)*"
 
         withCredentials([string(credentialsId: 'cow-bot-token', variable: 'GITHUB_TOKEN')]) {
-          sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${ghprbPullId}/comments\""
+          sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${env.CHANGE_ID}/comments\""
         }
       }
 
