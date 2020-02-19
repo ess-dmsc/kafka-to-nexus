@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include "FlatbufferReader.h"
 #include "HDFFile.h"
-#include "ProcessMessageResult.h"
 #include "WriterModuleBase.h"
 #include "logger.h"
 #include <string>
 
 namespace FileWriter {
+
+enum class ProcessMessageResult;
 
 /// \brief Represents a sourcename on a topic.
 ///

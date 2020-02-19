@@ -8,10 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "MainOpt.h"
-#include "URI.h"
 #include "helper.h"
-#include "json.h"
-#include <iostream>
 
 using uri::URI;
 
