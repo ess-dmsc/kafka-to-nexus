@@ -171,7 +171,7 @@ builders = pipeline_builder.createBuilders { container ->
       if (env.CHANGE_ID) {
         publishCoverageGithub(filepath:'build/coverage.xml',
                               coverageXmlType: 'cobertura',
-                              comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.65' ],
+                              comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.70' ],
                               coverageRateType: 'Line')
       }
 

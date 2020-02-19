@@ -97,8 +97,9 @@ make
 ```
 
 There are additional CMake flags for adjusting the build:
-* `-DRUN_DOXYGEN=TRUE` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
-* `-DBUILD_TESTS=FALSE` to skip building the unit tests
+* `-DRUN_DOXYGEN=ON` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
+* `-DBUILD_TESTS=OFF` to skip building the unit tests
+* `-DHTML_COVERAGE_REPORT=ON` to generate an html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
 
 ### Running the unit tests
 
