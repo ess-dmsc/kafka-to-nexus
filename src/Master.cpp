@@ -21,24 +21,15 @@
 
 namespace FileWriter {
 
-nlohmann::json parseCommand(std::string const &Command) {
-  try {
-    return nlohmann::json::parse(Command);
-  } catch (nlohmann::json::parse_error const &Error) {
-    throw std::runtime_error("Could not parse command JSON");
-  }
-}
-
-FileWriterState getNextState(std::string const &Command,
+FileWriterState getNextState(Msg const &Command,
                              std::chrono::milliseconds TimeStamp,
                              FileWriterState const &CurrentState) {
   try {
-    auto CommandJson = parseCommand(Command);
-    auto CommandName = CommandParser::extractCommandName(CommandJson);
+    auto CommandName = CommandParser::extractCommandName(Command);
 
     if (mpark::get_if<States::Writing>(&CurrentState)) {
       if (CommandName == CommandParser::StopCommand) {
-        auto StopInfo = CommandParser::extractStopInformation(CommandJson);
+        auto StopInfo = CommandParser::extractStopInformation(Command);
         if (StopInfo.StopTime.count() == 0) {
           StopInfo.StopTime = getCurrentTimeStampMS();
         }
@@ -50,7 +41,7 @@ FileWriterState getNextState(std::string const &Command,
     } else {
       if (CommandName == CommandParser::StartCommand) {
         auto const StartInfo =
-            CommandParser::extractStartInformation(CommandJson, TimeStamp);
+            CommandParser::extractStartInformation(Command, TimeStamp);
         return States::StartRequested{StartInfo};
       } else {
         throw std::runtime_error(fmt::format(
@@ -73,8 +64,6 @@ Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
 }
 
 FileWriterState Master::handleCommand(Msg const &CommandMessage) {
-  std::string Message = {CommandMessage.data(), CommandMessage.size()};
-
   // If Kafka message does not contain a timestamp then use current time.
   auto TimeStamp = getCurrentTimeStampMS();
 
@@ -85,7 +74,7 @@ FileWriterState Master::handleCommand(Msg const &CommandMessage) {
     Logger->info("Command doesn't contain timestamp, so using current time.");
   }
 
-  return getNextState(Message, TimeStamp, CurrentState);
+  return getNextState(CommandMessage, TimeStamp, CurrentState);
 }
 
 void Master::startWriting(StartCommandInfo const &StartInfo) {

@@ -21,10 +21,12 @@
 
 using namespace FileWriter;
 
-auto const MessageBuffer = buildRunStartMessage(
+auto const StartCommand = buildRunStartMessage(
     InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-    ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
-    StopTimeInput);
+    ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput, StopTimeInput);
+
+auto const StopCommand = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                             JobIDInput, ServiceIDInput);
 
 TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
 

@@ -10,44 +10,45 @@
 /// `StreamMaster` and the `Streamer` can incur. These error object have some
 /// utility methods that can be used to test the more common situations.
 
+#include <6s4t_run_stop_generated.h>
+#include <pl72_run_start_generated.h>
+
 #include "CommandParser.h"
+#include "Msg.h"
 
 namespace FileWriter {
 namespace CommandParser {
 
 StartCommandInfo
-extractStartInformation(const nlohmann::json &JSONCommand,
+extractStartInformation(Msg const &CommandMessage,
                         std::chrono::milliseconds DefaultStartTime) {
-  if (extractCommandName(JSONCommand) != StartCommand) {
-    throw std::runtime_error("Command was not a start command");
-  }
-
   StartCommandInfo Result;
 
-  // Required items
-  Result.JobID = extractJobID(JSONCommand);
-  Result.NexusStructure =
-      getRequiredValue<nlohmann::json>("nexus_structure", JSONCommand).dump();
-  auto FileAttributes =
-      getRequiredValue<nlohmann::json>("file_attributes", JSONCommand);
-  Result.Filename = getRequiredValue<std::string>("file_name", FileAttributes);
-  Result.BrokerInfo = extractBroker(JSONCommand);
+  const auto runStartData = GetRunStart(CommandMessage.data());
 
-  // Optional items
-  Result.StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
-  Result.StopTime =
-      extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  Result.ServiceID =
-      getOptionalValue<std::string>("service_id", JSONCommand, "");
+  if (runStartData->start_time() > 0) {
+    Result.StartTime = std::chrono::milliseconds{runStartData->start_time()};
+  } else {
+    Result.StartTime = DefaultStartTime;
+  }
+  Result.StopTime = std::chrono::milliseconds{runStartData->stop_time()};
+  Result.NexusStructure = runStartData->nexus_structure()->str();
+  Result.JobID = runStartData->job_id()->str();
+  Result.ServiceID = runStartData->service_id()->str();
+  Result.BrokerInfo = uri::URI(runStartData->broker()->str());
+  Result.Filename = runStartData->filename()->str();
+
+  // TODO JobID, NexusStructure, Filename, Broker are required
+  //   log error if any are missing
+
+  // TODO Log if broker URI is malformed
+
+  // TODO any other verification?
 
   return Result;
 }
 
-StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand) {
-  if (extractCommandName(JSONCommand) != StopCommand) {
-    throw std::runtime_error("Command was not a stop command");
-  }
-
+StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
   StopCommandInfo Result;
 
   // Required items
@@ -62,40 +63,27 @@ StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand) {
   return Result;
 }
 
-uri::URI extractBroker(nlohmann::json const &JSONCommand) {
-  std::string Broker = getRequiredValue<std::string>("broker", JSONCommand);
-  try {
-    uri::URI BrokerInfo{Broker};
-    return BrokerInfo;
-  } catch (std::runtime_error &e) {
-    throw std::runtime_error(
-        fmt::format("Unable to parse broker {} in command message", Broker));
+bool isStartCommand(Msg const &CommandMessage) {
+  if (!flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                        RunStartIdentifier())) {
+    return false;
   }
+
+  auto BufferVerifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStartBuffer(BufferVerifier);
 }
 
-std::string extractJobID(nlohmann::json const &JSONCommand) {
-  auto JobID = getRequiredValue<std::string>("job_id", JSONCommand);
-  if (JobID.empty()) {
-    throw std::runtime_error("Missing key job_id from command JSON");
+bool isStopCommand(Msg const &CommandMessage) {
+  if (!flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                        RunStopIdentifier())) {
+    return false;
   }
-  return JobID;
+
+  auto BufferVerifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStopBuffer(BufferVerifier);
 }
 
-std::chrono::milliseconds
-extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
-            std::chrono::milliseconds const &DefaultTime) {
-  auto RawTime = getOptionalValue<uint64_t>(Key, JSONCommand, 0);
-  if (RawTime > 0) {
-    return std::chrono::milliseconds{RawTime};
-  } else {
-    return DefaultTime;
-  }
-}
-
-std::string extractCommandName(const nlohmann::json &JSONCommand) {
-  auto Cmd = getRequiredValue<std::string>("cmd", JSONCommand);
-  std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(), ::tolower);
-  return Cmd;
-}
 } // namespace CommandParser
 } // namespace FileWriter
