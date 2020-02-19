@@ -21,10 +21,9 @@ if(CMAKE_COMPILER_IS_GNUCXX AND COV)
   include(CodeCoverage)
   append_coverage_compiler_flags()
   setup_target_for_coverage_gcovr_xml(NAME coverage
-                                       EXECUTABLE UnitTests
-                                       EXCLUDE src/tests
-                                       DEPENDENCIES UnitTests)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_COVERAGE}")
+                                      EXECUTABLE UnitTests
+                                      EXCLUDE src/tests
+                                      DEPENDENCIES UnitTests)
 endif()
 
 # Use gold linker if available on system (it is faster than default GNU linker)

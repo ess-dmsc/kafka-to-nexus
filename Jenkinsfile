@@ -169,18 +169,10 @@ builders = pipeline_builder.createBuilders { container ->
       ])
 
       if (env.CHANGE_ID) {
-        post {
-          success {
-            script {
-              if (env.CHANGE_ID) {
-                publishCoverageGithub(filepath:'build/coverage.xml',
-                                      coverageXmlType: 'cobertura',
-                                      comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.65' ],
-                                      coverageRateType: 'Line')
-              }
-            }
-          }
-        }
+        publishCoverageGithub(filepath:'build/coverage.xml',
+                              coverageXmlType: 'cobertura',
+                              comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.65' ],
+                              coverageRateType: 'Line')
       }
 
     } else if (container.key != release_os && container.key != no_graylog) {
