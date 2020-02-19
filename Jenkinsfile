@@ -143,7 +143,7 @@ builders = pipeline_builder.createBuilders { container ->
 
   pipeline_builder.stage("${container.key}: Test") {
     // env.CHANGE_ID is set for pull request builds.
-    if (container.key == test_and_coverage_os && !env.CHANGE_ID) {
+    if (container.key == test_and_coverage_os) {
       def test_output = "TestResults.xml"
       container.sh """
         cd build
