@@ -169,8 +169,10 @@ builders = pipeline_builder.createBuilders { container ->
       ])
 
       if (env.CHANGE_ID) {
-        sh "sed -n -e '/^TOTAL/p' build/coverage.txt > build/coverage_summary.txt"
-        String coverage_summary = new File('build/coverage_summary.txt').text
+        coverage_summary = sh (
+            script: "sed -n -e '/^TOTAL/p' build/coverage.txt",
+            returnStdout: true
+        ).trim()
 
         def repository_url = scm.userRemoteConfigs[0].url
         def repository_name = repository_url.replace("git@github.com:","").replace(".git","")
