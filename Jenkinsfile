@@ -169,10 +169,16 @@ builders = pipeline_builder.createBuilders { container ->
       ])
 
       if (env.CHANGE_ID) {
-        publishCoverageGithub(filepath:'build/coverage.xml',
-                              coverageXmlType: 'cobertura',
-                              comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.70' ],
-                              coverageRateType: 'Line')
+        sh "sed -n -e '/^TOTAL/p' build/coverage.txt > build/coverage_summary.txt"
+        String coverage_summary = new File('build/coverage_summary.txt').text
+
+        def repository_url = scm.userRemoteConfigs[0].url
+        def repository_name = repository_url.replace("git@github.com:","").replace(".git","")
+        def comment_text = "**Code Coverage**\n                                           Lines    Exec  Cover\n${coverage_summary}\n*For more detail see Cobertura report in Jenkins interface)*"
+
+        withCredentials([string(credentialsId: 'cow-bot-token', variable: 'GITHUB_TOKEN')]) {
+          sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${ghprbPullId}/comments\""
+        }
       }
 
     } else if (container.key != release_os && container.key != no_graylog) {
