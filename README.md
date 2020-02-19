@@ -1,5 +1,4 @@
 [![Build Status](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/badge/icon)](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/)
-[![codecov](https://codecov.io/gh/ess-dmsc/kafka-to-nexus/branch/master/graph/badge.svg)](https://codecov.io/gh/ess-dmsc/kafka-to-nexus)
 [![DOI](https://zenodo.org/badge/81435658.svg)](https://zenodo.org/badge/latestdoi/81435658)
 
 
@@ -98,8 +97,9 @@ make
 ```
 
 There are additional CMake flags for adjusting the build:
-* `-DRUN_DOXYGEN=TRUE` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
-* `-DBUILD_TESTS=FALSE` to skip building the unit tests
+* `-DRUN_DOXYGEN=ON` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
+* `-DBUILD_TESTS=OFF` to skip building the unit tests
+* `-DHTML_COVERAGE_REPORT=ON` to generate an html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
 
 ### Running the unit tests
 

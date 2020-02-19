@@ -14,7 +14,6 @@
 #include <string>
 #ifdef HAVE_GRAYLOG_LOGGER
 #include <graylog_logger/GraylogInterface.hpp>
-#include <graylog_logger/Log.hpp>
 #include <spdlog/sinks/graylog_sink.h>
 #endif
 

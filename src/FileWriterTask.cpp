@@ -9,7 +9,6 @@
 
 #include "FileWriterTask.h"
 #include "DemuxTopic.h"
-#include "EventLogger.h"
 #include "HDFFile.h"
 #include "KafkaW/ProducerTopic.h"
 #include "Source.h"

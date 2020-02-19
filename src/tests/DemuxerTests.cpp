@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "FlatbufferReader.h"
 #include "helpers/StubWriterModule.h"
 #include <DemuxTopic.h>
 #include <gtest/gtest.h>

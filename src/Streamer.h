@@ -13,15 +13,13 @@
 
 #pragma once
 
-#include "EventLogger.h"
+#include "FlatbufferMessage.h"
 #include "KafkaW/Consumer.h"
 #include "StreamStatus.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include <chrono>
 #include <future>
-#include <memory>
-#include <utility>
 
 namespace FileWriter {
 class DemuxTopic;
