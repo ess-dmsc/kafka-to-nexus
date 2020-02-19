@@ -175,7 +175,7 @@ builders = pipeline_builder.createBuilders { container ->
         ).trim()
 
         def repository_url = scm.userRemoteConfigs[0].url
-        def repository_name = repository_url.replace("git@github.com:","").replace(".git","")
+        def repository_name = repository_url.replace("git@github.com:","").replace(".git","").replace("https://github.com/","")
         def comment_text = "**Code Coverage**\n                                           Lines    Exec  Cover\n${coverage_summary}\n*For more detail see Cobertura report in Jenkins interface)*"
 
         withCredentials([string(credentialsId: 'cow-bot-token', variable: 'GITHUB_TOKEN')]) {
