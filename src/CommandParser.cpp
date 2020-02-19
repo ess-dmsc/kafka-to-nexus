@@ -40,10 +40,8 @@ extractStartInformation(Msg const &CommandMessage,
 
   // TODO JobID, NexusStructure, Filename, Broker are required
   //   log error if any are missing
-
-  // TODO Log if broker URI is malformed
-
-  // TODO any other verification?
+  //   log if broker URI is malformed
+  //   any other verification?
 
   return Result;
 }
@@ -51,14 +49,12 @@ extractStartInformation(Msg const &CommandMessage,
 StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
   StopCommandInfo Result;
 
-  // Required items
-  Result.JobID = extractJobID(JSONCommand);
+  const auto runStopData = GetRunStop(CommandMessage.data());
+  Result.JobID = runStopData->job_id()->str();
+  Result.StopTime = std::chrono::milliseconds{runStopData->stop_time()};
+  Result.ServiceID = runStopData->service_id()->str();
 
-  // Optional items
-  Result.StopTime =
-      extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  Result.ServiceID =
-      getOptionalValue<std::string>("service_id", JSONCommand, "");
+  // TODO JobID required, log error if missing
 
   return Result;
 }
