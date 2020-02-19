@@ -168,11 +168,16 @@ builders = pipeline_builder.createBuilders { container ->
           zoomCoverageChart: true
       ])
 
-      post {
-        success {
-          script {
-            if (env.CHANGE_ID) {
-              publishCoverageGithub(filepath:'build/coverage.xml', coverageXmlType: 'cobertura', comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.65' ], coverageRateType: 'Line')
+      if (env.CHANGE_ID) {
+        post {
+          success {
+            script {
+              if (env.CHANGE_ID) {
+                publishCoverageGithub(filepath:'build/coverage.xml',
+                                      coverageXmlType: 'cobertura',
+                                      comparisonOption: [ value: 'optionFixedCoverage', fixedCoverage: '0.65' ],
+                                      coverageRateType: 'Line')
+              }
             }
           }
         }
