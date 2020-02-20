@@ -19,6 +19,7 @@
 #include <mpark/variant.hpp>
 #include <string>
 #include <vector>
+#include "Metrics/Registrar.h"
 
 namespace Status {
 class StatusReporter;
@@ -43,7 +44,7 @@ class Master {
 public:
   Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
          std::unique_ptr<IJobCreator> Creator,
-         std::unique_ptr<Status::StatusReporter> Reporter);
+         std::unique_ptr<Status::StatusReporter> Reporter, Metrics::Registrar Registrar);
   virtual ~Master() = default;
 
   /// \brief Sets up command listener and handles any commands received.
@@ -60,6 +61,7 @@ private:
   std::unique_ptr<IJobCreator> Creator_;
   std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
   std::unique_ptr<Status::StatusReporter> Reporter;
+  Metrics::Registrar MasterMetricsRegistrar;
   FileWriterState CurrentState = States::Idle();
   virtual void startWriting(StartCommandInfo const &StartInfo);
   virtual void requestStopWriting(StopCommandInfo const &StopInfo);

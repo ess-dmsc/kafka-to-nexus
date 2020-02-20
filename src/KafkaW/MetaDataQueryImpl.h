@@ -16,6 +16,23 @@
 #include <librdkafka/rdkafkacpp.h>
 #include "KafkaW/MetadataException.h"
 
+namespace {
+const RdKafka::TopicMetadata *
+findKafkaTopic(const std::string &Topic,
+               const RdKafka::Metadata *KafkaMetadata) {
+  auto Topics = KafkaMetadata->topics();
+  auto Iterator =
+      std::find_if(Topics->cbegin(), Topics->cend(),
+                   [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
+                     return TopicMetadata->topic() == Topic;
+                   });
+  if (Iterator == Topics->end()) {
+    throw MetadataException("Topic \"" + Topic + "\" not listed by broker.");
+  }
+  return *Iterator;
+}
+}
+
 namespace KafkaW {
 using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
@@ -61,23 +78,6 @@ template <class KafkaHandle>
       ReturnSet.emplace_back(std::make_pair(CTopicPartition->partition(), CTopicPartition->offset()));
     }
   return ReturnSet;
-}
-
-namespace {
-const RdKafka::TopicMetadata *
-findKafkaTopic(const std::string &Topic,
-               const RdKafka::Metadata *KafkaMetadata) {
-  auto Topics = KafkaMetadata->topics();
-  auto Iterator =
-      std::find_if(Topics->cbegin(), Topics->cend(),
-                   [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
-                     return TopicMetadata->topic() == Topic;
-                   });
-  if (Iterator == Topics->end()) {
-    throw MetadataException("Topic \"" + Topic + "\" not listed by broker.");
-  }
-  return *Iterator;
-}
 }
 
 template <class KafkaHandle>

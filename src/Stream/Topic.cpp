@@ -87,4 +87,4 @@ Topic::createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
   }
 }
 
-} // namespace Stream
+} // namespace Stream

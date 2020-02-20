@@ -12,8 +12,6 @@
 #include <string>
 #include <chrono>
 #include <set>
-#include "KafkaW/MetadataException.h"
-#include "KafkaW/MetaDataQueryImpl.h"
 #include <librdkafka/rdkafkacpp.h>
 
 namespace KafkaW {
@@ -31,9 +29,7 @@ using duration = std::chrono::system_clock::duration;
 // \returns             The closest offset with a timestamp before Time (if available).
 // \throws MetadataException if a failure occurs.
   std::vector<std::pair<int, int64_t>> getOffsetForTime(std::string Broker, std::string Topic, std::vector<int> Partitions,
-                         time_point Time, duration TimeOut) {
-  return getOffsetForTimeImpl<RdKafka::Consumer>(Broker, Topic, Partitions, Time, TimeOut);
-}
+                         time_point Time, duration TimeOut);
 
 // \brief Query the broker for partitions available on a specified topic.
 //
@@ -42,9 +38,7 @@ using duration = std::chrono::system_clock::duration;
 // \param[in] TimeOut   The amount of time to wait for the meta-data call to complete.
 // \returns             A set of partition id:s.
 // \throws MetadataException if a failure occurs.
-std::set<int> getPartitionsForTopic(std::string Broker, std::string Topic, duration TimeOut) {
-  return getPartitionsForTopicImpl<RdKafka::Consumer>(Broker, Topic, TimeOut);
-}
+std::set<int> getPartitionsForTopic(std::string Broker, std::string Topic, duration TimeOut);
 
 // \brief Query the broker for available topics.
 //
@@ -52,8 +46,6 @@ std::set<int> getPartitionsForTopic(std::string Broker, std::string Topic, durat
 // \param[in] TimeOut   The amount of time to wait for the meta-data call to complete.
 // \returns             A set of topic names.
 // \throws MetadataException if a failure occurs.
-std::set<std::string> getTopicList(std::string Broker, duration TimeOut) {
-  return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut);
-}
+std::set<std::string> getTopicList(std::string Broker, duration TimeOut);
 
 }  // namespace KafkaW

@@ -68,4 +68,4 @@ void MessageWriter::writeMsgImpl(intptr_t ModulePtr,
   }
 }
 
-} // namespace Stream
+} // namespace Stream

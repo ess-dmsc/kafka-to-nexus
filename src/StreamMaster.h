@@ -68,13 +68,12 @@ private:
   void initStreams(std::set<std::string> KnownTopicNames);
   std::chrono::system_clock::duration CurrentMetadataTimeOut;
   std::atomic<bool> StreamersRemaining{true};
-  std::vector<Stream::Topic> Streamers;
+  std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;
   std::string ServiceId;
   FileWriter::StreamerOptions KafkaSettings;
-  SharedLogger Logger = getLogger();
   ThreadedExecutor Executor; // Must be last
 };
 

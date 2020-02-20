@@ -60,7 +60,6 @@ endif()
 
 set(kafka_to_nexus_SRC
         StreamStatus.cpp
-        Streamer.cpp
         StreamMaster.cpp
         Master.cpp
         logger.cpp
@@ -68,7 +67,6 @@ set(kafka_to_nexus_SRC
         JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
-        DemuxTopic.cpp
         EventLogger.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
@@ -97,12 +95,11 @@ set(kafka_to_nexus_SRC
     Stream/MessageWriter.cpp
     Stream/Message.cpp
     Stream/Partition.cpp
-    Stream/Topic.cpp)
+    Stream/Topic.cpp KafkaW/MetaDataQuery.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
         CommandListener.h
-        DemuxTopic.h
         StreamStatus.h
         EventLogger.h
         FileWriterTask.h
@@ -126,9 +123,7 @@ set(kafka_to_nexus_INC
         Master.h
         Msg.h
         FlatbufferMessage.h
-        ProcessMessageResult.h
         Source.h
-        Streamer.h
         StreamerOptions.h
         StreamMaster.h
         URI.h

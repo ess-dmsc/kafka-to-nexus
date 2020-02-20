@@ -2,7 +2,7 @@
 #include "FileWriterTask.h"
 #include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/MetaDataQuery.h"
-#include "Streamer.h"
+#include "KafkaW/MetadataException.h"
 #include "helper.h"
 #include "Stream/Partition.h"
 
@@ -11,7 +11,7 @@ StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
                            std::string const &ServiceID,
                            FileWriter::StreamerOptions Settings, Metrics::Registrar Registrar)
 
-    : WriterTask(std::move(FileWriterTask)), StreamMasterRegistrar(Registrar), WriterThread(Registrar.getNewRegistrar("stream")),
+    : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar), WriterThread(Registrar.getNewRegistrar("stream")),
       ServiceId(ServiceID), KafkaSettings(Settings) {
   Executor.SendWork([=](){
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
@@ -21,12 +21,13 @@ StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
 
 StreamMaster::~StreamMaster() {
   // Hint streamers of exit
-  Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
+  LOG_INFO("Stopped StreamMaster for file with id : {}", getJobId());
 }
 
 void StreamMaster::setStopTime(std::chrono::milliseconds const &StopTime) {
+  auto CStopTime = std::chrono::system_clock::time_point(StopTime);
   for (auto &s : Streamers) {
-    s.second.setStopTime(StopTime);
+    s->setStopTime(CStopTime);
   }
 }
 
@@ -46,7 +47,7 @@ void StreamMaster::getTopicNames() {
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    Logger->warn("Meta data call for retrieving topic names from the broker failed. Re-trying with a timeout of {} ms.", std::chrono::duration_cast<std::chrono::milliseconds>(CurrentMetadataTimeOut).count());
+    LOG_WARN("Meta data call for retrieving topic names from the broker failed. Re-trying with a timeout of {} ms.", std::chrono::duration_cast<std::chrono::milliseconds>(CurrentMetadataTimeOut).count());
     Executor.SendWork([=]() {
       getTopicNames();
     });
@@ -59,11 +60,14 @@ void StreamMaster::initStreams(std::set<std::string> KnownTopicNames) {
     if (KnownTopicNames.find(Src.topic()) != KnownTopicNames.end()) {
       TopicSrcMap[Src.topic()].push_back({Src.getHash(), reinterpret_cast<intptr_t>(Src.getWriterPtr())});
     } else {
-      Logger->error("Unable to set up consumer for source {} on topic {} as this topic is does not exist.", Src.sourcename(), Src.topic());
+      LOG_ERROR("Unable to set up consumer for source {} on topic {} as this topic is does not exist.", Src.sourcename(), Src.topic());
     }
   }
   for (auto &CItem : TopicSrcMap) {
-    Streamers.emplace(KafkaSettings.BrokerSettings, CItem.first, CItem.second, &WriterThread, StreamMetricRegistrar, KafkaSettings.StartTime, KafkaSettings.StopTime);
+    auto CStartTime = std::chrono::system_clock::time_point(KafkaSettings.StartTimestamp);
+    auto CStopTime = std::chrono::system_clock::time_point(KafkaSettings.StopTimestamp);
+    auto CTopic = std::make_unique<Stream::Topic>(KafkaSettings.BrokerSettings, CItem.first, CItem.second, &WriterThread, StreamMetricRegistrar, CStartTime, CStopTime);
+    Streamers.push_back(std::move(CTopic));
   }
 }
 
