@@ -58,17 +58,17 @@ def create_runstart_message(job_id: str, filename: str, start_time: Optional[int
 
     # Build the actual buffer
     RunStart.RunStartStart(builder)
-    RunStart.RunStartAddStartTime(builder, start_time)
-    if stop_time is not None:
-        RunStart.RunStartAddStopTime(builder, stop_time)
-    RunStart.RunStartAddRunName(builder, run_name_offset)
-    RunStart.RunStartAddInstrumentName(builder, instrument_name_offset)
-    RunStart.RunStartAddNexusStructure(builder, nexus_structure_offset)
-    RunStart.RunStartAddJobId(builder, job_id_offset)
-    RunStart.RunStartAddBroker(builder, broker_offset)
+    RunStart.RunStartAddFilename(builder, filename_offset)
     if service_id is not None:
         RunStart.RunStartAddServiceId(builder, service_id_offset)
-    RunStart.RunStartAddFilename(builder, filename_offset)
+    RunStart.RunStartAddBroker(builder, broker_offset)
+    RunStart.RunStartAddJobId(builder, job_id_offset)
+    RunStart.RunStartAddNexusStructure(builder, nexus_structure_offset)
+    RunStart.RunStartAddInstrumentName(builder, instrument_name_offset)
+    RunStart.RunStartAddRunName(builder, run_name_offset)
+    if stop_time is not None:
+        RunStart.RunStartAddStopTime(builder, stop_time)
+    RunStart.RunStartAddStartTime(builder, start_time)
     run_start_message = RunStart.RunStartEnd(builder)
     builder.Finish(run_start_message)
 
@@ -90,12 +90,12 @@ def create_runstop_message(job_id: str, run_name: str = "test_run", service_id: 
 
     # Build the actual buffer
     RunStop.RunStopStart(builder)
-    if stop_time is not None:
-        RunStop.RunStopAddStopTime(builder, stop_time)
-    RunStop.RunStopAddRunName(builder, run_name_offset)
-    RunStop.RunStopAddJobId(builder, job_id_offset)
     if service_id is not None:
         RunStop.RunStopAddServiceId(builder, service_id_offset)
+    RunStop.RunStopAddJobId(builder, job_id_offset)
+    RunStop.RunStopAddRunName(builder, run_name_offset)
+    if stop_time is not None:
+        RunStop.RunStopAddStopTime(builder, stop_time)
     run_stop_message = RunStop.RunStopEnd(builder)
     builder.Finish(run_stop_message)
 

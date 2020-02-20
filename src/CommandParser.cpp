@@ -49,7 +49,7 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
         "Errors encountered parsing run start message:\n{}", ErrorsString));
   }
 }
-}
+}  // namespace
 
 namespace FileWriter {
 namespace CommandParser {
