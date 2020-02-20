@@ -5,9 +5,8 @@ import numpy as np
 
 
 def test_static_data_reaches_file(docker_compose):
-
     producer = create_producer()
-    sleep(20)
+    sleep(10)
     # Start file writing
     job_id = publish_run_start_message(producer, "commands/nexus_structure_static.json",
                                        "output_file_static.nxs", start_time=int(docker_compose))

@@ -20,7 +20,7 @@ def publish_run_start_message(
         topic: str = "TEST_writerCommand",
         start_time: Optional[int] = None,
         stop_time: Optional[int] = None,
-        job_id: Optional[str] = uuid.uuid4(),
+        job_id: Optional[str] = str(uuid.uuid4()),
         service_id: Optional[str] = None
 ) -> str:
     with open(nexus_structure_filepath, "r") as nexus_structure_file:
