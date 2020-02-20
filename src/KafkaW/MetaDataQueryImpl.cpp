@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "KafkaW/MetaDataQueryImpl.h"
+#include <algorithm>
 
 namespace KafkaW {
 const RdKafka::TopicMetadata *
