@@ -12,9 +12,47 @@
 
 #include <6s4t_run_stop_generated.h>
 #include <pl72_run_start_generated.h>
+#include <sstream>
 
 #include "CommandParser.h"
 #include "Msg.h"
+
+namespace {
+void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
+  std::stringstream Errors;
+  if (RunStartData->job_id()->size() == 0) {
+    Errors << "Job ID missing, this field is required\n";
+  }
+
+  if (RunStartData->nexus_structure()->size() == 0) {
+    Errors << "NeXus Structure missing, this field is "
+              "required\n";
+  }
+
+  if (RunStartData->filename()->size() == 0) {
+    Errors << "Filename missing, this field is required\n";
+  }
+
+  if (RunStartData->broker()->size() == 0) {
+    Errors << "Broker missing, this field is required\n";
+  } else {
+    try {
+      uri::URI(RunStartData->broker()->str());
+    } catch (const std::runtime_error &URIError) {
+      Errors << "Broker missing, this field is required\n";
+    }
+  }
+
+  std::string const ErrorsString = Errors.str();
+  if (!ErrorsString.empty()) {
+    std::string const FullErrorMessage = fmt::format(
+        "Errors encountered parsing run start message:\n{}", ErrorsString);
+    auto Logger = getLogger();
+    Logger->error(FullErrorMessage);
+    throw std::runtime_error(FullErrorMessage);
+  }
+}
+}
 
 namespace FileWriter {
 namespace CommandParser {
@@ -24,24 +62,21 @@ extractStartInformation(Msg const &CommandMessage,
                         std::chrono::milliseconds DefaultStartTime) {
   StartCommandInfo Result;
 
-  const auto runStartData = GetRunStart(CommandMessage.data());
+  const auto RunStartData = GetRunStart(CommandMessage.data());
 
-  if (runStartData->start_time() > 0) {
-    Result.StartTime = std::chrono::milliseconds{runStartData->start_time()};
+  checkRequiredFieldsArePresent(RunStartData);
+
+  if (RunStartData->start_time() > 0) {
+    Result.StartTime = std::chrono::milliseconds{RunStartData->start_time()};
   } else {
     Result.StartTime = DefaultStartTime;
   }
-  Result.StopTime = std::chrono::milliseconds{runStartData->stop_time()};
-  Result.NexusStructure = runStartData->nexus_structure()->str();
-  Result.JobID = runStartData->job_id()->str();
-  Result.ServiceID = runStartData->service_id()->str();
-  Result.BrokerInfo = uri::URI(runStartData->broker()->str());
-  Result.Filename = runStartData->filename()->str();
-
-  // TODO JobID, NexusStructure, Filename, Broker are required
-  //   log error if any are missing
-  //   log if broker URI is malformed
-  //   any other verification?
+  Result.StopTime = std::chrono::milliseconds{RunStartData->stop_time()};
+  Result.NexusStructure = RunStartData->nexus_structure()->str();
+  Result.JobID = RunStartData->job_id()->str();
+  Result.ServiceID = RunStartData->service_id()->str();
+  Result.BrokerInfo = uri::URI(RunStartData->broker()->str());
+  Result.Filename = RunStartData->filename()->str();
 
   return Result;
 }
@@ -49,12 +84,20 @@ extractStartInformation(Msg const &CommandMessage,
 StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
   StopCommandInfo Result;
 
-  const auto runStopData = GetRunStop(CommandMessage.data());
-  Result.JobID = runStopData->job_id()->str();
-  Result.StopTime = std::chrono::milliseconds{runStopData->stop_time()};
-  Result.ServiceID = runStopData->service_id()->str();
+  const auto RunStopData = GetRunStop(CommandMessage.data());
 
-  // TODO JobID required, log error if missing
+  if (RunStopData->job_id()->size() == 0) {
+    std::string const FullErrorMessage =
+        "Errors encountered parsing run stop message:\n"
+        "Job ID missing, this field is required";
+    auto Logger = getLogger();
+    Logger->error(FullErrorMessage);
+    throw std::runtime_error(FullErrorMessage);
+  }
+
+  Result.JobID = RunStopData->job_id()->str();
+  Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
+  Result.ServiceID = RunStopData->service_id()->str();
 
   return Result;
 }
