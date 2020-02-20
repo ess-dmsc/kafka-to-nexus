@@ -34,6 +34,10 @@ struct Msg {
       : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
   }
+  Msg(uint8_t const *Data, size_t Bytes)
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
+    std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
+  }
   Msg &operator=(Msg const &Other) {
     Size = Other.Size;
     MetaData = Other.MetaData;

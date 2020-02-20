@@ -9,10 +9,12 @@
 
 #pragma once
 
+#include "Msg.h"
+
 #include <6s4t_run_stop_generated.h>
 #include <pl72_run_start_generated.h>
 
-flatbuffers::DetachedBuffer buildRunStartMessage(
+FileWriter::Msg buildRunStartMessage(
     std::string const &InstrumentName, std::string const &RunName,
     std::string const &NexusStructure, std::string const &JobID,
     std::string const &ServiceID, std::string const &Broker,
@@ -33,13 +35,14 @@ flatbuffers::DetachedBuffer buildRunStartMessage(
                      BrokerOffset, ServiceIDOffset, FilenameOffset);
 
   FinishRunStartBuffer(Builder, messageRunStart);
-  return Builder.Release();
+  auto MessageBuffer = Builder.Release();
+  return {MessageBuffer.data(), MessageBuffer.size()};
 }
 
-flatbuffers::DetachedBuffer buildRunStopMessage(uint64_t StopTime,
-                                                std::string const &RunName,
-                                                std::string const &JobID,
-                                                std::string const &ServiceID) {
+FileWriter::Msg buildRunStopMessage(uint64_t StopTime,
+                                    std::string const &RunName,
+                                    std::string const &JobID,
+                                    std::string const &ServiceID) {
   flatbuffers::FlatBufferBuilder Builder;
 
   const auto RunIDOffset = Builder.CreateString(RunName);
@@ -50,7 +53,8 @@ flatbuffers::DetachedBuffer buildRunStopMessage(uint64_t StopTime,
                                       JobIDOffset, ServiceIDOffset);
 
   FinishRunStopBuffer(Builder, messageRunStop);
-  return Builder.Release();
+  auto MessageBuffer = Builder.Release();
+  return {MessageBuffer.data(), MessageBuffer.size()};
 }
 
 std::string const InstrumentNameInput = "TEST";

@@ -7,12 +7,11 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <6s4t_run_stop_generated.h>
 #include <chrono>
 #include <gtest/gtest.h>
-#include <pl72_run_start_generated.h>
 
 #include "CommandParser.h"
+#include "Msg.h"
 #include "helpers/RunStartStopHelpers.h"
 
 class CommandParserHappyStartTests : public testing::Test {
@@ -26,8 +25,8 @@ public:
         ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
         StopTimeInput);
 
-    StartInfo = FileWriter::CommandParser::extractStartInformation(
-        MessageBuffer.data(), MessageBuffer.size());
+    StartInfo =
+        FileWriter::CommandParser::extractStartInformation(MessageBuffer);
   }
 };
 
@@ -40,7 +39,7 @@ TEST_F(CommandParserHappyStartTests, IfFilenamePresentThenExtractedCorrectly) {
 }
 
 TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
-  ASSERT_EQ(JobIDInput, StartInfo.BrokerInfo.HostPort);
+  ASSERT_EQ(BrokerInput, StartInfo.BrokerInfo.HostPort);
   ASSERT_EQ(1234u, StartInfo.BrokerInfo.Port);
 }
 
@@ -68,9 +67,9 @@ TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
       ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::CommandParser::extractStartInformation(MessageBuffer),
+      std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
@@ -80,9 +79,9 @@ TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
       ServiceIDInput, BrokerInput, EmptyFilename, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::CommandParser::extractStartInformation(MessageBuffer),
+      std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
@@ -92,18 +91,9 @@ TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
       ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error);
-}
-
-TEST(CommandParserSadStartTests, IfStopCommandPassedToStartMethodThenThrows) {
-  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                           JobIDInput, ServiceIDInput);
-
-  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::CommandParser::extractStartInformation(MessageBuffer),
+      std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, IfNoBrokerThenThrows) {
@@ -113,9 +103,9 @@ TEST(CommandParserSadStartTests, IfNoBrokerThenThrows) {
       ServiceIDInput, EmptyBroker, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::CommandParser::extractStartInformation(MessageBuffer),
+      std::runtime_error);
 }
 
 TEST(CommandParserSadStartTests, IfBrokerIsWrongFormThenThrows) {
@@ -125,9 +115,9 @@ TEST(CommandParserSadStartTests, IfBrokerIsWrongFormThenThrows) {
       ServiceIDInput, BrokerInvalidFormat, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::CommandParser::extractStartInformation(MessageBuffer),
+      std::runtime_error);
 }
 
 TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
@@ -140,7 +130,7 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
   auto FakeCurrentTime = std::chrono::milliseconds{987654321};
 
   auto StartInfo = FileWriter::CommandParser::extractStartInformation(
-      MessageBuffer.data(), MessageBuffer.size(), FakeCurrentTime);
+      MessageBuffer, FakeCurrentTime);
 
   ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
 }
@@ -152,8 +142,8 @@ TEST(CommandParserStartTests, IfNoServiceIdThenIsBlank) {
       EmptyServiceID, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  auto StartInfo = FileWriter::CommandParser::extractStartInformation(
-      MessageBuffer.data(), MessageBuffer.size());
+  auto StartInfo =
+      FileWriter::CommandParser::extractStartInformation(MessageBuffer);
 
   ASSERT_EQ("", StartInfo.ServiceID);
 }
@@ -163,8 +153,7 @@ TEST(CommandParserSadStopTests, IfNoJobIdThenThrows) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            EmptyJobID, ServiceIDInput);
 
-  ASSERT_THROW(FileWriter::CommandParser::extractStopInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
+  ASSERT_THROW(FileWriter::CommandParser::extractStopInformation(MessageBuffer),
                std::runtime_error);
 }
 
@@ -172,8 +161,8 @@ TEST(CommandParserHappyStopTests, IfJobIdPresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            JobIDInput, ServiceIDInput);
 
-  auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      MessageBuffer.data(), MessageBuffer.size());
+  auto StopInfo =
+      FileWriter::CommandParser::extractStopInformation(MessageBuffer);
 
   ASSERT_EQ(JobIDInput, StopInfo.JobID);
 }
@@ -182,8 +171,8 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            JobIDInput, ServiceIDInput);
 
-  auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      MessageBuffer.data(), MessageBuffer.size());
+  auto StopInfo =
+      FileWriter::CommandParser::extractStopInformation(MessageBuffer);
 
   ASSERT_EQ(std::chrono::milliseconds{StopTimeInput}, StopInfo.StopTime);
 }
@@ -193,8 +182,8 @@ TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            JobIDInput, EmptyServiceID);
 
-  auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      MessageBuffer.data(), MessageBuffer.size());
+  auto StopInfo =
+      FileWriter::CommandParser::extractStopInformation(MessageBuffer);
 
   ASSERT_EQ("", StopInfo.ServiceID);
 }
@@ -203,19 +192,56 @@ TEST(CommandParserStopTests, IfServiceIdPresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            JobIDInput, ServiceIDInput);
 
-  auto StopInfo = FileWriter::CommandParser::extractStopInformation(
-      MessageBuffer.data(), MessageBuffer.size());
+  auto StopInfo =
+      FileWriter::CommandParser::extractStopInformation(MessageBuffer);
 
   ASSERT_EQ(ServiceIDInput, StopInfo.ServiceID);
 }
 
-TEST(CommandParserSadStopTests, IfStartCommandPassedToStopMethodThenThrows) {
+TEST(CommandParserStartTests,
+     MessageIsNotStartCommandIfFlatbufferIDNotRecognised) {
+  std::string const MessageString = "00001234";
+  FileWriter::Msg const TestMessage{MessageString.c_str(),
+                                    MessageString.size()};
+  ASSERT_FALSE(FileWriter::CommandParser::isStartCommand(TestMessage));
+}
+
+TEST(CommandParserStartTests,
+     MessageIsNotStartCommandIfFlatbufferFailsVerification) {
+  std::string const MessageString = fmt::format("0000{}", RunStartIdentifier());
+  FileWriter::Msg const TestMessage{MessageString.c_str(),
+                                    MessageString.size()};
+  ASSERT_FALSE(FileWriter::CommandParser::isStartCommand(TestMessage));
+}
+
+TEST(CommandParserStartTests, MessageIsStartCommandIfValidRunStartFlatbuffer) {
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
       ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
+  FileWriter::Msg const TestMessage{MessageBuffer.data(), MessageBuffer.size()};
+  ASSERT_TRUE(FileWriter::CommandParser::isStartCommand(TestMessage));
+}
 
-  ASSERT_THROW(FileWriter::CommandParser::extractStopInformation(
-                   MessageBuffer.data(), MessageBuffer.size()),
-               std::runtime_error);
+TEST(CommandParserStopTests,
+     MessageIsNotStopCommandIfFlatbufferIDNotRecognised) {
+  std::string const MessageString = "00001234";
+  FileWriter::Msg const TestMessage{MessageString.c_str(),
+                                    MessageString.size()};
+  ASSERT_FALSE(FileWriter::CommandParser::isStopCommand(TestMessage));
+}
+
+TEST(CommandParserStopTests,
+     MessageIsNotStopCommandIfFlatbufferFailsVerification) {
+  std::string const MessageString = fmt::format("0000{}", RunStopIdentifier());
+  FileWriter::Msg const TestMessage{MessageString.c_str(),
+                                    MessageString.size()};
+  ASSERT_FALSE(FileWriter::CommandParser::isStopCommand(TestMessage));
+}
+
+TEST(CommandParserStopTests, MessageIsStartCommandIfValidRunStopFlatbuffer) {
+  auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
+                                           JobIDInput, ServiceIDInput);
+  FileWriter::Msg const TestMessage{MessageBuffer.data(), MessageBuffer.size()};
+  ASSERT_TRUE(FileWriter::CommandParser::isStopCommand(TestMessage));
 }

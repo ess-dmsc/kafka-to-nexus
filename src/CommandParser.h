@@ -44,13 +44,16 @@ namespace CommandParser {
 /// \param DefaultStartTime The start time to use if not supplied in the JSON
 /// \return The start information.
 StartCommandInfo extractStartInformation(
-    Msg const &JSONCommand,
+    Msg const &CommandMessage,
     std::chrono::milliseconds DefaultStartTime = getCurrentTimeStampMS());
 
 /// \brief Extract the information from the stop command.
 ///
 /// \param JSONCommand The JSON Command.
 /// \return The stop information.
-StopCommandInfo extractStopInformation(Msg const &JSONCommand);
+StopCommandInfo extractStopInformation(Msg const &CommandMessage);
+
+bool isStartCommand(Msg const &CommandMessage);
+bool isStopCommand(Msg const &CommandMessage);
 } // namespace CommandParser
 } // namespace FileWriter
