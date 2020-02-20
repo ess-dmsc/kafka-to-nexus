@@ -30,9 +30,8 @@ public:
   std::string const &topic() const;
   std::string const &sourcename() const;
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
-  WriterModule::Base* getWriterPtr() {
-    return WriterModule.get();
-  }
+  WriterModule::Base *getWriterPtr() { return WriterModule.get(); }
+
 private:
   std::string SourceName;
   std::string SchemaID;

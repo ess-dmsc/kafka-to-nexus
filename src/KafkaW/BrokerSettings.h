@@ -9,16 +9,16 @@
 
 #pragma once
 
+#include <chrono>
 #include <librdkafka/rdkafkacpp.h>
 #include <map>
 #include <string>
-#include <chrono>
 
 namespace KafkaW {
 
-  using duration = std::chrono::system_clock::duration;
-  using std::chrono_literals::operator""s;
-  using std::chrono_literals::operator""ms;
+using duration = std::chrono::system_clock::duration;
+using std::chrono_literals::operator""s;
+using std::chrono_literals::operator""ms;
 /// Collect options used to connect to the broker.
 struct BrokerSettings {
   BrokerSettings() = default;

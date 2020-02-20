@@ -76,8 +76,8 @@ class FakeJobCreator : public IJobCreator {
 public:
   std::unique_ptr<IStreamMaster>
   createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
-                       MainOpt & /*Settings*/,
-                       SharedLogger const & /*Logger*/, Metrics::Registrar) override {
+                       MainOpt & /*Settings*/, SharedLogger const & /*Logger*/,
+                       Metrics::Registrar) override {
     return std::make_unique<FakeStreamMaster>("some_id");
   };
 };

@@ -26,26 +26,26 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
                   const uri::URI &GraylogURI);
 
-template<typename... Args>
-void LOG_ERROR(spdlog::string_view_t fmt, const Args &... args)
-{
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::err, fmt, args...);
+template <typename... Args>
+void LOG_ERROR(spdlog::string_view_t fmt, const Args &... args) {
+  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::err, fmt,
+                   args...);
 }
 
-template<typename... Args>
-void LOG_WARN(spdlog::string_view_t fmt, const Args &... args)
-{
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::warn, fmt, args...);
+template <typename... Args>
+void LOG_WARN(spdlog::string_view_t fmt, const Args &... args) {
+  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::warn, fmt,
+                   args...);
 }
 
-template<typename... Args>
-void LOG_INFO(spdlog::string_view_t fmt, const Args &... args)
-{
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::info, fmt, args...);
+template <typename... Args>
+void LOG_INFO(spdlog::string_view_t fmt, const Args &... args) {
+  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::info, fmt,
+                   args...);
 }
 
-template<typename... Args>
-void LOG_DEBUG(spdlog::string_view_t fmt, const Args &... args)
-{
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::debug, fmt, args...);
+template <typename... Args>
+void LOG_DEBUG(spdlog::string_view_t fmt, const Args &... args) {
+  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::debug, fmt,
+                   args...);
 }

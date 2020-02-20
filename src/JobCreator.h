@@ -12,11 +12,11 @@
 #include "CommandParser.h"
 #include "FileWriterTask.h"
 #include "MainOpt.h"
+#include "Metrics/Registrar.h"
 #include "States.h"
 #include "StreamMaster.h"
 #include "json.h"
 #include <memory>
-#include "Metrics/Registrar.h"
 
 namespace FileWriter {
 
@@ -34,7 +34,8 @@ class IJobCreator {
 public:
   virtual std::unique_ptr<IStreamMaster>
   createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
-                       SharedLogger const &Logger, Metrics::Registrar Registrar) = 0;
+                       SharedLogger const &Logger,
+                       Metrics::Registrar Registrar) = 0;
   virtual ~IJobCreator() = default;
 };
 
@@ -49,7 +50,8 @@ public:
   /// \return The new file-writing job.
   std::unique_ptr<IStreamMaster>
   createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
-                       SharedLogger const &Logger, Metrics::Registrar Registrar) override;
+                       SharedLogger const &Logger,
+                       Metrics::Registrar Registrar) override;
 
 private:
   static void addStreamSourceToWriterModule(

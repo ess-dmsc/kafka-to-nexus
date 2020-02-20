@@ -33,9 +33,7 @@ json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
 }
 } // namespace
 
-std::vector<Source> &FileWriterTask::sources() {
-  return SourceToModuleMap;
-}
+std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");

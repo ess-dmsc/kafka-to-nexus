@@ -14,11 +14,11 @@
 
 #include "EventLogger.h"
 #include "MainOpt.h"
-#include <atomic>
-#include "ThreadedExecutor.h"
-#include "Stream/Topic.h"
-#include <set>
 #include "Metrics/Registrar.h"
+#include "Stream/Topic.h"
+#include "ThreadedExecutor.h"
+#include <atomic>
+#include <set>
 
 namespace FileWriter {
 class FileWriterTask;
@@ -35,7 +35,9 @@ public:
 class StreamMaster : public IStreamMaster {
 public:
   StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
-               std::string const &ServiceID, FileWriter::StreamerOptions Settings, Metrics::Registrar Registrar);
+               std::string const &ServiceID,
+               FileWriter::StreamerOptions Settings,
+               Metrics::Registrar Registrar);
   ~StreamMaster() override;
   StreamMaster(const StreamMaster &) = delete;
   StreamMaster(StreamMaster &&) = delete;

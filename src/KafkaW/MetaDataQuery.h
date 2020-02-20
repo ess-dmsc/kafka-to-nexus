@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <string>
 #include <chrono>
-#include <set>
 #include <librdkafka/rdkafkacpp.h>
+#include <set>
+#include <string>
 
 namespace KafkaW {
 
@@ -25,27 +25,30 @@ using duration = std::chrono::system_clock::duration;
 // \param[in] Topic     Name of topic.
 // \param[in] Partition Partition id.
 // \param[in] Time      Timestamp for which the offset should be found.
-// \param[in] TimeOut   The amount of time to wait for the meta-data call to complete.
-// \returns             The closest offset with a timestamp before Time (if available).
-// \throws MetadataException if a failure occurs.
-  std::vector<std::pair<int, int64_t>> getOffsetForTime(std::string Broker, std::string Topic, std::vector<int> Partitions,
-                         time_point Time, duration TimeOut);
+// \param[in] TimeOut   The amount of time to wait for the meta-data call to
+// complete. \returns             The closest offset with a timestamp before
+// Time (if available). \throws MetadataException if a failure occurs.
+std::vector<std::pair<int, int64_t>>
+getOffsetForTime(std::string Broker, std::string Topic,
+                 std::vector<int> Partitions, time_point Time,
+                 duration TimeOut);
 
 // \brief Query the broker for partitions available on a specified topic.
 //
 // \param[in] Broker    Address of one or several brokers.
 // \param[in] Topic     Name of topic.
-// \param[in] TimeOut   The amount of time to wait for the meta-data call to complete.
-// \returns             A set of partition id:s.
-// \throws MetadataException if a failure occurs.
-std::set<int> getPartitionsForTopic(std::string Broker, std::string Topic, duration TimeOut);
+// \param[in] TimeOut   The amount of time to wait for the meta-data call to
+// complete. \returns             A set of partition id:s. \throws
+// MetadataException if a failure occurs.
+std::set<int> getPartitionsForTopic(std::string Broker, std::string Topic,
+                                    duration TimeOut);
 
 // \brief Query the broker for available topics.
 //
 // \param[in] Broker    Address of one or several brokers.
-// \param[in] TimeOut   The amount of time to wait for the meta-data call to complete.
-// \returns             A set of topic names.
-// \throws MetadataException if a failure occurs.
+// \param[in] TimeOut   The amount of time to wait for the meta-data call to
+// complete. \returns             A set of topic names. \throws
+// MetadataException if a failure occurs.
 std::set<std::string> getTopicList(std::string Broker, duration TimeOut);
 
-}  // namespace KafkaW
+} // namespace KafkaW

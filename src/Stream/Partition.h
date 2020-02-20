@@ -9,30 +9,31 @@
 
 #pragma once
 
-#include "ThreadedExecutor.h"
-#include "MessageWriter.h"
 #include "FlatbufferMessage.h"
-#include "Message.h"
-#include <chrono>
 #include "KafkaW/Consumer.h"
+#include "Message.h"
+#include "MessageWriter.h"
 #include "PartitionFilter.h"
 #include "SourceFilter.h"
 #include "Stream/MessageWriter.h"
+#include "ThreadedExecutor.h"
+#include <chrono>
 
 namespace Stream {
 
 // Pollution of namespace, fix.
-using SrcToDst = std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash, Message::DstId>>;
-using std::chrono_literals::operator ""ms;
-using std::chrono_literals::operator ""s;
+using SrcToDst = std::vector<
+    std::pair<FileWriter::FlatbufferMessage::SrcHash, Message::DstId>>;
+using std::chrono_literals::operator""ms;
+using std::chrono_literals::operator""s;
 using time_point = std::chrono::system_clock::time_point;
 
 class Partition {
 public:
   Partition() = default;
 
-  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map, MessageWriter *Writer,
-            Metrics::Registrar RegisterMetric,
+  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
+            MessageWriter *Writer, Metrics::Registrar RegisterMetric,
             time_point Start, time_point Stop = time_point::max());
 
   void setStopTime(time_point Stop);
@@ -47,17 +48,20 @@ protected:
                               Metrics::Severity::ERROR};
   Metrics::Metric MessagesReceived{"received",
                                    "Number of messages received from broker."};
-  Metrics::Metric MessagesProcessed{"processed",
-                                    "Number of messages queued up for writing."};
+  Metrics::Metric MessagesProcessed{
+      "processed", "Number of messages queued up for writing."};
   Metrics::Metric BadOffsets{"bad_offsets",
-                             "Number of messages received with bad offsets.", Metrics::Severity::ERROR};
+                             "Number of messages received with bad offsets.",
+                             Metrics::Severity::ERROR};
 
-  Metrics::Metric FlatbufferErrors{"flatbuffer_errors",
-                              "Errors when creating flatbuffer message from Kafka message.",
-                              Metrics::Severity::ERROR};
+  Metrics::Metric FlatbufferErrors{
+      "flatbuffer_errors",
+      "Errors when creating flatbuffer message from Kafka message.",
+      Metrics::Severity::ERROR};
 
-  Metrics::Metric BadTimestamps{"bad_timestamps",
-                                "Number of messages received with bad timestamps.", Metrics::Severity::ERROR};
+  Metrics::Metric BadTimestamps{
+      "bad_timestamps", "Number of messages received with bad timestamps.",
+      Metrics::Severity::ERROR};
 
   void pollForMessage();
 
@@ -68,7 +72,7 @@ protected:
   std::int64_t CurrentOffset{0};
   PartitionFilter StopTester;
   std::map<FileWriter::FlatbufferMessage::SrcHash, SourceFilter> MsgFilters;
-  ThreadedExecutor Executor; //Must be last
+  ThreadedExecutor Executor; // Must be last
 };
 
 } // namespace Stream

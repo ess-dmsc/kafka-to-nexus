@@ -13,6 +13,10 @@
 #include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
+#include "Metrics/CarbonSink.h"
+#include "Metrics/LogSink.h"
+#include "Metrics/Registrar.h"
+#include "Metrics/Reporter.h"
 #include "Status/StatusReporter.h"
 #include "Version.h"
 #include "WriterRegistrar.h"
@@ -20,10 +24,6 @@
 #include <CLI/CLI.hpp>
 #include <csignal>
 #include <string>
-#include "Metrics/Registrar.h"
-#include "Metrics/Reporter.h"
-#include "Metrics/LogSink.h"
-#include "Metrics/CarbonSink.h"
 
 // These should only be visible in this translation unit
 static std::atomic_bool GotSignal{false};
@@ -86,16 +86,19 @@ int main(int argc, char **argv) {
   }
   using std::chrono_literals::operator""ms;
   std::vector<std::shared_ptr<Metrics::Reporter>> MetricsReporters;
-  MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(std::make_unique<Metrics::LogSink>(), 500ms));
+  MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
+      std::make_unique<Metrics::LogSink>(), 500ms));
 
   if (not Options->GrafanCarbonAddress.HostPort.empty()) {
     auto HostName = Options->GrafanCarbonAddress.Host;
     auto Port = Options->GrafanCarbonAddress.Port;
-    MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(std::make_unique<Metrics::CarbonSink>(HostName, Port), 500ms));
+    MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
+        std::make_unique<Metrics::CarbonSink>(HostName, Port), 500ms));
   }
 
   Metrics::Registrar MainRegistrar("kakfa-to-nexus", MetricsReporters);
-  auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->GrafanaCarbonMetricsId);
+  auto UsedRegistrar =
+      MainRegistrar.getNewRegistrar(Options->GrafanaCarbonMetricsId);
 
   if (Options->use_signal_handler) {
     std::signal(SIGINT, signal_handler);

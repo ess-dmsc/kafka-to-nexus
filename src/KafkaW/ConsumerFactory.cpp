@@ -42,7 +42,7 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
   return std::make_unique<Consumer>(std::move(KafkaConsumer), std::move(Conf),
                                     std::move(EventCallback));
 }
-  std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings) {
-    return createConsumer(Settings, Settings.Address);
-  }
+std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings) {
+  return createConsumer(Settings, Settings.Address);
+}
 } // namespace KafkaW

@@ -26,7 +26,8 @@ public:
         std::make_unique<FileWriter::FileWriterTask>("Not Important");
     FileWriterTask->setJobId(JobId);
     StreamMaster = std::make_unique<FileWriter::StreamMaster>(
-        std::move(FileWriterTask), "ServiceID", FileWriter::StreamerOptions(), Metrics::Registrar("some-app", {}));
+        std::move(FileWriterTask), "ServiceID", FileWriter::StreamerOptions(),
+        Metrics::Registrar("some-app", {}));
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;

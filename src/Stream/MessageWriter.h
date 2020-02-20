@@ -12,10 +12,10 @@
 
 #pragma once
 
+#include "Message.h"
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
 #include "ThreadedExecutor.h"
-#include "Message.h"
 #include "WriterModuleBase.h"
 #include "logger.h"
 #include <map>

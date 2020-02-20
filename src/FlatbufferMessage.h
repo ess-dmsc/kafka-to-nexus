@@ -9,13 +9,14 @@
 
 #pragma once
 
-#include "logger.h"
 #include "Msg.h"
+#include "logger.h"
 
 namespace FileWriter {
 class FlatbufferError : public std::runtime_error {
 public:
-  explicit FlatbufferError(std::string const &What) : std::runtime_error(What) {}
+  explicit FlatbufferError(std::string const &What)
+      : std::runtime_error(What) {}
 };
 
 class BufferTooSmallError : public FlatbufferError {
@@ -56,21 +57,25 @@ public:
   /// Constructor is used in unit testing code to simplify set-up.
   FlatbufferMessage() = default;
 
-  /// \brief Creates a flatbuffer message, verifies the message and extracts metadata.
+  /// \brief Creates a flatbuffer message, verifies the message and extracts
+  /// metadata.
   ///
-  ///\note This constructor should be used as little as possible and then only in unit tests.
+  ///\note This constructor should be used as little as possible and then only
+  ///in unit tests.
   /// \param BufferPtr Pointer to memory containing the data.
   /// \param Size Number of bytes in message.
   /// \note Will make a copy of the data in the Kafka message.
   FlatbufferMessage(char const *BufferPtr, size_t Size);
 
-  /// \brief Creates a flatbuffer message, verifies the message and extracts metadata.
+  /// \brief Creates a flatbuffer message, verifies the message and extracts
+  /// metadata.
   ///
-  /// \param KafkaMessage The Kafka message used to create the Flatbuffer message.
-  /// \note Will make a copy of the data in the Kafka message.
+  /// \param KafkaMessage The Kafka message used to create the Flatbuffer
+  /// message. \note Will make a copy of the data in the Kafka message.
   FlatbufferMessage(FileWriter::Msg const &KafkaMessage);
 
-  /// \brief Creates a flatbuffer message, verifies the message and extracts metadata.
+  /// \brief Creates a flatbuffer message, verifies the message and extracts
+  /// metadata.
   ///
   /// \param KafkaMessage The copy constructor.
   /// \note Will make a copy of the data in the Kafka message.

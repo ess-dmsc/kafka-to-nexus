@@ -22,14 +22,15 @@ public:
   using WorkMessage = std::function<void()>;
   ThreadedExecutor() : WorkerThread(ThreadFunction) {}
   ~ThreadedExecutor() {
-    SendWork([=]() {
-      RunThread = false;
-    });
+    SendWork([=]() { RunThread = false; });
     WorkerThread.join();
   }
   void SendWork(WorkMessage Message) { MessageQueue.enqueue(Message); }
   size_t size_approx() { return MessageQueue.size_approx(); }
-  void SendLowPrioWork(WorkMessage Message) { LowPrioMessageQueue.enqueue(Message); }
+  void SendLowPrioWork(WorkMessage Message) {
+    LowPrioMessageQueue.enqueue(Message);
+  }
+
 private:
   bool RunThread{true};
   std::function<void()> ThreadFunction{[=]() {

@@ -25,5 +25,4 @@ findKafkaTopic(const std::string &Topic,
   }
   return *Iterator;
 }
-}
-
+} // namespace KafkaW

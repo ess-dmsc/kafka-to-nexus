@@ -12,11 +12,8 @@
 namespace Stream {
 
 SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
-                           MessageWriter *Destination) : Start(StartTime),
-                                                         Stop(StopTime),
-                                                         Dest(Destination) {
-
-}
+                           MessageWriter *Destination)
+    : Start(StartTime), Stop(StopTime), Dest(Destination) {}
 
 SourceFilter::~SourceFilter() {
   if (BufferedMessage.isValid()) {
@@ -25,17 +22,14 @@ SourceFilter::~SourceFilter() {
   }
 }
 
-void SourceFilter::setStopTime(time_point StopTime) {
-  Stop = StopTime;
-}
+void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
 
-bool SourceFilter::hasFinished() {
-  return IsDone;
-}
+bool SourceFilter::hasFinished() { return IsDone; }
 
 uint64_t toNanoSec(time_point Time) {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
-      Time.time_since_epoch()).count();
+             Time.time_since_epoch())
+      .count();
 }
 
 bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
@@ -43,7 +37,7 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
     return false;
   } else if (InMsg.getTimestamp() < CurrentTimeStamp or
              not BufferedMessage.isValid()) {
-    //Log ERROR
+    // Log ERROR
     return false;
   }
   CurrentTimeStamp = InMsg.getTimestamp();

@@ -8,15 +8,18 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Topic.h"
-#include "KafkaW/MetaDataQuery.h"
 #include "KafkaW/ConsumerFactory.h"
+#include "KafkaW/MetaDataQuery.h"
 
 namespace Stream {
 
-Topic::Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map, MessageWriter *Writer,
-             Metrics::Registrar &RegisterMetric, time_point StartTime, time_point StopTime) : DataMap(Map), WriterPtr(Writer), StartConsumeTime(
-    StartTime), StopConsumeTime(StopTime), CurrentMetadataTimeOut(Settings.MinMetadataTimeout), Registrar(
-    RegisterMetric.getNewRegistrar(Topic)) {
+Topic::Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map,
+             MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
+             time_point StartTime, time_point StopTime)
+    : DataMap(Map), WriterPtr(Writer), StartConsumeTime(StartTime),
+      StopConsumeTime(StopTime),
+      CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
+      Registrar(RegisterMetric.getNewRegistrar(Topic)) {
   Executor.SendWork([=]() {
     CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
     getPartitionsForTopic(Settings, Topic);
@@ -33,17 +36,14 @@ void Topic::getPartitionsForTopic(KafkaW::BrokerSettings Settings,
                                   std::string Topic) {
   std::vector<int> FoundPartitions;
   try {
-    auto FoundPartitions = KafkaW::getPartitionsForTopic(Settings.Address,
-                                                         Topic,
-                                                         Settings.MinMetadataTimeout);
+    auto FoundPartitions = KafkaW::getPartitionsForTopic(
+        Settings.Address, Topic, Settings.MinMetadataTimeout);
   } catch (std::exception &E) {
     CurrentMetadataTimeOut *= 2;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    Executor.SendLowPrioWork([=]() {
-      getPartitionsForTopic(Settings, Topic);
-    });
+    Executor.SendLowPrioWork([=]() { getPartitionsForTopic(Settings, Topic); });
   }
   Executor.SendWork([=]() {
     CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
@@ -56,34 +56,32 @@ void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
                                     std::vector<int> Partitions) {
   std::vector<std::pair<int, int64_t>> PartitionOffsetList;
   try {
-    PartitionOffsetList = KafkaW::getOffsetForTime(Settings.Address, Topic,
-                                                   Partitions, StartConsumeTime,
-                                                   CurrentMetadataTimeOut);
+    PartitionOffsetList =
+        KafkaW::getOffsetForTime(Settings.Address, Topic, Partitions,
+                                 StartConsumeTime, CurrentMetadataTimeOut);
   } catch (std::exception &E) {
     CurrentMetadataTimeOut *= 2;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    Executor.SendLowPrioWork([=]() {
-      getOffsetsForPartitions(Settings, Topic, Partitions);
-    });
+    Executor.SendLowPrioWork(
+        [=]() { getOffsetsForPartitions(Settings, Topic, Partitions); });
   }
-  Executor.SendWork([=]() {
-    createStreams(Settings, Topic, PartitionOffsetList);
-  });
+  Executor.SendWork(
+      [=]() { createStreams(Settings, Topic, PartitionOffsetList); });
 }
 
-void
-Topic::createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
-                     std::vector<std::pair<int, int64_t> > PartitionOffsets) {
+void Topic::createStreams(
+    KafkaW::BrokerSettings Settings, std::string Topic,
+    std::vector<std::pair<int, int64_t>> PartitionOffsets) {
   for (const auto &CParOffset : PartitionOffsets) {
     auto CRegistrar = Registrar.getNewRegistrar(
         "partitions_" + std::to_string(CParOffset.first));
     auto Consumer = KafkaW::createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
-    ConsumerThreads.emplace_back(
-        std::make_unique<Partition>(std::move(Consumer), DataMap, WriterPtr,
-                                    CRegistrar, StartConsumeTime, StopConsumeTime));
+    ConsumerThreads.emplace_back(std::make_unique<Partition>(
+        std::move(Consumer), DataMap, WriterPtr, CRegistrar, StartConsumeTime,
+        StopConsumeTime));
   }
 }
 

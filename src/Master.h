@@ -12,6 +12,7 @@
 #include "CommandParser.h"
 #include "KafkaW/PollStatus.h"
 #include "MainOpt.h"
+#include "Metrics/Registrar.h"
 #include "Msg.h"
 #include "States.h"
 #include <atomic>
@@ -19,7 +20,6 @@
 #include <mpark/variant.hpp>
 #include <string>
 #include <vector>
-#include "Metrics/Registrar.h"
 
 namespace Status {
 class StatusReporter;
@@ -44,7 +44,8 @@ class Master {
 public:
   Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
          std::unique_ptr<IJobCreator> Creator,
-         std::unique_ptr<Status::StatusReporter> Reporter, Metrics::Registrar Registrar);
+         std::unique_ptr<Status::StatusReporter> Reporter,
+         Metrics::Registrar Registrar);
   virtual ~Master() = default;
 
   /// \brief Sets up command listener and handles any commands received.

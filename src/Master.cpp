@@ -65,9 +65,11 @@ FileWriterState getNextState(std::string const &Command,
 
 Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
                std::unique_ptr<IJobCreator> Creator,
-               std::unique_ptr<Status::StatusReporter> Reporter, Metrics::Registrar Registrar)
+               std::unique_ptr<Status::StatusReporter> Reporter,
+               Metrics::Registrar Registrar)
     : Logger(getLogger()), MainConfig(Config), CmdListener(std::move(Listener)),
-      Creator_(std::move(Creator)), Reporter(std::move(Reporter)), MasterMetricsRegistrar(Registrar) {
+      Creator_(std::move(Creator)), Reporter(std::move(Reporter)),
+      MasterMetricsRegistrar(Registrar) {
   CmdListener->start();
   Logger->info("getFileWriterProcessId: {}", Config.ServiceID);
 }
@@ -92,8 +94,8 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
   Logger->info("Received request to start writing file with id : {} at "
                "time {} ms",
                StartInfo.JobID, StartInfo.StartTime.count());
-  CurrentStreamMaster =
-      Creator_->createFileWritingJob(StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
+  CurrentStreamMaster = Creator_->createFileWritingJob(
+      StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
   Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
                               StartInfo.StartTime, StartInfo.StopTime});
 }

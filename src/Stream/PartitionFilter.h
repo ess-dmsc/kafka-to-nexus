@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <chrono>
 #include "KafkaW/PollStatus.h"
+#include <chrono>
 
 namespace Stream {
 using time_point = std::chrono::system_clock::time_point;
@@ -19,10 +19,9 @@ using duration = std::chrono::system_clock::duration;
 class PartitionFilter {
 public:
   PartitionFilter(time_point StopAtTime, duration ErrorTimeOut);
-  void setStopTime(time_point Stop) {
-    StopTime = Stop;
-  }
+  void setStopTime(time_point Stop) { StopTime = Stop; }
   bool shouldStopPartition(KafkaW::PollStatus LastPollStatus);
+
 protected:
   bool HasError{false};
   time_point ErrorTime;

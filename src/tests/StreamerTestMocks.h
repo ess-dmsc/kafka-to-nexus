@@ -1,10 +1,10 @@
 #pragma once
 
-#include <trompeloeil.hpp>
-#include "KafkaW/Consumer.h"
 #include "FlatbufferMessage.h"
 #include "FlatbufferReader.h"
+#include "KafkaW/Consumer.h"
 #include "WriterModuleBase.h"
+#include <trompeloeil.hpp>
 
 namespace FileWriter {
 
