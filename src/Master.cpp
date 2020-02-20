@@ -23,23 +23,26 @@ FileWriterState getNextState(Msg const &Command,
                              std::chrono::milliseconds TimeStamp,
                              FileWriterState const &CurrentState) {
   try {
-    if (mpark::get_if<States::Writing>(&CurrentState)) {
-      if (CommandParser::isStopCommand(Command)) {
-        auto StopInfo = CommandParser::extractStopInformation(Command);
-        if (StopInfo.StopTime.count() == 0) {
-          StopInfo.StopTime = getCurrentTimeStampMS();
+    if (CommandParser::isStopCommand(Command) ||
+        CommandParser::isStartCommand(Command)) {
+      if (mpark::get_if<States::Writing>(&CurrentState)) {
+        if (CommandParser::isStopCommand(Command)) {
+          auto StopInfo = CommandParser::extractStopInformation(Command);
+          if (StopInfo.StopTime.count() == 0) {
+            StopInfo.StopTime = getCurrentTimeStampMS();
+          }
+          return States::StopRequested{StopInfo};
+        } else {
+          throw std::runtime_error("Start command is not allowed when writing");
         }
-        return States::StopRequested{StopInfo};
       } else {
-        throw std::runtime_error("Start command is not allowed when writing");
-      }
-    } else {
-      if (CommandParser::isStartCommand(Command)) {
-        auto const StartInfo =
-            CommandParser::extractStartInformation(Command, TimeStamp);
-        return States::StartRequested{StartInfo};
-      } else {
-        throw std::runtime_error("Stop command is not allowed when idle");
+        if (CommandParser::isStartCommand(Command)) {
+          auto const StartInfo =
+              CommandParser::extractStartInformation(Command, TimeStamp);
+          return States::StartRequested{StartInfo};
+        } else {
+          throw std::runtime_error("Stop command is not allowed when idle");
+        }
       }
     }
   } catch (std::runtime_error const &Error) {

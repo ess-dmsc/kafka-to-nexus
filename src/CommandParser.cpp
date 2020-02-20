@@ -103,7 +103,13 @@ bool isStartCommand(Msg const &CommandMessage) {
 
   auto BufferVerifier =
       flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  return VerifyRunStartBuffer(BufferVerifier);
+  auto VerifiedStartCommand = VerifyRunStartBuffer(BufferVerifier);
+  if (!VerifiedStartCommand) {
+    auto Logger = getLogger();
+    Logger->warn("Message with start command identifer received, but it failed "
+                 "flatbuffer verification");
+  }
+  return VerifiedStartCommand;
 }
 
 bool isStopCommand(Msg const &CommandMessage) {
@@ -114,7 +120,13 @@ bool isStopCommand(Msg const &CommandMessage) {
 
   auto BufferVerifier =
       flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  return VerifyRunStopBuffer(BufferVerifier);
+  auto VerifiedStopCommand = VerifyRunStopBuffer(BufferVerifier);
+  if (!VerifiedStopCommand) {
+    auto Logger = getLogger();
+    Logger->warn("Message with stop command identifer received, but it failed "
+                 "flatbuffer verification");
+  }
+  return VerifiedStopCommand;
 }
 
 } // namespace CommandParser
