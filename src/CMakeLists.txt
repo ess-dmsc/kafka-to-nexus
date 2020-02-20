@@ -94,7 +94,7 @@ set(kafka_to_nexus_SRC
     Stream/MessageWriter.cpp
     Stream/Message.cpp
     Stream/Partition.cpp
-    Stream/Topic.cpp KafkaW/MetaDataQuery.cpp)
+    Stream/Topic.cpp KafkaW/MetaDataQuery.cpp KafkaW/MetaDataQueryImpl.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
