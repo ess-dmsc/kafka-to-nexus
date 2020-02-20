@@ -1,16 +1,6 @@
 version: '2'
 
 services:
-  event-producer:
-    image: screamingudder/nexus-streamer:456f5a6
-    network_mode: "host"
-    environment:
-      CONFIG_FILE: "/streamer_config.ini"
-      KAFKA_BROKER: "localhost"
-    volumes:
-      - ./config-files/streamer_config.ini:/streamer_config.ini
-      - ./config-files/SANS2D_reduced_with_geometry.nxs:/SANS2D_reduced_with_geometry.nxs
-
   filewriter:
     depends_on:
       - event-producer
