@@ -66,6 +66,10 @@ void Partition::pollForMessage() {
     case KafkaW::PollStatus::Error:
       KafkaErrors++;
       break;
+    case KafkaW::PollStatus::EndOfPartition: // Do nothing
+      break;
+    case KafkaW::PollStatus::Empty: // Do nothing
+      break;
   }
  if (StopTester.shouldStopPartition(Msg.first)) {
    HasFinished = true;
@@ -106,4 +110,4 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
 }
 
-} // namespace Stream
+} // namespace Stream

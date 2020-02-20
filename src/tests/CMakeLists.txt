@@ -13,8 +13,7 @@ set(UnitTests_SRC
         URITests.cpp
         CommandHandlerTests.cpp
         NeXusDatasetTests.cpp
-        DemuxerTests.cpp
-        MessageTests.cpp
+    MessageTests.cpp
         EventLoggerTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
@@ -31,8 +30,7 @@ set(UnitTests_SRC
         Metrics/MetricsReporterTest.cpp
         Metrics/LogSinkTest.cpp
         MasterTests.cpp
-        StreamerTests.cpp
-        $<TARGET_OBJECTS:writer_module>
+    $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
     DataMessageWriterTests.cpp MetaDataQueryTests.cpp)
 

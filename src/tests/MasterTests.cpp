@@ -77,7 +77,7 @@ public:
   std::unique_ptr<IStreamMaster>
   createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
                        MainOpt & /*Settings*/,
-                       SharedLogger const & /*Logger*/) override {
+                       SharedLogger const & /*Logger*/, Metrics::Registrar) override {
     return std::make_unique<FakeStreamMaster>("some_id");
   };
 };
@@ -113,7 +113,7 @@ public:
              std::unique_ptr<IJobCreator> JobCreator,
              std::unique_ptr<Status::StatusReporter> Reporter)
       : Master(Opt, std::move(CmdListener), std::move(JobCreator),
-               std::move(Reporter)) {}
+               std::move(Reporter), Metrics::Registrar("some-reg", {})) {}
   void injectMessage(KafkaW::PollStatus Status, Msg Message) {
     StoredMessage.first = Status;
     StoredMessage.second = Message;

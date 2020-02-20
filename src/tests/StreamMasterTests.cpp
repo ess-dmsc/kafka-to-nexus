@@ -9,7 +9,6 @@
 
 #include "KafkaW/Producer.h"
 #include "StreamMaster.h"
-#include "Streamer.h"
 #include <gtest/gtest.h>
 
 class ProducerStandIn : public KafkaW::Producer {
@@ -26,9 +25,8 @@ public:
     FileWriterTask =
         std::make_unique<FileWriter::FileWriterTask>("Not Important");
     FileWriterTask->setJobId(JobId);
-    std::map<std::string, FileWriter::Streamer> Streamers;
     StreamMaster = std::make_unique<FileWriter::StreamMaster>(
-        std::move(FileWriterTask), "ServiceID", std::move(Streamers));
+        std::move(FileWriterTask), "ServiceID", FileWriter::StreamerOptions(), Metrics::Registrar("some-app", {}));
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;

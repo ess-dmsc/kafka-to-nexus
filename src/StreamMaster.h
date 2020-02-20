@@ -21,7 +21,6 @@
 #include "Metrics/Registrar.h"
 
 namespace FileWriter {
-class Streamer;
 class FileWriterTask;
 
 class IStreamMaster {

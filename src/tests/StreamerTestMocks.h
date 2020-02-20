@@ -1,8 +1,10 @@
 #pragma once
 
 #include <trompeloeil.hpp>
-
-#include "Streamer.h"
+#include "KafkaW/Consumer.h"
+#include "FlatbufferMessage.h"
+#include "FlatbufferReader.h"
+#include "WriterModuleBase.h"
 
 namespace FileWriter {
 
@@ -20,33 +22,6 @@ public:
   IMPLEMENT_MOCK2(offsetsForTimesAllPartitions);
   IMPLEMENT_MOCK2(getHighWatermarkOffset);
   IMPLEMENT_MOCK1(getCurrentOffsets);
-};
-
-class DemuxerStandIn : public DemuxTopic {
-public:
-  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
-  void process_message(FlatbufferMessage const &) override {}
-};
-
-class StreamerStandIn : public Streamer {
-public:
-  StreamerStandIn()
-      : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
-                 std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings),
-                 std::make_shared<DemuxerStandIn>("SomeTopic")) {}
-  explicit StreamerStandIn(StreamerOptions Opts)
-      : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
-                 std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings),
-                 std::make_shared<DemuxerStandIn>("SomeTopic")) {}
-  StreamerStandIn(StreamerOptions Opts, std::shared_ptr<DemuxTopic> &Demuxer)
-      : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
-                 std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings),
-                 Demuxer) {}
-  using Streamer::ConsumerInitialised;
-  using Streamer::setStartTime;
 };
 
 } // namespace FileWriter

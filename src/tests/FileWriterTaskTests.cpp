@@ -33,7 +33,7 @@ TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
 
   Task.addSource(std::move(Src));
 
-  ASSERT_EQ(1u, Task.demuxers().size());
+  ASSERT_EQ(1u, Task.sources().size());
 }
 
 TEST(FileWriterTask, SettingJobIdSetsID) {

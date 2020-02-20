@@ -59,8 +59,7 @@ else()
 endif()
 
 set(kafka_to_nexus_SRC
-        StreamStatus.cpp
-        StreamMaster.cpp
+    StreamMaster.cpp
         Master.cpp
         logger.cpp
         CommandListener.cpp
@@ -100,8 +99,7 @@ set(kafka_to_nexus_SRC
 set(kafka_to_nexus_INC
         JobCreator.h
         CommandListener.h
-        StreamStatus.h
-        EventLogger.h
+    EventLogger.h
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h

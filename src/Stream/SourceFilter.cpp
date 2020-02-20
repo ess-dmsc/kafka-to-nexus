@@ -33,7 +33,7 @@ bool SourceFilter::hasFinished() {
   return IsDone;
 }
 
-int64_t toNanoSec(time_point Time) {
+uint64_t toNanoSec(time_point Time) {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
       Time.time_since_epoch()).count();
 }
