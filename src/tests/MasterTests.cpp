@@ -104,7 +104,7 @@ public:
              std::unique_ptr<Status::StatusReporter> Reporter)
       : Master(Opt, std::move(CmdListener), std::move(JobCreator),
                std::move(Reporter)) {}
-  void injectMessage(KafkaW::PollStatus Status, Msg Message) {
+  void injectMessage(KafkaW::PollStatus const &Status, Msg const &Message) {
     StoredMessage.first = Status;
     StoredMessage.second = Message;
   }
