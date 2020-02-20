@@ -1,4 +1,4 @@
-from helpers.kafkahelpers import create_producer, send_writer_command, create_consumer
+from helpers.kafkahelpers import create_producer, create_consumer, publish_run_start_message, publish_run_stop_message
 from time import sleep
 import pytest
 
@@ -6,24 +6,15 @@ import pytest
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)
-    job_id = send_writer_command(
-        "commands/start-command-generic.json",
-        producer,
-        service_id="filewriter1",
-        filename="output_file_ignores_stop_1.nxs",
-    )
-    send_writer_command(
-        "commands/start-command-generic.json",
-        producer,
-        service_id="filewriter2",
-        filename="output_file_ignores_stop_2.nxs",
-    )
+    service_id_1 = "filewriter1"
+    job_id = publish_run_start_message(producer, "commands/nexus_structure.json",
+                                       nexus_filename="output_file_ignores_stop_1.nxs", service_id=service_id_1)
+    publish_run_start_message(producer, "commands/nexus_structure.json",
+                              nexus_filename="output_file_ignores_stop_2.nxs", service_id="filewriter2")
 
     sleep(10)
 
-    send_writer_command(
-        "commands/stop-command.json", producer, job_id=job_id, service_id="filewriter1"
-    )
+    publish_run_stop_message(producer, job_id, service_id=service_id_1)
 
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus2"])

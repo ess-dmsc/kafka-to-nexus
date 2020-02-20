@@ -3,7 +3,8 @@ import docker
 from time import sleep
 from helpers.kafkahelpers import (
     create_producer,
-    send_writer_command,
+    publish_run_start_message,
+    publish_run_stop_message,
     consume_everything,
 )
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
@@ -38,12 +39,9 @@ def test_long_run(docker_compose_long_running):
     producer = create_producer()
     sleep(20)
     # Start file writing
-    job_id = send_writer_command(
-        "commands/start-command-for-long-running.json",
-        producer,
-        topic="TEST_writerCommandLR",
-        start_time=int(docker_compose_long_running),
-    )
+    job_id = publish_run_start_message(producer, "commands/nexus_structure_long_running.json",
+                                       nexus_filename="output_file_lr.nxs", topic="TEST_writerCommandLR",
+                                       start_time=int(docker_compose_long_running))
     sleep(10)
     # Minimum length of the test is determined by (pv_updates * 3) + 10 seconds
     pv_updates = 6000
@@ -52,12 +50,7 @@ def test_long_run(docker_compose_long_running):
         change_pv_value("SIMPLE:DOUBLE", i)
         sleep(3)
 
-    send_writer_command(
-        "commands/stop-command.json",
-        producer,
-        topic="TEST_writerCommandLR",
-        job_id=job_id,
-    )
+    publish_run_stop_message(producer, job_id=job_id, topic="TEST_writerCommandLR")
     sleep(30)
 
     filepath = "output-files/output_file_lr.nxs"

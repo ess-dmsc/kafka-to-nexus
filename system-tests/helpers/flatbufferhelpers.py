@@ -4,6 +4,7 @@ from .f142_logdata.Value import Value
 from .f142_logdata.Int import IntStart, IntAddValue, IntEnd
 from .run_start_stop import RunStart, RunStop
 from time import time
+from typing import Optional
 
 
 def _millseconds_to_nanoseconds(time_ms: int) -> int:
@@ -72,7 +73,7 @@ def create_runstart_message(job_id: str, filename: str, start_time: int = _secon
 
 
 def create_runstop_message(job_id: str, run_name: str = "test_run", service_id: str = "",
-                           stop_time: int = _seconds_to_nanoseconds(time())):
+                           stop_time: Optional[int] = None):
     file_identifier = b"6s4t"
     builder = flatbuffers.Builder(1024)
 
@@ -82,7 +83,8 @@ def create_runstop_message(job_id: str, run_name: str = "test_run", service_id: 
 
     # Build the actual buffer
     RunStop.RunStopStart(builder)
-    RunStop.RunStopAddStopTime(builder, stop_time)
+    if stop_time is not None:
+        RunStop.RunStopAddStopTime(builder, stop_time)
     RunStop.RunStopAddRunName(builder, run_name_offset)
     RunStop.RunStopAddJobId(builder, job_id_offset)
     RunStop.RunStopAddServiceId(builder, service_id_offset)
