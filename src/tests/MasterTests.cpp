@@ -20,13 +20,14 @@
 #include "helpers/RunStartStopHelpers.h"
 
 using namespace FileWriter;
+using namespace RunStartStopHelpers;
 
-auto const StartCommand = buildRunStartMessage(
-    InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-    ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput, StopTimeInput);
+auto const StartCommand = RunStartStopHelpers::buildRunStartMessage(
+    "TEST", "42", "{}", "qw3rty", "filewriter1", "somehost:1234",
+    "a-dummy-name-01.h5", 123456789000, 123456790000);
 
-auto const StopCommand = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                             JobIDInput, ServiceIDInput);
+auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
+    123456790000, "42", "qw3rty", "filewriter1");
 
 TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
 
@@ -154,7 +155,7 @@ public:
 TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
   MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
   Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg(StartCommand.c_str(), StartCommand.size()));
+                        Msg(StartCommand.data(), StartCommand.size()));
 
   REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
@@ -164,7 +165,7 @@ TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
 TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
   MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
   Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg(StartCommand.c_str(), StartCommand.size()));
+                        Msg(StartCommand.data(), StartCommand.size()));
   REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
 

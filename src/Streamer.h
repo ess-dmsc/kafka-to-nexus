@@ -121,8 +121,8 @@ private:
 
   bool messageTimestampInRange(std::uint64_t Timestamp) const;
 
-  std::unique_ptr<FlatbufferMessage> createFlatBufferMessage(char const *Data,
-                                                             size_t Size);
+  std::unique_ptr<FlatbufferMessage>
+  createFlatBufferMessage(uint8_t const *Data, size_t Size);
 
   /// Checks whether we've reached the stop offsets
   bool stopOffsetsReached() const;

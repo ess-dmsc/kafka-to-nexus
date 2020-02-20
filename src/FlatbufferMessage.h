@@ -54,7 +54,7 @@ public:
   ///
   /// \param BufferPtr Pointer to memory location containing flatbuffer.
   /// \param Size Size of flatbuffer in bytes.
-  FlatbufferMessage(char const *BufferPtr, size_t Size);
+  FlatbufferMessage(uint8_t const *BufferPtr, size_t Size);
 
   /// Default destructor.
   ~FlatbufferMessage() = default;
@@ -96,7 +96,7 @@ public:
   ///
   /// \return Pointer to flatbuffer data if flatbuffer is valid, `nullptr` if it
   /// is not.
-  char const *data() const { return DataPtr; };
+  uint8_t const *data() const { return DataPtr; };
 
   /// \brief Get size of flatbuffer.
   ///
@@ -106,7 +106,7 @@ public:
 
 private:
   void extractPacketInfo();
-  char const *const DataPtr{nullptr};
+  uint8_t const *const DataPtr{nullptr};
   size_t const DataSize{0};
   SrcHash SourceNameIDHash{0};
   std::string Sourcename;

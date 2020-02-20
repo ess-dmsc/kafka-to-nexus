@@ -45,7 +45,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  auto TestData = std::make_unique<char[]>(8);
+  auto TestData = std::make_unique<uint8_t[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   EXPECT_TRUE(CurrentMessage.isValid());
@@ -60,7 +60,7 @@ TEST_F(MessageTimeExtractionTest, WrongFlatbufferID) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  auto TestData = std::make_unique<char[]>(8);
+  auto TestData = std::make_unique<uint8_t[]>(8);
   std::memcpy(TestData.get() + 4, MessageKey.c_str(), 4);
 
   EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 8),
@@ -73,7 +73,7 @@ TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  auto TestData = std::make_unique<char[]>(8);
+  auto TestData = std::make_unique<uint8_t[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 7),
                BufferTooSmallError);
@@ -95,7 +95,7 @@ TEST_F(DemuxerTests, Success) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  auto TestData = std::make_unique<char[]>(8);
+  auto TestData = std::make_unique<uint8_t[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   std::string TopicName = "SomeTopicName";
@@ -116,7 +116,7 @@ TEST_F(DemuxerTests, WrongFlatbufferID) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  auto TestData = std::make_unique<char[]>(8);
+  auto TestData = std::make_unique<uint8_t[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   std::string TopicName = "SomeTopicName";
@@ -139,7 +139,7 @@ TEST_F(DemuxerTests, WrongSourceName) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  auto TestData = std::make_unique<char[]>(8);
+  auto TestData = std::make_unique<uint8_t[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   std::string TopicName = "SomeTopicName";

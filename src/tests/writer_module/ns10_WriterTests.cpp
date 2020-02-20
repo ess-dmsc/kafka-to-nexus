@@ -166,9 +166,8 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder->GetBufferPointer()),
-      Builder->GetSize());
+  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
+                                               Builder->GetSize());
 
   Writer.write(Message);
 
@@ -196,9 +195,8 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder->GetBufferPointer()),
-      Builder->GetSize());
+  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
+                                               Builder->GetSize());
 
   Writer.write(Message);
 
@@ -226,9 +224,8 @@ TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder->GetBufferPointer()),
-      Builder->GetSize());
+  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
+                                               Builder->GetSize());
 
   Writer.write(Message);
 
@@ -259,9 +256,8 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
 
   for (uint64_t i = 0; i < 10; ++i) {
     auto Builder = createFlatbufferMessageFromJson(BufferJson);
-    auto Message = FileWriter::FlatbufferMessage(
-        reinterpret_cast<char *>(Builder->GetBufferPointer()),
-        Builder->GetSize());
+    auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
+                                                 Builder->GetSize());
     Writer.write(Message);
   }
 
@@ -288,9 +284,8 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueCannotBeCastToDouble) {
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder->GetBufferPointer()),
-      Builder->GetSize());
+  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
+                                               Builder->GetSize());
 
   EXPECT_THROW(Writer.write(Message), std::invalid_argument);
 }
@@ -314,8 +309,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueDoesNotFitIntoDouble) {
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder->GetBufferPointer()),
-      Builder->GetSize());
+  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
+                                               Builder->GetSize());
   EXPECT_THROW(Writer.write(Message), std::out_of_range);
 }

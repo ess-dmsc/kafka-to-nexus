@@ -201,9 +201,8 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
   std::vector<uint32_t> const DetectorID = {3, 4, 5};
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime,
                                               TimeOfFlight, DetectorID);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -257,9 +256,8 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   std::vector<uint32_t> DetectorID = {3, 4, 5};
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime,
                                               TimeOfFlight, DetectorID);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -321,9 +319,8 @@ TEST_F(EventWriterTests,
       AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -358,9 +355,8 @@ TEST_F(EventWriterTests,
       AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -407,16 +403,14 @@ TEST_F(EventWriterTests,
   // First message with ADC pulse data
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
+                                            MessageBuffer.size());
 
   // Second message without ADC pulse data
   auto SecondMessageBuffer =
       generateFlatbufferData("TestSource", 0, 1, {0, 0, 0}, {0, 0, 0}, false);
-  FileWriter::FlatbufferMessage SecondTestMessage(
-      reinterpret_cast<const char *>(SecondMessageBuffer.data()),
-      MessageBuffer.size());
+  FileWriter::FlatbufferMessage SecondTestMessage(SecondMessageBuffer.data(),
+                                                  MessageBuffer.size());
 
   // Create writer and give it the message to write
   {

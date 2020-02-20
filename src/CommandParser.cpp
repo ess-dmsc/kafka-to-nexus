@@ -45,11 +45,8 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
 
   std::string const ErrorsString = Errors.str();
   if (!ErrorsString.empty()) {
-    std::string const FullErrorMessage = fmt::format(
-        "Errors encountered parsing run start message:\n{}", ErrorsString);
-    auto Logger = getLogger();
-    Logger->error(FullErrorMessage);
-    throw std::runtime_error(FullErrorMessage);
+    throw std::runtime_error(fmt::format(
+        "Errors encountered parsing run start message:\n{}", ErrorsString));
   }
 }
 }
@@ -87,12 +84,8 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
   const auto RunStopData = GetRunStop(CommandMessage.data());
 
   if (RunStopData->job_id()->size() == 0) {
-    std::string const FullErrorMessage =
-        "Errors encountered parsing run stop message:\n"
-        "Job ID missing, this field is required";
-    auto Logger = getLogger();
-    Logger->error(FullErrorMessage);
-    throw std::runtime_error(FullErrorMessage);
+    throw std::runtime_error("Errors encountered parsing run stop message:\n"
+                             "Job ID missing, this field is required");
   }
 
   Result.JobID = RunStopData->job_id()->str();

@@ -11,11 +11,6 @@
 #include <hs00_event_histogram_generated.h>
 
 namespace FlatbufferMetadata {
-
-static EventHistogram const *getRoot(char const *Data) {
-  return GetEventHistogram(Data);
-}
-
 bool hs00_Extractor::verify(FlatbufferMessage const &Message) const {
   flatbuffers::Verifier Verifier(
       reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
@@ -24,7 +19,7 @@ bool hs00_Extractor::verify(FlatbufferMessage const &Message) const {
 
 std::string
 hs00_Extractor::source_name(FlatbufferMessage const &Message) const {
-  auto Buffer = getRoot(Message.data());
+  auto Buffer = GetEventHistogram(Message.data());
   auto Source = Buffer->source();
   if (Source == nullptr) {
     spdlog::get("filewriterlogger")->info("message has no source_name");
@@ -34,7 +29,7 @@ hs00_Extractor::source_name(FlatbufferMessage const &Message) const {
 }
 
 uint64_t hs00_Extractor::timestamp(FlatbufferMessage const &Message) const {
-  auto Buffer = getRoot(Message.data());
+  auto Buffer = GetEventHistogram(Message.data());
   return Buffer->timestamp();
 }
 

@@ -223,7 +223,7 @@ bool Streamer::messageTimestampInRange(std::uint64_t Timestamp) const {
 }
 
 std::unique_ptr<FlatbufferMessage>
-Streamer::createFlatBufferMessage(char const *Data, size_t Size) {
+Streamer::createFlatBufferMessage(uint8_t const *Data, size_t Size) {
   std::unique_ptr<FlatbufferMessage> FBMessage;
   try {
     FBMessage = std::make_unique<FlatbufferMessage>(Data, Size);

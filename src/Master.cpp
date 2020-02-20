@@ -11,10 +11,8 @@
 #include "CommandListener.h"
 #include "CommandParser.h"
 #include "JobCreator.h"
-#include "Msg.h"
 #include "Status/StatusReporter.h"
 #include "helper.h"
-#include "json.h"
 #include "logger.h"
 #include <chrono>
 #include <functional>
@@ -25,27 +23,23 @@ FileWriterState getNextState(Msg const &Command,
                              std::chrono::milliseconds TimeStamp,
                              FileWriterState const &CurrentState) {
   try {
-    auto CommandName = CommandParser::extractCommandName(Command);
-
     if (mpark::get_if<States::Writing>(&CurrentState)) {
-      if (CommandName == CommandParser::StopCommand) {
+      if (CommandParser::isStopCommand(Command)) {
         auto StopInfo = CommandParser::extractStopInformation(Command);
         if (StopInfo.StopTime.count() == 0) {
           StopInfo.StopTime = getCurrentTimeStampMS();
         }
         return States::StopRequested{StopInfo};
       } else {
-        throw std::runtime_error(fmt::format(
-            "The command \"{}\" is not allowed when writing.", CommandName));
+        throw std::runtime_error("Start command is not allowed when writing");
       }
     } else {
-      if (CommandName == CommandParser::StartCommand) {
+      if (CommandParser::isStartCommand(Command)) {
         auto const StartInfo =
             CommandParser::extractStartInformation(Command, TimeStamp);
         return States::StartRequested{StartInfo};
       } else {
-        throw std::runtime_error(fmt::format(
-            "The command \"{}\" is not allowed when idle.", CommandName));
+        throw std::runtime_error("Stop command is not allowed when idle");
       }
     }
   } catch (std::runtime_error const &Error) {

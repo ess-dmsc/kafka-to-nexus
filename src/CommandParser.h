@@ -17,9 +17,12 @@
 
 #include "URI.h"
 #include "helper.h"
+#include "json.h"
 #include "logger.h"
 
 namespace FileWriter {
+
+struct Msg;
 
 struct StartCommandInfo {
   std::string JobID;
@@ -55,5 +58,39 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage);
 
 bool isStartCommand(Msg const &CommandMessage);
 bool isStopCommand(Msg const &CommandMessage);
+
+/// \brief Extract the specified value.
+///
+/// Throws if the key is not present
+///
+/// \param Key The key for the value to extract.
+/// \param JSONCommand The JSON Command.
+/// \return The extracted value.
+template <typename T>
+T getRequiredValue(std::string const &Key, nlohmann::json const &JSONCommand) {
+  if (auto x = find<T>(Key, JSONCommand)) {
+    return *x;
+  }
+
+  throw std::runtime_error(
+      fmt::format("Missing key {} from command JSON", Key));
+}
+
+/// \brief Extract the specified value or use supplied value.
+///
+///
+/// \param Key The key for the value to extract.
+/// \param JSONCommand The JSON Command.
+/// \param Default The value to use if the key is not present.
+/// \return The extracted (or default) value.
+template <typename T>
+T getOptionalValue(std::string const &Key, nlohmann::json const &JSONCommand,
+                   T const &Default) {
+  if (auto x = find<T>(Key, JSONCommand)) {
+    return *x;
+  }
+
+  return Default;
+}
 } // namespace CommandParser
 } // namespace FileWriter

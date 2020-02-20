@@ -9,6 +9,7 @@ set(UnitTests_SRC
         UnitTests.cpp
         HDFFileAttributesTests.cpp
         helpers/HDFFileTestHelper.cpp
+        helpers/RunStartStopHelpers.cpp
         JsonTests.cpp
         URITests.cpp
         CommandHandlerTests.cpp

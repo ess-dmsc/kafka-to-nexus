@@ -9,10 +9,24 @@
 
 #include <chrono>
 #include <gtest/gtest.h>
+#include <6s4t_run_stop_generated.h>
+#include <pl72_run_start_generated.h>
 
 #include "CommandParser.h"
 #include "Msg.h"
 #include "helpers/RunStartStopHelpers.h"
+
+using namespace RunStartStopHelpers;
+
+std::string const InstrumentNameInput = "TEST";
+std::string const RunNameInput = "42";
+std::string const NexusStructureInput = "{}";
+std::string const JobIDInput = "qw3rty";
+std::string const ServiceIDInput = "filewriter1";
+std::string const BrokerInput = "somehost:1234";
+std::string const FilenameInput = "a-dummy-name-01.h5";
+uint64_t const StartTimeInput = 123456789000;
+uint64_t const StopTimeInput = 123456790000;
 
 class CommandParserHappyStartTests : public testing::Test {
 public:
