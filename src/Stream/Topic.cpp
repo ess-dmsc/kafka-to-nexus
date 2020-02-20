@@ -41,7 +41,7 @@ void Topic::getPartitionsForTopic(KafkaW::BrokerSettings Settings,
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    Executor.SendWork([=]() {
+    Executor.SendLowPrioWork([=]() {
       getPartitionsForTopic(Settings, Topic);
     });
   }
@@ -64,7 +64,7 @@ void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    Executor.SendWork([=]() {
+    Executor.SendLowPrioWork([=]() {
       getOffsetsForPartitions(Settings, Topic, Partitions);
     });
   }

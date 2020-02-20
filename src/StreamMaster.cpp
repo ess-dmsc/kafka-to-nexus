@@ -48,7 +48,7 @@ void StreamMaster::getTopicNames() {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
     LOG_WARN("Meta data call for retrieving topic names from the broker failed. Re-trying with a timeout of {} ms.", std::chrono::duration_cast<std::chrono::milliseconds>(CurrentMetadataTimeOut).count());
-    Executor.SendWork([=]() {
+    Executor.SendLowPrioWork([=]() {
       getTopicNames();
     });
   }

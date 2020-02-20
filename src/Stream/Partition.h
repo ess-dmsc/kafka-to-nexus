@@ -66,9 +66,9 @@ protected:
   std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
   std::atomic_bool HasFinished{false};
   std::int64_t CurrentOffset{0};
-  ThreadedExecutor Executor; //Must be last
   PartitionFilter StopTester;
   std::map<FileWriter::FlatbufferMessage::SrcHash, SourceFilter> MsgFilters;
+  ThreadedExecutor Executor; //Must be last
 };
 
 } // namespace Stream
