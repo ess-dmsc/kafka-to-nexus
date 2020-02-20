@@ -79,7 +79,7 @@ public:
   ///
   /// \param KafkaMessage The copy constructor.
   /// \note Will make a copy of the data in the Kafka message.
-  explicit FlatbufferMessage(FlatbufferMessage const &Message);
+  FlatbufferMessage(FlatbufferMessage const &Other);
 
   /// Default destructor.
   ~FlatbufferMessage() = default;
