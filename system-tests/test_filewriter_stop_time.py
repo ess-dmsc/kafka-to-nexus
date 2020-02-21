@@ -16,6 +16,10 @@ import pytest
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     producer = create_producer()
     sleep(10)
+
+    # Ensure TEST_sampleEnv topic exists
+    publish_f142_message(producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow())))
+
     topic = "TEST_writerCommand"
     publish_run_start_message(producer, "commands/nexus_structure.json", "output_file_with_stop_time.nxs",
                               topic=topic, job_id="should_start_then_stop",

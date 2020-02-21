@@ -61,7 +61,7 @@ def create_runstart_message(job_id: str, filename: str, start_time: Optional[int
     # Build the actual buffer
     RunStart.RunStartStart(builder)
     # RunStart.RunStartAddDetectorSpectrumMap(builder, None)
-    RunStart.RunStartAddNPeriods(builder, 1)
+    RunStart.RunStartAddNPeriods(builder, 2)
     RunStart.RunStartAddFilename(builder, filename_offset)
     RunStart.RunStartAddServiceId(builder, service_id_offset)
     RunStart.RunStartAddBroker(builder, broker_offset)
@@ -77,6 +77,7 @@ def create_runstart_message(job_id: str, filename: str, start_time: Optional[int
     # Generate the output and replace the file_identifier
     buff = builder.Output()
     buff[4:8] = b"pl72"
+    print(buff)
     return bytes(buff)
 
 
@@ -105,4 +106,5 @@ def create_runstop_message(job_id: str, run_name: str = "test_run", service_id: 
     # Generate the output and replace the file_identifier
     buff = builder.Output()
     buff[4:8] = b"6s4t"
+    print(buff)
     return bytes(buff)
