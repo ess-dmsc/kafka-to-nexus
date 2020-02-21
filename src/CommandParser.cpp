@@ -59,7 +59,7 @@ extractStartInformation(Msg const &CommandMessage,
                         std::chrono::milliseconds DefaultStartTime) {
   StartCommandInfo Result;
 
-  const auto RunStartData = GetRunStart(CommandMessage.data());
+  auto const RunStartData = GetRunStart(CommandMessage.data());
 
   checkRequiredFieldsArePresent(RunStartData);
 
@@ -81,7 +81,7 @@ extractStartInformation(Msg const &CommandMessage,
 StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
   StopCommandInfo Result;
 
-  const auto RunStopData = GetRunStop(CommandMessage.data());
+  auto const RunStopData = GetRunStop(CommandMessage.data());
 
   if (RunStopData->job_id()->size() == 0) {
     throw std::runtime_error("Errors encountered parsing run stop message:\n"
@@ -103,7 +103,7 @@ bool isStartCommand(Msg const &CommandMessage) {
 
   auto BufferVerifier =
       flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  auto VerifiedStartCommand = VerifyRunStartBuffer(BufferVerifier);
+  auto const VerifiedStartCommand = VerifyRunStartBuffer(BufferVerifier);
   if (!VerifiedStartCommand) {
     auto Logger = getLogger();
     Logger->warn("Message with start command identifer received, but it failed "
@@ -120,7 +120,7 @@ bool isStopCommand(Msg const &CommandMessage) {
 
   auto BufferVerifier =
       flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  auto VerifiedStopCommand = VerifyRunStopBuffer(BufferVerifier);
+  auto const VerifiedStopCommand = VerifyRunStopBuffer(BufferVerifier);
   if (!VerifiedStopCommand) {
     auto Logger = getLogger();
     Logger->warn("Message with stop command identifer received, but it failed "
