@@ -7,9 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <6s4t_run_stop_generated.h>
 #include <chrono>
 #include <gtest/gtest.h>
-#include <6s4t_run_stop_generated.h>
 #include <pl72_run_start_generated.h>
 
 #include "CommandParser.h"
