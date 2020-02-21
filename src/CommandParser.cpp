@@ -96,37 +96,21 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
 }
 
 bool isStartCommand(Msg const &CommandMessage) {
-  if (!flatbuffers::BufferHasIdentifier(CommandMessage.data(),
-                                        RunStartIdentifier())) {
-    return false;
-  }
+  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          RunStartIdentifier());
 
-  auto BufferVerifier =
-      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  auto const VerifiedStartCommand = VerifyRunStartBuffer(BufferVerifier);
-  if (!VerifiedStartCommand) {
-    auto Logger = getLogger();
-    Logger->warn("Message with start command identifer received, but it failed "
-                 "flatbuffer verification");
-  }
-  return VerifiedStartCommand;
+  // Ideally we would run Verify on the buffer, but there is currently a problem
+  // making verifiable flatbuffer messages from python (Nicos).
+  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
 bool isStopCommand(Msg const &CommandMessage) {
-  if (!flatbuffers::BufferHasIdentifier(CommandMessage.data(),
-                                        RunStopIdentifier())) {
-    return false;
-  }
+  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          RunStopIdentifier());
 
-  auto BufferVerifier =
-      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  auto const VerifiedStopCommand = VerifyRunStopBuffer(BufferVerifier);
-  if (!VerifiedStopCommand) {
-    auto Logger = getLogger();
-    Logger->warn("Message with stop command identifer received, but it failed "
-                 "flatbuffer verification");
-  }
-  return VerifiedStopCommand;
+  // Ideally we would run Verify on the buffer, but there is currently a problem
+  // making verifiable flatbuffer messages from python (Nicos).
+  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
 } // namespace CommandParser

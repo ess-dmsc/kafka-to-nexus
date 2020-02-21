@@ -220,15 +220,28 @@ TEST(CommandParserStartTests,
   ASSERT_FALSE(FileWriter::CommandParser::isStartCommand(TestMessage));
 }
 
+TEST(CommandParserStopTests,
+     MessageIsNotStopCommandIfFlatbufferIDNotRecognised) {
+  std::string const MessageString = "00001234";
+  FileWriter::Msg const TestMessage{MessageString.c_str(),
+                                    MessageString.size()};
+  ASSERT_FALSE(FileWriter::CommandParser::isStopCommand(TestMessage));
+}
+
+// The following tests for verification of run start/stop messages are disabled
+// because it is currently not possible to make verifiable buffers from python.
+// This code can be re-enabled if the flatbuffers python library is fixed later.
+
 TEST(CommandParserStartTests,
-     MessageIsNotStartCommandIfFlatbufferFailsVerification) {
+     DISABLED_MessageIsNotStartCommandIfFlatbufferFailsVerification) {
   std::string const MessageString = fmt::format("0000{}", RunStartIdentifier());
   FileWriter::Msg const TestMessage{MessageString.c_str(),
                                     MessageString.size()};
   ASSERT_FALSE(FileWriter::CommandParser::isStartCommand(TestMessage));
 }
 
-TEST(CommandParserStartTests, MessageIsStartCommandIfValidRunStartFlatbuffer) {
+TEST(CommandParserStartTests,
+     DISABLED_MessageIsStartCommandIfValidRunStartFlatbuffer) {
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
       ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
@@ -238,22 +251,15 @@ TEST(CommandParserStartTests, MessageIsStartCommandIfValidRunStartFlatbuffer) {
 }
 
 TEST(CommandParserStopTests,
-     MessageIsNotStopCommandIfFlatbufferIDNotRecognised) {
-  std::string const MessageString = "00001234";
-  FileWriter::Msg const TestMessage{MessageString.c_str(),
-                                    MessageString.size()};
-  ASSERT_FALSE(FileWriter::CommandParser::isStopCommand(TestMessage));
-}
-
-TEST(CommandParserStopTests,
-     MessageIsNotStopCommandIfFlatbufferFailsVerification) {
+     DISABLED_MessageIsNotStopCommandIfFlatbufferFailsVerification) {
   std::string const MessageString = fmt::format("0000{}", RunStopIdentifier());
   FileWriter::Msg const TestMessage{MessageString.c_str(),
                                     MessageString.size()};
   ASSERT_FALSE(FileWriter::CommandParser::isStopCommand(TestMessage));
 }
 
-TEST(CommandParserStopTests, MessageIsStartCommandIfValidRunStopFlatbuffer) {
+TEST(CommandParserStopTests,
+     DISABLED_MessageIsStartCommandIfValidRunStopFlatbuffer) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            JobIDInput, ServiceIDInput);
   FileWriter::Msg const TestMessage{MessageBuffer.data(), MessageBuffer.size()};
