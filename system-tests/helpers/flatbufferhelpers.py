@@ -49,7 +49,7 @@ def create_runstart_message(
     instrument_name: str = "TEST",
     broker: str = "localhost:9092",
 ) -> bytes:
-    builder = flatbuffers.Builder(1024)
+    builder = flatbuffers.Builder(136)
 
     if start_time is None:
         start_time = _seconds_to_nanoseconds(time())
@@ -58,19 +58,16 @@ def create_runstart_message(
     if stop_time is None:
         stop_time = 0
 
-    filename_offset = builder.CreateString(filename)
     service_id_offset = builder.CreateString(service_id)
     broker_offset = builder.CreateString(broker)
     job_id_offset = builder.CreateString(job_id)
     nexus_structure_offset = builder.CreateString(nexus_structure)
     instrument_name_offset = builder.CreateString(instrument_name)
     run_name_offset = builder.CreateString(run_name)
+    filename_offset = builder.CreateString(filename)
 
     # Build the actual buffer
     RunStart.RunStartStart(builder)
-    # RunStart.RunStartAddDetectorSpectrumMap(builder, None)
-    RunStart.RunStartAddNPeriods(builder, 2)
-    RunStart.RunStartAddFilename(builder, filename_offset)
     RunStart.RunStartAddServiceId(builder, service_id_offset)
     RunStart.RunStartAddBroker(builder, broker_offset)
     RunStart.RunStartAddJobId(builder, job_id_offset)
@@ -79,13 +76,15 @@ def create_runstart_message(
     RunStart.RunStartAddRunName(builder, run_name_offset)
     RunStart.RunStartAddStopTime(builder, stop_time)
     RunStart.RunStartAddStartTime(builder, start_time)
+    RunStart.RunStartAddFilename(builder, filename_offset)
+    RunStart.RunStartAddNPeriods(builder, 1)
+
     run_start_message = RunStart.RunStartEnd(builder)
     builder.Finish(run_start_message)
 
     # Generate the output and replace the file_identifier
     buff = builder.Output()
     buff[4:8] = b"pl72"
-    print(buff)
     return bytes(buff)
 
 
@@ -95,7 +94,7 @@ def create_runstop_message(
     service_id: str = "",
     stop_time: Optional[int] = None,
 ) -> bytes:
-    builder = flatbuffers.Builder(1024)
+    builder = flatbuffers.Builder(136)
 
     if service_id is None:
         service_id = ""
@@ -112,11 +111,11 @@ def create_runstop_message(
     RunStop.RunStopAddJobId(builder, job_id_offset)
     RunStop.RunStopAddRunName(builder, run_name_offset)
     RunStop.RunStopAddStopTime(builder, stop_time)
+
     run_stop_message = RunStop.RunStopEnd(builder)
     builder.Finish(run_stop_message)
 
     # Generate the output and replace the file_identifier
     buff = builder.Output()
     buff[4:8] = b"6s4t"
-    print(buff)
     return bytes(buff)
