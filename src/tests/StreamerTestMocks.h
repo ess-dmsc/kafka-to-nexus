@@ -2,6 +2,7 @@
 
 #include <trompeloeil.hpp>
 
+#include "FlatbufferReader.h"
 #include "Streamer.h"
 
 namespace FileWriter {

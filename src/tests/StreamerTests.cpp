@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include <chrono>
+#include <f142_logdata_generated.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
@@ -18,7 +19,6 @@
 #include "Streamer.h"
 #include "StreamerTestMocks.h"
 #include "helpers/SetExtractorModule.h"
-#include <f142_logdata_generated.h>
 
 namespace FileWriter {
 

@@ -9,3 +9,5 @@ pipeline.gdsl
 *.h~
 *.cxx~
 /system-tests/output-files/*.nxs
+venv
+*.log

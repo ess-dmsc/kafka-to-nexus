@@ -10,7 +10,6 @@
 #include "../json.h"
 #include "WriterRegistrar.h"
 #include "helpers/StubWriterModule.h"
-#include <WriterModuleBase.h>
 #include <gtest/gtest.h>
 
 using namespace FileWriter;

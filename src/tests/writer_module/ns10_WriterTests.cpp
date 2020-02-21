@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include <flatbuffers/flatbuffers.h>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 

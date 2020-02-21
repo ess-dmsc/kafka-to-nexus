@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Source.h"
+#include "ProcessMessageResult.h"
 
 namespace FileWriter {
 
