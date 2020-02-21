@@ -1,4 +1,8 @@
-from helpers.kafkahelpers import create_producer, publish_run_start_message, publish_run_stop_message
+from helpers.kafkahelpers import (
+    create_producer,
+    publish_run_start_message,
+    publish_run_stop_message,
+)
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from time import sleep
 import numpy as np
@@ -8,8 +12,12 @@ def test_static_data_reaches_file(docker_compose):
     producer = create_producer()
     sleep(10)
     # Start file writing
-    job_id = publish_run_start_message(producer, "commands/nexus_structure_static.json",
-                                       "output_file_static.nxs", start_time=int(docker_compose))
+    job_id = publish_run_start_message(
+        producer,
+        "commands/nexus_structure_static.json",
+        "output_file_static.nxs",
+        start_time=int(docker_compose),
+    )
 
     # Give it some time to accumulate data
     sleep(10)

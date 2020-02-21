@@ -1,5 +1,9 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
-from .flatbufferhelpers import create_f142_message, create_runstart_message, create_runstop_message
+from .flatbufferhelpers import (
+    create_f142_message,
+    create_runstart_message,
+    create_runstop_message,
+)
 from typing import Optional
 import uuid
 
@@ -14,33 +18,41 @@ def create_producer():
 
 
 def publish_run_start_message(
-        producer: Producer,
-        nexus_structure_filepath: str,
-        nexus_filename: str,
-        topic: str = "TEST_writerCommand",
-        start_time: Optional[int] = None,
-        stop_time: Optional[int] = None,
-        job_id: Optional[str] = str(uuid.uuid4()),
-        service_id: Optional[str] = None
+    producer: Producer,
+    nexus_structure_filepath: str,
+    nexus_filename: str,
+    topic: str = "TEST_writerCommand",
+    start_time: Optional[int] = None,
+    stop_time: Optional[int] = None,
+    job_id: Optional[str] = str(uuid.uuid4()),
+    service_id: Optional[str] = None,
 ) -> str:
     with open(nexus_structure_filepath, "r") as nexus_structure_file:
         nexus_structure = nexus_structure_file.read().replace("\n", "")
 
-    runstart_message = create_runstart_message(job_id, nexus_filename, start_time, stop_time,
-                                               nexus_structure=nexus_structure, service_id=service_id)
+    runstart_message = create_runstart_message(
+        job_id,
+        nexus_filename,
+        start_time,
+        stop_time,
+        nexus_structure=nexus_structure,
+        service_id=service_id,
+    )
     producer.produce(topic, runstart_message)
     producer.flush()
     return job_id
 
 
 def publish_run_stop_message(
-        producer: Producer,
-        job_id: str,
-        topic: str = "TEST_writerCommand",
-        stop_time: Optional[int] = None,
-        service_id: Optional[str] = None
+    producer: Producer,
+    job_id: str,
+    topic: str = "TEST_writerCommand",
+    stop_time: Optional[int] = None,
+    service_id: Optional[str] = None,
 ) -> str:
-    runstop_message = create_runstop_message(job_id, service_id=service_id, stop_time=stop_time)
+    runstop_message = create_runstop_message(
+        job_id, service_id=service_id, stop_time=stop_time
+    )
     producer.produce(topic, runstop_message)
     producer.flush()
     return job_id

@@ -39,9 +39,13 @@ def test_long_run(docker_compose_long_running):
     producer = create_producer()
     sleep(20)
     # Start file writing
-    job_id = publish_run_start_message(producer, "commands/nexus_structure_long_running.json",
-                                       nexus_filename="output_file_lr.nxs", topic="TEST_writerCommandLR",
-                                       start_time=int(docker_compose_long_running))
+    job_id = publish_run_start_message(
+        producer,
+        "commands/nexus_structure_long_running.json",
+        nexus_filename="output_file_lr.nxs",
+        topic="TEST_writerCommandLR",
+        start_time=int(docker_compose_long_running),
+    )
     sleep(10)
     # Minimum length of the test is determined by (pv_updates * 3) + 10 seconds
     pv_updates = 6000

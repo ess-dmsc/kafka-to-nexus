@@ -18,15 +18,27 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     sleep(10)
 
     # Ensure TEST_sampleEnv topic exists
-    publish_f142_message(producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow())))
+    publish_f142_message(
+        producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
+    )
 
     topic = "TEST_writerCommand"
-    publish_run_start_message(producer, "commands/nexus_structure.json", "output_file_with_stop_time.nxs",
-                              topic=topic, job_id="should_start_then_stop",
-                              stop_time=int(unix_time_milliseconds(datetime.utcnow())))
+    publish_run_start_message(
+        producer,
+        "commands/nexus_structure.json",
+        "output_file_with_stop_time.nxs",
+        topic=topic,
+        job_id="should_start_then_stop",
+        stop_time=int(unix_time_milliseconds(datetime.utcnow())),
+    )
     sleep(10)
-    job_id = publish_run_start_message(producer, "commands/nexus_structure.json", "output_file_no_stop_time.nxs",
-                                       topic=topic, job_id="should_start_but_not_stop")
+    job_id = publish_run_start_message(
+        producer,
+        "commands/nexus_structure.json",
+        "output_file_no_stop_time.nxs",
+        topic=topic,
+        job_id="should_start_but_not_stop",
+    )
     sleep(10)
     msgs = consume_everything("TEST_writerStatus")
 
@@ -66,9 +78,14 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
     start_time = 1_560_330_000_002
     stop_time = 1_560_330_000_148
     # Ask to write 147 messages from the middle of the 200 messages we published
-    publish_run_start_message(producer, "commands/nexus_structure_historical.json",
-                              "output_file_of_historical_data.nxs",
-                              start_time=start_time, stop_time=stop_time, topic=command_topic)
+    publish_run_start_message(
+        producer,
+        "commands/nexus_structure_historical.json",
+        "output_file_of_historical_data.nxs",
+        start_time=start_time,
+        stop_time=stop_time,
+        topic=command_topic,
+    )
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
     filepath = "output-files/output_file_of_historical_data.nxs"

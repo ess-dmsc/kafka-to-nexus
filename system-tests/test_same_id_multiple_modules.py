@@ -35,8 +35,12 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
 
     sleep(20)
     # Start file writing
-    job_id = publish_run_start_message(producer, "commands/nexus_structure_multiple_modules.json",
-                                       "output_file_multiple_modules.nxs", start_time=int(docker_compose))
+    job_id = publish_run_start_message(
+        producer,
+        "commands/nexus_structure_multiple_modules.json",
+        "output_file_multiple_modules.nxs",
+        start_time=int(docker_compose),
+    )
     # Give it some time to accumulate data
     sleep(10)
     # Stop file writing

@@ -38,9 +38,17 @@ def create_f142_message(timestamp_unix_ms=None, source_name: str = "fw-test-help
     return bytes(buff)
 
 
-def create_runstart_message(job_id: str, filename: str, start_time: Optional[int] = None,
-                            stop_time: Optional[int] = None, run_name: str = "test_run", nexus_structure: str = "{}",
-                            service_id: str = "", instrument_name: str = "TEST", broker: str = "localhost:9092") -> bytes:
+def create_runstart_message(
+    job_id: str,
+    filename: str,
+    start_time: Optional[int] = None,
+    stop_time: Optional[int] = None,
+    run_name: str = "test_run",
+    nexus_structure: str = "{}",
+    service_id: str = "",
+    instrument_name: str = "TEST",
+    broker: str = "localhost:9092",
+) -> bytes:
     builder = flatbuffers.Builder(1024)
 
     if start_time is None:
@@ -81,8 +89,12 @@ def create_runstart_message(job_id: str, filename: str, start_time: Optional[int
     return bytes(buff)
 
 
-def create_runstop_message(job_id: str, run_name: str = "test_run", service_id: str = "",
-                           stop_time: Optional[int] = None) -> bytes:
+def create_runstop_message(
+    job_id: str,
+    run_name: str = "test_run",
+    service_id: str = "",
+    stop_time: Optional[int] = None,
+) -> bytes:
     builder = flatbuffers.Builder(1024)
 
     if service_id is None:
