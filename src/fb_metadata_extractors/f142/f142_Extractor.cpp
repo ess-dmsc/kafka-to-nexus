@@ -21,18 +21,18 @@ bool f142_Extractor::verify(FlatbufferMessage const &Message) const {
 /// Extract name of source from the message
 std::string
 f142_Extractor::source_name(FlatbufferMessage const &Message) const {
-  auto LogDataBuffer = GetLogData(Message.data());
-  auto s1 = LogDataBuffer->source_name();
-  if (s1 == nullptr) {
+  auto const LogDataBuffer = GetLogData(Message.data());
+  auto const SourceNameFlatbufferStr = LogDataBuffer->source_name();
+  if (SourceNameFlatbufferStr == nullptr) {
     spdlog::get("filewriterlogger")->warn("message has no source name");
     return "";
   }
-  return s1->str();
+  return SourceNameFlatbufferStr->str();
 }
 
 /// Extract timestamp from the message
 uint64_t f142_Extractor::timestamp(FlatbufferMessage const &Message) const {
-  auto LogDataBuffer = GetLogData(Message.data());
+  auto const LogDataBuffer = GetLogData(Message.data());
   return LogDataBuffer->timestamp();
 }
 
