@@ -264,10 +264,6 @@ def docker_compose(request):
     options = common_options
     if request.config.getoption(LOCAL_BUILD) is None:
         options["--file"] = ["docker-compose.yml"]
-    else:
-        # Only run the producer via docker-compose, not the file writer image,
-        # as we're using a local build of the file writer
-        options["--file"] = ["docker-compose-producer.yml"]
     return build_and_run(
         options,
         request,
@@ -298,10 +294,6 @@ def docker_compose_stop_command(request):
     options = common_options
     if request.config.getoption(LOCAL_BUILD) is None:
         options["--file"] = ["docker-compose.yml"]
-    else:
-        # Only run the producer via docker-compose, not the file writer image,
-        # as we're using a local build of the file writer
-        options["--file"] = ["docker-compose-producer.yml"]
     return build_and_run(
         options,
         request,

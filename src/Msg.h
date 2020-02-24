@@ -34,6 +34,10 @@ struct Msg {
       : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
   }
+  Msg(uint8_t const *Data, size_t Bytes)
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
+    std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
+  }
   Msg &operator=(Msg const &Other) {
     Size = Other.Size;
     MetaData = Other.MetaData;
@@ -42,11 +46,11 @@ struct Msg {
     return *this;
   }
 
-  char const *data() const {
+  uint8_t const *data() const {
     if (DataPtr == nullptr) {
       getLogger()->error("error at type: {}", -1);
     }
-    return DataPtr.get();
+    return reinterpret_cast<uint8_t const *>(DataPtr.get());
   }
 
   size_t size() const {

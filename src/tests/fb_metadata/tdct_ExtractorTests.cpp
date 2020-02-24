@@ -15,7 +15,8 @@
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 
-static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
+static std::unique_ptr<std::uint8_t[]>
+GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint64_t> TestTimestamps{11, 22, 33, 44, 55, 66};
   auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
@@ -25,7 +26,7 @@ static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   MessageBuilder.add_timestamps(FBTimestampOffset);
   builder.Finish(MessageBuilder.Finish(), timestampIdentifier());
   DataSize = builder.GetSize();
-  auto RawBuffer = std::make_unique<std::int8_t[]>(DataSize);
+  auto RawBuffer = std::make_unique<std::uint8_t[]>(DataSize);
   std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), DataSize);
   return RawBuffer;
 }
@@ -39,18 +40,17 @@ public:
     ReaderUnderTest = std::make_unique<FlatbufferMetadata::tdct_Extractor>();
     setExtractorModule<FlatbufferMetadata::tdct_Extractor>("tdct");
     RawBuffer = GenerateFlatbufferData(BufferSize);
-    TestMessage = std::make_unique<FBMsg>(
-        reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
+    TestMessage = std::make_unique<FBMsg>(RawBuffer.get(), BufferSize);
   };
 
   void SetUp() override { ASSERT_NE(RawBuffer.get(), nullptr); };
 
   static std::unique_ptr<FlatbufferMetadata::tdct_Extractor> ReaderUnderTest;
-  static std::unique_ptr<std::int8_t[]> RawBuffer;
+  static std::unique_ptr<std::uint8_t[]> RawBuffer;
   static size_t BufferSize;
   static std::unique_ptr<FBMsg> TestMessage;
 };
-std::unique_ptr<std::int8_t[]> ChopperTimeStampGuard::RawBuffer{nullptr};
+std::unique_ptr<std::uint8_t[]> ChopperTimeStampGuard::RawBuffer{nullptr};
 size_t ChopperTimeStampGuard::BufferSize{0};
 std::unique_ptr<FBMsg> ChopperTimeStampGuard::TestMessage{nullptr};
 std::unique_ptr<FlatbufferMetadata::tdct_Extractor>
@@ -69,13 +69,11 @@ TEST_F(ChopperTimeStampGuard, Verify) {
 }
 
 TEST_F(ChopperTimeStampGuard, VerifyFail) {
-  auto TempData = std::make_unique<char[]>(BufferSize);
+  auto TempData = std::make_unique<uint8_t[]>(BufferSize);
   std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
-  FileWriter::FlatbufferMessage TestMessage1(
-      reinterpret_cast<const char *>(TempData.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage1(TempData.get(), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[3] = 'h';
-  EXPECT_THROW(FileWriter::FlatbufferMessage(
-                   reinterpret_cast<const char *>(TempData.get()), BufferSize),
+  EXPECT_THROW(FileWriter::FlatbufferMessage(TempData.get(), BufferSize),
                FileWriter::NotValidFlatbuffer);
 }

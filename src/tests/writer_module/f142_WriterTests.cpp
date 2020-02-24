@@ -330,9 +330,8 @@ TEST_F(f142WriteData, WriteOneElement) {
   auto FlatbufferData = generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
-  TestWriter.write(FileWriter::FlatbufferMessage(
-      reinterpret_cast<char const *>(FlatbufferData.first.get()),
-      FlatbufferData.second));
+  TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
+                                                 FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
   ASSERT_EQ(TestWriter.Timestamp.dataspace().size(), 1);
   std::vector<double> WrittenValues(1);
@@ -364,9 +363,8 @@ TEST_F(f142WriteData, WriteOneArray) {
   std::uint64_t Timestamp{12};
   auto FlatbufferData =
       generateFlatbufferArrayMessage(ElementValues, Timestamp);
-  TestWriter.write(FileWriter::FlatbufferMessage(
-      reinterpret_cast<char const *>(FlatbufferData.first.get()),
-      FlatbufferData.second));
+  TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
+                                                 FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 3}));
   std::vector<double> WrittenValues(3);
   TestWriter.Values.read(WrittenValues);

@@ -24,9 +24,9 @@ public:
                          std::ifstream::in | std::ifstream::binary);
     InFile.seekg(0, InFile.end);
     FileSize = InFile.tellg();
-    RawData = std::make_unique<char[]>(FileSize);
+    RawData = std::make_unique<uint8_t[]>(FileSize);
     InFile.seekg(0, InFile.beg);
-    InFile.read(RawData.get(), FileSize);
+    InFile.read(reinterpret_cast<char *>(RawData.get()), FileSize);
   };
 
   void SetUp() override {
@@ -36,11 +36,11 @@ public:
   };
 
   std::unique_ptr<FlatbufferMetadata::NDAr_Extractor> Reader;
-  static std::unique_ptr<char[]> RawData;
+  static std::unique_ptr<uint8_t[]> RawData;
   static size_t FileSize;
 };
 
-std::unique_ptr<char[]> AreaDetectorReader::RawData;
+std::unique_ptr<uint8_t[]> AreaDetectorReader::RawData;
 size_t AreaDetectorReader::FileSize = 0;
 
 TEST_F(AreaDetectorReader, ValidateTestOk) {
@@ -67,9 +67,8 @@ TEST_F(AreaDetectorReader, ValidateTestFail) {
                                          FB_Tables::DType::Uint8, someData);
   builder.Finish(tmpPkg); // Finish without file identifier will fail verify
 
-  EXPECT_THROW(FileWriter::FlatbufferMessage(
-                   reinterpret_cast<char *>(builder.GetBufferPointer()),
-                   builder.GetSize()),
+  EXPECT_THROW(FileWriter::FlatbufferMessage(builder.GetBufferPointer(),
+                                             builder.GetSize()),
                std::runtime_error);
 }
 

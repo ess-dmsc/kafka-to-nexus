@@ -1,7 +1,11 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
-from .flatbufferhelpers import create_f142_message
+from .flatbufferhelpers import (
+    create_f142_message,
+    create_runstart_message,
+    create_runstop_message,
+)
+from typing import Optional
 import uuid
-import json
 
 
 def create_producer():
@@ -13,33 +17,45 @@ def create_producer():
     return producer
 
 
-def send_writer_command(
-    filepath,
-    producer,
-    topic="TEST_writerCommand",
-    start_time=None,
-    stop_time=None,
-    job_id=None,
-    service_id=None,
-    filename=None,
-):
-    with open(filepath, "r") as cmd_file:
-        data_str = cmd_file.read().replace("\n", "")
-        data = json.loads(data_str)
-        if start_time is not None:
-            data["start_time"] = start_time
-        if stop_time is not None:
-            data["stop_time"] = stop_time
-        if job_id is not None:
-            data["job_id"] = job_id
-        if service_id is not None:
-            data["service_id"] = service_id
-        if filename is not None:
-            data["file_attributes"]["file_name"] = filename
+def publish_run_start_message(
+    producer: Producer,
+    nexus_structure_filepath: str,
+    nexus_filename: str,
+    topic: str = "TEST_writerCommand",
+    start_time: Optional[int] = None,
+    stop_time: Optional[int] = None,
+    job_id: Optional[str] = str(uuid.uuid4()),
+    service_id: Optional[str] = None,
+) -> str:
+    with open(nexus_structure_filepath, "r") as nexus_structure_file:
+        nexus_structure = nexus_structure_file.read().replace("\n", "")
 
-    producer.produce(topic, json.dumps(data))
+    runstart_message = create_runstart_message(
+        job_id,
+        nexus_filename,
+        start_time,
+        stop_time,
+        nexus_structure=nexus_structure,
+        service_id=service_id,
+    )
+    producer.produce(topic, runstart_message)
     producer.flush()
-    return data["job_id"]
+    return job_id
+
+
+def publish_run_stop_message(
+    producer: Producer,
+    job_id: str,
+    topic: str = "TEST_writerCommand",
+    stop_time: Optional[int] = None,
+    service_id: Optional[str] = None,
+) -> str:
+    runstop_message = create_runstop_message(
+        job_id, service_id=service_id, stop_time=stop_time
+    )
+    producer.produce(topic, runstop_message)
+    producer.flush()
+    return job_id
 
 
 def create_consumer():

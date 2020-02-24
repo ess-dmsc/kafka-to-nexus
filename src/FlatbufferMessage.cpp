@@ -12,7 +12,7 @@
 
 namespace FileWriter {
 
-FlatbufferMessage::FlatbufferMessage(char const *const BufferPtr,
+FlatbufferMessage::FlatbufferMessage(uint8_t const *const BufferPtr,
                                      size_t const Size)
     : DataPtr(BufferPtr), DataSize(Size) {
   extractPacketInfo();
@@ -29,7 +29,7 @@ void FlatbufferMessage::extractPacketInfo() {
     throw BufferTooSmallError(fmt::format(
         "Flatbuffer was only {} bytes. Expected ≥ 8 bytes.", DataSize));
   }
-  std::string FlatbufferID(data() + 4, 4);
+  std::string FlatbufferID(reinterpret_cast<char const *>(data()) + 4, 4);
   try {
     auto &Reader = FlatbufferReaderRegistry::find(FlatbufferID);
     if (not Reader->verify(*this)) {

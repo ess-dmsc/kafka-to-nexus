@@ -3,14 +3,14 @@ gtest/1.10.0
 fmt/6.1.2
 h5cpp/2cfb0ad@ess-dmsc/stable
 librdkafka/1.2.0@ess-dmsc/stable
-jsonformoderncpp/3.6.1@vthiery/stable
-streaming-data-types/65e23a1@ess-dmsc/stable
+jsonformoderncpp/3.7.3@vthiery/stable
+streaming-data-types/c670575@ess-dmsc/stable
 CLI11/1.9.0@cliutils/stable
 trompeloeil/v36@rollbear/stable
 spdlog-graylog/1.5.0-dm1@ess-dmsc/stable
 date/4b46deb@ess-dmsc/stable
-asio/1.13.0@bincrafters/stable
-optional-lite/3.2.0@bincrafters/stable
+asio/1.13.0
+optional-lite/3.2.0
 readerwriterqueue/07e22ec@ess-dmsc/stable
 variant/1.3.0@bincrafters/stable
 
