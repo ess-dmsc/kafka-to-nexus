@@ -91,19 +91,18 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
   try {
     initValueDataset(HDFGroup);
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
-        HDFGroup,               // NOLINT(bugprone-unused-raii)
+        HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
-        HDFGroup,               // NOLINT(bugprone-unused-raii)
+        HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
-        HDFGroup,               // NOLINT(bugprone-unused-raii)
+        HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto ClassAttribute =
-        HDFGroup.attributes.create<std::string>("NX_class");
+    auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     FileWriter::writeAttributes(HDFGroup, &AttributesJson, Logger);
