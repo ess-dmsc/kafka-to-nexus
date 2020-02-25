@@ -16,7 +16,8 @@
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/tdct/tdct_Writer.h"
 
-static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
+static std::unique_ptr<std::uint8_t[]>
+GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint64_t> TestTimestamps{11, 22, 33, 44, 55, 66};
   auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
@@ -26,7 +27,7 @@ static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   MessageBuilder.add_timestamps(FBTimestampOffset);
   builder.Finish(MessageBuilder.Finish(), timestampIdentifier());
   DataSize = builder.GetSize();
-  auto RawBuffer = std::make_unique<std::int8_t[]>(DataSize);
+  auto RawBuffer = std::make_unique<std::uint8_t[]>(DataSize);
   std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), DataSize);
   return RawBuffer;
 }
@@ -84,12 +85,11 @@ TEST_F(ChopperTimeStampWriter, ReopenFileSuccess) {
 
 TEST_F(ChopperTimeStampWriter, WriteDataOnce) {
   size_t BufferSize;
-  std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize);
   tdct::tdct_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
@@ -115,12 +115,11 @@ TEST_F(ChopperTimeStampWriter, WriteDataOnce) {
 
 TEST_F(ChopperTimeStampWriter, WriteDataTwice) {
   size_t BufferSize;
-  std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize);
   tdct::tdct_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   EXPECT_NO_THROW(Writer.write(TestMsg));
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -150,7 +149,7 @@ TEST_F(ChopperTimeStampWriter, WriteDataTwice) {
 
 TEST_F(ChopperTimeStampWriter, WriteNoElements) {
   size_t BufferSize;
-  std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize);
   auto FbPointer = Gettimestamp(Buffer.get());
   auto ValueLengthPtr =
       reinterpret_cast<flatbuffers::uoffset_t *>(
@@ -160,7 +159,6 @@ TEST_F(ChopperTimeStampWriter, WriteNoElements) {
   tdct::tdct_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  EXPECT_THROW(FileWriter::FlatbufferMessage(
-                   reinterpret_cast<const char *>(Buffer.get()), BufferSize),
+  EXPECT_THROW(FileWriter::FlatbufferMessage(Buffer.get(), BufferSize),
                std::runtime_error);
 }

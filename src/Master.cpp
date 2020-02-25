@@ -11,50 +11,38 @@
 #include "CommandListener.h"
 #include "CommandParser.h"
 #include "JobCreator.h"
-#include "Msg.h"
 #include "Status/StatusReporter.h"
 #include "helper.h"
-#include "json.h"
 #include "logger.h"
 #include <chrono>
 #include <functional>
 
 namespace FileWriter {
 
-nlohmann::json parseCommand(std::string const &Command) {
-  try {
-    return nlohmann::json::parse(Command);
-  } catch (nlohmann::json::parse_error const &Error) {
-    throw std::runtime_error("Could not parse command JSON");
-  }
-}
-
-FileWriterState getNextState(std::string const &Command,
+FileWriterState getNextState(Msg const &Command,
                              std::chrono::milliseconds TimeStamp,
                              FileWriterState const &CurrentState) {
   try {
-    auto CommandJson = parseCommand(Command);
-    auto CommandName = CommandParser::extractCommandName(CommandJson);
-
-    if (mpark::get_if<States::Writing>(&CurrentState)) {
-      if (CommandName == CommandParser::StopCommand) {
-        auto StopInfo = CommandParser::extractStopInformation(CommandJson);
-        if (StopInfo.StopTime.count() == 0) {
-          StopInfo.StopTime = getCurrentTimeStampMS();
+    if (CommandParser::isStopCommand(Command) ||
+        CommandParser::isStartCommand(Command)) {
+      if (mpark::get_if<States::Writing>(&CurrentState)) {
+        if (CommandParser::isStopCommand(Command)) {
+          auto StopInfo = CommandParser::extractStopInformation(Command);
+          if (StopInfo.StopTime.count() == 0) {
+            StopInfo.StopTime = getCurrentTimeStampMS();
+          }
+          return States::StopRequested{StopInfo};
+        } else {
+          throw std::runtime_error("Start command is not allowed when writing");
         }
-        return States::StopRequested{StopInfo};
       } else {
-        throw std::runtime_error(fmt::format(
-            "The command \"{}\" is not allowed when writing.", CommandName));
-      }
-    } else {
-      if (CommandName == CommandParser::StartCommand) {
-        auto const StartInfo =
-            CommandParser::extractStartInformation(CommandJson, TimeStamp);
-        return States::StartRequested{StartInfo};
-      } else {
-        throw std::runtime_error(fmt::format(
-            "The command \"{}\" is not allowed when idle.", CommandName));
+        if (CommandParser::isStartCommand(Command)) {
+          auto const StartInfo =
+              CommandParser::extractStartInformation(Command, TimeStamp);
+          return States::StartRequested{StartInfo};
+        } else {
+          throw std::runtime_error("Stop command is not allowed when idle");
+        }
       }
     }
   } catch (std::runtime_error const &Error) {
@@ -73,8 +61,6 @@ Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
 }
 
 FileWriterState Master::handleCommand(Msg const &CommandMessage) {
-  std::string Message = {CommandMessage.data(), CommandMessage.size()};
-
   // If Kafka message does not contain a timestamp then use current time.
   auto TimeStamp = getCurrentTimeStampMS();
 
@@ -85,7 +71,7 @@ FileWriterState Master::handleCommand(Msg const &CommandMessage) {
     Logger->info("Command doesn't contain timestamp, so using current time.");
   }
 
-  return getNextState(Message, TimeStamp, CurrentState);
+  return getNextState(CommandMessage, TimeStamp, CurrentState);
 }
 
 void Master::startWriting(StartCommandInfo const &StartInfo) {

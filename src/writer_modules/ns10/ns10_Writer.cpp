@@ -99,12 +99,8 @@ WriterModule::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-static CacheEntry const *getRoot(char const *Data) {
-  return GetCacheEntry(Data);
-}
-
 void ns10_Writer::write(const FileWriter::FlatbufferMessage &Message) {
-  auto Entry = getRoot(Message.data());
+  auto Entry = GetCacheEntry(Message.data());
   auto CurrentTimestamp = Entry->time();
   auto Source = Entry->key();
   auto Value = Entry->value();

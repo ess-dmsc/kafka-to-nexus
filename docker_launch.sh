@@ -17,7 +17,7 @@ then
    echo "Kafka broker not accessible at file writer launch"
    exit 1
 fi
-export LD_LIBRARY_PATH=/kafka_to_nexus/lib/
+export LD_LIBRARY_PATH=/home/root/kafka_to_nexus/lib/
 
 COMMAND_URI="${COMMAND_URI:=//localhost:9092/TEST_writerCommand}"
 STATUS_URI="${STATUS_URI:=//localhost:9092/TEST_writerStatus}"
@@ -26,7 +26,7 @@ HDF_OUTPUT_PREFIX="${HDF_OUTPUT_PREFIX:=/output-files/}"
 
 if [ -z "$CONFIG_FILE" ]
 then
-    COMMAND=/kafka_to_nexus/bin/kafka-to-nexus\ --command-uri\ "${COMMAND_URI}"\ \
+    COMMAND=/home/root/kafka_to_nexus/bin/kafka-to-nexus\ --command-uri\ "${COMMAND_URI}"\ \
       --status-uri\ "${STATUS_URI}"\ \
       --graylog-logger-address\ "${GRAYLOG_ADDRESS}"\ \
       --hdf-output-prefix\ "${HDF_OUTPUT_PREFIX}"\ \
@@ -36,7 +36,7 @@ then
     $COMMAND
 
 else
-    COMMAND=/kafka_to_nexus/bin/kafka-to-nexus\ --config-file\ "${CONFIG_FILE}"
+    COMMAND=/home/root/kafka_to_nexus/bin/kafka-to-nexus\ --config-file\ "${CONFIG_FILE}"
 
     echo $COMMAND
     $COMMAND

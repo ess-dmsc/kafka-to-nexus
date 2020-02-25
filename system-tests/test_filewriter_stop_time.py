@@ -1,7 +1,8 @@
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from helpers.kafkahelpers import (
     create_producer,
-    send_writer_command,
+    publish_run_start_message,
+    publish_run_stop_message,
     consume_everything,
     publish_f142_message,
 )
@@ -15,22 +16,28 @@ import pytest
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     producer = create_producer()
     sleep(10)
+
+    # Ensure TEST_sampleEnv topic exists
+    publish_f142_message(
+        producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
+    )
+
     topic = "TEST_writerCommand"
-    send_writer_command(
-        "commands/start-command-generic.json",
+    publish_run_start_message(
         producer,
+        "commands/nexus_structure.json",
+        "output_file_with_stop_time.nxs",
         topic=topic,
-        stop_time=int(unix_time_milliseconds(datetime.utcnow())),
         job_id="should_start_then_stop",
-        filename="output_file_with_stop_time.nxs",
+        stop_time=int(unix_time_milliseconds(datetime.utcnow())),
     )
     sleep(10)
-    job_id = send_writer_command(
-        "commands/start-command-generic.json",
+    job_id = publish_run_start_message(
         producer,
+        "commands/nexus_structure.json",
+        "output_file_no_stop_time.nxs",
         topic=topic,
         job_id="should_start_but_not_stop",
-        filename="output_file_no_stop_time.nxs",
     )
     sleep(10)
     msgs = consume_everything("TEST_writerStatus")
@@ -48,7 +55,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     assert not stopped
 
     # Clean up by stopping writing
-    send_writer_command("commands/stop-command.json", producer, job_id=job_id)
+    publish_run_stop_message(producer, job_id=job_id)
     sleep(10)
 
 
@@ -71,12 +78,13 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
     start_time = 1_560_330_000_002
     stop_time = 1_560_330_000_148
     # Ask to write 147 messages from the middle of the 200 messages we published
-    send_writer_command(
-        "commands/start-command-for-historical-data.json",
+    publish_run_start_message(
         producer,
-        topic=command_topic,
+        "commands/nexus_structure_historical.json",
+        "output_file_of_historical_data.nxs",
         start_time=start_time,
         stop_time=stop_time,
+        topic=command_topic,
     )
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.

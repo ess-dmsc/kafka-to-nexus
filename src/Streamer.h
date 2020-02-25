@@ -13,15 +13,13 @@
 
 #pragma once
 
-#include "EventLogger.h"
+#include "FlatbufferMessage.h"
 #include "KafkaW/Consumer.h"
 #include "StreamStatus.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include <chrono>
 #include <future>
-#include <memory>
-#include <utility>
 
 namespace FileWriter {
 class DemuxTopic;
@@ -121,8 +119,8 @@ private:
 
   bool messageTimestampInRange(std::uint64_t Timestamp) const;
 
-  std::unique_ptr<FlatbufferMessage> createFlatBufferMessage(char const *Data,
-                                                             size_t Size);
+  std::unique_ptr<FlatbufferMessage>
+  createFlatBufferMessage(uint8_t const *Data, size_t Size);
 
   /// Checks whether we've reached the stop offsets
   bool stopOffsetsReached() const;

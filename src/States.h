@@ -9,9 +9,7 @@
 
 #pragma once
 
-#include <memory>
 #include <mpark/variant.hpp>
-#include <string>
 
 struct MainOpt;
 

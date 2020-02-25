@@ -29,9 +29,7 @@ class IJobCreator;
 class CommandListener;
 class IStreamMaster;
 
-nlohmann::json parseCommand(std::string const &Command);
-
-FileWriterState getNextState(std::string const &Command,
+FileWriterState getNextState(Msg const &Command,
                              std::chrono::milliseconds TimeStamp,
                              FileWriterState const &CurrentState);
 

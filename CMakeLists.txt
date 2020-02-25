@@ -15,12 +15,26 @@ create_version_header(
   ${VERSION_INCLUDE_DIR}/Version.h
 )
 
+# Extra warnings and treat warnings as errors
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
-if(CMAKE_COMPILER_IS_GNUCXX AND COV)
+set(HTML_COVERAGE_REPORT OFF CACHE BOOL "Generate test coverage report as html, find in <BUILD_DIR>/coverage/index.html")
+if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
   include(CodeCoverage)
-  setup_target_for_coverage(coverage UnitTests coverage)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_COVERAGE}")
+  append_coverage_compiler_flags()
+  # Exclude tests and Metric sink implementations that do network IO from test coverage
+  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log* src/writer_modules/f142_test/)
+  if (HTML_COVERAGE_REPORT)
+    setup_target_for_coverage_gcovr_html(NAME coverage
+                                         EXECUTABLE UnitTests
+                                         EXCLUDE ${COVERAGE_EXCLUDE}
+                                         DEPENDENCIES UnitTests)
+  else()
+    setup_target_for_coverage_gcovr_xml(NAME coverage
+                                        EXECUTABLE UnitTests
+                                        EXCLUDE ${COVERAGE_EXCLUDE}
+                                        DEPENDENCIES UnitTests)
+  endif()
 endif()
 
 # Use gold linker if available on system (it is faster than default GNU linker)

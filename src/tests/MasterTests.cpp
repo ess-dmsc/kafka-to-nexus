@@ -7,6 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <gtest/gtest.h>
+#include <memory>
+
 #include "CommandListener.h"
 #include "JobCreator.h"
 #include "Master.h"
@@ -14,33 +17,20 @@
 #include "Status/StatusReporter.h"
 #include "helpers/FakeStreamMaster.h"
 #include "helpers/KafkaWMocks.h"
-#include <gtest/gtest.h>
-#include <memory>
+#include "helpers/RunStartStopHelpers.h"
 
 using namespace FileWriter;
+using namespace RunStartStopHelpers;
 
-std::string StartCommand{R"""({
-    "cmd": "filewriter_new",
-    "broker": "localhost:9092",
-    "job_id": "1234",
-    "file_attributes": {"file_name": "output_file1.nxs"},
-    "nexus_structure": { }
-  })"""};
+auto const StartCommand = RunStartStopHelpers::buildRunStartMessage(
+    "TEST", "42", "{}", "qw3rty", "filewriter1", "somehost:1234",
+    "a-dummy-name-01.h5", 123456789000, 123456790000);
 
-std::string StopCommand{R"""({
-    "cmd": "filewriter_stop",
-    "job_id": "1234"
-  })"""};
-
-TEST(ParseCommandTests, IfCommandStringIsParseableThenDoesNotThrow) {
-  ASSERT_NO_THROW(parseCommand(StartCommand));
-}
-
-TEST(ParseCommandTests, IfCommandStringIsNotParseableThenThrows) {
-  ASSERT_THROW(parseCommand("{Invalid: JSON"), std::runtime_error);
-}
+auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
+    123456790000, "42", "qw3rty", "filewriter1");
 
 TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
+
   FileWriterState CurrentState = States::Idle();
   auto const NewState =
       getNextState(StartCommand, std::chrono::milliseconds{0}, CurrentState);
@@ -114,7 +104,7 @@ public:
              std::unique_ptr<Status::StatusReporter> Reporter)
       : Master(Opt, std::move(CmdListener), std::move(JobCreator),
                std::move(Reporter)) {}
-  void injectMessage(KafkaW::PollStatus Status, Msg Message) {
+  void injectMessage(KafkaW::PollStatus const &Status, Msg const &Message) {
     StoredMessage.first = Status;
     StoredMessage.second = Message;
   }
@@ -165,7 +155,7 @@ public:
 TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
   MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
   Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg(StartCommand.c_str(), StartCommand.size()));
+                        Msg(StartCommand.data(), StartCommand.size()));
 
   REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
@@ -175,7 +165,7 @@ TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
 TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
   MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
   Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg(StartCommand.c_str(), StartCommand.size()));
+                        Msg(StartCommand.data(), StartCommand.size()));
   REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
 

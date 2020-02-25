@@ -9,6 +9,7 @@ set(UnitTests_SRC
         UnitTests.cpp
         HDFFileAttributesTests.cpp
         helpers/HDFFileTestHelper.cpp
+        helpers/RunStartStopHelpers.cpp
         JsonTests.cpp
         URITests.cpp
         CommandHandlerTests.cpp
@@ -41,6 +42,7 @@ set(UnitTests_INC
         helpers/HDFFileTestHelper.h
         helpers/KafkaWMocks.h
         helpers/FakeStreamMaster.h
+        helpers/RunStartStopHelpers.h
         Metrics/CarbonTestServer.h
         Metrics/MockSink.h
         Metrics/MockReporter.h
