@@ -20,26 +20,30 @@
 namespace {
 void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
   std::stringstream Errors;
-  if (RunStartData->job_id()->size() == 0) {
+  if (RunStartData->job_id() == nullptr ||
+      RunStartData->job_id()->size() == 0) {
     Errors << "Job ID missing, this field is required\n";
   }
 
-  if (RunStartData->nexus_structure()->size() == 0) {
+  if (RunStartData->nexus_structure() == nullptr ||
+      RunStartData->nexus_structure()->size() == 0) {
     Errors << "NeXus Structure missing, this field is "
               "required\n";
   }
 
-  if (RunStartData->filename()->size() == 0) {
+  if (RunStartData->filename() == nullptr ||
+      RunStartData->filename()->size() == 0) {
     Errors << "Filename missing, this field is required\n";
   }
 
-  if (RunStartData->broker()->size() == 0) {
+  if (RunStartData->broker() == nullptr ||
+      RunStartData->broker()->size() == 0) {
     Errors << "Broker missing, this field is required\n";
   } else {
     try {
       uri::URI(RunStartData->broker()->str());
     } catch (const std::runtime_error &URIError) {
-      Errors << "Broker missing, this field is required\n";
+      Errors << "Unable to parse broker address\n";
     }
   }
 
@@ -71,7 +75,9 @@ extractStartInformation(Msg const &CommandMessage,
   Result.StopTime = std::chrono::milliseconds{RunStartData->stop_time()};
   Result.NexusStructure = RunStartData->nexus_structure()->str();
   Result.JobID = RunStartData->job_id()->str();
-  Result.ServiceID = RunStartData->service_id()->str();
+  if (RunStartData->service_id() != nullptr) {
+    Result.ServiceID = RunStartData->service_id()->str();
+  }
   Result.BrokerInfo = uri::URI(RunStartData->broker()->str());
   Result.Filename = RunStartData->filename()->str();
 
@@ -90,7 +96,9 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
 
   Result.JobID = RunStopData->job_id()->str();
   Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
-  Result.ServiceID = RunStopData->service_id()->str();
+  if (RunStopData->service_id() != nullptr) {
+    Result.ServiceID = RunStopData->service_id()->str();
+  }
 
   return Result;
 }
