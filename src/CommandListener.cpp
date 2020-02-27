@@ -26,7 +26,9 @@ void CommandListener::start() {
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
   consumer = KafkaW::createConsumer(BrokerSettings, BrokerSettings.Address);
   if (consumer->topicPresent(config.CommandBrokerURI.Topic))
-    consumer->addTopic(config.CommandBrokerURI.Topic);
+    // consumer->addTopic(config.CommandBrokerURI.Topic);
+    consumer->addTopicAtTimestamp(config.CommandBrokerURI.Topic,
+                                  std::chrono::milliseconds{1582759520275});
   else {
     Logger->error(
         "Topic {} not in broker. Could not start listener for topic {}.",

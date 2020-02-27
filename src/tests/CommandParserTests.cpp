@@ -10,6 +10,7 @@
 #include <6s4t_run_stop_generated.h>
 #include <chrono>
 #include <gtest/gtest.h>
+#include <nonstd/optional.hpp>
 #include <pl72_run_start_generated.h>
 
 #include "CommandParser.h"
@@ -22,7 +23,7 @@ std::string const InstrumentNameInput = "TEST";
 std::string const RunNameInput = "42";
 std::string const NexusStructureInput = "{}";
 std::string const JobIDInput = "qw3rty";
-std::string const ServiceIDInput = "filewriter1";
+nonstd::optional<std::string> const ServiceIDInput = "filewriter1";
 std::string const BrokerInput = "somehost:1234";
 std::string const FilenameInput = "a-dummy-name-01.h5";
 uint64_t const StartTimeInput = 123456789000;
@@ -149,12 +150,24 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
   ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
 }
 
-TEST(CommandParserStartTests, IfNoServiceIdThenIsBlank) {
-  std::string const EmptyServiceID;
+TEST(CommandParserStartTests, IfBlankServiceIdThenIsBlank) {
+  nonstd::optional<std::string> const EmptyServiceID = "";
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
       EmptyServiceID, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
+
+  auto StartInfo =
+      FileWriter::CommandParser::extractStartInformation(MessageBuffer);
+
+  ASSERT_EQ("", StartInfo.ServiceID);
+}
+
+TEST(CommandParserStartTests, IfMissingServiceIdThenIsBlank) {
+  nonstd::optional<std::string> const NoServiceID = nonstd::nullopt;
+  auto MessageBuffer = buildRunStartMessage(
+      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
+      NoServiceID, BrokerInput, FilenameInput, StartTimeInput, StopTimeInput);
 
   auto StartInfo =
       FileWriter::CommandParser::extractStartInformation(MessageBuffer);
@@ -192,9 +205,20 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
 }
 
 TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
-  std::string const EmptyServiceID;
+  nonstd::optional<std::string> const EmptyServiceID = "";
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            JobIDInput, EmptyServiceID);
+
+  auto StopInfo =
+      FileWriter::CommandParser::extractStopInformation(MessageBuffer);
+
+  ASSERT_EQ("", StopInfo.ServiceID);
+}
+
+TEST(CommandParserStopTests, IfMissingServiceIdThenIsBlank) {
+  nonstd::optional<std::string> const NoServiceID = nonstd::nullopt;
+  auto MessageBuffer =
+      buildRunStopMessage(StopTimeInput, RunNameInput, JobIDInput, NoServiceID);
 
   auto StopInfo =
       FileWriter::CommandParser::extractStopInformation(MessageBuffer);
