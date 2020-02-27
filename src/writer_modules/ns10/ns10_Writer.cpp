@@ -84,13 +84,12 @@ ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup,
 
 WriterModule::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
-    auto &CurrentGroup = HDFGroup;
-    Values = NeXusDataset::DoubleValue(CurrentGroup, NeXusDataset::Mode::Open);
-    Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
+    Values = NeXusDataset::DoubleValue(HDFGroup, NeXusDataset::Mode::Open);
+    Timestamp = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
-        NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
+        NeXusDataset::CueIndex(HDFGroup, NeXusDataset::Mode::Open);
     CueTimestamp =
-        NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
+        NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
