@@ -89,22 +89,20 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
-    auto &CurrentGroup = HDFGroup;
-    initValueDataset(CurrentGroup);
+    initValueDataset(HDFGroup);
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
+        HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
+        HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
+        HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto ClassAttribute =
-        CurrentGroup.attributes.create<std::string>("NX_class");
+    auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     FileWriter::writeAttributes(HDFGroup, &AttributesJson, Logger);
@@ -119,14 +117,13 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
 
 WriterModule::InitResult NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
-    auto &CurrentGroup = HDFGroup;
     Values = std::make_unique<NeXusDataset::MultiDimDatasetBase>(
-        CurrentGroup, NeXusDataset::Mode::Open);
-    Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
+        HDFGroup, NeXusDataset::Mode::Open);
+    Timestamp = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
-        NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
+        NeXusDataset::CueIndex(HDFGroup, NeXusDataset::Mode::Open);
     CueTimestamp =
-        NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
+        NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
