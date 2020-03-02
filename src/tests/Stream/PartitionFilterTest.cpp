@@ -10,9 +10,9 @@
 /// \brief Test partition filtering.
 ///
 
-#include <gtest/gtest.h>
 #include "Stream/PartitionFilter.h"
 #include <chrono>
+#include <gtest/gtest.h>
 
 using std::chrono_literals::operator""ms;
 
@@ -53,6 +53,7 @@ TEST_F(PartitionFilterTest, ErrorStateRecovered) {
 
 TEST_F(PartitionFilterTest, ErrorStateRecoveredEOP) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(KafkaW::PollStatus::Error));
-  EXPECT_FALSE(UnderTest.shouldStopPartition(KafkaW::PollStatus::EndOfPartition));
+  EXPECT_FALSE(
+      UnderTest.shouldStopPartition(KafkaW::PollStatus::EndOfPartition));
   EXPECT_FALSE(UnderTest.hasErrorState());
 }

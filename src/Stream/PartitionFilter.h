@@ -21,7 +21,8 @@ public:
   PartitionFilter(time_point StopAtTime, duration ErrorTimeOut);
   void setStopTime(time_point Stop) { StopTime = Stop; }
   bool shouldStopPartition(KafkaW::PollStatus LastPollStatus);
-  bool hasErrorState() {return HasError;}
+  bool hasErrorState() { return HasError; }
+
 protected:
   bool HasError{false};
   time_point ErrorTime;
