@@ -66,7 +66,8 @@ protected:
   void pollForMessage();
 
   void processMessage(FileWriter::Msg const &Message);
-
+  int PartitionID{0}; // Fix
+  std::string Topic{}; // Fix
   std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
   std::atomic_bool HasFinished{false};
   std::int64_t CurrentOffset{0};
