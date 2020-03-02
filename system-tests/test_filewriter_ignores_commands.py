@@ -38,7 +38,7 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
     for i in range(30):
         msg = consumer.poll()
         if b'"file_being_written":""' in msg.value():
-            # filewriter2 is not currently writing a file => stop command has been processed.
+            # Filewriter2 is not currently writing a file => stop command has been processed.
             stopped = True
             break
         sleep(1)
