@@ -11,9 +11,9 @@
 
 namespace Stream {
 
-PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
+PartitionFilter::PartitionFilter(Stream::time_point StopAtTime, duration StopTimeLeeway,
                                  Stream::duration ErrorTimeOut)
-    : StopTime(StopAtTime), MaxErrorTime(ErrorTimeOut) {}
+    : StopTime(StopAtTime), StopLeeway(StopTimeLeeway), MaxErrorTime(ErrorTimeOut) {}
 
 bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus LastPollStatus) {
   switch (LastPollStatus) {
@@ -25,7 +25,7 @@ bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus LastPollStatus) {
     break;
   case KafkaW::PollStatus::EndOfPartition:
     HasError = false;
-    if (std::chrono::system_clock::now() > StopTime) {
+    if (std::chrono::system_clock::now() > StopTime + StopLeeway) {
       return true;
     }
     return false;

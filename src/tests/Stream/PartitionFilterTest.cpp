@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 #include "Stream/PartitionFilter.h"
 #include <chrono>
+#include <thread>
 
 using std::chrono_literals::operator""ms;
 
@@ -55,4 +56,10 @@ TEST_F(PartitionFilterTest, ErrorStateRecoveredEOP) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(KafkaW::PollStatus::Error));
   EXPECT_FALSE(UnderTest.shouldStopPartition(KafkaW::PollStatus::EndOfPartition));
   EXPECT_FALSE(UnderTest.hasErrorState());
+}
+
+TEST_F(PartitionFilterTest, ErrorStateAndStop) {
+  EXPECT_FALSE(UnderTest.shouldStopPartition(KafkaW::PollStatus::Error));
+  std::this_thread::sleep_for(100ms);
+  EXPECT_TRUE(UnderTest.shouldStopPartition(KafkaW::PollStatus::Error));
 }
