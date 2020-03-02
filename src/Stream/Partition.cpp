@@ -68,9 +68,12 @@ void Partition::pollForMessage() {
   }
   if (StopTester.shouldStopPartition(Msg.first)) {
     if (StopTester.hasErrorState()) {
-      LOG_ERROR("Stopping consumption of data from Kafka in partition {} of topic {} due to error.", PartitionID, Topic);
+      LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
+                "topic {} due to error.",
+                PartitionID, Topic);
     } else {
-      LOG_INFO("Done consuming data from partition {} of topic {}.", PartitionID, Topic);
+      LOG_INFO("Done consuming data from partition {} of topic {}.",
+               PartitionID, Topic);
     }
     HasFinished = true;
     return;
