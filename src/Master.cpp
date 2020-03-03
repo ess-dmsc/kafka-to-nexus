@@ -86,7 +86,8 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
 
 void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
   if (StopInfo.JobID != CurrentStreamMaster->getJobId()) {
-    Logger->info("Stop request's job id {} does not match running job's id {}, so ignoring",
+    Logger->info("Stop request's job id {} does not match running job's id {}, "
+                 "so ignoring",
                  StopInfo.JobID, CurrentStreamMaster->getJobId());
     return;
   }

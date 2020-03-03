@@ -34,9 +34,9 @@ JobCreator::initializeHDF(FileWriterTask &Task,
     std::vector<StreamHDFInfo> StreamHDFInfoList;
     Task.InitialiseHdf(NexusStructure.dump(), StreamHDFInfoList, UseSwmr);
     return StreamHDFInfoList;
-  } catch (nlohmann::detail::exception const & Error) {
-    throw std::runtime_error(fmt::format(
-        "Could not parse NeXus structure JSON '{}'", Error.what()));
+  } catch (nlohmann::detail::exception const &Error) {
+    throw std::runtime_error(
+        fmt::format("Could not parse NeXus structure JSON '{}'", Error.what()));
   }
 }
 
