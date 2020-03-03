@@ -21,8 +21,7 @@ namespace {
 /// \param Topic Name of the topic to look for.
 /// \return The topic metadata object.
 const RdKafka::TopicMetadata *
-findTopic(std::string const &Topic,
-          RdKafka::Metadata const &KafkaMetadata) {
+findTopic(std::string const &Topic, RdKafka::Metadata const &KafkaMetadata) {
   auto Topics = KafkaMetadata.topics();
   auto Iterator =
       std::find_if(Topics->cbegin(), Topics->cend(),
