@@ -15,7 +15,7 @@ namespace KafkaW {
 
 ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
                              std::string TopicName)
-    : KafkaProducer(ProducerPtr), Name(std::move(TopicName)) {
+    : KafkaProducer(std::move(ProducerPtr)), Name(std::move(TopicName)) {
 
   std::string ErrStr;
   RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(

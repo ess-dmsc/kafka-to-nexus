@@ -84,7 +84,7 @@ public:
   /// Get the group for the HDF file.
   ///
   /// \return The group.
-  hdf5::node::Group hdfGroup();
+  hdf5::node::Group hdfGroup() const;
 
   /// Get whether SWMR is enabled for this task.
   ///

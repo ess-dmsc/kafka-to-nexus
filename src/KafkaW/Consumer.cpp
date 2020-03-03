@@ -21,9 +21,9 @@ namespace {
 /// \param Topic Name of the topic to look for.
 /// \return The topic metadata object.
 const RdKafka::TopicMetadata *
-findTopic(const std::string &Topic,
-          const std::shared_ptr<RdKafka::Metadata> &KafkaMetadata) {
-  auto Topics = KafkaMetadata->topics();
+findTopic(std::string const &Topic,
+          RdKafka::Metadata const &KafkaMetadata) {
+  auto Topics = KafkaMetadata.topics();
   auto Iterator =
       std::find_if(Topics->cbegin(), Topics->cend(),
                    [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
@@ -246,8 +246,8 @@ int64_t Consumer::getHighWatermarkOffset(std::string const &Topic,
 }
 
 std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
-  std::shared_ptr<RdKafka::Metadata> KafkaMetadata = getMetadata();
-  auto matchedTopic = findTopic(Topic, KafkaMetadata);
+  std::unique_ptr<RdKafka::Metadata> KafkaMetadata = getMetadata();
+  auto const matchedTopic = findTopic(Topic, *KafkaMetadata);
   std::vector<int32_t> TopicPartitionNumbers;
   const RdKafka::TopicMetadata::PartitionMetadataVector *PartitionMetadata =
       matchedTopic->partitions();
@@ -261,8 +261,8 @@ std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
 
 bool Consumer::topicPresent(const std::string &TopicName) {
   try {
-    std::shared_ptr<RdKafka::Metadata> KafkaMetadata = getMetadata();
-    findTopic(TopicName, KafkaMetadata);
+    std::unique_ptr<RdKafka::Metadata> KafkaMetadata = getMetadata();
+    findTopic(TopicName, *KafkaMetadata);
   } catch (std::runtime_error &e) {
     return false;
   }
@@ -271,11 +271,11 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 
 /// Gets metadata from the Kafka broker, if unsuccessful then keeps trying
 /// and logs a warning message every WarnOnNRetries attempts.
-std::shared_ptr<RdKafka::Metadata> Consumer::getMetadata() {
+std::unique_ptr<RdKafka::Metadata> Consumer::getMetadata() {
   Logger->trace("Querying broker for Metadata");
   uint32_t LoopCounter = 0;
   uint32_t WarnOnNRetries = 10;
-  std::shared_ptr<RdKafka::Metadata> KafkaMetadata = metadataCall();
+  std::unique_ptr<RdKafka::Metadata> KafkaMetadata = metadataCall();
   while (KafkaMetadata == nullptr) {
     if (LoopCounter == WarnOnNRetries) {
       Logger->warn("Cannot contact broker, retrying until connection is "
@@ -289,13 +289,13 @@ std::shared_ptr<RdKafka::Metadata> Consumer::getMetadata() {
   return KafkaMetadata;
 }
 
-std::shared_ptr<RdKafka::Metadata> Consumer::metadataCall() {
+std::unique_ptr<RdKafka::Metadata> Consumer::metadataCall() {
   RdKafka::Metadata *MetadataPtr = nullptr;
   auto ErrorCode = KafkaConsumer->metadata(
       true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
   switch (ErrorCode) {
   case RdKafka::ERR_NO_ERROR:
-    return std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
+    return std::unique_ptr<RdKafka::Metadata>(MetadataPtr);
   case RdKafka::ERR__TRANSPORT:
     return nullptr;
   case RdKafka::ERR__TIMED_OUT:
