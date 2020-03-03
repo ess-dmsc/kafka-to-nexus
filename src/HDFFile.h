@@ -26,7 +26,7 @@ struct StreamHDFInfo {
   bool InitialisedOk = false;
 };
 
-class HDFFile final {
+class HDFFile {
 public:
   HDFFile();
 
