@@ -15,7 +15,7 @@ namespace KafkaW {
 
 ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
                              std::string TopicName)
-    : KafkaProducer(ProducerPtr), Name(std::move(TopicName)) {
+    : KafkaProducer(std::move(ProducerPtr)), Name(std::move(TopicName)) {
 
   std::string ErrStr;
   RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(
@@ -39,11 +39,10 @@ int ProducerTopic::produce(const std::string &MsgData) {
   auto MsgPtr = new Msg_;
   std::copy(MsgData.cbegin(), MsgData.cend(), std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();
-  std::unique_ptr<ProducerMessage> Msg(MsgPtr);
-  return produce(Msg);
+  return produce(std::unique_ptr<ProducerMessage>(MsgPtr));
 }
 
-int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
+int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
   void const *key = nullptr;
   size_t key_len = 0;
   // MsgFlags = 0 means that we are responsible for cleaning up the message

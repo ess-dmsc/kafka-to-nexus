@@ -22,7 +22,7 @@ enum class ProcessMessageResult;
 ///
 /// The sourcename can be empty. This is meant for highest efficiency on topics
 /// which are exclusively used for only one sourcename.
-class Source final {
+class Source {
 public:
   Source(std::string Name, std::string ID, std::string Topic,
          WriterModule::ptr Writer);
@@ -32,7 +32,7 @@ public:
   std::string const &sourcename() const;
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
-  HDFFile *HDFFileForSWMR = nullptr;
+  std::shared_ptr<HDFFile> HDFFileForSWMR = nullptr;
 
 private:
   std::string SourceName;
