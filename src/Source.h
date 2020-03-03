@@ -32,7 +32,7 @@ public:
   std::string const &sourcename() const;
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
-  HDFFile *HDFFileForSWMR = nullptr;
+  std::shared_ptr<HDFFile> HDFFileForSWMR = nullptr;
 
 private:
   std::string SourceName;

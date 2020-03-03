@@ -37,7 +37,7 @@ public:
   ///
   /// \param TaskID The service ID.
   explicit FileWriterTask(std::string TaskID)
-      : ServiceId(std::move(TaskID)), Logger(getLogger()){};
+      : ServiceId(std::move(TaskID)), File(std::make_shared<HDFFile>()), Logger(getLogger()){};
 
   /// Destructor.
   ~FileWriterTask();
@@ -98,7 +98,7 @@ private:
   void reopenFile();
   std::string JobId;
   std::string ServiceId;
-  HDFFile File;
+  std::shared_ptr<HDFFile> File;
   SharedLogger Logger;
 };
 
