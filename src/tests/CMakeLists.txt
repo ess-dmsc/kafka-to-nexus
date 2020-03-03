@@ -16,7 +16,6 @@ set(UnitTests_SRC
         NeXusDatasetTests.cpp
         DemuxerTests.cpp
         MessageTests.cpp
-        EventLoggerTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
         ProducerTests.cpp
