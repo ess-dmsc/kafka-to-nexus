@@ -15,9 +15,11 @@
 namespace Stream {
 using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
+using std::chrono_literals::operator""s;
 
 class PartitionFilter {
 public:
+    PartitionFilter() = default;
   PartitionFilter(time_point StopAtTime, duration StopTimeLeeway, duration ErrorTimeOut);
   void setStopTime(time_point Stop) { StopTime = Stop; }
   bool shouldStopPartition(KafkaW::PollStatus LastPollStatus);
@@ -26,9 +28,9 @@ public:
 protected:
   bool HasError{false};
   time_point ErrorTime;
-  time_point StopTime;
-  duration StopLeeway;
-  duration MaxErrorTime;
+  time_point StopTime{time_point::max()};
+  duration StopLeeway{10s};
+  duration MaxErrorTime{10s};
 };
 
 } // namespace Stream

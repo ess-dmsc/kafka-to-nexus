@@ -15,7 +15,7 @@ namespace Stream {
 Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop)
-    : ConsumerPtr(std::move(Consumer)), StopTester(Stop, 30s) {
+    : ConsumerPtr(std::move(Consumer)), StopTester(Stop,10s, 30s) {
 
   for (auto &SrcDestPair : Map) {
     if (MsgFilters.find(SrcDestPair.first) == MsgFilters.end()) {
