@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "FileWriterTask.h"
 #include "KafkaW/Producer.h"
 #include "StreamMaster.h"
 #include "Streamer.h"

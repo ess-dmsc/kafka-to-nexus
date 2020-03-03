@@ -41,7 +41,7 @@ FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
   TopicNameToDemuxerMap.clear();
   try {
-    File.close();
+    closeFile();
   } catch (std::exception const &E) {
     Logger->error(fmt::format(
         "Exception while closing file in ~FileWriterTask: {}", E.what()));
@@ -59,7 +59,7 @@ void FileWriterTask::setFilename(std::string const &Prefix,
 
 void FileWriterTask::addSource(Source &&Source) {
   if (swmrEnabled()) {
-    Source.HDFFileForSWMR = &File;
+    Source.HDFFileForSWMR = File;
   }
 
   TopicNameToDemuxerMap.emplace(Source.topic(),
@@ -76,7 +76,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
 
   try {
     Logger->info("Creating HDF file {}", Filename);
-    File.init(Filename, NexusStructureJson, HdfInfo, UseSwmr);
+    File->init(Filename, NexusStructureJson, HdfInfo, UseSwmr);
     // The HDF file is closed and re-opened to (optionally) support SWMR and
     // parallel writing.
     closeFile();
@@ -88,11 +88,11 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
   }
 }
 
-void FileWriterTask::closeFile() { File.close(); }
+void FileWriterTask::closeFile() { File->close(); }
 
 void FileWriterTask::reopenFile() {
   try {
-    File.reopen(Filename);
+    File->reopen(Filename);
   } catch (std::exception const &E) {
     Logger->error("Exception when reopening file: {}", E.what());
     throw;
@@ -101,9 +101,11 @@ void FileWriterTask::reopenFile() {
 
 std::string FileWriterTask::jobID() const { return JobId; }
 
-hdf5::node::Group FileWriterTask::hdfGroup() { return File.H5File.root(); }
+hdf5::node::Group FileWriterTask::hdfGroup() const {
+  return File->H5File.root();
+}
 
-bool FileWriterTask::swmrEnabled() const { return File.isSWMREnabled(); }
+bool FileWriterTask::swmrEnabled() const { return File->isSWMREnabled(); }
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 

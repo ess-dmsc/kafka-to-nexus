@@ -69,7 +69,6 @@ set(kafka_to_nexus_SRC
         FileWriterTask.cpp
         Source.cpp
         DemuxTopic.cpp
-        EventLogger.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
         KafkaW/Consumer.cpp
@@ -100,7 +99,6 @@ set(kafka_to_nexus_INC
         CommandListener.h
         DemuxTopic.h
         StreamStatus.h
-        EventLogger.h
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h

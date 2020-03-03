@@ -31,13 +31,14 @@ public:
 /// It contains the list of `Source` and `DemuxTopic`
 /// and makes those available to the FileMaster and `Streamer`.
 /// Created by `Master` on command message and passed to FileMaster in vector.
-class FileWriterTask final {
+class FileWriterTask {
 public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
   explicit FileWriterTask(std::string TaskID)
-      : ServiceId(std::move(TaskID)), Logger(getLogger()){};
+      : ServiceId(std::move(TaskID)), File(std::make_shared<HDFFile>()),
+        Logger(getLogger()){};
 
   /// Destructor.
   ~FileWriterTask();
@@ -84,7 +85,7 @@ public:
   /// Get the group for the HDF file.
   ///
   /// \return The group.
-  hdf5::node::Group hdfGroup();
+  hdf5::node::Group hdfGroup() const;
 
   /// Get whether SWMR is enabled for this task.
   ///
@@ -98,7 +99,7 @@ private:
   void reopenFile();
   std::string JobId;
   std::string ServiceId;
-  HDFFile File;
+  std::shared_ptr<HDFFile> File;
   SharedLogger Logger;
 };
 

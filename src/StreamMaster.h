@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "EventLogger.h"
 #include "MainOpt.h"
 #include <atomic>
 #include <thread>

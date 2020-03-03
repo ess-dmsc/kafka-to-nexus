@@ -64,7 +64,7 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
 }
 
 void setUpHdfStructure(StreamSettings const &StreamSettings,
-                       std::unique_ptr<FileWriterTask> const &Task) {
+                       FileWriterTask const &Task) {
   WriterModule::Registry::ModuleFactory ModuleFactory;
   try {
     auto Find = WriterModule::Registry::find(StreamSettings.ModuleName);
@@ -81,7 +81,7 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
         "Can not create a writer module for '{}'", StreamSettings.ModuleName));
   }
 
-  auto RootGroup = Task->hdfGroup();
+  auto RootGroup = Task.hdfGroup();
   try {
     HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson);
   } catch (std::exception const &E) {
@@ -99,7 +99,7 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
 /// Helper to extract information about the provided streams.
 /// \param Logger Pointer to spdlog instance to be used for logging.
 static vector<StreamSettings>
-extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
+extractStreamInformationFromJson(FileWriterTask const &Task,
                                  std::vector<StreamHDFInfo> &StreamHDFInfoList,
                                  SharedLogger const &Logger) {
   Logger->info("Command contains {} streams", StreamHDFInfoList.size());
@@ -142,7 +142,7 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
       initializeHDF(*Task, StartInfo.NexusStructure, Settings.UseHdfSwmr);
 
   std::vector<StreamSettings> StreamSettingsList =
-      extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
+      extractStreamInformationFromJson(*Task, StreamHDFInfoList, Logger);
 
   if (Settings.AbortOnUninitialisedStream) {
     for (auto const &Item : StreamHDFInfoList) {
