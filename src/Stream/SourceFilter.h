@@ -18,6 +18,7 @@
 namespace Stream {
 
 using time_point = std::chrono::system_clock::time_point;
+uint64_t toNanoSec(time_point Time);
 
 class SourceFilter {
 public:
@@ -46,6 +47,8 @@ protected:
       Dest->addMessage({CDest, Msg});
     }
   }
+
+  void sendBufferedMessage();
   time_point Start;
   time_point Stop;
   uint64_t CurrentTimeStamp{0};
@@ -59,6 +62,9 @@ protected:
   Metrics::Metric UnorderedTimestamp{
       "unordered_timestamp", "Timestamp of message not in chronological order.",
       Metrics::Severity::ERROR};
+  Metrics::Metric RepeatedTimestamp{
+          "repeated_timestamp", "Got message with repeated timestamp.",
+          Metrics::Severity::DEBUG};
   Metrics::Metric MessagesReceived{"received",
                                    "Number of messages received/processed.",
                                    Metrics::Severity::DEBUG};

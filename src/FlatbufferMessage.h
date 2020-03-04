@@ -85,8 +85,8 @@ public:
   ~FlatbufferMessage() = default;
 
   FlatbufferMessage &operator=(FlatbufferMessage const &Other) {
-    DataPtr = std::make_unique<char[]>(DataSize);
-    std::memcpy(DataPtr.get(), Other.DataPtr.get(), DataSize);
+    DataPtr = std::make_unique<char[]>(Other.DataSize);
+    std::memcpy(DataPtr.get(), Other.DataPtr.get(), Other.DataSize);
     DataSize = Other.DataSize;
     SourceNameIDHash = Other.SourceNameIDHash;
     Sourcename = Other.Sourcename;

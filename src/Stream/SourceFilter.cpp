@@ -20,13 +20,11 @@ SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
   RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(MessagesTransmitted, {Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(MessagesDiscarded, {Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(RepeatedTimestamp, {Metrics::LogTo::LOG_MSG});
 }
 
 SourceFilter::~SourceFilter() {
-  if (BufferedMessage.isValid()) {
-    sendMessage(BufferedMessage);
-    BufferedMessage = FileWriter::FlatbufferMessage();
-  }
+  sendBufferedMessage();
 }
 
 void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
@@ -39,16 +37,24 @@ uint64_t toNanoSec(time_point Time) {
       .count();
 }
 
+void SourceFilter::sendBufferedMessage() {
+  if (BufferedMessage.isValid()) {
+    sendMessage(BufferedMessage);
+    BufferedMessage = FileWriter::FlatbufferMessage();
+  }
+}
+
 bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
   MessagesReceived++;
   if (InMsg.getTimestamp() == CurrentTimeStamp) {
     MessagesDiscarded++;
+    RepeatedTimestamp++;
     return false;
   } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
     MessagesDiscarded++;
     UnorderedTimestamp++;
     return false;
-  } else if (not BufferedMessage.isValid()) {
+  } else if (not InMsg.isValid()) {
     MessagesDiscarded++;
     FlatbufferInvalid++;
     return false;
@@ -63,17 +69,11 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
     return false;
   } else if (CurrentTimeStamp > toNanoSec(Start) and
              CurrentTimeStamp < toNanoSec(Stop)) {
-    if (BufferedMessage.isValid()) {
-      sendMessage(BufferedMessage);
-      BufferedMessage = FileWriter::FlatbufferMessage();
-    }
+    sendBufferedMessage();
     sendMessage(InMsg);
     return true;
   }
-  if (BufferedMessage.isValid()) {
-    sendMessage(BufferedMessage);
-    BufferedMessage = FileWriter::FlatbufferMessage();
-  }
+  sendBufferedMessage();
   sendMessage(InMsg);
   IsDone = true;
   return true;

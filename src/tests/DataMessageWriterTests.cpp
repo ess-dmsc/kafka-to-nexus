@@ -78,7 +78,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
   }
 }
 
-static class xxxFbReader : public FileWriter::FlatbufferReader {
+class xxxFbReader : public FileWriter::FlatbufferReader {
   bool verify(FileWriter::FlatbufferMessage const &) const override {
     return true;
   }

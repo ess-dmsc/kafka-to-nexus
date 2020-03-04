@@ -22,8 +22,16 @@
 namespace Stream {
 
 // Pollution of namespace, fix.
-using SrcToDst = std::vector<
-    std::pair<FileWriter::FlatbufferMessage::SrcHash, Message::DstId>>;
+struct SrcDstKey {
+  FileWriter::FlatbufferMessage::SrcHash Hash;
+  Message::DstId Destination;
+  std::string SourceName;
+  std::string FlatbufferId;
+  std::string getMetricsNameString() {
+    return SourceName + "_" + FlatbufferId;
+  }
+};
+using SrcToDst = std::vector<SrcDstKey>;
 using std::chrono_literals::operator""ms;
 using std::chrono_literals::operator""s;
 using time_point = std::chrono::system_clock::time_point;
@@ -72,7 +80,7 @@ protected:
   std::atomic_bool HasFinished{false};
   std::int64_t CurrentOffset{0};
   PartitionFilter StopTester;
-  std::map<FileWriter::FlatbufferMessage::SrcHash, SourceFilter> MsgFilters;
+  std::map<FileWriter::FlatbufferMessage::SrcHash, std::unique_ptr<SourceFilter>> MsgFilters;
   ThreadedExecutor Executor; // Must be last
 };
 

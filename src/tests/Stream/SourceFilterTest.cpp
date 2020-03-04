@@ -24,20 +24,36 @@ public:
     MAKE_MOCK1(addMessage, void(Stream::Message), override);
 };
 
+class SourceFilterStandIn : public Stream::SourceFilter {
+public:
+  SourceFilterStandIn(Stream::time_point Start, Stream::time_point Stop, Stream::MessageWriter *Writer, Metrics::Registrar Reg) : SourceFilter(Start, Stop, Writer, Reg) {}
+  using SourceFilter::MessagesDiscarded;
+  using SourceFilter::MessagesTransmitted;
+  using SourceFilter::MessagesReceived;
+  using SourceFilter::RepeatedTimestamp;
+  using SourceFilter::UnorderedTimestamp;
+};
+
 class SourceFilterTest : public ::testing::Test {
 public:
     Stream::time_point StartTime{std::chrono::system_clock::now()};
     MessageWriterStandIn Writer;
-    Stream::SourceFilter UnderTest{StartTime, std::chrono::system_clock::time_point::max(),
-                                   &Writer};
+    Metrics::Registrar SomeRegistrar{"test_reg", {}};
+    auto getTestFilter() {
+      return std::make_unique<SourceFilterStandIn>(StartTime, std::chrono::system_clock::time_point::max(),
+                                            &Writer, SomeRegistrar);
+    }
+
 };
 
 TEST_F(SourceFilterTest, InitState) {
-    EXPECT_FALSE(UnderTest.hasFinished());
+  auto UnderTest = getTestFilter();
+    EXPECT_FALSE(UnderTest->hasFinished());
 }
 using trompeloeil::_;
 
-static class xxxFbReader : public FileWriter::FlatbufferReader {
+class yyyyFbReader : public FileWriter::FlatbufferReader {
+public:
     bool verify(FileWriter::FlatbufferMessage const &) const override {
         return true;
     }
@@ -48,31 +64,200 @@ static class xxxFbReader : public FileWriter::FlatbufferReader {
     }
 
     uint64_t timestamp(FileWriter::FlatbufferMessage const &) const override {
-        return xxxFbReader::Timestamp;
+        return yyyyFbReader::Timestamp;
     }
     static void setTimestamp(uint64_t NewTime) {
-        xxxFbReader::Timestamp = NewTime;
+      yyyyFbReader::Timestamp = NewTime;
     }
 private:
     static uint64_t Timestamp;
 };
 
-uint64_t xxxFbReader::Timestamp{1};
+uint64_t yyyyFbReader::Timestamp{1};
 
 FileWriter::FlatbufferMessage generateMsg() {
-    std::array<char, 9> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
-    setExtractorModule<xxxFbReader>("xxxx");
+    std::array<char, 9> SomeData{'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'};
+    setExtractorModule<yyyyFbReader>("yyyy");
     return FileWriter::FlatbufferMessage(SomeData.data(), SomeData.size());
 }
 
 TEST_F(SourceFilterTest, InvalidMessage) {
-    FORBID_CALL(Writer, addMessage(_));
-    FileWriter::FlatbufferMessage TestMsg;
-    UnderTest.filterMessage(std::move(TestMsg));
+  FORBID_CALL(Writer, addMessage(_));
+  auto UnderTest = getTestFilter();
+  FileWriter::FlatbufferMessage TestMsg;
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesDiscarded == 1);
+  EXPECT_FALSE(UnderTest->hasFinished());
 }
 
-TEST_F(SourceFilterTest, MessageUnknownDest) {
-    FORBID_CALL(Writer, addMessage(_));
-    auto TestMsg = generateMsg();
-    UnderTest.filterMessage(std::move(TestMsg));
+TEST_F(SourceFilterTest, MessageNoDest) {
+  FORBID_CALL(Writer, addMessage(_));
+  auto UnderTest = getTestFilter();
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, BufferedMessageBeforeStart) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(0);
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, MultipleMessagesBeforeStart) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(0);
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  yyyyFbReader::setTimestamp(2);
+  auto TestMsg2 = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg2));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, SameTSBeforeStart) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(0);
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+using std::chrono_literals::operator""ms;
+
+TEST_F(SourceFilterTest, SameTSAfterStart) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(0);
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, MsgBeforeAndAfterStart) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(0);
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
+  auto TestMsg2 = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg2));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, MultipleDestinations) {
+  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestId==1).TIMES(1);
+  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestId==12).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(1);
+  UnderTest->addDestinationId(12);
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, MessageAfterStop) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(1);
+  UnderTest->setStopTime(StartTime + 20ms);
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
+  EXPECT_TRUE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, MessageBeforeAndAfterStop) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(1);
+  UnderTest->setStopTime(StartTime + 20ms);
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 10ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
+  auto TestMsg2 = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg2));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
+  EXPECT_TRUE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, MessageBeforeStartAndAfterStop) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(1);
+  UnderTest->setStopTime(StartTime + 20ms);
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime - 10ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
+
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
+  auto TestMsg2 = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg2));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
+  EXPECT_TRUE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, UnorderedMsgBeforeStart) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(1);
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime - 10ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
+
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime - 50ms));
+  auto TestMsg2 = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg2));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->UnorderedTimestamp == 1);
+  EXPECT_TRUE(UnderTest->MessagesDiscarded == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
+}
+
+TEST_F(SourceFilterTest, UnorderedMsgAfterStart) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter();
+  UnderTest->addDestinationId(1);
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 10ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 5ms));
+  auto TestMsg2 = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg2));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->UnorderedTimestamp == 1);
+  EXPECT_TRUE(UnderTest->MessagesDiscarded == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
 }

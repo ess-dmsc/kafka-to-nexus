@@ -17,11 +17,11 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
                      time_point Start, time_point Stop)
     : ConsumerPtr(std::move(Consumer)), StopTester(Stop, 10s, 30s) {
 
-  for (auto &SrcDestPair : Map) {
-    if (MsgFilters.find(SrcDestPair.first) == MsgFilters.end()) {
-      MsgFilters[SrcDestPair.first] = SourceFilter(Start, Stop, Writer);
+  for (auto &SrcDestInfo : Map) {
+    if (MsgFilters.find(SrcDestInfo.Hash) == MsgFilters.end()) {
+      MsgFilters.emplace(SrcDestInfo.Hash, std::make_unique<SourceFilter>(Start, Stop, Writer, RegisterMetric.getNewRegistrar(SrcDestInfo.getMetricsNameString())));
     }
-    MsgFilters[SrcDestPair.first].addDestinationId(SrcDestPair.second);
+    MsgFilters[SrcDestInfo.Hash]->addDestinationId(SrcDestInfo.Destination);
   }
 
   RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
@@ -42,7 +42,7 @@ void Partition::setStopTime(time_point Stop) {
   Executor.SendWork([=]() {
     StopTester.setStopTime(Stop);
     for (auto &Filter : MsgFilters) {
-      Filter.second.setStopTime(Stop);
+      Filter.second->setStopTime(Stop);
     }
   });
 }
@@ -105,9 +105,9 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
   auto CurrentFilter = MsgFilters.find(FbMsg.getSourceHash());
   if (CurrentFilter != MsgFilters.end() and
-      CurrentFilter->second.filterMessage(std::move(FbMsg))) {
+      CurrentFilter->second->filterMessage(std::move(FbMsg))) {
     MessagesProcessed++;
-    if (CurrentFilter->second.hasFinished()) {
+    if (CurrentFilter->second-> hasFinished()) {
       MsgFilters.erase(CurrentFilter->first);
     }
   }

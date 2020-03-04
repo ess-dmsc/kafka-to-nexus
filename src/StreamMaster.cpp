@@ -62,7 +62,7 @@ void StreamMaster::initStreams(std::set<std::string> KnownTopicNames) {
   for (auto &Src : WriterTask->sources()) {
     if (KnownTopicNames.find(Src.topic()) != KnownTopicNames.end()) {
       TopicSrcMap[Src.topic()].push_back(
-          {Src.getHash(), reinterpret_cast<intptr_t>(Src.getWriterPtr())});
+          {Src.getHash(), reinterpret_cast<intptr_t>(Src.getWriterPtr()), Src.sourcename(), Src.flatbufferID()});
     } else {
       LOG_ERROR("Unable to set up consumer for source {} on topic {} as this "
                 "topic is does not exist.",
