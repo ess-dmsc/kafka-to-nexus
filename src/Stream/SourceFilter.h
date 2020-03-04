@@ -10,9 +10,9 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "Stream/MessageWriter.h"
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
+#include "Stream/MessageWriter.h"
 #include <chrono>
 
 namespace Stream {
@@ -53,18 +53,21 @@ protected:
   bool IsDone{false};
   FileWriter::FlatbufferMessage BufferedMessage;
   std::vector<Message::DstId> DestIDs;
-    Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
-                                "Flatbuffer failed validation.",
-                                Metrics::Severity::ERROR};
-    Metrics::Metric UnorderedTimestamp{"unordered_timestamp",
-                                      "Timestamp of message not in chronological order.",
-                                      Metrics::Severity::ERROR};
-    Metrics::Metric MessagesReceived{"received",
-                                       "Number of messages received/processed.", Metrics::Severity::DEBUG};
-    Metrics::Metric MessagesTransmitted{"sent",
-                                     "Number of messages queued up for writing.", Metrics::Severity::DEBUG};
-    Metrics::Metric MessagesDiscarded{"discarded",
-                                        "Number of messages discarded for whatever reason.", Metrics::Severity::DEBUG};
+  Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
+                                    "Flatbuffer failed validation.",
+                                    Metrics::Severity::ERROR};
+  Metrics::Metric UnorderedTimestamp{
+      "unordered_timestamp", "Timestamp of message not in chronological order.",
+      Metrics::Severity::ERROR};
+  Metrics::Metric MessagesReceived{"received",
+                                   "Number of messages received/processed.",
+                                   Metrics::Severity::DEBUG};
+  Metrics::Metric MessagesTransmitted{
+      "sent", "Number of messages queued up for writing.",
+      Metrics::Severity::DEBUG};
+  Metrics::Metric MessagesDiscarded{
+      "discarded", "Number of messages discarded for whatever reason.",
+      Metrics::Severity::DEBUG};
 };
 
 } // namespace Stream

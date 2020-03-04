@@ -19,8 +19,9 @@ using std::chrono_literals::operator""s;
 
 class PartitionFilter {
 public:
-    PartitionFilter() = default;
-  PartitionFilter(time_point StopAtTime, duration StopTimeLeeway, duration ErrorTimeOut);
+  PartitionFilter() = default;
+  PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
+                  duration ErrorTimeOut);
   void setStopTime(time_point Stop) { StopTime = Stop; }
   bool shouldStopPartition(KafkaW::PollStatus LastPollStatus);
   bool hasErrorState() { return HasError; }

@@ -11,12 +11,14 @@
 
 namespace Stream {
 
-PartitionFilter::PartitionFilter(Stream::time_point StopAtTime, duration StopTimeLeeway,
+PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
+                                 duration StopTimeLeeway,
                                  Stream::duration ErrorTimeOut)
-    : StopTime(StopAtTime), StopLeeway(StopTimeLeeway), MaxErrorTime(ErrorTimeOut) {
-    if (StopTime == time_point::max())  { //Deal with potential overflow problem
-        StopTime -= StopTimeLeeway;
-    }
+    : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
+      MaxErrorTime(ErrorTimeOut) {
+  if (StopTime == time_point::max()) { // Deal with potential overflow problem
+    StopTime -= StopTimeLeeway;
+  }
 }
 
 bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus LastPollStatus) {

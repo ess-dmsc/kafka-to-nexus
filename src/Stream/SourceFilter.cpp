@@ -12,13 +12,14 @@
 namespace Stream {
 
 SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
-                           MessageWriter *Destination, Metrics::Registrar RegisterMetric)
+                           MessageWriter *Destination,
+                           Metrics::Registrar RegisterMetric)
     : Start(StartTime), Stop(StopTime), Dest(Destination) {
-    RegisterMetric.registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
-    RegisterMetric.registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
-    RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::LOG_MSG});
-    RegisterMetric.registerMetric(MessagesTransmitted, {Metrics::LogTo::LOG_MSG});
-    RegisterMetric.registerMetric(MessagesDiscarded, {Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(MessagesTransmitted, {Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(MessagesDiscarded, {Metrics::LogTo::LOG_MSG});
 }
 
 SourceFilter::~SourceFilter() {
@@ -41,23 +42,23 @@ uint64_t toNanoSec(time_point Time) {
 bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
   MessagesReceived++;
   if (InMsg.getTimestamp() == CurrentTimeStamp) {
-      MessagesDiscarded++;
+    MessagesDiscarded++;
     return false;
   } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
     MessagesDiscarded++;
     UnorderedTimestamp++;
     return false;
   } else if (not BufferedMessage.isValid()) {
-      MessagesDiscarded++;
-      FlatbufferInvalid++;
-      return false;
+    MessagesDiscarded++;
+    FlatbufferInvalid++;
+    return false;
   }
   CurrentTimeStamp = InMsg.getTimestamp();
 
   if (CurrentTimeStamp < toNanoSec(Start)) {
-      if (BufferedMessage.isValid()) {
-          MessagesDiscarded++;
-      }
+    if (BufferedMessage.isValid()) {
+      MessagesDiscarded++;
+    }
     BufferedMessage = std::move(InMsg);
     return false;
   } else if (CurrentTimeStamp > toNanoSec(Start) and
