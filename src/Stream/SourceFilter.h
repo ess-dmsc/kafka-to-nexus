@@ -11,6 +11,8 @@
 
 #include "FlatbufferMessage.h"
 #include "Stream/MessageWriter.h"
+#include "Metrics/Metric.h"
+#include "Metrics/Registrar.h"
 #include <chrono>
 
 namespace Stream {
@@ -21,7 +23,7 @@ class SourceFilter {
 public:
   SourceFilter() = default;
   SourceFilter(time_point StartTime, time_point StopTime,
-               MessageWriter *Destination);
+               MessageWriter *Destination, Metrics::Registrar RegisterMetric);
   ~SourceFilter();
   void addDestinationId(Message::DstId NewDestination) {
     DestIDs.push_back(NewDestination);
@@ -37,9 +39,9 @@ public:
   void setStopTime(time_point StopTime);
   bool hasFinished();
 
-private:
+protected:
   void sendMessage(FileWriter::FlatbufferMessage const &Msg) {
-    // Increase msg counter
+    MessagesTransmitted++;
     for (auto &CDest : DestIDs) {
       Dest->addMessage({CDest, Msg});
     }
@@ -51,6 +53,18 @@ private:
   bool IsDone{false};
   FileWriter::FlatbufferMessage BufferedMessage;
   std::vector<Message::DstId> DestIDs;
+    Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
+                                "Flatbuffer failed validation.",
+                                Metrics::Severity::ERROR};
+    Metrics::Metric UnorderedTimestamp{"unordered_timestamp",
+                                      "Timestamp of message not in chronological order.",
+                                      Metrics::Severity::ERROR};
+    Metrics::Metric MessagesReceived{"received",
+                                       "Number of messages received/processed.", Metrics::Severity::DEBUG};
+    Metrics::Metric MessagesTransmitted{"sent",
+                                     "Number of messages queued up for writing.", Metrics::Severity::DEBUG};
+    Metrics::Metric MessagesDiscarded{"discarded",
+                                        "Number of messages discarded for whatever reason.", Metrics::Severity::DEBUG};
 };
 
 } // namespace Stream

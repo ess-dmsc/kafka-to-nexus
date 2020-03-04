@@ -27,7 +27,7 @@ class MessageWriter {
 public:
   MessageWriter(Metrics::Registrar const &MetricReg);
 
-  void addMessage(Message Msg);
+  virtual void addMessage(Message Msg);
 
   using ModuleHash = size_t;
 
