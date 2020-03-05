@@ -81,7 +81,9 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose):
     sleep(10)
 
     # Request stop but with slightly wrong job_id
-    publish_run_stop_message(producer, job_id[:-1], )
+    publish_run_stop_message(
+        producer, job_id[:-1],
+    )
 
     msgs = consume_everything("TEST_writerStatus")
 
