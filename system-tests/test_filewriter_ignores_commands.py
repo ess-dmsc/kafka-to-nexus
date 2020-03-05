@@ -72,18 +72,20 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose_multiple_instance
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus1"])
 
-    # Poll a few times on the status topic to check the filewriter has not stopped writing.
-    stopped = False
+    # Poll a few times on the status topic and check the final message read 
+    # indicates that is still running
+    running = False
 
     for i in range(30):
         msg = consumer.poll()
         if b'"file_being_written":""' in msg.value():
-            # Filewriter is not currently writing a file => stop command has been processed incorrectly
-            stopped = True
-            break
+            # Could be an out of date message that was still to be processed
+            running = False
+        else:
+            running = True
         sleep(1)
 
     sleep(5)
     consumer.unsubscribe()
 
-    assert not stopped
+    assert running
