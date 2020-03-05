@@ -72,7 +72,7 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose_multiple_instance
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus1"])
 
-    # Poll a few times on the status topic and check the final message read 
+    # Poll a few times on the status topic and check the final message read
     # indicates that is still running
     running = False
 
