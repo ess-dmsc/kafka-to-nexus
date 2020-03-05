@@ -85,15 +85,14 @@ extractStartInformation(Msg const &CommandMessage,
 }
 
 StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
-  StopCommandInfo Result;
-
   auto const RunStopData = GetRunStop(CommandMessage.data());
 
-  if (RunStopData->job_id()->size() == 0) {
+  if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {
     throw std::runtime_error("Errors encountered parsing run stop message:\n"
                              "Job ID missing, this field is required");
   }
 
+  StopCommandInfo Result;
   Result.JobID = RunStopData->job_id()->str();
   Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
   if (RunStopData->service_id() != nullptr) {

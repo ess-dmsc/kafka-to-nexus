@@ -1,9 +1,14 @@
 from helpers.kafkahelpers import (
+    consume_everything,
     create_producer,
     create_consumer,
+    publish_f142_message,
     publish_run_start_message,
     publish_run_stop_message,
 )
+from helpers.timehelpers import unix_time_milliseconds
+from datetime import datetime
+import json
 from time import sleep
 import pytest
 
@@ -32,13 +37,13 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus2"])
 
-    # poll a few times on the status topic to see if the filewriter2 has stopped writing files.
+    # Poll a few times on the status topic to see if the filewriter2 has stopped writing.
     stopped = False
 
     for i in range(30):
         msg = consumer.poll()
         if b'"file_being_written":""' in msg.value():
-            # filewriter2 is not currently writing a file - stop command has been processed.
+            # Filewriter2 is not currently writing a file => stop command has been processed.
             stopped = True
             break
         sleep(1)
@@ -52,3 +57,44 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
 
     # Check filewriter1's job queue is not empty
     assert b'"file_being_written":""' not in writer1msg.value()
+
+
+def test_ignores_commands_with_incorrect_job_id(docker_compose):
+    producer = create_producer()
+    sleep(10)
+
+    # Ensure TEST_sampleEnv topic exists
+    publish_f142_message(
+        producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
+    )
+
+    sleep(10)
+
+    # Start file writing
+    job_id = publish_run_start_message(
+        producer,
+        "commands/nexus_structure.json",
+        "output_file_jobid.nxs",
+        start_time=int(docker_compose),
+    )
+
+    sleep(10)
+
+    # Request stop but with slightly wrong job_id
+    publish_run_stop_message(
+        producer, job_id[:-1],
+    )
+
+    msgs = consume_everything("TEST_writerStatus")
+
+    # Poll a few times on the status topic and check the final message read
+    # indicates that is still running
+    running = False
+    for message in msgs:
+        message = json.loads(str(message.value(), encoding="utf-8"))
+        if message["file_being_written"] == "":
+            running = False
+        else:
+            running = True
+
+    assert running

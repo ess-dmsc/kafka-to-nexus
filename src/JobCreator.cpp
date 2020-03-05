@@ -29,10 +29,15 @@ std::vector<StreamHDFInfo>
 JobCreator::initializeHDF(FileWriterTask &Task,
                           std::string const &NexusStructureString,
                           bool UseSwmr) {
-  json NexusStructure = json::parse(NexusStructureString);
-  std::vector<StreamHDFInfo> StreamHDFInfoList;
-  Task.InitialiseHdf(NexusStructure.dump(), StreamHDFInfoList, UseSwmr);
-  return StreamHDFInfoList;
+  try {
+    json const NexusStructure = json::parse(NexusStructureString);
+    std::vector<StreamHDFInfo> StreamHDFInfoList;
+    Task.InitialiseHdf(NexusStructure.dump(), StreamHDFInfoList, UseSwmr);
+    return StreamHDFInfoList;
+  } catch (nlohmann::detail::exception const &Error) {
+    throw std::runtime_error(
+        fmt::format("Could not parse NeXus structure JSON '{}'", Error.what()));
+  }
 }
 
 StreamSettings
