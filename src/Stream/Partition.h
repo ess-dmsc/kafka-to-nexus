@@ -79,6 +79,8 @@ protected:
   std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
   std::atomic_bool HasFinished{false};
   std::int64_t CurrentOffset{0};
+  time_point StopTime;
+  duration StopTimeLeeway;
   PartitionFilter StopTester;
   std::map<FileWriter::FlatbufferMessage::SrcHash, std::unique_ptr<SourceFilter>> MsgFilters;
   ThreadedExecutor Executor; // Must be last

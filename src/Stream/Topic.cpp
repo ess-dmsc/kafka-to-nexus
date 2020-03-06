@@ -58,7 +58,7 @@ void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
   try {
     PartitionOffsetList =
         KafkaW::getOffsetForTime(Settings.Address, Topic, Partitions,
-                                 StartConsumeTime, CurrentMetadataTimeOut);
+                                 StartConsumeTime - StartLeeway, CurrentMetadataTimeOut);
   } catch (std::exception &E) {
     CurrentMetadataTimeOut *= 2;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {

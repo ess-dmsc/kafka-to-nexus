@@ -15,7 +15,7 @@ namespace Stream {
 Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway, duration KafkaErrorTimeout)
-    : ConsumerPtr(std::move(Consumer)), StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
+    : ConsumerPtr(std::move(Consumer)), StopTime(Stop), StopTimeLeeway(StopLeeway), StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
 
   for (auto &SrcDestInfo : Map) {
     if (MsgFilters.find(SrcDestInfo.Hash) == MsgFilters.end()) {
@@ -81,10 +81,12 @@ void Partition::pollForMessage() {
 
   if (KafkaW::PollStatus::Message == Msg.first) {
     processMessage(Msg.second);
-  }
-  if (MsgFilters.empty()) {
-    HasFinished = true;
-    return;
+    if (MsgFilters.empty() or Msg.second.getMetaData().timestamp() > StopTime + StopTimeLeeway) {
+      LOG_INFO("Done consuming data from partition {} of topic {}.",
+               PartitionID, Topic);
+      HasFinished = true;
+      return;
+    }
   }
 
   Executor.SendWork([=]() { pollForMessage(); });
