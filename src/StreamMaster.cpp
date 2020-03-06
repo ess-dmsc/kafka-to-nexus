@@ -76,7 +76,7 @@ void StreamMaster::initStreams(std::set<std::string> KnownTopicNames) {
         std::chrono::system_clock::time_point(KafkaSettings.StopTimestamp);
     auto CTopic = std::make_unique<Stream::Topic>(
         KafkaSettings.BrokerSettings, CItem.first, CItem.second, &WriterThread,
-        StreamMetricRegistrar, CStartTime, CStopTime);
+        StreamMetricRegistrar, CStartTime, KafkaSettings.BeforeStartTime, CStopTime, KafkaSettings.AfterStopTime);
     Streamers.push_back(std::move(CTopic));
   }
 }

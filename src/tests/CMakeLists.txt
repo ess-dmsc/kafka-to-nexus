@@ -32,7 +32,7 @@ set(UnitTests_SRC
         MasterTests.cpp
     $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
-    DataMessageWriterTests.cpp MetaDataQueryTests.cpp Stream/PartitionFilterTest.cpp Stream/SourceFilterTest.cpp)
+        Stream/MessageWriterTests.cpp MetaDataQueryTests.cpp Stream/PartitionFilterTest.cpp Stream/SourceFilterTest.cpp)
 
 set(UnitTests_INC
         StreamerTestMocks.h

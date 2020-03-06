@@ -27,8 +27,9 @@ struct BrokerSettings {
   int MetadataTimeoutMS = 2000;
   int OffsetsForTimesTimeoutMS = 2000;
   int ConsumerCloseTimeoutMS = 5000;
-  duration MinMetadataTimeout{100ms};
-  duration MaxMetadataTimeout{10s};
+  duration MinMetadataTimeout{100ms}; // When doing Kafka metadata calls, start with this timeout
+  duration MaxMetadataTimeout{10s}; // When doing Kafka metadata calls, use this as the max timeout
+  duration KafkaErrorTimeout{30s}; // If there is an error with the Kafka broker when consuming data (for writing files), wait this long before stopping
   std::map<std::string, std::string> KafkaConfiguration = {
       {"metadata.request.timeout.ms", "2000"}, // 2 Secs
       {"socket.timeout.ms", "2000"},

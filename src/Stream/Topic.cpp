@@ -15,9 +15,9 @@ namespace Stream {
 
 Topic::Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map,
              MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
-             time_point StartTime, time_point StopTime)
-    : DataMap(Map), WriterPtr(Writer), StartConsumeTime(StartTime),
-      StopConsumeTime(StopTime),
+             time_point StartTime, duration StartTimeLeeway, time_point StopTime, duration StopTimeLeeway)
+    : DataMap(Map), WriterPtr(Writer), StartConsumeTime(StartTime), StartLeeway(StartTimeLeeway),
+      StopConsumeTime(StopTime), StopLeeway(StopTimeLeeway), KafkaErrorTimeout(Settings.KafkaErrorTimeout),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
       Registrar(RegisterMetric.getNewRegistrar(Topic)) {
   Executor.SendWork([=]() {
@@ -76,12 +76,12 @@ void Topic::createStreams(
     std::vector<std::pair<int, int64_t>> PartitionOffsets) {
   for (const auto &CParOffset : PartitionOffsets) {
     auto CRegistrar = Registrar.getNewRegistrar(
-        "partitions_" + std::to_string(CParOffset.first));
+        "partition_" + std::to_string(CParOffset.first));
     auto Consumer = KafkaW::createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
     ConsumerThreads.emplace_back(std::make_unique<Partition>(
         std::move(Consumer), DataMap, WriterPtr, CRegistrar, StartConsumeTime,
-        StopConsumeTime));
+        StopConsumeTime, StopLeeway, KafkaErrorTimeout));
   }
 }
 

@@ -42,7 +42,7 @@ public:
 
   Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
             MessageWriter *Writer, Metrics::Registrar RegisterMetric,
-            time_point Start, time_point Stop = time_point::max());
+            time_point Start, time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
 
   void setStopTime(time_point Stop);
 

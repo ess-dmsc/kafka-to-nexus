@@ -23,8 +23,8 @@ class Topic {
 public:
   Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map,
         MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
-        time_point StartTime,
-        time_point StopTime = std::chrono::system_clock::time_point::max());
+        time_point StartTime, duration StartTimeLeeway,
+        time_point StopTime, duration StopTimeLeeway);
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
@@ -34,8 +34,11 @@ protected:
   SrcToDst DataMap;
   MessageWriter *WriterPtr;
   time_point StartConsumeTime;
+  duration StartLeeway;
   time_point StopConsumeTime;
-  std::chrono::system_clock::duration CurrentMetadataTimeOut;
+  duration StopLeeway;
+  duration KafkaErrorTimeout;
+  duration CurrentMetadataTimeOut;
   Metrics::Registrar Registrar;
 
   void getPartitionsForTopic(KafkaW::BrokerSettings Settings,
