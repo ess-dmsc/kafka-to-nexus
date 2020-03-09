@@ -78,10 +78,16 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
   Logger->info("Received request to start writing file with id : {} at "
                "time {} ms",
                StartInfo.JobID, StartInfo.StartTime.count());
-  CurrentStreamMaster =
-      Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
-  Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
-                              StartInfo.StartTime, StartInfo.StopTime});
+  try {
+    CurrentState = States::Writing();
+    Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
+                                StartInfo.StartTime, StartInfo.StopTime});
+    CurrentStreamMaster =
+        Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
+  } catch (std::runtime_error const &Error) {
+    Logger->error("{}", Error.what());
+    CurrentState = States::Idle();
+  }
 }
 
 void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
@@ -106,12 +112,7 @@ bool Master::hasWritingStopped() {
 
 void Master::moveToNewState(FileWriterState const &NewState) {
   if (auto StartReq = mpark::get_if<States::StartRequested>(&NewState)) {
-    try {
       startWriting(StartReq->StartInfo);
-      CurrentState = States::Writing();
-    } catch (std::runtime_error const &Error) {
-      Logger->error("{}", Error.what());
-    }
   } else if (auto StopReq = mpark::get_if<States::StopRequested>(&NewState)) {
     requestStopWriting(StopReq->StopInfo);
   }

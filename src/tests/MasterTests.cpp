@@ -175,3 +175,14 @@ TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
   Master->run();
   ASSERT_FALSE(Master->isWriting());
 }
+
+TEST_F(MasterTests, IfStartingThrowsThenEntersNotWritingState) {
+  MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
+  Master->injectMessage(KafkaW::PollStatus::Message,
+                        Msg(StartCommand.data(), StartCommand.size()));
+  ALLOW_CALL(*Master, startWriting(trompeloeil::_)).THROW(std::runtime_error("Could not start"));
+
+  Master->run();
+
+  ASSERT_FALSE(Master->isWriting());
+}
