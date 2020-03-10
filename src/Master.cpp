@@ -86,7 +86,7 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
         Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
-    CurrentState = States::Idle();
+    setToIdle();
   }
 }
 
@@ -136,14 +136,18 @@ void Master::run() {
   // Doesn't stop immediately when commanded to.
   // Also, can stop even if not commanded to.
   if (hasWritingStopped()) {
-    CurrentStreamMaster.reset(nullptr);
-    CurrentState = States::Idle();
-    Reporter->resetStatusInfo();
+    setToIdle();
   }
 }
 
 bool Master::isWriting() const {
   return mpark::get_if<States::Idle>(&CurrentState) == nullptr;
+}
+
+void Master::setToIdle() {
+  CurrentStreamMaster.reset(nullptr);
+  CurrentState = States::Idle();
+  Reporter->resetStatusInfo();
 }
 
 } // namespace FileWriter

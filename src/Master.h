@@ -65,5 +65,6 @@ private:
   virtual std::pair<KafkaW::PollStatus, Msg> pollForMessage();
   virtual void moveToNewState(FileWriterState const &NewState);
   virtual FileWriterState handleCommand(Msg const &CommandMessage);
+  void setToIdle();
 };
 } // namespace FileWriter

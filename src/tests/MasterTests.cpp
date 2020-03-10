@@ -72,6 +72,16 @@ public:
   };
 };
 
+class FakeJobCreatorThatThrows : public IJobCreator {
+public:
+  std::unique_ptr<IStreamMaster>
+  createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
+                       MainOpt & /*Settings*/,
+                       SharedLogger const & /*Logger*/) override {
+    throw std::runtime_error("Something when wrong");
+  };
+};
+
 class ProducerStandIn : public KafkaW::Producer {
 public:
   explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
@@ -97,19 +107,19 @@ public:
   };
 };
 
-class MockMaster : public Master {
+/// A version of Master that allows messages to be injected for testing
+/// purposes.
+class TestableMaster : public Master {
 public:
-  MockMaster(MainOpt Opt, std::unique_ptr<CommandListener> CmdListener,
-             std::unique_ptr<IJobCreator> JobCreator,
-             std::unique_ptr<Status::StatusReporter> Reporter)
+  TestableMaster(MainOpt Opt, std::unique_ptr<CommandListener> CmdListener,
+                 std::unique_ptr<IJobCreator> JobCreator,
+                 std::unique_ptr<Status::StatusReporter> Reporter)
       : Master(Opt, std::move(CmdListener), std::move(JobCreator),
                std::move(Reporter)) {}
   void injectMessage(KafkaW::PollStatus const &Status, Msg const &Message) {
     StoredMessage.first = Status;
     StoredMessage.second = Message;
   }
-
-  MAKE_MOCK1(startWriting, void(StartCommandInfo const &), override);
 
   bool WritingStopped = false;
 
@@ -132,41 +142,43 @@ private:
 class MasterTests : public ::testing::Test {
 public:
   void SetUp() override {
-    MainOpt MainOpts;
-    KafkaW::BrokerSettings BrokerSettings;
-    std::unique_ptr<IJobCreator> Creator = std::make_unique<FakeJobCreator>();
+    Creator = std::make_unique<FakeJobCreator>();
+    ThrowingCreator = std::make_unique<FakeJobCreatorThatThrows>();
+    CmdListener = std::make_unique<CommandListenerStandIn>(MainOpts);
+
     std::shared_ptr<KafkaW::Producer> Producer =
         std::make_shared<ProducerStandIn>(BrokerSettings);
-    std::unique_ptr<CommandListener> CmdListener =
-        std::make_unique<CommandListenerStandIn>(MainOpts);
-
     std::unique_ptr<KafkaW::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
-    auto Reporter = std::make_unique<Status::StatusReporter>(
+    Reporter = std::make_unique<Status::StatusReporter>(
         std::chrono::milliseconds{1000}, ProducerTopic);
-    MasterPtr =
-        std::make_unique<MockMaster>(MainOpts, std::move(CmdListener),
-                                     std::move(Creator), std::move(Reporter));
   };
 
-  std::unique_ptr<Master> MasterPtr;
+  MainOpt MainOpts;
+  KafkaW::BrokerSettings BrokerSettings;
+  std::unique_ptr<IJobCreator> Creator;
+  std::unique_ptr<IJobCreator> ThrowingCreator;
+  std::unique_ptr<CommandListener> CmdListener;
+  std::unique_ptr<Status::StatusReporter> Reporter;
 };
 
 TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
-  MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
+  auto Master =
+      std::make_unique<TestableMaster>(MainOpts, std::move(CmdListener),
+                                       std::move(Creator), std::move(Reporter));
   Master->injectMessage(KafkaW::PollStatus::Message,
                         Msg(StartCommand.data(), StartCommand.size()));
 
-  REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
   ASSERT_TRUE(Master->isWriting());
 }
 
 TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
-  MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
+  auto Master =
+      std::make_unique<TestableMaster>(MainOpts, std::move(CmdListener),
+                                       std::move(Creator), std::move(Reporter));
   Master->injectMessage(KafkaW::PollStatus::Message,
                         Msg(StartCommand.data(), StartCommand.size()));
-  REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
   Master->run();
 
   // Stop the file-writing
@@ -177,10 +189,11 @@ TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
 }
 
 TEST_F(MasterTests, IfStartingThrowsThenEntersNotWritingState) {
-  MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
+  auto Master = std::make_unique<TestableMaster>(
+      MainOpts, std::move(CmdListener), std::move(ThrowingCreator),
+      std::move(Reporter));
   Master->injectMessage(KafkaW::PollStatus::Message,
                         Msg(StartCommand.data(), StartCommand.size()));
-  ALLOW_CALL(*Master, startWriting(trompeloeil::_)).THROW(std::runtime_error("Could not start"));
 
   Master->run();
 
