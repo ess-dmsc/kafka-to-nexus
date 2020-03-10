@@ -112,7 +112,7 @@ bool Master::hasWritingStopped() {
 
 void Master::moveToNewState(FileWriterState const &NewState) {
   if (auto StartReq = mpark::get_if<States::StartRequested>(&NewState)) {
-      startWriting(StartReq->StartInfo);
+    startWriting(StartReq->StartInfo);
   } else if (auto StopReq = mpark::get_if<States::StopRequested>(&NewState)) {
     requestStopWriting(StopReq->StopInfo);
   }
