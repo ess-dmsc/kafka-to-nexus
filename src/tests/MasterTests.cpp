@@ -146,8 +146,7 @@ public:
 
 void queueCommandMessage(CommandListener *Listener, KafkaW::PollStatus Status,
                          Msg Message) {
-  dynamic_cast<FakeCommandListener *>(Listener)->injectMessage(Status,
-                                                                  Message);
+  dynamic_cast<FakeCommandListener *>(Listener)->injectMessage(Status, Message);
 }
 
 TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
