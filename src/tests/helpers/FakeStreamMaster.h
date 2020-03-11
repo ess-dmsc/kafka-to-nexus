@@ -17,8 +17,11 @@ public:
   explicit FakeStreamMaster(std::string const &JobID, bool Removable = false)
       : JobID(JobID), IsRemovable(Removable) {}
   std::string getJobId() const override { return JobID; }
-  void setStopTime(const std::chrono::milliseconds & /*StopTime*/) override {}
-  bool isDoneWriting() override { return !IsRemovable; }
+  void setStopTime(const std::chrono::milliseconds & /*StopTime*/) override {
+    // Simulate immediate stop.
+    IsRemovable = true;
+  }
+  bool isDoneWriting() override { return IsRemovable; }
 
 private:
   std::string JobID;
