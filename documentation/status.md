@@ -18,10 +18,10 @@ If all is fine and the file-writer is idle then the message would be something l
 }
 ```
 
-The update_interval is used to inform clients how often status message can be expected, so they can
+The `update_interval` is used to inform clients how often status message can be expected, so they can
 judge whether communication is lost.
 
-If the a file is being written then the status message would be something like this:
+If a file is being written then the status message would be something like this:
 
 ```json
 {
