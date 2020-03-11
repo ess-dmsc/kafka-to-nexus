@@ -30,3 +30,6 @@ nicos/<device>/<parameter>
 where the prefix `nicos/` is required, `device` and `parameter` must be `/`
 separated and correspond to the names NICOS uses for the device and the specific
 parameter.
+
+NOTE: The source name must be lower-case even if the device name isn't. 
+E.G NICOS device `motor_Y` becomes `nicos/motor_y/value`.
