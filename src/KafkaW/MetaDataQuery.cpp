@@ -24,7 +24,7 @@ getOffsetForTime(std::string Broker, std::string Topic,
                                                  Time, TimeOut);
 }
 
-std::set<int> getPartitionsForTopic(std::string Broker, std::string Topic,
+std::vector<int> getPartitionsForTopic(std::string Broker, std::string Topic,
                                     duration TimeOut) {
   return getPartitionsForTopicImpl<RdKafka::Consumer>(Broker, Topic, TimeOut);
 }

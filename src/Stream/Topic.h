@@ -16,6 +16,7 @@
 #include "ThreadedExecutor.h"
 #include "logger.h"
 #include <chrono>
+#include <set>
 
 namespace Stream {
 
@@ -28,7 +29,7 @@ public:
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
-  ~Topic() = default;
+  virtual ~Topic() = default;
 
 protected:
   SrcToDst DataMap;
@@ -41,14 +42,26 @@ protected:
   duration CurrentMetadataTimeOut;
   Metrics::Registrar Registrar;
 
-  void getPartitionsForTopic(KafkaW::BrokerSettings Settings,
+  // This intermediate function is required for unit testing.
+  virtual void initMetadataCalls(KafkaW::BrokerSettings Settings,
+                                 std::string Topic);
+
+  virtual void getPartitionsForTopic(KafkaW::BrokerSettings Settings,
                              std::string Topic);
 
-  void getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
+  virtual void getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
                                std::string Topic, std::vector<int> Partitions);
 
-  void createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
+  virtual void createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
                      std::vector<std::pair<int, int64_t>> PartitionOffsets);
+
+  virtual std::vector<std::pair<int, int64_t>>
+  getOffsetForTimeInternal(std::string Broker, std::string Topic,
+                   std::vector<int> Partitions, time_point Time,
+                   duration TimeOut) const;
+
+  virtual std::vector<int> getPartitionsForTopicInternal(std::string Broker, std::string Topic,
+                                      duration TimeOut) const;
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   ThreadedExecutor Executor; // Must be last

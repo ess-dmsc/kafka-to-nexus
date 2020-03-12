@@ -40,13 +40,15 @@ class Partition {
 public:
   Partition() = default;
 
-  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
+  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition, std::string TopicName, SrcToDst Map,
             MessageWriter *Writer, Metrics::Registrar RegisterMetric,
             time_point Start, time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
 
   void setStopTime(time_point Stop);
 
   bool hasFinished();
+  auto getPartitionID() const {return PartitionID;}
+  auto getTopicName() const {return Topic;}
 
 protected:
   Metrics::Metric KafkaTimeouts{"timeouts",
@@ -74,9 +76,9 @@ protected:
   void pollForMessage();
 
   void processMessage(FileWriter::Msg const &Message);
-  int PartitionID{0};  // Fix
-  std::string Topic{}; // Fix
   std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
+  int PartitionID{-1};
+  std::string Topic{"not_initialized"};
   std::atomic_bool HasFinished{false};
   std::int64_t CurrentOffset{0};
   time_point StopTime;

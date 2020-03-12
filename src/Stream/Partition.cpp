@@ -12,10 +12,10 @@
 
 namespace Stream {
 
-Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, SrcToDst Map,
+Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition, std::string TopicName, SrcToDst Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway, duration KafkaErrorTimeout)
-    : ConsumerPtr(std::move(Consumer)), StopTime(Stop), StopTimeLeeway(StopLeeway), StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
+    : ConsumerPtr(std::move(Consumer)), PartitionID(Partition), Topic(TopicName), StopTime(Stop), StopTimeLeeway(StopLeeway), StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
 
   for (auto &SrcDestInfo : Map) {
     if (MsgFilters.find(SrcDestInfo.Hash) == MsgFilters.end()) {
@@ -89,7 +89,7 @@ void Partition::pollForMessage() {
     }
   }
 
-  Executor.SendWork([=]() { pollForMessage(); });
+  Executor.SendLowPrioWork([=]() { pollForMessage(); });
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {

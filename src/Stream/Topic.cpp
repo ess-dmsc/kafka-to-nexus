@@ -7,9 +7,11 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <KafkaW/MetadataException.h>
 #include "Topic.h"
 #include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/MetaDataQuery.h"
+#include "logger.h"
 
 namespace Stream {
 
@@ -20,6 +22,12 @@ Topic::Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map,
       StopConsumeTime(StopTime), StopLeeway(StopTimeLeeway), KafkaErrorTimeout(Settings.KafkaErrorTimeout),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
       Registrar(RegisterMetric.getNewRegistrar(Topic)) {
+  Executor.SendWork([=](){
+    initMetadataCalls(Settings, Topic);
+  });
+}
+
+void Topic::initMetadataCalls(KafkaW::BrokerSettings Settings, std::string Topic) {
   Executor.SendWork([=]() {
     CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
     getPartitionsForTopic(Settings, Topic);
@@ -34,41 +42,63 @@ void Topic::setStopTime(std::chrono::system_clock::time_point StopTime) {
 
 void Topic::getPartitionsForTopic(KafkaW::BrokerSettings Settings,
                                   std::string Topic) {
-  std::vector<int> FoundPartitions;
   try {
-    auto FoundPartitions = KafkaW::getPartitionsForTopic(
+    auto FoundPartitions = getPartitionsForTopicInternal(
         Settings.Address, Topic, Settings.MinMetadataTimeout);
-  } catch (std::exception &E) {
+    Executor.SendWork([=]() {
+      CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
+      getOffsetsForPartitions(Settings, Topic, FoundPartitions);
+    });
+  } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
+    LOG_WARN("Meta data call for retrieving partition IDs for topic \"{}\" from the broker "
+             "failed. The failure message was: \"{}\". Re-trying with a timeout of {} ms.", Topic, E.what(),
+             std::chrono::duration_cast<std::chrono::milliseconds>(
+                 CurrentMetadataTimeOut)
+                 .count());
     Executor.SendLowPrioWork([=]() { getPartitionsForTopic(Settings, Topic); });
   }
-  Executor.SendWork([=]() {
-    CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
-    getOffsetsForPartitions(Settings, Topic, FoundPartitions);
-  });
+}
+
+std::vector<std::pair<int, int64_t>>
+Topic::getOffsetForTimeInternal(std::string Broker, std::string Topic,
+                      std::vector<int> Partitions, time_point Time,
+                      duration TimeOut) const {
+  return KafkaW::getOffsetForTime(Broker, Topic, Partitions, Time, TimeOut);
+}
+
+std::vector<int> Topic::getPartitionsForTopicInternal(std::string Broker, std::string Topic,
+                                    duration TimeOut) const {
+  return KafkaW::getPartitionsForTopic(Broker, Topic, TimeOut);
 }
 
 void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
                                     std::string Topic,
                                     std::vector<int> Partitions) {
-  std::vector<std::pair<int, int64_t>> PartitionOffsetList;
   try {
-    PartitionOffsetList =
-        KafkaW::getOffsetForTime(Settings.Address, Topic, Partitions,
+    auto PartitionOffsetList =
+        getOffsetForTimeInternal(Settings.Address, Topic, Partitions,
                                  StartConsumeTime - StartLeeway, CurrentMetadataTimeOut);
-  } catch (std::exception &E) {
+    Executor.SendWork([=]() {
+          CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
+          createStreams(Settings, Topic, PartitionOffsetList);
+        });
+  } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
+    LOG_WARN("Meta data call for retrieving offsets for topic \"{}\" from the broker "
+             "failed. The failure message was: \"{}\". Re-trying with a timeout of {} ms.", Topic, E.what(),
+             std::chrono::duration_cast<std::chrono::milliseconds>(
+                 CurrentMetadataTimeOut)
+                 .count());
     Executor.SendLowPrioWork(
         [=]() { getOffsetsForPartitions(Settings, Topic, Partitions); });
   }
-  Executor.SendWork(
-      [=]() { createStreams(Settings, Topic, PartitionOffsetList); });
 }
 
 void Topic::createStreams(
@@ -80,9 +110,8 @@ void Topic::createStreams(
     auto Consumer = KafkaW::createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
     ConsumerThreads.emplace_back(std::make_unique<Partition>(
-        std::move(Consumer), DataMap, WriterPtr, CRegistrar, StartConsumeTime,
+        std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr, CRegistrar, StartConsumeTime,
         StopConsumeTime, StopLeeway, KafkaErrorTimeout));
   }
 }
-
 } // namespace Stream

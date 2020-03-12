@@ -79,7 +79,7 @@ getOffsetForTimeImpl(std::string Broker, std::string Topic,
 }
 
 template <class KafkaHandle>
-std::set<int> getPartitionsForTopicImpl(std::string Broker, std::string Topic,
+std::vector<int> getPartitionsForTopicImpl(std::string Broker, std::string Topic,
                                         duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   std::string ErrorStr;
@@ -96,12 +96,12 @@ std::set<int> getPartitionsForTopicImpl(std::string Broker, std::string Topic,
         std::to_string(ReturnCode));
   }
   auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
-  std::set<int> ReturnSet;
+  std::vector<int> ReturnVector;
   for (auto const &Partition : *TopicMetaData->partitions()) {
-    ReturnSet.emplace(Partition->id());
+    ReturnVector.push_back(Partition->id());
   }
   delete MetadataPtr;
-  return ReturnSet;
+  return ReturnVector;
 }
 
 template <class KafkaHandle>
