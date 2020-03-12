@@ -65,10 +65,20 @@ TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
 class FakeJobCreator : public IJobCreator {
 public:
   std::unique_ptr<IStreamMaster>
+  createFileWritingJob(StartCommandInfo const &StartInfo,
+                       MainOpt & /*Settings*/,
+                       SharedLogger const & /*Logger*/) override {
+    return std::make_unique<FakeStreamMaster>(StartInfo.JobID);
+  };
+};
+
+class FakeJobCreatorThatThrows : public IJobCreator {
+public:
+  std::unique_ptr<IStreamMaster>
   createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
                        MainOpt & /*Settings*/,
                        SharedLogger const & /*Logger*/) override {
-    return std::make_unique<FakeStreamMaster>("some_id");
+    throw std::runtime_error("Something went wrong");
   };
 };
 
@@ -88,90 +98,115 @@ public:
   int produce(const std::string & /*MsgData*/) override { return 0; }
 };
 
-class CommandListenerStandIn : public CommandListener {
+class FakeCommandListener : public CommandListener {
 public:
-  explicit CommandListenerStandIn(MainOpt &Config) : CommandListener(Config){};
+  explicit FakeCommandListener(MainOpt &Config) : CommandListener(Config){};
   void start() override{};
   std::pair<KafkaW::PollStatus, Msg> poll() override {
-    return {KafkaW::PollStatus::Empty, Msg()};
-  };
-};
-
-class MockMaster : public Master {
-public:
-  MockMaster(MainOpt Opt, std::unique_ptr<CommandListener> CmdListener,
-             std::unique_ptr<IJobCreator> JobCreator,
-             std::unique_ptr<Status::StatusReporter> Reporter)
-      : Master(Opt, std::move(CmdListener), std::move(JobCreator),
-               std::move(Reporter)) {}
-  void injectMessage(KafkaW::PollStatus const &Status, Msg const &Message) {
-    StoredMessage.first = Status;
-    StoredMessage.second = Message;
-  }
-
-  MAKE_MOCK1(startWriting, void(StartCommandInfo const &), override);
-
-  bool WritingStopped = false;
-
-private:
-  std::pair<KafkaW::PollStatus, Msg> pollForMessage() override {
-    auto const Status = StoredMessage.first;
-    StoredMessage.first = KafkaW::PollStatus::Empty;
-    if (Status == KafkaW::PollStatus::Message) {
-      return std::pair<KafkaW::PollStatus, Msg>(
-          Status, std::move(StoredMessage.second));
+    if (StoredMessages.empty()) {
+      return {KafkaW::PollStatus::Empty, Msg()};
     }
-    return {KafkaW::PollStatus::Empty, Msg()};
-  }
-  std::pair<KafkaW::PollStatus, Msg> StoredMessage{KafkaW::PollStatus::Empty,
-                                                   Msg()};
+    auto Message = std::move(StoredMessages.front());
+    StoredMessages.pop_front();
+    return Message;
+  };
 
-  bool hasWritingStopped() override { return WritingStopped; }
+  void injectMessage(KafkaW::PollStatus const &Status, Msg const &Message) {
+    std::pair<KafkaW::PollStatus, Msg> NewMsg;
+    NewMsg.first = Status;
+    NewMsg.second = Message;
+    StoredMessages.emplace_back(std::move(NewMsg));
+  }
+
+  std::deque<std::pair<KafkaW::PollStatus, Msg>> StoredMessages;
 };
 
 class MasterTests : public ::testing::Test {
 public:
   void SetUp() override {
-    MainOpt MainOpts;
-    KafkaW::BrokerSettings BrokerSettings;
-    std::unique_ptr<IJobCreator> Creator = std::make_unique<FakeJobCreator>();
+    Creator = std::make_unique<FakeJobCreator>();
+    ThrowingCreator = std::make_unique<FakeJobCreatorThatThrows>();
+    CmdListener = std::make_unique<FakeCommandListener>(MainOpts);
+
     std::shared_ptr<KafkaW::Producer> Producer =
         std::make_shared<ProducerStandIn>(BrokerSettings);
-    std::unique_ptr<CommandListener> CmdListener =
-        std::make_unique<CommandListenerStandIn>(MainOpts);
-
     std::unique_ptr<KafkaW::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
-    auto Reporter = std::make_unique<Status::StatusReporter>(
+    Reporter = std::make_unique<Status::StatusReporter>(
         std::chrono::milliseconds{1000}, ProducerTopic);
-    MasterPtr =
-        std::make_unique<MockMaster>(MainOpts, std::move(CmdListener),
-                                     std::move(Creator), std::move(Reporter));
   };
 
-  std::unique_ptr<Master> MasterPtr;
+  MainOpt MainOpts;
+  KafkaW::BrokerSettings BrokerSettings;
+  std::unique_ptr<IJobCreator> Creator;
+  std::unique_ptr<IJobCreator> ThrowingCreator;
+  std::unique_ptr<CommandListener> CmdListener;
+  std::unique_ptr<Status::StatusReporter> Reporter;
 };
 
-TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
-  MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
-  Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg(StartCommand.data(), StartCommand.size()));
+void queueCommandMessage(CommandListener *Listener, KafkaW::PollStatus Status,
+                         Msg Message) {
+  dynamic_cast<FakeCommandListener *>(Listener)->injectMessage(Status, Message);
+}
 
-  REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
+TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
+  queueCommandMessage(CmdListener.get(), KafkaW::PollStatus::Message,
+                      Msg(StartCommand.data(), StartCommand.size()));
+
+  auto Master = std::make_unique<FileWriter::Master>(
+      MainOpts, std::move(CmdListener), std::move(Creator),
+      std::move(Reporter));
+
   Master->run();
   ASSERT_TRUE(Master->isWriting());
 }
 
 TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
-  MockMaster *Master = dynamic_cast<MockMaster *>(MasterPtr.get());
-  Master->injectMessage(KafkaW::PollStatus::Message,
-                        Msg(StartCommand.data(), StartCommand.size()));
-  REQUIRE_CALL(*Master, startWriting(trompeloeil::_));
+  queueCommandMessage(CmdListener.get(), KafkaW::PollStatus::Message,
+                      Msg(StartCommand.data(), StartCommand.size()));
+  queueCommandMessage(CmdListener.get(), KafkaW::PollStatus::Message,
+                      Msg(StopCommand.data(), StopCommand.size()));
+
+  auto Master = std::make_unique<FileWriter::Master>(
+      MainOpts, std::move(CmdListener), std::move(Creator),
+      std::move(Reporter));
+  // Process start message
   Master->run();
 
-  // Stop the file-writing
-  Master->WritingStopped = true;
-
+  // Process stop message
   Master->run();
   ASSERT_FALSE(Master->isWriting());
+}
+
+TEST_F(MasterTests, IfStartingThrowsThenEntersNotWritingState) {
+  queueCommandMessage(CmdListener.get(), KafkaW::PollStatus::Message,
+                      Msg(StartCommand.data(), StartCommand.size()));
+
+  auto Master = std::make_unique<FileWriter::Master>(
+      MainOpts, std::move(CmdListener), std::move(ThrowingCreator),
+      std::move(Reporter));
+
+  Master->run();
+
+  ASSERT_FALSE(Master->isWriting());
+}
+
+TEST_F(MasterTests, IfStoppedMessageContainsWrongJobIdThenIgnored) {
+  auto WrongIdCommand = RunStartStopHelpers::buildRunStopMessage(
+      123456790000, "42", "wrong_id", "filewriter1");
+
+  queueCommandMessage(CmdListener.get(), KafkaW::PollStatus::Message,
+                      Msg(StartCommand.data(), StartCommand.size()));
+  queueCommandMessage(CmdListener.get(), KafkaW::PollStatus::Message,
+                      Msg(WrongIdCommand.data(), WrongIdCommand.size()));
+
+  auto Master = std::make_unique<FileWriter::Master>(
+      MainOpts, std::move(CmdListener), std::move(Creator),
+      std::move(Reporter));
+  // Process start message
+  Master->run();
+
+  // Process stop message
+  Master->run();
+  ASSERT_TRUE(Master->isWriting());
 }
