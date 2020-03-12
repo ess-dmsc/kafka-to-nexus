@@ -78,7 +78,7 @@ public:
   createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
                        MainOpt & /*Settings*/,
                        SharedLogger const & /*Logger*/) override {
-    throw std::runtime_error("Something when wrong");
+    throw std::runtime_error("Something went wrong");
   };
 };
 
