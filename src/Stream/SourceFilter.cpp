@@ -46,14 +46,14 @@ void SourceFilter::sendBufferedMessage() {
 
 bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
   MessagesReceived++;
-  if (InMsg.getTimestamp() == CurrentTimeStamp) {
-    RepeatedTimestamp++;
-  } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
-    UnorderedTimestamp++;
-  } else if (not InMsg.isValid()) {
+  if (not InMsg.isValid()) {
     MessagesDiscarded++;
     FlatbufferInvalid++;
     return false;
+  } else if (InMsg.getTimestamp() == CurrentTimeStamp) {
+    RepeatedTimestamp++;
+  } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
+    UnorderedTimestamp++;
   }
   CurrentTimeStamp = InMsg.getTimestamp();
 

@@ -26,7 +26,7 @@ public:
   SourceFilter(time_point StartTime, time_point StopTime,
                MessageWriter *Destination, Metrics::Registrar RegisterMetric);
   ~SourceFilter();
-  void addDestinationId(Message::DestPtrType NewDestination) {
+  void addDestinationPtr(Message::DestPtrType NewDestination) {
     DestIDs.push_back(NewDestination);
   };
 

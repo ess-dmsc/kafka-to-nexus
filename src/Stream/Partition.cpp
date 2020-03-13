@@ -21,7 +21,7 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition, 
     if (MsgFilters.find(SrcDestInfo.Hash) == MsgFilters.end()) {
       MsgFilters.emplace(SrcDestInfo.Hash, std::make_unique<SourceFilter>(Start, Stop, Writer, RegisterMetric.getNewRegistrar(SrcDestInfo.getMetricsNameString())));
     }
-    MsgFilters[SrcDestInfo.Hash]->addDestinationId(SrcDestInfo.Destination);
+    MsgFilters[SrcDestInfo.Hash]->addDestinationPtr(SrcDestInfo.Destination);
   }
 
   RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});

@@ -102,7 +102,7 @@ TEST_F(SourceFilterTest, MessageNoDest) {
 TEST_F(SourceFilterTest, BufferedMessageBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(0);
+  UnderTest->addDestinationPtr(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   EXPECT_TRUE(UnderTest->MessagesReceived == 1);
@@ -113,7 +113,7 @@ TEST_F(SourceFilterTest, BufferedMessageBeforeStart) {
 TEST_F(SourceFilterTest, MultipleMessagesBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(0);
+  UnderTest->addDestinationPtr(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   yyyyFbReader::setTimestamp(2);
@@ -127,7 +127,7 @@ TEST_F(SourceFilterTest, MultipleMessagesBeforeStart) {
 TEST_F(SourceFilterTest, SameTSBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(0);
+  UnderTest->addDestinationPtr(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   UnderTest->filterMessage(std::move(TestMsg));
@@ -140,23 +140,24 @@ TEST_F(SourceFilterTest, SameTSBeforeStart) {
 using std::chrono_literals::operator""ms;
 
 TEST_F(SourceFilterTest, SameTSAfterStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(0);
+  UnderTest->addDestinationPtr(0);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
+  TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   EXPECT_TRUE(UnderTest->MessagesReceived == 2);
   EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
   EXPECT_FALSE(UnderTest->hasFinished());
 }
 
 TEST_F(SourceFilterTest, MsgBeforeAndAfterStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(0);
+  UnderTest->addDestinationPtr(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
@@ -170,24 +171,26 @@ TEST_F(SourceFilterTest, MsgBeforeAndAfterStart) {
 TEST_F(SourceFilterTest, MultipleDestinations) {
   TemplateWriter::WriterClass Writer1;
   TemplateWriter::WriterClass Writer2;
-  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestPtr==&Writer1).TIMES(1);
-  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestPtr==&Writer2).TIMES(1);
-  auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(&Writer1);
-  UnderTest->addDestinationId(&Writer2);
-  yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
-  EXPECT_FALSE(UnderTest->hasFinished());
+  {
+    REQUIRE_CALL(Writer, addMessage(_)).LR_WITH(_1.DestPtr== &Writer1).TIMES(1);
+    REQUIRE_CALL(Writer, addMessage(_)).LR_WITH(_1.DestPtr== &Writer2).TIMES(1);
+    auto UnderTest = getTestFilter();
+    UnderTest->addDestinationPtr(&Writer1);
+    UnderTest->addDestinationPtr(&Writer2);
+    yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
+    auto TestMsg = generateMsg();
+    UnderTest->filterMessage(std::move(TestMsg));
+    EXPECT_TRUE(UnderTest->MessagesReceived == 1);
+    EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
+    EXPECT_FALSE(UnderTest->hasFinished());
+  }
 }
 
 TEST_F(SourceFilterTest, MessageAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationId(&Writer1);
+  UnderTest->addDestinationPtr(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
   auto TestMsg = generateMsg();
@@ -201,7 +204,7 @@ TEST_F(SourceFilterTest, MessageBeforeAndAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationId(&Writer1);
+  UnderTest->addDestinationPtr(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 10ms));
   auto TestMsg = generateMsg();
@@ -219,7 +222,7 @@ TEST_F(SourceFilterTest, MessageBeforeStartAndAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationId(&Writer1);
+  UnderTest->addDestinationPtr(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime - 10ms));
   auto TestMsg = generateMsg();
@@ -238,7 +241,7 @@ TEST_F(SourceFilterTest, UnorderedMsgBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationId(&Writer1);
+  UnderTest->addDestinationPtr(&Writer1);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime - 10ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
@@ -254,10 +257,10 @@ TEST_F(SourceFilterTest, UnorderedMsgBeforeStart) {
 }
 
 TEST_F(SourceFilterTest, UnorderedMsgAfterStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationId(&Writer1);
+  UnderTest->addDestinationPtr(&Writer1);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 10ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
@@ -266,6 +269,6 @@ TEST_F(SourceFilterTest, UnorderedMsgAfterStart) {
   UnderTest->filterMessage(std::move(TestMsg2));
   EXPECT_TRUE(UnderTest->MessagesReceived == 2);
   EXPECT_TRUE(UnderTest->UnorderedTimestamp == 1);
-  EXPECT_TRUE(UnderTest->MessagesDiscarded == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
+  EXPECT_TRUE(UnderTest->MessagesDiscarded == 0);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
 }
