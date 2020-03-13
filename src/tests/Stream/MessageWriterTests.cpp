@@ -27,7 +27,7 @@ public:
 
 class DataMessageWriterStandIn : public Stream::MessageWriter {
 public:
-  DataMessageWriterStandIn(Metrics::Registrar const &Registrar)
+  explicit DataMessageWriterStandIn(Metrics::Registrar const &Registrar)
       : MessageWriter(Registrar) {}
   using MessageWriter::Executor;
   using MessageWriter::ModuleErrorCounters;

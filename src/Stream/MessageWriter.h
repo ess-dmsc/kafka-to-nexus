@@ -28,7 +28,7 @@ namespace Stream {
 
 class MessageWriter {
 public:
-  MessageWriter(Metrics::Registrar const &MetricReg);
+  explicit MessageWriter(Metrics::Registrar const &MetricReg);
 
   virtual void addMessage(Message Msg);
 

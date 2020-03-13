@@ -17,7 +17,7 @@ namespace Stream {
 
 using ModuleHash = MessageWriter::ModuleHash;
 
-ModuleHash generateSrcHash(std::string Source, std::string FlatbufferId) {
+ModuleHash generateSrcHash(std::string const &Source, std::string const &FlatbufferId) {
   return std::hash<std::string>{}(Source + FlatbufferId);
 }
 
