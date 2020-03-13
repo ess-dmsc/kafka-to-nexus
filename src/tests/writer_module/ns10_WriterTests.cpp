@@ -167,7 +167,7 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
   auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-      Builder->GetSize());
+                                               Builder->GetSize());
 
   Writer.write(Message);
 
@@ -196,7 +196,7 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
   auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-      Builder->GetSize());
+                                               Builder->GetSize());
 
   Writer.write(Message);
 
@@ -225,7 +225,7 @@ TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
   auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-      Builder->GetSize());
+                                               Builder->GetSize());
 
   Writer.write(Message);
 
@@ -257,7 +257,7 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
   for (uint64_t i = 0; i < 10; ++i) {
     auto Builder = createFlatbufferMessageFromJson(BufferJson);
     auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-        Builder->GetSize());
+                                                 Builder->GetSize());
     Writer.write(Message);
   }
 
@@ -285,7 +285,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueCannotBeCastToDouble) {
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
   auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-      Builder->GetSize());
+                                               Builder->GetSize());
 
   EXPECT_THROW(Writer.write(Message), std::invalid_argument);
 }
@@ -310,6 +310,6 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueDoesNotFitIntoDouble) {
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
   auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-      Builder->GetSize());
+                                               Builder->GetSize());
   EXPECT_THROW(Writer.write(Message), std::out_of_range);
 }

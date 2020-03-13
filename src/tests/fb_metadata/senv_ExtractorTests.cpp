@@ -82,7 +82,8 @@ TEST_F(FastSampleEnvironmentReader, VerifyFail) {
       reinterpret_cast<const uint8_t *>(TempData.get()), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[3] = 'h';
-  EXPECT_THROW(FileWriter::FlatbufferMessage(
-                   reinterpret_cast<const uint8_t *>(TempData.get()), BufferSize),
-               FileWriter::NotValidFlatbuffer);
+  EXPECT_THROW(
+      FileWriter::FlatbufferMessage(
+          reinterpret_cast<const uint8_t *>(TempData.get()), BufferSize),
+      FileWriter::NotValidFlatbuffer);
 }

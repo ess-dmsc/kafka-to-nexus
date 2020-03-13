@@ -359,7 +359,7 @@ createTestMessage(size_t HistogramID, size_t PacketID,
 FileWriter::FlatbufferMessage
 wrapBuilder(std::unique_ptr<flatbuffers::FlatBufferBuilder> const &Builder) {
   return FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-      Builder->GetSize());
+                                       Builder->GetSize());
 }
 
 using WriterModule::InitResult;

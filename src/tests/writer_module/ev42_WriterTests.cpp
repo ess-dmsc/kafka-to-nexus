@@ -202,7 +202,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime,
                                               TimeOfFlight, DetectorID);
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
-      MessageBuffer.size());
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -257,7 +257,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime,
                                               TimeOfFlight, DetectorID);
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
-      MessageBuffer.size());
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -320,7 +320,7 @@ TEST_F(EventWriterTests,
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
-      MessageBuffer.size());
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -356,7 +356,7 @@ TEST_F(EventWriterTests,
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
-      MessageBuffer.size());
+                                            MessageBuffer.size());
 
   // Create writer and give it the message to write
   {
@@ -404,13 +404,13 @@ TEST_F(EventWriterTests,
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
-      MessageBuffer.size());
+                                            MessageBuffer.size());
 
   // Second message without ADC pulse data
   auto SecondMessageBuffer =
       generateFlatbufferData("TestSource", 0, 1, {0, 0, 0}, {0, 0, 0}, false);
   FileWriter::FlatbufferMessage SecondTestMessage(SecondMessageBuffer.data(),
-      MessageBuffer.size());
+                                                  MessageBuffer.size());
 
   // Create writer and give it the message to write
   {

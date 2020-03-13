@@ -76,7 +76,7 @@ TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
   auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-      Builder->GetSize());
+                                               Builder->GetSize());
 
   EXPECT_TRUE(Message.isValid());
   EXPECT_EQ(Message.getSourceName(), std::string("nicos/device/parameter"));

@@ -15,7 +15,8 @@
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 
-static std::unique_ptr<std::uint8_t[]> GenerateFlatbufferData(size_t &DataSize) {
+static std::unique_ptr<std::uint8_t[]>
+GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint64_t> TestTimestamps{11, 22, 33, 44, 55, 66};
   auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
@@ -68,7 +69,7 @@ TEST_F(ChopperTimeStampGuard, Verify) {
 }
 
 TEST_F(ChopperTimeStampGuard, VerifyFail) {
-  auto TempData = std::make_unique<uint8_t []>(BufferSize);
+  auto TempData = std::make_unique<uint8_t[]>(BufferSize);
   std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
   FileWriter::FlatbufferMessage TestMessage1(TempData.get(), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));

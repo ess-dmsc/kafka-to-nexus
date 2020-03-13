@@ -41,7 +41,7 @@ public:
     FileSize = InFile.tellg();
     RawData = std::make_unique<uint8_t[]>(FileSize);
     InFile.seekg(0, InFile.beg);
-    InFile.read(reinterpret_cast<char*>(RawData.get()), FileSize);
+    InFile.read(reinterpret_cast<char *>(RawData.get()), FileSize);
   };
 
   static std::unique_ptr<uint8_t[]> RawData;
@@ -470,7 +470,8 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   // cppcheck-suppress invalidPointerCast
   GenerateFlatbuffer(builder, reinterpret_cast<uint8_t *>(&testData[0]),
                      1000 * (sizeof(testData[0])), FBType);
-  FileWriter::FlatbufferMessage Message(builder.GetBufferPointer(), builder.GetSize());
+  FileWriter::FlatbufferMessage Message(builder.GetBufferPointer(),
+                                        builder.GetSize());
   ADWriterStandIn Writer;
   auto JsonConfig = nlohmann::json::parse(R""({
     "array_size": [10,10,10]

@@ -27,7 +27,9 @@ struct SrcDstKey {
   Message::DestPtrType Destination;
   std::string SourceName;
   std::string FlatbufferId;
-  std::string getMetricsNameString() const { return SourceName + "_" + FlatbufferId; }
+  std::string getMetricsNameString() const {
+    return SourceName + "_" + FlatbufferId;
+  }
 };
 using SrcToDst = std::vector<SrcDstKey>;
 using std::chrono_literals::operator""ms;

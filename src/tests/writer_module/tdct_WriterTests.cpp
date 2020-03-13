@@ -16,7 +16,8 @@
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/tdct/tdct_Writer.h"
 
-static std::unique_ptr<std::uint8_t[]> GenerateFlatbufferData(size_t &DataSize) {
+static std::unique_ptr<std::uint8_t[]>
+GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint64_t> TestTimestamps{11, 22, 33, 44, 55, 66};
   auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
@@ -88,8 +89,7 @@ TEST_F(ChopperTimeStampWriter, WriteDataOnce) {
   tdct::tdct_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(
-      Buffer.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");

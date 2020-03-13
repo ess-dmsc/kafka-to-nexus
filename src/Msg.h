@@ -18,7 +18,9 @@ namespace FileWriter {
 
 struct MessageMetaData {
   std::chrono::milliseconds Timestamp{0};
-  auto timestamp() const { return std::chrono::system_clock::time_point{Timestamp}; }
+  auto timestamp() const {
+    return std::chrono::system_clock::time_point{Timestamp};
+  }
   RdKafka::MessageTimestamp::MessageTimestampType TimestampType{
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_NOT_AVAILABLE};

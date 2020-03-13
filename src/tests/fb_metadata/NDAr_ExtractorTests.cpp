@@ -26,7 +26,7 @@ public:
     FileSize = InFile.tellg();
     RawData = std::make_unique<uint8_t[]>(FileSize);
     InFile.seekg(0, InFile.beg);
-    InFile.read(reinterpret_cast<char*>(RawData.get()), FileSize);
+    InFile.read(reinterpret_cast<char *>(RawData.get()), FileSize);
   };
 
   void SetUp() override {
