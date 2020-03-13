@@ -161,7 +161,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
   });
   Future.wait();
 }
-#include "URI.h"
+
 TEST_F(TopicTest, CreateStreams) {
   auto UnderTest = createTestedInstance();
   std::string TopicName{"Some_topic"};
