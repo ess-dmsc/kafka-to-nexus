@@ -23,10 +23,10 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
 
   for (auto &SrcDestInfo : Map) {
     MsgFilters.emplace(SrcDestInfo.Hash,
-                         std::make_unique<SourceFilter>(
-                             Start, Stop, Writer,
-                             RegisterMetric.getNewRegistrar(
-                                 SrcDestInfo.getMetricsNameString())));
+                       std::make_unique<SourceFilter>(
+                           Start, Stop, Writer,
+                           RegisterMetric.getNewRegistrar(
+                               SrcDestInfo.getMetricsNameString())));
     MsgFilters[SrcDestInfo.Hash]->addDestinationPtr(SrcDestInfo.Destination);
   }
 
