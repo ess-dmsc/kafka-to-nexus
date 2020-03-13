@@ -20,9 +20,13 @@ class ThreadedExecutor {
 private:
 public:
   using WorkMessage = std::function<void()>;
-  ThreadedExecutor() : WorkerThread(ThreadFunction) {}
+  ThreadedExecutor(bool LowPrioThreadExit = false) : LowPrioExit(LowPrioThreadExit), WorkerThread(ThreadFunction) {}
   ~ThreadedExecutor() {
-    SendWork([=]() { RunThread = false; });
+    if (LowPrioExit) {
+      SendLowPrioWork([=]() { RunThread = false; });
+    } else {
+      SendWork([=]() { RunThread = false; });
+    }
     WorkerThread.join();
   }
   void SendWork(WorkMessage Message) { MessageQueue.enqueue(Message); }
@@ -48,5 +52,6 @@ private:
   }};
   moodycamel::ConcurrentQueue<WorkMessage> MessageQueue;
   moodycamel::ConcurrentQueue<WorkMessage> LowPrioMessageQueue;
+  bool const LowPrioExit{false};
   std::thread WorkerThread;
 };
