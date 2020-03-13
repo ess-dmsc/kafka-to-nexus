@@ -15,10 +15,11 @@ namespace Stream {
 
 class Message {
 public:
-  using DestPtrType = WriterModule::Base*;
+  using DestPtrType = WriterModule::Base *;
   Message() = default;
 
-  Message(DestPtrType DestinationModule, FileWriter::FlatbufferMessage const &Msg);
+  Message(DestPtrType DestinationModule,
+          FileWriter::FlatbufferMessage const &Msg);
 
   FileWriter::FlatbufferMessage FbMsg;
   DestPtrType DestPtr{nullptr};

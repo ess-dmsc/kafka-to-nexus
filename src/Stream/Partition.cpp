@@ -12,14 +12,22 @@
 
 namespace Stream {
 
-Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition, std::string TopicName, SrcToDst Map,
-                     MessageWriter *Writer, Metrics::Registrar RegisterMetric,
-                     time_point Start, time_point Stop, duration StopLeeway, duration KafkaErrorTimeout)
-    : ConsumerPtr(std::move(Consumer)), PartitionID(Partition), Topic(TopicName), StopTime(Stop), StopTimeLeeway(StopLeeway), StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
+Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
+                     std::string TopicName, SrcToDst Map, MessageWriter *Writer,
+                     Metrics::Registrar RegisterMetric, time_point Start,
+                     time_point Stop, duration StopLeeway,
+                     duration KafkaErrorTimeout)
+    : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
+      Topic(TopicName), StopTime(Stop), StopTimeLeeway(StopLeeway),
+      StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
 
   for (auto &SrcDestInfo : Map) {
     if (MsgFilters.find(SrcDestInfo.Hash) == MsgFilters.end()) {
-      MsgFilters.emplace(SrcDestInfo.Hash, std::make_unique<SourceFilter>(Start, Stop, Writer, RegisterMetric.getNewRegistrar(SrcDestInfo.getMetricsNameString())));
+      MsgFilters.emplace(SrcDestInfo.Hash,
+                         std::make_unique<SourceFilter>(
+                             Start, Stop, Writer,
+                             RegisterMetric.getNewRegistrar(
+                                 SrcDestInfo.getMetricsNameString())));
     }
     MsgFilters[SrcDestInfo.Hash]->addDestinationPtr(SrcDestInfo.Destination);
   }
@@ -81,7 +89,8 @@ void Partition::pollForMessage() {
 
   if (KafkaW::PollStatus::Message == Msg.first) {
     processMessage(Msg.second);
-    if (MsgFilters.empty() or Msg.second.getMetaData().timestamp() > StopTime + StopTimeLeeway) {
+    if (MsgFilters.empty() or
+        Msg.second.getMetaData().timestamp() > StopTime + StopTimeLeeway) {
       LOG_INFO("Done consuming data from partition {} of topic {}.",
                PartitionID, Topic);
       HasFinished = true;
@@ -109,7 +118,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   if (CurrentFilter != MsgFilters.end() and
       CurrentFilter->second->filterMessage(std::move(FbMsg))) {
     MessagesProcessed++;
-    if (CurrentFilter->second-> hasFinished()) {
+    if (CurrentFilter->second->hasFinished()) {
       MsgFilters.erase(CurrentFilter->first);
     }
   }

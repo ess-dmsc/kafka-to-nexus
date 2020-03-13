@@ -23,9 +23,7 @@ SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
   RegisterMetric.registerMetric(RepeatedTimestamp, {Metrics::LogTo::LOG_MSG});
 }
 
-SourceFilter::~SourceFilter() {
-  sendBufferedMessage();
-}
+SourceFilter::~SourceFilter() { sendBufferedMessage(); }
 
 void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
 

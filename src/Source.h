@@ -29,7 +29,7 @@ public:
   ~Source() = default;
   std::string const &topic() const;
   std::string const &sourcename() const;
-  std::string const &flatbufferID() const {return SchemaID;};
+  std::string const &flatbufferID() const { return SchemaID; };
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
   WriterModule::Base *getWriterPtr() { return WriterModule.get(); }
 

@@ -61,8 +61,9 @@ void StreamMaster::initStreams(std::set<std::string> KnownTopicNames) {
   std::map<std::string, Stream::SrcToDst> TopicSrcMap;
   for (auto &Src : WriterTask->sources()) {
     if (KnownTopicNames.find(Src.topic()) != KnownTopicNames.end()) {
-      TopicSrcMap[Src.topic()].push_back(
-          {Src.getHash(), Src.getWriterPtr(), Src.sourcename(), Src.flatbufferID()});
+      TopicSrcMap[Src.topic()].push_back({Src.getHash(), Src.getWriterPtr(),
+                                          Src.sourcename(),
+                                          Src.flatbufferID()});
     } else {
       LOG_ERROR("Unable to set up consumer for source {} on topic {} as this "
                 "topic does not exist.",
@@ -76,7 +77,8 @@ void StreamMaster::initStreams(std::set<std::string> KnownTopicNames) {
         std::chrono::system_clock::time_point(KafkaSettings.StopTimestamp);
     auto CTopic = std::make_unique<Stream::Topic>(
         KafkaSettings.BrokerSettings, CItem.first, CItem.second, &WriterThread,
-        StreamMetricRegistrar, CStartTime, KafkaSettings.BeforeStartTime, CStopTime, KafkaSettings.AfterStopTime);
+        StreamMetricRegistrar, CStartTime, KafkaSettings.BeforeStartTime,
+        CStopTime, KafkaSettings.AfterStopTime);
     Streamers.push_back(std::move(CTopic));
   }
 }

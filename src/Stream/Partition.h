@@ -27,9 +27,7 @@ struct SrcDstKey {
   Message::DestPtrType Destination;
   std::string SourceName;
   std::string FlatbufferId;
-  std::string getMetricsNameString() {
-    return SourceName + "_" + FlatbufferId;
-  }
+  std::string getMetricsNameString() { return SourceName + "_" + FlatbufferId; }
 };
 using SrcToDst = std::vector<SrcDstKey>;
 using std::chrono_literals::operator""ms;
@@ -40,15 +38,16 @@ class Partition {
 public:
   Partition() = default;
 
-  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition, std::string TopicName, SrcToDst Map,
-            MessageWriter *Writer, Metrics::Registrar RegisterMetric,
-            time_point Start, time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
+  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
+            std::string TopicName, SrcToDst Map, MessageWriter *Writer,
+            Metrics::Registrar RegisterMetric, time_point Start,
+            time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
 
   void setStopTime(time_point Stop);
 
   bool hasFinished();
-  auto getPartitionID() const {return PartitionID;}
-  auto getTopicName() const {return Topic;}
+  auto getPartitionID() const { return PartitionID; }
+  auto getTopicName() const { return Topic; }
 
 protected:
   Metrics::Metric KafkaTimeouts{"timeouts",
@@ -84,7 +83,9 @@ protected:
   time_point StopTime;
   duration StopTimeLeeway;
   PartitionFilter StopTester;
-  std::map<FileWriter::FlatbufferMessage::SrcHash, std::unique_ptr<SourceFilter>> MsgFilters;
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           std::unique_ptr<SourceFilter>>
+      MsgFilters;
   ThreadedExecutor Executor; // Must be last
 };
 

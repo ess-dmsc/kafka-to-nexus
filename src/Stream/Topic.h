@@ -24,8 +24,8 @@ class Topic {
 public:
   Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map,
         MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
-        time_point StartTime, duration StartTimeLeeway,
-        time_point StopTime, duration StopTimeLeeway);
+        time_point StartTime, duration StartTimeLeeway, time_point StopTime,
+        duration StopTimeLeeway);
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
@@ -47,21 +47,24 @@ protected:
                                  std::string Topic);
 
   virtual void getPartitionsForTopic(KafkaW::BrokerSettings Settings,
-                             std::string Topic);
+                                     std::string Topic);
 
   virtual void getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
-                               std::string Topic, std::vector<int> Partitions);
+                                       std::string Topic,
+                                       std::vector<int> Partitions);
 
-  virtual void createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
-                     std::vector<std::pair<int, int64_t>> PartitionOffsets);
+  virtual void
+  createStreams(KafkaW::BrokerSettings Settings, std::string Topic,
+                std::vector<std::pair<int, int64_t>> PartitionOffsets);
 
   virtual std::vector<std::pair<int, int64_t>>
   getOffsetForTimeInternal(std::string Broker, std::string Topic,
-                   std::vector<int> Partitions, time_point Time,
-                   duration TimeOut) const;
+                           std::vector<int> Partitions, time_point Time,
+                           duration TimeOut) const;
 
-  virtual std::vector<int> getPartitionsForTopicInternal(std::string Broker, std::string Topic,
-                                      duration TimeOut) const;
+  virtual std::vector<int>
+  getPartitionsForTopicInternal(std::string Broker, std::string Topic,
+                                duration TimeOut) const;
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   ThreadedExecutor Executor; // Must be last

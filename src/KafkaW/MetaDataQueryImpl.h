@@ -79,8 +79,9 @@ getOffsetForTimeImpl(std::string Broker, std::string Topic,
 }
 
 template <class KafkaHandle>
-std::vector<int> getPartitionsForTopicImpl(std::string Broker, std::string Topic,
-                                        duration TimeOut) {
+std::vector<int> getPartitionsForTopicImpl(std::string Broker,
+                                           std::string Topic,
+                                           duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   std::string ErrorStr;
   auto TopicObj = std::unique_ptr<RdKafka::Topic>(

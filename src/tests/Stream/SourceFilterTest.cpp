@@ -10,76 +10,79 @@
 /// \brief Test partition filtering.
 ///
 
-#include "Stream/SourceFilter.h"
-#include <chrono>
-#include <thread>
-#include <gtest/gtest.h>
-#include <trompeloeil.hpp>
 #include "FlatbufferReader.h"
+#include "Stream/SourceFilter.h"
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/template/TemplateWriter.h"
+#include <chrono>
+#include <gtest/gtest.h>
+#include <thread>
+#include <trompeloeil.hpp>
 
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
-    MessageWriterStandIn() : MessageWriter(Metrics::Registrar("", {})) {}
-    MAKE_MOCK1(addMessage, void(Stream::Message), override);
+  MessageWriterStandIn() : MessageWriter(Metrics::Registrar("", {})) {}
+  MAKE_MOCK1(addMessage, void(Stream::Message), override);
 };
 
 class SourceFilterStandIn : public Stream::SourceFilter {
 public:
-  SourceFilterStandIn(Stream::time_point Start, Stream::time_point Stop, Stream::MessageWriter *Writer, Metrics::Registrar Reg) : SourceFilter(Start, Stop, Writer, Reg) {}
+  SourceFilterStandIn(Stream::time_point Start, Stream::time_point Stop,
+                      Stream::MessageWriter *Writer, Metrics::Registrar Reg)
+      : SourceFilter(Start, Stop, Writer, Reg) {}
   using SourceFilter::MessagesDiscarded;
-  using SourceFilter::MessagesTransmitted;
   using SourceFilter::MessagesReceived;
+  using SourceFilter::MessagesTransmitted;
   using SourceFilter::RepeatedTimestamp;
   using SourceFilter::UnorderedTimestamp;
 };
 
 class SourceFilterTest : public ::testing::Test {
 public:
-    Stream::time_point StartTime{std::chrono::system_clock::now()};
-    MessageWriterStandIn Writer;
-    Metrics::Registrar SomeRegistrar{"test_reg", {}};
-    auto getTestFilter() {
-      return std::make_unique<SourceFilterStandIn>(StartTime, std::chrono::system_clock::time_point::max(),
-                                            &Writer, SomeRegistrar);
-    }
-
+  Stream::time_point StartTime{std::chrono::system_clock::now()};
+  MessageWriterStandIn Writer;
+  Metrics::Registrar SomeRegistrar{"test_reg", {}};
+  auto getTestFilter() {
+    return std::make_unique<SourceFilterStandIn>(
+        StartTime, std::chrono::system_clock::time_point::max(), &Writer,
+        SomeRegistrar);
+  }
 };
 
 TEST_F(SourceFilterTest, InitState) {
   auto UnderTest = getTestFilter();
-    EXPECT_FALSE(UnderTest->hasFinished());
+  EXPECT_FALSE(UnderTest->hasFinished());
 }
 using trompeloeil::_;
 
 class yyyyFbReader : public FileWriter::FlatbufferReader {
 public:
-    bool verify(FileWriter::FlatbufferMessage const &) const override {
-        return true;
-    }
+  bool verify(FileWriter::FlatbufferMessage const &) const override {
+    return true;
+  }
 
-    std::string
-    source_name(FileWriter::FlatbufferMessage const &) const override {
-        return "some_name";
-    }
+  std::string
+  source_name(FileWriter::FlatbufferMessage const &) const override {
+    return "some_name";
+  }
 
-    uint64_t timestamp(FileWriter::FlatbufferMessage const &) const override {
-        return yyyyFbReader::Timestamp;
-    }
-    static void setTimestamp(uint64_t NewTime) {
-      yyyyFbReader::Timestamp = NewTime;
-    }
+  uint64_t timestamp(FileWriter::FlatbufferMessage const &) const override {
+    return yyyyFbReader::Timestamp;
+  }
+  static void setTimestamp(uint64_t NewTime) {
+    yyyyFbReader::Timestamp = NewTime;
+  }
+
 private:
-    static uint64_t Timestamp;
+  static uint64_t Timestamp;
 };
 
 uint64_t yyyyFbReader::Timestamp{1};
 
 FileWriter::FlatbufferMessage generateMsg() {
-    std::array<char, 9> SomeData{'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'};
-    setExtractorModule<yyyyFbReader>("yyyy");
-    return FileWriter::FlatbufferMessage(SomeData.data(), SomeData.size());
+  std::array<char, 9> SomeData{'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'};
+  setExtractorModule<yyyyFbReader>("yyyy");
+  return FileWriter::FlatbufferMessage(SomeData.data(), SomeData.size());
 }
 
 TEST_F(SourceFilterTest, InvalidMessage) {
@@ -172,8 +175,12 @@ TEST_F(SourceFilterTest, MultipleDestinations) {
   TemplateWriter::WriterClass Writer1;
   TemplateWriter::WriterClass Writer2;
   {
-    REQUIRE_CALL(Writer, addMessage(_)).LR_WITH(_1.DestPtr== &Writer1).TIMES(1);
-    REQUIRE_CALL(Writer, addMessage(_)).LR_WITH(_1.DestPtr== &Writer2).TIMES(1);
+    REQUIRE_CALL(Writer, addMessage(_))
+        .LR_WITH(_1.DestPtr == &Writer1)
+        .TIMES(1);
+    REQUIRE_CALL(Writer, addMessage(_))
+        .LR_WITH(_1.DestPtr == &Writer2)
+        .TIMES(1);
     auto UnderTest = getTestFilter();
     UnderTest->addDestinationPtr(&Writer1);
     UnderTest->addDestinationPtr(&Writer2);

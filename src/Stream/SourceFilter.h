@@ -62,9 +62,9 @@ protected:
   Metrics::Metric UnorderedTimestamp{
       "unordered_timestamp", "Timestamp of message not in chronological order.",
       Metrics::Severity::ERROR};
-  Metrics::Metric RepeatedTimestamp{
-          "repeated_timestamp", "Got message with repeated timestamp.",
-          Metrics::Severity::DEBUG};
+  Metrics::Metric RepeatedTimestamp{"repeated_timestamp",
+                                    "Got message with repeated timestamp.",
+                                    Metrics::Severity::DEBUG};
   Metrics::Metric MessagesReceived{"received",
                                    "Number of messages received/processed.",
                                    Metrics::Severity::DEBUG};

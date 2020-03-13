@@ -41,7 +41,7 @@ getOffsetForTime(std::string Broker, std::string Topic,
 // complete. \returns             A set of partition id:s. \throws
 // MetadataException if a failure occurs.
 std::vector<int> getPartitionsForTopic(std::string Broker, std::string Topic,
-                                    duration TimeOut);
+                                       duration TimeOut);
 
 // \brief Query the broker for available topics.
 //
