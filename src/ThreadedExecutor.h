@@ -39,6 +39,7 @@ public:
 private:
   bool RunThread{true};
   std::function<void()> ThreadFunction{[=]() {
+    // cppcheck-suppress internalAstError
     while (RunThread) {
       WorkMessage CurrentMessage;
       if (MessageQueue.try_dequeue(CurrentMessage)) {

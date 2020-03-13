@@ -24,7 +24,7 @@ public:
                   duration ErrorTimeOut);
   void setStopTime(time_point Stop) { StopTime = Stop; }
   bool shouldStopPartition(KafkaW::PollStatus LastPollStatus);
-  bool hasErrorState() { return HasError; }
+  bool hasErrorState() const { return HasError; }
 
 protected:
   bool HasError{false};

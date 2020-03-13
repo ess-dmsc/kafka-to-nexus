@@ -22,13 +22,11 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
       StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
 
   for (auto &SrcDestInfo : Map) {
-    if (MsgFilters.find(SrcDestInfo.Hash) == MsgFilters.end()) {
-      MsgFilters.emplace(SrcDestInfo.Hash,
+    MsgFilters.emplace(SrcDestInfo.Hash,
                          std::make_unique<SourceFilter>(
                              Start, Stop, Writer,
                              RegisterMetric.getNewRegistrar(
                                  SrcDestInfo.getMetricsNameString())));
-    }
     MsgFilters[SrcDestInfo.Hash]->addDestinationPtr(SrcDestInfo.Destination);
   }
 

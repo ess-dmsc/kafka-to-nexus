@@ -126,6 +126,7 @@ private:
   std::pair<KafkaW::PollStatus, Msg> StoredMessage{KafkaW::PollStatus::Empty,
                                                    Msg()};
 
+  // cppcheck-suppress unusedFunction
   bool hasWritingStopped() override { return WritingStopped; }
 };
 
