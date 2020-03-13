@@ -25,7 +25,7 @@ using std::chrono_literals::operator""s;
 
 class TopicStandIn : public Stream::Topic {
 public:
-  TopicStandIn(KafkaW::BrokerSettings Settings, std::string Topic,
+  TopicStandIn(KafkaW::BrokerSettings Settings, std::string const &Topic,
                Stream::SrcToDst Map, Stream::MessageWriter *Writer,
                Metrics::Registrar &RegisterMetric, Stream::time_point StartTime,
                Stream::duration StartTimeLeeway, Stream::time_point StopTime,

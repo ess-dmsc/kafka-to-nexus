@@ -27,7 +27,7 @@ SourceFilter::~SourceFilter() { sendBufferedMessage(); }
 
 void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
 
-bool SourceFilter::hasFinished() { return IsDone; }
+bool SourceFilter::hasFinished() const { return IsDone; }
 
 uint64_t toNanoSec(time_point Time) {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(

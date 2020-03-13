@@ -18,7 +18,7 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
                      time_point Stop, duration StopLeeway,
                      duration KafkaErrorTimeout)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
-      Topic(TopicName), StopTime(Stop), StopTimeLeeway(StopLeeway),
+      Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
 
   for (auto &SrcDestInfo : Map) {
@@ -55,7 +55,7 @@ void Partition::setStopTime(time_point Stop) {
   });
 }
 
-bool Partition::hasFinished() { return HasFinished.load(); }
+bool Partition::hasFinished() const { return HasFinished.load(); }
 
 void Partition::pollForMessage() {
   auto Msg = ConsumerPtr->poll();

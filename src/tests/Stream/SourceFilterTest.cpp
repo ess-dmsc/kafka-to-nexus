@@ -133,6 +133,7 @@ TEST_F(SourceFilterTest, SameTSBeforeStart) {
   UnderTest->addDestinationPtr(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
+  TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   EXPECT_TRUE(UnderTest->MessagesReceived == 2);
   EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);

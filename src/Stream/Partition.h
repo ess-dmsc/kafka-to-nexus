@@ -27,7 +27,7 @@ struct SrcDstKey {
   Message::DestPtrType Destination;
   std::string SourceName;
   std::string FlatbufferId;
-  std::string getMetricsNameString() { return SourceName + "_" + FlatbufferId; }
+  std::string getMetricsNameString() const { return SourceName + "_" + FlatbufferId; }
 };
 using SrcToDst = std::vector<SrcDstKey>;
 using std::chrono_literals::operator""ms;
@@ -45,7 +45,7 @@ public:
 
   void setStopTime(time_point Stop);
 
-  bool hasFinished();
+  bool hasFinished() const;
   auto getPartitionID() const { return PartitionID; }
   auto getTopicName() const { return Topic; }
 

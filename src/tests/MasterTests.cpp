@@ -72,16 +72,6 @@ TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
   ASSERT_TRUE(mpark::get_if<States::Idle>(&NewState));
 }
 
-class FakeJobCreator : public IJobCreator {
-public:
-  std::unique_ptr<IStreamMaster>
-  createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
-                       MainOpt & /*Settings*/, SharedLogger const & /*Logger*/,
-                       Metrics::Registrar) override {
-    return std::make_unique<FakeStreamMaster>("some_id");
-  };
-};
-
 class ProducerStandIn : public KafkaW::Producer {
 public:
   explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
@@ -144,7 +134,7 @@ public:
   void SetUp() override {
     MainOpt MainOpts;
     KafkaW::BrokerSettings BrokerSettings;
-    std::unique_ptr<IJobCreator> Creator = std::make_unique<FakeJobCreator>();
+    std::unique_ptr<IJobCreator> Creator = std::make_unique<JobCreator>();
     std::shared_ptr<KafkaW::Producer> Producer =
         std::make_shared<ProducerStandIn>(BrokerSettings);
     std::unique_ptr<CommandListener> CmdListener =
