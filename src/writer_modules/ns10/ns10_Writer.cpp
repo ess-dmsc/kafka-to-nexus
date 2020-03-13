@@ -100,7 +100,7 @@ WriterModule::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-static CacheEntry const *getRoot(char const *Data) {
+static CacheEntry const *getRoot(uint8_t const *Data) {
   return GetCacheEntry(Data);
 }
 

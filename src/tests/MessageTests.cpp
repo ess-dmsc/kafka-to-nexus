@@ -22,10 +22,10 @@ public:
     std::map<std::string, ReaderPtr> &Readers =
         FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    TestData = std::make_unique<char[]>(8);
+    TestData = std::make_unique<uint8_t[]>(8);
   }
   const std::string TestKey{"temp"};
-  std::unique_ptr<char[]> TestData{nullptr};
+  std::unique_ptr<uint8_t[]> TestData{nullptr};
 };
 
 class MsgDummyReader1 : public FlatbufferReader {

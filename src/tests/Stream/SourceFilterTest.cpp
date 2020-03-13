@@ -80,7 +80,7 @@ private:
 uint64_t yyyyFbReader::Timestamp{1};
 
 FileWriter::FlatbufferMessage generateMsg() {
-  std::array<char, 9> SomeData{'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'};
+  std::array<uint8_t, 9> SomeData{'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'};
   setExtractorModule<yyyyFbReader>("yyyy");
   return FileWriter::FlatbufferMessage(SomeData.data(), SomeData.size());
 }

@@ -358,8 +358,7 @@ createTestMessage(size_t HistogramID, size_t PacketID,
 
 FileWriter::FlatbufferMessage
 wrapBuilder(std::unique_ptr<flatbuffers::FlatBufferBuilder> const &Builder) {
-  return FileWriter::FlatbufferMessage(
-      reinterpret_cast<char const *>(Builder->GetBufferPointer()),
+  return FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
       Builder->GetSize());
 }
 
@@ -496,6 +495,6 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   Writer->parse_config(JsonBulk);
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   auto M = FileWriter::FlatbufferMessage(
-      reinterpret_cast<const char *>(V2.data()), V2.size());
+      reinterpret_cast<const uint8_t *>(V2.data()), V2.size());
   ASSERT_NO_THROW(Writer->write(M));
 }

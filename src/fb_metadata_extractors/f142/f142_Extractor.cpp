@@ -11,12 +11,11 @@
 #include <f142_logdata_generated.h>
 
 namespace FlatbufferMetadata {
-LogData const *get_fbuf(char const *data) { return GetLogData(data); }
+LogData const *get_fbuf(uint8_t const *data) { return GetLogData(data); }
 
 /// \brief  Use flatbuffers library to validate a message
 bool f142_Extractor::verify(FlatbufferMessage const &Message) const {
-  auto Verifier = flatbuffers::Verifier(
-      reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
+  auto Verifier = flatbuffers::Verifier(Message.data(), Message.size());
   return VerifyLogDataBuffer(Verifier);
 }
 

@@ -12,7 +12,7 @@
 
 namespace FlatbufferMetadata {
 
-static EventHistogram const *getRoot(char const *Data) {
+static EventHistogram const *getRoot(uint8_t const *Data) {
   return GetEventHistogram(Data);
 }
 

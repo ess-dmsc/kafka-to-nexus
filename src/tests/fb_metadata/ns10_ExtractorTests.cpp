@@ -75,8 +75,7 @@ TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
     })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder->GetBufferPointer()),
+  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
       Builder->GetSize());
 
   EXPECT_TRUE(Message.isValid());

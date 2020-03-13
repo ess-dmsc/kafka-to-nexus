@@ -16,7 +16,7 @@
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/senv/senv_Writer.h"
 
-std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
+std::unique_ptr<std::uint8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint16_t> TestValues{0, 1, 2, 3, 4, 5};
   std::vector<std::uint64_t> TestTimestamps{1, 2, 3, 4, 5, 6};
@@ -34,7 +34,7 @@ std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   MessageBuilder.add_TimestampLocation(Location::Middle);
   builder.Finish(MessageBuilder.Finish(), SampleEnvironmentDataIdentifier());
   DataSize = builder.GetSize();
-  auto RawBuffer = std::make_unique<std::int8_t[]>(DataSize);
+  auto RawBuffer = std::make_unique<std::uint8_t[]>(DataSize);
   std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), DataSize);
   return RawBuffer;
 }
@@ -90,12 +90,11 @@ TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
 
 TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   size_t BufferSize;
-  std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize);
   WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -130,12 +129,11 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
 
 TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   size_t BufferSize;
-  std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize);
   WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
@@ -168,7 +166,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
 
 TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   size_t BufferSize;
-  std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize);
   auto FbPointer = GetSampleEnvironmentData(Buffer.get());
   auto ValueLengthPtr =
       reinterpret_cast<flatbuffers::uoffset_t *>(
@@ -178,8 +176,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -193,7 +190,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
 
 TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   size_t BufferSize;
-  std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize);
   auto FbPointer = GetSampleEnvironmentData(Buffer.get());
   auto TimestampsLengthPtr =
       reinterpret_cast<flatbuffers::uoffset_t *>(
@@ -203,8 +200,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");

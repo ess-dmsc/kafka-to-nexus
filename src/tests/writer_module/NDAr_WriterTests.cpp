@@ -39,12 +39,12 @@ public:
                          std::ifstream::in | std::ifstream::binary);
     InFile.seekg(0, InFile.end);
     FileSize = InFile.tellg();
-    RawData = std::make_unique<char[]>(FileSize);
+    RawData = std::make_unique<uint8_t[]>(FileSize);
     InFile.seekg(0, InFile.beg);
-    InFile.read(RawData.get(), FileSize);
+    InFile.read(reinterpret_cast<char*>(RawData.get()), FileSize);
   };
 
-  static std::unique_ptr<char[]> RawData;
+  static std::unique_ptr<uint8_t[]> RawData;
   static size_t FileSize;
 
   void SetUp() override {
@@ -62,7 +62,7 @@ public:
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
 };
-std::unique_ptr<char[]> AreaDetectorWriter::RawData;
+std::unique_ptr<uint8_t[]> AreaDetectorWriter::RawData;
 size_t AreaDetectorWriter::FileSize = 0;
 
 TEST_F(AreaDetectorWriter, WriterInitTest) {
@@ -302,7 +302,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
                        1000 * (sizeof(TestData[0])), FB_Tables::DType::Float64);
 
     FileWriter::FlatbufferMessage Message(
-        reinterpret_cast<char *>(builder.GetBufferPointer()),
+        reinterpret_cast<uint8_t *>(builder.GetBufferPointer()),
         builder.GetSize());
     EXPECT_NO_THROW(Writer.write(Message));
   }
@@ -470,8 +470,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   // cppcheck-suppress invalidPointerCast
   GenerateFlatbuffer(builder, reinterpret_cast<uint8_t *>(&testData[0]),
                      1000 * (sizeof(testData[0])), FBType);
-  FileWriter::FlatbufferMessage Message(
-      reinterpret_cast<char *>(builder.GetBufferPointer()), builder.GetSize());
+  FileWriter::FlatbufferMessage Message(builder.GetBufferPointer(), builder.GetSize());
   ADWriterStandIn Writer;
   auto JsonConfig = nlohmann::json::parse(R""({
     "array_size": [10,10,10]

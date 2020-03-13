@@ -99,8 +99,7 @@ public:
 TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {
   std::string const TestSourceName = "TestSource";
   auto MessageBuffer = generateFlatbufferData(TestSourceName);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
       MessageBuffer.size());
   EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), TestSourceName);
 }
@@ -108,16 +107,14 @@ TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {
 TEST_F(EventReaderTests, ReaderReturnsPulseTimeAsMessageTimestamp) {
   uint64_t PulseTime = 42;
   auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
       MessageBuffer.size());
   EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), PulseTime);
 }
 
 TEST_F(EventReaderTests, ReaderVerifiesValidMessage) {
   auto MessageBuffer = generateFlatbufferData();
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
       MessageBuffer.size());
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }

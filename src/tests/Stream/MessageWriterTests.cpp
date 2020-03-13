@@ -97,7 +97,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
   REQUIRE_CALL(WriterModule, write(_))
       .TIMES(1)
       .THROW(WriterModule::WriterException("Some error."));
-  std::array<char, 9> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
+  std::array<uint8_t, 9> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
   setExtractorModule<xxxFbReader>("xxxx");
   FileWriter::FlatbufferMessage Msg(SomeData.data(), SomeData.size());
   Stream::Message SomeMessage(
