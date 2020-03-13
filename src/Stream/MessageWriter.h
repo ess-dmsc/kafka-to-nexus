@@ -47,7 +47,8 @@ protected:
   std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
   Metrics::Registrar Registrar;
   static bool const LowPriorityExecutorExit{true};
-  ThreadedExecutor Executor{MessageWriter::LowPriorityExecutorExit}; // Must be last
+  ThreadedExecutor Executor{
+      MessageWriter::LowPriorityExecutorExit}; // Must be last
 };
 
 } // namespace Stream
