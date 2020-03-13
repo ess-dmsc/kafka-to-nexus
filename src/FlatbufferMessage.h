@@ -65,7 +65,7 @@ public:
   /// \param BufferPtr Pointer to memory containing the data.
   /// \param Size Number of bytes in message.
   /// \note Will make a copy of the data in the Kafka message.
-  FlatbufferMessage(char const *BufferPtr, size_t Size);
+  FlatbufferMessage(uint8_t const *BufferPtr, size_t Size);
 
   /// \brief Creates a flatbuffer message, verifies the message and extracts
   /// metadata.
@@ -85,7 +85,7 @@ public:
   ~FlatbufferMessage() = default;
 
   FlatbufferMessage &operator=(FlatbufferMessage const &Other) {
-    DataPtr = std::make_unique<char[]>(Other.DataSize);
+    DataPtr = std::make_unique<uint8_t[]>(Other.DataSize);
     std::memcpy(DataPtr.get(), Other.DataPtr.get(), Other.DataSize);
     DataSize = Other.DataSize;
     SourceNameIDHash = Other.SourceNameIDHash;
@@ -133,7 +133,7 @@ public:
   ///
   /// \return Pointer to flatbuffer data if flatbuffer is valid, `nullptr` if it
   /// is not.
-  char const *data() const { return DataPtr.get(); };
+  uint8_t const *data() const { return DataPtr.get(); };
 
   /// \brief Get size of flatbuffer.
   ///
@@ -143,7 +143,7 @@ public:
 
 private:
   void extractPacketInfo();
-  std::unique_ptr<char[]> DataPtr;
+  std::unique_ptr<uint8_t[]> DataPtr;
   size_t DataSize{0};
   SrcHash SourceNameIDHash{0};
   std::string Sourcename;
