@@ -27,6 +27,11 @@ public:
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
+
+  template <typename CType> bool operator==(CType const &Rhs) {
+    return Counter.load(MemoryOrder) == Rhs;
+  };
+
   int64_t operator=(int64_t const &NewValue) {
     Counter.store(NewValue, MemoryOrder);
     return Counter.load(MemoryOrder);

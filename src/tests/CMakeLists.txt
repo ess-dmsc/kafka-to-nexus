@@ -32,6 +32,7 @@ set(UnitTests_SRC
         Metrics/LogSinkTest.cpp
         MasterTests.cpp
         StreamerTests.cpp
+        Stream/MessageWriterTests.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
     )
@@ -56,7 +57,7 @@ add_executable(UnitTests
         )
 
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
-target_include_directories(UnitTests PRIVATE ${path_include_common})
+target_include_directories(UnitTests PRIVATE ${path_include_common} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(UnitTests
         trompeloeil::trompeloeil
         ${libraries_common}
