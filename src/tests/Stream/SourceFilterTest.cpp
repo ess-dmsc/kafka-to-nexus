@@ -17,6 +17,7 @@
 #include <trompeloeil.hpp>
 #include "FlatbufferReader.h"
 #include "helpers/SetExtractorModule.h"
+#include "writer_modules/template/TemplateWriter.h"
 
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
@@ -167,11 +168,13 @@ TEST_F(SourceFilterTest, MsgBeforeAndAfterStart) {
 }
 
 TEST_F(SourceFilterTest, MultipleDestinations) {
-  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestId==1).TIMES(1);
-  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestId==12).TIMES(1);
+  TemplateWriter::WriterClass Writer1;
+  TemplateWriter::WriterClass Writer2;
+  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestPtr==&Writer1).TIMES(1);
+  REQUIRE_CALL(Writer, addMessage(_)).WITH(_1.DestPtr==&Writer2).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(1);
-  UnderTest->addDestinationId(12);
+  UnderTest->addDestinationId(&Writer1);
+  UnderTest->addDestinationId(&Writer2);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
@@ -183,7 +186,8 @@ TEST_F(SourceFilterTest, MultipleDestinations) {
 TEST_F(SourceFilterTest, MessageAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(1);
+  TemplateWriter::WriterClass Writer1;
+  UnderTest->addDestinationId(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 50ms));
   auto TestMsg = generateMsg();
@@ -196,7 +200,8 @@ TEST_F(SourceFilterTest, MessageAfterStop) {
 TEST_F(SourceFilterTest, MessageBeforeAndAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(1);
+  TemplateWriter::WriterClass Writer1;
+  UnderTest->addDestinationId(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 10ms));
   auto TestMsg = generateMsg();
@@ -213,7 +218,8 @@ TEST_F(SourceFilterTest, MessageBeforeAndAfterStop) {
 TEST_F(SourceFilterTest, MessageBeforeStartAndAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(1);
+  TemplateWriter::WriterClass Writer1;
+  UnderTest->addDestinationId(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime - 10ms));
   auto TestMsg = generateMsg();
@@ -231,7 +237,8 @@ TEST_F(SourceFilterTest, MessageBeforeStartAndAfterStop) {
 TEST_F(SourceFilterTest, UnorderedMsgBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(1);
+  TemplateWriter::WriterClass Writer1;
+  UnderTest->addDestinationId(&Writer1);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime - 10ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
@@ -249,7 +256,8 @@ TEST_F(SourceFilterTest, UnorderedMsgBeforeStart) {
 TEST_F(SourceFilterTest, UnorderedMsgAfterStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationId(1);
+  TemplateWriter::WriterClass Writer1;
+  UnderTest->addDestinationId(&Writer1);
   yyyyFbReader::setTimestamp(Stream::toNanoSec(StartTime + 10ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));

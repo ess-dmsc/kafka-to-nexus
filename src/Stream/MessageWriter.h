@@ -16,10 +16,13 @@
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
 #include "ThreadedExecutor.h"
-#include "WriterModuleBase.h"
 #include "logger.h"
 #include <map>
 #include <thread>
+
+namespace WriterModule {
+class Base;
+}
 
 namespace Stream {
 
@@ -32,7 +35,7 @@ public:
   using ModuleHash = size_t;
 
 protected:
-  void writeMsgImpl(intptr_t ModulePtr,
+  void writeMsgImpl(WriterModule::Base *ModulePtr,
                     FileWriter::FlatbufferMessage const Msg);
 
   SharedLogger Log{getLogger()};

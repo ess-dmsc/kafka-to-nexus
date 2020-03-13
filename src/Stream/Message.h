@@ -7,18 +7,21 @@
 #include "FlatbufferMessage.h"
 #include <memory>
 
+namespace WriterModule {
+class Base;
+}
+
 namespace Stream {
 
 class Message {
 public:
-  using DstId = intptr_t;
-
+  using DestPtrType = WriterModule::Base*;
   Message() = default;
 
-  Message(DstId DestinationId, FileWriter::FlatbufferMessage const &Msg);
+  Message(DestPtrType DestinationModule, FileWriter::FlatbufferMessage const &Msg);
 
   FileWriter::FlatbufferMessage FbMsg;
-  DstId DestId{0};
+  DestPtrType DestPtr{nullptr};
 };
 
 } // namespace Stream

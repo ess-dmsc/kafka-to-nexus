@@ -47,7 +47,7 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1);
   FileWriter::FlatbufferMessage Msg;
   Stream::Message SomeMessage(
-      reinterpret_cast<Stream::Message::DstId>(&WriterModule), Msg);
+      reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.addMessage(SomeMessage);
@@ -64,7 +64,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
       .THROW(WriterModule::WriterException("Some error."));
   FileWriter::FlatbufferMessage Msg;
   Stream::Message SomeMessage(
-      reinterpret_cast<Stream::Message::DstId>(&WriterModule), Msg);
+      reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.Executor.SendWork(
@@ -101,7 +101,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
   setExtractorModule<xxxFbReader>("xxxx");
   FileWriter::FlatbufferMessage Msg(SomeData.data(), SomeData.size());
   Stream::Message SomeMessage(
-      reinterpret_cast<Stream::Message::DstId>(&WriterModule), Msg);
+      reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.Executor.SendWork(

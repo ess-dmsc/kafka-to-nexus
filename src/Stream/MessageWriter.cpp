@@ -36,13 +36,13 @@ MessageWriter::MessageWriter(Metrics::Registrar const &MetricReg)
 }
 
 void MessageWriter::addMessage(Message Msg) {
-  Executor.SendWork([=]() { writeMsgImpl(Msg.DestId, Msg.FbMsg); });
+  Executor.SendWork([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
 }
 
-void MessageWriter::writeMsgImpl(intptr_t ModulePtr,
+void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
                                  FileWriter::FlatbufferMessage const Msg) {
   try {
-    reinterpret_cast<WriterModule::Base *>(ModulePtr)->write(Msg);
+    ModulePtr->write(Msg);
     WritesDone++;
   } catch (WriterModule::WriterException &E) {
     WriteErrors++;

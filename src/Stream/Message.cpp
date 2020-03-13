@@ -6,7 +6,7 @@
 
 namespace Stream {
 
-Message::Message(DstId DestinationId, FileWriter::FlatbufferMessage const &Msg)
-    : FbMsg(Msg), DestId(DestinationId) {}
+Message::Message(WriterModule::Base *DestinationModule, FileWriter::FlatbufferMessage const &Msg)
+    : FbMsg(Msg), DestPtr(DestinationModule) {}
 
 } // namespace Stream

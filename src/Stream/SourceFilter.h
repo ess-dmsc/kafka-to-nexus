@@ -26,7 +26,7 @@ public:
   SourceFilter(time_point StartTime, time_point StopTime,
                MessageWriter *Destination, Metrics::Registrar RegisterMetric);
   ~SourceFilter();
-  void addDestinationId(Message::DstId NewDestination) {
+  void addDestinationId(Message::DestPtrType NewDestination) {
     DestIDs.push_back(NewDestination);
   };
 
@@ -55,7 +55,7 @@ protected:
   MessageWriter *Dest{nullptr};
   bool IsDone{false};
   FileWriter::FlatbufferMessage BufferedMessage;
-  std::vector<Message::DstId> DestIDs;
+  std::vector<Message::DestPtrType> DestIDs;
   Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
                                     "Flatbuffer failed validation.",
                                     Metrics::Severity::ERROR};

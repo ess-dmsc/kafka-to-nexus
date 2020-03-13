@@ -24,7 +24,7 @@ namespace Stream {
 // Pollution of namespace, fix.
 struct SrcDstKey {
   FileWriter::FlatbufferMessage::SrcHash Hash;
-  Message::DstId Destination;
+  Message::DestPtrType Destination;
   std::string SourceName;
   std::string FlatbufferId;
   std::string getMetricsNameString() {
