@@ -88,11 +88,6 @@ public:
   /// \return The group.
   hdf5::node::Group hdfGroup();
 
-  /// Get whether SWMR is enabled for this task.
-  ///
-  /// \return true if enabled.
-  bool swmrEnabled() const;
-
 private:
   std::string Filename;
   std::vector<Source> SourceToModuleMap;

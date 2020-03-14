@@ -94,8 +94,6 @@ std::string FileWriterTask::jobID() const { return JobId; }
 
 hdf5::node::Group FileWriterTask::hdfGroup() { return File.H5File.root(); }
 
-bool FileWriterTask::swmrEnabled() const { return File.isSWMREnabled(); }
-
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 std::string FileWriterTask::filename() const { return Filename; }

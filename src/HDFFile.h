@@ -48,12 +48,6 @@ public:
   void close();
   void finalize();
 
-  /// If using SWMR, gets invoked by Source and can trigger a flush of the HDF
-  /// file.
-  void SWMRFlush();
-
-  bool isSWMREnabled() const;
-
   hdf5::file::File H5File;
   hdf5::node::Group RootGroup;
 
