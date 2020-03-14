@@ -22,7 +22,7 @@ namespace Stream {
 
 class Topic {
 public:
-  Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map,
+  Topic(KafkaW::BrokerSettings Settings, std::string const &Topic, SrcToDst Map,
         MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway);
