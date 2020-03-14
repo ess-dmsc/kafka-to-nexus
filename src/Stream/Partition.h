@@ -41,7 +41,7 @@ public:
   Partition() = default;
 
   Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
-            std::string TopicName, SrcToDst Map, MessageWriter *Writer,
+            std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::Registrar RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
 

@@ -79,10 +79,11 @@ public:
 class TopicTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
-    return std::make_unique<TopicStandIn>(KafkaSettings, "some_topic", Map,
+    return std::make_unique<TopicStandIn>(KafkaSettings, UsedTopicName, Map,
                                           nullptr, Registrar, Start, 5s, Stop,
                                           5s);
   }
+  std::string const UsedTopicName{"some_topic_or_another"};
   KafkaW::BrokerSettings KafkaSettings;
   Stream::time_point Start{std::chrono::system_clock::now()};
   Stream::time_point Stop{std::chrono::system_clock::time_point::max()};
@@ -95,9 +96,8 @@ using trompeloeil::_;
 
 TEST_F(TopicTest, StartMetaDataCall) {
   auto UnderTest = createTestedInstance();
-  std::string TopicName{"Some_topic"};
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, TopicName)).TIMES(1);
-  UnderTest->initMetadataCallsBase(KafkaSettings, TopicName);
+  REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
+  UnderTest->initMetadataCallsBase(KafkaSettings, UsedTopicName);
 
   // Wait until we are done processing "getPartitionsForTopic
   std::promise<bool> Promise;
@@ -109,13 +109,12 @@ TEST_F(TopicTest, StartMetaDataCall) {
 
 TEST_F(TopicTest, GetPartitionsForTopicException) {
   auto UnderTest = createTestedInstance();
-  std::string TopicName{"Some_topic"};
 
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, TopicName)).TIMES(1);
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, TopicName, _))
+  REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
+  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
-  UnderTest->getPartitionsForTopicBase(KafkaSettings, TopicName);
+  UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
 
   // Wait until we are done processing "getPartitionsForTopic
   std::promise<bool> Promise;
@@ -127,16 +126,15 @@ TEST_F(TopicTest, GetPartitionsForTopicException) {
 
 TEST_F(TopicTest, GetPartitionsForTopicNoException) {
   auto UnderTest = createTestedInstance();
-  std::string TopicName{"Some_topic"};
   std::vector<int> ReturnPartitions{2, 3};
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, TopicName, _))
+  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
       .RETURN(ReturnPartitions);
   REQUIRE_CALL(*UnderTest,
-               getOffsetsForPartitions(_, TopicName, ReturnPartitions))
+               getOffsetsForPartitions(_, UsedTopicName, ReturnPartitions))
       .TIMES(1);
-  UnderTest->getPartitionsForTopicBase(KafkaSettings, TopicName);
+  UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
 
   // Wait until we are done processing "getPartitionsForTopic
   std::promise<bool> Promise;
@@ -148,15 +146,14 @@ TEST_F(TopicTest, GetPartitionsForTopicNoException) {
 
 TEST_F(TopicTest, GetOffsetsForPartitionsException) {
   auto UnderTest = createTestedInstance();
-  std::string TopicName{"Some_topic"};
   std::vector<int> Partitions{2, 3};
-  REQUIRE_CALL(*UnderTest, getOffsetsForPartitions(_, TopicName, Partitions))
+  REQUIRE_CALL(*UnderTest, getOffsetsForPartitions(_, UsedTopicName, Partitions))
       .TIMES(1);
   REQUIRE_CALL(*UnderTest,
-               getOffsetForTimeInternal(_, TopicName, Partitions, _, _))
+               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
-  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, TopicName, Partitions);
+  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName, Partitions);
 
   // Wait until we are done processing "getOffsetsForPartitions
   std::promise<bool> Promise;
@@ -168,16 +165,15 @@ TEST_F(TopicTest, GetOffsetsForPartitionsException) {
 
 TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
   auto UnderTest = createTestedInstance();
-  std::string TopicName{"Some_topic"};
   std::vector<int> Partitions{6, 3, 2};
   TopicStandIn::offset_list ReturnOffsets{{1, 5}, {3, 6}};
   FORBID_CALL(*UnderTest, getOffsetsForPartitions(_, _, _));
   REQUIRE_CALL(*UnderTest,
-               getOffsetForTimeInternal(_, TopicName, Partitions, _, _))
+               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
       .TIMES(1)
       .RETURN(ReturnOffsets);
-  REQUIRE_CALL(*UnderTest, createStreams(_, TopicName, ReturnOffsets)).TIMES(1);
-  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, TopicName, Partitions);
+  REQUIRE_CALL(*UnderTest, createStreams(_, UsedTopicName, ReturnOffsets)).TIMES(1);
+  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName, Partitions);
 
   // Wait until we are done processing "getOffsetsForPartitions
   std::promise<bool> Promise;
@@ -189,13 +185,12 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
 
 TEST_F(TopicTest, CreateStreams) {
   auto UnderTest = createTestedInstance();
-  std::string TopicName{"Some_topic"};
   TopicStandIn::offset_list PartitionOffsets{{1, 5}, {3, 6}};
-  UnderTest->createStreamsBase(KafkaSettings, TopicName, PartitionOffsets);
+  UnderTest->createStreamsBase(KafkaSettings, UsedTopicName, PartitionOffsets);
   ASSERT_EQ(PartitionOffsets.size(), UnderTest->ConsumerThreads.size());
   for (size_t i = 0; i < PartitionOffsets.size(); i++) {
     EXPECT_EQ(UnderTest->ConsumerThreads[i]->getPartitionID(),
               PartitionOffsets[i].first);
-    EXPECT_EQ(UnderTest->ConsumerThreads[i]->getTopicName(), TopicName);
+    EXPECT_EQ(UnderTest->ConsumerThreads[i]->getTopicName(), UsedTopicName);
   }
 }
