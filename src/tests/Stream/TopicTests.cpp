@@ -147,13 +147,15 @@ TEST_F(TopicTest, GetPartitionsForTopicNoException) {
 TEST_F(TopicTest, GetOffsetsForPartitionsException) {
   auto UnderTest = createTestedInstance();
   std::vector<int> Partitions{2, 3};
-  REQUIRE_CALL(*UnderTest, getOffsetsForPartitions(_, UsedTopicName, Partitions))
+  REQUIRE_CALL(*UnderTest,
+               getOffsetsForPartitions(_, UsedTopicName, Partitions))
       .TIMES(1);
   REQUIRE_CALL(*UnderTest,
                getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
-  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName, Partitions);
+  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
+                                         Partitions);
 
   // Wait until we are done processing "getOffsetsForPartitions
   std::promise<bool> Promise;
@@ -172,8 +174,10 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
                getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
       .TIMES(1)
       .RETURN(ReturnOffsets);
-  REQUIRE_CALL(*UnderTest, createStreams(_, UsedTopicName, ReturnOffsets)).TIMES(1);
-  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName, Partitions);
+  REQUIRE_CALL(*UnderTest, createStreams(_, UsedTopicName, ReturnOffsets))
+      .TIMES(1);
+  UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
+                                         Partitions);
 
   // Wait until we are done processing "getOffsetsForPartitions
   std::promise<bool> Promise;

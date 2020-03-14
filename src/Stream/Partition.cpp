@@ -13,9 +13,9 @@
 namespace Stream {
 
 Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
-                     std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
-                     Metrics::Registrar RegisterMetric, time_point Start,
-                     time_point Stop, duration StopLeeway,
+                     std::string TopicName, SrcToDst const &Map,
+                     MessageWriter *Writer, Metrics::Registrar RegisterMetric,
+                     time_point Start, time_point Stop, duration StopLeeway,
                      duration KafkaErrorTimeout)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
