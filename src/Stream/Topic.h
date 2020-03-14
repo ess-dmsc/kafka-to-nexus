@@ -22,16 +22,22 @@ namespace Stream {
 
 class Topic {
 public:
-  Topic(KafkaW::BrokerSettings Settings, std::string const &Topic, SrcToDst Map,
+  Topic(KafkaW::BrokerSettings Settings, std::string Topic, SrcToDst Map,
         MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway);
+
+  /// \brief Must be called after the constructor.
+  /// \note The existance of this function is required for unit testing.
+  void start();
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
   virtual ~Topic() = default;
 
 protected:
+  KafkaW::BrokerSettings KafkaSettings;
+  std::string TopicName;
   SrcToDst DataMap;
   MessageWriter *WriterPtr;
   time_point StartConsumeTime;

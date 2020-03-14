@@ -79,6 +79,7 @@ void StreamMaster::initStreams(std::set<std::string> KnownTopicNames) {
         KafkaSettings.BrokerSettings, CItem.first, CItem.second, &WriterThread,
         StreamMetricRegistrar, CStartTime, KafkaSettings.BeforeStartTime,
         CStopTime, KafkaSettings.AfterStopTime);
+    CTopic->start();
     Streamers.push_back(std::move(CTopic));
   }
 }
