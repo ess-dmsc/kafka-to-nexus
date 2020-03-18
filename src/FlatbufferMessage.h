@@ -47,9 +47,6 @@ public:
 ///
 /// Used to simplify passing around flatbuffers and the most important pieces of
 /// meta-data.
-///
-/// \note Does not take ownership of any pointers. You must make sure to
-/// free the pointers you passed yourself.
 class FlatbufferMessage {
 public:
   using SrcHash = size_t;
