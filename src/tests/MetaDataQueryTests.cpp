@@ -73,7 +73,7 @@ using std::chrono_literals::operator""ms;
 
 class UsedMockPartitionMetadata : public MockPartitionMetadata {
 public:
-  UsedMockPartitionMetadata(int Id) : UsedId(Id) {}
+  explicit UsedMockPartitionMetadata(int Id) : UsedId(Id) {}
   int32_t id() const override { return UsedId; }
   int UsedId;
 };
@@ -82,9 +82,8 @@ class UsedMockTopicMetadata : public MockTopicMetadata {
 public:
   UsedMockTopicMetadata(std::string Name, std::vector<int> Partitions)
       : MockTopicMetadata(std::move(Name)) {
-    for (auto Id : Partitions) {
-      ReturnVector.push_back(new UsedMockPartitionMetadata(Id));
-    }
+    std::transform(Partitions.begin(), Partitions.end(), std::back_inserter(ReturnVector),
+                   [](auto Id){return new UsedMockPartitionMetadata(Id); });
   }
   PartitionMetadataVector const *partitions() const override {
     return &ReturnVector;
