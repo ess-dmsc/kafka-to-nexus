@@ -22,7 +22,7 @@
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
   MessageWriterStandIn() : MessageWriter(Metrics::Registrar("", {})) {}
-  MAKE_MOCK1(addMessage, void(Stream::Message), override);
+  MAKE_MOCK1(addMessage, void(Stream::Message const&), override);
 };
 
 class SourceFilterStandIn : public Stream::SourceFilter {
