@@ -30,7 +30,7 @@ using duration = std::chrono::system_clock::duration;
 // Time (if available). \throws §MetadataException if a failure occurs.
 std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
-                 std::vector<int> Partitions, time_point Time,
+                 std::vector<int> const &Partitions, time_point Time,
                  duration TimeOut);
 
 // \brief Query the broker for partitions available on a specified topic.

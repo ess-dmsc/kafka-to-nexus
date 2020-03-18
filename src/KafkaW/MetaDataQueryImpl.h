@@ -45,7 +45,7 @@ std::unique_ptr<RdKafka::Handle> getKafkaHandle(std::string Broker) {
 template <class KafkaHandle>
 std::vector<std::pair<int, int64_t>>
 getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
-                     std::vector<int> Partitions, time_point Time,
+                     std::vector<int> const &Partitions, time_point Time,
                      duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   auto UsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -78,14 +78,14 @@ getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
   return ReturnSet;
 }
 
-template <class KafkaHandle>
+template <class KafkaHandle, class KafkaTopic>
 std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
                                            std::string const &Topic,
                                            duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   std::string ErrorStr;
   auto TopicObj = std::unique_ptr<RdKafka::Topic>(
-      RdKafka::Topic::create(Handle.get(), Topic, nullptr, ErrorStr));
+      KafkaTopic::create(Handle.get(), Topic, nullptr, ErrorStr));
   auto TimeOutInMs =
       std::chrono::duration_cast<std::chrono::milliseconds>(TimeOut).count();
   RdKafka::Metadata *MetadataPtr{nullptr};
