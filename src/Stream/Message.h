@@ -26,8 +26,8 @@ public:
   Message() = default;
 
   Message(WriterModule::Base *DestinationModule,
-  FileWriter::FlatbufferMessage const &Msg)
-  : FbMsg(Msg), DestPtr(DestinationModule) {}
+          FileWriter::FlatbufferMessage const &Msg)
+      : FbMsg(Msg), DestPtr(DestinationModule) {}
 
   FileWriter::FlatbufferMessage const FbMsg{};
   DestPtrType const DestPtr{nullptr};

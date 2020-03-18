@@ -35,8 +35,8 @@ public:
   explicit ThreadedExecutor(bool LowPriorityThreadExit = false)
       : LowPriorityExit(LowPriorityThreadExit), WorkerThread(ThreadFunction) {}
 
-      /// \brief Destructor, see constructor for details on exiting the thread
-      /// when calling the destructor.
+  /// \brief Destructor, see constructor for details on exiting the thread
+  /// when calling the destructor.
   ~ThreadedExecutor() {
     if (LowPriorityExit) {
       SendLowPrioWork([=]() { RunThread = false; });
