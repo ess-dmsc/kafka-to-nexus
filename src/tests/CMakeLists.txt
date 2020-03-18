@@ -32,6 +32,7 @@ set(UnitTests_SRC
         Metrics/LogSinkTest.cpp
         MasterTests.cpp
         StreamerTests.cpp
+        MetaDataQueryTests.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
     )
