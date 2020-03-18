@@ -17,19 +17,19 @@ using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
 
 std::vector<std::pair<int, int64_t>>
-getOffsetForTime(std::string Broker, std::string Topic,
+getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> Partitions, time_point Time,
                  duration TimeOut) {
   return getOffsetForTimeImpl<RdKafka::Consumer>(Broker, Topic, Partitions,
                                                  Time, TimeOut);
 }
 
-std::vector<int> getPartitionsForTopic(std::string Broker, std::string Topic,
+std::vector<int> getPartitionsForTopic(std::string const &Broker, std::string const &Topic,
                                        duration TimeOut) {
   return getPartitionsForTopicImpl<RdKafka::Consumer>(Broker, Topic, TimeOut);
 }
 
-std::set<std::string> getTopicList(std::string Broker, duration TimeOut) {
+std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut) {
   return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut);
 }
 

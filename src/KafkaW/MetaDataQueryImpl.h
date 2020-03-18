@@ -44,7 +44,7 @@ std::unique_ptr<RdKafka::Handle> getKafkaHandle(std::string Broker) {
 
 template <class KafkaHandle>
 std::vector<std::pair<int, int64_t>>
-getOffsetForTimeImpl(std::string Broker, std::string Topic,
+getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
                      std::vector<int> Partitions, time_point Time,
                      duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
@@ -79,8 +79,8 @@ getOffsetForTimeImpl(std::string Broker, std::string Topic,
 }
 
 template <class KafkaHandle>
-std::vector<int> getPartitionsForTopicImpl(std::string Broker,
-                                           std::string Topic,
+std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
+                                           std::string const &Topic,
                                            duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   std::string ErrorStr;
@@ -106,7 +106,7 @@ std::vector<int> getPartitionsForTopicImpl(std::string Broker,
 }
 
 template <class KafkaHandle>
-std::set<std::string> getTopicListImpl(std::string Broker, duration TimeOut) {
+std::set<std::string> getTopicListImpl(std::string const &Broker, duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   std::string ErrorStr;
   auto TimeOutInMs =
