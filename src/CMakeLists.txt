@@ -92,7 +92,6 @@ set(kafka_to_nexus_SRC
         Metrics/CarbonSink.cpp
         Status/StatusReporterBase.cpp
     Stream/MessageWriter.cpp
-    Stream/Message.cpp
     Stream/Partition.cpp
     Stream/Topic.cpp KafkaW/MetaDataQuery.cpp KafkaW/MetaDataQueryImpl.cpp)
 

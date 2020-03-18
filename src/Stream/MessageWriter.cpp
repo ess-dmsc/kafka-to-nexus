@@ -36,12 +36,12 @@ MessageWriter::MessageWriter(Metrics::Registrar const &MetricReg)
                            {Metrics::LogTo::LOG_MSG});
 }
 
-void MessageWriter::addMessage(Message Msg) {
+void MessageWriter::addMessage(Message const &Msg) {
   Executor.SendWork([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
 }
 
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
-                                 FileWriter::FlatbufferMessage const Msg) {
+                                 FileWriter::FlatbufferMessage const &Msg) {
   try {
     ModulePtr->write(Msg);
     WritesDone++;

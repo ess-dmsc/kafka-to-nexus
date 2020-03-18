@@ -18,16 +18,19 @@ class Base;
 
 namespace Stream {
 
+/// \brief Simple message for passing flatbuffers to the writing thread.
+/// \note Copies the flatbuffer in order to simplify the design.
 class Message {
 public:
   using DestPtrType = WriterModule::Base *;
   Message() = default;
 
-  Message(DestPtrType DestinationModule,
-          FileWriter::FlatbufferMessage const &Msg);
+  Message(WriterModule::Base *DestinationModule,
+          FileWriter::FlatbufferMessage const &Msg)
+      : FbMsg(Msg), DestPtr(DestinationModule) {}
 
-  FileWriter::FlatbufferMessage FbMsg;
-  DestPtrType DestPtr{nullptr};
+  FileWriter::FlatbufferMessage const FbMsg{};
+  DestPtrType const DestPtr{nullptr};
 };
 
 } // namespace Stream
