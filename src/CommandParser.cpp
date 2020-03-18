@@ -22,7 +22,7 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
   std::stringstream Errors;
   if (RunStartData->job_id() == nullptr ||
       RunStartData->job_id()->size() == 0) {
-    Errors << "Job ID missing, this field is required\n";
+    Errors << "JobType ID missing, this field is required\n";
   }
 
   if (RunStartData->nexus_structure() == nullptr ||
@@ -89,7 +89,7 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
 
   if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {
     throw std::runtime_error("Errors encountered parsing run stop message:\n"
-                             "Job ID missing, this field is required");
+                             "JobType ID missing, this field is required");
   }
 
   StopCommandInfo Result;

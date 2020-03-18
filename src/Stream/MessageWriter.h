@@ -30,13 +30,13 @@ class MessageWriter {
 public:
   explicit MessageWriter(Metrics::Registrar const &MetricReg);
 
-  virtual void addMessage(Message Msg);
+  virtual void addMessage(Message const &Msg);
 
   using ModuleHash = size_t;
 
 protected:
   void writeMsgImpl(WriterModule::Base *ModulePtr,
-                    FileWriter::FlatbufferMessage const Msg);
+                    FileWriter::FlatbufferMessage const &Msg);
 
   SharedLogger Log{getLogger()};
   Metrics::Metric WritesDone{"writes_done",

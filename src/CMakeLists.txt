@@ -94,8 +94,7 @@ set(kafka_to_nexus_SRC
         Metrics/CarbonSink.cpp
         Status/StatusReporterBase.cpp
         Status/StatusReporter.cpp
-        Stream/MessageWriter.cpp
-        Stream/Message.cpp)
+        Stream/MessageWriter.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h

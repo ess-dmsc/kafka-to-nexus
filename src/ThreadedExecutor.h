@@ -19,40 +19,40 @@
 class ThreadedExecutor {
 private:
 public:
-  using WorkMessage = std::function<void()>;
-  ThreadedExecutor(bool LowPrioThreadExit = false)
-      : LowPrioExit(LowPrioThreadExit), WorkerThread(ThreadFunction) {}
+  using JobType = std::function<void()>;
+  explicit ThreadedExecutor(bool LowPriorityThreadExit = false)
+      : LowPriorityExit(LowPriorityThreadExit), WorkerThread(ThreadFunction) {}
   ~ThreadedExecutor() {
-    if (LowPrioExit) {
+    if (LowPriorityExit) {
       SendLowPrioWork([=]() { RunThread = false; });
     } else {
       SendWork([=]() { RunThread = false; });
     }
     WorkerThread.join();
   }
-  void SendWork(WorkMessage Message) { MessageQueue.enqueue(Message); }
-  size_t size_approx() { return MessageQueue.size_approx(); }
-  void SendLowPrioWork(WorkMessage Message) {
-    LowPrioMessageQueue.enqueue(Message);
+  void SendWork(JobType Task) { TaskQueue.enqueue(std::move(Task)); }
+  size_t size_approx() { return TaskQueue.size_approx(); }
+  void SendLowPrioWork(JobType Task) {
+    LowPriorityTaskQueue.enqueue(std::move(Task));
   }
 
 private:
   bool RunThread{true};
   std::function<void()> ThreadFunction{[=]() {
     while (RunThread) {
-      WorkMessage CurrentMessage;
-      if (MessageQueue.try_dequeue(CurrentMessage)) {
-        CurrentMessage();
-      } else if (LowPrioMessageQueue.try_dequeue(CurrentMessage)) {
-        CurrentMessage();
+      JobType CurrentTask;
+      if (TaskQueue.try_dequeue(CurrentTask)) {
+        CurrentTask();
+      } else if (LowPriorityTaskQueue.try_dequeue(CurrentTask)) {
+        CurrentTask();
       } else {
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(5ms);
       }
     }
   }};
-  moodycamel::ConcurrentQueue<WorkMessage> MessageQueue;
-  moodycamel::ConcurrentQueue<WorkMessage> LowPrioMessageQueue;
-  bool const LowPrioExit{false};
+  moodycamel::ConcurrentQueue<JobType> TaskQueue;
+  moodycamel::ConcurrentQueue<JobType> LowPriorityTaskQueue;
+  bool const LowPriorityExit{false};
   std::thread WorkerThread;
 };
