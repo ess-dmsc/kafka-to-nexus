@@ -20,7 +20,7 @@ class ThreadedExecutor {
 private:
 public:
   using WorkMessage = std::function<void()>;
-  ThreadedExecutor(bool LowPrioThreadExit = false)
+  explicit ThreadedExecutor(bool LowPrioThreadExit = false)
       : LowPrioExit(LowPrioThreadExit), WorkerThread(ThreadFunction) {}
   ~ThreadedExecutor() {
     if (LowPrioExit) {
