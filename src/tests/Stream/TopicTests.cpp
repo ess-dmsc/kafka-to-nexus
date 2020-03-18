@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "KafkaW/Consumer.h"
-#include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/MetadataException.h"
 #include "Metrics/Registrar.h"
 #include "Stream/Partition.h"

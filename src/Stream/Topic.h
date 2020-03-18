@@ -28,7 +28,7 @@ public:
         duration StopTimeLeeway);
 
   /// \brief Must be called after the constructor.
-  /// \note The existance of this function is required for unit testing.
+  /// \note This function exist in order to make unit testing possible.
   void start();
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
