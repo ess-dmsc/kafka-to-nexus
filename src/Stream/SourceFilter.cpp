@@ -48,7 +48,8 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
     MessagesDiscarded++;
     FlatbufferInvalid++;
     return false;
-  } else if (InMsg.getTimestamp() == CurrentTimeStamp) {
+  }
+  if (InMsg.getTimestamp() == CurrentTimeStamp) {
     RepeatedTimestamp++;
   } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
     UnorderedTimestamp++;
@@ -59,9 +60,10 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
     if (BufferedMessage.isValid()) {
       MessagesDiscarded++;
     }
-    BufferedMessage = std::move(InMsg);
+    BufferedMessage = InMsg;
     return false;
-  } else if (CurrentTimeStamp > toNanoSec(Start) and
+  }
+  if (CurrentTimeStamp > toNanoSec(Start) and
              CurrentTimeStamp < toNanoSec(Stop)) {
     sendBufferedMessage();
     sendMessage(InMsg);
