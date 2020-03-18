@@ -106,7 +106,8 @@ std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
 }
 
 template <class KafkaHandle>
-std::set<std::string> getTopicListImpl(std::string const &Broker, duration TimeOut) {
+std::set<std::string> getTopicListImpl(std::string const &Broker,
+                                       duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   std::string ErrorStr;
   auto TimeOutInMs =

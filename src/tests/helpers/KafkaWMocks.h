@@ -14,8 +14,10 @@
 
 class MockMetadata : public RdKafka::Metadata {
 public:
-  MAKE_CONST_MOCK0(brokers, const RdKafka::Metadata::BrokerMetadataVector *(), override);
-  MAKE_CONST_MOCK0(topics, const RdKafka::Metadata::TopicMetadataVector *(), override);
+  MAKE_CONST_MOCK0(brokers, const RdKafka::Metadata::BrokerMetadataVector *(),
+                   override);
+  MAKE_CONST_MOCK0(topics, const RdKafka::Metadata::TopicMetadataVector *(),
+                   override);
   MAKE_CONST_MOCK0(orig_broker_id, int32_t(), override);
   MAKE_CONST_MOCK0(orig_broker_name, const std::string(), override);
 };
@@ -152,7 +154,7 @@ public:
   MAKE_CONST_MOCK0(name, const std::string(), override);
   MAKE_CONST_MOCK1(partition_available, bool(int32_t), override);
   MAKE_MOCK2(offset_store, RdKafka::ErrorCode(int32_t, int64_t), override);
-  MAKE_MOCK0(c_ptr, rd_kafka_topic_s*(), override);
+  MAKE_MOCK0(c_ptr, rd_kafka_topic_s *(), override);
 };
 
 class MockProducer : public RdKafka::Producer {

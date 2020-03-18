@@ -24,12 +24,15 @@ getOffsetForTime(std::string const &Broker, std::string const &Topic,
                                                  Time, TimeOut);
 }
 
-std::vector<int> getPartitionsForTopic(std::string const &Broker, std::string const &Topic,
+std::vector<int> getPartitionsForTopic(std::string const &Broker,
+                                       std::string const &Topic,
                                        duration TimeOut) {
-  return getPartitionsForTopicImpl<RdKafka::Consumer,RdKafka::Topic>(Broker, Topic, TimeOut);
+  return getPartitionsForTopicImpl<RdKafka::Consumer, RdKafka::Topic>(
+      Broker, Topic, TimeOut);
 }
 
-std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut) {
+std::set<std::string> getTopicList(std::string const &Broker,
+                                   duration TimeOut) {
   return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut);
 }
 

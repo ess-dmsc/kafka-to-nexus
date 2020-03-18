@@ -40,7 +40,8 @@ getOffsetForTime(std::string const &Broker, std::string const &Topic,
 // \param[in] TimeOut   The amount of time to wait for the meta-data call to
 // complete. \returns             A set of partition id:s. \throws
 // MetadataException if a failure occurs.
-std::vector<int> getPartitionsForTopic(std::string const &Broker, std::string const &Topic,
+std::vector<int> getPartitionsForTopic(std::string const &Broker,
+                                       std::string const &Topic,
                                        duration TimeOut);
 
 // \brief Query the broker for available topics.

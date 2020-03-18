@@ -15,12 +15,13 @@
 
 namespace Stream {
 
-Topic::Topic(KafkaW::BrokerSettings const &Settings, std::string const &Topic, SrcToDst Map,
-             MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
-             time_point StartTime, duration StartTimeLeeway,
-             time_point StopTime, duration StopTimeLeeway)
-    : KafkaSettings(Settings), TopicName(Topic),
-      DataMap(std::move(Map)), WriterPtr(Writer), StartConsumeTime(StartTime),
+Topic::Topic(KafkaW::BrokerSettings const &Settings, std::string const &Topic,
+             SrcToDst Map, MessageWriter *Writer,
+             Metrics::Registrar &RegisterMetric, time_point StartTime,
+             duration StartTimeLeeway, time_point StopTime,
+             duration StopTimeLeeway)
+    : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
+      WriterPtr(Writer), StartConsumeTime(StartTime),
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
       StopLeeway(StopTimeLeeway), KafkaErrorTimeout(Settings.KafkaErrorTimeout),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),

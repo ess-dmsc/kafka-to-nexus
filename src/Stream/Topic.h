@@ -22,8 +22,8 @@ namespace Stream {
 
 class Topic {
 public:
-  Topic(KafkaW::BrokerSettings const &Settings, std::string const &Topic, SrcToDst Map,
-        MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
+  Topic(KafkaW::BrokerSettings const &Settings, std::string const &Topic,
+        SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway);
 
