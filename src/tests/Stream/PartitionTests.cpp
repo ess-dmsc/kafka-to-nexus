@@ -7,26 +7,21 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <gtest/gtest.h>
 #include "Stream/Partition.h"
 #include "helpers/KafkaWMocks.h"
+#include <gtest/gtest.h>
 
 class PartitionStandIn : Stream::Partition {
 public:
   PartitionStandIn(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
-                   std::string TopicName, Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
+                   std::string TopicName, Stream::SrcToDst const &Map,
+                   Stream::MessageWriter *Writer,
                    Metrics::Registrar RegisterMetric, Stream::time_point Start,
-                   Stream::time_point Stop, Stream::duration StopLeeway, Stream::duration KafkaErrorTimeout)
-      : Stream::Partition(std::move(Consumer),
-                          Partition,
-                          std::move(TopicName),
-                          std::move(Map),
-                          Writer,
-                          RegisterMetric,
-                          Start,
-                          Stop,
-                          StopLeeway,
-                          KafkaErrorTimeout) {}
+                   Stream::time_point Stop, Stream::duration StopLeeway,
+                   Stream::duration KafkaErrorTimeout)
+      : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
+                          std::move(Map), Writer, RegisterMetric, Start, Stop,
+                          StopLeeway, KafkaErrorTimeout) {}
 
   using Partition::pollForMessage;
   using Partition::processMessage;
@@ -37,7 +32,9 @@ using std::chrono_literals::operator""s;
 class PartitionTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
-    return std::make_unique<PartitionStandIn>( nullptr, UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start, Stop, 5s, 10s);
+    return std::make_unique<PartitionStandIn>(nullptr, UsedPartitionId,
+                                              TopicName, UsedMap, nullptr,
+                                              Registrar, Start, Stop, 5s, 10s);
   }
   MockKafkaConsumer Consumer;
   int UsedPartitionId{0};

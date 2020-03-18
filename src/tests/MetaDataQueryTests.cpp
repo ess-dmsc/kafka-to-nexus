@@ -82,8 +82,9 @@ class UsedMockTopicMetadata : public MockTopicMetadata {
 public:
   UsedMockTopicMetadata(std::string Name, std::vector<int> Partitions)
       : MockTopicMetadata(std::move(Name)) {
-    std::transform(Partitions.begin(), Partitions.end(), std::back_inserter(ReturnVector),
-                   [](auto Id){return new UsedMockPartitionMetadata(Id); });
+    std::transform(Partitions.begin(), Partitions.end(),
+                   std::back_inserter(ReturnVector),
+                   [](auto Id) { return new UsedMockPartitionMetadata(Id); });
   }
   PartitionMetadataVector const *partitions() const override {
     return &ReturnVector;
