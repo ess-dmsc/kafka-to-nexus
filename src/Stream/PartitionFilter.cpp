@@ -15,14 +15,14 @@ PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
                                  duration StopTimeLeeway,
                                  Stream::duration ErrorTimeOut)
     : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
-      MaxErrorTime(ErrorTimeOut) {
+      ErrorTimeOut(ErrorTimeOut) {
   if (StopTime == time_point::max()) { // Deal with potential overflow problem
     StopTime -= StopTimeLeeway;
   }
 }
 
-bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus LastPollStatus) {
-  switch (LastPollStatus) {
+bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus CurrentPollStatus) {
+  switch (CurrentPollStatus) {
   case KafkaW::PollStatus::Empty:
   case KafkaW::PollStatus::Message:
   case KafkaW::PollStatus::TimedOut:
@@ -40,7 +40,7 @@ bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus LastPollStatus) {
     if (not HasError) {
       HasError = true;
       ErrorTime = std::chrono::system_clock::now();
-    } else if (std::chrono::system_clock::now() > ErrorTime + MaxErrorTime) {
+    } else if (std::chrono::system_clock::now() > ErrorTime + ErrorTimeOut) {
       return true;
     }
     break;
