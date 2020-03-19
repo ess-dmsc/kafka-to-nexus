@@ -41,6 +41,9 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
       FlatbufferErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(
       BadTimestamps, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+}
+
+void Partition::start() {
   Executor.SendWork([=]() { pollForMessage(); });
 }
 

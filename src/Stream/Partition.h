@@ -44,6 +44,11 @@ public:
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::Registrar RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
+  virtual ~Partition() = default;
+
+  /// \brief Must be called after the constructor.
+  /// \note This function exist in order to make unit testing possible.
+  void start();
 
   void setStopTime(time_point Stop);
 
@@ -74,9 +79,9 @@ protected:
       "bad_timestamps", "Number of messages received with bad timestamps.",
       Metrics::Severity::ERROR};
 
-  void pollForMessage();
+  virtual void pollForMessage();
 
-  void processMessage(FileWriter::Msg const &Message);
+  virtual void processMessage(FileWriter::Msg const &Message);
   std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
   int PartitionID{-1};
   std::string Topic{"not_initialized"};
