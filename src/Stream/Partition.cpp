@@ -12,7 +12,7 @@
 
 namespace Stream {
 
-Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
+Partition::Partition(std::unique_ptr<KafkaW::ConsumerInterface> Consumer, int Partition,
                      std::string TopicName, SrcToDst const &Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway,
@@ -20,6 +20,9 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
+  if (time_point::max() - StopTime <= StopTimeLeeway) { // Deal with potential overflow problem
+    StopTime -= StopTimeLeeway;
+  }
 
   for (auto &SrcDestInfo : Map) {
     MsgFilters.emplace(SrcDestInfo.Hash,
@@ -44,7 +47,7 @@ Partition::Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
 }
 
 void Partition::start() {
-  Executor.SendWork([=]() { pollForMessage(); });
+  addPollTask();
 }
 
 void Partition::setStopTime(time_point Stop) {
@@ -57,6 +60,10 @@ void Partition::setStopTime(time_point Stop) {
 }
 
 bool Partition::hasFinished() const { return HasFinished.load(); }
+
+void Partition::addPollTask() {
+  Executor.SendLowPrioWork([=]() { pollForMessage(); });
+}
 
 void Partition::pollForMessage() {
   auto Msg = ConsumerPtr->poll();
@@ -98,8 +105,7 @@ void Partition::pollForMessage() {
       return;
     }
   }
-
-  Executor.SendLowPrioWork([=]() { pollForMessage(); });
+  addPollTask();
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {

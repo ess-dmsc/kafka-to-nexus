@@ -40,7 +40,7 @@ class Partition {
 public:
   Partition() = default;
 
-  Partition(std::unique_ptr<KafkaW::Consumer> Consumer, int Partition,
+  Partition(std::unique_ptr<KafkaW::ConsumerInterface> Consumer, int Partition,
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::Registrar RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
@@ -81,8 +81,10 @@ protected:
 
   virtual void pollForMessage();
 
+  virtual void addPollTask();
+
   virtual void processMessage(FileWriter::Msg const &Message);
-  std::unique_ptr<KafkaW::Consumer> ConsumerPtr;
+  std::unique_ptr<KafkaW::ConsumerInterface> ConsumerPtr;
   int PartitionID{-1};
   std::string Topic{"not_initialized"};
   std::atomic_bool HasFinished{false};
