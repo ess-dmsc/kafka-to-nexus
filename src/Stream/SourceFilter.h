@@ -38,6 +38,7 @@ public:
 
   bool filterMessage(FileWriter::FlatbufferMessage &&InMsg);
   void setStopTime(time_point StopTime);
+  time_point getStopTime() { return Stop;}
   bool hasFinished() const;
 
 protected:

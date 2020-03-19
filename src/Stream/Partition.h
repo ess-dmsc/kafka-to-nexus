@@ -82,6 +82,7 @@ protected:
   virtual void pollForMessage();
 
   virtual void addPollTask();
+  virtual bool shouldStopBasedOnPollStatus(KafkaW::PollStatus CStatus);
 
   virtual void processMessage(FileWriter::Msg const &Message);
   std::unique_ptr<KafkaW::ConsumerInterface> ConsumerPtr;

@@ -65,6 +65,21 @@ void Partition::addPollTask() {
   Executor.SendLowPrioWork([=]() { pollForMessage(); });
 }
 
+bool Partition::shouldStopBasedOnPollStatus(KafkaW::PollStatus CStatus) {
+  if (StopTester.shouldStopPartition(CStatus)) {
+    if (StopTester.hasErrorState()) {
+      LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
+                "topic {} due to error.",
+                PartitionID, Topic);
+    } else {
+      LOG_INFO("Done consuming data from partition {} of topic {}.",
+               PartitionID, Topic);
+    }
+    return true;
+  }
+  return false;
+}
+
 void Partition::pollForMessage() {
   auto Msg = ConsumerPtr->poll();
   switch (Msg.first) {
@@ -82,15 +97,7 @@ void Partition::pollForMessage() {
   case KafkaW::PollStatus::Empty: // Do nothing
     break;
   }
-  if (StopTester.shouldStopPartition(Msg.first)) {
-    if (StopTester.hasErrorState()) {
-      LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
-                "topic {} due to error.",
-                PartitionID, Topic);
-    } else {
-      LOG_INFO("Done consuming data from partition {} of topic {}.",
-               PartitionID, Topic);
-    }
+  if (shouldStopBasedOnPollStatus(Msg.first)) {
     HasFinished = true;
     return;
   }
