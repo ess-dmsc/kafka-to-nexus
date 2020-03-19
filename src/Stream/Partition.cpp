@@ -12,15 +12,16 @@
 
 namespace Stream {
 
-Partition::Partition(std::unique_ptr<KafkaW::ConsumerInterface> Consumer, int Partition,
-                     std::string TopicName, SrcToDst const &Map,
+Partition::Partition(std::unique_ptr<KafkaW::ConsumerInterface> Consumer,
+                     int Partition, std::string TopicName, SrcToDst const &Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway,
                      duration KafkaErrorTimeout)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
-  if (time_point::max() - StopTime <= StopTimeLeeway) { // Deal with potential overflow problem
+  if (time_point::max() - StopTime <=
+      StopTimeLeeway) { // Deal with potential overflow problem
     StopTime -= StopTimeLeeway;
   }
 
@@ -46,9 +47,7 @@ Partition::Partition(std::unique_ptr<KafkaW::ConsumerInterface> Consumer, int Pa
       BadTimestamps, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
 
-void Partition::start() {
-  addPollTask();
-}
+void Partition::start() { addPollTask(); }
 
 void Partition::setStopTime(time_point Stop) {
   Executor.SendWork([=]() {

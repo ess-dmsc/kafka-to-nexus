@@ -16,12 +16,14 @@ PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
                                  Stream::duration ErrorTimeOut)
     : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
       ErrorTimeOut(ErrorTimeOut) {
-  if (time_point::max() - StopTime <= StopTimeLeeway) { // Deal with potential overflow problem
+  if (time_point::max() - StopTime <=
+      StopTimeLeeway) { // Deal with potential overflow problem
     StopTime -= StopTimeLeeway;
   }
 }
 
-bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus CurrentPollStatus) {
+bool PartitionFilter::shouldStopPartition(
+    KafkaW::PollStatus CurrentPollStatus) {
   switch (CurrentPollStatus) {
   case KafkaW::PollStatus::Empty:
   case KafkaW::PollStatus::Message:

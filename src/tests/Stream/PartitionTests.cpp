@@ -13,9 +13,9 @@
 
 class PartitionStandIn : public Stream::Partition {
 public:
-  PartitionStandIn(std::unique_ptr<KafkaW::ConsumerInterface> Consumer, int Partition,
-                   std::string TopicName, Stream::SrcToDst const &Map,
-                   Stream::MessageWriter *Writer,
+  PartitionStandIn(std::unique_ptr<KafkaW::ConsumerInterface> Consumer,
+                   int Partition, std::string TopicName,
+                   Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
                    Metrics::Registrar RegisterMetric, Stream::time_point Start,
                    Stream::time_point Stop, Stream::duration StopLeeway,
                    Stream::duration KafkaErrorTimeout)
@@ -26,15 +26,11 @@ public:
   MAKE_MOCK0(addPollTask, void(), override);
   MAKE_MOCK1(processMessage, void(FileWriter::Msg const &), override);
   MAKE_MOCK1(shouldStopBasedOnPollStatus, bool(KafkaW::PollStatus), override);
-  void pollForMessageBase() {
-    Partition::pollForMessage();
-  }
-  void addPollTaskBase() {
-    Partition::addPollTask();
-  }
-  using Partition::MsgFilters;
-  using Partition::Executor;
+  void pollForMessageBase() { Partition::pollForMessage(); }
+  void addPollTaskBase() { Partition::addPollTask(); }
   using Partition::ConsumerPtr;
+  using Partition::Executor;
+  using Partition::MsgFilters;
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
@@ -43,16 +39,23 @@ public:
 class ConsumerStandIn : public KafkaW::ConsumerInterface {
 public:
   using PollReturnType = std::pair<KafkaW::PollStatus, FileWriter::Msg>;
-  MAKE_MOCK1(addTopic, void(std::string const&), override);
-  MAKE_MOCK2(addTopicAtTimestamp, void(std::string const&, std::chrono::milliseconds), override);
+  MAKE_MOCK1(addTopic, void(std::string const &), override);
+  MAKE_MOCK2(addTopicAtTimestamp,
+             void(std::string const &, std::chrono::milliseconds), override);
   MAKE_MOCK0(poll, PollReturnType(), override);
-  MAKE_MOCK1(topicPresent, bool(std::string const&), override);
-  MAKE_MOCK1(queryTopicPartitions, std::vector<int32_t>(std::string const&), override);
-  MAKE_MOCK2(offsetsForTimesAllPartitions, std::vector<int64_t>(std::string const&,
-    std::chrono::milliseconds), override);
-  MAKE_MOCK3(addPartitionAtOffset, void(std::string const &, int,int64_t), override);
-  MAKE_MOCK2(getHighWatermarkOffset, int64_t(std::string const &, int32_t), override);
-  MAKE_MOCK1(getCurrentOffsets, std::vector<int64_t>(std::string const&), override);
+  MAKE_MOCK1(topicPresent, bool(std::string const &), override);
+  MAKE_MOCK1(queryTopicPartitions, std::vector<int32_t>(std::string const &),
+             override);
+  MAKE_MOCK2(offsetsForTimesAllPartitions,
+             std::vector<int64_t>(std::string const &,
+                                  std::chrono::milliseconds),
+             override);
+  MAKE_MOCK3(addPartitionAtOffset, void(std::string const &, int, int64_t),
+             override);
+  MAKE_MOCK2(getHighWatermarkOffset, int64_t(std::string const &, int32_t),
+             override);
+  MAKE_MOCK1(getCurrentOffsets, std::vector<int64_t>(std::string const &),
+             override);
 };
 
 using std::chrono_literals::operator""s;
@@ -60,17 +63,17 @@ using std::chrono_literals::operator""s;
 class PartitionTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
-    auto Temp =  std::make_unique<PartitionStandIn>(std::make_unique<ConsumerStandIn>(), UsedPartitionId,
-                                              TopicName, UsedMap, nullptr,
-                                              Registrar, Start, Stop, StopLeeway, ErrorTimeout);
-    Consumer = dynamic_cast<ConsumerStandIn*>(Temp->ConsumerPtr.get());
+    auto Temp = std::make_unique<PartitionStandIn>(
+        std::make_unique<ConsumerStandIn>(), UsedPartitionId, TopicName,
+        UsedMap, nullptr, Registrar, Start, Stop, StopLeeway, ErrorTimeout);
+    Consumer = dynamic_cast<ConsumerStandIn *>(Temp->ConsumerPtr.get());
     return Temp;
   }
   ConsumerStandIn *Consumer{nullptr};
 
   int UsedPartitionId{0};
   std::string TopicName{"some_topic"};
-  Stream::SrcToDst UsedMap{Stream::SrcDstKey{1,nullptr, "some_name", "idid"}};
+  Stream::SrcToDst UsedMap{Stream::SrcDstKey{1, nullptr, "some_name", "idid"}};
   Stream::time_point Start{std::chrono::system_clock::now()};
   Stream::time_point Stop{std::chrono::system_clock::time_point::max()};
   Stream::duration StopLeeway{5s};
@@ -114,10 +117,11 @@ TEST_F(PartitionTest, PollingEmptyMessage) {
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   FORBID_CALL(*UnderTest, processMessage(_));
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
-
 }
 
 TEST_F(PartitionTest, PollingWithMessage) {
@@ -127,7 +131,9 @@ TEST_F(PartitionTest, PollingWithMessage) {
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
@@ -139,7 +145,9 @@ TEST_F(PartitionTest, PollingTimeoutMessage) {
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   FORBID_CALL(*UnderTest, processMessage(_));
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
@@ -151,7 +159,9 @@ TEST_F(PartitionTest, PollingErrorMessage) {
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   FORBID_CALL(*UnderTest, processMessage(_));
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
@@ -163,7 +173,9 @@ TEST_F(PartitionTest, PollingEndOfPartitionMessage) {
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   FORBID_CALL(*UnderTest, processMessage(_));
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
@@ -176,7 +188,9 @@ TEST_F(PartitionTest, PollingWithMessageNoFilter) {
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
   FORBID_CALL(*UnderTest, addPollTask());
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_TRUE(UnderTest->hasFinished());
 }
@@ -184,12 +198,16 @@ TEST_F(PartitionTest, PollingWithMessageNoFilter) {
 TEST_F(PartitionTest, PollingWithMessageBeforeStart) {
   ConsumerStandIn::PollReturnType PollReturn;
   PollReturn.first = KafkaW::PollStatus::Message;
-  PollReturn.second.MetaData.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>((Start - 10s).time_since_epoch());
+  PollReturn.second.MetaData.Timestamp =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Start - 10s).time_since_epoch());
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
@@ -197,12 +215,16 @@ TEST_F(PartitionTest, PollingWithMessageBeforeStart) {
 TEST_F(PartitionTest, PollingWithMessageAfterStart) {
   ConsumerStandIn::PollReturnType PollReturn;
   PollReturn.first = KafkaW::PollStatus::Message;
-  PollReturn.second.MetaData.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>((Start + 10s).time_since_epoch());
+  PollReturn.second.MetaData.Timestamp =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Start + 10s).time_since_epoch());
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
@@ -211,12 +233,16 @@ TEST_F(PartitionTest, PollingWithMessageAfterStop) {
   ConsumerStandIn::PollReturnType PollReturn;
   PollReturn.first = KafkaW::PollStatus::Message;
   Stop = Start + 20s;
-  PollReturn.second.MetaData.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>((Stop + 5s).time_since_epoch());
+  PollReturn.second.MetaData.Timestamp =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Stop + 5s).time_since_epoch());
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
   REQUIRE_CALL(*UnderTest, addPollTask()).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   UnderTest->pollForMessageBase();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
@@ -225,11 +251,15 @@ TEST_F(PartitionTest, PollingWithMessageAfterStopPlusLeeway) {
   ConsumerStandIn::PollReturnType PollReturn;
   PollReturn.first = KafkaW::PollStatus::Message;
   Stop = Start + 20s;
-  PollReturn.second.MetaData.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>((Stop + 5s + StopLeeway).time_since_epoch());
+  PollReturn.second.MetaData.Timestamp =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Stop + 5s + StopLeeway).time_since_epoch());
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(false);
   FORBID_CALL(*UnderTest, addPollTask());
   UnderTest->pollForMessageBase();
   EXPECT_TRUE(UnderTest->hasFinished());
@@ -239,10 +269,14 @@ TEST_F(PartitionTest, PollingWithErrorState) {
   ConsumerStandIn::PollReturnType PollReturn;
   PollReturn.first = KafkaW::PollStatus::Error;
   Stop = Start + 20s;
-  PollReturn.second.MetaData.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>((Stop + 5s + StopLeeway).time_since_epoch());
+  PollReturn.second.MetaData.Timestamp =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Stop + 5s + StopLeeway).time_since_epoch());
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))
+      .TIMES(1)
+      .RETURN(true);
   FORBID_CALL(*UnderTest, addPollTask());
   UnderTest->pollForMessageBase();
   EXPECT_TRUE(UnderTest->hasFinished());
@@ -258,8 +292,7 @@ TEST_F(PartitionTest, SetStopTime) {
   // Wait until we are done processing
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendWork(
-      [&Promise]() { Promise.set_value(true); });
+  UnderTest->Executor.SendWork([&Promise]() { Promise.set_value(true); });
   Future.wait();
   for (auto &CFilter : UnderTest->MsgFilters) {
     EXPECT_EQ(CFilter.second->getStopTime(), NewStopTime);
