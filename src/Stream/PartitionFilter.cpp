@@ -21,7 +21,8 @@ PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
   }
 }
 
-bool PartitionFilter::shouldStopPartition(KafkaW::PollStatus CurrentPollStatus) {
+bool PartitionFilter::shouldStopPartition(
+    KafkaW::PollStatus CurrentPollStatus) {
   switch (CurrentPollStatus) {
   case KafkaW::PollStatus::Empty:
   case KafkaW::PollStatus::Message:
