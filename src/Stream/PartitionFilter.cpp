@@ -16,7 +16,8 @@ PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
                                  Stream::duration ErrorTimeOut)
     : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
       ErrorTimeOut(ErrorTimeOut) {
-  if (StopTime == time_point::max()) { // Deal with potential overflow problem
+  if (time_point::max() - StopTime <=
+      StopTimeLeeway) { // Deal with potential overflow problem
     StopTime -= StopTimeLeeway;
   }
 }
