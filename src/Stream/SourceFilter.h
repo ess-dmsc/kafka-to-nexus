@@ -25,7 +25,7 @@ public:
   SourceFilter() = default;
   SourceFilter(time_point StartTime, time_point StopTime,
                MessageWriter *Destination, Metrics::Registrar RegisterMetric);
-  ~SourceFilter();
+  virtual ~SourceFilter();
   void addDestinationPtr(Message::DestPtrType NewDestination) {
     DestIDs.push_back(NewDestination);
   };
@@ -36,10 +36,10 @@ public:
   /// \param InMsg The flatbuffer message that is to be filtered.
   /// \return True if message passed the filter. False otherwise.
 
-  bool filterMessage(FileWriter::FlatbufferMessage &&InMsg);
+  virtual bool filterMessage(FileWriter::FlatbufferMessage &&InMsg);
   void setStopTime(time_point StopTime);
   time_point getStopTime() { return Stop; }
-  bool hasFinished() const;
+  virtual bool hasFinished() const;
 
 protected:
   void sendMessage(FileWriter::FlatbufferMessage const &Msg) {
