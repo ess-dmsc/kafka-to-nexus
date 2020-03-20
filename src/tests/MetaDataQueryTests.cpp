@@ -19,7 +19,7 @@ TEST_F(CreateKafkaHandleTest, Success) {
   EXPECT_FALSE(Result == nullptr);
 }
 
-class UsedProducerMock : public MockProducer {
+class UsedProducerMock {
 public:
   static int CallsToCreate;
   static RdKafka::Producer *create(RdKafka::Conf *, std::string &) {
@@ -159,11 +159,11 @@ TEST_F(GetTopicOffsetTest, Failure) {
 
 class GetTopicPartitionsTest : public ::testing::Test {};
 
-class TopicMockAlt : MockTopic {
+class TopicMockAlt {
 public:
   static RdKafka::Topic *create(RdKafka::Handle *, const std::string &,
                                 RdKafka::Conf *, std::string &) {
-    return new TopicMockAlt;
+    return nullptr;
   }
 };
 
