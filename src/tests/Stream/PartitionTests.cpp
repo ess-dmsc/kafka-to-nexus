@@ -128,7 +128,7 @@ TEST_F(PartitionTest, AddPollTask) {
   // Wait until we are done processing
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendLowPrioWork(
+  UnderTest->Executor.SendLowPriorityWork(
       [&Promise]() { Promise.set_value(true); });
   Future.wait();
 }

@@ -67,7 +67,7 @@ void Topic::getPartitionsForTopic(KafkaW::BrokerSettings Settings,
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  CurrentMetadataTimeOut)
                  .count());
-    Executor.SendLowPrioWork([=]() { getPartitionsForTopic(Settings, Topic); });
+    Executor.SendLowPriorityWork([=]() { getPartitionsForTopic(Settings, Topic); });
   }
 }
 
@@ -108,7 +108,7 @@ void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  CurrentMetadataTimeOut)
                  .count());
-    Executor.SendLowPrioWork(
+    Executor.SendLowPriorityWork(
         [=]() { getOffsetsForPartitions(Settings, Topic, Partitions); });
   }
 }

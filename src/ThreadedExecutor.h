@@ -39,7 +39,7 @@ public:
   /// when calling the destructor.
   ~ThreadedExecutor() {
     if (LowPriorityExit) {
-      SendLowPrioWork([=]() { RunThread = false; });
+      SendLowPriorityWork([=]() { RunThread = false; });
     } else {
       SendWork([=]() { RunThread = false; });
     }
@@ -54,7 +54,7 @@ public:
   ///
   /// \param Task The std::function that will be executed when processing the
   /// task.
-  void SendLowPrioWork(JobType Task) {
+  void SendLowPriorityWork(JobType Task) {
     LowPriorityTaskQueue.enqueue(std::move(Task));
   }
 

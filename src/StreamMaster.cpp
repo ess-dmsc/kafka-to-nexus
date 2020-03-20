@@ -53,7 +53,7 @@ void StreamMaster::getTopicNames() {
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  CurrentMetadataTimeOut)
                  .count());
-    Executor.SendLowPrioWork([=]() { getTopicNames(); });
+    Executor.SendLowPriorityWork([=]() { getTopicNames(); });
   }
 }
 

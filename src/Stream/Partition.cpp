@@ -61,7 +61,7 @@ void Partition::setStopTime(time_point Stop) {
 bool Partition::hasFinished() const { return HasFinished.load(); }
 
 void Partition::addPollTask() {
-  Executor.SendLowPrioWork([=]() { pollForMessage(); });
+  Executor.SendLowPriorityWork([=]() { pollForMessage(); });
 }
 
 bool Partition::shouldStopBasedOnPollStatus(KafkaW::PollStatus CStatus) {
