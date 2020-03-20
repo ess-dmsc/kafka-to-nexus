@@ -101,7 +101,7 @@ TEST_F(TopicTest, StartMetaDataCall) {
   // Wait until we are done processing "getPartitionsForTopic
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendLowPrioWork(
+  UnderTest->Executor.SendLowPriorityWork(
       [&Promise]() { Promise.set_value(true); });
   Future.wait();
 }
@@ -118,7 +118,7 @@ TEST_F(TopicTest, GetPartitionsForTopicException) {
   // Wait until we are done processing "getPartitionsForTopic
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendLowPrioWork(
+  UnderTest->Executor.SendLowPriorityWork(
       [&Promise]() { Promise.set_value(true); });
   Future.wait();
 }
@@ -138,7 +138,7 @@ TEST_F(TopicTest, GetPartitionsForTopicNoException) {
   // Wait until we are done processing "getPartitionsForTopic
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendLowPrioWork(
+  UnderTest->Executor.SendLowPriorityWork(
       [&Promise]() { Promise.set_value(true); });
   Future.wait();
 }
@@ -159,7 +159,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsException) {
   // Wait until we are done processing "getOffsetsForPartitions
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendLowPrioWork(
+  UnderTest->Executor.SendLowPriorityWork(
       [&Promise]() { Promise.set_value(true); });
   Future.wait();
 }
@@ -181,7 +181,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
   // Wait until we are done processing "getOffsetsForPartitions
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendLowPrioWork(
+  UnderTest->Executor.SendLowPriorityWork(
       [&Promise]() { Promise.set_value(true); });
   Future.wait();
 }

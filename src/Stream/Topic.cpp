@@ -67,7 +67,8 @@ void Topic::getPartitionsForTopic(KafkaW::BrokerSettings Settings,
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  CurrentMetadataTimeOut)
                  .count());
-    Executor.SendLowPriorityWork([=]() { getPartitionsForTopic(Settings, Topic); });
+    Executor.SendLowPriorityWork(
+        [=]() { getPartitionsForTopic(Settings, Topic); });
   }
 }
 

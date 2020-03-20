@@ -7,11 +7,11 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "FlatbufferReader.h"
 #include "Stream/Partition.h"
 #include "helpers/KafkaWMocks.h"
 #include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
-#include "FlatbufferReader.h"
 
 class zzzzFbReader : public FileWriter::FlatbufferReader {
 public:
@@ -28,7 +28,6 @@ public:
   static std::string UsedSourceName;
 };
 std::string zzzzFbReader::UsedSourceName{"some_name"};
-
 
 class PartitionStandIn : public Stream::Partition {
 public:
@@ -52,11 +51,11 @@ public:
   }
   using Partition::ConsumerPtr;
   using Partition::Executor;
+  using Partition::FlatbufferErrors;
   using Partition::MsgFilters;
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
-  using Partition::FlatbufferErrors;
 };
 
 class ConsumerStandIn : public KafkaW::ConsumerInterface {
@@ -96,8 +95,10 @@ public:
 
   int UsedPartitionId{0};
   std::string TopicName{"some_topic"};
-  size_t UsedFilterHash{FileWriter::calcSourceHash("zzzz", zzzzFbReader::UsedSourceName)};
-  Stream::SrcToDst UsedMap{Stream::SrcDstKey{UsedFilterHash, nullptr, "some_name", "idid"}};
+  size_t UsedFilterHash{
+      FileWriter::calcSourceHash("zzzz", zzzzFbReader::UsedSourceName)};
+  Stream::SrcToDst UsedMap{
+      Stream::SrcDstKey{UsedFilterHash, nullptr, "some_name", "idid"}};
   Stream::time_point Start{std::chrono::system_clock::now()};
   Stream::time_point Stop{std::chrono::system_clock::time_point::max()};
   Stream::duration StopLeeway{5s};
@@ -327,8 +328,11 @@ TEST_F(PartitionTest, SetStopTime) {
 class SourceFilterStandInAlt : public Stream::SourceFilter {
 public:
   SourceFilterStandInAlt()
-      : SourceFilter(std::chrono::system_clock::now(), std::chrono::system_clock::now(), nullptr, Metrics::Registrar("some_reg", {})) {}
-      MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage &&Message), override);
+      : SourceFilter(std::chrono::system_clock::now(),
+                     std::chrono::system_clock::now(), nullptr,
+                     Metrics::Registrar("some_reg", {})) {}
+  MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage &&Message),
+             override);
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
 
