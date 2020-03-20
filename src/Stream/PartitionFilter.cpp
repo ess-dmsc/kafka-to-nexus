@@ -33,11 +33,7 @@ bool PartitionFilter::shouldStopPartition(
     break;
   case KafkaW::PollStatus::EndOfPartition:
     HasError = false;
-    if (std::chrono::system_clock::now() > StopTime + StopLeeway) {
-      return true;
-    }
-    return false;
-    break;
+    return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case KafkaW::PollStatus::Error:
     if (not HasError) {
       HasError = true;
