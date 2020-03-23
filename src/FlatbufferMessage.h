@@ -57,7 +57,7 @@ public:
   /// \brief Creates a flatbuffer message, verifies the message and extracts
   /// metadata.
   ///
-  ///\note This constructor should be used as little as possible and then only
+  /// \note This constructor should be used as little as possible and then only
   /// in unit tests.
   /// \param BufferPtr Pointer to memory containing the data.
   /// \param Size Number of bytes in message.
