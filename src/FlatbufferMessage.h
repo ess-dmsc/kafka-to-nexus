@@ -69,7 +69,8 @@ public:
   /// metadata.
   ///
   /// \param KafkaMessage The Kafka message used to create the Flatbuffer
-  /// message. \note Will make a copy of the data in the Kafka message.
+  /// message.
+  /// \note Will make a copy of the data in the Kafka message.
   explicit FlatbufferMessage(FileWriter::Msg const &KafkaMessage);
 
   /// \brief Creates a flatbuffer message, verifies the message and extracts
