@@ -51,7 +51,7 @@ class FlatbufferMessage {
 public:
   using SrcHash = size_t;
 
-  /// Constructor is used in unit testing code to simplify set-up.
+  /// \brief This constructor is used in the unit testing code to simplify set-up.
   FlatbufferMessage() = default;
 
   /// \brief Creates a flatbuffer message, verifies the message and extracts
@@ -74,13 +74,13 @@ public:
   explicit FlatbufferMessage(FileWriter::Msg const &KafkaMessage);
 
   /// \brief Creates a flatbuffer message, verifies the message and extracts
-  /// metadata.
+  /// metadata. Copy constructor version.
   ///
-  /// \param KafkaMessage The copy constructor.
+  /// \param Other The instance of the FlatbufferMessage that is to be copied.
   /// \note Will make a copy of the data in the Kafka message.
   FlatbufferMessage(FlatbufferMessage const &Other);
 
-  /// Default destructor.
+  /// \\bried Default destructor.
   ~FlatbufferMessage() = default;
 
   FlatbufferMessage &operator=(FlatbufferMessage const &Other) {
