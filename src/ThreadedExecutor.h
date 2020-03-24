@@ -49,13 +49,13 @@ public:
   ///
   /// \param Task The std::function that will be executed when processing the
   /// task.
-  void SendWork(JobType Task) { TaskQueue.enqueue(std::move(Task)); }
+  void sendWork(JobType Task) { TaskQueue.enqueue(std::move(Task)); }
 
   /// \brief Put tasks in the low priority queue.
   ///
   /// \param Task The std::function that will be executed when processing the
   /// task.
-  void SendLowPriorityWork(JobType Task) {
+  void sendLowPriorityWork(JobType Task) {
     LowPriorityTaskQueue.enqueue(std::move(Task));
   }
 
