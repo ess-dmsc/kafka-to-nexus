@@ -15,7 +15,7 @@
 #include <memory>
 #include <thread>
 
-/// \brief Class for executing jobs in a seperate "worker thread".
+/// \brief Class for executing jobs in a separate "worker thread".
 ///
 /// This implementation uses two work/task queues: high priority and low
 /// priority. High priority jobs will be executed first before any low priority
