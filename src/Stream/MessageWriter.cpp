@@ -23,7 +23,7 @@ ModuleHash generateSrcHash(std::string const &Source,
 }
 
 static const ModuleHash UnknownModuleHash{
-    generateSrcHash("Unknown source", "Unknown fb.-id")};
+    generateSrcHash("Unknown source", "Unknown fb-id")};
 
 MessageWriter::MessageWriter(Metrics::Registrar const &MetricReg)
     : Registrar(MetricReg.getNewRegistrar("writer")) {
