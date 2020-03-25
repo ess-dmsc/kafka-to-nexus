@@ -32,8 +32,9 @@ public:
     return Counter.load(MemoryOrder) == Rhs;
   };
 
-  template <typename CType>
-  explicit operator CType() const {return static_cast<CType>(Counter.load());}
+  template <typename CType> explicit operator CType() const {
+    return static_cast<CType>(Counter.load());
+  }
 
   int64_t operator=(int64_t const &NewValue) {
     Counter.store(NewValue, MemoryOrder);

@@ -7,19 +7,16 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <gtest/gtest.h>
 #include "ThreadedExecutor.h"
+#include <gtest/gtest.h>
 
-class ThreadedExecutorTest : public ::testing::Test {
-};
+class ThreadedExecutorTest : public ::testing::Test {};
 
 TEST_F(ThreadedExecutorTest, RunHighPriorityJob) {
   bool SomeVariable{false};
   {
     ThreadedExecutor Executor;
-    Executor.sendWork([&SomeVariable](){
-      SomeVariable = true;
-    });
+    Executor.sendWork([&SomeVariable]() { SomeVariable = true; });
   }
   EXPECT_TRUE(SomeVariable);
 }
@@ -28,25 +25,19 @@ TEST_F(ThreadedExecutorTest, RunLowPriorityJob) {
   bool SomeVariable{false};
   {
     ThreadedExecutor Executor;
-    Executor.sendLowPriorityWork([&SomeVariable](){
-      SomeVariable = true;
-    });
+    Executor.sendLowPriorityWork([&SomeVariable]() { SomeVariable = true; });
   }
   EXPECT_TRUE(SomeVariable);
 }
 
 TEST_F(ThreadedExecutorTest, LowPriorityExit) {
   bool LowPriorityExit{true};
-  {
-    ThreadedExecutor Executor(LowPriorityExit);
-  }
+  { ThreadedExecutor Executor(LowPriorityExit); }
   SUCCEED();
 }
 
 TEST_F(ThreadedExecutorTest, HighPriorityExit) {
   bool LowPriorityExit{false};
-  {
-    ThreadedExecutor Executor(LowPriorityExit);
-  }
+  { ThreadedExecutor Executor(LowPriorityExit); }
   SUCCEED();
 }

@@ -51,7 +51,8 @@ class FlatbufferMessage {
 public:
   using SrcHash = size_t;
 
-  /// \brief This constructor is used in the unit testing code to simplify set-up.
+  /// \brief This constructor is used in the unit testing code to simplify
+  /// set-up.
   FlatbufferMessage() = default;
 
   /// \brief Creates a flatbuffer message, verifies the message and extracts

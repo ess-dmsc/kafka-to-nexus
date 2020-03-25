@@ -64,8 +64,9 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
-    Writer.Executor.sendWork(
-        [&Writer]() { EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1); });
+    Writer.Executor.sendWork([&Writer]() {
+      EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
+    });
     Writer.addMessage(SomeMessage);
     Writer.Executor.sendWork([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
@@ -101,8 +102,9 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
-    Writer.Executor.sendWork(
-        [&Writer]() { EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1); });
+    Writer.Executor.sendWork([&Writer]() {
+      EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
+    });
     Writer.addMessage(SomeMessage);
     Writer.Executor.sendWork([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 0);

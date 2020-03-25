@@ -36,11 +36,13 @@ public:
 
   auto nrOfWritesDone() const { return int64_t(WritesDone); };
   auto nrOfWriteErrors() const { return int64_t(WriteErrors); };
-  auto nrOfWriterModulesWithErrors() const {return ModuleErrorCounters.size();}
+  auto nrOfWriterModulesWithErrors() const {
+    return ModuleErrorCounters.size();
+  }
 
 protected:
   virtual void writeMsgImpl(WriterModule::Base *ModulePtr,
-                    FileWriter::FlatbufferMessage const &Msg);
+                            FileWriter::FlatbufferMessage const &Msg);
 
   SharedLogger Log{getLogger()};
   Metrics::Metric WritesDone{"writes_done",
