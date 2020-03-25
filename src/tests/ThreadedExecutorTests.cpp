@@ -23,8 +23,9 @@ TEST_F(ThreadedExecutorTest, RunHighPriorityJob) {
 
 TEST_F(ThreadedExecutorTest, RunLowPriorityJob) {
   bool SomeVariable{false};
+  bool LowPriorityExit{true};
   {
-    ThreadedExecutor Executor;
+    ThreadedExecutor Executor{LowPriorityExit};
     Executor.sendLowPriorityWork([&SomeVariable]() { SomeVariable = true; });
   }
   EXPECT_TRUE(SomeVariable);
