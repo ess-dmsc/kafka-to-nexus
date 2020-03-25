@@ -30,9 +30,6 @@ public:
   explicit DataMessageWriterStandIn(Metrics::Registrar const &Registrar)
       : MessageWriter(Registrar) {}
   using MessageWriter::Executor;
-  using MessageWriter::ModuleErrorCounters;
-  using MessageWriter::WriteErrors;
-  using MessageWriter::WritesDone;
 };
 
 class DataMessageWriterTest : public ::testing::Test {
@@ -51,9 +48,9 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.addMessage(SomeMessage);
-    Writer.Executor.SendWork([&Writer]() {
-      EXPECT_TRUE(Writer.WritesDone == 1);
-      EXPECT_TRUE(Writer.WriteErrors == 0);
+    Writer.Executor.sendWork([&Writer]() {
+      EXPECT_TRUE(Writer.nrOfWritesDone() == 1);
+      EXPECT_TRUE(Writer.nrOfWriteErrors() == 0);
     });
   }
 }
@@ -67,13 +64,14 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
-    Writer.Executor.SendWork(
-        [&Writer]() { EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 1); });
+    Writer.Executor.sendWork([&Writer]() {
+      EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
+    });
     Writer.addMessage(SomeMessage);
-    Writer.Executor.SendWork([&Writer]() {
-      EXPECT_TRUE(Writer.WritesDone == 0);
-      EXPECT_TRUE(Writer.WriteErrors == 1);
-      EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 1);
+    Writer.Executor.sendWork([&Writer]() {
+      EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
+      EXPECT_TRUE(Writer.nrOfWriteErrors() == 1);
+      EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
   }
 }
@@ -104,13 +102,14 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
-    Writer.Executor.SendWork(
-        [&Writer]() { EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 1); });
+    Writer.Executor.sendWork([&Writer]() {
+      EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
+    });
     Writer.addMessage(SomeMessage);
-    Writer.Executor.SendWork([&Writer]() {
-      EXPECT_TRUE(Writer.WritesDone == 0);
-      EXPECT_TRUE(Writer.WriteErrors == 1);
-      EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 2);
+    Writer.Executor.sendWork([&Writer]() {
+      EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
+      EXPECT_TRUE(Writer.nrOfWriteErrors() == 1);
+      EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 2);
     });
   }
 }

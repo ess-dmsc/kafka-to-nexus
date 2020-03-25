@@ -28,12 +28,12 @@ Topic::Topic(KafkaW::BrokerSettings const &Settings, std::string const &Topic,
       Registrar(RegisterMetric.getNewRegistrar(Topic)) {}
 
 void Topic::start() {
-  Executor.SendWork([=]() { initMetadataCalls(KafkaSettings, TopicName); });
+  Executor.sendWork([=]() { initMetadataCalls(KafkaSettings, TopicName); });
 }
 
 void Topic::initMetadataCalls(KafkaW::BrokerSettings Settings,
                               std::string Topic) {
-  Executor.SendWork([=]() {
+  Executor.sendWork([=]() {
     CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
     getPartitionsForTopic(Settings, Topic);
   });
@@ -50,7 +50,7 @@ void Topic::getPartitionsForTopic(KafkaW::BrokerSettings Settings,
   try {
     auto FoundPartitions = getPartitionsForTopicInternal(
         Settings.Address, Topic, Settings.MinMetadataTimeout);
-    Executor.SendWork([=]() {
+    Executor.sendWork([=]() {
       CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
       getOffsetsForPartitions(Settings, Topic, FoundPartitions);
     });
@@ -67,7 +67,7 @@ void Topic::getPartitionsForTopic(KafkaW::BrokerSettings Settings,
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  CurrentMetadataTimeOut)
                  .count());
-    Executor.SendLowPriorityWork(
+    Executor.sendLowPriorityWork(
         [=]() { getPartitionsForTopic(Settings, Topic); });
   }
 }
@@ -92,7 +92,7 @@ void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
     auto PartitionOffsetList = getOffsetForTimeInternal(
         Settings.Address, Topic, Partitions, StartConsumeTime - StartLeeway,
         CurrentMetadataTimeOut);
-    Executor.SendWork([=]() {
+    Executor.sendWork([=]() {
       CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
       createStreams(Settings, Topic, PartitionOffsetList);
     });
@@ -109,7 +109,7 @@ void Topic::getOffsetsForPartitions(KafkaW::BrokerSettings Settings,
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  CurrentMetadataTimeOut)
                  .count());
-    Executor.SendLowPriorityWork(
+    Executor.sendLowPriorityWork(
         [=]() { getOffsetsForPartitions(Settings, Topic, Partitions); });
   }
 }

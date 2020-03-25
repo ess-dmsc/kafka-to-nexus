@@ -50,7 +50,7 @@ Partition::Partition(std::unique_ptr<KafkaW::ConsumerInterface> Consumer,
 void Partition::start() { addPollTask(); }
 
 void Partition::setStopTime(time_point Stop) {
-  Executor.SendWork([=]() {
+  Executor.sendWork([=]() {
     StopTester.setStopTime(Stop);
     for (auto &Filter : MsgFilters) {
       Filter.second->setStopTime(Stop);
@@ -61,7 +61,7 @@ void Partition::setStopTime(time_point Stop) {
 bool Partition::hasFinished() const { return HasFinished.load(); }
 
 void Partition::addPollTask() {
-  Executor.SendLowPriorityWork([=]() { pollForMessage(); });
+  Executor.sendLowPriorityWork([=]() { pollForMessage(); });
 }
 
 bool Partition::shouldStopBasedOnPollStatus(KafkaW::PollStatus CStatus) {

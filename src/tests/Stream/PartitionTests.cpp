@@ -129,7 +129,7 @@ TEST_F(PartitionTest, AddPollTask) {
   // Wait until we are done processing
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendLowPriorityWork(
+  UnderTest->Executor.sendLowPriorityWork(
       [&Promise]() { Promise.set_value(true); });
   Future.wait();
 }
@@ -318,7 +318,7 @@ TEST_F(PartitionTest, SetStopTime) {
   // Wait until we are done processing
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.SendWork([&Promise]() { Promise.set_value(true); });
+  UnderTest->Executor.sendWork([&Promise]() { Promise.set_value(true); });
   Future.wait();
   for (auto &CFilter : UnderTest->MsgFilters) {
     EXPECT_EQ(CFilter.second->getStopTime(), NewStopTime);

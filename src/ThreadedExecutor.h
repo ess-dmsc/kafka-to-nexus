@@ -15,7 +15,7 @@
 #include <memory>
 #include <thread>
 
-/// \brief Class for executing jobs in a seperate "worker thread".
+/// \brief Class for executing jobs in a separate "worker thread".
 ///
 /// This implementation uses two work/task queues: high priority and low
 /// priority. High priority jobs will be executed first before any low priority
@@ -39,9 +39,9 @@ public:
   /// when calling the destructor.
   ~ThreadedExecutor() {
     if (LowPriorityExit) {
-      SendLowPriorityWork([=]() { RunThread = false; });
+      sendLowPriorityWork([=]() { RunThread = false; });
     } else {
-      SendWork([=]() { RunThread = false; });
+      sendWork([=]() { RunThread = false; });
     }
     WorkerThread.join();
   }
@@ -49,12 +49,13 @@ public:
   ///
   /// \param Task The std::function that will be executed when processing the
   /// task.
-  void SendWork(JobType Task) { TaskQueue.enqueue(std::move(Task)); }
+  void sendWork(JobType Task) { TaskQueue.enqueue(std::move(Task)); }
+
   /// \brief Put tasks in the low priority queue.
   ///
   /// \param Task The std::function that will be executed when processing the
   /// task.
-  void SendLowPriorityWork(JobType Task) {
+  void sendLowPriorityWork(JobType Task) {
     LowPriorityTaskQueue.enqueue(std::move(Task));
   }
 

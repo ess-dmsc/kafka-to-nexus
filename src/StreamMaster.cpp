@@ -15,7 +15,7 @@ StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
       WriterThread(Registrar.getNewRegistrar("stream")), ServiceId(ServiceID),
       KafkaSettings(Settings) {
-  Executor.SendWork([=]() {
+  Executor.sendWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
   });
@@ -41,7 +41,7 @@ void StreamMaster::getTopicNames() {
   try {
     auto TopicNames = KafkaW::getTopicList(KafkaSettings.BrokerSettings.Address,
                                            CurrentMetadataTimeOut);
-    Executor.SendWork([=]() { initStreams(TopicNames); });
+    Executor.sendWork([=]() { initStreams(TopicNames); });
   } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;
     auto &Settings = KafkaSettings.BrokerSettings;
@@ -53,7 +53,7 @@ void StreamMaster::getTopicNames() {
              std::chrono::duration_cast<std::chrono::milliseconds>(
                  CurrentMetadataTimeOut)
                  .count());
-    Executor.SendLowPriorityWork([=]() { getTopicNames(); });
+    Executor.sendLowPriorityWork([=]() { getTopicNames(); });
   }
 }
 
