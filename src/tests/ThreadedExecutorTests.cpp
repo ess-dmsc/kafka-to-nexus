@@ -23,8 +23,8 @@ TEST_F(ThreadedExecutorTest, RunHighPriorityJob) {
 
 TEST_F(ThreadedExecutorTest, RunLowPriorityJob) {
   bool SomeVariable{false};
-  bool LowPriorityExit{true};
   {
+    bool LowPriorityExit{true};
     ThreadedExecutor Executor{LowPriorityExit};
     Executor.sendLowPriorityWork([&SomeVariable]() { SomeVariable = true; });
   }
@@ -32,13 +32,17 @@ TEST_F(ThreadedExecutorTest, RunLowPriorityJob) {
 }
 
 TEST_F(ThreadedExecutorTest, LowPriorityExit) {
-  bool LowPriorityExit{true};
-  { ThreadedExecutor Executor(LowPriorityExit); }
+  {
+    bool LowPriorityExit{true};
+    ThreadedExecutor Executor(LowPriorityExit);
+  }
   SUCCEED();
 }
 
 TEST_F(ThreadedExecutorTest, HighPriorityExit) {
-  bool LowPriorityExit{false};
-  { ThreadedExecutor Executor(LowPriorityExit); }
+  {
+    bool LowPriorityExit{false};
+    ThreadedExecutor Executor(LowPriorityExit);
+  }
   SUCCEED();
 }
