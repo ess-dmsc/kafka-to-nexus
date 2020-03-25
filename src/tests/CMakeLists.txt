@@ -35,7 +35,7 @@ set(UnitTests_SRC
         Stream/MessageWriterTests.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
-    )
+        ThreadedExecutorTests.cpp)
 
 set(UnitTests_INC
         StreamerTestMocks.h

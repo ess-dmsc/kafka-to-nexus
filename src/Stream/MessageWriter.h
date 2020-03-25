@@ -34,8 +34,12 @@ public:
 
   using ModuleHash = size_t;
 
+  auto nrOfWritesDone() const { return int64_t(WritesDone); };
+  auto nrOfWriteErrors() const { return int64_t(WriteErrors); };
+  auto nrOfWriterModulesWithErrors() const {return ModuleErrorCounters.size();}
+
 protected:
-  void writeMsgImpl(WriterModule::Base *ModulePtr,
+  virtual void writeMsgImpl(WriterModule::Base *ModulePtr,
                     FileWriter::FlatbufferMessage const &Msg);
 
   SharedLogger Log{getLogger()};
@@ -48,7 +52,9 @@ protected:
   Metrics::Registrar Registrar;
   static bool const LowPriorityExecutorExit{true};
   ThreadedExecutor Executor{
-      MessageWriter::LowPriorityExecutorExit}; // Must be last
+      MessageWriter::LowPriorityExecutorExit}; // Must be last to prevent
+                                               // accessing de-allocated
+                                               // resources
 };
 
 } // namespace Stream

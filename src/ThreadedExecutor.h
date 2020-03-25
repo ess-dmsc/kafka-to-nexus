@@ -39,9 +39,9 @@ public:
   /// when calling the destructor.
   ~ThreadedExecutor() {
     if (LowPriorityExit) {
-      SendLowPriorityWork([=]() { RunThread = false; });
+      sendLowPriorityWork([=]() { RunThread = false; });
     } else {
-      SendWork([=]() { RunThread = false; });
+      sendWork([=]() { RunThread = false; });
     }
     WorkerThread.join();
   }

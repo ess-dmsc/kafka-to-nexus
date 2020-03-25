@@ -37,7 +37,7 @@ MessageWriter::MessageWriter(Metrics::Registrar const &MetricReg)
 }
 
 void MessageWriter::addMessage(Message const &Msg) {
-  Executor.SendWork([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
+  Executor.sendWork([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
 }
 
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
