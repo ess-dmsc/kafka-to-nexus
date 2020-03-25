@@ -26,8 +26,10 @@ using duration = std::chrono::system_clock::duration;
 // \param[in] Partition Partition id.
 // \param[in] Time      Timestamp for which the offset should be found.
 // \param[in] TimeOut   The amount of time to wait for the meta-data call to
-// complete. \returns             The closest offset with a timestamp before
-// Time (if available). \throws §MetadataException if a failure occurs.
+// complete.
+// \return              The closest offset with a timestamp before Time (if
+// available).
+// \throw MetadataException if a failure occurs.
 std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> const &Partitions, time_point Time,
@@ -38,8 +40,9 @@ getOffsetForTime(std::string const &Broker, std::string const &Topic,
 // \param[in] Broker    Address of one or several brokers.
 // \param[in] Topic     Name of topic.
 // \param[in] TimeOut   The amount of time to wait for the meta-data call to
-// complete. \returns             A set of partition id:s. \throws
-// MetadataException if a failure occurs.
+// complete.
+// \return              A set of partition id:s.
+// \throw               MetadataException if a failure occurs.
 std::vector<int> getPartitionsForTopic(std::string const &Broker,
                                        std::string const &Topic,
                                        duration TimeOut);
@@ -48,8 +51,9 @@ std::vector<int> getPartitionsForTopic(std::string const &Broker,
 //
 // \param[in] Broker    Address of one or several brokers.
 // \param[in] TimeOut   The amount of time to wait for the meta-data call to
-// complete. \returns             A set of topic names. \throws
-// MetadataException if a failure occurs.
+// complete.
+// \return              A set of topic names.
+// \throw               MetadataException if a failure occurs.
 std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut);
 
 } // namespace KafkaW
