@@ -15,7 +15,7 @@
 
 #pragma once
 #include "FlatbufferMessage.h"
-#include "NeXusDataset.h"
+#include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
 namespace WriterModule {

@@ -11,7 +11,7 @@
 
 #include "FlatbufferMessage.h"
 #include "WriterModuleBase.h"
-#include <NeXusDataset.h>
+#include <NeXusDataset/NeXusDataset.h>
 #include <array>
 #include <chrono>
 #include <memory>

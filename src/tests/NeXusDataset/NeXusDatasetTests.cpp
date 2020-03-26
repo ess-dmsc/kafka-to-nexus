@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "NeXusDataset.h"
+#include "NeXusDataset/NeXusDataset.h"
 #include <gtest/gtest.h>
 #include <h5cpp/datatype/type_trait.hpp>
 #include <h5cpp/hdf5.hpp>

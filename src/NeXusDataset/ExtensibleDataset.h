@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "logger.h"
+#include "../logger.h"
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/hdf5.hpp>
 

@@ -80,10 +80,8 @@ set(kafka_to_nexus_SRC
         FlatbufferMessage.cpp
         MainOpt.cpp
         CLIOptions.cpp
-        NeXusDataset.cpp
         StreamMaster.cpp
         CommandParser.cpp
-        ExtensibleDataset.cpp
         WriterRegistrar.cpp
         Metrics/Reporter.cpp
         Metrics/Registrar.cpp
@@ -127,11 +125,9 @@ set(kafka_to_nexus_INC
         StreamMaster.h
         URI.h
         CLIOptions.h
-        NeXusDataset.h
         KafkaW/ConfigureKafka.cpp
         KafkaW/ConfigureKafka.h
         CommandParser.h
-        ExtensibleDataset.h
         WriterRegistrar.h
         Metrics/Registrar.h
         Metrics/Metric.h
@@ -161,11 +157,13 @@ set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
 
 add_subdirectory(writer_modules)
 add_subdirectory(fb_metadata_extractors)
+add_subdirectory(NeXusDataset)
 
 set(tgt "kafka-to-nexus")
 set(sources
         kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
+        $<TARGET_OBJECTS:NeXusDataset>
         ${WRITER_MODULES}
         ${FB_METADATA_EXTRACTORS}
         )

@@ -4,6 +4,7 @@ get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 
 add_subdirectory(writer_module)
 add_subdirectory(fb_metadata)
+add_subdirectory(NeXusDataset)
 
 set(UnitTests_SRC
         UnitTests.cpp
@@ -13,7 +14,6 @@ set(UnitTests_SRC
         JsonTests.cpp
         URITests.cpp
         CommandHandlerTests.cpp
-        NeXusDatasetTests.cpp
         DemuxerTests.cpp
         MessageTests.cpp
         FileWriterTaskTests.cpp
@@ -23,7 +23,6 @@ set(UnitTests_SRC
         ConsumerTests.cpp
         StreamMasterTests.cpp
         CommandParserTests.cpp
-        ExtensibleDatasetTests.cpp
         Metrics/MetricsRegistrarTest.cpp
         Metrics/MetricTest.cpp
         Metrics/CarbonConnectionTest.cpp
@@ -34,6 +33,7 @@ set(UnitTests_SRC
         StreamerTests.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
+        $<TARGET_OBJECTS:NeXusDatasetTests>
     )
 
 set(UnitTests_INC
@@ -45,11 +45,13 @@ set(UnitTests_INC
         Metrics/CarbonTestServer.h
         Metrics/MockSink.h
         Metrics/MockReporter.h
-        helpers/SetExtractorModule.h StatusReporterTests.cpp)
+        helpers/SetExtractorModule.h
+        StatusReporterTests.cpp)
 
 add_executable(UnitTests
         ${UnitTests_SRC}
         ${UnitTests_INC}
+        $<TARGET_OBJECTS:NeXusDataset>
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         ${WRITER_MODULES}
         ${FB_METADATA_EXTRACTORS}
