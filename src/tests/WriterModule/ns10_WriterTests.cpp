@@ -11,13 +11,13 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "FlatbufferMessage.h"
-#include "WriterRegistrar.h"
 #include "AccessMessageMetadata/ns10/ns10_Extractor.h"
+#include "FlatbufferMessage.h"
+#include "WriterModule/ns10/ns10_Writer.h"
+#include "WriterRegistrar.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
-#include "WriterModule/ns10/ns10_Writer.h"
 #include <ns10_cache_entry_generated.h>
 
 using WriterModule::ns10::ns10_Writer;

@@ -14,12 +14,12 @@
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 
-#include "FlatbufferMessage.h"
 #include "AccessMessageMetadata/f142/f142_Extractor.h"
+#include "FlatbufferMessage.h"
+#include "WriterModule/f142/f142_Writer.h"
 #include "helper.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "WriterModule/f142/f142_Writer.h"
 #include <f142_logdata_generated.h>
 
 using nlohmann::json;

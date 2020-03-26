@@ -12,9 +12,9 @@
 #include <senv_data_generated.h>
 
 #include "AccessMessageMetadata/senv/senv_Extractor.h"
+#include "WriterModule/senv/senv_Writer.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "WriterModule/senv/senv_Writer.h"
 
 std::unique_ptr<std::uint8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;

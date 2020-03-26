@@ -238,8 +238,7 @@ Streamer::createFlatBufferMessage(uint8_t const *Data, size_t Size) {
   return FBMessage;
 }
 
-void Streamer::processMessage(
-    std::pair<Kafka::PollStatus, Msg> &KafkaMessage) {
+void Streamer::processMessage(std::pair<Kafka::PollStatus, Msg> &KafkaMessage) {
 
   if (auto const FBMessage = createFlatBufferMessage(
           KafkaMessage.second.data(), KafkaMessage.second.size())) {

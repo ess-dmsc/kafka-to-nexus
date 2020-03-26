@@ -13,11 +13,11 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
-#include "FlatbufferReader.h"
 #include "AccessMessageMetadata/NDAr/NDAr_Extractor.h"
+#include "FlatbufferReader.h"
+#include "WriterModule/NDAr/NDAr_Writer.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "WriterModule/NDAr/NDAr_Writer.h"
 
 class ADWriterStandIn : public WriterModule::NDAr::NDAr_Writer {
 public:

@@ -12,9 +12,9 @@
 #include <tdct_timestamps_generated.h>
 
 #include "AccessMessageMetadata/tdct/tdct_Extractor.h"
+#include "WriterModule/tdct/tdct_Writer.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "WriterModule/tdct/tdct_Writer.h"
 
 static std::unique_ptr<std::uint8_t[]>
 GenerateFlatbufferData(size_t &DataSize) {

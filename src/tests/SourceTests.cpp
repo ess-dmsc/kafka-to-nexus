@@ -9,10 +9,10 @@
 
 #include "helpers/SetExtractorModule.h"
 #include "helpers/StubWriterModule.h"
+#include <AccessMessageMetadata/ev42/ev42_Extractor.h>
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
 #include <Source.h>
-#include <AccessMessageMetadata/ev42/ev42_Extractor.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>

@@ -12,8 +12,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "FlatbufferMessage.h"
 #include "AccessMessageMetadata/ns10/ns10_Extractor.h"
+#include "FlatbufferMessage.h"
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
 #include "ns10_cache_entry_generated.h"

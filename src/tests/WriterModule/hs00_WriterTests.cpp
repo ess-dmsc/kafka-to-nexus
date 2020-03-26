@@ -7,17 +7,17 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "WriterRegistrar.h"
 #include "AccessMessageMetadata/hs00/hs00_Extractor.h"
-#include "helper.h"
-#include "helpers/SetExtractorModule.h"
-#include "json.h"
 #include "WriterModule/hs00/Dimension.h"
 #include "WriterModule/hs00/Exceptions.h"
 #include "WriterModule/hs00/Shape.h"
 #include "WriterModule/hs00/Slice.h"
 #include "WriterModule/hs00/WriterTyped.h"
 #include "WriterModule/hs00/hs00_Writer.h"
+#include "WriterRegistrar.h"
+#include "helper.h"
+#include "helpers/SetExtractorModule.h"
+#include "json.h"
 #include <WriterModuleBase.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
