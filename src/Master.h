@@ -10,7 +10,7 @@
 #pragma once
 
 #include "CommandParser.h"
-#include "KafkaW/PollStatus.h"
+#include "Kafka/PollStatus.h"
 #include "MainOpt.h"
 #include "Msg.h"
 #include "States.h"
@@ -62,7 +62,7 @@ private:
   virtual void startWriting(StartCommandInfo const &StartInfo);
   virtual void requestStopWriting(StopCommandInfo const &StopInfo);
   virtual bool hasWritingStopped();
-  virtual std::pair<KafkaW::PollStatus, Msg> pollForMessage();
+  virtual std::pair<Kafka::PollStatus, Msg> pollForMessage();
   virtual void moveToNewState(FileWriterState const &NewState);
   virtual FileWriterState handleCommand(Msg const &CommandMessage);
   void setToIdle();

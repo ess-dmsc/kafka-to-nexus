@@ -33,7 +33,6 @@ class CommandParserHappyStartTests : public testing::Test {
 public:
   FileWriter::StartCommandInfo StartInfo;
 
-  // cppcheck-suppress unusedFunction
   void SetUp() override {
     auto MessageBuffer = buildRunStartMessage(
         InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,

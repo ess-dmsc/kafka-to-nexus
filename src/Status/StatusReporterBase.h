@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../KafkaW/ProducerTopic.h"
+#include "../Kafka/ProducerTopic.h"
 #include "StatusInfo.h"
 #include "logger.h"
 #include <asio.hpp>
@@ -21,7 +21,7 @@ namespace Status {
 class StatusReporterBase {
 public:
   StatusReporterBase(std::chrono::milliseconds Interval,
-                     std::unique_ptr<KafkaW::ProducerTopic> StatusProducerTopic)
+                     std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic)
       : Period(Interval), StatusProducerTopic(std::move(StatusProducerTopic)) {}
 
   virtual ~StatusReporterBase() = default;
@@ -55,7 +55,7 @@ private:
   virtual void postReportStatusActions(){};
   StatusInfo Status{};
   mutable std::mutex StatusMutex;
-  std::unique_ptr<KafkaW::ProducerTopic> StatusProducerTopic;
+  std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic;
 };
 
 } // namespace Status

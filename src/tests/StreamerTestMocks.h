@@ -8,9 +8,9 @@
 namespace FileWriter {
 
 class ConsumerEmptyStandIn
-    : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
+    : public trompeloeil::mock_interface<Kafka::ConsumerInterface> {
 public:
-  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){
+  explicit ConsumerEmptyStandIn(const Kafka::BrokerSettings &Settings){
       UNUSED_ARG(Settings)};
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);

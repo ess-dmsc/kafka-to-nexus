@@ -71,19 +71,17 @@ set(kafka_to_nexus_SRC
         DemuxTopic.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
-        KafkaW/Consumer.cpp
-        KafkaW/Producer.cpp
-        KafkaW/ProducerTopic.cpp
-        KafkaW/ConsumerFactory.cpp
+        Kafka/Consumer.cpp
+        Kafka/Producer.cpp
+        Kafka/ProducerTopic.cpp
+        Kafka/ConsumerFactory.cpp
         helper.cpp
         URI.cpp
         FlatbufferMessage.cpp
         MainOpt.cpp
         CLIOptions.cpp
-        NeXusDataset.cpp
         StreamMaster.cpp
         CommandParser.cpp
-        ExtensibleDataset.cpp
         WriterRegistrar.cpp
         Metrics/Reporter.cpp
         Metrics/Registrar.cpp
@@ -105,16 +103,16 @@ set(kafka_to_nexus_INC
         WriterModuleBase.h
         helper.h
         json.h
-        KafkaW/BrokerSettings.h
-        KafkaW/Consumer.h
-        KafkaW/Producer.h
-        KafkaW/ProducerTopic.h
-        KafkaW/PollStatus.h
-        KafkaW/ProducerStats.h
-        KafkaW/ProducerMessage.h
-        KafkaW/KafkaEventCb.h
-        KafkaW/MetadataException.h
-        KafkaW/ConsumerFactory.h
+        Kafka/BrokerSettings.h
+        Kafka/Consumer.h
+        Kafka/Producer.h
+        Kafka/ProducerTopic.h
+        Kafka/PollStatus.h
+        Kafka/ProducerStats.h
+        Kafka/ProducerMessage.h
+        Kafka/KafkaEventCb.h
+        Kafka/MetadataException.h
+        Kafka/ConsumerFactory.h
         logger.h
         MainOpt.h
         Master.h
@@ -127,11 +125,9 @@ set(kafka_to_nexus_INC
         StreamMaster.h
         URI.h
         CLIOptions.h
-        NeXusDataset.h
-        KafkaW/ConfigureKafka.cpp
-        KafkaW/ConfigureKafka.h
+        Kafka/ConfigureKafka.cpp
+        Kafka/ConfigureKafka.h
         CommandParser.h
-        ExtensibleDataset.h
         WriterRegistrar.h
         Metrics/Registrar.h
         Metrics/Metric.h
@@ -147,32 +143,32 @@ set(kafka_to_nexus_INC
         Status/StatusReporter.cpp
         Status/StatusReporterBase.h)
 
-set(tgt "kafka_to_nexus__objects")
-add_library(${tgt} OBJECT
+add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}
         ${kafka_to_nexus_INC}
         )
 
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+target_compile_definitions(kafka_to_nexus__objects PRIVATE ${compile_defs_common})
+target_include_directories(kafka_to_nexus__objects PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
 
-add_subdirectory(writer_modules)
-add_subdirectory(fb_metadata_extractors)
+add_subdirectory(WriterModule)
+add_subdirectory(AccessMessageMetadata)
+add_subdirectory(NeXusDataset)
 
-set(tgt "kafka-to-nexus")
 set(sources
         kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
+        $<TARGET_OBJECTS:NeXusDataset>
         ${WRITER_MODULES}
         ${FB_METADATA_EXTRACTORS}
         )
-add_executable(${tgt} ${sources})
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common})
+add_executable(kafka-to-nexus ${sources})
+target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
+target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+target_link_libraries(kafka-to-nexus ${libraries_common})
 
 option(BUILD_TESTS "Build unit tests" ON)
 if (BUILD_TESTS)
