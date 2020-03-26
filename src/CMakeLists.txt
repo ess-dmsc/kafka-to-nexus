@@ -143,14 +143,13 @@ set(kafka_to_nexus_INC
         Status/StatusReporter.cpp
         Status/StatusReporterBase.h)
 
-set(tgt "kafka_to_nexus__objects")
-add_library(${tgt} OBJECT
+add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}
         ${kafka_to_nexus_INC}
         )
 
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+target_compile_definitions(kafka_to_nexus__objects PRIVATE ${compile_defs_common})
+target_include_directories(kafka_to_nexus__objects PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
@@ -159,7 +158,6 @@ add_subdirectory(writer_modules)
 add_subdirectory(fb_metadata_extractors)
 add_subdirectory(NeXusDataset)
 
-set(tgt "kafka-to-nexus")
 set(sources
         kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
@@ -167,10 +165,10 @@ set(sources
         ${WRITER_MODULES}
         ${FB_METADATA_EXTRACTORS}
         )
-add_executable(${tgt} ${sources})
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common})
+add_executable(kafka-to-nexus ${sources})
+target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
+target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+target_link_libraries(kafka-to-nexus ${libraries_common})
 
 option(BUILD_TESTS "Build unit tests" ON)
 if (BUILD_TESTS)
