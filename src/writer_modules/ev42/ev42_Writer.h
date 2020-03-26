@@ -7,8 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "NeXusDataset/AdcDatasets.h"
 #include "FlatbufferMessage.h"
+#include "NeXusDataset/AdcDatasets.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
