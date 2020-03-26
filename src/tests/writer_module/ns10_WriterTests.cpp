@@ -17,7 +17,7 @@
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
-#include "writer_modules/ns10/ns10_Writer.h"
+#include "WriterModule/ns10/ns10_Writer.h"
 #include <ns10_cache_entry_generated.h>
 
 using WriterModule::ns10::ns10_Writer;

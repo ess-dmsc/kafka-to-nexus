@@ -14,7 +14,7 @@
 #include "AccessMessageMetadata/tdct/tdct_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "writer_modules/tdct/tdct_Writer.h"
+#include "WriterModule/tdct/tdct_Writer.h"
 
 static std::unique_ptr<std::uint8_t[]>
 GenerateFlatbufferData(size_t &DataSize) {

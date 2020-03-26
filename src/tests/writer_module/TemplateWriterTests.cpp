@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "writer_modules/template/TemplateWriter.h"
+#include "WriterModule/template/TemplateWriter.h"
 #include <gtest/gtest.h>
 
 TEST(TemplateTests, WriterReturnValues) {

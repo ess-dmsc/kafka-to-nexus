@@ -19,7 +19,7 @@
 #include "helper.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "writer_modules/f142/f142_Writer.h"
+#include "WriterModule/f142/f142_Writer.h"
 #include <f142_logdata_generated.h>
 
 using nlohmann::json;

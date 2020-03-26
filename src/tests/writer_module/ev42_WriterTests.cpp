@@ -19,7 +19,7 @@
 #include "AccessMessageMetadata/ev42/ev42_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "writer_modules/ev42/ev42_Writer.h"
+#include "WriterModule/ev42/ev42_Writer.h"
 
 using namespace WriterModule::ev42;
 

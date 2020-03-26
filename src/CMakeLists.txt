@@ -154,7 +154,7 @@ target_include_directories(kafka_to_nexus__objects PRIVATE ${path_include_common
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
 
-add_subdirectory(writer_modules)
+add_subdirectory(WriterModule)
 add_subdirectory(AccessMessageMetadata)
 add_subdirectory(NeXusDataset)
 

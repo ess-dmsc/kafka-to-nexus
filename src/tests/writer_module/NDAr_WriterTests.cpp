@@ -17,7 +17,7 @@
 #include "AccessMessageMetadata/NDAr/NDAr_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
-#include "writer_modules/NDAr/NDAr_Writer.h"
+#include "WriterModule/NDAr/NDAr_Writer.h"
 
 class ADWriterStandIn : public WriterModule::NDAr::NDAr_Writer {
 public:
