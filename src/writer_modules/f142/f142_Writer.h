@@ -22,7 +22,6 @@
 namespace WriterModule {
 namespace f142 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
-using ForwarderDebugDataset = NeXusDataset::ExtensibleDataset<std::uint64_t>;
 
 class f142_Writer : public WriterModule::Base {
 public:
