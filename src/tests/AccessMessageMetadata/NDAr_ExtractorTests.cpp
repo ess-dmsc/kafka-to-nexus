@@ -29,6 +29,7 @@ public:
     InFile.read(reinterpret_cast<char *>(RawData.get()), FileSize);
   };
 
+  // cppcheck-suppress unusedFunction; used by google-test
   void SetUp() override {
     ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<AccessMessageMetadata::NDAr_Extractor>();
