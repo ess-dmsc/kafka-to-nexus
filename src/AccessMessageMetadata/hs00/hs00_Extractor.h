@@ -11,11 +11,11 @@
 
 #include "FlatbufferReader.h"
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class hs00_Extractor : public FileWriter::FlatbufferReader {
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

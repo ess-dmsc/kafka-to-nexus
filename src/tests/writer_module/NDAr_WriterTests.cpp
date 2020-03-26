@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "FlatbufferReader.h"
-#include "fb_metadata_extractors/NDAr/NDAr_Extractor.h"
+#include "AccessMessageMetadata/NDAr/NDAr_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/NDAr/NDAr_Writer.h"
@@ -51,7 +51,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    setExtractorModule<FlatbufferMetadata::NDAr_Extractor>("NDAr");
+    setExtractorModule<AccessMessageMetadata::NDAr_Extractor>("NDAr");
   };
 
   void TearDown() override { File.close(); };

@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FlatbufferMessage.h"
-#include "fb_metadata_extractors/template/TemplateExtractor.h"
+#include "AccessMessageMetadata/template/TemplateExtractor.h"
 #include <gtest/gtest.h>
 
 TEST(TemplateTests, ReaderReturnValues) {

@@ -10,7 +10,7 @@
 #include "f142_Extractor.h"
 #include <f142_logdata_generated.h>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 /// \brief  Use flatbuffers library to validate a message
 bool f142_Extractor::verify(FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(
@@ -39,4 +39,4 @@ uint64_t f142_Extractor::timestamp(FlatbufferMessage const &Message) const {
 /// Register the Reader with the application's registry
 static FileWriter::FlatbufferReaderRegistry::Registrar<f142_Extractor>
     RegisterReader("f142");
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

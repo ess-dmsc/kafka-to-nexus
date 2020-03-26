@@ -16,7 +16,7 @@
 
 #include <utility>
 
-#include "fb_metadata_extractors/ev42/ev42_Extractor.h"
+#include "AccessMessageMetadata/ev42/ev42_Extractor.h"
 #include "helpers/SetExtractorModule.h"
 
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
@@ -89,11 +89,11 @@ template <typename T> void repeatVector(std::vector<T> &InputVector) {
 class EventReaderTests : public ::testing::Test {
 public:
   void SetUp() override {
-    ReaderUnderTest = std::make_unique<FlatbufferMetadata::ev42_Extractor>();
-    setExtractorModule<FlatbufferMetadata::ev42_Extractor>("ev42");
+    ReaderUnderTest = std::make_unique<AccessMessageMetadata::ev42_Extractor>();
+    setExtractorModule<AccessMessageMetadata::ev42_Extractor>("ev42");
   };
 
-  std::unique_ptr<FlatbufferMetadata::ev42_Extractor> ReaderUnderTest;
+  std::unique_ptr<AccessMessageMetadata::ev42_Extractor> ReaderUnderTest;
 };
 
 TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {

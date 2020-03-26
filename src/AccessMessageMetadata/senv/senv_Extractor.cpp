@@ -15,7 +15,7 @@
 #include "senv_Extractor.h"
 #include <senv_data_generated.h>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 
 // Register the timestamp and name extraction class for this module
 static FileWriter::FlatbufferReaderRegistry::Registrar<senv_Extractor>
@@ -38,4 +38,4 @@ std::string senv_Extractor::source_name(
   return FbPointer->Name()->str();
 }
 
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

@@ -11,7 +11,7 @@
 #include <memory>
 #include <senv_data_generated.h>
 
-#include "fb_metadata_extractors/senv/senv_Extractor.h"
+#include "AccessMessageMetadata/senv/senv_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/senv/senv_Writer.h"
@@ -45,7 +45,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    setExtractorModule<FlatbufferMetadata::senv_Extractor>("senv");
+    setExtractorModule<AccessMessageMetadata::senv_Extractor>("senv");
   };
 
   void TearDown() override { File.close(); };

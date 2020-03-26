@@ -155,7 +155,7 @@ set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
 
 add_subdirectory(writer_modules)
-add_subdirectory(fb_metadata_extractors)
+add_subdirectory(AccessMessageMetadata)
 add_subdirectory(NeXusDataset)
 
 set(sources

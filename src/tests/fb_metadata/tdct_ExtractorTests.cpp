@@ -11,7 +11,7 @@
 #include <memory>
 #include <tdct_timestamps_generated.h>
 
-#include "fb_metadata_extractors/tdct/tdct_Extractor.h"
+#include "AccessMessageMetadata/tdct/tdct_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 
@@ -37,15 +37,15 @@ using FBMsg = FileWriter::FlatbufferMessage;
 class ChopperTimeStampGuard : public ::testing::Test {
 public:
   static void SetUpTestCase() {
-    ReaderUnderTest = std::make_unique<FlatbufferMetadata::tdct_Extractor>();
-    setExtractorModule<FlatbufferMetadata::tdct_Extractor>("tdct");
+    ReaderUnderTest = std::make_unique<AccessMessageMetadata::tdct_Extractor>();
+    setExtractorModule<AccessMessageMetadata::tdct_Extractor>("tdct");
     RawBuffer = GenerateFlatbufferData(BufferSize);
     TestMessage = std::make_unique<FBMsg>(RawBuffer.get(), BufferSize);
   };
 
   void SetUp() override { ASSERT_NE(RawBuffer.get(), nullptr); };
 
-  static std::unique_ptr<FlatbufferMetadata::tdct_Extractor> ReaderUnderTest;
+  static std::unique_ptr<AccessMessageMetadata::tdct_Extractor> ReaderUnderTest;
   static std::unique_ptr<std::uint8_t[]> RawBuffer;
   static size_t BufferSize;
   static std::unique_ptr<FBMsg> TestMessage;
@@ -53,7 +53,7 @@ public:
 std::unique_ptr<std::uint8_t[]> ChopperTimeStampGuard::RawBuffer{nullptr};
 size_t ChopperTimeStampGuard::BufferSize{0};
 std::unique_ptr<FBMsg> ChopperTimeStampGuard::TestMessage{nullptr};
-std::unique_ptr<FlatbufferMetadata::tdct_Extractor>
+std::unique_ptr<AccessMessageMetadata::tdct_Extractor>
     ChopperTimeStampGuard::ReaderUnderTest{nullptr};
 
 TEST_F(ChopperTimeStampGuard, GetSourceName) {

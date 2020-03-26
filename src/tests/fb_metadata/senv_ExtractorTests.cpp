@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "fb_metadata_extractors/senv/senv_Extractor.h"
+#include "AccessMessageMetadata/senv/senv_Extractor.h"
 #include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
 #include <memory>
@@ -47,11 +47,11 @@ public:
 
   void SetUp() override {
     ASSERT_NE(RawBuffer.get(), nullptr);
-    ReaderUnderTest = std::make_unique<FlatbufferMetadata::senv_Extractor>();
-    setExtractorModule<FlatbufferMetadata::senv_Extractor>("senv");
+    ReaderUnderTest = std::make_unique<AccessMessageMetadata::senv_Extractor>();
+    setExtractorModule<AccessMessageMetadata::senv_Extractor>("senv");
   };
 
-  std::unique_ptr<FlatbufferMetadata::senv_Extractor> ReaderUnderTest;
+  std::unique_ptr<AccessMessageMetadata::senv_Extractor> ReaderUnderTest;
   static std::unique_ptr<std::uint8_t[]> RawBuffer;
   static size_t BufferSize;
 };

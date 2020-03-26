@@ -11,7 +11,7 @@
 #include <memory>
 #include <tdct_timestamps_generated.h>
 
-#include "fb_metadata_extractors/tdct/tdct_Extractor.h"
+#include "AccessMessageMetadata/tdct/tdct_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/tdct/tdct_Writer.h"
@@ -41,7 +41,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    setExtractorModule<FlatbufferMetadata::tdct_Extractor>("tdct");
+    setExtractorModule<AccessMessageMetadata::tdct_Extractor>("tdct");
   };
 
   void TearDown() override { File.close(); };

@@ -15,7 +15,7 @@
 #include "tdct_Extractor.h"
 #include <tdct_timestamps_generated.h>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 
 // Register the timestamp and name extraction class for this module
 static FileWriter::FlatbufferReaderRegistry::Registrar<tdct_Extractor>
@@ -42,4 +42,4 @@ std::string tdct_Extractor::source_name(
   return FbPointer->name()->str();
 }
 
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

@@ -10,7 +10,7 @@
 #include "ev42_Extractor.h"
 #include <ev42_events_generated.h>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 
 bool ev42_Extractor::verify(FlatbufferMessage const &Message) const {
   flatbuffers::Verifier VerifierInstance(
@@ -37,4 +37,4 @@ uint64_t ev42_Extractor::timestamp(FlatbufferMessage const &Message) const {
 static FileWriter::FlatbufferReaderRegistry::Registrar<ev42_Extractor>
     RegisterReader("ev42");
 
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

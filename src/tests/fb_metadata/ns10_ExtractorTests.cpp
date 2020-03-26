@@ -13,7 +13,7 @@
 #include <memory>
 
 #include "FlatbufferMessage.h"
-#include "fb_metadata_extractors/ns10/ns10_Extractor.h"
+#include "AccessMessageMetadata/ns10/ns10_Extractor.h"
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
 #include "ns10_cache_entry_generated.h"
@@ -62,7 +62,7 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
 class NicosCacheReaderTest : public ::testing::Test {
 public:
   void SetUp() override {
-    setExtractorModule<FlatbufferMetadata::ns10_Extractor>("ns10");
+    setExtractorModule<AccessMessageMetadata::ns10_Extractor>("ns10");
   };
 };
 

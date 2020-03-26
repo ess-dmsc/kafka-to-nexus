@@ -10,7 +10,7 @@
 #include "hs00_Extractor.h"
 #include <hs00_event_histogram_generated.h>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 bool hs00_Extractor::verify(FlatbufferMessage const &Message) const {
   flatbuffers::Verifier Verifier(
       reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
@@ -35,4 +35,4 @@ uint64_t hs00_Extractor::timestamp(FlatbufferMessage const &Message) const {
 
 FileWriter::FlatbufferReaderRegistry::Registrar<hs00_Extractor>
     RegisterReader("hs00");
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

@@ -16,7 +16,7 @@
 #pragma once
 #include "FlatbufferReader.h"
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class ns10_Extractor : public FileWriter::FlatbufferReader {
 public:
@@ -27,4 +27,4 @@ public:
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
 
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

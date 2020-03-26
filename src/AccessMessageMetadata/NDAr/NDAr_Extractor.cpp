@@ -15,7 +15,7 @@
 #include "NDAr_Extractor.h"
 #include <NDAr_NDArray_schema_generated.h>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 
 // Register the timestamp and name extraction class for this module.
 static FileWriter::FlatbufferReaderRegistry::Registrar<NDAr_Extractor>
@@ -46,4 +46,4 @@ NDAr_Extractor::source_name(const FileWriter::FlatbufferMessage &) const {
   // schema. When the variable has been addded, this function will be updated.
   return "ADPluginKafka";
 }
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

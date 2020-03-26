@@ -13,7 +13,7 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
-#include "fb_metadata_extractors/NDAr/NDAr_Extractor.h"
+#include "AccessMessageMetadata/NDAr/NDAr_Extractor.h"
 #include "helpers/SetExtractorModule.h"
 
 class AreaDetectorReader : public ::testing::Test {
@@ -31,11 +31,11 @@ public:
 
   void SetUp() override {
     ASSERT_NE(FileSize, size_t(0));
-    Reader = std::make_unique<FlatbufferMetadata::NDAr_Extractor>();
-    setExtractorModule<FlatbufferMetadata::NDAr_Extractor>("NDAr");
+    Reader = std::make_unique<AccessMessageMetadata::NDAr_Extractor>();
+    setExtractorModule<AccessMessageMetadata::NDAr_Extractor>("NDAr");
   };
 
-  std::unique_ptr<FlatbufferMetadata::NDAr_Extractor> Reader;
+  std::unique_ptr<AccessMessageMetadata::NDAr_Extractor> Reader;
   static std::unique_ptr<uint8_t[]> RawData;
   static size_t FileSize;
 };

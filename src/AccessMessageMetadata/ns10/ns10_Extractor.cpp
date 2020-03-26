@@ -10,7 +10,7 @@
 #include "ns10_Extractor.h"
 #include <ns10_cache_entry_generated.h>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 
 // Instantiates a ReaderClass used for extracting source names, timestamps and
 // verifying a flatbuffers.
@@ -40,4 +40,4 @@ ns10_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
   return std::lround(TimeNs);
 }
 
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

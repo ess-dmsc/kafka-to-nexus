@@ -13,7 +13,7 @@
 
 #include "FlatbufferMessage.h"
 #include "WriterRegistrar.h"
-#include "fb_metadata_extractors/ns10/ns10_Extractor.h"
+#include "AccessMessageMetadata/ns10/ns10_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
@@ -80,7 +80,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    setExtractorModule<FlatbufferMetadata::ns10_Extractor>("ns10");
+    setExtractorModule<AccessMessageMetadata::ns10_Extractor>("ns10");
   };
 
   void TearDown() override { File.close(); };

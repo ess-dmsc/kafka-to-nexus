@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "FlatbufferMessage.h"
-#include "fb_metadata_extractors/f142/f142_Extractor.h"
+#include "AccessMessageMetadata/f142/f142_Extractor.h"
 #include "helper.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
@@ -231,7 +231,7 @@ public:
     TestFile =
         HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
     RootGroup = TestFile.H5File.root();
-    setExtractorModule<FlatbufferMetadata::f142_Extractor>("f142");
+    setExtractorModule<AccessMessageMetadata::f142_Extractor>("f142");
   }
   FileWriter::HDFFile TestFile;
   hdf5::node::Group RootGroup;

@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "WriterRegistrar.h"
-#include "fb_metadata_extractors/hs00/hs00_Extractor.h"
+#include "AccessMessageMetadata/hs00/hs00_Extractor.h"
 #include "helper.h"
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
@@ -35,7 +35,7 @@ using WriterModule::hs00::WriterTyped;
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
-    setExtractorModule<FlatbufferMetadata::hs00_Extractor>("hs00");
+    setExtractorModule<AccessMessageMetadata::hs00_Extractor>("hs00");
     try {
       WriterModule::Registry::Registrar<hs00_Writer> RegisterIt("hs00",
                                                                 "test_name");

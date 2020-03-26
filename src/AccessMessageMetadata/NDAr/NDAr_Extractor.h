@@ -7,17 +7,24 @@
 //
 // Screaming Udder!                              https://esss.se
 
+/** Copyright (C) 2018 European Spallation Source ERIC */
+
+/// \file
+/// \brief Define classes required to implement the ADC file writing module.
+
 #pragma once
 
 #include "FlatbufferReader.h"
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
+using FBReaderBase = FileWriter::FlatbufferReader;
 
-class f142_Extractor : public FileWriter::FlatbufferReader {
+/// See parent class for documentation.
+class NDAr_Extractor : public FBReaderBase {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
-  std::string source_name(FlatbufferMessage const &Message) const override;
+  std::string source_name(FlatbufferMessage const &) const override;
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata

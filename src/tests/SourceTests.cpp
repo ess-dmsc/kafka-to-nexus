@@ -12,14 +12,14 @@
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
 #include <Source.h>
-#include <fb_metadata_extractors/ev42/ev42_Extractor.h>
+#include <AccessMessageMetadata/ev42/ev42_Extractor.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 #include <ev42_events_generated.h>
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata
 
 using FileWriter::FlatbufferMessage;
 using FileWriter::Source;
@@ -28,11 +28,11 @@ using WriterModule::Base;
 
 flatbuffers::DetachedBuffer createEventMessageBuffer() {
   flatbuffers::FlatBufferBuilder Builder;
-  FlatbufferMetadata::EventMessageBuilder EventMessage(Builder);
+  AccessMessageMetadata::EventMessageBuilder EventMessage(Builder);
   EventMessage.add_pulse_time(
       1); // avoid 0 pulse time which is detected as a validation error
   Builder.Finish(EventMessage.Finish(),
-                 FlatbufferMetadata::EventMessageIdentifier());
+                 AccessMessageMetadata::EventMessageIdentifier());
 
   // Note, Release gives us a "DetachedBuffer" which owns the data
   return Builder.Release();
@@ -41,7 +41,7 @@ flatbuffers::DetachedBuffer createEventMessageBuffer() {
 class SourceTests : public ::testing::Test {
 public:
   void SetUp() override {
-    setExtractorModule<FlatbufferMetadata::ev42_Extractor>("ev42");
+    setExtractorModule<AccessMessageMetadata::ev42_Extractor>("ev42");
   };
 };
 

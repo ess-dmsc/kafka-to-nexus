@@ -16,15 +16,15 @@
 
 #include "FlatbufferReader.h"
 
-namespace FlatbufferMetadata {
+namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
 /// See parent class for documentation.
-class NDAr_Extractor : public FBReaderBase {
+class senv_Extractor : public FBReaderBase {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
-  std::string source_name(FlatbufferMessage const &) const override;
+  std::string source_name(FlatbufferMessage const &Message) const override;
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
-} // namespace FlatbufferMetadata
+} // namespace AccessMessageMetadata
