@@ -9,10 +9,10 @@
 
 #pragma once
 
-namespace KafkaW {
-struct ProducerMessage {
-  virtual ~ProducerMessage() = default;
-  unsigned char *data;
-  uint32_t size;
-};
-} // namespace KafkaW
+#include "BrokerSettings.h"
+#include <librdkafka/rdkafkacpp.h>
+
+namespace Kafka {
+void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
+                    Kafka::BrokerSettings Settings);
+}

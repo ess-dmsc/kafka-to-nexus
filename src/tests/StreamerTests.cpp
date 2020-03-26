@@ -22,7 +22,7 @@
 
 namespace FileWriter {
 
-using KafkaW::PollStatus;
+using Kafka::PollStatus;
 using trompeloeil::_;
 using namespace FileWriter;
 
@@ -99,7 +99,7 @@ protected:
     BrokerSettings.Address = "127.0.0.1:1";
     Options.BrokerSettings = BrokerSettings;
   }
-  KafkaW::BrokerSettings BrokerSettings;
+  Kafka::BrokerSettings BrokerSettings;
   StreamerOptions Options;
 };
 
@@ -207,7 +207,7 @@ protected:
   std::string DataBuffer{"0000test"};
   std::string SourceName{"SomeRandomSourceName"};
   std::string TopicName{"SomeRandomTopicName"};
-  KafkaW::BrokerSettings BrokerSettings;
+  Kafka::BrokerSettings BrokerSettings;
   StreamerOptions Options;
   std::unique_ptr<StreamerStandIn> TestStreamer;
 };
@@ -512,7 +512,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
 
 TEST(FlatBufferValidationTest,
      NumberOfValidationFailuresIncreasesIfFlatBufferIsInvalid) {
-  KafkaW::BrokerSettings BrokerSettings;
+  Kafka::BrokerSettings BrokerSettings;
   StreamerOptions Options;
   std::unique_ptr<StreamerStandIn> TestStreamer;
   std::string SchemaID = "f142";

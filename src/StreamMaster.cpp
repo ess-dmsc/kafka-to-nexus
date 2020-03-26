@@ -1,6 +1,6 @@
 #include "StreamMaster.h"
 #include "FileWriterTask.h"
-#include "KafkaW/ConsumerFactory.h"
+#include "Kafka/ConsumerFactory.h"
 #include "Streamer.h"
 #include "helper.h"
 
@@ -13,9 +13,9 @@ StreamMaster::createStreamMaster(const std::string &Broker,
   std::map<std::string, Streamer> Streams;
   for (auto &TopicNameDemuxerPair : FileWriterTask->demuxers()) {
     try {
-      std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
-          KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
-                                 Broker);
+      std::unique_ptr<Kafka::ConsumerInterface> Consumer =
+          Kafka::createConsumer(Options.StreamerConfiguration.BrokerSettings,
+                                Broker);
       Streams.emplace(std::piecewise_construct,
                       std::forward_as_tuple(TopicNameDemuxerPair.first),
                       std::forward_as_tuple(Broker, TopicNameDemuxerPair.first,

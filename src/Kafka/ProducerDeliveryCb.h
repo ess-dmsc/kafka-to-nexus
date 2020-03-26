@@ -15,7 +15,7 @@
 #include "logger.h"
 #include <librdkafka/rdkafkacpp.h>
 
-namespace KafkaW {
+namespace Kafka {
 
 class ProducerDeliveryCb : public RdKafka::DeliveryReportCb {
 public:
@@ -39,4 +39,4 @@ private:
   ProducerStats &Stats;
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
-} // namespace KafkaW
+} // namespace Kafka

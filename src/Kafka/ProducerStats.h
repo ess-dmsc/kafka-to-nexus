@@ -9,7 +9,7 @@
 
 #pragma once
 
-namespace KafkaW {
+namespace Kafka {
 
 // Provides statistics for all producers
 struct ProducerStats {
@@ -36,4 +36,4 @@ struct ProducerStats {
     out_queue = x.out_queue.load();
   };
 };
-} // namespace KafkaW
+} // namespace Kafka

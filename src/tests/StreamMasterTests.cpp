@@ -8,14 +8,14 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FileWriterTask.h"
-#include "KafkaW/Producer.h"
+#include "Kafka/Producer.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
 #include <gtest/gtest.h>
 
-class ProducerStandIn : public KafkaW::Producer {
+class ProducerStandIn : public Kafka::Producer {
 public:
-  explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
+  explicit ProducerStandIn(Kafka::BrokerSettings &Settings)
       : Producer(Settings){};
   using Producer::ProducerID;
   using Producer::ProducerPtr;

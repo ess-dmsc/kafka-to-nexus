@@ -7,14 +7,14 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "../KafkaW/Producer.h"
+#include "../Kafka/Producer.h"
 #include "helpers/MockMessage.h"
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <trompeloeil.hpp>
 
 using trompeloeil::_;
-using namespace KafkaW;
+using namespace Kafka;
 
 class ProducerDeliveryCbTests : public ::testing::Test {
 protected:

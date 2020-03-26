@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "../KafkaW/Producer.h"
+#include "../Kafka/Producer.h"
 #include "helpers/KafkaWMocks.h"
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafkacpp.h>
@@ -21,9 +21,9 @@ protected:
   void SetUp() override {}
 };
 
-class ProducerStandIn : public KafkaW::Producer {
+class ProducerStandIn : public Kafka::Producer {
 public:
-  explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
+  explicit ProducerStandIn(Kafka::BrokerSettings &Settings)
       : Producer(Settings){};
   using Producer::ProducerID;
   using Producer::ProducerPtr;
@@ -51,13 +51,13 @@ public:
 };
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
-  KafkaW::BrokerSettings Settings{};
+  Kafka::BrokerSettings Settings{};
   EXPECT_EQ(1, std::abs(ProducerStandIn(Settings).ProducerID -
                         ProducerStandIn(Settings).ProducerID));
 }
 
 TEST_F(ProducerTests, callPollTest) {
-  KafkaW::BrokerSettings Settings{};
+  Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
   REQUIRE_CALL(*TempProducerPtr, poll(_)).TIMES(1).RETURN(0);
 
@@ -72,7 +72,7 @@ TEST_F(ProducerTests, callPollTest) {
 }
 
 TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
-  KafkaW::BrokerSettings Settings{};
+  Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
   REQUIRE_CALL(*TempProducerPtr, produce(_, _, _, _, _, _, _, _))
       .TIMES(1)
@@ -93,7 +93,7 @@ TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
 }
 
 TEST_F(ProducerTests, produceReturnsErrorCodeIfMessageNotProduced) {
-  KafkaW::BrokerSettings Settings{};
+  Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
   REQUIRE_CALL(*TempProducerPtr, produce(_, _, _, _, _, _, _, _))
       .TIMES(1)
@@ -114,7 +114,7 @@ TEST_F(ProducerTests, produceReturnsErrorCodeIfMessageNotProduced) {
 }
 
 TEST_F(ProducerTests, testDestructorOutputQueueWithTooManyItemsToProduce) {
-  KafkaW::BrokerSettings Settings{};
+  Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
 
   REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(82).RETURN(1);
@@ -129,7 +129,7 @@ TEST_F(ProducerTests, testDestructorOutputQueueWithTooManyItemsToProduce) {
 }
 
 TEST_F(ProducerTests, produceAlsoCallsPollOnProducer) {
-  KafkaW::BrokerSettings Settings{};
+  Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
 
   // We'll call produce this many times and require the same number of calls to

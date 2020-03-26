@@ -11,7 +11,7 @@
 #include "ConfigureKafka.h"
 #include "logger.h"
 
-namespace KafkaW {
+namespace Kafka {
 
 static std::atomic<int> ProducerInstanceCount;
 
@@ -94,4 +94,4 @@ RdKafka::ErrorCode Producer::produce(RdKafka::Topic *Topic, int32_t Partition,
   return ProducerPtr->produce(Topic, Partition, MessageFlags, Payload,
                               PayloadSize, Key, KeySize, OpaqueMessage);
 }
-} // namespace KafkaW
+} // namespace Kafka

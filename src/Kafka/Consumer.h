@@ -21,7 +21,7 @@ namespace FileWriter {
 struct Msg;
 }
 
-namespace KafkaW {
+namespace Kafka {
 
 class ConsumerInterface {
 public:
@@ -67,7 +67,7 @@ public:
                            std::chrono::milliseconds StartTime) override;
   /// Checks if a topic is present on the broker.
   /// This is used to prevent passing around a pointer to an iterator of an
-  /// RdKafka::Topic outside of KafkaW and instead returns a bool.
+  /// RdKafka::Topic outside of Kafka and instead returns a bool.
   /// \param TopicName Name of the topic to check.
   /// \return True or false depending on whether the topic exists or not.
   bool topicPresent(const std::string &TopicName) override;
@@ -134,4 +134,4 @@ private:
   static void deletePartitions(
       std::vector<RdKafka::TopicPartition *> const &TopicPartitions);
 };
-} // namespace KafkaW
+} // namespace Kafka

@@ -11,7 +11,7 @@
 #include "logger.h"
 #include <librdkafka/rdkafkacpp.h>
 
-namespace KafkaW {
+namespace Kafka {
 class KafkaEventCb : public RdKafka::EventCb {
 public:
   void event_cb(RdKafka::Event &Event) override {
@@ -56,4 +56,4 @@ private:
       {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG, SPDLOG_LEVEL_CRITICAL}};
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
-} // namespace KafkaW
+} // namespace Kafka

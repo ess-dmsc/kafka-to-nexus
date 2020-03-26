@@ -16,7 +16,7 @@
 #include "ProducerStats.h"
 #include <atomic>
 
-namespace KafkaW {
+namespace Kafka {
 
 class ProducerTopic;
 
@@ -69,4 +69,4 @@ private:
   KafkaEventCb EventCb;
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
-} // namespace KafkaW
+} // namespace Kafka

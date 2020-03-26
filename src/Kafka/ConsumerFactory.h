@@ -12,7 +12,7 @@
 #include "Consumer.h"
 #include <memory>
 
-namespace KafkaW {
+namespace Kafka {
 std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
                                          const std::string &Broker);
-} // namespace KafkaW
+} // namespace Kafka

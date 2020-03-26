@@ -10,7 +10,7 @@
 #include "ConsumerFactory.h"
 #include "helper.h"
 
-namespace KafkaW {
+namespace Kafka {
 
 std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
                                          const std::string &Broker) {
@@ -42,4 +42,4 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
   return std::make_unique<Consumer>(std::move(KafkaConsumer), std::move(Conf),
                                     std::move(EventCallback));
 }
-} // namespace KafkaW
+} // namespace Kafka

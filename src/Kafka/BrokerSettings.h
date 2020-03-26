@@ -13,7 +13,7 @@
 #include <map>
 #include <string>
 
-namespace KafkaW {
+namespace Kafka {
 
 /// Collect options used to connect to the broker.
 struct BrokerSettings {
@@ -41,4 +41,4 @@ struct BrokerSettings {
       {"api.version.request", "true"},
       {"enable.auto.commit", "false"}};
 };
-} // namespace KafkaW
+} // namespace Kafka

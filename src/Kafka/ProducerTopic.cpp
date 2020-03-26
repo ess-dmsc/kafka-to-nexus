@@ -11,7 +11,7 @@
 #include "ProducerMessage.h"
 #include <vector>
 
-namespace KafkaW {
+namespace Kafka {
 
 ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
                              std::string TopicName)
@@ -86,4 +86,4 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
 }
 
 std::string ProducerTopic::name() const { return Name; }
-} // namespace KafkaW
+} // namespace Kafka

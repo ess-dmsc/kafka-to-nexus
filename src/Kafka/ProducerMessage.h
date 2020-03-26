@@ -9,6 +9,10 @@
 
 #pragma once
 
-namespace KafkaW {
-enum class PollStatus { Message, Error, EndOfPartition, Empty, TimedOut };
-}
+namespace Kafka {
+struct ProducerMessage {
+  virtual ~ProducerMessage() = default;
+  unsigned char *data;
+  uint32_t size;
+};
+} // namespace Kafka

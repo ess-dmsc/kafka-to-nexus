@@ -35,7 +35,7 @@ findTopic(std::string const &Topic, RdKafka::Metadata const &KafkaMetadata) {
 }
 } // namespace
 
-namespace KafkaW {
+namespace Kafka {
 
 static std::atomic<int> ConsumerInstanceCount;
 
@@ -338,4 +338,4 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
     return {PollStatus::Error, FileWriter::Msg()};
   }
 }
-} // namespace KafkaW
+} // namespace Kafka

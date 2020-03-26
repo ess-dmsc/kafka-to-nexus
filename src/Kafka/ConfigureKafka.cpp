@@ -10,9 +10,9 @@
 #include "ConfigureKafka.h"
 #include <logger.h>
 
-namespace KafkaW {
+namespace Kafka {
 void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
-                    KafkaW::BrokerSettings Settings) {
+                    Kafka::BrokerSettings Settings) {
   SharedLogger Logger = spdlog::get("filewriterlogger");
   std::string ErrorString;
   for (const auto &ConfigurationItem : Settings.KafkaConfiguration) {
@@ -26,4 +26,4 @@ void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
     }
   }
 }
-} // namespace KafkaW
+} // namespace Kafka

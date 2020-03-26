@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "KafkaW/Consumer.h"
+#include "Kafka/Consumer.h"
 #include "MainOpt.h"
 #include "logger.h"
 
@@ -25,11 +25,11 @@ public:
   virtual void start();
 
   /// Check for new command packets and return one if there is.
-  virtual std::pair<KafkaW::PollStatus, Msg> poll();
+  virtual std::pair<Kafka::PollStatus, Msg> poll();
 
 private:
   MainOpt &config;
-  std::unique_ptr<KafkaW::ConsumerInterface> consumer;
+  std::unique_ptr<Kafka::ConsumerInterface> consumer;
   SharedLogger Logger = getLogger();
 };
 } // namespace FileWriter
