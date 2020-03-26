@@ -69,7 +69,7 @@ public:
 TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
   nlohmann::json BufferJson = R"({
       "key": "nicos/device/parameter",
-      "writer_module": "ns10",
+      "WriterModule": "ns10",
       "time": 123.456,
       "value": "10.01"
     })"_json;

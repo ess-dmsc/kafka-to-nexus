@@ -159,7 +159,7 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
 
   nlohmann::json BufferJson = R"({
     "key": "nicos/device/parameter",
-    "writer_module": "ns10",
+    "WriterModule": "ns10",
     "time": 123.456,
     "value": "10.01"
   })"_json;
@@ -188,7 +188,7 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
 
   nlohmann::json BufferJson = R"({
     "key": "nicos/device/parameter",
-    "writer_module": "ns10",
+    "WriterModule": "ns10",
     "time": 123.456,
     "value": "10.01"
   })"_json;
@@ -217,7 +217,7 @@ TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
 
   nlohmann::json BufferJson = R"({
     "key": "nicos/device2/parameter",
-    "writer_module": "ns10",
+    "WriterModule": "ns10",
     "time": 123.456,
     "value": "10.01"
   })"_json;
@@ -248,7 +248,7 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
 
   nlohmann::json BufferJson = R"({
     "key": "nicos/device/parameter",
-    "writer_module": "ns10",
+    "WriterModule": "ns10",
     "time": 123.456,
     "value": "10.01"
   })"_json;
@@ -277,7 +277,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueCannotBeCastToDouble) {
 
   nlohmann::json BufferJson = R"({
     "key": "nicos/device/parameter",
-    "writer_module": "ns10",
+    "WriterModule": "ns10",
     "time": 123.456,
     "value": "This is a string"
   })"_json;
@@ -302,7 +302,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueDoesNotFitIntoDouble) {
 
   nlohmann::json BufferJson = R"({
     "key": "nicos/device/parameter",
-    "writer_module": "ns10",
+    "WriterModule": "ns10",
     "time": 123.456,
     "value": "2e1024"
   })"_json;

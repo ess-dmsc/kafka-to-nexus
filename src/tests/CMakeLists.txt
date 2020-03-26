@@ -2,8 +2,8 @@ find_package(trompeloeil REQUIRED)
 
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 
-add_subdirectory(writer_module)
-add_subdirectory(fb_metadata)
+add_subdirectory(WriterModule)
+add_subdirectory(AccessMessageMetadata)
 add_subdirectory(NeXusDataset)
 
 set(UnitTests_SRC
