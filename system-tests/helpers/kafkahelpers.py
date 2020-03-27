@@ -28,8 +28,14 @@ def publish_run_start_message(
     with open(nexus_structure_filepath, "r") as nexus_structure_file:
         nexus_structure = nexus_structure_file.read().replace("\n", "")
 
-    runstart_message = serialise_pl72(job_id, nexus_filename, start_time, stop_time,
-                                      nexus_structure=nexus_structure, service_id=service_id)
+    runstart_message = serialise_pl72(
+        job_id,
+        nexus_filename,
+        start_time,
+        stop_time,
+        nexus_structure=nexus_structure,
+        service_id=service_id,
+    )
     producer.produce(topic, bytes(runstart_message))
     producer.flush()
     return job_id
