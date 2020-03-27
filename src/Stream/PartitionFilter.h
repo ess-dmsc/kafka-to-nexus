@@ -9,8 +9,11 @@
 
 #pragma once
 
-#include "KafkaW/PollStatus.h"
 #include <chrono>
+
+namespace KafkaW {
+enum class PollStatus;
+}
 
 namespace Stream {
 using time_point = std::chrono::system_clock::time_point;

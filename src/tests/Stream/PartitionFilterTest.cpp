@@ -10,6 +10,7 @@
 /// \brief Test partition filtering.
 ///
 
+#include "KafkaW/PollStatus.h"
 #include "Stream/PartitionFilter.h"
 #include <chrono>
 #include <gtest/gtest.h>

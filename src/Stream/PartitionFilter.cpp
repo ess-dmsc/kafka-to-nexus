@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "PartitionFilter.h"
+#include "KafkaW/PollStatus.h"
 
 namespace Stream {
 
@@ -16,8 +17,8 @@ PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
                                  Stream::duration ErrorTimeOut)
     : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
       ErrorTimeOut(ErrorTimeOut) {
-  if (time_point::max() - StopTime <=
-      StopTimeLeeway) { // Deal with potential overflow problem
+  // Deal with potential overflow problem
+  if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
   }
 }
