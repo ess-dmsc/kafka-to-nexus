@@ -11,14 +11,6 @@
 #include "helpers/KafkaWMocks.h"
 #include <gtest/gtest.h>
 
-class CreateKafkaHandleTest : public ::testing::Test {};
-
-TEST_F(CreateKafkaHandleTest, OnSuccess) {
-  auto Result =
-      KafkaW::getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>("some_broker");
-  EXPECT_FALSE(Result == nullptr);
-}
-
 class UsedProducerMock {
 public:
   static int CallsToCreate;
@@ -28,15 +20,6 @@ public:
   }
 };
 int UsedProducerMock::CallsToCreate = 0;
-
-TEST_F(CreateKafkaHandleTest, FailureToCreateHandleThrows) {
-  UsedProducerMock::CallsToCreate = 0;
-  auto testFunc = [](auto Adr) { // Work around for GTest limitation
-    return KafkaW::getKafkaHandle<UsedProducerMock, RdKafka::Conf>(Adr);
-  };
-  EXPECT_THROW(testFunc("some_broker"), MetadataException);
-  EXPECT_EQ(UsedProducerMock::CallsToCreate, 1);
-}
 
 class UsedConfMock : public MockConf {
 public:
@@ -55,10 +38,29 @@ public:
 int UsedConfMock::CallsToCreate = 0;
 int UsedConfMock::CallsToSet = 0;
 
+class CreateKafkaHandleTest : public ::testing::Test {
+  void SetUp() override {
+    UsedProducerMock::CallsToCreate = 0;
+    UsedConfMock::CallsToCreate = 0;
+    UsedConfMock::CallsToSet = 0;
+  }
+};
+
+TEST_F(CreateKafkaHandleTest, OnSuccess) {
+  auto Result =
+      KafkaW::getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>("some_broker");
+  EXPECT_FALSE(Result == nullptr);
+}
+
+TEST_F(CreateKafkaHandleTest, FailureToCreateHandleThrows) {
+  auto testFunc = [](auto Adr) { // Work around for GTest limitation
+    return KafkaW::getKafkaHandle<UsedProducerMock, RdKafka::Conf>(Adr);
+  };
+  EXPECT_THROW(testFunc("some_broker"), MetadataException);
+  EXPECT_EQ(UsedProducerMock::CallsToCreate, 1);
+}
+
 TEST_F(CreateKafkaHandleTest, FailureToSetBrokerThrows) {
-  UsedProducerMock::CallsToCreate = 0;
-  UsedConfMock::CallsToCreate = 0;
-  UsedConfMock::CallsToSet = 0;
   auto testFunc = [](auto Adr) { // Work around for GTest limitation
     return KafkaW::getKafkaHandle<UsedProducerMock, UsedConfMock>(Adr);
   };

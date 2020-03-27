@@ -78,6 +78,15 @@ getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
   return ReturnSet;
 }
 
+template <typename MetaDataType>
+std::vector<int> extractPartitinIDs(MetaDataType TopicMetaData) {
+  std::vector<int> ReturnVector;
+  for (auto const &Partition : *TopicMetaData->partitions()) {
+    ReturnVector.push_back(Partition->id());
+  }
+  return ReturnVector;
+}
+
 template <class KafkaHandle, class KafkaTopic>
 std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
                                            std::string const &Topic,
@@ -97,10 +106,7 @@ std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
         std::to_string(ReturnCode));
   }
   auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
-  std::vector<int> ReturnVector;
-  for (auto const &Partition : *TopicMetaData->partitions()) {
-    ReturnVector.push_back(Partition->id());
-  }
+  auto ReturnVector = extractPartitinIDs(TopicMetaData);
   delete MetadataPtr;
   return ReturnVector;
 }
