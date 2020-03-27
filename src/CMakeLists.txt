@@ -93,7 +93,7 @@ set(kafka_to_nexus_SRC
         Metrics/LogSink.cpp
         Metrics/CarbonSink.cpp
         Status/StatusReporterBase.cpp
-        Stream/PartitionFilter.cpp)
+        Stream/PartitionFilter.cpp
         Status/StatusReporter.cpp
         Stream/MessageWriter.cpp)
 
@@ -149,7 +149,7 @@ set(kafka_to_nexus_INC
         Status/StatusReporter.h
         Status/StatusReporter.cpp
         Status/StatusReporterBase.h
-        Stream/PartitionFilter.h)
+        Stream/PartitionFilter.h
         Status/StatusReporterBase.h
         Stream/MessageWriter.h
         Stream/Message.h
