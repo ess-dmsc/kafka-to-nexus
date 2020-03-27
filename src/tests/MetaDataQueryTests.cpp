@@ -13,7 +13,7 @@
 
 class CreateKafkaHandleTest : public ::testing::Test {};
 
-TEST_F(CreateKafkaHandleTest, Success) {
+TEST_F(CreateKafkaHandleTest, OnSuccess) {
   auto Result =
       KafkaW::getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>("some_broker");
   EXPECT_FALSE(Result == nullptr);
@@ -29,7 +29,7 @@ public:
 };
 int UsedProducerMock::CallsToCreate = 0;
 
-TEST_F(CreateKafkaHandleTest, FailedToCreateHandle) {
+TEST_F(CreateKafkaHandleTest, FailureToCreateHandleThrows) {
   UsedProducerMock::CallsToCreate = 0;
   auto testFunc = [](auto Adr) { // Work around for GTest limitation
     return KafkaW::getKafkaHandle<UsedProducerMock, RdKafka::Conf>(Adr);
@@ -55,7 +55,7 @@ public:
 int UsedConfMock::CallsToCreate = 0;
 int UsedConfMock::CallsToSet = 0;
 
-TEST_F(CreateKafkaHandleTest, FailedToSetBroker) {
+TEST_F(CreateKafkaHandleTest, FailureToSetBrokerThrows) {
   UsedProducerMock::CallsToCreate = 0;
   UsedConfMock::CallsToCreate = 0;
   UsedConfMock::CallsToSet = 0;
@@ -134,7 +134,7 @@ int UsedProducerMockAlt::TimeOut;
 RdKafka::ErrorCode UsedProducerMockAlt::ReturnErrorCode =
     RdKafka::ErrorCode::ERR_NO_ERROR;
 
-TEST_F(GetTopicOffsetTest, Success) {
+TEST_F(GetTopicOffsetTest, OnSuccess) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   std::vector<int> Partitions{4, 5};
   std::vector<std::pair<int, int64_t>> ExpectedResult{{4, RETURN_TIME_OFFSET},
@@ -145,7 +145,7 @@ TEST_F(GetTopicOffsetTest, Success) {
             ExpectedResult);
 }
 
-TEST_F(GetTopicOffsetTest, Failure) {
+TEST_F(GetTopicOffsetTest, OnFailureThrowsAndGetsSetToTimeOut) {
   auto UsedTimeOut{234ms};
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__BAD_MSG;
   EXPECT_THROW(KafkaW::getOffsetForTimeImpl<UsedProducerMockAlt>(
@@ -167,7 +167,7 @@ public:
   }
 };
 
-TEST_F(GetTopicPartitionsTest, Success) {
+TEST_F(GetTopicPartitionsTest, OnSuccess) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   auto ExpectedPartitions = std::vector<int>{1, 3, 5};
   auto ReceivedPartitions =
@@ -176,7 +176,7 @@ TEST_F(GetTopicPartitionsTest, Success) {
   EXPECT_EQ(ReceivedPartitions, ExpectedPartitions);
 }
 
-TEST_F(GetTopicPartitionsTest, MetadataFailure) {
+TEST_F(GetTopicPartitionsTest, OnGetPartitionsFailureThrows) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__TIMED_OUT;
   try {
     KafkaW::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>(
@@ -191,7 +191,7 @@ TEST_F(GetTopicPartitionsTest, MetadataFailure) {
 
 class GetTopicNamesTest : public ::testing::Test {};
 
-TEST_F(GetTopicNamesTest, Success) {
+TEST_F(GetTopicNamesTest, OnSuccess) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   auto ExpectedTopics = std::set<std::string>{"some_topic", "some_other_topic"};
   auto ReceivedTopics =
