@@ -1,11 +1,9 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
-from .flatbufferhelpers import (
-    create_f142_message,
-    create_runstop_message,
-)
+from .flatbufferhelpers import create_f142_message
 from typing import Optional
 import uuid
 from streaming_data_types.run_start_pl72 import serialise_pl72
+from streaming_data_types.run_stop_6s4t import serialise_6s4t
 
 
 def create_producer():
@@ -44,10 +42,9 @@ def publish_run_stop_message(
     stop_time: Optional[int] = None,
     service_id: Optional[str] = None,
 ) -> str:
-    runstop_message = create_runstop_message(
-        job_id, service_id=service_id, stop_time=stop_time
-    )
-    producer.produce(topic, runstop_message)
+    runstop_message = serialise_6s4t(job_id, service_id=service_id, stop_time=stop_time)
+
+    producer.produce(topic, bytes(runstop_message))
     producer.flush()
     return job_id
 
