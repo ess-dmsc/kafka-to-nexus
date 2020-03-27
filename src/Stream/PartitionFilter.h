@@ -33,7 +33,7 @@ public:
   /// \brief Update the stop time.
   void setStopTime(time_point Stop) { StopTime = Stop; }
   /// \brief Applies the stop logic to the current poll status.
-  /// \param[in] CurrentPollStatus The current (last) poll status.
+  /// \param CurrentPollStatus The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
   /// be halted.
   bool shouldStopPartition(KafkaW::PollStatus CurrentPollStatus);
