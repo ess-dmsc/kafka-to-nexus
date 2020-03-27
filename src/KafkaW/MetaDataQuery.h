@@ -21,11 +21,11 @@ using duration = std::chrono::system_clock::duration;
 
 // \brief Query the broker for topic + partition offset of a given timestamp.
 //
-// \param[in] Broker    Address of one or several brokers.
-// \param[in] Topic     Name of topic.
-// \param[in] Partition Partition id.
-// \param[in] Time      Timestamp for which the offset should be found.
-// \param[in] TimeOut   The amount of time to wait for the meta-data call to
+// \param Broker    Address of one or several brokers.
+// \param Topic     Name of topic.
+// \param Partition Partition id.
+// \param Time      Timestamp for which the offset should be found.
+// \param TimeOut   The amount of time to wait for the meta-data call to
 // complete.
 // \return              The closest offset with a timestamp before Time (if
 // available).
@@ -37,9 +37,9 @@ getOffsetForTime(std::string const &Broker, std::string const &Topic,
 
 // \brief Query the broker for partitions available on a specified topic.
 //
-// \param[in] Broker    Address of one or several brokers.
-// \param[in] Topic     Name of topic.
-// \param[in] TimeOut   The amount of time to wait for the meta-data call to
+// \param Broker    Address of one or several brokers.
+// \param Topic     Name of topic.
+// \param TimeOut   The amount of time to wait for the meta-data call to
 // complete.
 // \return              A set of partition ids.
 // \throw               MetadataException if a failure occurs.
@@ -49,8 +49,8 @@ std::vector<int> getPartitionsForTopic(std::string const &Broker,
 
 // \brief Query the broker for available topics.
 //
-// \param[in] Broker    Address of one or several brokers.
-// \param[in] TimeOut   The amount of time to wait for the meta-data call to
+// \param Broker    Address of one or several brokers.
+// \param TimeOut   The amount of time to wait for the meta-data call to
 // complete.
 // \return              A set of topic names.
 // \throw               MetadataException if a failure occurs.
