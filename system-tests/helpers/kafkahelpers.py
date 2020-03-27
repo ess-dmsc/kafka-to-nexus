@@ -1,11 +1,11 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
 from .flatbufferhelpers import (
     create_f142_message,
-    create_runstart_message,
     create_runstop_message,
 )
 from typing import Optional
 import uuid
+from streaming_data_types.run_start_pl72 import serialise_pl72
 
 
 def create_producer():
@@ -30,15 +30,9 @@ def publish_run_start_message(
     with open(nexus_structure_filepath, "r") as nexus_structure_file:
         nexus_structure = nexus_structure_file.read().replace("\n", "")
 
-    runstart_message = create_runstart_message(
-        job_id,
-        nexus_filename,
-        start_time,
-        stop_time,
-        nexus_structure=nexus_structure,
-        service_id=service_id,
-    )
-    producer.produce(topic, runstart_message)
+    runstart_message = serialise_pl72(job_id, nexus_filename, start_time, stop_time,
+                                      nexus_structure=nexus_structure, service_id=service_id)
+    producer.produce(topic, bytes(runstart_message))
     producer.flush()
     return job_id
 
