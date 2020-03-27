@@ -9,55 +9,92 @@
 
 #pragma once
 
+#include "Msg.h"
 #include "logger.h"
 
 namespace FileWriter {
-class BufferTooSmallError : public std::runtime_error {
+class FlatbufferError : public std::runtime_error {
+public:
+  explicit FlatbufferError(std::string const &What)
+      : std::runtime_error(What) {}
+};
+
+class BufferTooSmallError : public FlatbufferError {
 public:
   explicit BufferTooSmallError(const std::string &what)
-      : std::runtime_error(what){};
+      : FlatbufferError(what){};
 };
 
-class UnknownFlatbufferID : public std::runtime_error {
+class UnknownFlatbufferID : public FlatbufferError {
 public:
   explicit UnknownFlatbufferID(const std::string &what)
-      : std::runtime_error(what){};
+      : FlatbufferError(what){};
 };
 
-class InvalidFlatbufferTimestamp : public std::runtime_error {
+class InvalidFlatbufferTimestamp : public FlatbufferError {
 public:
   explicit InvalidFlatbufferTimestamp(const std::string &what)
-      : std::runtime_error(what){};
+      : FlatbufferError(what){};
 };
 
-class NotValidFlatbuffer : public std::runtime_error {
+class NotValidFlatbuffer : public FlatbufferError {
 public:
   explicit NotValidFlatbuffer(const std::string &what)
-      : std::runtime_error(what){};
+      : FlatbufferError(what){};
 };
 
 /// \brief A wrapper around a databuffer which holds a flatbuffer.
 ///
 /// Used to simplify passing around flatbuffers and the most important pieces of
 /// meta-data.
-///
-/// \note Does not take ownership of any pointers. You must make sure to
-/// free the pointers you passed yourself.
 class FlatbufferMessage {
 public:
   using SrcHash = size_t;
 
-  /// Constructor is used in unit testing code to simplify set-up.
+  /// \brief This constructor is used in the unit testing code to simplify
+  /// set-up.
   FlatbufferMessage() = default;
 
-  /// \brief Verifies the data in the flatbuffer to make sure if it is valid.
+  /// \brief Creates a flatbuffer message, verifies the message and extracts
+  /// metadata.
   ///
-  /// \param BufferPtr Pointer to memory location containing flatbuffer.
-  /// \param Size Size of flatbuffer in bytes.
+  /// \note This constructor should be used as little as possible and then only
+  /// in unit tests.
+  ///
+  /// \param BufferPtr Pointer to memory containing the data.
+  /// \param Size Number of bytes in message.
+  /// \note Will make a copy of the data in the Kafka message.
   FlatbufferMessage(uint8_t const *BufferPtr, size_t Size);
 
-  /// Default destructor.
+  /// \brief Creates a flatbuffer message, verifies the message and extracts
+  /// metadata.
+  ///
+  /// \param KafkaMessage The Kafka message used to create the Flatbuffer
+  /// message.
+  /// \note Will make a copy of the data in the Kafka message.
+  explicit FlatbufferMessage(FileWriter::Msg const &KafkaMessage);
+
+  /// \brief Creates a flatbuffer message, verifies the message and extracts
+  /// metadata. Copy constructor version.
+  ///
+  /// \param Other The instance of the FlatbufferMessage that is to be copied.
+  /// \note Will make a copy of the data in the Kafka message.
+  FlatbufferMessage(FlatbufferMessage const &Other);
+
+  /// \\bried Default destructor.
   ~FlatbufferMessage() = default;
+
+  FlatbufferMessage &operator=(FlatbufferMessage const &Other) {
+    DataPtr = std::make_unique<uint8_t[]>(Other.DataSize);
+    std::memcpy(DataPtr.get(), Other.DataPtr.get(), Other.DataSize);
+    DataSize = Other.DataSize;
+    SourceNameIDHash = Other.SourceNameIDHash;
+    Sourcename = Other.Sourcename;
+    ID = Other.ID;
+    Timestamp = Other.Timestamp;
+    Valid = Other.Valid;
+    return *this;
+  }
 
   /// \brief Returns the state of the FlatbufferMessage.
   ///
@@ -96,7 +133,7 @@ public:
   ///
   /// \return Pointer to flatbuffer data if flatbuffer is valid, `nullptr` if it
   /// is not.
-  uint8_t const *data() const { return DataPtr; };
+  uint8_t const *data() const { return DataPtr.get(); };
 
   /// \brief Get size of flatbuffer.
   ///
@@ -106,8 +143,8 @@ public:
 
 private:
   void extractPacketInfo();
-  uint8_t const *const DataPtr{nullptr};
-  size_t const DataSize{0};
+  std::unique_ptr<uint8_t[]> DataPtr;
+  size_t DataSize{0};
   SrcHash SourceNameIDHash{0};
   std::string Sourcename;
   std::string ID;

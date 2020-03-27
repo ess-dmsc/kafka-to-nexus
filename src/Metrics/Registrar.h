@@ -25,7 +25,7 @@ public:
 
   void registerMetric(Metric &NewMetric, std::vector<LogTo> const &SinkTypes);
 
-  Registrar getNewRegistrar(std::string const &MetricsPrefix);
+  Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
 
 private:
   std::string prependPrefix(std::string const &Name) const;

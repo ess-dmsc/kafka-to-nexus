@@ -12,10 +12,25 @@
 
 namespace FileWriter {
 
-FlatbufferMessage::FlatbufferMessage(uint8_t const *const BufferPtr,
-                                     size_t const Size)
-    : DataPtr(BufferPtr), DataSize(Size) {
+FlatbufferMessage::FlatbufferMessage(uint8_t const *BufferPtr, size_t Size)
+    : DataPtr(std::make_unique<uint8_t[]>(Size)), DataSize(Size) {
+  std::memcpy(DataPtr.get(), BufferPtr, DataSize);
   extractPacketInfo();
+}
+
+FlatbufferMessage::FlatbufferMessage(FileWriter::Msg const &KafkaMessage)
+    : DataPtr(std::make_unique<uint8_t[]>(KafkaMessage.size())),
+      DataSize(KafkaMessage.size()) {
+  std::memcpy(DataPtr.get(), KafkaMessage.data(), DataSize);
+  extractPacketInfo();
+}
+
+FlatbufferMessage::FlatbufferMessage(FlatbufferMessage const &Other)
+    : DataPtr(std::make_unique<uint8_t[]>(Other.size())),
+      DataSize(Other.size()), SourceNameIDHash(Other.SourceNameIDHash),
+      Sourcename(Other.Sourcename), ID(Other.ID), Timestamp(Other.Timestamp),
+      Valid(Other.Valid) {
+  std::memcpy(DataPtr.get(), Other.data(), DataSize);
 }
 
 FlatbufferMessage::SrcHash calcSourceHash(std::string const &ID,

@@ -24,8 +24,7 @@ void Registrar::registerMetric(Metric &NewMetric,
   }
 }
 
-// cppcheck-suppress unusedFunction
-Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) {
+Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
   std::vector<std::shared_ptr<Reporter>> Reporters;
   Reporters.reserve(ReporterList.size());
 
