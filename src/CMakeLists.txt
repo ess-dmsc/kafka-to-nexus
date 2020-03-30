@@ -75,6 +75,8 @@ set(kafka_to_nexus_SRC
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
         KafkaW/ConsumerFactory.cpp
+        KafkaW/MetaDataQuery.cpp
+        KafkaW/MetaDataQueryImpl.cpp
         helper.cpp
         URI.cpp
         FlatbufferMessage.cpp
@@ -118,6 +120,8 @@ set(kafka_to_nexus_INC
         KafkaW/KafkaEventCb.h
         KafkaW/MetadataException.h
         KafkaW/ConsumerFactory.h
+        KafkaW/MetaDataQuery.h
+        KafkaW/MetaDataQueryImpl.h
         logger.h
         MainOpt.h
         Master.h
