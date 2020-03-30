@@ -30,12 +30,6 @@ public:
     DestIDs.push_back(NewDestination);
   };
 
-  /// \brief Passes message through filter and sends to writer queue if it
-  /// passes.
-  ///
-  /// \param InMsg The flatbuffer message that is to be filtered.
-  /// \return True if message passed the filter. False otherwise.
-
   virtual bool filterMessage(FileWriter::FlatbufferMessage &&InMsg);
   void setStopTime(time_point StopTime);
   time_point getStopTime() { return Stop; }
