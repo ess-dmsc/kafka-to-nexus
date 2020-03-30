@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include "KafkaW/MetadataException.h"
+#include "Kafka/MetadataException.h"
 #include <chrono>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <set>
 #include <string>
 
-namespace KafkaW {
+namespace Kafka {
 using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
 
@@ -134,4 +134,4 @@ std::set<std::string> getTopicListImpl(std::string const &Broker,
   return TopicNames;
 }
 
-} // namespace KafkaW
+} // namespace Kafka

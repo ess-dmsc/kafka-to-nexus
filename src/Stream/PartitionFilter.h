@@ -11,7 +11,7 @@
 
 #include <chrono>
 
-namespace KafkaW {
+namespace Kafka {
 enum class PollStatus;
 }
 
@@ -39,7 +39,7 @@ public:
   /// \param CurrentPollStatus The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
   /// be halted.
-  bool shouldStopPartition(KafkaW::PollStatus CurrentPollStatus);
+  bool shouldStopPartition(Kafka::PollStatus CurrentPollStatus);
 
   /// \brief Check if we currently have an error state.
   bool hasErrorState() const { return HasError; }

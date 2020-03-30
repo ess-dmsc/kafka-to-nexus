@@ -7,10 +7,10 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "KafkaW/MetaDataQueryImpl.h"
+#include "Kafka/MetaDataQueryImpl.h"
 #include <algorithm>
 
-namespace KafkaW {
+namespace Kafka {
 const RdKafka::TopicMetadata *
 findKafkaTopic(const std::string &Topic,
                const RdKafka::Metadata *KafkaMetadata) {
@@ -25,4 +25,4 @@ findKafkaTopic(const std::string &Topic,
   }
   return *Iterator;
 }
-} // namespace KafkaW
+} // namespace Kafka

@@ -7,11 +7,11 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "KafkaW/MetaDataQuery.h"
-#include "KafkaW/MetaDataQueryImpl.h"
-#include "KafkaW/MetadataException.h"
+#include "Kafka/MetaDataQuery.h"
+#include "Kafka/MetaDataQueryImpl.h"
+#include "Kafka/MetadataException.h"
 
-namespace KafkaW {
+namespace Kafka {
 
 using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
@@ -36,4 +36,4 @@ std::set<std::string> getTopicList(std::string const &Broker,
   return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut);
 }
 
-} // namespace KafkaW
+} // namespace Kafka

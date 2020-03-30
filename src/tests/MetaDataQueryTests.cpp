@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "KafkaW/MetaDataQueryImpl.h"
+#include "Kafka/MetaDataQueryImpl.h"
 #include "helpers/KafkaWMocks.h"
 #include <gtest/gtest.h>
 
@@ -48,13 +48,13 @@ class CreateKafkaHandleTest : public ::testing::Test {
 
 TEST_F(CreateKafkaHandleTest, OnSuccess) {
   auto Result =
-      KafkaW::getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>("some_broker");
+      Kafka::getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>("some_broker");
   EXPECT_FALSE(Result == nullptr);
 }
 
 TEST_F(CreateKafkaHandleTest, FailureToCreateHandleThrows) {
   auto testFunc = [](auto Adr) { // Work around for GTest limitation
-    return KafkaW::getKafkaHandle<UsedProducerMock, RdKafka::Conf>(Adr);
+    return Kafka::getKafkaHandle<UsedProducerMock, RdKafka::Conf>(Adr);
   };
   EXPECT_THROW(testFunc("some_broker"), MetadataException);
   EXPECT_EQ(UsedProducerMock::CallsToCreate, 1);
@@ -62,7 +62,7 @@ TEST_F(CreateKafkaHandleTest, FailureToCreateHandleThrows) {
 
 TEST_F(CreateKafkaHandleTest, FailureToSetBrokerThrows) {
   auto testFunc = [](auto Adr) { // Work around for GTest limitation
-    return KafkaW::getKafkaHandle<UsedProducerMock, UsedConfMock>(Adr);
+    return Kafka::getKafkaHandle<UsedProducerMock, UsedConfMock>(Adr);
   };
   EXPECT_THROW(testFunc("some_broker"), MetadataException);
   EXPECT_EQ(UsedConfMock::CallsToCreate, 1);
@@ -141,7 +141,7 @@ TEST_F(GetTopicOffsetTest, OnSuccess) {
   std::vector<int> Partitions{4, 5};
   std::vector<std::pair<int, int64_t>> ExpectedResult{{4, RETURN_TIME_OFFSET},
                                                       {5, RETURN_TIME_OFFSET}};
-  EXPECT_EQ(KafkaW::getOffsetForTimeImpl<UsedProducerMockAlt>(
+  EXPECT_EQ(Kafka::getOffsetForTimeImpl<UsedProducerMockAlt>(
                 "Some_broker", "some_topic", Partitions,
                 std::chrono::system_clock::now(), 10ms),
             ExpectedResult);
@@ -150,7 +150,7 @@ TEST_F(GetTopicOffsetTest, OnSuccess) {
 TEST_F(GetTopicOffsetTest, OnFailureThrowsAndGetsSetToTimeOut) {
   auto UsedTimeOut{234ms};
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__BAD_MSG;
-  EXPECT_THROW(KafkaW::getOffsetForTimeImpl<UsedProducerMockAlt>(
+  EXPECT_THROW(Kafka::getOffsetForTimeImpl<UsedProducerMockAlt>(
                    "Some_broker", "some_topic", {4},
                    std::chrono::system_clock::now(), UsedTimeOut),
                MetadataException);
@@ -173,7 +173,7 @@ TEST_F(GetTopicPartitionsTest, OnSuccess) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   auto ExpectedPartitions = std::vector<int>{1, 3, 5};
   auto ReceivedPartitions =
-      KafkaW::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>(
+      Kafka::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>(
           "Some_broker", "some_topic", 10ms);
   EXPECT_EQ(ReceivedPartitions, ExpectedPartitions);
 }
@@ -181,7 +181,7 @@ TEST_F(GetTopicPartitionsTest, OnSuccess) {
 TEST_F(GetTopicPartitionsTest, OnGetPartitionsFailureThrows) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__TIMED_OUT;
   EXPECT_THROW(
-      (KafkaW::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>(
+      (Kafka::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>(
           "Some_broker", "some_topic", 10ms)),
       MetadataException);
 }
@@ -192,13 +192,13 @@ TEST_F(GetTopicNamesTest, OnSuccess) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   auto ExpectedTopics = std::set<std::string>{"some_topic", "some_other_topic"};
   auto ReceivedTopics =
-      KafkaW::getTopicListImpl<UsedProducerMockAlt>("Some_broker", 10ms);
+      Kafka::getTopicListImpl<UsedProducerMockAlt>("Some_broker", 10ms);
   EXPECT_EQ(ReceivedTopics, ExpectedTopics);
 }
 
 TEST_F(GetTopicNamesTest, MetadataFailure) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__TIMED_OUT;
   EXPECT_THROW(
-      KafkaW::getTopicListImpl<UsedProducerMockAlt>("Some_broker", 10ms),
+      Kafka::getTopicListImpl<UsedProducerMockAlt>("Some_broker", 10ms),
       MetadataException);
 }

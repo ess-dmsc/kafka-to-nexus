@@ -14,7 +14,7 @@
 #include <set>
 #include <string>
 
-namespace KafkaW {
+namespace Kafka {
 
 using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
@@ -30,4 +30,4 @@ std::vector<int> getPartitionsForTopic(std::string const &Broker,
 
 std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut);
 
-} // namespace KafkaW
+} // namespace Kafka

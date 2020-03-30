@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "PartitionFilter.h"
-#include "KafkaW/PollStatus.h"
+#include "Kafka/PollStatus.h"
 
 namespace Stream {
 
@@ -24,17 +24,17 @@ PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
 }
 
 bool PartitionFilter::shouldStopPartition(
-    KafkaW::PollStatus CurrentPollStatus) {
+    Kafka::PollStatus CurrentPollStatus) {
   switch (CurrentPollStatus) {
-  case KafkaW::PollStatus::Empty:
-  case KafkaW::PollStatus::Message:
-  case KafkaW::PollStatus::TimedOut:
+  case Kafka::PollStatus::Empty:
+  case Kafka::PollStatus::Message:
+  case Kafka::PollStatus::TimedOut:
     HasError = false;
     return false;
-  case KafkaW::PollStatus::EndOfPartition:
+  case Kafka::PollStatus::EndOfPartition:
     HasError = false;
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
-  case KafkaW::PollStatus::Error:
+  case Kafka::PollStatus::Error:
     if (not HasError) {
       HasError = true;
       ErrorTime = std::chrono::system_clock::now();

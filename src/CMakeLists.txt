@@ -71,12 +71,12 @@ set(kafka_to_nexus_SRC
         DemuxTopic.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
-        KafkaW/Consumer.cpp
-        KafkaW/Producer.cpp
-        KafkaW/ProducerTopic.cpp
-        KafkaW/ConsumerFactory.cpp
-        KafkaW/MetaDataQuery.cpp
-        KafkaW/MetaDataQueryImpl.cpp
+        Kafka/Consumer.cpp
+        Kafka/Producer.cpp
+        Kafka/ProducerTopic.cpp
+        Kafka/ConsumerFactory.cpp
+        Kafka/MetaDataQuery.cpp
+        Kafka/MetaDataQueryImpl.cpp
         helper.cpp
         URI.cpp
         FlatbufferMessage.cpp
@@ -108,18 +108,18 @@ set(kafka_to_nexus_INC
         WriterModuleBase.h
         helper.h
         json.h
-        KafkaW/BrokerSettings.h
-        KafkaW/Consumer.h
-        KafkaW/Producer.h
-        KafkaW/ProducerTopic.h
-        KafkaW/PollStatus.h
-        KafkaW/ProducerStats.h
-        KafkaW/ProducerMessage.h
-        KafkaW/KafkaEventCb.h
-        KafkaW/MetadataException.h
-        KafkaW/ConsumerFactory.h
-        KafkaW/MetaDataQuery.h
-        KafkaW/MetaDataQueryImpl.h
+        Kafka/BrokerSettings.h
+        Kafka/Consumer.h
+        Kafka/Producer.h
+        Kafka/ProducerTopic.h
+        Kafka/PollStatus.h
+        Kafka/ProducerStats.h
+        Kafka/ProducerMessage.h
+        Kafka/KafkaEventCb.h
+        Kafka/MetadataException.h
+        Kafka/ConsumerFactory.h
+        Kafka/MetaDataQuery.h
+        Kafka/MetaDataQueryImpl.h
         logger.h
         MainOpt.h
         Master.h
