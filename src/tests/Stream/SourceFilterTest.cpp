@@ -12,8 +12,8 @@
 
 #include "FlatbufferReader.h"
 #include "Stream/SourceFilter.h"
-#include "helpers/SetExtractorModule.h"
 #include "WriterModule/template/TemplateWriter.h"
+#include "helpers/SetExtractorModule.h"
 #include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
