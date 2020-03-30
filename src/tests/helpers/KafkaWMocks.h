@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #pragma once
-#include "KafkaW/ProducerTopic.h"
+#include "Kafka/ProducerTopic.h"
 #include <librdkafka/rdkafkacpp.h>
 #include <trompeloeil.hpp>
 
@@ -52,7 +52,7 @@ public:
   RdKafka::ErrorCode ErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   RdKafka::Metadata *MetadataPtr = nullptr;
 
-  // KafkaW::Consumer may be calling this method multiple times in case
+  // Kafka::Consumer may be calling this method multiple times in case
   // RdKafka::ERR_TRANSPORT is returned. After few unsuccessful calls
   // ERR_NO_ERROR is returned to simulate established connection.
   RdKafka::ErrorCode metadata(bool, const RdKafka::Topic *,

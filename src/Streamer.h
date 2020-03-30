@@ -14,7 +14,7 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "KafkaW/Consumer.h"
+#include "Kafka/Consumer.h"
 #include "StreamStatus.h"
 #include "StreamerOptions.h"
 #include "logger.h"
@@ -23,7 +23,7 @@
 
 namespace FileWriter {
 class DemuxTopic;
-using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
+using ConsumerPtr = std::unique_ptr<Kafka::ConsumerInterface>;
 using DemuxPtr = std::shared_ptr<DemuxTopic>;
 
 /// \brief Connect to kafka topics eventually at a given point in time
@@ -55,7 +55,7 @@ public:
   /// \param MessageProcessor instance of the policy that describe how to
   /// process the message
   /// \param KafkaMessage the received message
-  void processMessage(std::pair<KafkaW::PollStatus, Msg> &KafkaMessage);
+  void processMessage(std::pair<Kafka::PollStatus, Msg> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.
@@ -107,7 +107,7 @@ private:
                  std::chrono::milliseconds StopTime,
                  std::string const &TopicName);
 
-  std::pair<KafkaW::PollStatus, Msg> poll();
+  std::pair<Kafka::PollStatus, Msg> poll();
 
   /// Checks whether current message means we've now reached the stop offsets
   bool stopOffsetsNowReached(int32_t NewMessagePartition,

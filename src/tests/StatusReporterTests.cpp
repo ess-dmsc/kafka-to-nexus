@@ -12,17 +12,17 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 
-class ProducerStandIn : public KafkaW::Producer {
+class ProducerStandIn : public Kafka::Producer {
 public:
-  explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
+  explicit ProducerStandIn(Kafka::BrokerSettings &Settings)
       : Producer(Settings){};
   using Producer::ProducerID;
   using Producer::ProducerPtr;
 };
 
-class ProducerTopicStandIn : public KafkaW::ProducerTopic {
+class ProducerTopicStandIn : public Kafka::ProducerTopic {
 public:
-  ProducerTopicStandIn(std::shared_ptr<KafkaW::Producer> ProducerPtr,
+  ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
                        std::string const &TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
   int produce(const std::string & /*MsgData*/) override { return 0; }
@@ -31,11 +31,11 @@ public:
 class StatusReporterTests : public ::testing::Test {
 public:
   void SetUp() override {
-    KafkaW::BrokerSettings BrokerSettings;
-    std::shared_ptr<KafkaW::Producer> Producer =
+    Kafka::BrokerSettings BrokerSettings;
+    std::shared_ptr<Kafka::Producer> Producer =
         std::make_shared<ProducerStandIn>(BrokerSettings);
 
-    std::unique_ptr<KafkaW::ProducerTopic> ProducerTopic =
+    std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     ReporterPtr = std::make_unique<Status::StatusReporterBase>(
         std::chrono::milliseconds{100}, std::move(ProducerTopic));

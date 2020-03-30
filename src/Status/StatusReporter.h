@@ -18,7 +18,7 @@ namespace Status {
 class StatusReporter : public StatusReporterBase {
 public:
   StatusReporter(std::chrono::milliseconds Interval,
-                 std::unique_ptr<KafkaW::ProducerTopic> &StatusProducerTopic)
+                 std::unique_ptr<Kafka::ProducerTopic> &StatusProducerTopic)
       : StatusReporterBase(Interval, std::move(StatusProducerTopic)), IO(),
         AsioTimer(IO, Interval) {
     this->start();

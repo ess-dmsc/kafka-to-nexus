@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include "KafkaW/BrokerSettings.h"
+#include "Kafka/BrokerSettings.h"
 #include <chrono>
 
 namespace FileWriter {
 
 /// Contains configuration parameters for the Streamer
 struct StreamerOptions {
-  KafkaW::BrokerSettings BrokerSettings;
+  Kafka::BrokerSettings BrokerSettings;
   std::chrono::milliseconds StartTimestamp{0};
   std::chrono::milliseconds StopTimestamp{0};
   std::chrono::milliseconds BeforeStartTime{1000};

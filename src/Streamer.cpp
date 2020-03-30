@@ -9,7 +9,7 @@
 
 #include "Streamer.h"
 #include "DemuxTopic.h"
-#include "KafkaW/PollStatus.h"
+#include "Kafka/PollStatus.h"
 #include "Msg.h"
 #include "helper.h"
 
@@ -238,8 +238,7 @@ Streamer::createFlatBufferMessage(uint8_t const *Data, size_t Size) {
   return FBMessage;
 }
 
-void Streamer::processMessage(
-    std::pair<KafkaW::PollStatus, Msg> &KafkaMessage) {
+void Streamer::processMessage(std::pair<Kafka::PollStatus, Msg> &KafkaMessage) {
 
   if (auto const FBMessage = createFlatBufferMessage(
           KafkaMessage.second.data(), KafkaMessage.second.size())) {
@@ -263,12 +262,12 @@ void Streamer::processMessage(
   }
 }
 
-std::pair<KafkaW::PollStatus, Msg> Streamer::poll() {
+std::pair<Kafka::PollStatus, Msg> Streamer::poll() {
   if (Consumer == nullptr && ConsumerInitialised.valid()) {
     auto ready = ifConsumerIsReadyThenAssignIt();
     if (!ready) {
       // Not ready, so try again on next poll
-      return {KafkaW::PollStatus::Empty, Msg()};
+      return {Kafka::PollStatus::Empty, Msg()};
     }
   }
 
@@ -289,7 +288,7 @@ void Streamer::process() {
     return;
   }
 
-  if (KafkaMessage.first != KafkaW::PollStatus::Message) {
+  if (KafkaMessage.first != Kafka::PollStatus::Message) {
     return;
   }
   processMessage(KafkaMessage);
