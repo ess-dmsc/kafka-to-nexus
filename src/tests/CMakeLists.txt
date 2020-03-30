@@ -33,6 +33,7 @@ set(UnitTests_SRC
         MasterTests.cpp
         StreamerTests.cpp
         MetaDataQueryTests.cpp
+        Stream/PartitionFilterTest.cpp
         Stream/MessageWriterTests.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
