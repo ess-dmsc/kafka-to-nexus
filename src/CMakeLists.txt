@@ -95,7 +95,9 @@ set(kafka_to_nexus_SRC
         Status/StatusReporterBase.cpp
         Stream/PartitionFilter.cpp
         Status/StatusReporter.cpp
-        Stream/MessageWriter.cpp)
+        Stream/MessageWriter.cpp
+        Stream/SourceFilter.cpp
+        )
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -153,6 +155,7 @@ set(kafka_to_nexus_INC
         Status/StatusReporterBase.h
         Stream/MessageWriter.h
         Stream/Message.h
+        Stream/SourceFilter.h
         ThreadedExecutor.h)
 
 add_library(kafka_to_nexus__objects OBJECT
