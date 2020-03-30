@@ -180,15 +180,7 @@ TEST_F(GetTopicPartitionsTest, OnSuccess) {
 
 TEST_F(GetTopicPartitionsTest, OnGetPartitionsFailureThrows) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__TIMED_OUT;
-  try {
-    KafkaW::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>(
-        "Some_broker", "some_topic", 10ms);
-    FAIL() << "Did not throw";
-  } catch (MetadataException &E) {
-    SUCCEED();
-  } catch (std::exception &E) {
-    FAIL() << "Got the wrong exception.";
-  }
+  EXPECT_THROW( (KafkaW::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>( "Some_broker", "some_topic", 10ms)), MetadataException);
 }
 
 class GetTopicNamesTest : public ::testing::Test {};

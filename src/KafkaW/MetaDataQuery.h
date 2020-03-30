@@ -19,41 +19,15 @@ namespace KafkaW {
 using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
 
-// \brief Query the broker for topic + partition offset of a given timestamp.
-//
-// \param Broker    Address of one or several brokers.
-// \param Topic     Name of topic.
-// \param Partition Partition id.
-// \param Time      Timestamp for which the offset should be found.
-// \param TimeOut   The amount of time to wait for the meta-data call to
-// complete.
-// \return              The closest offset with a timestamp before Time (if
-// available).
-// \throw MetadataException if a failure occurs.
 std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> const &Partitions, time_point Time,
                  duration TimeOut);
 
-// \brief Query the broker for partitions available on a specified topic.
-//
-// \param Broker    Address of one or several brokers.
-// \param Topic     Name of topic.
-// \param TimeOut   The amount of time to wait for the meta-data call to
-// complete.
-// \return              A set of partition ids.
-// \throw               MetadataException if a failure occurs.
 std::vector<int> getPartitionsForTopic(std::string const &Broker,
                                        std::string const &Topic,
                                        duration TimeOut);
 
-// \brief Query the broker for available topics.
-//
-// \param Broker    Address of one or several brokers.
-// \param TimeOut   The amount of time to wait for the meta-data call to
-// complete.
-// \return              A set of topic names.
-// \throw               MetadataException if a failure occurs.
 std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut);
 
 } // namespace KafkaW
