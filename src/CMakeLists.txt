@@ -75,6 +75,8 @@ set(kafka_to_nexus_SRC
         Kafka/Producer.cpp
         Kafka/ProducerTopic.cpp
         Kafka/ConsumerFactory.cpp
+        Kafka/MetaDataQuery.cpp
+        Kafka/MetaDataQueryImpl.cpp
         helper.cpp
         URI.cpp
         FlatbufferMessage.cpp
@@ -90,7 +92,10 @@ set(kafka_to_nexus_SRC
         Metrics/CarbonConnection.cpp
         Metrics/LogSink.cpp
         Metrics/CarbonSink.cpp
-        Status/StatusReporterBase.cpp)
+        Status/StatusReporterBase.cpp
+        Stream/PartitionFilter.cpp
+        Status/StatusReporter.cpp
+        Stream/MessageWriter.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -113,6 +118,8 @@ set(kafka_to_nexus_INC
         Kafka/KafkaEventCb.h
         Kafka/MetadataException.h
         Kafka/ConsumerFactory.h
+        Kafka/MetaDataQuery.h
+        Kafka/MetaDataQueryImpl.h
         logger.h
         MainOpt.h
         Master.h
@@ -141,7 +148,12 @@ set(kafka_to_nexus_INC
         Status/StatusInfo.h
         Status/StatusReporter.h
         Status/StatusReporter.cpp
-        Status/StatusReporterBase.h)
+        Status/StatusReporterBase.h
+        Stream/PartitionFilter.h
+        Status/StatusReporterBase.h
+        Stream/MessageWriter.h
+        Stream/Message.h
+        ThreadedExecutor.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

@@ -38,7 +38,7 @@ void addWriterModule(std::string const &FlatbufferID,
                      std::string const &ModuleName, ModuleFactory Value);
 
 /// \brief Get module factory for a module name.
-/// \param[in] ModuleName Module name of module instantiated by
+/// \param ModuleName Module name of module instantiated by
 /// factory function.
 /// \return A module factory and flatbuffer id that this module will accept.
 /// \throw std::runtime_error if module name does not exist.
