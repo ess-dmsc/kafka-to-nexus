@@ -32,7 +32,7 @@ public:
 
   virtual bool filterMessage(FileWriter::FlatbufferMessage &&InMsg);
   void setStopTime(time_point StopTime);
-  time_point getStopTime() { return Stop; }
+  time_point getStopTime() const { return Stop; }
   virtual bool hasFinished() const;
 
 protected:
