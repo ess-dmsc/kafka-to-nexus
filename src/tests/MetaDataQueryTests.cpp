@@ -180,7 +180,10 @@ TEST_F(GetTopicPartitionsTest, OnSuccess) {
 
 TEST_F(GetTopicPartitionsTest, OnGetPartitionsFailureThrows) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__TIMED_OUT;
-  EXPECT_THROW( (KafkaW::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>( "Some_broker", "some_topic", 10ms)), MetadataException);
+  EXPECT_THROW(
+      (KafkaW::getPartitionsForTopicImpl<UsedProducerMockAlt, TopicMockAlt>(
+          "Some_broker", "some_topic", 10ms)),
+      MetadataException);
 }
 
 class GetTopicNamesTest : public ::testing::Test {};
