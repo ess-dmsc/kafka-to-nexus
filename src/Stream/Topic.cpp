@@ -23,7 +23,7 @@ Topic::Topic(KafkaW::BrokerSettings const &Settings, std::string const &Topic,
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
-      StopLeeway(StopTimeLeeway), KafkaErrorTimeout(Settings.KafkaErrorTimeout),
+      StopLeeway(StopTimeLeeway),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
       Registrar(RegisterMetric.getNewRegistrar(Topic)) {}
 
@@ -125,7 +125,7 @@ void Topic::createStreams(
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,
         CRegistrar, StartConsumeTime, StopConsumeTime, StopLeeway,
-        KafkaErrorTimeout);
+        Settings.KafkaErrorTimeout);
     TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));
   }

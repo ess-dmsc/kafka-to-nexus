@@ -44,7 +44,6 @@ protected:
   duration StartLeeway;
   time_point StopConsumeTime;
   duration StopLeeway;
-  duration KafkaErrorTimeout;
   duration CurrentMetadataTimeOut;
   Metrics::Registrar Registrar;
 

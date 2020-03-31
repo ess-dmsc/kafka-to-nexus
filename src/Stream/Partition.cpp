@@ -20,8 +20,8 @@ Partition::Partition(std::unique_ptr<KafkaW::ConsumerInterface> Consumer,
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
-  if (time_point::max() - StopTime <=
-      StopTimeLeeway) { // Deal with potential overflow problem
+  // Deal with potential overflow problem
+  if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
   }
 
