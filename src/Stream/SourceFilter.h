@@ -18,8 +18,10 @@
 namespace Stream {
 
 using time_point = std::chrono::system_clock::time_point;
-uint64_t toNanoSec(time_point Time);
+uint64_t toNanoSeconds(time_point Time);
 
+/// \brief Pass messages to the writer thread based on timestamp of message
+/// and if there are any destinations in the file for the data.
 class SourceFilter {
 public:
   SourceFilter() = default;

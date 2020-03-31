@@ -29,7 +29,7 @@ void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
 
 bool SourceFilter::hasFinished() const { return IsDone; }
 
-uint64_t toNanoSec(time_point Time) {
+uint64_t toNanoSeconds(time_point Time) {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
              Time.time_since_epoch())
       .count();
@@ -56,14 +56,14 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
   }
   CurrentTimeStamp = InMsg.getTimestamp();
 
-  if (CurrentTimeStamp < toNanoSec(Start)) {
+  if (CurrentTimeStamp < toNanoSeconds(Start)) {
     if (BufferedMessage.isValid()) {
       MessagesDiscarded++;
     }
     BufferedMessage = InMsg;
     return false;
   }
-  if (CurrentTimeStamp > toNanoSec(Stop)) {
+  if (CurrentTimeStamp > toNanoSeconds(Stop)) {
     IsDone = true;
   }
   sendBufferedMessage();
