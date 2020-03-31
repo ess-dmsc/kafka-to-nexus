@@ -63,15 +63,11 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
     BufferedMessage = InMsg;
     return false;
   }
-  if (CurrentTimeStamp > toNanoSec(Start) and
-      CurrentTimeStamp < toNanoSec(Stop)) {
-    sendBufferedMessage();
-    sendMessage(InMsg);
-    return true;
+  if (CurrentTimeStamp > toNanoSec(Stop)) {
+    IsDone = true;
   }
   sendBufferedMessage();
   sendMessage(InMsg);
-  IsDone = true;
   return true;
 }
 
