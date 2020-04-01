@@ -37,7 +37,7 @@ struct MainOpt {
   std::string ServiceID;
 
   /// \brief Streamer options are parsed from the configuration file and passed
-  /// on to the StreamMaster.
+  /// on to the StreamController.
   FileWriter::StreamerOptions StreamerConfiguration;
 
   /// Command line argument to print application version and exit.
