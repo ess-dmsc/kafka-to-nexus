@@ -34,11 +34,13 @@ struct Msg {
       : DataPtr(std::move(Other.DataPtr)), Size(Other.Size),
         MetaData(Other.MetaData) {}
   Msg(char const *Data, size_t Bytes, MessageMetaData MessageInfo = {})
-      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes), MetaData(MessageInfo) {
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes),
+        MetaData(MessageInfo) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
   }
   Msg(uint8_t const *Data, size_t Bytes, MessageMetaData MessageInfo = {})
-      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes), MetaData(MessageInfo) {
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes),
+        MetaData(MessageInfo) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
   }
   Msg &operator=(Msg const &Other) {
@@ -63,6 +65,7 @@ struct Msg {
     return Size;
   }
   MessageMetaData const getMetaData() const { return MetaData; }
+
 protected:
   std::unique_ptr<char[]> DataPtr{nullptr};
   size_t Size{0};

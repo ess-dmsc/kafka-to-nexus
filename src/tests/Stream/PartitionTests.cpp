@@ -222,10 +222,13 @@ TEST_F(PartitionTest, PollingWithMessageNoFilter) {
 }
 
 TEST_F(PartitionTest, PollingWithMessageBeforeStart) {
-  FileWriter::MessageMetaData MetaData{std::chrono::duration_cast<std::chrono::milliseconds>(
-      (Start - 10s).time_since_epoch()), RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  FileWriter::MessageMetaData MetaData{
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Start - 10s).time_since_epoch()),
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+  ConsumerStandIn::PollReturnType PollReturn{
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
@@ -238,10 +241,13 @@ TEST_F(PartitionTest, PollingWithMessageBeforeStart) {
 }
 
 TEST_F(PartitionTest, PollingWithMessageAfterStart) {
-  FileWriter::MessageMetaData MetaData{std::chrono::duration_cast<std::chrono::milliseconds>(
-      (Start + 10s).time_since_epoch()), RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  FileWriter::MessageMetaData MetaData{
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Start + 10s).time_since_epoch()),
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+  ConsumerStandIn::PollReturnType PollReturn{
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
@@ -255,10 +261,13 @@ TEST_F(PartitionTest, PollingWithMessageAfterStart) {
 
 TEST_F(PartitionTest, PollingWithMessageAfterStop) {
   Stop = Start + 20s;
-  FileWriter::MessageMetaData MetaData{std::chrono::duration_cast<std::chrono::milliseconds>(
-      (Stop + 5s).time_since_epoch()), RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  FileWriter::MessageMetaData MetaData{
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Stop + 5s).time_since_epoch()),
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+  ConsumerStandIn::PollReturnType PollReturn{
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
@@ -272,10 +281,13 @@ TEST_F(PartitionTest, PollingWithMessageAfterStop) {
 
 TEST_F(PartitionTest, PollingWithMessageAfterStopPlusLeeway) {
   Stop = Start + 20s;
-  FileWriter::MessageMetaData MetaData{std::chrono::duration_cast<std::chrono::milliseconds>(
-      (Stop + 5s + StopLeeway).time_since_epoch()), RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  FileWriter::MessageMetaData MetaData{
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Stop + 5s + StopLeeway).time_since_epoch()),
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+  ConsumerStandIn::PollReturnType PollReturn{
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, processMessage(_)).TIMES(1);
@@ -289,10 +301,13 @@ TEST_F(PartitionTest, PollingWithMessageAfterStopPlusLeeway) {
 
 TEST_F(PartitionTest, PollingWithErrorState) {
   Stop = Start + 20s;
-  FileWriter::MessageMetaData MetaData{std::chrono::duration_cast<std::chrono::milliseconds>(
-      (Stop + 5s + StopLeeway).time_since_epoch()), RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  FileWriter::MessageMetaData MetaData{
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          (Stop + 5s + StopLeeway).time_since_epoch()),
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{Kafka::PollStatus::Error, FileWriter::Msg{TempPointer, 0, MetaData}};
+  ConsumerStandIn::PollReturnType PollReturn{
+      Kafka::PollStatus::Error, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, shouldStopBasedOnPollStatus(_))

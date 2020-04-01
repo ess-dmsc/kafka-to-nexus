@@ -342,8 +342,9 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
           std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
           KafkaMsg->timestamp().type, KafkaMsg->offset(),
           KafkaMsg->partition()};
-      auto RetMsg = FileWriter::Msg(
-          reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(), MetaData);
+      auto RetMsg =
+          FileWriter::Msg(reinterpret_cast<const char *>(KafkaMsg->payload()),
+                          KafkaMsg->len(), MetaData);
       return {PollStatus::Message, std::move(RetMsg)};
     } else {
       return {PollStatus::Empty, FileWriter::Msg()};
