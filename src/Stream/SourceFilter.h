@@ -22,6 +22,9 @@ uint64_t toNanoSeconds(time_point Time);
 
 /// \brief Pass messages to the writer thread based on timestamp of message
 /// and if there are any destinations in the file for the data.
+/// SourceFilter buffers a message such that, when used in conjunction with the
+/// periodic-update feature of the Forwarder, the writer module should always be
+/// able to record at least the data from a single message.
 class SourceFilter {
 public:
   SourceFilter() = default;
