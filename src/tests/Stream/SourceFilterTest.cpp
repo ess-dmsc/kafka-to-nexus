@@ -91,12 +91,11 @@ TEST_F(SourceFilterTest, InvalidMessage) {
   EXPECT_FALSE(UnderTest->hasFinished());
 }
 
-TEST_F(SourceFilterTest, MessageNoDest) {
+TEST_F(SourceFilterTest, MessageWithNoDest) {
   FORBID_CALL(Writer, addMessage(_));
   auto UnderTest = getTestFilter();
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_FALSE(UnderTest->hasFinished());
 }
 
 TEST_F(SourceFilterTest, SendBufferedMessageFromBeforeStart) {
