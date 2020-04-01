@@ -9,7 +9,7 @@
 
 #include "FileWriterTask.h"
 #include "Kafka/Producer.h"
-#include "StreamMaster.h"
+#include "StreamController.h"
 #include "Streamer.h"
 #include <gtest/gtest.h>
 
@@ -21,21 +21,21 @@ public:
   using Producer::ProducerPtr;
 };
 
-class StreamMasterTests : public ::testing::Test {
+class StreamControllerTests : public ::testing::Test {
 public:
   void SetUp() override {
     FileWriterTask =
         std::make_unique<FileWriter::FileWriterTask>("Not Important");
     FileWriterTask->setJobId(JobId);
     std::map<std::string, FileWriter::Streamer> Streamers;
-    StreamMaster = std::make_unique<FileWriter::StreamMaster>(
+    StreamController = std::make_unique<FileWriter::StreamController>(
         std::move(FileWriterTask), "ServiceID", std::move(Streamers));
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;
-  std::unique_ptr<FileWriter::StreamMaster> StreamMaster;
+  std::unique_ptr<FileWriter::StreamController> StreamController;
 };
 
-TEST_F(StreamMasterTests, getJobIdReturnsCorrectValue) {
-  ASSERT_EQ(JobId, StreamMaster->getJobId());
+TEST_F(StreamControllerTests, getJobIdReturnsCorrectValue) {
+  ASSERT_EQ(JobId, StreamController->getJobId());
 }

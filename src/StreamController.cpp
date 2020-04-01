@@ -1,4 +1,4 @@
-#include "StreamMaster.h"
+#include "StreamController.h"
 #include "FileWriterTask.h"
 #include "Kafka/ConsumerFactory.h"
 #include "Streamer.h"
@@ -6,10 +6,10 @@
 
 namespace FileWriter {
 
-std::unique_ptr<StreamMaster>
-StreamMaster::createStreamMaster(const std::string &Broker,
-                                 std::unique_ptr<FileWriterTask> FileWriterTask,
-                                 const MainOpt &Options) {
+std::unique_ptr<StreamController>
+StreamController::createStreamController(const std::string &Broker,
+                                         std::unique_ptr<FileWriterTask> FileWriterTask,
+                                         const MainOpt &Options) {
   std::map<std::string, Streamer> Streams;
   for (auto &TopicNameDemuxerPair : FileWriterTask->demuxers()) {
     try {
@@ -27,37 +27,37 @@ StreamMaster::createStreamMaster(const std::string &Broker,
     }
   }
 
-  return std::make_unique<StreamMaster>(std::move(FileWriterTask),
-                                        Options.ServiceID, std::move(Streams));
+  return std::make_unique<StreamController>(std::move(FileWriterTask),
+                                            Options.ServiceID, std::move(Streams));
 }
 
-StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
-                           std::string const &ServiceID,
-                           std::map<std::string, Streamer> Streams)
+StreamController::StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
+                                   std::string const &ServiceID,
+                                   std::map<std::string, Streamer> Streams)
 
     : Streamers(std::move(Streams)), WriterTask(std::move(FileWriterTask)),
       ServiceId(ServiceID) {}
 
-StreamMaster::~StreamMaster() {
+StreamController::~StreamController() {
   Stop = true;
   if (WriteThread.joinable()) {
     WriteThread.join();
   }
-  Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
+  Logger->info("Stopped StreamController for file with id : {}", getJobId());
 }
 
-void StreamMaster::setStopTime(std::chrono::milliseconds const &StopTime) {
+void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
   for (auto &s : Streamers) {
     s.second.setStopTime(StopTime);
   }
 }
 
-void StreamMaster::setTopicWriteDuration(std::chrono::milliseconds Duration) {
+void StreamController::setTopicWriteDuration(std::chrono::milliseconds Duration) {
   TopicWriteDuration = Duration;
 }
 
-void StreamMaster::start() {
-  Logger->info("StreamMaster: start");
+void StreamController::start() {
+  Logger->info("StreamController: start");
   Stop = false;
 
   if (!WriteThread.joinable()) {
@@ -66,7 +66,7 @@ void StreamMaster::start() {
   }
 }
 
-void StreamMaster::processStream(Streamer &Stream) {
+void StreamController::processStream(Streamer &Stream) {
   auto ProcessStartTime = std::chrono::system_clock::now();
 
   // Consume and process messages
@@ -88,7 +88,7 @@ void StreamMaster::processStream(Streamer &Stream) {
   }
 }
 
-void StreamMaster::run() {
+void StreamController::run() {
 
   while (!Stop && StreamersRemaining.load()) {
     bool StreamsStillWriting = false;
@@ -107,7 +107,7 @@ void StreamMaster::run() {
   doStop();
 }
 
-void StreamMaster::doStop() {
+void StreamController::doStop() {
   for (auto &Stream : Streamers) {
     // Give the streams a chance to close, log if they fail
     Logger->info("Shutting down {}", Stream.first);
@@ -124,8 +124,8 @@ void StreamMaster::doStop() {
   Streamers.clear();
 }
 
-bool StreamMaster::isDoneWriting() { return !StreamersRemaining.load(); }
+bool StreamController::isDoneWriting() { return !StreamersRemaining.load(); }
 
-std::string StreamMaster::getJobId() const { return WriterTask->jobID(); }
+std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 
 } // namespace FileWriter

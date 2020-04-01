@@ -7,14 +7,14 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "StreamMaster.h"
+#include "StreamController.h"
 #include <chrono>
 #include <memory>
 #include <string>
 
-class FakeStreamMaster : public FileWriter::IStreamMaster {
+class FakeStreamController : public FileWriter::IStreamController {
 public:
-  explicit FakeStreamMaster(std::string const &JobID, bool Removable = false)
+  explicit FakeStreamController(std::string const &JobID, bool Removable = false)
       : JobID(JobID), IsRemovable(Removable) {}
   std::string getJobId() const override { return JobID; }
   void setStopTime(const std::chrono::milliseconds & /*StopTime*/) override {

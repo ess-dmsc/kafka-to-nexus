@@ -13,7 +13,7 @@
 #include "CommandParser.h"
 #include "FileWriterTask.h"
 #include "Msg.h"
-#include "StreamMaster.h"
+#include "StreamController.h"
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
 #include "json.h"
@@ -130,7 +130,7 @@ extractStreamInformationFromJson(FileWriterTask const &Task,
   return StreamSettingsList;
 }
 
-std::unique_ptr<IStreamMaster>
+std::unique_ptr<IStreamController>
 JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
                                  MainOpt &Settings,
                                  SharedLogger const &Logger) {
@@ -168,8 +168,8 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
   }
 
   Logger->info("Write file with job_id: {}", Task->jobID());
-  auto s = StreamMaster::createStreamMaster(StartInfo.BrokerInfo.HostPort,
-                                            std::move(Task), Settings);
+  auto s = StreamController::createStreamController(StartInfo.BrokerInfo.HostPort,
+                                                    std::move(Task), Settings);
   if (Settings.topic_write_duration.count() != 0) {
     s->setTopicWriteDuration(Settings.topic_write_duration);
   }

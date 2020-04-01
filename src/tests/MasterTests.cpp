@@ -15,7 +15,7 @@
 #include "Master.h"
 #include "Msg.h"
 #include "Status/StatusReporter.h"
-#include "helpers/FakeStreamMaster.h"
+#include "helpers/FakeStreamController.h"
 #include "helpers/KafkaWMocks.h"
 #include "helpers/RunStartStopHelpers.h"
 
@@ -64,17 +64,17 @@ TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
 
 class FakeJobCreator : public IJobCreator {
 public:
-  std::unique_ptr<IStreamMaster>
+  std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const &StartInfo,
                        MainOpt & /*Settings*/,
                        SharedLogger const & /*Logger*/) override {
-    return std::make_unique<FakeStreamMaster>(StartInfo.JobID);
+    return std::make_unique<FakeStreamController>(StartInfo.JobID);
   };
 };
 
 class FakeJobCreatorThatThrows : public IJobCreator {
 public:
-  std::unique_ptr<IStreamMaster>
+  std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
                        MainOpt & /*Settings*/,
                        SharedLogger const & /*Logger*/) override {

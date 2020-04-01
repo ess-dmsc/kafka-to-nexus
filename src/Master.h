@@ -27,7 +27,7 @@ class StatusReporter;
 namespace FileWriter {
 class IJobCreator;
 class CommandListener;
-class IStreamMaster;
+class IStreamController;
 
 FileWriterState getNextState(Msg const &Command,
                              std::chrono::milliseconds TimeStamp,
@@ -56,7 +56,7 @@ private:
   MainOpt &MainConfig;
   std::unique_ptr<CommandListener> CmdListener;
   std::unique_ptr<IJobCreator> Creator_;
-  std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
+  std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporter> Reporter;
   FileWriterState CurrentState = States::Idle();
   virtual void startWriting(StartCommandInfo const &StartInfo);

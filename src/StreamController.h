@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/// \file Header file for the StreamMaster, that
+/// \file Header file for the StreamController, that
 /// coordinates the execution of the Streamers
 
 #pragma once
@@ -20,37 +20,37 @@ namespace FileWriter {
 class Streamer;
 class FileWriterTask;
 
-class IStreamMaster {
+class IStreamController {
 public:
-  virtual ~IStreamMaster() = default;
+  virtual ~IStreamController() = default;
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
 };
 
-/// \brief The StreamMaster's task is to coordinate the different Streamers.
-class StreamMaster : public IStreamMaster {
+/// \brief The StreamController's task is to coordinate the different Streamers.
+class StreamController : public IStreamController {
 public:
-  /// \brief Builder method for StreamMaster.
+  /// \brief Builder method for StreamController.
   ///
   /// \param Broker The Kafka broker for the consumers.
   /// \param FileWriterTask The file-writer.
   /// \param Options The general application settings.
   /// \param Producer The Kafka producer used for reporting.
   /// \return
-  static std::unique_ptr<StreamMaster>
-  createStreamMaster(const std::string &Broker,
-                     std::unique_ptr<FileWriterTask> FileWriterTask,
-                     const MainOpt &Options);
+  static std::unique_ptr<StreamController>
+  createStreamController(const std::string &Broker,
+                         std::unique_ptr<FileWriterTask> FileWriterTask,
+                         const MainOpt &Options);
 
-  StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
-               std::string const &ServiceID,
-               std::map<std::string, Streamer> Streams);
-  ~StreamMaster() override;
-  StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) = delete;
-  StreamMaster &operator=(const StreamMaster &) = delete;
-  StreamMaster &operator=(StreamMaster &&) = delete;
+  StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
+                   std::string const &ServiceID,
+                   std::map<std::string, Streamer> Streams);
+  ~StreamController() override;
+  StreamController(const StreamController &) = delete;
+  StreamController(StreamController &&) = delete;
+  StreamController &operator=(const StreamController &) = delete;
+  StreamController &operator=(StreamController &&) = delete;
 
   /// \brief Set the point in time that triggers
   /// the termination of the run.

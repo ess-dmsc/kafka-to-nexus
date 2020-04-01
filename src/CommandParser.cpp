@@ -7,7 +7,7 @@
 // Screaming Udder!                              https://esss.se
 
 /// \file This file defines the different success and failure status that the
-/// `StreamMaster` and the `Streamer` can incur. These error object have some
+/// `StreamController` and the `Streamer` can incur. These error object have some
 /// utility methods that can be used to test the more common situations.
 
 #include <6s4t_run_stop_generated.h>
