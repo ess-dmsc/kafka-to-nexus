@@ -82,7 +82,7 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
     CurrentState = States::Writing();
     Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
                                 StartInfo.StartTime, StartInfo.StopTime});
-    CurrentStreamMaster =
+    CurrentStreamController =
         Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
@@ -91,23 +91,23 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
 }
 
 void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
-  if (StopInfo.JobID != CurrentStreamMaster->getJobId()) {
+  if (StopInfo.JobID != CurrentStreamController->getJobId()) {
     Logger->info(
         "Stop request's job id ({}) does not match running job's id ({}), "
         "so ignoring",
-        StopInfo.JobID, CurrentStreamMaster->getJobId());
+        StopInfo.JobID, CurrentStreamController->getJobId());
     return;
   }
 
   Logger->info("Received request to stop file with id : {} at time {} ms",
                StopInfo.JobID, StopInfo.StopTime.count());
-  CurrentStreamMaster->setStopTime(StopInfo.StopTime);
+  CurrentStreamController->setStopTime(StopInfo.StopTime);
   Reporter->updateStopTime(StopInfo.StopTime);
 }
 
 bool Master::hasWritingStopped() {
-  return CurrentStreamMaster != nullptr and
-         CurrentStreamMaster->isDoneWriting();
+  return CurrentStreamController != nullptr and
+         CurrentStreamController->isDoneWriting();
 }
 
 void Master::moveToNewState(FileWriterState const &NewState) {
@@ -145,7 +145,7 @@ bool Master::isWriting() const {
 }
 
 void Master::setToIdle() {
-  CurrentStreamMaster.reset(nullptr);
+  CurrentStreamController.reset(nullptr);
   CurrentState = States::Idle();
   Reporter->resetStatusInfo();
 }

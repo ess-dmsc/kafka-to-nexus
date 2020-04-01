@@ -13,7 +13,7 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "States.h"
-#include "StreamMaster.h"
+#include "StreamController.h"
 #include "json.h"
 #include <memory>
 
@@ -31,7 +31,7 @@ struct StreamSettings {
 
 class IJobCreator {
 public:
-  virtual std::unique_ptr<IStreamMaster>
+  virtual std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
                        SharedLogger const &Logger) = 0;
   virtual ~IJobCreator() = default;
@@ -46,7 +46,7 @@ public:
   /// \param Settings General settings for the file writer.
   /// \param Logger The logger.
   /// \return The new file-writing job.
-  std::unique_ptr<IStreamMaster>
+  std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
                        SharedLogger const &Logger) override;
 
