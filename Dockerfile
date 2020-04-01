@@ -15,7 +15,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y autoremove  \
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install conan \
+    && pip install conan==1.20.0 \
     && mkdir kafka_to_nexus \
     && conan config install http://github.com/ess-dmsc/conan-configuration.git \
     && if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
