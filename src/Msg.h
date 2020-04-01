@@ -18,6 +18,9 @@ namespace FileWriter {
 
 struct MessageMetaData {
   std::chrono::milliseconds Timestamp{0};
+  auto timestamp() const {
+    return std::chrono::system_clock::time_point{Timestamp};
+  }
   RdKafka::MessageTimestamp::MessageTimestampType TimestampType{
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_NOT_AVAILABLE};
@@ -30,12 +33,12 @@ struct Msg {
   Msg(Msg &&Other) noexcept
       : DataPtr(std::move(Other.DataPtr)), Size(Other.Size),
         MetaData(Other.MetaData) {}
-  Msg(char const *Data, size_t Bytes)
-      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
+  Msg(char const *Data, size_t Bytes, MessageMetaData MessageInfo = {})
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes), MetaData(MessageInfo) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
   }
-  Msg(uint8_t const *Data, size_t Bytes)
-      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes) {
+  Msg(uint8_t const *Data, size_t Bytes, MessageMetaData MessageInfo = {})
+      : DataPtr(std::make_unique<char[]>(Bytes)), Size(Bytes), MetaData(MessageInfo) {
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
   }
   Msg &operator=(Msg const &Other) {
@@ -46,11 +49,11 @@ struct Msg {
     return *this;
   }
 
-  uint8_t const *data() const {
+  char const *data() const {
     if (DataPtr == nullptr) {
       getLogger()->error("error at type: {}", -1);
     }
-    return reinterpret_cast<uint8_t const *>(DataPtr.get());
+    return DataPtr.get();
   }
 
   size_t size() const {
@@ -59,7 +62,8 @@ struct Msg {
     }
     return Size;
   }
-
+  MessageMetaData const getMetaData() const { return MetaData; }
+protected:
   std::unique_ptr<char[]> DataPtr{nullptr};
   size_t Size{0};
   MessageMetaData MetaData;

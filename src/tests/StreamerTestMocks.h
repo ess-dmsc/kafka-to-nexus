@@ -20,6 +20,7 @@ public:
   IMPLEMENT_MOCK2(offsetsForTimesAllPartitions);
   IMPLEMENT_MOCK2(getHighWatermarkOffset);
   IMPLEMENT_MOCK1(getCurrentOffsets);
+  IMPLEMENT_MOCK3(addPartitionAtOffset);
 };
 
 class DemuxerStandIn : public DemuxTopic {

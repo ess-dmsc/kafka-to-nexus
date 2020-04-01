@@ -30,12 +30,12 @@ std::pair<PollStatus, Msg> generateKafkaMsg(char const *DataPtr,
                                             size_t const Size,
                                             int64_t Offset = 0,
                                             int32_t Partition = 0) {
-  FileWriter::Msg Message = FileWriter::Msg(DataPtr, Size);
-  Message.MetaData = FileWriter::MessageMetaData{
+  auto MetaData = FileWriter::MessageMetaData{
       std::chrono::milliseconds(0),
       RdKafka::MessageTimestamp::MessageTimestampType::
-          MSG_TIMESTAMP_CREATE_TIME,
+      MSG_TIMESTAMP_CREATE_TIME,
       Offset, Partition};
+  FileWriter::Msg Message = FileWriter::Msg(DataPtr, Size, MetaData);
   return {PollStatus::Message, std::move(Message)};
 }
 
