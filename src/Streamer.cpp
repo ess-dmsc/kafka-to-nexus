@@ -241,7 +241,7 @@ Streamer::createFlatBufferMessage(uint8_t const *Data, size_t Size) {
 void Streamer::processMessage(std::pair<Kafka::PollStatus, Msg> &KafkaMessage) {
 
   if (auto const FBMessage = createFlatBufferMessage(
-          reinterpret_cast<const uint8_t *const>(KafkaMessage.second.data()),
+          reinterpret_cast<const uint8_t *>(KafkaMessage.second.data()),
           KafkaMessage.second.size())) {
     if (!messageSourceIsValid(FBMessage->getSourceHash())) {
       // TODO count unknown source name
