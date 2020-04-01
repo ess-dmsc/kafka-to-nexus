@@ -34,6 +34,7 @@ set(UnitTests_SRC
         MetaDataQueryTests.cpp
         Stream/PartitionFilterTest.cpp
         Stream/MessageWriterTests.cpp
+        Stream/SourceFilterTest.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
         ThreadedExecutorTests.cpp
