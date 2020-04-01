@@ -5,13 +5,13 @@ ARG https_proxy
 ARG local_conan_server
 
 # Replace the default profile and remotes with the ones from our Ubuntu build node
-ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/master/files/default_profile" "/root/.conan/profiles/default"
+ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/7a4840422e78d451ada97662399116c31a4bc44e/files/default_profile" "/root/.conan/profiles/default"
 COPY ./conan ../kafka_to_nexus_src/conan
 
 # Install packages - We don't want to purge kafkacat and tzdata after building
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -y \
-    && apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools autoconf libtool automake kafkacat tzdata \
+    && apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools python-wheel autoconf libtool automake kafkacat tzdata \
     && apt-get -y autoremove  \
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/* \
