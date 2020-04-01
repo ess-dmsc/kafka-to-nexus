@@ -336,7 +336,6 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-      // PollStatus::Message;
       // extract data
       auto MetaData = FileWriter::MessageMetaData{
           std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
