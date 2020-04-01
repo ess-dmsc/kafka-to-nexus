@@ -8,8 +8,8 @@
 // Screaming Udder!                              https://esss.se
 
 /// \file This file defines the different success and failure status that the
-/// `StreamMaster` and the `Streamer` can incur. These error object have some
-/// utility methods that can be used to test the more common situations.
+/// `StreamController` and the `Streamer` can incur. These error object have
+/// some utility methods that can be used to test the more common situations.
 
 #pragma once
 #include <string>

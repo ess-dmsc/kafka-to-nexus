@@ -61,7 +61,7 @@ endif()
 set(kafka_to_nexus_SRC
         StreamStatus.cpp
         Streamer.cpp
-        StreamMaster.cpp
+        StreamController.cpp
         Master.cpp
         logger.cpp
         CommandListener.cpp
@@ -82,7 +82,7 @@ set(kafka_to_nexus_SRC
         FlatbufferMessage.cpp
         MainOpt.cpp
         CLIOptions.cpp
-        StreamMaster.cpp
+        StreamController.cpp
         CommandParser.cpp
         WriterRegistrar.cpp
         Metrics/Reporter.cpp
@@ -131,7 +131,7 @@ set(kafka_to_nexus_INC
         Source.h
         Streamer.h
         StreamerOptions.h
-        StreamMaster.h
+        StreamController.h
         URI.h
         CLIOptions.h
         Kafka/ConfigureKafka.cpp

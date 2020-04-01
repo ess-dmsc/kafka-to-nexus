@@ -21,7 +21,7 @@ set(UnitTests_SRC
         ProducerTests.cpp
         ProducerDeliveryTests.cpp
         ConsumerTests.cpp
-        StreamMasterTests.cpp
+        StreamControllerTests.cpp
         CommandParserTests.cpp
         Metrics/MetricsRegistrarTest.cpp
         Metrics/MetricTest.cpp
@@ -45,7 +45,7 @@ set(UnitTests_INC
         StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
         helpers/KafkaWMocks.h
-        helpers/FakeStreamMaster.h
+        helpers/FakeStreamController.h
         helpers/RunStartStopHelpers.h
         Metrics/CarbonTestServer.h
         Metrics/MockSink.h
