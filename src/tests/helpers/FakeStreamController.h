@@ -14,7 +14,8 @@
 
 class FakeStreamController : public FileWriter::IStreamController {
 public:
-  explicit FakeStreamController(std::string const &JobID, bool Removable = false)
+  explicit FakeStreamController(std::string const &JobID,
+                                bool Removable = false)
       : JobID(JobID), IsRemovable(Removable) {}
   std::string getJobId() const override { return JobID; }
   void setStopTime(const std::chrono::milliseconds & /*StopTime*/) override {

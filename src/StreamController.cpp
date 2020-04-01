@@ -6,10 +6,9 @@
 
 namespace FileWriter {
 
-std::unique_ptr<StreamController>
-StreamController::createStreamController(const std::string &Broker,
-                                         std::unique_ptr<FileWriterTask> FileWriterTask,
-                                         const MainOpt &Options) {
+std::unique_ptr<StreamController> StreamController::createStreamController(
+    const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
+    const MainOpt &Options) {
   std::map<std::string, Streamer> Streams;
   for (auto &TopicNameDemuxerPair : FileWriterTask->demuxers()) {
     try {
@@ -27,13 +26,13 @@ StreamController::createStreamController(const std::string &Broker,
     }
   }
 
-  return std::make_unique<StreamController>(std::move(FileWriterTask),
-                                            Options.ServiceID, std::move(Streams));
+  return std::make_unique<StreamController>(
+      std::move(FileWriterTask), Options.ServiceID, std::move(Streams));
 }
 
-StreamController::StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
-                                   std::string const &ServiceID,
-                                   std::map<std::string, Streamer> Streams)
+StreamController::StreamController(
+    std::unique_ptr<FileWriterTask> FileWriterTask,
+    std::string const &ServiceID, std::map<std::string, Streamer> Streams)
 
     : Streamers(std::move(Streams)), WriterTask(std::move(FileWriterTask)),
       ServiceId(ServiceID) {}
@@ -52,7 +51,8 @@ void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
   }
 }
 
-void StreamController::setTopicWriteDuration(std::chrono::milliseconds Duration) {
+void StreamController::setTopicWriteDuration(
+    std::chrono::milliseconds Duration) {
   TopicWriteDuration = Duration;
 }
 

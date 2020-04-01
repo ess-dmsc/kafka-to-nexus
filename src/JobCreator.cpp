@@ -168,8 +168,8 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
   }
 
   Logger->info("Write file with job_id: {}", Task->jobID());
-  auto s = StreamController::createStreamController(StartInfo.BrokerInfo.HostPort,
-                                                    std::move(Task), Settings);
+  auto s = StreamController::createStreamController(
+      StartInfo.BrokerInfo.HostPort, std::move(Task), Settings);
   if (Settings.topic_write_duration.count() != 0) {
     s->setTopicWriteDuration(Settings.topic_write_duration);
   }
