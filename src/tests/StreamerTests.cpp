@@ -72,7 +72,7 @@ protected:
 // cppcheck-suppress syntaxError
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingABroker) {
   EXPECT_THROW(Streamer("", "topic", Options,
-                        std::make_unique<ConsumerEmptyStandIn>(
+                        std::make_unique<Kafka::MockConsumer>(
                             StreamerOptions().BrokerSettings),
                         std::make_shared<DemuxerStandIn>("topic")),
                std::runtime_error);
@@ -80,7 +80,7 @@ TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingABroker) {
 
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingATopic) {
   EXPECT_THROW(Streamer("broker", "", Options,
-                        std::make_unique<ConsumerEmptyStandIn>(
+                        std::make_unique<Kafka::MockConsumer>(
                             StreamerOptions().BrokerSettings),
                         std::make_shared<DemuxerStandIn>("topic")),
                std::runtime_error);
@@ -89,7 +89,7 @@ TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingATopic) {
 TEST_F(StreamerInitTest, CanCreateAStreamerIfProvideABrokerAndATopic) {
   EXPECT_NO_THROW(Streamer(
       "broker", "topic", Options,
-      std::make_unique<ConsumerEmptyStandIn>(StreamerOptions().BrokerSettings),
+      std::make_unique<Kafka::MockConsumer>(StreamerOptions().BrokerSettings),
       std::make_shared<DemuxerStandIn>("topic")));
 }
 
@@ -105,7 +105,7 @@ protected:
 
 TEST_F(StreamerProcessTest, CreationNotYetDoneThenDoesNotPoll) {
   StreamerStandIn TestStreamer(Options);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).TIMES(0);
   TestStreamer.ConsumerInitialised.get();
   TestStreamer.ConsumerInitialised =
@@ -224,7 +224,7 @@ TEST_F(StreamerProcessTimingTest,
 TEST_F(StreamerProcessTimingTest,
        NumberOfProcessedMessagesDoesNotIncreaseIfMessageBeforeStartTimestamp) {
   TestStreamer->setStartTime(std::chrono::milliseconds{1});
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
@@ -243,7 +243,7 @@ TEST_F(StreamerProcessTimingTest,
 TEST_F(StreamerProcessTimingTest,
        NumberOfProcessedMessagesDoesNotIncreaseIfOffsetIsReached) {
   TestStreamer->setStopTime(std::chrono::milliseconds{1});
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
 
   // The newly received message will have an offset of 10
   int64_t StopOffset = 10;
@@ -281,7 +281,7 @@ TEST_F(StreamerProcessTimingTest,
 TEST_F(
     StreamerProcessTimingTest,
     NumberOfProcessedMessagesDoesNotIncreaseWhenStopOffsetHasAlreadyBeenReached) {
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
 
   // The newly received message will have an offset of 10
   int64_t StopOffset = 10;
@@ -331,7 +331,7 @@ TEST_F(
 TEST_F(
     StreamerProcessTimingTest,
     NumberOfProcessedMessagesDoesNotIncreaseWhenThereIsNoDataOnTopicToConsume) {
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
 
   // There is no data, so polling the consumer will give us an EndOfPartition
   // message with no payload
@@ -370,7 +370,7 @@ TEST_F(
 TEST_F(
     StreamerProcessTimingTest,
     NumberOfProcessedMessagesDoesNotIncreaseWhenThereIsNoDataBetweenRunStartAndStop) {
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
 
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
@@ -409,7 +409,7 @@ TEST_F(StreamerProcessTimingTest,
        ReceivingEmptyMessageAfterStopIsNotProcessed) {
   TestStreamer->setStopTime(std::chrono::milliseconds{5});
 
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
@@ -443,7 +443,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStopAreNotProcessed) {
               std::chrono::milliseconds(12000);
   TestStreamer->setStopTime(Then);
 
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
@@ -464,7 +464,7 @@ TEST_F(StreamerProcessTimingTest,
   TestStreamer->setStopTime(Now);
   std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
@@ -487,7 +487,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
 
   FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
                                 std::move(Writer));
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName))
       .TIMES(1);
@@ -526,7 +526,7 @@ TEST(FlatBufferValidationTest,
   Demuxer->addSource(std::move(TestSource));
   TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);
 
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new Kafka::MockConsumer(BrokerSettings);
 
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName, 42, 10))

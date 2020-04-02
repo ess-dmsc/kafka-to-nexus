@@ -4,24 +4,9 @@
 
 #include "FlatbufferReader.h"
 #include "Streamer.h"
+#include "helpers/KafkaMocks.h"
 
 namespace FileWriter {
-
-class ConsumerEmptyStandIn
-    : public trompeloeil::mock_interface<Kafka::ConsumerInterface> {
-public:
-  explicit ConsumerEmptyStandIn(const Kafka::BrokerSettings &Settings){
-      UNUSED_ARG(Settings)};
-  IMPLEMENT_MOCK1(addTopic);
-  IMPLEMENT_MOCK2(addTopicAtTimestamp);
-  IMPLEMENT_MOCK1(topicPresent);
-  IMPLEMENT_MOCK1(queryTopicPartitions);
-  IMPLEMENT_MOCK0(poll);
-  IMPLEMENT_MOCK2(offsetsForTimesAllPartitions);
-  IMPLEMENT_MOCK2(getHighWatermarkOffset);
-  IMPLEMENT_MOCK1(getCurrentOffsets);
-  IMPLEMENT_MOCK3(addPartitionAtOffset);
-};
 
 class DemuxerStandIn : public DemuxTopic {
 public:
@@ -33,17 +18,17 @@ class StreamerStandIn : public Streamer {
 public:
   StreamerStandIn()
       : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
-                 std::make_unique<ConsumerEmptyStandIn>(
+                 std::make_unique<Kafka::MockConsumer>(
                      StreamerOptions().BrokerSettings),
                  std::make_shared<DemuxerStandIn>("SomeTopic")) {}
   explicit StreamerStandIn(StreamerOptions Opts)
       : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
-                 std::make_unique<ConsumerEmptyStandIn>(
+                 std::make_unique<Kafka::MockConsumer>(
                      StreamerOptions().BrokerSettings),
                  std::make_shared<DemuxerStandIn>("SomeTopic")) {}
   StreamerStandIn(StreamerOptions Opts, std::shared_ptr<DemuxTopic> &Demuxer)
       : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
-                 std::make_unique<ConsumerEmptyStandIn>(
+                 std::make_unique<Kafka::MockConsumer>(
                      StreamerOptions().BrokerSettings),
                  Demuxer) {}
   using Streamer::ConsumerInitialised;

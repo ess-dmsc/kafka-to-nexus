@@ -9,7 +9,7 @@
 
 #include "FlatbufferReader.h"
 #include "Stream/Partition.h"
-#include "helpers/KafkaWMocks.h"
+#include "helpers/RdKafkaMocks.h"
 #include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
 
