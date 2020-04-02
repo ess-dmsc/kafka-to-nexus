@@ -9,6 +9,7 @@
 
 #include "FlatbufferReader.h"
 #include "Stream/Partition.h"
+#include "helpers/KafkaMocks.h"
 #include "helpers/RdKafkaMocks.h"
 #include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
@@ -58,40 +59,20 @@ public:
   using Partition::StopTimeLeeway;
 };
 
-class ConsumerStandIn : public Kafka::ConsumerInterface {
-public:
-  using PollReturnType = std::pair<Kafka::PollStatus, FileWriter::Msg>;
-  MAKE_MOCK1(addTopic, void(std::string const &), override);
-  MAKE_MOCK2(addTopicAtTimestamp,
-             void(std::string const &, std::chrono::milliseconds), override);
-  MAKE_MOCK0(poll, PollReturnType(), override);
-  MAKE_MOCK1(topicPresent, bool(std::string const &), override);
-  MAKE_MOCK1(queryTopicPartitions, std::vector<int32_t>(std::string const &),
-             override);
-  MAKE_MOCK2(offsetsForTimesAllPartitions,
-             std::vector<int64_t>(std::string const &,
-                                  std::chrono::milliseconds),
-             override);
-  MAKE_MOCK3(addPartitionAtOffset, void(std::string const &, int, int64_t),
-             override);
-  MAKE_MOCK2(getHighWatermarkOffset, int64_t(std::string const &, int32_t),
-             override);
-  MAKE_MOCK1(getCurrentOffsets, std::vector<int64_t>(std::string const &),
-             override);
-};
-
 using std::chrono_literals::operator""s;
 
 class PartitionTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
+    Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
-        std::make_unique<ConsumerStandIn>(), UsedPartitionId, TopicName,
-        UsedMap, nullptr, Registrar, Start, Stop, StopLeeway, ErrorTimeout);
-    Consumer = dynamic_cast<ConsumerStandIn *>(Temp->ConsumerPtr.get());
+        std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
+        UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start, Stop,
+        StopLeeway, ErrorTimeout);
+    Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->ConsumerPtr.get());
     return Temp;
   }
-  ConsumerStandIn *Consumer{nullptr};
+  Kafka::MockConsumer *Consumer{nullptr};
 
   int UsedPartitionId{0};
   std::string TopicName{"some_topic"};
@@ -137,7 +118,7 @@ TEST_F(PartitionTest, AddPollTask) {
 using trompeloeil::_;
 
 TEST_F(PartitionTest, PollingEmptyMessage) {
-  ConsumerStandIn::PollReturnType PollReturn;
+  Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::Empty;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -151,7 +132,7 @@ TEST_F(PartitionTest, PollingEmptyMessage) {
 }
 
 TEST_F(PartitionTest, PollingWithMessage) {
-  ConsumerStandIn::PollReturnType PollReturn;
+  Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::Message;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -165,7 +146,7 @@ TEST_F(PartitionTest, PollingWithMessage) {
 }
 
 TEST_F(PartitionTest, PollingTimeoutMessage) {
-  ConsumerStandIn::PollReturnType PollReturn;
+  Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::TimedOut;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -179,7 +160,7 @@ TEST_F(PartitionTest, PollingTimeoutMessage) {
 }
 
 TEST_F(PartitionTest, PollingErrorMessage) {
-  ConsumerStandIn::PollReturnType PollReturn;
+  Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::Error;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -193,7 +174,7 @@ TEST_F(PartitionTest, PollingErrorMessage) {
 }
 
 TEST_F(PartitionTest, PollingEndOfPartitionMessage) {
-  ConsumerStandIn::PollReturnType PollReturn;
+  Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::EndOfPartition;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -207,7 +188,7 @@ TEST_F(PartitionTest, PollingEndOfPartitionMessage) {
 }
 
 TEST_F(PartitionTest, PollingWithMessageNoFilter) {
-  ConsumerStandIn::PollReturnType PollReturn;
+  Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::Message;
   auto UnderTest = createTestedInstance();
   UnderTest->MsgFilters.clear();
@@ -227,7 +208,7 @@ TEST_F(PartitionTest, PollingWithMessageBeforeStart) {
           (Start - 10s).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{
+  Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -246,7 +227,7 @@ TEST_F(PartitionTest, PollingWithMessageAfterStart) {
           (Start + 10s).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{
+  Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -266,7 +247,7 @@ TEST_F(PartitionTest, PollingWithMessageAfterStop) {
           (Stop + 5s).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{
+  Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -286,7 +267,7 @@ TEST_F(PartitionTest, PollingWithMessageAfterStopPlusLeeway) {
           (Stop + 5s + StopLeeway).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{
+  Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
@@ -306,7 +287,7 @@ TEST_F(PartitionTest, PollingWithErrorState) {
           (Stop + 5s + StopLeeway).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
-  ConsumerStandIn::PollReturnType PollReturn{
+  Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Error, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));

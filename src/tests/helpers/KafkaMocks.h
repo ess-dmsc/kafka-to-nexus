@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <trompeloeil.hpp>
+
 namespace Kafka {
 
 class MockConsumer
@@ -16,6 +18,7 @@ class MockConsumer
 public:
   explicit MockConsumer(const Kafka::BrokerSettings &Settings){
       UNUSED_ARG(Settings)};
+  using PollReturnType = std::pair<Kafka::PollStatus, FileWriter::Msg>;
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
   IMPLEMENT_MOCK1(topicPresent);
