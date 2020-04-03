@@ -10,7 +10,8 @@ from helpers.timehelpers import unix_time_milliseconds
 from time import sleep
 from datetime import datetime
 import json
-import pytest
+from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
+from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 
 
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
@@ -70,7 +71,16 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
     # Publish some data with timestamps in the past(these are from 2019 - 06 - 12)
     for data_topic in data_topics:
         for time_in_ms_after_epoch in range(1_560_330_000_000, 1_560_330_000_200):
-            publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
+            if time_in_ms_after_epoch == 1_560_330_000_050:
+                # EPICS alarm goes into HIGH state
+                publish_f142_message(producer, data_topic, time_in_ms_after_epoch,
+                                     alarm_status=AlarmStatus.HIGH, alarm_severity=AlarmSeverity.MAJOR)
+            elif time_in_ms_after_epoch == 1_560_330_000_060:
+                # EPICS alarm returns to NO_ALARM
+                publish_f142_message(producer, data_topic, time_in_ms_after_epoch,
+                                     alarm_status=AlarmStatus.NO_ALARM, alarm_severity=AlarmSeverity.NO_ALARM)
+            else:
+                publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
 
     sleep(5)
 
@@ -98,6 +108,18 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         assert file["entry/historical_data_2/time"].len() == (
             stop_time - start_time + 1
         ), "Expected there to be one message per millisecond recorded between specified start and stop time"
+
+        # EPICS alarms
+        assert file["entry/historical_data_1/alarm_status"].len() == 2, \
+            "Expected there to have record two changes in EPICS alarm status"
+        assert file["entry/historical_data_1/alarm_severity"].len() == 2, \
+            "Expected there to have record two changes in EPICS alarm status"
+        # First alarm change
+        assert file["entry/historical_data_1/alarm_status"][0] == "HIGH"
+        assert file["entry/historical_data_1/alarm_severity"][0] == "MAJOR"
+        # Second alarm change
+        assert file["entry/historical_data_1/alarm_status"][1] == "NO_ALARM"
+        assert file["entry/historical_data_1/alarm_severity"][0] == "NO_ALARM"
 
         assert (
             file["entry/no_data/time"].len() == 0
