@@ -374,7 +374,8 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
 
-  // When alarm status is NO_CHANGE nothing should be recorded in the alarm datasets
+  // When alarm status is NO_CHANGE nothing should be recorded in the alarm
+  // datasets
   EXPECT_EQ(TestWriter.AlarmTime.dataspace().size(), 0);
   EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 0);
   EXPECT_EQ(TestWriter.AlarmSeverity.dataspace().size(), 0);
@@ -387,12 +388,12 @@ TEST_F(f142WriteData, WhenMessageContainsAnAlarmChangeItIsWritten) {
   uint64_t Timestamp{11};
   auto FlatbufferData = generateFlatbufferMessage(
       3.14, Timestamp,
-      nonstd::optional<AlarmInfo>(
-          {AlarmStatus::HIHI, AlarmSeverity::MAJOR}));
+      nonstd::optional<AlarmInfo>({AlarmStatus::HIHI, AlarmSeverity::MAJOR}));
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
 
-  // When alarm status is something other than NO_CHANGE, it should be recorded in the alarm datasets
+  // When alarm status is something other than NO_CHANGE, it should be recorded
+  // in the alarm datasets
   EXPECT_EQ(TestWriter.AlarmTime.dataspace().size(), 1);
   EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 1);
   EXPECT_EQ(TestWriter.AlarmSeverity.dataspace().size(), 1);
@@ -401,18 +402,27 @@ TEST_F(f142WriteData, WhenMessageContainsAnAlarmChangeItIsWritten) {
   TestWriter.AlarmTime.read(WrittenAlarmTimes);
   EXPECT_EQ(WrittenAlarmTimes.at(0), Timestamp);
 
-  std::vector<std::string> WrittenAlarmStatus(1);
-  TestWriter.AlarmTime.read(WrittenAlarmStatus);
-  EXPECT_EQ(WrittenAlarmStatus.at(0), "HIHI");
+  std::string WrittenAlarmStatusTemporary;
+  TestWriter.AlarmStatus.read(
+      WrittenAlarmStatusTemporary, TestWriter.AlarmStatus.datatype(),
+      hdf5::dataspace::Scalar(), hdf5::dataspace::Hyperslab{{0}, {1}});
+  std::string WrittenAlarmStatus(
+      WrittenAlarmStatusTemporary
+          .data()); // Trim null characters from end of string
+  EXPECT_EQ(WrittenAlarmStatus, "HIHI");
 
-  std::vector<std::string> WrittenAlarmSeverity(1);
-  TestWriter.AlarmTime.read(WrittenAlarmSeverity);
-  EXPECT_EQ(WrittenAlarmSeverity.at(0), "MAJOR");
+  std::string WrittenAlarmSeverityTemporary;
+  TestWriter.AlarmSeverity.read(
+      WrittenAlarmSeverityTemporary, TestWriter.AlarmSeverity.datatype(),
+      hdf5::dataspace::Scalar(), hdf5::dataspace::Hyperslab{{0}, {1}});
+  std::string WrittenAlarmSeverity(
+      WrittenAlarmSeverityTemporary
+          .data()); // Trim null characters from end of string
+  EXPECT_EQ(WrittenAlarmSeverity, "MAJOR");
 }
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
-generateFlatbufferArrayMessage(std::vector<double> Value,
-                               uint64_t Timestamp) {
+generateFlatbufferArrayMessage(std::vector<double> Value, uint64_t Timestamp) {
   auto ValueFunc = [Value](auto &Builder) {
     auto VectorOffset = Builder.CreateVector(Value);
     ArrayDoubleBuilder ValueBuilder(Builder);
