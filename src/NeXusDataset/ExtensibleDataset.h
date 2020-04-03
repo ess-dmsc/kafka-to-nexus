@@ -252,7 +252,7 @@ public:
   /// \param ChunkSize The number of strings in one chunk.
   FixedSizeString(const hdf5::node::Group &Parent, std::string Name, Mode CMode,
                   size_t StringSize = 300, size_t ChunkSize = 1024);
-  size_t getMaxStringSize() const;
+  constexpr size_t getMaxStringSize() const { return MaxStringSize; };
   void appendString(std::string const &InString);
 
 private:

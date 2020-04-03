@@ -166,6 +166,9 @@ InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
     Values = NeXusDataset::MultiDimDatasetBase(HDFGroup, Open);
+    AlarmTime = NeXusDataset::AlarmTime(HDFGroup, Open);
+    AlarmStatus = NeXusDataset::AlarmStatus(HDFGroup, Open);
+    AlarmSeverity = NeXusDataset::AlarmSeverity(HDFGroup, Open);
   } catch (std::exception &E) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
