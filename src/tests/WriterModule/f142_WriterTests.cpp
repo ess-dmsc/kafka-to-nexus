@@ -39,6 +39,9 @@ public:
 
 class f142_WriterStandIn : public f142_Writer {
 public:
+  using f142_Writer::AlarmSeverity;
+  using f142_Writer::AlarmStatus;
+  using f142_Writer::AlarmTime;
   using f142_Writer::ArraySize;
   using f142_Writer::ChunkSize;
   using f142_Writer::CueIndex;
@@ -240,10 +243,15 @@ public:
   hdf5::node::Group RootGroup;
 };
 
+struct AlarmInfo {
+  AlarmStatus Status;
+  AlarmSeverity Severity;
+};
+
 template <class ValFuncType>
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
-generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
-                              std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
+    ValFuncType ValueFunc, Value ValueTypeId, std::uint64_t Timestamp,
+    nonstd::optional<AlarmInfo> EpicsAlarmChange = nonstd::nullopt) {
   auto Builder = flatbuffers::FlatBufferBuilder();
   auto SourceNameOffset = Builder.CreateString("SomeSourceName");
   auto ValueOffset = ValueFunc(Builder);
@@ -252,6 +260,13 @@ generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
   LogDataBuilder.add_timestamp(Timestamp);
   LogDataBuilder.add_source_name(SourceNameOffset);
   LogDataBuilder.add_value_type(ValueTypeId);
+
+  if (EpicsAlarmChange) {
+    auto AlarmChange = *EpicsAlarmChange;
+    LogDataBuilder.add_status(AlarmChange.Status);
+    LogDataBuilder.add_severity(AlarmChange.Severity);
+  }
+
   FinishLogDataBuffer(Builder, LogDataBuilder.Finish());
   size_t BufferSize = Builder.GetSize();
   auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
@@ -259,14 +274,16 @@ generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
   return {std::move(ReturnBuffer), BufferSize};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
-generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessage(
+    double Value, std::uint64_t Timestamp,
+    nonstd::optional<AlarmInfo> EpicsAlarmChange = nonstd::nullopt) {
   auto ValueFunc = [Value](auto &Builder) {
     DoubleBuilder ValueBuilder(Builder);
     ValueBuilder.add_value(Value);
     return ValueBuilder.Finish().Union();
   };
-  return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp);
+  return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp,
+                                       std::move(EpicsAlarmChange));
 }
 
 TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
@@ -343,6 +360,24 @@ TEST_F(f142WriteData, WriteOneElement) {
   std::vector<std::uint64_t> WrittenTimes(1);
   TestWriter.Timestamp.read(WrittenTimes);
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
+}
+
+TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
+  f142_WriterStandIn TestWriter;
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+  std::uint64_t Timestamp{11};
+  auto FlatbufferData = generateFlatbufferMessage(
+      3.14, Timestamp,
+      nonstd::optional<AlarmInfo>(
+          {AlarmStatus::NO_CHANGE, AlarmSeverity::NO_CHANGE}));
+  TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
+                                                 FlatbufferData.second));
+
+  // When alarm status is NO_CHANGE nothing should be recorded in the alarm datasets
+  EXPECT_EQ(TestWriter.AlarmTime.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.AlarmSeverity.dataspace().size(), 0);
 }
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
