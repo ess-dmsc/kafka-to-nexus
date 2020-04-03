@@ -421,7 +421,7 @@ class f142WriteAlarms : public ::testing::TestWithParam<AlarmWritingTestInfo> {
 public:
   void SetUp() override {
     TestFile =
-        HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
+        HDFFileTestHelper::createInMemoryTestFile("f142WriteAlarms.hdf5", false);
     RootGroup = TestFile.H5File.root();
     setExtractorModule<AccessMessageMetadata::f142_Extractor>("f142");
   }
