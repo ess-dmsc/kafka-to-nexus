@@ -366,7 +366,7 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
   TestWriter.reopen(RootGroup);
-  std::uint64_t Timestamp{11};
+  uint64_t Timestamp{11};
   auto FlatbufferData = generateFlatbufferMessage(
       3.14, Timestamp,
       nonstd::optional<AlarmInfo>(
@@ -380,9 +380,39 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   EXPECT_EQ(TestWriter.AlarmSeverity.dataspace().size(), 0);
 }
 
+TEST_F(f142WriteData, WhenMessageContainsAnAlarmChangeItIsWritten) {
+  f142_WriterStandIn TestWriter;
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+  uint64_t Timestamp{11};
+  auto FlatbufferData = generateFlatbufferMessage(
+      3.14, Timestamp,
+      nonstd::optional<AlarmInfo>(
+          {AlarmStatus::HIHI, AlarmSeverity::MAJOR}));
+  TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
+                                                 FlatbufferData.second));
+
+  // When alarm status is something other than NO_CHANGE, it should be recorded in the alarm datasets
+  EXPECT_EQ(TestWriter.AlarmTime.dataspace().size(), 1);
+  EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 1);
+  EXPECT_EQ(TestWriter.AlarmSeverity.dataspace().size(), 1);
+
+  std::vector<uint64_t> WrittenAlarmTimes(1);
+  TestWriter.AlarmTime.read(WrittenAlarmTimes);
+  EXPECT_EQ(WrittenAlarmTimes.at(0), Timestamp);
+
+  std::vector<std::string> WrittenAlarmStatus(1);
+  TestWriter.AlarmTime.read(WrittenAlarmStatus);
+  EXPECT_EQ(WrittenAlarmStatus.at(0), "HIHI");
+
+  std::vector<std::string> WrittenAlarmSeverity(1);
+  TestWriter.AlarmTime.read(WrittenAlarmSeverity);
+  EXPECT_EQ(WrittenAlarmSeverity.at(0), "MAJOR");
+}
+
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
 generateFlatbufferArrayMessage(std::vector<double> Value,
-                               std::uint64_t Timestamp) {
+                               uint64_t Timestamp) {
   auto ValueFunc = [Value](auto &Builder) {
     auto VectorOffset = Builder.CreateVector(Value);
     ArrayDoubleBuilder ValueBuilder(Builder);
@@ -398,7 +428,7 @@ TEST_F(f142WriteData, WriteOneArray) {
   TestWriter.init_hdf(RootGroup, "");
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 4.5, 3.1};
-  std::uint64_t Timestamp{12};
+  uint64_t Timestamp{12};
   auto FlatbufferData =
       generateFlatbufferArrayMessage(ElementValues, Timestamp);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
