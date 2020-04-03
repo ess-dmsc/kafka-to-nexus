@@ -188,15 +188,15 @@ void appendData(DatasetType &Dataset, const void *Pointer, size_t Size) {
 }
 
 void f142_Writer::write(FlatbufferMessage const &Message) {
-  auto Flatbuffer = GetLogData(Message.data());
+  auto LogDataMessage = GetLogData(Message.data());
   size_t NrOfElements{1};
-  Timestamp.appendElement(Flatbuffer->timestamp());
-  auto Type = Flatbuffer->value_type();
+  Timestamp.appendElement(LogDataMessage->timestamp());
+  auto Type = LogDataMessage->value_type();
 
   // Note that we are using our knowledge about flatbuffers here to minimise
-  // amount of code we have to write by using some pointer arithmetric.
+  // amount of code we have to write by using some pointer arithmetic.
   auto DataPtr = reinterpret_cast<void const *>(
-      reinterpret_cast<uint8_t const *>(Flatbuffer->value()) + 4);
+      reinterpret_cast<uint8_t const *>(LogDataMessage->value()) + 4);
 
   auto extractArrayInfo = [&NrOfElements, &DataPtr]() {
     NrOfElements = *(reinterpret_cast<int const *>(DataPtr) + 1);
@@ -257,6 +257,12 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   default:
     throw WriterModule::WriterException(
         "Unknown data type in f142 flatbuffer.");
+  }
+
+  if (LogDataMessage->status() != AlarmStatus::NO_CHANGE) {
+    AlarmTime.appendElement(LogDataMessage->timestamp());
+    AlarmStatus.appendString("HIHI");
+    AlarmSeverity.appendString("MAJOR");
   }
 }
 /// Register the writer module.
