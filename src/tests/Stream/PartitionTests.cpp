@@ -63,12 +63,13 @@ using std::chrono_literals::operator""s;
 
 class PartitionTest : public ::testing::Test {
 public:
-  auto createTestedInstance() {
+  auto createTestedInstance(Stream::time_point StopTime = std::chrono::system_clock::time_point::max()) {
     Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
-        UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start, Stop,
+        UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start, StopTime,
         StopLeeway, ErrorTimeout);
+    Stop = StopTime;
     Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->ConsumerPtr.get());
     return Temp;
   }
@@ -88,12 +89,19 @@ public:
   std::array<char, 9> SomeData{'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z'};
 };
 
-TEST_F(PartitionTest, InitValues) {
-  auto UnderTest = createTestedInstance();
+TEST_F(PartitionTest, OnConstructionValuesAreAsExpected) {
+  auto StopTime = Start + 20s;
+  auto UnderTest = createTestedInstance(StopTime);
   EXPECT_EQ(UnderTest->getPartitionID(), UsedPartitionId);
   EXPECT_EQ(UnderTest->getTopicName(), TopicName);
   EXPECT_EQ(UnderTest->StopTimeLeeway, StopLeeway);
-  EXPECT_EQ(UnderTest->StopTime, Stop - StopLeeway);
+  EXPECT_EQ(UnderTest->StopTime, StopTime);
+}
+
+TEST_F(PartitionTest, IfStopTimeTooCloseToMaxThenItIsBackedOff) {
+  auto StopTime = std::chrono::system_clock::time_point::max() - StopLeeway/2;
+  auto UnderTest = createTestedInstance(StopTime);
+  EXPECT_EQ(UnderTest->StopTime, StopTime - StopLeeway);
 }
 
 TEST_F(PartitionTest, StartPolling) {
