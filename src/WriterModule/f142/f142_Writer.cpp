@@ -137,6 +137,10 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                      },
                      {ChunkSize, ArraySize}, ValueUnits);
 
+    NeXusDataset::AlarmTime(HDFGroup, Create);
+    NeXusDataset::AlarmStatus(HDFGroup, Create);
+    NeXusDataset::AlarmSeverity(HDFGroup, Create);
+
     if (HDFGroup.attributes.exists("NX_class")) {
       Logger->info("NX_class already specified!");
     } else {

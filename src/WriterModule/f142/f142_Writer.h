@@ -18,6 +18,7 @@
 #include <nlohmann/json.hpp>
 #include <nonstd/optional.hpp>
 #include <vector>
+#include <NeXusDataset/EpicsAlarmDatasets.h>
 
 namespace WriterModule {
 namespace f142 {
