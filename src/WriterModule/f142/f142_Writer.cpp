@@ -211,6 +211,7 @@ std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
     {AlarmStatus::COS, "COS"},
     {AlarmStatus::UDF, "UDF"},
     {AlarmStatus::CALC, "CALC"},
+    {AlarmStatus::COMM, "COMM"},
     {AlarmStatus::NO_CHANGE, "NO_CHANGE"}};
 
 std::unordered_map<AlarmSeverity, std::string> AlarmSeverityToString{
@@ -299,6 +300,8 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     AlarmStatus.appendString(AlarmStatusToString[LogDataMessage->status()]);
     AlarmSeverity.appendString(
         AlarmSeverityToString[LogDataMessage->severity()]);
+  } else {
+    fmt::print("Timestamp: {}\n", LogDataMessage->timestamp());
   }
 }
 /// Register the writer module.
