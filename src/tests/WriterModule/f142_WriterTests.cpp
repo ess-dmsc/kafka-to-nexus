@@ -471,7 +471,30 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
 
 std::vector<AlarmWritingTestInfo> const AlarmWritingTestParams = {
     {1, AlarmStatus::WRITE, AlarmSeverity::MAX, "WRITE", "MAX"},
-    {2, AlarmStatus::MAX, AlarmSeverity::MIN, "MAX", "MIN"}};
+    {2, AlarmStatus::MAX, AlarmSeverity::MIN, "MAX", "MIN"},
+    {3, AlarmStatus::MIN, AlarmSeverity::MAJOR, "MIN", "MAJOR"},
+    {4, AlarmStatus::NO_ALARM, AlarmSeverity::MINOR, "NO_ALARM", "MINOR"},
+    {5, AlarmStatus::COS, AlarmSeverity::INVALID, "COS", "INVALID"},
+    {6, AlarmStatus::LOW, AlarmSeverity::NO_ALARM, "LOW", "NO_ALARM"},
+    {7, AlarmStatus::UDF, AlarmSeverity::MAX, "UDF", "MAX"},
+    {8, AlarmStatus::CALC, AlarmSeverity::MAX, "CALC", "MAX"},
+    {9, AlarmStatus::COMM, AlarmSeverity::MAX, "COMM", "MAX"},
+    {10, AlarmStatus::HIGH, AlarmSeverity::MAX, "HIGH", "MAX"},
+    {11, AlarmStatus::HIHI, AlarmSeverity::MAX, "HIHI", "MAX"},
+    {12, AlarmStatus::LINK, AlarmSeverity::MAX, "LINK", "MAX"},
+    {13, AlarmStatus::LOLO, AlarmSeverity::MAX, "LOLO", "MAX"},
+    {14, AlarmStatus::READ, AlarmSeverity::MAX, "READ", "MAX"},
+    {15, AlarmStatus::SCAN, AlarmSeverity::MAX, "SCAN", "MAX"},
+    {16, AlarmStatus::SIMM, AlarmSeverity::MAX, "SIMM", "MAX"},
+    {17, AlarmStatus::SOFT, AlarmSeverity::MAX, "SOFT", "MAX"},
+    {18, AlarmStatus::STATE, AlarmSeverity::MAX, "STATE", "MAX"},
+    {19, AlarmStatus::TIMED, AlarmSeverity::MAX, "TIMED", "MAX"},
+    {20, AlarmStatus::BAD_SUB, AlarmSeverity::MAX, "BAD_SUB", "MAX"},
+    {21, AlarmStatus::DISABLE, AlarmSeverity::MAX, "DISABLE", "MAX"},
+    {22, AlarmStatus::HWLIMIT, AlarmSeverity::MAX, "HWLIMIT", "MAX"},
+    {23, AlarmStatus::READ_ACCESS, AlarmSeverity::MAX, "READ_ACCESS", "MAX"},
+    {24, AlarmStatus::WRITE_ACCESS, AlarmSeverity::MAX, "WRITE_ACCESS", "MAX"}
+};
 
 INSTANTIATE_TEST_SUITE_P(TestWritingAllAlarmTypes, f142WriteAlarms,
                          testing::ValuesIn(AlarmWritingTestParams));
