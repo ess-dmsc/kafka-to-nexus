@@ -297,9 +297,26 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
 
   if (LogDataMessage->status() != AlarmStatus::NO_CHANGE) {
     AlarmTime.appendElement(LogDataMessage->timestamp());
-    AlarmStatus.appendString(AlarmStatusToString[LogDataMessage->status()]);
-    AlarmSeverity.appendString(
-        AlarmSeverityToString[LogDataMessage->severity()]);
+
+    auto AlarmStatusStringIterator =
+        AlarmStatusToString.find(LogDataMessage->status());
+    std::string AlarmStatusString;
+    if (AlarmStatusStringIterator == AlarmStatusToString.end()) {
+      AlarmStatusString = "UNRECOGNISED_STATUS";
+    } else {
+      AlarmStatusString = AlarmStatusStringIterator->second;
+    }
+    AlarmStatus.appendString(AlarmStatusString);
+
+    auto AlarmSeverityStringIterator =
+        AlarmSeverityToString.find(LogDataMessage->severity());
+    std::string AlarmSeverityString;
+    if (AlarmSeverityStringIterator == AlarmSeverityToString.end()) {
+      AlarmSeverityString = "UNRECOGNISED_SEVERITY";
+    } else {
+      AlarmSeverityString = AlarmSeverityStringIterator->second;
+    }
+    AlarmSeverity.appendString(AlarmSeverityString);
   } else {
     fmt::print("Timestamp: {}\n", LogDataMessage->timestamp());
   }
