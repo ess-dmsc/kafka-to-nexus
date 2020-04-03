@@ -62,15 +62,12 @@ public:
                    Stream::time_point Stop, Stream::duration StopLeeway,
                    Stream::duration KafkaErrorTimeout, std::unique_ptr<IExecutor> Executor)
       : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
-                          std::move(Map), Writer, RegisterMetric, Start, Stop,
+                          Map, Writer, RegisterMetric, Start, Stop,
                           StopLeeway, KafkaErrorTimeout, std::move(Executor)) {}
   void addPollTask() override {
     // Do nothing as don't want to automatically poll again
   }
-  void pollForMessageBase() { Partition::pollForMessage(); }
-  void processMessageBase(FileWriter::Msg const &Msg) {
-    Partition::processMessage(Msg);
-  }
+  using Partition::pollForMessage;
   using Partition::ConsumerPtr;
   using Partition::Executor;
   using Partition::FlatbufferErrors;
@@ -132,7 +129,7 @@ TEST_F(PartitionTest, EmptyMessageIsIgnored) {
   Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::Empty;
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 0);
 }
 
@@ -141,7 +138,7 @@ TEST_F(PartitionTest, ActualMessageIsCounted) {
   PollReturn.first = Kafka::PollStatus::Message;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
 }
 
@@ -150,7 +147,7 @@ TEST_F(PartitionTest, TimeoutMessageIsCountedButThenIgnored) {
   PollReturn.first = Kafka::PollStatus::TimedOut;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 0);
   EXPECT_EQ(UnderTest->KafkaTimeouts.getCounterPtr()->load(), 1);
 }
@@ -160,7 +157,7 @@ TEST_F(PartitionTest, ErrorMessageIsCountedButThenIgnored) {
   PollReturn.first = Kafka::PollStatus::Error;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 0);
   EXPECT_EQ(UnderTest->KafkaErrors.getCounterPtr()->load(), 1);
 }
@@ -170,7 +167,7 @@ TEST_F(PartitionTest, EndOfPartitionMessageIsIgnored) {
   PollReturn.first = Kafka::PollStatus::EndOfPartition;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 0);
 }
 
@@ -180,7 +177,7 @@ TEST_F(PartitionTest, WithNoFiltersPartitionIsFinishedOnMessage) {
   auto UnderTest = createTestedInstance();
   UnderTest->MsgFilters.clear();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_TRUE(UnderTest->hasFinished());
 }
 
@@ -194,7 +191,7 @@ TEST_F(PartitionTest, MessageWithInvalidFlatBufferIsNotProcessed) {
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
   EXPECT_EQ(UnderTest->FlatbufferErrors.getCounterPtr()->load(), 1);
 }
@@ -210,7 +207,7 @@ TEST_F(PartitionTest, MessageWithinStopLeewayDoesNotTriggerFinished) {
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance(Stop);
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_FALSE(UnderTest->hasFinished());
 }
 
@@ -225,7 +222,7 @@ TEST_F(PartitionTest, MessageAfterStopLeewayTriggersFinished) {
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance(Stop);
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessageBase();
+  UnderTest->pollForMessage();
   EXPECT_TRUE(UnderTest->hasFinished());
 }
 
@@ -256,7 +253,7 @@ TEST_F(PartitionTest, IfSourceHashUnknownThenNotProcessed) {
   UnderTest->MsgFilters[SomeOtherHash] = std::move(TestFilter);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
-  UnderTest->processMessageBase(Msg);
+  UnderTest->processMessage(Msg);
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
   EXPECT_EQ(UnderTest->MessagesProcessed.getCounterPtr()->load(), 0);
 }
@@ -270,7 +267,7 @@ TEST_F(PartitionTest, IfSourceHashIsKnownThenItIsProcessed) {
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
-  UnderTest->processMessageBase(Msg);
+  UnderTest->processMessage(Msg);
   EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
   EXPECT_EQ(UnderTest->MessagesProcessed.getCounterPtr()->load(), 1);
 }
@@ -285,7 +282,7 @@ TEST_F(PartitionTest, FilterNotRemovedIfNotDone) {
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
-  UnderTest->processMessageBase(Msg);
+  UnderTest->processMessage(Msg);
   EXPECT_EQ(UnderTest->MsgFilters.size(), OldSize);
 }
 
@@ -299,6 +296,6 @@ TEST_F(PartitionTest, FilterIsRemovedWhenDone) {
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(true);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
-  UnderTest->processMessageBase(Msg);
+  UnderTest->processMessage(Msg);
   EXPECT_EQ(UnderTest->MsgFilters.size(), OldSize - 1);
 }
