@@ -16,10 +16,10 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                      int Partition, std::string TopicName, SrcToDst const &Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway,
-                     duration KafkaErrorTimeout)
+                     duration KafkaErrorTimeout, std::unique_ptr<IExecutor> Executor)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
-      StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
+      StopTester(Stop, StopLeeway, KafkaErrorTimeout), Executor(std::move(Executor)) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
@@ -50,7 +50,7 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
 void Partition::start() { addPollTask(); }
 
 void Partition::setStopTime(time_point Stop) {
-  Executor.sendWork([=]() {
+  Executor->sendWork([=]() {
     StopTester.setStopTime(Stop);
     for (auto &Filter : MsgFilters) {
       Filter.second->setStopTime(Stop);
@@ -61,7 +61,7 @@ void Partition::setStopTime(time_point Stop) {
 bool Partition::hasFinished() const { return HasFinished.load(); }
 
 void Partition::addPollTask() {
-  Executor.sendLowPriorityWork([=]() { pollForMessage(); });
+  Executor->sendLowPriorityWork([=]() { pollForMessage(); });
 }
 
 bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
@@ -82,18 +82,14 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
 void Partition::pollForMessage() {
   auto Msg = ConsumerPtr->poll();
   switch (Msg.first) {
-  case Kafka::PollStatus::Message:
-    MessagesReceived++;
-    break;
   case Kafka::PollStatus::TimedOut:
     KafkaTimeouts++;
     break;
   case Kafka::PollStatus::Error:
     KafkaErrors++;
     break;
-  case Kafka::PollStatus::EndOfPartition: // Do nothing
-    break;
-  case Kafka::PollStatus::Empty: // Do nothing
+  default:
+    // Do nothing
     break;
   }
   if (shouldStopBasedOnPollStatus(Msg.first)) {
@@ -101,7 +97,7 @@ void Partition::pollForMessage() {
     return;
   }
 
-  if (Kafka::PollStatus::Message == Msg.first) {
+  if (Msg.first == Kafka::PollStatus::Message) {
     processMessage(Msg.second);
     if (MsgFilters.empty() or
         Msg.second.getMetaData().timestamp() > StopTime + StopTimeLeeway) {
@@ -115,6 +111,7 @@ void Partition::pollForMessage() {
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
+  MessagesReceived++;
   if (CurrentOffset != 0 and
       CurrentOffset + 1 != Message.getMetaData().Offset) {
     BadOffsets++;
