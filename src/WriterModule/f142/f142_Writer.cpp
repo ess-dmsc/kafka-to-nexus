@@ -317,8 +317,6 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
       AlarmSeverityString = AlarmSeverityStringIterator->second;
     }
     AlarmSeverity.appendString(AlarmSeverityString);
-  } else {
-    fmt::print("Timestamp: {}\n", LogDataMessage->timestamp());
   }
 }
 /// Register the writer module.
