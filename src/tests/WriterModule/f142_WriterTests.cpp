@@ -56,6 +56,9 @@ TEST_F(f142Init, BasicDefaultInit) {
   EXPECT_TRUE(RootGroup.has_dataset("cue_timestamp_zero"));
   EXPECT_TRUE(RootGroup.has_dataset("time"));
   EXPECT_TRUE(RootGroup.has_dataset("value"));
+  EXPECT_TRUE(RootGroup.has_dataset("alarm_time"));
+  EXPECT_TRUE(RootGroup.has_dataset("alarm_status"));
+  EXPECT_TRUE(RootGroup.has_dataset("alarm_severity"));
 }
 
 TEST_F(f142Init, ReOpenSuccess) {
