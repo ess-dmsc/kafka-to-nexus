@@ -189,8 +189,6 @@ void appendData(DatasetType &Dataset, const void *Pointer, size_t Size) {
 
 std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
     {AlarmStatus::NO_ALARM, "NO_ALARM"},
-    {AlarmStatus::MIN, "MIN"},
-    {AlarmStatus::MAX, "MAX"},
     {AlarmStatus::WRITE_ACCESS, "WRITE_ACCESS"},
     {AlarmStatus::READ_ACCESS, "READ_ACCESS"},
     {AlarmStatus::READ, "READ"},
@@ -216,8 +214,6 @@ std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
 
 std::unordered_map<AlarmSeverity, std::string> AlarmSeverityToString{
     {AlarmSeverity::NO_ALARM, "NO_ALARM"},
-    {AlarmSeverity::MIN, "MIN"},
-    {AlarmSeverity::MAX, "MAX"},
     {AlarmSeverity::MINOR, "MINOR"},
     {AlarmSeverity::MAJOR, "MAJOR"},
     {AlarmSeverity::INVALID, "INVALID"},
