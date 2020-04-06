@@ -68,6 +68,11 @@ def generate_new_container():
 
     add_var("http_proxy")
     add_var("https_proxy")
+    add_var("local_conan_server")
+    try:
+        client.images.get(IMAGE_NAME)
+    except docker.errors.ImageNotFound as e:
+        client.images.pull(IMAGE_NAME)
     container = client.containers.create(
         IMAGE_NAME,
         name=CONTAINER_NAME,
