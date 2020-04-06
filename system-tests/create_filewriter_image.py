@@ -164,7 +164,7 @@ def create_filewriter_image():
         pass
 
     if conan_hash_changed(container) or src_hash_changed(container):
-        execute_command("rm -rf *", "/home/jenkins/build/", container)
+        container.exec_run('bash -c "rm -rf *"', workdir="/home/jenkins/build/")
         run_conan(container)
         rebuild_filewriter(container)
         re_generate_test_image(container)
