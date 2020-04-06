@@ -130,19 +130,6 @@ def build_filewriter_image(request):
         from create_filewriter_image import create_filewriter_image
 
         create_filewriter_image()
-        # build_args = {}
-        # if "http_proxy" in os.environ:
-        #     build_args["http_proxy"] = os.environ["http_proxy"]
-        # if "https_proxy" in os.environ:
-        #     build_args["https_proxy"] = os.environ["https_proxy"]
-        # if "local_conan_server" in os.environ:
-        #     build_args["local_conan_server"] = os.environ["local_conan_server"]
-        # image, logs = client.images.build(
-        #     path="../", tag="kafka-to-nexus:latest", rm=False, buildargs=build_args
-        # )
-        # for item in logs:
-        #     print(item, flush=True)
-
 
 def run_containers(cmd, options):
     print("Running docker-compose up", flush=True)
