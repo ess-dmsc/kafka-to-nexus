@@ -306,15 +306,13 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     }
     AlarmStatus.appendStringElement(AlarmStatusString);
 
-    auto AlarmSeverityStringIterator =
+auto const AlarmSeverityStringIterator =
         AlarmSeverityToString.find(LogDataMessage->severity());
-    std::string AlarmSeverityString;
-    if (AlarmSeverityStringIterator == AlarmSeverityToString.end()) {
-      AlarmSeverityString = "UNRECOGNISED_SEVERITY";
-    } else {
+    std::string AlarmSeverityString = "UNRECOGNISED_SEVERITY";
+    if (AlarmSeverityStringIterator != AlarmSeverityToString.end()) {
       AlarmSeverityString = AlarmSeverityStringIterator->second;
     }
-    AlarmSeverity.appendStringElement(AlarmSeverityString);
+    AlarmSeverity.appendString(AlarmSeverityString);
   }
 }
 /// Register the writer module.
