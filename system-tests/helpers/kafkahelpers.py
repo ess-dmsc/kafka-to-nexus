@@ -80,9 +80,14 @@ def _millseconds_to_nanoseconds(time_ms: int) -> int:
     return int(time_ms * 1000000)
 
 
-def publish_f142_message(producer: Producer, topic: str, kafka_timestamp: Optional[int] = None,
-                         source_name: Optional[str] = None, alarm_status: Optional[int] = None,
-                         alarm_severity: Optional[int] = None):
+def publish_f142_message(
+    producer: Producer,
+    topic: str,
+    kafka_timestamp: Optional[int] = None,
+    source_name: Optional[str] = None,
+    alarm_status: Optional[int] = None,
+    alarm_severity: Optional[int] = None,
+):
     """
     Publish an f142 message to a given topic.
     Optionally set the timestamp in the kafka header to allow, for example, fake "historical" data.
@@ -96,7 +101,12 @@ def publish_f142_message(producer: Producer, topic: str, kafka_timestamp: Option
     if source_name is None:
         source_name = "fw-test-helpers"
     value = 42
-    f142_message = serialise_f142(value, source_name, _millseconds_to_nanoseconds(kafka_timestamp),
-                                  alarm_status, alarm_severity)
+    f142_message = serialise_f142(
+        value,
+        source_name,
+        _millseconds_to_nanoseconds(kafka_timestamp),
+        alarm_status,
+        alarm_severity,
+    )
     producer.produce(topic, f142_message, timestamp=kafka_timestamp)
     producer.poll(0)

@@ -76,12 +76,22 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         for time_in_ms_after_epoch in range(1_560_330_000_000, 1_560_330_000_200):
             if time_in_ms_after_epoch == first_alarm_change_time_ms:
                 # EPICS alarm goes into HIGH state
-                publish_f142_message(producer, data_topic, time_in_ms_after_epoch,
-                                     alarm_status=AlarmStatus.HIGH, alarm_severity=AlarmSeverity.MAJOR)
+                publish_f142_message(
+                    producer,
+                    data_topic,
+                    time_in_ms_after_epoch,
+                    alarm_status=AlarmStatus.HIGH,
+                    alarm_severity=AlarmSeverity.MAJOR,
+                )
             elif time_in_ms_after_epoch == second_alarm_change_time_ms:
                 # EPICS alarm returns to NO_ALARM
-                publish_f142_message(producer, data_topic, time_in_ms_after_epoch,
-                                     alarm_status=AlarmStatus.NO_ALARM, alarm_severity=AlarmSeverity.NO_ALARM)
+                publish_f142_message(
+                    producer,
+                    data_topic,
+                    time_in_ms_after_epoch,
+                    alarm_status=AlarmStatus.NO_ALARM,
+                    alarm_severity=AlarmSeverity.NO_ALARM,
+                )
             else:
                 publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
 
@@ -113,18 +123,26 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         ), "Expected there to be one message per millisecond recorded between specified start and stop time"
 
         # EPICS alarms
-        assert file["entry/historical_data_1/alarm_status"].len() == 2, \
-            "Expected there to have record two changes in EPICS alarm status"
-        assert file["entry/historical_data_1/alarm_severity"].len() == 2, \
-            "Expected there to have record two changes in EPICS alarm status"
+        assert (
+            file["entry/historical_data_1/alarm_status"].len() == 2
+        ), "Expected there to have record two changes in EPICS alarm status"
+        assert (
+            file["entry/historical_data_1/alarm_severity"].len() == 2
+        ), "Expected there to have record two changes in EPICS alarm status"
         # First alarm change
         assert file["entry/historical_data_1/alarm_status"][0] == "HIGH"
         assert file["entry/historical_data_1/alarm_severity"][0] == "MAJOR"
-        assert file["entry/historical_data_1/alarm_time"][0] == first_alarm_change_time_ms * 1000  # ns
+        assert (
+            file["entry/historical_data_1/alarm_time"][0]
+            == first_alarm_change_time_ms * 1000
+        )  # ns
         # Second alarm change
         assert file["entry/historical_data_1/alarm_status"][1] == "NO_ALARM"
         assert file["entry/historical_data_1/alarm_severity"][1] == "NO_ALARM"
-        assert file["entry/historical_data_1/alarm_time"][1] == second_alarm_change_time_ms * 1000  # ns
+        assert (
+            file["entry/historical_data_1/alarm_time"][1]
+            == second_alarm_change_time_ms * 1000
+        )  # ns
 
         assert (
             file["entry/no_data/time"].len() == 0
