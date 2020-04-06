@@ -306,7 +306,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     } else {
       AlarmStatusString = AlarmStatusStringIterator->second;
     }
-    AlarmStatus.appendString(AlarmStatusString);
+    AlarmStatus.appendStringElement(AlarmStatusString);
 
     auto AlarmSeverityStringIterator =
         AlarmSeverityToString.find(LogDataMessage->severity());
@@ -316,7 +316,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     } else {
       AlarmSeverityString = AlarmSeverityStringIterator->second;
     }
-    AlarmSeverity.appendString(AlarmSeverityString);
+    AlarmSeverity.appendStringElement(AlarmSeverityString);
   }
 }
 /// Register the writer module.

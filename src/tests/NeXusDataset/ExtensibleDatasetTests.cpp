@@ -361,7 +361,7 @@ TEST_F(DatasetCreation, StringDatasetWriteString) {
       RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
 
   std::string TestString{"Hello"};
-  TestDataset.appendString(TestString);
+  TestDataset.appendStringElement(TestString);
   std::string ReadBackString;
   TestDataset.read(ReadBackString, TestDataset.datatype(),
                    hdf5::dataspace::Scalar(),
@@ -378,9 +378,9 @@ TEST_F(DatasetCreation, StringDatasetWriteTwoStrings) {
       RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
 
   std::string TestString1{"Hello"};
-  TestDataset.appendString(TestString1);
+  TestDataset.appendStringElement(TestString1);
   std::string TestString2{"Hi"};
-  TestDataset.appendString(TestString2);
+  TestDataset.appendStringElement(TestString2);
 
   std::string ReadBackString;
   TestDataset.read(ReadBackString, TestDataset.datatype(),
@@ -397,7 +397,7 @@ TEST_F(DatasetCreation, StringDatasetWriteTooLongString) {
       RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
 
   std::string TestString{"The quick brown fox jumped over the lazy turtle"};
-  TestDataset.appendString(TestString);
+  TestDataset.appendStringElement(TestString);
   std::string ReadBackString;
   TestDataset.read(ReadBackString, TestDataset.datatype(),
                    hdf5::dataspace::Scalar(),
