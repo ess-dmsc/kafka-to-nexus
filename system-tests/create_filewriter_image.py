@@ -8,7 +8,7 @@ import io
 
 IMAGE_NAME = "screamingudder/ubuntu18.04-build-node:3.0.6"
 CONTAINER_NAME = "filewriter-system-test"
-DEBUG_MODE = True
+DEBUG_MODE = False
 client = docker.from_env()
 
 
@@ -163,13 +163,9 @@ def create_filewriter_image():
     except docker.errors.APIError as e:
         pass
 
-    if conan_hash_changed(container):
-        print("Conan package list outdated")
+    if conan_hash_changed(container) or src_hash_changed(container):
+        execute_command("rm -rf *", "/home/jenkins/build/", container)
         run_conan(container)
-        rebuild_filewriter(container)
-        re_generate_test_image(container)
-    elif src_hash_changed(container):
-        print("Filewriter source code has changed")
         rebuild_filewriter(container)
         re_generate_test_image(container)
 
