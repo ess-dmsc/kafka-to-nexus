@@ -128,6 +128,7 @@ def build_filewriter_image(request):
         client = docker.from_env()
         print("Building Filewriter image", flush=True)
         from create_filewriter_image import create_filewriter_image
+
         create_filewriter_image()
         # build_args = {}
         # if "http_proxy" in os.environ:
