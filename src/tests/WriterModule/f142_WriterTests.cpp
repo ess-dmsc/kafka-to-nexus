@@ -420,8 +420,8 @@ struct AlarmWritingTestInfo {
 class f142WriteAlarms : public ::testing::TestWithParam<AlarmWritingTestInfo> {
 public:
   void SetUp() override {
-    TestFile =
-        HDFFileTestHelper::createInMemoryTestFile("f142WriteAlarms.hdf5", false);
+    TestFile = HDFFileTestHelper::createInMemoryTestFile("f142WriteAlarms.hdf5",
+                                                         false);
     RootGroup = TestFile.H5File.root();
     setExtractorModule<AccessMessageMetadata::f142_Extractor>("f142");
   }
@@ -490,9 +490,10 @@ std::vector<AlarmWritingTestInfo> const AlarmWritingTestParams = {
     {18, AlarmStatus::BAD_SUB, AlarmSeverity::NO_ALARM, "BAD_SUB", "NO_ALARM"},
     {19, AlarmStatus::DISABLE, AlarmSeverity::NO_ALARM, "DISABLE", "NO_ALARM"},
     {20, AlarmStatus::HWLIMIT, AlarmSeverity::NO_ALARM, "HWLIMIT", "NO_ALARM"},
-    {21, AlarmStatus::READ_ACCESS, AlarmSeverity::NO_ALARM, "READ_ACCESS", "NO_ALARM"},
-    {22, AlarmStatus::WRITE_ACCESS, AlarmSeverity::NO_ALARM, "WRITE_ACCESS", "NO_ALARM"}
-};
+    {21, AlarmStatus::READ_ACCESS, AlarmSeverity::NO_ALARM, "READ_ACCESS",
+     "NO_ALARM"},
+    {22, AlarmStatus::WRITE_ACCESS, AlarmSeverity::NO_ALARM, "WRITE_ACCESS",
+     "NO_ALARM"}};
 
 INSTANTIATE_TEST_SUITE_P(TestWritingAllAlarmTypes, f142WriteAlarms,
                          testing::ValuesIn(AlarmWritingTestParams));

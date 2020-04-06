@@ -11,6 +11,7 @@
 
 #include "FlatbufferMessage.h"
 #include "WriterModuleBase.h"
+#include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
 #include <array>
 #include <chrono>
@@ -18,7 +19,6 @@
 #include <nlohmann/json.hpp>
 #include <nonstd/optional.hpp>
 #include <vector>
-#include <NeXusDataset/EpicsAlarmDatasets.h>
 
 namespace WriterModule {
 namespace f142 {

@@ -366,7 +366,8 @@ TEST_F(DatasetCreation, StringDatasetWriteString) {
   TestDataset.read(ReadBackString, TestDataset.datatype(),
                    hdf5::dataspace::Scalar(),
                    hdf5::dataspace::Hyperslab{{0}, {1}});
-  std::string CompareString(ReadBackString.data());  // Trim null characters from end of string
+  std::string CompareString(
+      ReadBackString.data()); // Trim null characters from end of string
   EXPECT_EQ(TestString, CompareString);
 }
 

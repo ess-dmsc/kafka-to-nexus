@@ -12,7 +12,7 @@
 namespace NeXusDataset {
 
 AlarmTime::AlarmTime(hdf5::node::Group const &Parent, Mode CMode,
-                         size_t ChunkSize)
+                     size_t ChunkSize)
     : ExtensibleDataset<std::uint64_t>(Parent, "alarm_time", CMode, ChunkSize) {
   if (Mode::Create == CMode) {
     auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");

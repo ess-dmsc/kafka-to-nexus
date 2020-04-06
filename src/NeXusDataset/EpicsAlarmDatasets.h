@@ -33,7 +33,8 @@ public:
 class AlarmTime : public ExtensibleDataset<std::uint64_t> {
 public:
   AlarmTime() = default;
-  AlarmTime(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
+  AlarmTime(hdf5::node::Group const &Parent, Mode CMode,
+            size_t ChunkSize = 1024);
 };
 
 } // namespace NeXusDataset
