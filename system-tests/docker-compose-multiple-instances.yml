@@ -2,7 +2,7 @@ version: '2'
 
 services:
   filewriter1:
-    image: kafka-to-nexus:latest
+    image: filewriter-image:latest
     network_mode: "host"
     environment:
       CONFIG_FILE: "/file_writer_config.ini"
@@ -12,7 +12,7 @@ services:
       - ./logs/:/filewriter_logs/
 
   filewriter2:
-    image: kafka-to-nexus:latest
+    image: filewriter-image:latest
     network_mode: "host"
     environment:
       CONFIG_FILE: "/file_writer_config.ini"
