@@ -291,6 +291,10 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
         "Unknown data type in f142 flatbuffer.");
   }
 
+  // AlarmStatus::NO_CHANGE is not a real EPICS alarm status value, it is used
+  // by the Forwarder to indicate that the alarm has not changed from the
+  // previously published value. The Filewriter only records changes in alarm
+  // status.
   if (LogDataMessage->status() != AlarmStatus::NO_CHANGE) {
     AlarmTime.appendElement(LogDataMessage->timestamp());
 
