@@ -49,9 +49,20 @@ def copy_to_container(container):
     copy_files_to_container([src_hash_file_name, conan_hash_file_name], "./", container)
 
 def generate_new_container():
-    container = client.containers.create(IMAGE_NAME, name = CONTAINER_NAME, command = "tail -f /dev/null")
+    environment_variables = {}
+    def add_var(var_name):
+        if var_name in os.environ:
+            environment_variables[var_name] = os.environ[var_name]
+    add_var("http_proxy")
+    add_var("https_proxy")
+    container = client.containers.create(IMAGE_NAME, name = CONTAINER_NAME, command = "tail -f /dev/null", environment = environment_variables)
     container.start()
-    container.exec_run("apt-get --assume-yes install kafkacat", user="root") 
+    container.exec_run("apt-get --assume-yes install kafkacat", user="root")
+    if "local_conan_server" in os.environ:
+        print("Setting up local conan server")
+        container.exec_run("conan remote add --insert 0 ess-dmsc-local {}".format(os.environ["local_conan_server"]))
+    else:
+        print("No local conan server available in environment variables.")
     return container
     
 def kill_and_remove(container):
@@ -63,13 +74,6 @@ def kill_and_remove(container):
 
 def run_conan(container):
     print("Running conan")
-    code, output = container.exec_run("ls conan_hash.txt")
-    if code != 0:
-        print("This is the first conan run. Configuring local remote.")
-        if "local_conan_server" in os.environ:
-            container.exec_run("conan remote add --insert 0 ess-dmsc-local {}".format(os.environ["local_conan_server"]))
-        else:
-            print("No local conan server available in environment variables.")
     container.exec_run("mkdir build", workdir = "/home/jenkins/")
     execute_command("conan install --build=outdated ../conan", "/home/jenkins/build", container)
     execute_command("cp conan_hash_new.txt conan_hash.txt", "/home/jenkins/", container)
