@@ -131,6 +131,7 @@ def build_filewriter_image(request):
 
         create_filewriter_image()
 
+
 def run_containers(cmd, options):
     print("Running docker-compose up", flush=True)
     cmd.up(options)
