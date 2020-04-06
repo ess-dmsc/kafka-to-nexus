@@ -306,7 +306,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     }
     AlarmStatus.appendStringElement(AlarmStatusString);
 
-auto const AlarmSeverityStringIterator =
+    auto const AlarmSeverityStringIterator =
         AlarmSeverityToString.find(LogDataMessage->severity());
     std::string AlarmSeverityString = "UNRECOGNISED_SEVERITY";
     if (AlarmSeverityStringIterator != AlarmSeverityToString.end()) {
