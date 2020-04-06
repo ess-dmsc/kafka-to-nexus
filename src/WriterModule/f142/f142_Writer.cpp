@@ -312,7 +312,7 @@ auto const AlarmSeverityStringIterator =
     if (AlarmSeverityStringIterator != AlarmSeverityToString.end()) {
       AlarmSeverityString = AlarmSeverityStringIterator->second;
     }
-    AlarmSeverity.appendString(AlarmSeverityString);
+    AlarmSeverity.appendStringElement(AlarmSeverityString);
   }
 }
 /// Register the writer module.
