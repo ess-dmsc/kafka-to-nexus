@@ -145,6 +145,11 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addUriOption(App, "--graylog-logger-address",
                MainOptions.GraylogLoggerAddress,
                "<host:port> Log to Graylog via graylog_logger library");
+  addUriOption(App, "--grafana-carbon-address", MainOptions.GrafanCarbonAddress,
+               "<host:port> Address to the Grafana (Carbon) metrics service.");
+  App.add_option("--metrics-id", MainOptions.GrafanaCarbonMetricsId,
+                 "An extra metrics ID string. Only used if present. Will take "
+                 "the form: \"kafka-to-nexus.[id].*\"");
   std::string LogLevelInfoStr =
       R"*(Set log message level. Set to 0 - 5 or one of
   `Trace`, `Debug`, `Info`, `Warning`, `Error`
