@@ -130,15 +130,15 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
             file["entry/historical_data_1/alarm_severity"].len() == 2
         ), "Expected there to have record two changes in EPICS alarm status"
         # First alarm change
-        assert file["entry/historical_data_1/alarm_status"][0] == "HIGH"
-        assert file["entry/historical_data_1/alarm_severity"][0] == "MAJOR"
+        assert file["entry/historical_data_1/alarm_status"][0] == b"HIGH"
+        assert file["entry/historical_data_1/alarm_severity"][0] == b"MAJOR"
         assert (
             file["entry/historical_data_1/alarm_time"][0]
             == first_alarm_change_time_ms * 1000
         )  # ns
         # Second alarm change
-        assert file["entry/historical_data_1/alarm_status"][1] == "NO_ALARM"
-        assert file["entry/historical_data_1/alarm_severity"][1] == "NO_ALARM"
+        assert file["entry/historical_data_1/alarm_status"][1] == b"NO_ALARM"
+        assert file["entry/historical_data_1/alarm_severity"][1] == b"NO_ALARM"
         assert (
             file["entry/historical_data_1/alarm_time"][1]
             == second_alarm_change_time_ms * 1000
