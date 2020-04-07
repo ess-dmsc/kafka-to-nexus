@@ -2,12 +2,14 @@ set(datasets_SRC
         NeXusDataset.cpp
         ExtensibleDataset.cpp
         AdcDatasets.cpp
+        EpicsAlarmDatasets.cpp
         )
 
 set(datasets_INC
         NeXusDataset.h
         ExtensibleDataset.h
         AdcDatasets.h
+        EpicsAlarmDatasets.h
         )
 
 add_library(NeXusDataset OBJECT
