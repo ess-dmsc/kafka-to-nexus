@@ -134,14 +134,14 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         assert file["entry/historical_data_1/alarm_severity"][0] == b"MAJOR"
         assert (
             file["entry/historical_data_1/alarm_time"][0]
-            == first_alarm_change_time_ms * 1000
+            == first_alarm_change_time_ms * 1000000
         )  # ns
         # Second alarm change
         assert file["entry/historical_data_1/alarm_status"][1] == b"NO_ALARM"
         assert file["entry/historical_data_1/alarm_severity"][1] == b"NO_ALARM"
         assert (
             file["entry/historical_data_1/alarm_time"][1]
-            == second_alarm_change_time_ms * 1000
+            == second_alarm_change_time_ms * 1000000
         )  # ns
 
         assert (
