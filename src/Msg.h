@@ -51,11 +51,11 @@ struct Msg {
     return *this;
   }
 
-  char const *data() const {
+  uint8_t const *data() const {
     if (DataPtr == nullptr) {
       getLogger()->error("error at type: {}", -1);
     }
-    return DataPtr.get();
+    return reinterpret_cast<uint8_t const *>(DataPtr.get());
   }
 
   size_t size() const {
@@ -64,7 +64,7 @@ struct Msg {
     }
     return Size;
   }
-  MessageMetaData const getMetaData() const { return MetaData; }
+  MessageMetaData getMetaData() const { return MetaData; }
 
 protected:
   std::unique_ptr<char[]> DataPtr{nullptr};
