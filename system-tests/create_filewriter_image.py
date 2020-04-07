@@ -7,6 +7,7 @@ import hashlib
 import io
 
 IMAGE_NAME = "screamingudder/ubuntu18.04-build-node:3.0.6"
+TEST_IMAGE_NAME = "filewriter-image"
 CONTAINER_NAME = "filewriter-system-test"
 DEBUG_MODE = False
 client = docker.from_env()
@@ -124,7 +125,13 @@ def rebuild_filewriter(container):
 
 def re_generate_test_image(container):
     print("Generating docker image")
-    container.commit("filewriter-image", changes='CMD ["./docker_launch.sh"]')
+    try:
+        client.images.remove(TEST_IMAGE_NAME + ":latest")
+    except docker.errors.ImageNotFound as e:
+        pass
+    except docker.errors.APIError as e:
+        pass
+    container.commit(TEST_IMAGE_NAME, changes='CMD ["/home/jenkins/docker_launch.sh"]')
 
 
 def conan_hash_changed(container):
