@@ -18,12 +18,8 @@ using std::chrono_literals::operator""s;
 using trompeloeil::_;
 
 class ImmediateExecutor : public IExecutor {
-  void sendWork(JobType Task) override {
-    Task();
-  }
-  void sendLowPriorityWork(JobType Task) override {
-    Task();
-  }
+  void sendWork(JobType Task) override { Task(); }
+  void sendLowPriorityWork(JobType Task) override { Task(); }
 };
 
 class SourceFilterStandInAlt : public Stream::SourceFilter {
@@ -60,35 +56,38 @@ public:
                    Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
                    Metrics::Registrar RegisterMetric, Stream::time_point Start,
                    Stream::time_point Stop, Stream::duration StopLeeway,
-                   Stream::duration KafkaErrorTimeout, std::unique_ptr<IExecutor> Executor)
+                   Stream::duration KafkaErrorTimeout,
+                   std::unique_ptr<IExecutor> Executor)
       : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
-                          Map, Writer, RegisterMetric, Start, Stop,
-                          StopLeeway, KafkaErrorTimeout, std::move(Executor)) {}
+                          Map, Writer, RegisterMetric, Start, Stop, StopLeeway,
+                          KafkaErrorTimeout, std::move(Executor)) {}
   void addPollTask() override {
     // Do nothing as don't want to automatically poll again
   }
-  using Partition::pollForMessage;
   using Partition::ConsumerPtr;
   using Partition::Executor;
   using Partition::FlatbufferErrors;
+  using Partition::KafkaErrors;
+  using Partition::KafkaTimeouts;
+  using Partition::MessagesProcessed;
+  using Partition::MessagesReceived;
   using Partition::MsgFilters;
+  using Partition::pollForMessage;
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
-  using Partition::MessagesReceived;
-  using Partition::KafkaTimeouts;
-  using Partition::KafkaErrors;
-  using Partition::MessagesProcessed;
 };
 
 class PartitionTest : public ::testing::Test {
 public:
-  auto createTestedInstance(Stream::time_point StopTime = std::chrono::system_clock::time_point::max()) {
+  auto createTestedInstance(Stream::time_point StopTime =
+                                std::chrono::system_clock::time_point::max()) {
     Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
-        UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start, StopTime,
-        StopLeeway, ErrorTimeout, std::make_unique<ImmediateExecutor>());
+        UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start,
+        StopTime, StopLeeway, ErrorTimeout,
+        std::make_unique<ImmediateExecutor>());
     Stop = StopTime;
     Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->ConsumerPtr.get());
     return Temp;
@@ -119,7 +118,7 @@ TEST_F(PartitionTest, OnConstructionValuesAreAsExpected) {
 }
 
 TEST_F(PartitionTest, IfStopTimeTooCloseToMaxThenItIsBackedOff) {
-  auto StopTime = std::chrono::system_clock::time_point::max() - StopLeeway/2;
+  auto StopTime = std::chrono::system_clock::time_point::max() - StopLeeway / 2;
   auto UnderTest = createTestedInstance(StopTime);
   EXPECT_EQ(UnderTest->StopTime, StopTime - StopLeeway);
 }

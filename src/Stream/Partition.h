@@ -44,7 +44,8 @@ public:
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::Registrar RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
-            std::unique_ptr<IExecutor> Executor = std::make_unique<ThreadedExecutor>());
+            std::unique_ptr<IExecutor> Executor =
+                std::make_unique<ThreadedExecutor>());
   virtual ~Partition() = default;
 
   /// \brief Must be called after the constructor.

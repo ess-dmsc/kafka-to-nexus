@@ -16,10 +16,12 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                      int Partition, std::string TopicName, SrcToDst const &Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway,
-                     duration KafkaErrorTimeout, std::unique_ptr<IExecutor> Executor)
+                     duration KafkaErrorTimeout,
+                     std::unique_ptr<IExecutor> Executor)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
-      StopTester(Stop, StopLeeway, KafkaErrorTimeout), Executor(std::move(Executor)) {
+      StopTester(Stop, StopLeeway, KafkaErrorTimeout),
+      Executor(std::move(Executor)) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
