@@ -11,6 +11,7 @@
 
 #include "FlatbufferMessage.h"
 #include "WriterModuleBase.h"
+#include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
 #include <array>
 #include <chrono>
@@ -68,6 +69,15 @@ protected:
 
   /// Index into the f142 values.
   NeXusDataset::CueIndex CueIndex;
+
+  /// Timestamps of changes in EPICS alarm status
+  NeXusDataset::AlarmTime AlarmTime;
+
+  /// Changes in EPICS alarm status
+  NeXusDataset::AlarmStatus AlarmStatus;
+
+  /// Severity corresponding to EPICS alarm status
+  NeXusDataset::AlarmSeverity AlarmSeverity;
 
   // set by default to a large value:
   uint64_t ValueIndexInterval = std::numeric_limits<uint64_t>::max();
