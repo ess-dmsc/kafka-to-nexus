@@ -147,8 +147,8 @@ TEST_F(PartitionTest, TimeoutMessageIsCountedButThenIgnored) {
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
-  EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 0);
-  EXPECT_EQ(UnderTest->KafkaTimeouts.getCounterPtr()->load(), 1);
+  EXPECT_EQ(int(UnderTest->MessagesReceived), 0);
+  EXPECT_EQ(int(UnderTest->KafkaTimeouts), 1);
 }
 
 TEST_F(PartitionTest, ErrorMessageIsCountedButThenIgnored) {
