@@ -48,7 +48,7 @@ struct MainOpt {
   /// Can optionally use the `graylog_logger` library to log to this address.
   uri::URI GraylogLoggerAddress;
 
-  uri::URI GrafanCarbonAddress;
+  uri::URI GrafanaCarbonAddress;
   std::string GrafanaCarbonMetricsId;
 
   /// Used for logging to file

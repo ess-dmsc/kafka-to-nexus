@@ -89,9 +89,9 @@ int main(int argc, char **argv) {
   MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
       std::make_unique<Metrics::LogSink>(), 500ms));
 
-  if (not Options->GrafanCarbonAddress.HostPort.empty()) {
-    auto HostName = Options->GrafanCarbonAddress.Host;
-    auto Port = Options->GrafanCarbonAddress.Port;
+  if (not Options->GrafanaCarbonAddress.HostPort.empty()) {
+    auto HostName = Options->GrafanaCarbonAddress.Host;
+    auto Port = Options->GrafanaCarbonAddress.Port;
     MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
         std::make_unique<Metrics::CarbonSink>(HostName, Port), 500ms));
   }
