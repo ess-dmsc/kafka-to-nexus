@@ -84,6 +84,9 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
 void Partition::pollForMessage() {
   auto Msg = ConsumerPtr->poll();
   switch (Msg.first) {
+  case Kafka::PollStatus::Message:
+    MessagesReceived++;
+    break;
   case Kafka::PollStatus::TimedOut:
     KafkaTimeouts++;
     break;
@@ -113,7 +116,6 @@ void Partition::pollForMessage() {
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
-  MessagesReceived++;
   if (CurrentOffset != 0 and
       CurrentOffset + 1 != Message.getMetaData().Offset) {
     BadOffsets++;

@@ -138,7 +138,7 @@ TEST_F(PartitionTest, ActualMessageIsCounted) {
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
-  EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
+  EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
 }
 
 TEST_F(PartitionTest, TimeoutMessageIsCountedButThenIgnored) {
@@ -157,8 +157,8 @@ TEST_F(PartitionTest, ErrorMessageIsCountedButThenIgnored) {
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
-  EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 0);
-  EXPECT_EQ(UnderTest->KafkaErrors.getCounterPtr()->load(), 1);
+  EXPECT_EQ(int(UnderTest->MessagesReceived), 0);
+  EXPECT_EQ(int(UnderTest->KafkaErrors), 1);
 }
 
 TEST_F(PartitionTest, EndOfPartitionMessageIsIgnored) {
@@ -191,8 +191,8 @@ TEST_F(PartitionTest, MessageWithInvalidFlatBufferIsNotProcessed) {
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
-  EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
-  EXPECT_EQ(UnderTest->FlatbufferErrors.getCounterPtr()->load(), 1);
+  EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
+  EXPECT_EQ(int(UnderTest->FlatbufferErrors), 1);
 }
 
 TEST_F(PartitionTest, MessageWithinStopLeewayDoesNotTriggerFinished) {
@@ -253,7 +253,6 @@ TEST_F(PartitionTest, IfSourceHashUnknownThenNotProcessed) {
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
-  EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
   EXPECT_EQ(int(UnderTest->MessagesProcessed), 0);
 }
 
@@ -267,8 +266,7 @@ TEST_F(PartitionTest, IfSourceHashIsKnownThenItIsProcessed) {
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
-  EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
-  EXPECT_EQ(UnderTest->MessagesProcessed.getCounterPtr()->load(), 1);
+  EXPECT_EQ(int(UnderTest->MessagesProcessed), 1);
 }
 
 TEST_F(PartitionTest, FilterNotRemovedIfNotDone) {
