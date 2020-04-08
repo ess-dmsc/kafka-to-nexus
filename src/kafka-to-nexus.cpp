@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
   Metrics::Registrar MainRegistrar("kakfa-to-nexus", MetricsReporters);
   auto UsedRegistrar =
-      MainRegistrar.getNewRegistrar(Options->GrafanaCarbonMetricsId);
+      MainRegistrar.getNewRegistrar(Options->ServiceID);
 
   if (Options->use_signal_handler) {
     std::signal(SIGINT, signal_handler);

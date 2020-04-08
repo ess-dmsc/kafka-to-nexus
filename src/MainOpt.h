@@ -49,7 +49,6 @@ struct MainOpt {
   uri::URI GraylogLoggerAddress;
 
   uri::URI GrafanaCarbonAddress;
-  std::string GrafanaCarbonMetricsId;
 
   /// Used for logging to file
   std::string LogFilename;
