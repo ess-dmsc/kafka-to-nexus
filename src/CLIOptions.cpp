@@ -145,7 +145,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addUriOption(App, "--graylog-logger-address",
                MainOptions.GraylogLoggerAddress,
                "<host:port> Log to Graylog via graylog_logger library");
-  addUriOption(App, "--grafana-carbon-address", MainOptions.GrafanaCarbonAddress,
+  addUriOption(App, "--grafana-carbon-address",
+               MainOptions.GrafanaCarbonAddress,
                "<host:port> Address to the Grafana (Carbon) metrics service.");
   std::string LogLevelInfoStr =
       R"*(Set log message level. Set to 0 - 5 or one of
@@ -166,10 +167,12 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option("--teamid", MainOptions.teamid);
-  App.add_option("--service-id", MainOptions.ServiceID,
-                 "Used as the service identifier in status messages and as an"
-                 "extra metrics ID string. Only used by the metrics system if present. Will"
-                 "make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
+  App.add_option(
+      "--service-id", MainOptions.ServiceID,
+      "Used as the service identifier in status messages and as an"
+      "extra metrics ID string. Only used by the metrics system if present. "
+      "Will"
+      "make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
