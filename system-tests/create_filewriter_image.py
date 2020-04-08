@@ -1,6 +1,5 @@
 import os.path
 import os
-import pytest
 import docker
 import tarfile
 import hashlib
