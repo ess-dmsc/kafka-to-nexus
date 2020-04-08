@@ -253,7 +253,6 @@ TEST_F(PartitionTest, IfSourceHashUnknownThenNotProcessed) {
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
-  EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
   EXPECT_EQ(int(UnderTest->MessagesProcessed), 0);
 }
 
@@ -267,7 +266,6 @@ TEST_F(PartitionTest, IfSourceHashIsKnownThenItIsProcessed) {
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
-  EXPECT_EQ(UnderTest->MessagesReceived.getCounterPtr()->load(), 1);
   EXPECT_EQ(UnderTest->MessagesProcessed.getCounterPtr()->load(), 1);
 }
 
