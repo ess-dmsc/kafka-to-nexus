@@ -16,8 +16,6 @@ namespace NeXusDataset {
 class Amplitude : public ExtensibleDataset<std::uint32_t> {
 public:
   Amplitude() = default;
-  /// \brief Create the raw_value dataset of NXLog.
-  /// \throw std::runtime_error if dataset already exists.
   Amplitude(hdf5::node::Group const &Parent, Mode CMode,
             size_t ChunkSize = 1024)
       : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_amplitude", CMode,
@@ -27,8 +25,6 @@ public:
 class PeakArea : public ExtensibleDataset<std::uint32_t> {
 public:
   PeakArea() = default;
-  /// \brief Create the raw_value dataset of NXLog.
-  /// \throw std::runtime_error if dataset already exists.
   PeakArea(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024)
       : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_peak_area", CMode,
                                          ChunkSize){};
@@ -37,8 +33,6 @@ public:
 class Background : public ExtensibleDataset<std::uint32_t> {
 public:
   Background() = default;
-  /// \brief Create the raw_value dataset of NXLog.
-  /// \throw std::runtime_error if dataset already exists.
   Background(hdf5::node::Group const &Parent, Mode CMode,
              size_t ChunkSize = 1024)
       : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_background", CMode,
@@ -48,8 +42,6 @@ public:
 class ThresholdTime : public ExtensibleDataset<std::uint64_t> {
 public:
   ThresholdTime() = default;
-  /// \brief Create the raw_value dataset of NXLog.
-  /// \throw std::runtime_error if dataset already exists.
   ThresholdTime(hdf5::node::Group const &Parent, Mode CMode,
                 size_t ChunkSize = 1024);
 };
@@ -57,8 +49,6 @@ public:
 class PeakTime : public ExtensibleDataset<std::uint64_t> {
 public:
   PeakTime() = default;
-  /// \brief Create the raw_value dataset of NXLog.
-  /// \throw std::runtime_error if dataset already exists.
   PeakTime(hdf5::node::Group const &Parent, Mode CMode,
            size_t ChunkSize = 1024);
 };

@@ -137,6 +137,10 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                      },
                      {ChunkSize, ArraySize}, ValueUnits);
 
+    NeXusDataset::AlarmTime(HDFGroup, Create);
+    NeXusDataset::AlarmStatus(HDFGroup, Create);
+    NeXusDataset::AlarmSeverity(HDFGroup, Create);
+
     if (HDFGroup.attributes.exists("NX_class")) {
       Logger->info("NX_class already specified!");
     } else {
@@ -162,6 +166,9 @@ InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
     Values = NeXusDataset::MultiDimDatasetBase(HDFGroup, Open);
+    AlarmTime = NeXusDataset::AlarmTime(HDFGroup, Open);
+    AlarmStatus = NeXusDataset::AlarmStatus(HDFGroup, Open);
+    AlarmSeverity = NeXusDataset::AlarmSeverity(HDFGroup, Open);
   } catch (std::exception &E) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
@@ -180,16 +187,48 @@ void appendData(DatasetType &Dataset, const void *Pointer, size_t Size) {
       });
 }
 
+std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
+    {AlarmStatus::NO_ALARM, "NO_ALARM"},
+    {AlarmStatus::WRITE_ACCESS, "WRITE_ACCESS"},
+    {AlarmStatus::READ_ACCESS, "READ_ACCESS"},
+    {AlarmStatus::READ, "READ"},
+    {AlarmStatus::WRITE, "WRITE"},
+    {AlarmStatus::HWLIMIT, "HWLIMIT"},
+    {AlarmStatus::DISABLE, "DISABLE"},
+    {AlarmStatus::BAD_SUB, "BAD_SUB"},
+    {AlarmStatus::TIMED, "TIMED"},
+    {AlarmStatus::SOFT, "SOFT"},
+    {AlarmStatus::SIMM, "SIMM"},
+    {AlarmStatus::LINK, "LINK"},
+    {AlarmStatus::LOW, "LOW"},
+    {AlarmStatus::LOLO, "LOLO"},
+    {AlarmStatus::HIGH, "HIGH"},
+    {AlarmStatus::HIHI, "HIHI"},
+    {AlarmStatus::SCAN, "SCAN"},
+    {AlarmStatus::STATE, "STATE"},
+    {AlarmStatus::COS, "COS"},
+    {AlarmStatus::UDF, "UDF"},
+    {AlarmStatus::CALC, "CALC"},
+    {AlarmStatus::COMM, "COMM"},
+    {AlarmStatus::NO_CHANGE, "NO_CHANGE"}};
+
+std::unordered_map<AlarmSeverity, std::string> AlarmSeverityToString{
+    {AlarmSeverity::NO_ALARM, "NO_ALARM"},
+    {AlarmSeverity::MINOR, "MINOR"},
+    {AlarmSeverity::MAJOR, "MAJOR"},
+    {AlarmSeverity::INVALID, "INVALID"},
+    {AlarmSeverity::NO_CHANGE, "NO_CHANGE"}};
+
 void f142_Writer::write(FlatbufferMessage const &Message) {
-  auto Flatbuffer = GetLogData(Message.data());
+  auto LogDataMessage = GetLogData(Message.data());
   size_t NrOfElements{1};
-  Timestamp.appendElement(Flatbuffer->timestamp());
-  auto Type = Flatbuffer->value_type();
+  Timestamp.appendElement(LogDataMessage->timestamp());
+  auto Type = LogDataMessage->value_type();
 
   // Note that we are using our knowledge about flatbuffers here to minimise
-  // amount of code we have to write by using some pointer arithmetric.
+  // amount of code we have to write by using some pointer arithmetic.
   auto DataPtr = reinterpret_cast<void const *>(
-      reinterpret_cast<uint8_t const *>(Flatbuffer->value()) + 4);
+      reinterpret_cast<uint8_t const *>(LogDataMessage->value()) + 4);
 
   auto extractArrayInfo = [&NrOfElements, &DataPtr]() {
     NrOfElements = *(reinterpret_cast<int const *>(DataPtr) + 1);
@@ -250,6 +289,30 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   default:
     throw WriterModule::WriterException(
         "Unknown data type in f142 flatbuffer.");
+  }
+
+  // AlarmStatus::NO_CHANGE is not a real EPICS alarm status value, it is used
+  // by the Forwarder to indicate that the alarm has not changed from the
+  // previously published value. The Filewriter only records changes in alarm
+  // status.
+  if (LogDataMessage->status() != AlarmStatus::NO_CHANGE) {
+    AlarmTime.appendElement(LogDataMessage->timestamp());
+
+    auto const AlarmStatusStringIterator =
+        AlarmStatusToString.find(LogDataMessage->status());
+    std::string AlarmStatusString = "UNRECOGNISED_STATUS";
+    if (AlarmStatusStringIterator != AlarmStatusToString.end()) {
+      AlarmStatusString = AlarmStatusStringIterator->second;
+    }
+    AlarmStatus.appendStringElement(AlarmStatusString);
+
+    auto const AlarmSeverityStringIterator =
+        AlarmSeverityToString.find(LogDataMessage->severity());
+    std::string AlarmSeverityString = "UNRECOGNISED_SEVERITY";
+    if (AlarmSeverityStringIterator != AlarmSeverityToString.end()) {
+      AlarmSeverityString = AlarmSeverityStringIterator->second;
+    }
+    AlarmSeverity.appendStringElement(AlarmSeverityString);
   }
 }
 /// Register the writer module.
