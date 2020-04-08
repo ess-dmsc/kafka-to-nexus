@@ -64,7 +64,8 @@ struct Msg {
     }
     return Size;
   }
-  MessageMetaData getMetaData() const { return MetaData; }
+  // Return value is const as it should/can not change.
+  MessageMetaData const &getMetaData() const { return MetaData; }
 
 protected:
   std::unique_ptr<char[]> DataPtr{nullptr};
