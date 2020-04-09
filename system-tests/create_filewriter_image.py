@@ -112,7 +112,11 @@ def run_conan(container):
     execute_command(
         "conan install --build=outdated ../conan", "/home/jenkins/build", container
     )
-    execute_command("cp {} {}".format(CONAN_HASH_NAME_NEW, CONAN_HASH_NAME_OLD), "/home/jenkins/", container)
+    execute_command(
+        "cp {} {}".format(CONAN_HASH_NAME_NEW, CONAN_HASH_NAME_OLD),
+        "/home/jenkins/",
+        container,
+    )
     print("Done running conan")
 
 
@@ -123,7 +127,11 @@ def rebuild_filewriter(container):
         "/home/jenkins/build",
         container,
     )
-    execute_command("cp {} {}".format(SRC_HASH_NAME_NEW, SRC_HASH_NAME_OLD), "/home/jenkins/", container)
+    execute_command(
+        "cp {} {}".format(SRC_HASH_NAME_NEW, SRC_HASH_NAME_OLD),
+        "/home/jenkins/",
+        container,
+    )
     print("Done building the filewriter")
 
 
