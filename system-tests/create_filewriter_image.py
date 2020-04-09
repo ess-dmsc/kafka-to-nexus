@@ -1,6 +1,5 @@
 import os.path
 import os
-import pytest
 import docker
 import tarfile
 import hashlib
@@ -10,6 +9,10 @@ IMAGE_NAME = "screamingudder/ubuntu18.04-build-node:3.0.6"
 TEST_IMAGE_NAME = "filewriter-image"
 CONTAINER_NAME = "filewriter-system-test"
 DEBUG_MODE = False
+CONAN_HASH_NAME_OLD = "conan_hash.txt"
+CONAN_HASH_NAME_NEW = "conan_hash_new.txt"
+SRC_HASH_NAME_OLD = "src_hash.txt"
+SRC_HASH_NAME_NEW = "src_hash_new.txt"
 client = docker.from_env()
 
 
@@ -52,12 +55,10 @@ def copy_to_container(container):
     source_files = ["cmake/", "src/", "CMakeLists.txt", "docker_launch.sh"]
     src_hash = copy_files_to_container(source_files, "../", container)
 
-    src_hash_file_name = "src_hash_new.txt"
-    conan_hash_file_name = "conan_hash_new.txt"
-    create_hash_file(src_hash_file_name, src_hash)
-    create_hash_file(conan_hash_file_name, conan_hash)
+    create_hash_file(SRC_HASH_NAME_NEW, src_hash)
+    create_hash_file(CONAN_HASH_NAME_NEW, conan_hash)
 
-    copy_files_to_container([src_hash_file_name, conan_hash_file_name], "./", container)
+    copy_files_to_container([SRC_HASH_NAME_NEW, CONAN_HASH_NAME_NEW], "./", container)
 
 
 def generate_new_container():
@@ -73,7 +74,9 @@ def generate_new_container():
     try:
         client.images.get(IMAGE_NAME)
     except docker.errors.ImageNotFound as e:
+        print("Unable to find docker base image, downloading.")
         client.images.pull(IMAGE_NAME)
+        print("Done downloading docker image.")
     container = client.containers.create(
         IMAGE_NAME,
         name=CONTAINER_NAME,
@@ -81,6 +84,7 @@ def generate_new_container():
         environment=environment_variables,
     )
     container.start()
+    print("Installing base dependencies onto container")
     container.exec_run("apt-get --assume-yes install kafkacat", user="root")
     if "local_conan_server" in os.environ:
         print("Setting up local conan server")
@@ -108,7 +112,7 @@ def run_conan(container):
     execute_command(
         "conan install --build=outdated ../conan", "/home/jenkins/build", container
     )
-    execute_command("cp conan_hash_new.txt conan_hash.txt", "/home/jenkins/", container)
+    execute_command("cp {} {}".format(CONAN_HASH_NAME_NEW, CONAN_HASH_NAME_OLD), "/home/jenkins/", container)
     print("Done running conan")
 
 
@@ -119,7 +123,7 @@ def rebuild_filewriter(container):
         "/home/jenkins/build",
         container,
     )
-    execute_command("cp src_hash_new.txt src_hash.txt", "/home/jenkins/", container)
+    execute_command("cp {} {}".format(SRC_HASH_NAME_NEW, SRC_HASH_NAME_OLD), "/home/jenkins/", container)
     print("Done building the filewriter")
 
 
@@ -136,15 +140,15 @@ def re_generate_test_image(container):
 
 def conan_hash_changed(container):
     return (
-        container.exec_run("less conan_hash_new.txt").output
-        != container.exec_run("less conan_hash.txt").output
+        container.exec_run("less " + CONAN_HASH_NAME_NEW).output
+        != container.exec_run("less " + CONAN_HASH_NAME_OLD).output
     )
 
 
 def src_hash_changed(container):
     return (
-        container.exec_run("less src_hash_new.txt").output
-        != container.exec_run("less src_hash.txt").output
+        container.exec_run("less " + SRC_HASH_NAME_NEW).output
+        != container.exec_run("less " + SRC_HASH_NAME_OLD).output
     )
 
 
