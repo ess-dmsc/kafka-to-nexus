@@ -45,7 +45,8 @@ set(UnitTests_SRC
 set(UnitTests_INC
         StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
-        helpers/KafkaWMocks.h
+        helpers/RdKafkaMocks.h
+        helpers/KafkaMocks.h
         helpers/FakeStreamController.h
         helpers/RunStartStopHelpers.h
         Metrics/CarbonTestServer.h

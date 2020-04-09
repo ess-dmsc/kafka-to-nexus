@@ -16,7 +16,7 @@
 #include "Msg.h"
 #include "Status/StatusReporter.h"
 #include "helpers/FakeStreamController.h"
-#include "helpers/KafkaWMocks.h"
+#include "helpers/RdKafkaMocks.h"
 #include "helpers/RunStartStopHelpers.h"
 
 using namespace FileWriter;

@@ -43,7 +43,9 @@ public:
   Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::Registrar RegisterMetric, time_point Start,
-            time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
+            time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
+            std::unique_ptr<IExecutor> Executor =
+                std::make_unique<ThreadedExecutor>());
   virtual ~Partition() = default;
 
   /// \brief Must be called after the constructor.
@@ -80,7 +82,6 @@ protected:
       Metrics::Severity::ERROR};
 
   virtual void pollForMessage();
-
   virtual void addPollTask();
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
 
@@ -96,7 +97,7 @@ protected:
   std::map<FileWriter::FlatbufferMessage::SrcHash,
            std::unique_ptr<SourceFilter>>
       MsgFilters;
-  ThreadedExecutor Executor; // Must be last
+  std::unique_ptr<IExecutor> Executor; // Must be last
 };
 
 } // namespace Stream

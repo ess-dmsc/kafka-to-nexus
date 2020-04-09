@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "../Kafka/Producer.h"
-#include "helpers/KafkaWMocks.h"
+#include "helpers/RdKafkaMocks.h"
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
