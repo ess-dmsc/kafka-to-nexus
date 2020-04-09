@@ -37,6 +37,8 @@ public:
   virtual std::vector<int64_t>
   offsetsForTimesAllPartitions(std::string const &Topic,
                                std::chrono::milliseconds Time) = 0;
+  virtual void addPartitionAtOffset(std::string const &Topic, int PartitionId,
+                                    int64_t Offset) = 0;
   virtual int64_t getHighWatermarkOffset(std::string const &Topic,
                                          int32_t Partition) = 0;
   virtual std::vector<int64_t> getCurrentOffsets(std::string const &Topic) = 0;
@@ -65,6 +67,15 @@ public:
   /// \param StartTime Start timestamp to consume from.
   void addTopicAtTimestamp(std::string const &Topic,
                            std::chrono::milliseconds StartTime) override;
+
+  /// Set a topic partition at a specified offset to consume from.
+  ///
+  /// Replaces any exisiting topics + partitions that are currently being
+  /// consumed.
+  /// \note This is a non blocking call.
+  void addPartitionAtOffset(std::string const &Topic, int PartitionId,
+                            int64_t Offset) override;
+
   /// Checks if a topic is present on the broker.
   /// This is used to prevent passing around a pointer to an iterator of an
   /// RdKafka::Topic outside of Kafka and instead returns a bool.
