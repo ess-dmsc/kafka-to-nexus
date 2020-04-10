@@ -15,6 +15,15 @@
 #include <memory>
 #include <thread>
 
+using JobType = std::function<void()>;
+
+class IExecutor {
+public:
+  virtual ~IExecutor() = default;
+  virtual void sendWork(JobType Task) = 0;
+  virtual void sendLowPriorityWork(JobType Task) = 0;
+};
+
 /// \brief Class for executing jobs in a separate "worker thread".
 ///
 /// This implementation uses two work/task queues: high priority and low
@@ -24,10 +33,9 @@
 /// \note The execution order of jobs in a queue can not be guaranteed. In
 /// fact, it is likely that all the tasks produced by one thread will be
 /// completed before the tasks produced by another thread.
-class ThreadedExecutor {
+class ThreadedExecutor : public IExecutor {
 private:
 public:
-  using JobType = std::function<void()>;
   /// \brief Constructor of ThreadedExecutor.
   ///
   /// \param LowPriorityThreadExit If set to true, will put the exit thread
@@ -49,13 +57,13 @@ public:
   ///
   /// \param Task The std::function that will be executed when processing the
   /// task.
-  void sendWork(JobType Task) { TaskQueue.enqueue(std::move(Task)); }
+  void sendWork(JobType Task) override { TaskQueue.enqueue(std::move(Task)); }
 
   /// \brief Put tasks in the low priority queue.
   ///
   /// \param Task The std::function that will be executed when processing the
   /// task.
-  void sendLowPriorityWork(JobType Task) {
+  void sendLowPriorityWork(JobType Task) override {
     LowPriorityTaskQueue.enqueue(std::move(Task));
   }
 

@@ -35,6 +35,7 @@ set(UnitTests_SRC
         Stream/PartitionFilterTest.cpp
         Stream/MessageWriterTests.cpp
         Stream/SourceFilterTest.cpp
+        Stream/PartitionTests.cpp
         $<TARGET_OBJECTS:writer_module>
         $<TARGET_OBJECTS:fb_metadata>
         ThreadedExecutorTests.cpp
@@ -44,7 +45,8 @@ set(UnitTests_SRC
 set(UnitTests_INC
         StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
-        helpers/KafkaWMocks.h
+        helpers/RdKafkaMocks.h
+        helpers/KafkaMocks.h
         helpers/FakeStreamController.h
         helpers/RunStartStopHelpers.h
         Metrics/CarbonTestServer.h

@@ -10,8 +10,8 @@
 #include "../Kafka/MetadataException.h"
 #include "Kafka/Consumer.h"
 #include "Msg.h"
-#include "helpers/KafkaWMocks.h"
 #include "helpers/MockMessage.h"
+#include "helpers/RdKafkaMocks.h"
 
 #include <gtest/gtest.h>
 #include <memory>

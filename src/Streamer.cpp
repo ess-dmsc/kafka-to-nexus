@@ -282,8 +282,8 @@ std::pair<Kafka::PollStatus, Msg> Streamer::poll() {
 void Streamer::process() {
   // Consume message
   auto KafkaMessage = poll();
-  if (haveReachedStopOffsets(KafkaMessage.second.MetaData.Partition,
-                             KafkaMessage.second.MetaData.Offset)) {
+  if (haveReachedStopOffsets(KafkaMessage.second.getMetaData().Partition,
+                             KafkaMessage.second.getMetaData().Offset)) {
     RunStatus.store(StreamerStatus::HAS_FINISHED);
     return;
   }

@@ -64,9 +64,9 @@ FileWriterState Master::handleCommand(Msg const &CommandMessage) {
   // If Kafka message does not contain a timestamp then use current time.
   auto TimeStamp = getCurrentTimeStampMS();
 
-  if (CommandMessage.MetaData.TimestampType !=
+  if (CommandMessage.getMetaData().TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
-    TimeStamp = CommandMessage.MetaData.Timestamp;
+    TimeStamp = CommandMessage.getMetaData().Timestamp;
   } else {
     Logger->info("Command doesn't contain timestamp, so using current time.");
   }
