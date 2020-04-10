@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Kafka/MetaDataQueryImpl.h"
-#include "helpers/KafkaWMocks.h"
+#include "helpers/RdKafkaMocks.h"
 #include <gtest/gtest.h>
 
 class UsedProducerMock {
