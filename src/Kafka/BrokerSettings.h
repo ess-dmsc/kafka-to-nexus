@@ -9,12 +9,15 @@
 
 #pragma once
 
-#include <librdkafka/rdkafkacpp.h>
+#include <chrono>
 #include <map>
 #include <string>
 
 namespace Kafka {
 
+using duration = std::chrono::system_clock::duration;
+using std::chrono_literals::operator""s;
+using std::chrono_literals::operator""ms;
 /// Collect options used to connect to the broker.
 struct BrokerSettings {
   BrokerSettings() = default;
@@ -22,6 +25,13 @@ struct BrokerSettings {
   int PollTimeoutMS = 100;
   int MetadataTimeoutMS = 2000;
   int OffsetsForTimesTimeoutMS = 2000;
+  duration MinMetadataTimeout{
+      100ms}; // When doing Kafka metadata calls, start with this timeout
+  duration MaxMetadataTimeout{
+      10s}; // When doing Kafka metadata calls, use this as the max timeout
+  duration KafkaErrorTimeout{
+      30s}; // If there is an error with the Kafka broker when consuming data
+            // (for writing files), wait this long before stopping
   std::map<std::string, std::string> KafkaConfiguration = {
       {"metadata.request.timeout.ms", "2000"}, // 2 Secs
       {"socket.timeout.ms", "2000"},
