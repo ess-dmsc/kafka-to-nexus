@@ -159,8 +159,16 @@ def src_hash_changed(container):
         != container.exec_run("less " + SRC_HASH_NAME_OLD).output
     )
 
+def do_container_cleanup(container):
+    print("Cleaning container")
+    container.exec_run("conan remove \"*\" -s -b -f")
+    container.exec_run("apt -y purge clang-format cloc cmake doxygen gcc-8 g++-8 git graphviz \
+        flex lcov mpich python3-pip qt5-default valgrind vim-common tzdata \
+        autoconf automake libtool perl ninja-build curl")
+    container.exec_run("apt-get clean")
+    print("Done cleaning container")
 
-def create_filewriter_image():
+def create_filewriter_image(do_cleanup = False):
     list_of_containers = client.containers.list("all")
     found_container = False
     for c_container in list_of_containers:
@@ -181,14 +189,19 @@ def create_filewriter_image():
         container.start()
     except docker.errors.APIError as e:
         pass
-
+    
     if conan_hash_changed(container) or src_hash_changed(container):
         container.exec_run('bash -c "rm -rf *"', workdir="/home/jenkins/build/")
         run_conan(container)
         rebuild_filewriter(container)
+        if do_cleanup:
+            do_container_cleanup(container)
         re_generate_test_image(container)
 
     container.kill()
+    if do_cleanup:
+        container.remove()
+        print("Removed container")
     print("Done creating filewriter docker image")
 
 
