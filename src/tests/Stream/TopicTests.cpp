@@ -188,7 +188,9 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
 
 TEST_F(TopicTest, CreateStreams) {
   auto UnderTest = createTestedInstance();
-  TopicStandIn::offset_list PartitionOffsets{{1, 5}, {3, 6}};
+  UnderTest->start();
+  //TopicStandIn::offset_list PartitionOffsets{{1, 5}, {3, 6}};
+  TopicStandIn::offset_list PartitionOffsets{{1,5}};
   UnderTest->createStreamsBase(KafkaSettings, UsedTopicName, PartitionOffsets);
   ASSERT_EQ(PartitionOffsets.size(), UnderTest->ConsumerThreads.size());
   for (size_t i = 0; i < PartitionOffsets.size(); i++) {
