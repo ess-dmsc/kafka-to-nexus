@@ -28,6 +28,7 @@ void URI::parse(const std::string &URIString) {
                              URIString + "\".");
   }
   HostPort = Matches[6].str();
+  Host = Matches[7].str();
   if (Matches[10].matched) {
     Port = static_cast<uint32_t>(std::stoi(Matches[10].str()));
   }
