@@ -127,18 +127,9 @@ def build_filewriter_image(request):
     if request.config.getoption(LOCAL_BUILD) is None:
         client = docker.from_env()
         print("Building Filewriter image", flush=True)
-        build_args = {}
-        if "http_proxy" in os.environ:
-            build_args["http_proxy"] = os.environ["http_proxy"]
-        if "https_proxy" in os.environ:
-            build_args["https_proxy"] = os.environ["https_proxy"]
-        if "local_conan_server" in os.environ:
-            build_args["local_conan_server"] = os.environ["local_conan_server"]
-        image, logs = client.images.build(
-            path="../", tag="kafka-to-nexus:latest", rm=False, buildargs=build_args
-        )
-        for item in logs:
-            print(item, flush=True)
+        from create_filewriter_image import create_filewriter_image
+
+        create_filewriter_image()
 
 
 def run_containers(cmd, options):

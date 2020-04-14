@@ -22,7 +22,7 @@ services:
   filewriter:
     depends_on:
       - forwarder
-    image: kafka-to-nexus:latest
+    image: filewriter-image:latest
     network_mode: "host"
     environment:
       CONFIG_FILE: "/longrunning.ini"
