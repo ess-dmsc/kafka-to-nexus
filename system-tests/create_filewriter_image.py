@@ -4,6 +4,7 @@ import docker
 import tarfile
 import hashlib
 import io
+import argparse
 
 IMAGE_NAME = "screamingudder/ubuntu18.04-build-node:3.0.6"
 TEST_IMAGE_NAME = "filewriter-image"
@@ -210,4 +211,12 @@ def create_filewriter_image(do_cleanup=False):
 
 
 if __name__ == "__main__":
-    create_filewriter_image()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--do-cleanup",
+        action="store_true",
+        help="Cleanup caches to create a smaller size image, but build container will be removed",
+    )
+    args = parser.parse_args()
+
+    create_filewriter_image(do_cleanup=args.do_cleanup)

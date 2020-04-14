@@ -42,10 +42,10 @@ Most tests check the NeXus file created by the file-writer contains the correct 
 Log files are placed in the `logs` folder in `system-tests` provided that the `ini` file is using the `--log-file` flag and the docker-compose file mounts the `logs` directory.
 
 #### *kafka-to-nexus* docker image
-The docker image used to run the filewriter is for performance reasons generated using a Python script (*create\_filewriter\_image.py*). By default, this script will leave behind a container which can be re-used by the script for (realtively speaking) quickly generating a new image. If you for whatever reason want a smaller docker image, you can run the function for generating the image like this:
+For performance reasons the docker image containing the filewriter is generated using a Python script (*create\_filewriter\_image.py*) rather than a Dockerfile. By default, this script will leave behind a container which can be re-used by the script for, relatively speaking, quickly generating a new image. If you for whatever reason want a smaller docker image, you can run the script for generating the image like this:
 
 ```
-create_filewriter_image(do_cleanup = True)
+python create_filewriter_image.py --do-cleanup
 ```
 
 Note that this will delete the container when it is done and thus require more time next time it is executed.
