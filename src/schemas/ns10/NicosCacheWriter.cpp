@@ -70,11 +70,11 @@ CacheWriter::init_hdf(hdf5::node::Group &HDFGroup,
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     FileWriter::writeAttributes(HDFGroup, &AttributesJson, Logger);
-    if(HDFGroup.attributes.exists("NX_class")){
-       Logger->info("NX_class already specified!");
+    if (HDFGroup.attributes.exists("NX_class")) {
+      Logger->info("NX_class already specified!");
     } else {
       auto ClassAttribute =
-        CurrentGroup.attributes.create<std::string>("NX_class");
+          CurrentGroup.attributes.create<std::string>("NX_class");
       ClassAttribute.write("NXlog");
     }
   } catch (std::exception &E) {
