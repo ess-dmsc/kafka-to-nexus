@@ -27,7 +27,7 @@ def num_artifacts_to_keep
 if (env.BRANCH_NAME == 'master') {
   num_artifacts_to_keep = '5'
 } else {
-  num_artifacts_to_keep = '1'
+  num_artifacts_to_keep = '2'
 }
 
 // Set number of old builds to keep.
