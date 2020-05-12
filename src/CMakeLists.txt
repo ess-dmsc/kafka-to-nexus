@@ -49,6 +49,7 @@ set(libraries_common
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${DATE_LIBRARY}
+        fmt::fmt
         pthread
         z
         )
@@ -160,8 +161,7 @@ set(sources
 add_executable(${tgt} EXCLUDE_FROM_ALL ${sources})
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
-        )
+target_link_libraries(${tgt} ${libraries_common})
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 
@@ -176,7 +176,7 @@ set(sources
 add_executable(${tgt} ${sources})
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
+target_link_libraries(${tgt} ${libraries_common})
 
 option(BUILD_TESTS "Build unit tests" ON)
 if (BUILD_TESTS)

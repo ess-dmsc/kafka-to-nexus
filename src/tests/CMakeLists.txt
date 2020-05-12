@@ -59,7 +59,6 @@ target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
 target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
 target_link_libraries(UnitTests
         ${libraries_common}
-        fmt::fmt
         ${CONAN_LIBS_GTEST}
         )
 
