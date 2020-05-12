@@ -55,7 +55,6 @@ add_executable(UnitTests
         ${WRITER_MODULES}
         )
 
-add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
 target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
 target_link_libraries(UnitTests
