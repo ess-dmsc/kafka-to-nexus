@@ -26,7 +26,7 @@
 namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
-#include "schemas/hs00_event_histogram_generated.h"
+#include <hs00_event_histogram_generated.h>
 } // namespace hs00
 } // namespace Schemas
 } // namespace FileWriter
