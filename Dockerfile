@@ -27,7 +27,7 @@ COPY ./src ../kafka_to_nexus_src/src
 COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
 
 RUN cd kafka_to_nexus \
-    && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
+    && cmake --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
     && make -j8 kafka-to-nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
