@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
 ARG http_proxy
 ARG https_proxy
@@ -11,8 +11,10 @@ COPY ./conan ../kafka_to_nexus_src/conan
 # Install packages - We don't want to purge kafkacat and tzdata after building
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -y \
-    && apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools autoconf libtool automake kafkacat tzdata gcc-8 g++-8 \
-    && apt-get -y autoremove  \
+    && apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools autoconf libtool automake kafkacat tzdata gcc-8 g++-8
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
+RUN update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-8 800
+RUN apt-get -y autoremove  \
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/* \
     && pip install conan \
