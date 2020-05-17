@@ -53,8 +53,8 @@ public:
                    Stream::time_point Stop, Stream::duration StopLeeway,
                    Stream::duration KafkaErrorTimeout)
       : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
-                          Map, Writer, std::move(RegisterMetric), Start, Stop, StopLeeway,
-                          KafkaErrorTimeout) {}
+                          Map, Writer, std::move(RegisterMetric), Start, Stop,
+                          StopLeeway, KafkaErrorTimeout) {}
   void addPollTask() override {
     // Do nothing as don't want to automatically poll again
   }
