@@ -75,6 +75,17 @@ public:
   }
 };
 
+void waitUntilDoneProcessing(TopicStandIn *UnderTest) {
+  // Queue a job in the executor and block until it is complete
+  // so that we know previously queued job that is part of test should
+  // now have been executed
+  std::promise<bool> Promise;
+  auto Future = Promise.get_future();
+  UnderTest->Executor.sendLowPriorityWork(
+      [&Promise]() { Promise.set_value(true); });
+  Future.wait();
+}
+
 class TopicTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
@@ -98,12 +109,7 @@ TEST_F(TopicTest, StartMetaDataCall) {
   REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
   UnderTest->initMetadataCallsBase(KafkaSettings, UsedTopicName);
 
-  // Wait until we are done processing "getPartitionsForTopic
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
 TEST_F(TopicTest, GetPartitionsForTopicException) {
@@ -115,12 +121,7 @@ TEST_F(TopicTest, GetPartitionsForTopicException) {
       .THROW(MetadataException("Test"));
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
 
-  // Wait until we are done processing "getPartitionsForTopic
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
 TEST_F(TopicTest, GetPartitionsForTopicNoException) {
@@ -135,12 +136,7 @@ TEST_F(TopicTest, GetPartitionsForTopicNoException) {
       .TIMES(1);
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
 
-  // Wait until we are done processing "getPartitionsForTopic
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
 TEST_F(TopicTest, GetOffsetsForPartitionsException) {
@@ -156,12 +152,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsException) {
   UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
                                          Partitions);
 
-  // Wait until we are done processing "getOffsetsForPartitions
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
 TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
@@ -178,12 +169,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
   UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
                                          Partitions);
 
-  // Wait until we are done processing "getOffsetsForPartitions
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
 TEST_F(TopicTest, CreateStreams) {
