@@ -112,9 +112,11 @@ TEST_F(TopicTest, StartMetaDataCall) {
   waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetPartitionsForTopicException) {
+TEST_F(TopicTest, IfGetPartitionsForTopicExceptionThenReExecute) {
   auto UnderTest = createTestedInstance();
 
+  // The metadata request can time out so it is important to retry if
+  // unsuccessful
   REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
   REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
@@ -124,9 +126,10 @@ TEST_F(TopicTest, GetPartitionsForTopicException) {
   waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetPartitionsForTopicNoException) {
+TEST_F(TopicTest, IfGetPartitionsForTopicSuccessThenNotReExecuted) {
   auto UnderTest = createTestedInstance();
   std::vector<int> ReturnPartitions{2, 3};
+
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
   REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
@@ -139,9 +142,12 @@ TEST_F(TopicTest, GetPartitionsForTopicNoException) {
   waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetOffsetsForPartitionsException) {
+TEST_F(TopicTest, IfGetOffsetsForPartitionsExceptionThenReExecute) {
   auto UnderTest = createTestedInstance();
   std::vector<int> Partitions{2, 3};
+
+  // The query to the broker can time out so it is important to retry if
+  // unsuccessful
   REQUIRE_CALL(*UnderTest,
                getOffsetsForPartitions(_, UsedTopicName, Partitions))
       .TIMES(1);
@@ -155,10 +161,11 @@ TEST_F(TopicTest, GetOffsetsForPartitionsException) {
   waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
+TEST_F(TopicTest, IfGetOffsetsForPartitionsSuccessThenNotReExecuted) {
   auto UnderTest = createTestedInstance();
   std::vector<int> Partitions{6, 3, 2};
   TopicStandIn::offset_list ReturnOffsets{{1, 5}, {3, 6}};
+
   FORBID_CALL(*UnderTest, getOffsetsForPartitions(_, _, _));
   REQUIRE_CALL(*UnderTest,
                getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
@@ -172,7 +179,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
   waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, CreateStreams) {
+TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
   auto UnderTest = createTestedInstance();
   UnderTest->start();
   TopicStandIn::offset_list PartitionOffsets{{1, 5}, {3, 6}};
