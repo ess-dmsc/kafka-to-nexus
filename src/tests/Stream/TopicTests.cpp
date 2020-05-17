@@ -28,49 +28,56 @@ public:
                Stream::SrcToDst Map, Stream::MessageWriter *Writer,
                Metrics::Registrar &RegisterMetric, Stream::time_point StartTime,
                Stream::duration StartTimeLeeway, Stream::time_point StopTime,
-               Stream::duration StopTimeLeeway)
+               Stream::duration StopTimeLeeway,
+               std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
       : Stream::Topic(Settings, Topic, Map, Writer, RegisterMetric, StartTime,
-                      StartTimeLeeway, StopTime, StopTimeLeeway) {}
+                      StartTimeLeeway, StopTime, StopTimeLeeway,
+                      std::move(CreateConsumers)) {}
   using Topic::ConsumerThreads;
   using Topic::CurrentMetadataTimeOut;
   using Topic::Executor;
   using offset_list = std::vector<std::pair<int, int64_t>>;
   MAKE_CONST_MOCK5(getOffsetForTimeInternal,
-                   offset_list(std::string, std::string, std::vector<int>,
-                               Stream::time_point, Stream::duration),
+                   offset_list(std::string const &, std::string const &,
+                               std::vector<int> const &, Stream::time_point,
+                               Stream::duration),
                    override);
   MAKE_CONST_MOCK3(getPartitionsForTopicInternal,
-                   std::vector<int>(std::string, std::string, Stream::duration),
+                   std::vector<int>(std::string const &, std::string const &,
+                                    Stream::duration),
                    override);
-  MAKE_MOCK2(getPartitionsForTopic, void(Kafka::BrokerSettings, std::string),
+  MAKE_MOCK2(getPartitionsForTopic,
+             void(Kafka::BrokerSettings const &, std::string const &),
              override);
   MAKE_MOCK3(getOffsetsForPartitions,
-             void(Kafka::BrokerSettings, std::string, std::vector<int>),
+             void(Kafka::BrokerSettings const &, std::string const &,
+                  std::vector<int> const &),
              override);
   MAKE_MOCK3(createStreams,
-             void(Kafka::BrokerSettings, std::string,
-                  std::vector<std::pair<int, int64_t>>),
+             void(Kafka::BrokerSettings const &, std::string const &,
+                  std::vector<std::pair<int, int64_t>> const &),
              override);
-  void initMetadataCalls(Kafka::BrokerSettings, std::string) override {}
-  void initMetadataCallsBase(Kafka::BrokerSettings Settings,
-                             std::string Topic) {
+  void initMetadataCalls(Kafka::BrokerSettings const &,
+                         std::string const &) override {}
+  void initMetadataCallsBase(Kafka::BrokerSettings const &Settings,
+                             std::string const &Topic) {
     Topic::initMetadataCalls(Settings, Topic);
   }
 
-  void getPartitionsForTopicBase(Kafka::BrokerSettings Settings,
-                                 std::string Topic) {
+  void getPartitionsForTopicBase(Kafka::BrokerSettings const &Settings,
+                                 std::string const &Topic) {
     Topic::getPartitionsForTopic(Settings, Topic);
   }
 
-  void getOffsetsForPartitionsBase(Kafka::BrokerSettings Settings,
-                                   std::string Topic,
-                                   std::vector<int> Partitions) {
+  void getOffsetsForPartitionsBase(Kafka::BrokerSettings const &Settings,
+                                   std::string const &Topic,
+                                   std::vector<int> const &Partitions) {
     Topic::getOffsetsForPartitions(Settings, Topic, Partitions);
   }
 
-  void
-  createStreamsBase(Kafka::BrokerSettings Settings, std::string Topic,
-                    std::vector<std::pair<int, int64_t>> PartitionOffsets) {
+  void createStreamsBase(
+      Kafka::BrokerSettings const &Settings, std::string const &Topic,
+      std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
     Topic::createStreams(Settings, Topic, PartitionOffsets);
   }
 };
@@ -89,9 +96,9 @@ void waitUntilDoneProcessing(TopicStandIn *UnderTest) {
 class TopicTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
-    return std::make_unique<TopicStandIn>(KafkaSettings, UsedTopicName, Map,
-                                          nullptr, Registrar, Start, 5s, Stop,
-                                          5s);
+    return std::make_unique<TopicStandIn>(
+        KafkaSettings, UsedTopicName, Map, nullptr, Registrar, Start, 5s, Stop,
+        5s, std::make_unique<Kafka::StubConsumerFactory>());
   }
   std::string const UsedTopicName{"some_topic_or_another"};
   Kafka::BrokerSettings KafkaSettings;

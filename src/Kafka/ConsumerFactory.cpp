@@ -46,4 +46,15 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
 std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings) {
   return createConsumer(Settings, Settings.Address);
 }
+
+std::unique_ptr<ConsumerInterface>
+ConsumerFactory::createConsumer(const BrokerSettings &Settings) {
+  return Kafka::createConsumer(Settings);
+}
+
+std::unique_ptr<ConsumerInterface>
+ConsumerFactory::createConsumer(const BrokerSettings &Settings,
+                                const std::string &Broker) {
+  return Kafka::createConsumer(Settings, Broker);
+}
 } // namespace Kafka
