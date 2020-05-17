@@ -20,8 +20,6 @@ std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings);
 class ConsumerFactoryInterface {
 public:
   virtual std::unique_ptr<ConsumerInterface>
-  createConsumer(const BrokerSettings &Settings, const std::string &Broker) = 0;
-  virtual std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) = 0;
   virtual ~ConsumerFactoryInterface() = default;
 };
@@ -29,22 +27,12 @@ public:
 class ConsumerFactory : public ConsumerFactoryInterface {
 public:
   std::unique_ptr<ConsumerInterface>
-  createConsumer(const BrokerSettings &Settings,
-                 const std::string &Broker) override;
-  std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) override;
   ~ConsumerFactory() override = default;
 };
 
 class StubConsumerFactory : public ConsumerFactoryInterface {
 public:
-  std::unique_ptr<ConsumerInterface>
-  createConsumer(const BrokerSettings &Settings,
-                 const std::string &Broker) override {
-    UNUSED_ARG(Settings);
-    UNUSED_ARG(Broker);
-    return std::unique_ptr<ConsumerInterface>(new StubConsumer());
-  };
   std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) override {
     UNUSED_ARG(Settings);
