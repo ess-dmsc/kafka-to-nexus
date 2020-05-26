@@ -28,59 +28,77 @@ public:
                Stream::SrcToDst Map, Stream::MessageWriter *Writer,
                Metrics::Registrar &RegisterMetric, Stream::time_point StartTime,
                Stream::duration StartTimeLeeway, Stream::time_point StopTime,
-               Stream::duration StopTimeLeeway)
+               Stream::duration StopTimeLeeway,
+               std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
       : Stream::Topic(Settings, Topic, Map, Writer, RegisterMetric, StartTime,
-                      StartTimeLeeway, StopTime, StopTimeLeeway) {}
+                      StartTimeLeeway, StopTime, StopTimeLeeway,
+                      std::move(CreateConsumers)) {}
   using Topic::ConsumerThreads;
   using Topic::CurrentMetadataTimeOut;
   using Topic::Executor;
   using offset_list = std::vector<std::pair<int, int64_t>>;
   MAKE_CONST_MOCK5(getOffsetForTimeInternal,
-                   offset_list(std::string, std::string, std::vector<int>,
-                               Stream::time_point, Stream::duration),
+                   offset_list(std::string const &, std::string const &,
+                               std::vector<int> const &, Stream::time_point,
+                               Stream::duration),
                    override);
   MAKE_CONST_MOCK3(getPartitionsForTopicInternal,
-                   std::vector<int>(std::string, std::string, Stream::duration),
+                   std::vector<int>(std::string const &, std::string const &,
+                                    Stream::duration),
                    override);
-  MAKE_MOCK2(getPartitionsForTopic, void(Kafka::BrokerSettings, std::string),
+  MAKE_MOCK2(getPartitionsForTopic,
+             void(Kafka::BrokerSettings const &, std::string const &),
              override);
   MAKE_MOCK3(getOffsetsForPartitions,
-             void(Kafka::BrokerSettings, std::string, std::vector<int>),
+             void(Kafka::BrokerSettings const &, std::string const &,
+                  std::vector<int> const &),
              override);
   MAKE_MOCK3(createStreams,
-             void(Kafka::BrokerSettings, std::string,
-                  std::vector<std::pair<int, int64_t>>),
+             void(Kafka::BrokerSettings const &, std::string const &,
+                  std::vector<std::pair<int, int64_t>> const &),
              override);
-  void initMetadataCalls(Kafka::BrokerSettings, std::string) override {}
-  void initMetadataCallsBase(Kafka::BrokerSettings Settings,
-                             std::string Topic) {
+  void initMetadataCalls(Kafka::BrokerSettings const &,
+                         std::string const &) override {}
+  void initMetadataCallsBase(Kafka::BrokerSettings const &Settings,
+                             std::string const &Topic) {
     Topic::initMetadataCalls(Settings, Topic);
   }
 
-  void getPartitionsForTopicBase(Kafka::BrokerSettings Settings,
-                                 std::string Topic) {
+  void getPartitionsForTopicBase(Kafka::BrokerSettings const &Settings,
+                                 std::string const &Topic) {
     Topic::getPartitionsForTopic(Settings, Topic);
   }
 
-  void getOffsetsForPartitionsBase(Kafka::BrokerSettings Settings,
-                                   std::string Topic,
-                                   std::vector<int> Partitions) {
+  void getOffsetsForPartitionsBase(Kafka::BrokerSettings const &Settings,
+                                   std::string const &Topic,
+                                   std::vector<int> const &Partitions) {
     Topic::getOffsetsForPartitions(Settings, Topic, Partitions);
   }
 
-  void
-  createStreamsBase(Kafka::BrokerSettings Settings, std::string Topic,
-                    std::vector<std::pair<int, int64_t>> PartitionOffsets) {
+  void createStreamsBase(
+      Kafka::BrokerSettings const &Settings, std::string const &Topic,
+      std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
     Topic::createStreams(Settings, Topic, PartitionOffsets);
   }
 };
 
+void waitUntilDoneProcessing(TopicStandIn *UnderTest) {
+  // Queue a job in the executor and block until it is complete
+  // so that we know previously queued job that is part of test should
+  // now have been executed
+  std::promise<bool> Promise;
+  auto Future = Promise.get_future();
+  UnderTest->Executor.sendLowPriorityWork(
+      [&Promise]() { Promise.set_value(true); });
+  Future.wait();
+}
+
 class TopicTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
-    return std::make_unique<TopicStandIn>(KafkaSettings, UsedTopicName, Map,
-                                          nullptr, Registrar, Start, 5s, Stop,
-                                          5s);
+    return std::make_unique<TopicStandIn>(
+        KafkaSettings, UsedTopicName, Map, nullptr, Registrar, Start, 5s, Stop,
+        5s, std::make_unique<Kafka::StubConsumerFactory>());
   }
   std::string const UsedTopicName{"some_topic_or_another"};
   Kafka::BrokerSettings KafkaSettings;
@@ -98,34 +116,27 @@ TEST_F(TopicTest, StartMetaDataCall) {
   REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
   UnderTest->initMetadataCallsBase(KafkaSettings, UsedTopicName);
 
-  // Wait until we are done processing "getPartitionsForTopic
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetPartitionsForTopicException) {
+TEST_F(TopicTest, IfGetPartitionsForTopicExceptionThenReExecute) {
   auto UnderTest = createTestedInstance();
 
+  // The metadata request can time out so it is important to retry if
+  // unsuccessful
   REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
   REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
 
-  // Wait until we are done processing "getPartitionsForTopic
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetPartitionsForTopicNoException) {
+TEST_F(TopicTest, IfGetPartitionsForTopicSuccessThenNotReExecuted) {
   auto UnderTest = createTestedInstance();
   std::vector<int> ReturnPartitions{2, 3};
+
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
   REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
@@ -135,17 +146,15 @@ TEST_F(TopicTest, GetPartitionsForTopicNoException) {
       .TIMES(1);
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
 
-  // Wait until we are done processing "getPartitionsForTopic
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetOffsetsForPartitionsException) {
+TEST_F(TopicTest, IfGetOffsetsForPartitionsExceptionThenReExecute) {
   auto UnderTest = createTestedInstance();
   std::vector<int> Partitions{2, 3};
+
+  // The query to the broker can time out so it is important to retry if
+  // unsuccessful
   REQUIRE_CALL(*UnderTest,
                getOffsetsForPartitions(_, UsedTopicName, Partitions))
       .TIMES(1);
@@ -156,18 +165,14 @@ TEST_F(TopicTest, GetOffsetsForPartitionsException) {
   UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
                                          Partitions);
 
-  // Wait until we are done processing "getOffsetsForPartitions
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
+TEST_F(TopicTest, IfGetOffsetsForPartitionsSuccessThenNotReExecuted) {
   auto UnderTest = createTestedInstance();
   std::vector<int> Partitions{6, 3, 2};
   TopicStandIn::offset_list ReturnOffsets{{1, 5}, {3, 6}};
+
   FORBID_CALL(*UnderTest, getOffsetsForPartitions(_, _, _));
   REQUIRE_CALL(*UnderTest,
                getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
@@ -178,15 +183,10 @@ TEST_F(TopicTest, GetOffsetsForPartitionsNoException) {
   UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
                                          Partitions);
 
-  // Wait until we are done processing "getOffsetsForPartitions
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->Executor.sendLowPriorityWork(
-      [&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  waitUntilDoneProcessing(UnderTest.get());
 }
 
-TEST_F(TopicTest, CreateStreams) {
+TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
   auto UnderTest = createTestedInstance();
   UnderTest->start();
   TopicStandIn::offset_list PartitionOffsets{{1, 5}, {3, 6}};

@@ -19,20 +19,23 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              SrcToDst Map, MessageWriter *Writer,
              Metrics::Registrar &RegisterMetric, time_point StartTime,
              duration StartTimeLeeway, time_point StopTime,
-             duration StopTimeLeeway)
+             duration StopTimeLeeway,
+             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
+                 std::make_unique<Kafka::ConsumerFactory>())
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
       StopLeeway(StopTimeLeeway),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
-      Registrar(RegisterMetric.getNewRegistrar(Topic)) {}
+      Registrar(RegisterMetric.getNewRegistrar(Topic)),
+      ConsumerCreator(std::move(CreateConsumers)) {}
 
 void Topic::start() {
   Executor.sendWork([=]() { initMetadataCalls(KafkaSettings, TopicName); });
 }
 
-void Topic::initMetadataCalls(Kafka::BrokerSettings Settings,
-                              std::string Topic) {
+void Topic::initMetadataCalls(Kafka::BrokerSettings const &Settings,
+                              std::string const &Topic) {
   Executor.sendWork([=]() {
     CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
     getPartitionsForTopic(Settings, Topic);
@@ -45,8 +48,8 @@ void Topic::setStopTime(std::chrono::system_clock::time_point StopTime) {
   }
 }
 
-void Topic::getPartitionsForTopic(Kafka::BrokerSettings Settings,
-                                  std::string Topic) {
+void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
+                                  std::string const &Topic) {
   try {
     auto FoundPartitions = getPartitionsForTopicInternal(
         Settings.Address, Topic, Settings.MinMetadataTimeout);
@@ -73,21 +76,22 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings Settings,
 }
 
 std::vector<std::pair<int, int64_t>>
-Topic::getOffsetForTimeInternal(std::string Broker, std::string Topic,
-                                std::vector<int> Partitions, time_point Time,
-                                duration TimeOut) const {
+Topic::getOffsetForTimeInternal(std::string const &Broker,
+                                std::string const &Topic,
+                                std::vector<int> const &Partitions,
+                                time_point Time, duration TimeOut) const {
   return Kafka::getOffsetForTime(Broker, Topic, Partitions, Time, TimeOut);
 }
 
-std::vector<int> Topic::getPartitionsForTopicInternal(std::string Broker,
-                                                      std::string Topic,
+std::vector<int> Topic::getPartitionsForTopicInternal(std::string const &Broker,
+                                                      std::string const &Topic,
                                                       duration TimeOut) const {
   return Kafka::getPartitionsForTopic(Broker, Topic, TimeOut);
 }
 
-void Topic::getOffsetsForPartitions(Kafka::BrokerSettings Settings,
-                                    std::string Topic,
-                                    std::vector<int> Partitions) {
+void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
+                                    std::string const &Topic,
+                                    std::vector<int> const &Partitions) {
   try {
     auto PartitionOffsetList = getOffsetForTimeInternal(
         Settings.Address, Topic, Partitions, StartConsumeTime - StartLeeway,
@@ -115,12 +119,12 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings Settings,
 }
 
 void Topic::createStreams(
-    Kafka::BrokerSettings Settings, std::string Topic,
-    std::vector<std::pair<int, int64_t>> PartitionOffsets) {
+    Kafka::BrokerSettings const &Settings, std::string const &Topic,
+    std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
   for (const auto &CParOffset : PartitionOffsets) {
     auto CRegistrar = Registrar.getNewRegistrar(
         "partition_" + std::to_string(CParOffset.first));
-    auto Consumer = Kafka::createConsumer(Settings);
+    auto Consumer = ConsumerCreator->createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,
