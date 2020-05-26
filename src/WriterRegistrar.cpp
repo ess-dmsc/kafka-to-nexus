@@ -57,7 +57,6 @@ std::pair<ModuleFactory, std::string> const find(WriterModuleHash ModuleHash) {
 
 void clear() { getFactories().clear(); }
 
-// cppcheck-suppress unusedFunction
 void addWriterModule(std::string const &FlatbufferID,
                      std::string const &ModuleName, ModuleFactory Value) {
   auto &Factories = getFactories();

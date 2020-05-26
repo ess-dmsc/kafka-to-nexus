@@ -9,7 +9,6 @@
 
 #include "Consumer.h"
 #include "MetadataException.h"
-#include "Msg.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>

@@ -17,11 +17,6 @@
 using std::chrono_literals::operator""s;
 using trompeloeil::_;
 
-class ImmediateExecutor : public IExecutor {
-  void sendWork(JobType Task) override { Task(); }
-  void sendLowPriorityWork(JobType Task) override { Task(); }
-};
-
 class SourceFilterStandInAlt : public Stream::SourceFilter {
 public:
   SourceFilterStandInAlt()
@@ -56,11 +51,10 @@ public:
                    Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
                    Metrics::Registrar RegisterMetric, Stream::time_point Start,
                    Stream::time_point Stop, Stream::duration StopLeeway,
-                   Stream::duration KafkaErrorTimeout,
-                   std::unique_ptr<IExecutor> Executor)
+                   Stream::duration KafkaErrorTimeout)
       : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
-                          Map, Writer, RegisterMetric, Start, Stop, StopLeeway,
-                          KafkaErrorTimeout, std::move(Executor)) {}
+                          Map, Writer, std::move(RegisterMetric), Start, Stop,
+                          StopLeeway, KafkaErrorTimeout) {}
   void addPollTask() override {
     // Do nothing as don't want to automatically poll again
   }
@@ -78,6 +72,16 @@ public:
   using Partition::StopTimeLeeway;
 };
 
+void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
+  // Queue a job in the executor and block until it is complete
+  // so that we know previously queued job that is part of test should
+  // now have been executed
+  std::promise<bool> Promise;
+  auto Future = Promise.get_future();
+  UnderTest->Executor.sendWork([&Promise]() { Promise.set_value(true); });
+  Future.wait();
+}
+
 class PartitionTest : public ::testing::Test {
 public:
   auto createTestedInstance(Stream::time_point StopTime =
@@ -86,8 +90,7 @@ public:
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
         UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start,
-        StopTime, StopLeeway, ErrorTimeout,
-        std::make_unique<ImmediateExecutor>());
+        StopTime, StopLeeway, ErrorTimeout);
     Stop = StopTime;
     Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->ConsumerPtr.get());
     return Temp;
@@ -239,6 +242,7 @@ TEST_F(PartitionTest, SetStopTimePropagatesToFilters) {
   auto UnderTest = createTestedInstance();
   UnderTest->setStopTime(NewStopTime);
 
+  waitUntilDoneProcessing(UnderTest.get());
   for (auto &CFilter : UnderTest->MsgFilters) {
     EXPECT_EQ(CFilter.second->getStopTime(), NewStopTime);
   }

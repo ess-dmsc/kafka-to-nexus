@@ -12,6 +12,7 @@
 #include "BrokerSettings.h"
 #include "ConsumerRebalanceCb.h"
 #include "KafkaEventCb.h"
+#include "Msg.h"
 #include "PollStatus.h"
 #include <chrono>
 #include <librdkafka/rdkafkacpp.h>
@@ -144,5 +145,59 @@ private:
   getOffsets(std::vector<RdKafka::TopicPartition *> const &TopicPartitions);
   static void deletePartitions(
       std::vector<RdKafka::TopicPartition *> const &TopicPartitions);
+};
+
+class StubConsumer : public ConsumerInterface {
+public:
+  ~StubConsumer() override = default;
+
+  void addTopic(std::string const &Topic) override { UNUSED_ARG(Topic); };
+
+  void addTopicAtTimestamp(std::string const &Topic,
+                           std::chrono::milliseconds StartTime) override {
+    UNUSED_ARG(Topic);
+    UNUSED_ARG(StartTime);
+  };
+
+  std::pair<PollStatus, FileWriter::Msg> poll() override {
+    return {PollStatus::TimedOut, FileWriter::Msg()};
+  };
+  bool topicPresent(const std::string &Topic) override {
+    UNUSED_ARG(Topic);
+    return true;
+  };
+
+  std::vector<int32_t>
+  queryTopicPartitions(const std::string &TopicName) override {
+    UNUSED_ARG(TopicName);
+    return {};
+  };
+
+  std::vector<int64_t>
+  offsetsForTimesAllPartitions(std::string const &Topic,
+                               std::chrono::milliseconds Time) override {
+    UNUSED_ARG(Topic);
+    UNUSED_ARG(Time);
+    return {};
+  };
+
+  void addPartitionAtOffset(std::string const &Topic, int PartitionId,
+                            int64_t Offset) override {
+    UNUSED_ARG(Topic);
+    UNUSED_ARG(PartitionId);
+    UNUSED_ARG(Offset);
+  };
+
+  int64_t getHighWatermarkOffset(std::string const &Topic,
+                                 int32_t Partition) override {
+    UNUSED_ARG(Topic);
+    UNUSED_ARG(Partition);
+    return 0;
+  };
+
+  std::vector<int64_t> getCurrentOffsets(std::string const &Topic) override {
+    UNUSED_ARG(Topic);
+    return {};
+  };
 };
 } // namespace Kafka
