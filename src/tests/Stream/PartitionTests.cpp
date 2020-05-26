@@ -82,8 +82,6 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
   Future.wait();
 }
 
-// Tests disabled due to being sensitive to thread scheduling
-
 class PartitionTest : public ::testing::Test {
 public:
   auto createTestedInstance(Stream::time_point StopTime =

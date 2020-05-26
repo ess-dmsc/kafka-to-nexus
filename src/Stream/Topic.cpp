@@ -15,6 +15,20 @@
 
 namespace Stream {
 
+Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
+             SrcToDst Map, MessageWriter *Writer,
+             Metrics::Registrar &RegisterMetric, time_point StartTime,
+             duration StartTimeLeeway, time_point StopTime,
+             duration StopTimeLeeway,
+             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
+    : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
+      WriterPtr(Writer), StartConsumeTime(StartTime),
+      StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
+      StopLeeway(StopTimeLeeway),
+      CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
+      Registrar(RegisterMetric.getNewRegistrar(Topic)),
+      ConsumerCreator(std::move(CreateConsumers)) {}
+
 void Topic::start() {
   Executor.sendWork([=]() { initMetadataCalls(KafkaSettings, TopicName); });
 }
