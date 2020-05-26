@@ -20,7 +20,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              Metrics::Registrar &RegisterMetric, time_point StartTime,
              duration StartTimeLeeway, time_point StopTime,
              duration StopTimeLeeway,
-             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
+             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers = std::make_unique<Kafka::ConsumerFactory>())
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
