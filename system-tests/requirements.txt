@@ -5,4 +5,4 @@ docker>=3.4.1
 h5py>=2.8.0
 flatbuffers>=1.11
 black==19.3b0
-https://github.com/ess-dmsc/python-streaming-data-types/releases/download/0.3.0/streaming_data_types-0.3.0-py3-none-any.whl
+ess-streaming-data-types
