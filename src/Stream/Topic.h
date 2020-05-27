@@ -27,7 +27,7 @@ public:
         SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway,
-        std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers);
+        std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers = std::make_unique<Kafka::ConsumerFactory>());
 
   /// \brief Must be called after the constructor.
   /// \note This function exist in order to make unit testing possible.

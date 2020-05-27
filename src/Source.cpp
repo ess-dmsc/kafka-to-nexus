@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Source.h"
-#include "ProcessMessageResult.h"
 
 namespace FileWriter {
 
@@ -21,25 +20,5 @@ Source::Source(std::string Name, std::string ID, std::string Topic,
 std::string const &Source::topic() const { return TopicName; }
 
 std::string const &Source::sourcename() const { return SourceName; }
-
-ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
-  if (std::string(Message.data() + 4, Message.data() + 8) != SchemaID) {
-    Logger->trace("SchemaID: {} not accepted by source_name: {}", SchemaID,
-                  SourceName);
-    return ProcessMessageResult::ERR;
-  }
-
-  try {
-    WriterModule->write(Message);
-    if (HDFFileForSWMR != nullptr) {
-      HDFFileForSWMR->SWMRFlush();
-    }
-  } catch (const WriterModule::WriterException &E) {
-    Logger->error("Failure while writing message: {}", E.what());
-    return ProcessMessageResult::ERR;
-  }
-
-  return ProcessMessageResult::OK;
-}
 
 } // namespace FileWriter

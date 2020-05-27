@@ -21,8 +21,10 @@ namespace WriterModule {
 namespace Registry {
 using ModuleFactory = std::function<std::unique_ptr<WriterModule::Base>()>;
 using WriterModuleHash = size_t;
+using ModuleFlatbufferID = std::string;
+using FactoryAndID = std::pair<ModuleFactory, ModuleFlatbufferID>;
 
-WriterModuleHash getWriterModuleHash(std::string const &FlatbufferID,
+WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID,
                                      std::string const &ModuleName);
 
 /// \brief Get all registered modules.
@@ -34,7 +36,7 @@ std::map<std::string, std::string> getFactoryIdsAndNames();
 ///
 /// \param key
 /// \param value
-void addWriterModule(std::string const &FlatbufferID,
+void addWriterModule(ModuleFlatbufferID const &ID,
                      std::string const &ModuleName, ModuleFactory Value);
 
 /// \brief Get module factory for a module name.
@@ -42,9 +44,9 @@ void addWriterModule(std::string const &FlatbufferID,
 /// factory function.
 /// \return A module factory and flatbuffer id that this module will accept.
 /// \throw std::runtime_error if module name does not exist.
-std::pair<ModuleFactory, std::string> const find(std::string const &ModuleName);
+FactoryAndID const find(std::string const &ModuleName);
 
-std::pair<ModuleFactory, std::string> const find(WriterModuleHash ModuleHash);
+FactoryAndID const find(WriterModuleHash ModuleHash);
 
 void clear();
 
@@ -57,10 +59,10 @@ public:
   /// identifier `FlatbufferID`.
   ///
   /// \param FlatbufferID The unique identifier for this writer module.
-  explicit Registrar(std::string const &FlatbufferID,
+  explicit Registrar(ModuleFlatbufferID const &ID,
                      std::string const &ModuleName) {
     auto FactoryFunction = []() { return std::make_unique<Module>(); };
-    addWriterModule(FlatbufferID, ModuleName, FactoryFunction);
+    addWriterModule(ID, ModuleName, FactoryFunction);
   };
 };
 } // namespace Registry

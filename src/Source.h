@@ -9,14 +9,13 @@
 
 #pragma once
 
+#include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "WriterModuleBase.h"
 #include "logger.h"
 #include <string>
 
 namespace FileWriter {
-
-enum class ProcessMessageResult;
 
 /// \brief Represents a sourcename on a topic.
 ///
@@ -30,9 +29,9 @@ public:
   ~Source() = default;
   std::string const &topic() const;
   std::string const &sourcename() const;
+  std::string const &flatbufferID() const { return SchemaID; };
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
-  ProcessMessageResult process_message(FlatbufferMessage const &Message);
-  std::shared_ptr<HDFFile> HDFFileForSWMR = nullptr;
+  WriterModule::Base *getWriterPtr() { return WriterModule.get(); }
 
 private:
   std::string SourceName;
@@ -40,7 +39,6 @@ private:
   std::string TopicName;
   FlatbufferMessage::SrcHash Hash;
   std::unique_ptr<WriterModule::Base> WriterModule;
-  SharedLogger Logger = getLogger();
 };
 
 } // namespace FileWriter

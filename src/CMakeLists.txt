@@ -59,8 +59,6 @@ else()
 endif()
 
 set(kafka_to_nexus_SRC
-        StreamStatus.cpp
-        Streamer.cpp
         StreamController.cpp
         Master.cpp
         logger.cpp
@@ -68,7 +66,6 @@ set(kafka_to_nexus_SRC
         JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
-        DemuxTopic.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
         Kafka/Consumer.cpp
@@ -104,8 +101,6 @@ set(kafka_to_nexus_SRC
 set(kafka_to_nexus_INC
         JobCreator.h
         CommandListener.h
-        DemuxTopic.h
-        StreamStatus.h
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h
@@ -129,9 +124,7 @@ set(kafka_to_nexus_INC
         Master.h
         Msg.h
         FlatbufferMessage.h
-        ProcessMessageResult.h
         Source.h
-        Streamer.h
         StreamerOptions.h
         StreamController.h
         URI.h

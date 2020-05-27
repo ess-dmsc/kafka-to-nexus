@@ -37,8 +37,7 @@ public:
   ///
   /// \param TaskID The service ID.
   explicit FileWriterTask(std::string TaskID)
-      : ServiceId(std::move(TaskID)), File(std::make_shared<HDFFile>()),
-        Logger(getLogger()){};
+      : ServiceId(std::move(TaskID)), Logger(getLogger()){};
 
   /// Destructor.
   ~FileWriterTask();
@@ -46,9 +45,11 @@ public:
   /// Initialise the HDF file.
   ///
   /// \param NexusStructure The structure of the NeXus file.
+  /// \param ConfigFile The configuration information.
   /// \param HdfInfo The HDF information for the stream.
   /// \param UseSwmr Whether to use SWMR.
   void InitialiseHdf(std::string const &NexusStructure,
+                     std::string const &ConfigFile,
                      std::vector<StreamHDFInfo> &HdfInfo, bool UseSwmr);
 
   /// \brief  Set the `JobID`.
@@ -70,7 +71,7 @@ public:
   /// \brief Get the list of demuxers.
   ///
   /// \return The demux topics.
-  std::map<std::string, std::shared_ptr<DemuxTopic>> &demuxers();
+  std::vector<Source> &sources();
 
   /// \brief  Get the job ID of the file being written.
   ///
@@ -85,21 +86,16 @@ public:
   /// Get the group for the HDF file.
   ///
   /// \return The group.
-  hdf5::node::Group hdfGroup() const;
-
-  /// Get whether SWMR is enabled for this task.
-  ///
-  /// \return true if enabled.
-  bool swmrEnabled() const;
+  hdf5::node::Group hdfGroup();
 
 private:
   std::string Filename;
-  std::map<std::string, std::shared_ptr<DemuxTopic>> TopicNameToDemuxerMap;
+  std::vector<Source> SourceToModuleMap;
   void closeFile();
   void reopenFile();
   std::string JobId;
   std::string ServiceId;
-  std::shared_ptr<HDFFile> File;
+  HDFFile File;
   SharedLogger Logger;
 };
 

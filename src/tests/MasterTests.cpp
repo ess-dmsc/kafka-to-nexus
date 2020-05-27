@@ -67,7 +67,7 @@ public:
   std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const &StartInfo,
                        MainOpt & /*Settings*/,
-                       SharedLogger const & /*Logger*/) override {
+                       SharedLogger const & /*Logger*/, Metrics::Registrar) override {
     return std::make_unique<FakeStreamController>(StartInfo.JobID);
   };
 };
@@ -77,7 +77,7 @@ public:
   std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
                        MainOpt & /*Settings*/,
-                       SharedLogger const & /*Logger*/) override {
+                       SharedLogger const & /*Logger*/, Metrics::Registrar) override {
     throw std::runtime_error("Something went wrong");
   };
 };
@@ -155,7 +155,7 @@ TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
 
   auto Master = std::make_unique<FileWriter::Master>(
       MainOpts, std::move(CmdListener), std::move(Creator),
-      std::move(Reporter));
+      std::move(Reporter), Metrics::Registrar("some_reg", {}));
 
   Master->run();
   ASSERT_TRUE(Master->isWriting());
@@ -169,7 +169,7 @@ TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
 
   auto Master = std::make_unique<FileWriter::Master>(
       MainOpts, std::move(CmdListener), std::move(Creator),
-      std::move(Reporter));
+      std::move(Reporter), Metrics::Registrar("some_reg", {}));
   // Process start message
   Master->run();
 
@@ -184,7 +184,7 @@ TEST_F(MasterTests, IfStartingThrowsThenEntersNotWritingState) {
 
   auto Master = std::make_unique<FileWriter::Master>(
       MainOpts, std::move(CmdListener), std::move(ThrowingCreator),
-      std::move(Reporter));
+      std::move(Reporter), Metrics::Registrar("some_reg", {}));
 
   Master->run();
 
@@ -202,7 +202,7 @@ TEST_F(MasterTests, IfStoppedMessageContainsWrongJobIdThenIgnored) {
 
   auto Master = std::make_unique<FileWriter::Master>(
       MainOpts, std::move(CmdListener), std::move(Creator),
-      std::move(Reporter));
+      std::move(Reporter), Metrics::Registrar("some_reg", {}));
   // Process start message
   Master->run();
 

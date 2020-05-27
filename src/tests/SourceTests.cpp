@@ -11,7 +11,6 @@
 #include "helpers/StubWriterModule.h"
 #include <AccessMessageMetadata/ev42/ev42_Extractor.h>
 #include <FlatbufferMessage.h>
-#include <ProcessMessageResult.h>
 #include <Source.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
@@ -69,46 +68,4 @@ TEST_F(SourceTests, MovedSourceHasCorrectState) {
   auto TestSource2 = std::move(TestSource);
   ASSERT_EQ(TestSource2.topic(), TopicName);
   ASSERT_EQ(TestSource2.sourcename(), SourceName);
-}
-
-TEST_F(SourceTests, ProcessMessagePassesMessageToWriterModule) {
-  std::string SourceName("TestSourceName");
-  std::string TopicName("TestTopicName");
-  std::string ModuleName("ev42");
-  auto WriterModule = std::make_unique<WriterModuleMock>();
-  REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)));
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
-  auto MessageBuffer = createEventMessageBuffer();
-  FileWriter::FlatbufferMessage Message(MessageBuffer.data(),
-                                        MessageBuffer.size());
-  ASSERT_EQ(FileWriter::ProcessMessageResult::OK,
-            TestSource.process_message(Message));
-}
-
-TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
-  std::string SourceName("TestSourceName");
-  std::string TopicName("TestTopicName");
-  std::string ModuleName("ev42");
-  auto WriterModule = std::make_unique<WriterModuleMock>();
-  REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)))
-      .THROW(WriterModule::WriterException("IO Error"));
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
-  auto MessageBuffer = createEventMessageBuffer();
-  FileWriter::FlatbufferMessage Message(MessageBuffer.data(),
-                                        MessageBuffer.size());
-  ASSERT_EQ(FileWriter::ProcessMessageResult::ERR,
-            TestSource.process_message(Message));
-}
-
-TEST_F(SourceTests, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
-  std::string SourceName("TestSourceName");
-  std::string TopicName("TestTopicName");
-  std::string ModuleName("test");
-  auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
-  auto MessageBuffer = createEventMessageBuffer();
-  FileWriter::FlatbufferMessage Message(MessageBuffer.data(),
-                                        MessageBuffer.size());
-  ASSERT_EQ(FileWriter::ProcessMessageResult::ERR,
-            TestSource.process_message(Message));
 }

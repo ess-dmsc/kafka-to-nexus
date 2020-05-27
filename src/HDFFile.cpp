@@ -853,7 +853,7 @@ void checkHDFVersion(SharedLogger const &Logger) {
 }
 
 void HDFFile::init(std::string const &Filename,
-                   nlohmann::json const &NexusStructure,
+                   nlohmann::json const &NexusStructure, nlohmann::json const &,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
   if (std::ifstream(Filename).good()) {
     // File exists already
@@ -1095,15 +1095,5 @@ void HDFFile::finalize() {
         std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
   }
 }
-
-void HDFFile::SWMRFlush() {
-  auto Now = CLOCK::now();
-  if (Now - SWMRFlushLast > SWMRFlushInterval) {
-    flush();
-    SWMRFlushLast = Now;
-  }
-}
-
-bool HDFFile::isSWMREnabled() const { return SWMREnabled; }
 
 } // namespace FileWriter

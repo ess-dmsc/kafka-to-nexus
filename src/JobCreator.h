@@ -12,6 +12,7 @@
 #include "CommandParser.h"
 #include "FileWriterTask.h"
 #include "MainOpt.h"
+#include "Metrics/Registrar.h"
 #include "States.h"
 #include "StreamController.h"
 #include "json.h"
@@ -23,7 +24,7 @@ namespace FileWriter {
 struct StreamSettings {
   StreamHDFInfo StreamHDFInfoObj;
   std::string Topic;
-  std::string ModuleName;
+  std::string Module;
   std::string Source;
   std::string ConfigStreamJson;
   std::string Attributes;
@@ -33,7 +34,8 @@ class IJobCreator {
 public:
   virtual std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
-                       SharedLogger const &Logger) = 0;
+                       SharedLogger const &Logger,
+                       Metrics::Registrar Registrar) = 0;
   virtual ~IJobCreator() = default;
 };
 
@@ -48,7 +50,8 @@ public:
   /// \return The new file-writing job.
   std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
-                       SharedLogger const &Logger) override;
+                       SharedLogger const &Logger,
+                       Metrics::Registrar Registrar) override;
 
 private:
   static void addStreamSourceToWriterModule(

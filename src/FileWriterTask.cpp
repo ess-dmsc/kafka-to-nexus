@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FileWriterTask.h"
-#include "DemuxTopic.h"
 #include "HDFFile.h"
 #include "Kafka/ProducerTopic.h"
 #include "Source.h"
@@ -33,15 +32,12 @@ json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
 }
 } // namespace
 
-std::map<std::string, std::shared_ptr<DemuxTopic>> &FileWriterTask::demuxers() {
-  return TopicNameToDemuxerMap;
-}
+std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
-  TopicNameToDemuxerMap.clear();
   try {
-    closeFile();
+    File.close();
   } catch (std::exception const &E) {
     Logger->error(fmt::format(
         "Exception while closing file in ~FileWriterTask: {}", E.what()));
@@ -58,25 +54,19 @@ void FileWriterTask::setFilename(std::string const &Prefix,
 }
 
 void FileWriterTask::addSource(Source &&Source) {
-  if (swmrEnabled()) {
-    Source.HDFFileForSWMR = File;
-  }
-
-  TopicNameToDemuxerMap.emplace(Source.topic(),
-                                std::make_shared<DemuxTopic>(Source.topic()));
-
-  // Add the source to the demuxer for its topic
-  TopicNameToDemuxerMap[Source.topic()]->addSource(std::move(Source));
+  SourceToModuleMap.push_back(std::move(Source));
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
+                                   std::string const &ConfigFile,
                                    std::vector<StreamHDFInfo> &HdfInfo,
                                    bool UseSwmr) {
   auto NexusStructureJson = hdf_parse(NexusStructure, Logger);
+  auto ConfigFileJson = hdf_parse(ConfigFile, Logger);
 
   try {
     Logger->info("Creating HDF file {}", Filename);
-    File->init(Filename, NexusStructureJson, HdfInfo, UseSwmr);
+    File.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo, UseSwmr);
     // The HDF file is closed and re-opened to (optionally) support SWMR and
     // parallel writing.
     closeFile();
@@ -88,11 +78,11 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
   }
 }
 
-void FileWriterTask::closeFile() { File->close(); }
+void FileWriterTask::closeFile() { File.close(); }
 
 void FileWriterTask::reopenFile() {
   try {
-    File->reopen(Filename);
+    File.reopen(Filename);
   } catch (std::exception const &E) {
     Logger->error("Exception when reopening file: {}", E.what());
     throw;
@@ -101,11 +91,7 @@ void FileWriterTask::reopenFile() {
 
 std::string FileWriterTask::jobID() const { return JobId; }
 
-hdf5::node::Group FileWriterTask::hdfGroup() const {
-  return File->H5File.root();
-}
-
-bool FileWriterTask::swmrEnabled() const { return File->isSWMREnabled(); }
+hdf5::node::Group FileWriterTask::hdfGroup() { return File.H5File.root(); }
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
