@@ -164,8 +164,8 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
 
   Logger->info("Write file with job_id: {}", Task->jobID());
   return std::make_unique<StreamController>(std::move(Task), Settings.ServiceID,
-                                        Settings.StreamerConfiguration,
-                                        Registrar);
+                                            Settings.StreamerConfiguration,
+                                            Registrar);
 }
 
 void JobCreator::addStreamSourceToWriterModule(

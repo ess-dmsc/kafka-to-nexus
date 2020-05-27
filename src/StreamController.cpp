@@ -7,10 +7,10 @@
 #include "helper.h"
 
 namespace FileWriter {
-StreamController::StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
-                           std::string const &ServiceID,
-                           FileWriter::StreamerOptions Settings,
-                           Metrics::Registrar Registrar)
+StreamController::StreamController(
+    std::unique_ptr<FileWriterTask> FileWriterTask,
+    std::string const &ServiceID, FileWriter::StreamerOptions Settings,
+    Metrics::Registrar Registrar)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
       WriterThread(Registrar.getNewRegistrar("stream")), ServiceId(ServiceID),
@@ -40,7 +40,7 @@ std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 void StreamController::getTopicNames() {
   try {
     auto TopicNames = Kafka::getTopicList(KafkaSettings.BrokerSettings.Address,
-                                           CurrentMetadataTimeOut);
+                                          CurrentMetadataTimeOut);
     Executor.sendWork([=]() { initStreams(TopicNames); });
   } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;
