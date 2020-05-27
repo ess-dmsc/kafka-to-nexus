@@ -40,7 +40,6 @@ JobCreator::initializeHDF(FileWriterTask &Task,
     throw std::runtime_error(
         fmt::format("Could not parse NeXus structure JSON '{}'", Error.what()));
   }
-
 }
 
 StreamSettings
