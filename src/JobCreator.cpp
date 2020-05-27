@@ -30,7 +30,7 @@ JobCreator::initializeHDF(FileWriterTask &Task,
                           std::string const &NexusStructureString,
                           bool UseSwmr) {
   try {
-    json NexusStructure = json::parse(NexusStructureString);
+    json const NexusStructure = json::parse(NexusStructureString);
     std::vector<StreamHDFInfo> StreamHDFInfoList;
     json ConfigFile = json::parse("{}");
     Task.InitialiseHdf(NexusStructure.dump(), ConfigFile.dump(),
@@ -40,7 +40,6 @@ JobCreator::initializeHDF(FileWriterTask &Task,
     throw std::runtime_error(
         fmt::format("Could not parse NeXus structure JSON '{}'", Error.what()));
   }
-
 }
 
 StreamSettings

@@ -32,17 +32,15 @@ FileWriterState getNextState(Msg const &Command,
             StopInfo.StopTime = getCurrentTimeStampMS();
           }
           return States::StopRequested{StopInfo};
-        } else {
-          throw std::runtime_error("Start command is not allowed when writing");
         }
+        throw std::runtime_error("Start command is not allowed when writing");
       } else {
         if (CommandParser::isStartCommand(Command)) {
           auto const StartInfo =
               CommandParser::extractStartInformation(Command, TimeStamp);
           return States::StartRequested{StartInfo};
-        } else {
-          throw std::runtime_error("Stop command is not allowed when idle");
         }
+        throw std::runtime_error("Stop command is not allowed when idle");
       }
     }
   } catch (std::runtime_error const &Error) {

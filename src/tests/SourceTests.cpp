@@ -25,18 +25,6 @@ using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 using WriterModule::Base;
 
-flatbuffers::DetachedBuffer createEventMessageBuffer() {
-  flatbuffers::FlatBufferBuilder Builder;
-  AccessMessageMetadata::EventMessageBuilder EventMessage(Builder);
-  EventMessage.add_pulse_time(
-      1); // avoid 0 pulse time which is detected as a validation error
-  Builder.Finish(EventMessage.Finish(),
-                 AccessMessageMetadata::EventMessageIdentifier());
-
-  // Note, Release gives us a "DetachedBuffer" which owns the data
-  return Builder.Release();
-}
-
 class SourceTests : public ::testing::Test {
 public:
   void SetUp() override {

@@ -22,7 +22,6 @@ CommandListener::CommandListener(MainOpt &Config) : config(Config) {}
 void CommandListener::start() {
   Kafka::BrokerSettings BrokerSettings =
       config.StreamerConfiguration.BrokerSettings;
-  BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
   consumer = Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
   if (consumer->topicPresent(config.CommandBrokerURI.Topic))
