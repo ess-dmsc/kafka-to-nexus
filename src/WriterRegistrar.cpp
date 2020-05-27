@@ -36,8 +36,7 @@ std::map<ModuleFlatbufferID, std::string> getFactoryIdsAndNames() {
   return ReturnMap;
 }
 
-FactoryAndID const
-find(std::string const &ModuleName) {
+FactoryAndID const find(std::string const &ModuleName) {
   auto const &Factories = getFactories();
   auto FoundItem = std::find_if(std::cbegin(Factories), std::cend(Factories),
                                 [&ModuleName](auto const &CItem) {
