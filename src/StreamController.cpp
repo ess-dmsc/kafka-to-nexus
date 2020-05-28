@@ -23,7 +23,8 @@ StreamController::StreamController(
 
 StreamController::~StreamController() {
   // Hint streamers of exit
-  LOG_INFO("Stopped StreamController for file with id : {}", StreamController::getJobId());
+  LOG_INFO("Stopped StreamController for file with id : {}",
+           StreamController::getJobId());
 }
 
 void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
