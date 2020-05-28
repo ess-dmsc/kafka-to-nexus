@@ -9,7 +9,6 @@
 
 #include "FileWriterTask.h"
 #include "HDFFile.h"
-#include "Kafka/ProducerTopic.h"
 #include "Source.h"
 #include "helper.h"
 #include "logger.h"

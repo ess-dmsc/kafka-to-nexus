@@ -9,7 +9,6 @@
 
 #include "../Kafka/MetadataException.h"
 #include "Kafka/Consumer.h"
-#include "Msg.h"
 #include "helpers/MockMessage.h"
 #include "helpers/RdKafkaMocks.h"
 
