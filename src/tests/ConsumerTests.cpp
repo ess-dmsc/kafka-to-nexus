@@ -27,7 +27,7 @@ protected:
 
 TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   auto *Message = new MockMessage;
-  std::string TestPayload = "Test payload";
+  std::string const TestPayload = "Test payload";
   REQUIRE_CALL(*Message, err())
       .TIMES(1)
       .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);

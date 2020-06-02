@@ -43,7 +43,7 @@ public:
   Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
          std::unique_ptr<IJobCreator> Creator,
          std::unique_ptr<Status::StatusReporter> Reporter,
-         Metrics::Registrar Registrar);
+         Metrics::Registrar const &Registrar);
   virtual ~Master() = default;
 
   /// \brief Sets up command listener and handles any commands received.

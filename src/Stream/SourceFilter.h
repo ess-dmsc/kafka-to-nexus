@@ -42,7 +42,7 @@ public:
 
 protected:
   void sendMessage(FileWriter::FlatbufferMessage const &Msg) {
-    MessagesTransmitted++;
+    ++MessagesTransmitted;
     for (auto &CDest : DestIDs) {
       Dest->addMessage({CDest, Msg});
     }

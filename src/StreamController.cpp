@@ -10,7 +10,7 @@ namespace FileWriter {
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     std::string const &ServiceID, FileWriter::StreamerOptions Settings,
-    Metrics::Registrar Registrar)
+    Metrics::Registrar const &Registrar)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
       WriterThread(Registrar.getNewRegistrar("stream")), ServiceId(ServiceID),

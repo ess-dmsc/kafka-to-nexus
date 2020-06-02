@@ -36,7 +36,7 @@ public:
   StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
                    std::string const &ServiceID,
                    FileWriter::StreamerOptions Settings,
-                   Metrics::Registrar Registrar);
+                   Metrics::Registrar const &Registrar);
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;

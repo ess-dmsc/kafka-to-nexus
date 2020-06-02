@@ -52,7 +52,7 @@ FileWriterState getNextState(Msg const &Command,
 Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
                std::unique_ptr<IJobCreator> Creator,
                std::unique_ptr<Status::StatusReporter> Reporter,
-               Metrics::Registrar Registrar)
+               Metrics::Registrar const &Registrar)
     : Logger(getLogger()), MainConfig(Config), CmdListener(std::move(Listener)),
       Creator_(std::move(Creator)), Reporter(std::move(Reporter)),
       MasterMetricsRegistrar(Registrar) {
