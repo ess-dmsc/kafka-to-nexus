@@ -10,12 +10,12 @@
 #pragma once
 
 #include "Kafka/MetadataException.h"
+#include "TimeUtility.h"
 #include <chrono>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <set>
 #include <string>
-#include "TimeUtility.h"
 
 namespace Kafka {
 

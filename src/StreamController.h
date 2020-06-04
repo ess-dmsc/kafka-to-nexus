@@ -58,7 +58,8 @@ public:
   /// \brief Returns true if all topics are done AND current system time
   /// is greater than stop time.
   ///
-  /// \note If stop time has not been set, it will be treated as the maximum possible time.
+  /// \note If stop time has not been set, it will be treated as the maximum
+  /// possible time.
   bool isDoneWriting() override;
 
   /// \brief Get the unique job id associated with the streamer (and hence

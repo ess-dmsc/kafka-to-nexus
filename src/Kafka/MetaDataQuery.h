@@ -9,11 +9,11 @@
 
 #pragma once
 
+#include "TimeUtility.h"
 #include <chrono>
 #include <librdkafka/rdkafkacpp.h>
 #include <set>
 #include <string>
-#include "TimeUtility.h"
 
 namespace Kafka {
 

@@ -12,8 +12,7 @@
 
 namespace Stream {
 
-PartitionFilter::PartitionFilter(time_point StopAtTime,
-                                 duration StopTimeLeeway,
+PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
                                  duration ErrorTimeOut)
     : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
       ErrorTimeOut(ErrorTimeOut) {

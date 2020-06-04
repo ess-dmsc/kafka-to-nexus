@@ -132,7 +132,7 @@ void Topic::createStreams(
     TempPartition->start();
     ConsumerThreads.emplace(std::move(TempPartition));
   }
-  Executor.sendLowPriorityWork([=](){ checkIfDone(); });
+  Executor.sendLowPriorityWork([=]() { checkIfDone(); });
 }
 
 void Topic::checkIfDone() {
@@ -145,6 +145,6 @@ void Topic::checkIfDone() {
     IsDone.store(true);
   }
   std::this_thread::sleep_for(50ms);
-  Executor.sendLowPriorityWork([=](){checkIfDone();});
+  Executor.sendLowPriorityWork([=]() { checkIfDone(); });
 }
 } // namespace Stream

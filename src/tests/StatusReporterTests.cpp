@@ -56,8 +56,7 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
-  Status::StatusInfo const Info{"1234", "file1.nxs",
-                                1234567890ms,
+  Status::StatusInfo const Info{"1234", "file1.nxs", 1234567890ms,
                                 time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
@@ -81,8 +80,7 @@ TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
 }
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
-  Status::StatusInfo const Info{"1234", "file1.nxs",
-                                1234567890ms,
+  Status::StatusInfo const Info{"1234", "file1.nxs", 1234567890ms,
                                 time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 

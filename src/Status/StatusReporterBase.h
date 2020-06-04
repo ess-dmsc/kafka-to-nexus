@@ -20,9 +20,11 @@ namespace Status {
 
 class StatusReporterBase {
 public:
-  StatusReporterBase(std::chrono::milliseconds Interval, std::string const &ServiceId,
+  StatusReporterBase(std::chrono::milliseconds Interval,
+                     std::string const &ServiceId,
                      std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic)
-      : Period(Interval), ServiceIdentifier(ServiceId), StatusProducerTopic(std::move(StatusProducerTopic)) {}
+      : Period(Interval), ServiceIdentifier(ServiceId),
+        StatusProducerTopic(std::move(StatusProducerTopic)) {}
 
   virtual ~StatusReporterBase() = default;
 

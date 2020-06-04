@@ -36,7 +36,7 @@ public:
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
-  bool isDone() {return IsDone.load();};
+  bool isDone() { return IsDone.load(); };
 
   virtual ~Topic() = default;
 

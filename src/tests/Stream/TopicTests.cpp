@@ -39,8 +39,7 @@ public:
   using offset_list = std::vector<std::pair<int, int64_t>>;
   MAKE_CONST_MOCK5(getOffsetForTimeInternal,
                    offset_list(std::string const &, std::string const &,
-                               std::vector<int> const &, time_point,
-                               duration),
+                               std::vector<int> const &, time_point, duration),
                    override);
   MAKE_CONST_MOCK3(getPartitionsForTopicInternal,
                    std::vector<int>(std::string const &, std::string const &,
@@ -192,11 +191,12 @@ TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
   TopicStandIn::offset_list PartitionOffsets{{1, 5}, {3, 6}};
   UnderTest->createStreamsBase(KafkaSettings, UsedTopicName, PartitionOffsets);
   ASSERT_EQ(PartitionOffsets.size(), UnderTest->ConsumerThreads.size());
-  for (auto & Partition : UnderTest->ConsumerThreads) {
+  for (auto &Partition : UnderTest->ConsumerThreads) {
     auto CPartitionId = Partition->getPartitionID();
-    EXPECT_TRUE(std::any_of(PartitionOffsets.begin(), PartitionOffsets.end(), [&CPartitionId](auto const &Item){
-      return Item.first == CPartitionId;
-    }));
+    EXPECT_TRUE(std::any_of(PartitionOffsets.begin(), PartitionOffsets.end(),
+                            [&CPartitionId](auto const &Item) {
+                              return Item.first == CPartitionId;
+                            }));
     EXPECT_EQ(Partition->getTopicName(), UsedTopicName);
   }
 }

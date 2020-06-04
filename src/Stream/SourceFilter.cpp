@@ -52,7 +52,8 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
   CurrentTimeStamp = InMsg.getTimestamp();
 
   auto Temp = std::chrono::nanoseconds(InMsg.getTimestamp());
-  auto TempMsgTime = time_point(std::chrono::duration_cast<std::chrono::microseconds>(Temp));
+  auto TempMsgTime =
+      time_point(std::chrono::duration_cast<std::chrono::microseconds>(Temp));
   if (TempMsgTime < Start) {
     if (BufferedMessage.isValid()) {
       MessagesDiscarded++;

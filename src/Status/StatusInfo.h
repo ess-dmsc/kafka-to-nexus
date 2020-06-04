@@ -9,9 +9,9 @@
 
 #pragma once
 
+#include "TimeUtility.h"
 #include <chrono>
 #include <string>
-#include "TimeUtility.h"
 
 namespace Status {
 

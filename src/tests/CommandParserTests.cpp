@@ -67,7 +67,8 @@ TEST_F(CommandParserHappyStartTests, IfStartPresentThenExtractedCorrectly) {
 }
 
 TEST_F(CommandParserHappyStartTests, IfStopPresentThenExtractedCorrectly) {
-  ASSERT_EQ(time_point(std::chrono::milliseconds{StopTimeInput}), StartInfo.StopTime);
+  ASSERT_EQ(time_point(std::chrono::milliseconds{StopTimeInput}),
+            StartInfo.StopTime);
 }
 
 TEST_F(CommandParserHappyStartTests, IfServiceIdPresentThenExtractedCorrectly) {

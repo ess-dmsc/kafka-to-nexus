@@ -42,7 +42,8 @@ createStatusReporter(MainOpt const &MainConfig) {
   auto StatusProducerTopic = std::make_unique<Kafka::ProducerTopic>(
       StatusProducer, MainConfig.KafkaStatusURI.Topic);
   return std::make_unique<Status::StatusReporter>(
-      MainConfig.StatusMasterIntervalMS, MainConfig.ServiceID, StatusProducerTopic);
+      MainConfig.StatusMasterIntervalMS, MainConfig.ServiceID,
+      StatusProducerTopic);
 }
 
 int main(int argc, char **argv) {

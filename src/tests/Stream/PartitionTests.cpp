@@ -84,8 +84,7 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
 
 class PartitionTest : public ::testing::Test {
 public:
-  auto createTestedInstance(time_point StopTime =
-                                time_point::max()) {
+  auto createTestedInstance(time_point StopTime = time_point::max()) {
     Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),

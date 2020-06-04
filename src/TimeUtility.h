@@ -19,26 +19,24 @@ using std::chrono_literals::operator""s;
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 namespace system_clock {
-static auto now() {
-   return std::chrono::system_clock::now();
- }
-}
+static auto now() { return std::chrono::system_clock::now(); }
+} // namespace system_clock
 
 static auto toNanoSeconds(time_point Timestamp) {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
-      Timestamp.time_since_epoch())
+             Timestamp.time_since_epoch())
       .count();
 }
 
 static auto toMicroSeconds(time_point Timestamp) {
   return std::chrono::duration_cast<std::chrono::microseconds>(
-      Timestamp.time_since_epoch())
+             Timestamp.time_since_epoch())
       .count();
 }
 
 static auto toMilliSeconds(time_point Timestamp) {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-      Timestamp.time_since_epoch())
+             Timestamp.time_since_epoch())
       .count();
 }
 #pragma GCC diagnostic pop
