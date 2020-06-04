@@ -15,12 +15,11 @@
 #include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
+#include "TimeUtility.h"
 
-using std::chrono_literals::operator""ms;
-using Stream::time_point;
 class PartitionFilterTest : public ::testing::Test {
 public:
-  Stream::PartitionFilter UnderTest{Stream::time_point::max(), 10ms, 20ms};
+  Stream::PartitionFilter UnderTest{time_point::max(), 10ms, 20ms};
 };
 
 TEST_F(PartitionFilterTest, NoErrorOnInitState) {

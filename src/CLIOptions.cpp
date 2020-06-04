@@ -162,17 +162,14 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "
                  "commands");
-  App.add_flag("--logpid-sleep", MainOptions.logpid_sleep);
-  App.add_flag("--use-signal-handler", MainOptions.use_signal_handler);
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
-  App.add_option("--teamid", MainOptions.teamid);
   App.add_option(
       "--service-id", MainOptions.ServiceID,
       "Used as the service identifier in status messages and as an"
       "extra metrics ID string. Only used by the metrics system if present. "
       "Will"
-      "make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
+      " make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
@@ -186,17 +183,6 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addMillisecondOption(App, "--streamer-ms-after-stop",
                        MainOptions.StreamerConfiguration.AfterStopTime,
                        "Streamer option - milliseconds after stop time", true);
-  addMillisecondOption(App, "--streamer-start-time",
-                       MainOptions.StreamerConfiguration.StartTimestamp,
-                       "Streamer option - start timestamp (milliseconds)",
-                       true);
-  addMillisecondOption(App, "--streamer-stop-time",
-                       MainOptions.StreamerConfiguration.StopTimestamp,
-                       "Streamer option - stop timestamp (milliseconds)", true);
-  addMillisecondOption(
-      App, "--stream-master-topic-write-interval",
-      MainOptions.topic_write_duration,
-      "Stream-master option - topic write interval (milliseconds)");
   addKafkaOption(
       App, "-S,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,

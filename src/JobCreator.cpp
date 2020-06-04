@@ -159,7 +159,8 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
-  Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
+  Settings.StreamerConfiguration.StopTimestamp = time_point(StartInfo.StopTime);
+  Settings.StreamerConfiguration.BrokerSettings.Address = StartInfo.BrokerInfo.HostPort;
 
   Logger->info("Write file with job_id: {}", Task->jobID());
   return std::make_unique<StreamController>(std::move(Task), Settings.ServiceID,

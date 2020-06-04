@@ -20,9 +20,9 @@ namespace Status {
 
 class StatusReporterBase {
 public:
-  StatusReporterBase(std::chrono::milliseconds Interval,
+  StatusReporterBase(std::chrono::milliseconds Interval, std::string const &ServiceId,
                      std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic)
-      : Period(Interval), StatusProducerTopic(std::move(StatusProducerTopic)) {}
+      : Period(Interval), ServiceIdentifier(ServiceId), StatusProducerTopic(std::move(StatusProducerTopic)) {}
 
   virtual ~StatusReporterBase() = default;
 
@@ -52,6 +52,7 @@ protected:
   void reportStatus();
 
 private:
+  std::string const ServiceIdentifier;
   virtual void postReportStatusActions(){};
   StatusInfo Status{};
   mutable std::mutex StatusMutex;

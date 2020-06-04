@@ -42,7 +42,7 @@ createStatusReporter(MainOpt const &MainConfig) {
   auto StatusProducerTopic = std::make_unique<Kafka::ProducerTopic>(
       StatusProducer, MainConfig.KafkaStatusURI.Topic);
   return std::make_unique<Status::StatusReporter>(
-      MainConfig.StatusMasterIntervalMS, StatusProducerTopic);
+      MainConfig.StatusMasterIntervalMS, MainConfig.ServiceID, StatusProducerTopic);
 }
 
 int main(int argc, char **argv) {
@@ -99,10 +99,9 @@ int main(int argc, char **argv) {
   Metrics::Registrar MainRegistrar("kakfa-to-nexus", MetricsReporters);
   auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceID);
 
-  if (Options->use_signal_handler) {
-    std::signal(SIGINT, signal_handler);
-    std::signal(SIGTERM, signal_handler);
-  }
+  std::signal(SIGINT, signal_handler);
+  std::signal(SIGTERM, signal_handler);
+
   FileWriter::Master Master(
       *Options, std::make_unique<FileWriter::CommandListener>(*Options),
       std::make_unique<FileWriter::JobCreator>(),

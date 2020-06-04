@@ -49,9 +49,9 @@ public:
   PartitionStandIn(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                    int Partition, std::string TopicName,
                    Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
-                   Metrics::Registrar RegisterMetric, Stream::time_point Start,
-                   Stream::time_point Stop, Stream::duration StopLeeway,
-                   Stream::duration KafkaErrorTimeout)
+                   Metrics::Registrar RegisterMetric, time_point Start,
+                   time_point Stop, duration StopLeeway,
+                   duration KafkaErrorTimeout)
       : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
                           Map, Writer, std::move(RegisterMetric), Start, Stop,
                           StopLeeway, KafkaErrorTimeout) {}
@@ -84,8 +84,8 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
 
 class PartitionTest : public ::testing::Test {
 public:
-  auto createTestedInstance(Stream::time_point StopTime =
-                                std::chrono::system_clock::time_point::max()) {
+  auto createTestedInstance(time_point StopTime =
+                                time_point::max()) {
     Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
@@ -103,10 +103,10 @@ public:
       FileWriter::calcSourceHash("zzzz", zzzzFbReader::UsedSourceName)};
   Stream::SrcToDst UsedMap{
       Stream::SrcDstKey{UsedFilterHash, nullptr, "some_name", "idid"}};
-  Stream::time_point Start{std::chrono::system_clock::now()};
-  Stream::time_point Stop{std::chrono::system_clock::time_point::max()};
-  Stream::duration StopLeeway{5s};
-  Stream::duration ErrorTimeout{10s};
+  time_point Start{std::chrono::system_clock::now()};
+  time_point Stop{std::chrono::system_clock::time_point::max()};
+  duration StopLeeway{5s};
+  duration ErrorTimeout{10s};
   Metrics::Registrar Registrar{"some_name", {}};
   std::array<char, 9> SomeData{'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z'};
 };

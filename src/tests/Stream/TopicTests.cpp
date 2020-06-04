@@ -26,9 +26,9 @@ class TopicStandIn : public Stream::Topic {
 public:
   TopicStandIn(Kafka::BrokerSettings Settings, std::string const &Topic,
                Stream::SrcToDst Map, Stream::MessageWriter *Writer,
-               Metrics::Registrar &RegisterMetric, Stream::time_point StartTime,
-               Stream::duration StartTimeLeeway, Stream::time_point StopTime,
-               Stream::duration StopTimeLeeway,
+               Metrics::Registrar &RegisterMetric, time_point StartTime,
+               duration StartTimeLeeway, time_point StopTime,
+               duration StopTimeLeeway,
                std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
       : Stream::Topic(Settings, Topic, Map, Writer, RegisterMetric, StartTime,
                       StartTimeLeeway, StopTime, StopTimeLeeway,
@@ -39,12 +39,12 @@ public:
   using offset_list = std::vector<std::pair<int, int64_t>>;
   MAKE_CONST_MOCK5(getOffsetForTimeInternal,
                    offset_list(std::string const &, std::string const &,
-                               std::vector<int> const &, Stream::time_point,
-                               Stream::duration),
+                               std::vector<int> const &, time_point,
+                               duration),
                    override);
   MAKE_CONST_MOCK3(getPartitionsForTopicInternal,
                    std::vector<int>(std::string const &, std::string const &,
-                                    Stream::duration),
+                                    duration),
                    override);
   MAKE_MOCK2(getPartitionsForTopic,
              void(Kafka::BrokerSettings const &, std::string const &),
@@ -102,8 +102,8 @@ public:
   }
   std::string const UsedTopicName{"some_topic_or_another"};
   Kafka::BrokerSettings KafkaSettings;
-  Stream::time_point Start{std::chrono::system_clock::now()};
-  Stream::time_point Stop{std::chrono::system_clock::time_point::max()};
+  time_point Start{std::chrono::system_clock::now()};
+  time_point Stop{std::chrono::system_clock::time_point::max()};
   Metrics::Registrar Registrar{"some_name", {}};
   Stream::SrcToDst Map;
 };
@@ -192,9 +192,11 @@ TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
   TopicStandIn::offset_list PartitionOffsets{{1, 5}, {3, 6}};
   UnderTest->createStreamsBase(KafkaSettings, UsedTopicName, PartitionOffsets);
   ASSERT_EQ(PartitionOffsets.size(), UnderTest->ConsumerThreads.size());
-  for (size_t i = 0; i < PartitionOffsets.size(); i++) {
-    EXPECT_EQ(UnderTest->ConsumerThreads[i]->getPartitionID(),
-              PartitionOffsets[i].first);
-    EXPECT_EQ(UnderTest->ConsumerThreads[i]->getTopicName(), UsedTopicName);
+  for (auto & Partition : UnderTest->ConsumerThreads) {
+    auto CPartitionId = Partition->getPartitionID();
+    EXPECT_TRUE(std::any_of(PartitionOffsets.begin(), PartitionOffsets.end(), [&CPartitionId](auto const &Item){
+      return Item.first == CPartitionId;
+    }));
+    EXPECT_EQ(Partition->getTopicName(), UsedTopicName);
   }
 }

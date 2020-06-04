@@ -13,11 +13,9 @@
 #include <librdkafka/rdkafkacpp.h>
 #include <set>
 #include <string>
+#include "TimeUtility.h"
 
 namespace Kafka {
-
-using time_point = std::chrono::system_clock::time_point;
-using duration = std::chrono::system_clock::duration;
 
 std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,

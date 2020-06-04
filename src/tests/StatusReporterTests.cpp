@@ -38,7 +38,7 @@ public:
     std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     ReporterPtr = std::make_unique<Status::StatusReporterBase>(
-        std::chrono::milliseconds{100}, std::move(ProducerTopic));
+        std::chrono::milliseconds{100}, "ServiceId", std::move(ProducerTopic));
   }
 
   std::unique_ptr<Status::StatusReporterBase> ReporterPtr;
@@ -57,8 +57,8 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
   Status::StatusInfo const Info{"1234", "file1.nxs",
-                                std::chrono::milliseconds(1234567890),
-                                std::chrono::milliseconds(19876543210)};
+                                1234567890ms,
+                                time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   auto const Report = ReporterPtr->createReport();
@@ -67,11 +67,11 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
   ASSERT_EQ(Json["job_id"], Info.JobId);
   ASSERT_EQ(Json["file_being_written"], Info.Filename);
   ASSERT_EQ(Json["start_time"], Info.StartTime.count());
-  ASSERT_EQ(Json["stop_time"], Info.StopTime.count());
+  ASSERT_EQ(Json["stop_time"], toMilliSeconds(Info.StopTime));
 }
 
 TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
-  auto const StopTime = std::chrono::milliseconds(1234567890);
+  auto const StopTime = 1234567890ms;
   ReporterPtr->updateStopTime(StopTime);
 
   auto const Report = ReporterPtr->createReport();
@@ -82,8 +82,8 @@ TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
   Status::StatusInfo const Info{"1234", "file1.nxs",
-                                std::chrono::milliseconds(1234567890),
-                                std::chrono::milliseconds(19876543210)};
+                                1234567890ms,
+                                time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();

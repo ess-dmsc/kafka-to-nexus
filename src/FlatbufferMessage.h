@@ -114,7 +114,7 @@ public:
   /// Extracted using FileWriter::FlatbufferReader::timestamp().
   ///
   /// \return The timestamp if flatbuffer is valid, 0 if it is not.
-  std::uint64_t getTimestamp() const { return Timestamp; };
+  auto getTimestamp() const { return Timestamp; };
 
   /// \brief Get the hash from a combination of the flatbuffer type and source
   /// name.
@@ -148,7 +148,7 @@ private:
   SrcHash SourceNameIDHash{0};
   std::string Sourcename;
   std::string ID;
-  std::uint64_t Timestamp{0};
+  std::int64_t Timestamp{0};
   bool Valid{false};
 };
 

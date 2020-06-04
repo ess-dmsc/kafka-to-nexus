@@ -29,12 +29,6 @@ void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
 
 bool SourceFilter::hasFinished() const { return IsDone; }
 
-uint64_t toNanoSeconds(time_point Time) {
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(
-             Time.time_since_epoch())
-      .count();
-}
-
 void SourceFilter::sendBufferedMessage() {
   if (BufferedMessage.isValid()) {
     sendMessage(BufferedMessage);
@@ -49,6 +43,7 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
     FlatbufferInvalid++;
     return false;
   }
+
   if (InMsg.getTimestamp() == CurrentTimeStamp) {
     RepeatedTimestamp++;
   } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
@@ -56,14 +51,16 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
   }
   CurrentTimeStamp = InMsg.getTimestamp();
 
-  if (CurrentTimeStamp < toNanoSeconds(Start)) {
+  auto Temp = std::chrono::nanoseconds(InMsg.getTimestamp());
+  auto TempMsgTime = time_point(std::chrono::duration_cast<std::chrono::microseconds>(Temp));
+  if (TempMsgTime < Start) {
     if (BufferedMessage.isValid()) {
       MessagesDiscarded++;
     }
     BufferedMessage = InMsg;
     return false;
   }
-  if (CurrentTimeStamp > toNanoSeconds(Stop)) {
+  if (TempMsgTime > Stop) {
     IsDone = true;
   }
   sendBufferedMessage();

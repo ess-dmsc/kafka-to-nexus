@@ -95,8 +95,7 @@ set(kafka_to_nexus_SRC
         Stream/MessageWriter.cpp
         Stream/SourceFilter.cpp
         Stream/Partition.cpp
-        Stream/Topic.cpp
-        )
+        Stream/Topic.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -153,7 +152,7 @@ set(kafka_to_nexus_INC
         Stream/SourceFilter.h
         Stream/Partition.h
         Stream/Topic.h
-        ThreadedExecutor.h)
+        ThreadedExecutor.h TimeUtility.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

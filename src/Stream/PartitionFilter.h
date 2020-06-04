@@ -9,16 +9,13 @@
 
 #pragma once
 
-#include <chrono>
+#include "TimeUtility.h"
 
 namespace Kafka {
 enum class PollStatus;
 }
 
 namespace Stream {
-using time_point = std::chrono::system_clock::time_point;
-using duration = std::chrono::system_clock::duration;
-using std::chrono_literals::operator""s;
 
 /// \brief Implements logic for determining if we should stop consuming data
 /// based on message polling status.

@@ -55,6 +55,10 @@ public:
   /// last message to be written in nanoseconds.
   void setStopTime(const std::chrono::milliseconds &StopTime) override;
 
+  /// \brief Returns true if all topics are done AND current system time
+  /// is greater than stop time.
+  ///
+  /// \note If stop time has not been set, it will be treated as the maximum possible time.
   bool isDoneWriting() override;
 
   /// \brief Get the unique job id associated with the streamer (and hence
@@ -66,9 +70,10 @@ public:
 private:
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
+  void checkIfStreamsAreDone();
   std::chrono::system_clock::duration CurrentMetadataTimeOut;
   std::atomic<bool> StreamersRemaining{true};
-  std::vector<std::unique_ptr<Stream::Topic>> Streamers;
+  std::set<std::unique_ptr<Stream::Topic>> Streamers;
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;

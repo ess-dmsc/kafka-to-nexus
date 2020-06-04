@@ -15,10 +15,9 @@
 #include <memory>
 #include <set>
 #include <string>
+#include "TimeUtility.h"
 
 namespace Kafka {
-using time_point = std::chrono::system_clock::time_point;
-using duration = std::chrono::system_clock::duration;
 
 const RdKafka::TopicMetadata *
 findKafkaTopic(const std::string &Topic,

@@ -17,7 +17,7 @@
 #include "SourceFilter.h"
 #include "Stream/MessageWriter.h"
 #include "ThreadedExecutor.h"
-#include <chrono>
+#include "TimeUtility.h"
 
 namespace Stream {
 
@@ -32,9 +32,6 @@ struct SrcDstKey {
   }
 };
 using SrcToDst = std::vector<SrcDstKey>;
-using std::chrono_literals::operator""ms;
-using std::chrono_literals::operator""s;
-using time_point = std::chrono::system_clock::time_point;
 
 class Partition {
 public:

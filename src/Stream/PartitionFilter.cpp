@@ -12,9 +12,9 @@
 
 namespace Stream {
 
-PartitionFilter::PartitionFilter(Stream::time_point StopAtTime,
+PartitionFilter::PartitionFilter(time_point StopAtTime,
                                  duration StopTimeLeeway,
-                                 Stream::duration ErrorTimeOut)
+                                 duration ErrorTimeOut)
     : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
       ErrorTimeOut(ErrorTimeOut) {
   // Deal with potential overflow problem

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <chrono>
+#include "TimeUtility.h"
 
 #include "URI.h"
 #include "helper.h"
@@ -27,7 +27,7 @@ struct StartCommandInfo {
   std::string ServiceID;
   uri::URI BrokerInfo{"localhost:9092"};
   std::chrono::milliseconds StartTime{0};
-  std::chrono::milliseconds StopTime{0};
+  time_point StopTime{time_point::max()};
 };
 
 struct StopCommandInfo {

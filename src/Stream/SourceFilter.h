@@ -13,12 +13,9 @@
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
 #include "Stream/MessageWriter.h"
-#include <chrono>
+#include "TimeUtility.h"
 
 namespace Stream {
-
-using time_point = std::chrono::system_clock::time_point;
-uint64_t toNanoSeconds(time_point Time);
 
 /// \brief Pass messages to the writer thread based on timestamp of message
 /// and if there are any destinations in the file for the data.
@@ -51,7 +48,7 @@ protected:
   void sendBufferedMessage();
   time_point Start;
   time_point Stop;
-  uint64_t CurrentTimeStamp{0};
+  int64_t CurrentTimeStamp{0};
   MessageWriter *Dest{nullptr};
   bool IsDone{false};
   FileWriter::FlatbufferMessage BufferedMessage;

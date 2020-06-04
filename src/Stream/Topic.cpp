@@ -130,7 +130,21 @@ void Topic::createStreams(
         CRegistrar, StartConsumeTime, StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout);
     TempPartition->start();
-    ConsumerThreads.emplace_back(std::move(TempPartition));
+    ConsumerThreads.emplace(std::move(TempPartition));
   }
+  Executor.sendLowPriorityWork([=](){ checkIfDone(); });
+}
+
+void Topic::checkIfDone() {
+  for (auto &Partition : ConsumerThreads) {
+    if (Partition->hasFinished()) {
+      ConsumerThreads.erase(Partition);
+    }
+  }
+  if (ConsumerThreads.empty()) {
+    IsDone.store(true);
+  }
+  std::this_thread::sleep_for(50ms);
+  Executor.sendLowPriorityWork([=](){checkIfDone();});
 }
 } // namespace Stream

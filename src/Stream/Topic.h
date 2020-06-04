@@ -36,9 +36,12 @@ public:
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
+  bool isDone() {return IsDone.load();};
+
   virtual ~Topic() = default;
 
 protected:
+  std::atomic_bool IsDone{false};
   Kafka::BrokerSettings KafkaSettings;
   std::string TopicName;
   SrcToDst DataMap;
@@ -75,7 +78,9 @@ protected:
                                 std::string const &Topic,
                                 duration TimeOut) const;
 
-  std::vector<std::unique_ptr<Partition>> ConsumerThreads;
+  void checkIfDone();
+
+  std::set<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
   ThreadedExecutor Executor; // Must be last
 };

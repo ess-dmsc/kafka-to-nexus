@@ -15,7 +15,7 @@ StreamController::StreamController(
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
       WriterThread(Registrar.getNewRegistrar("stream")), ServiceId(ServiceID),
       KafkaSettings(Settings) {
-  Executor.sendWork([=]() {
+  Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
   });
@@ -28,13 +28,14 @@ StreamController::~StreamController() {
 }
 
 void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
+  KafkaSettings.StopTimestamp = time_point(StopTime);
   auto CStopTime = std::chrono::system_clock::time_point(StopTime);
   for (auto &s : Streamers) {
     s->setStopTime(CStopTime);
   }
 }
-
-bool StreamController::isDoneWriting() { return !StreamersRemaining.load(); }
+using duration = std::chrono::system_clock::duration;
+bool StreamController::isDoneWriting() { return !StreamersRemaining.load() and KafkaSettings.StopTimestamp != time_point(duration(0)) and std::chrono::system_clock::now() > KafkaSettings.StopTimestamp; }
 
 std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 
@@ -42,7 +43,7 @@ void StreamController::getTopicNames() {
   try {
     auto TopicNames = Kafka::getTopicList(KafkaSettings.BrokerSettings.Address,
                                           CurrentMetadataTimeOut);
-    Executor.sendWork([=]() { initStreams(TopicNames); });
+    Executor.sendLowPriorityWork([=]() { initStreams(TopicNames); });
   } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;
     auto &Settings = KafkaSettings.BrokerSettings;
@@ -81,8 +82,22 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
         StreamMetricRegistrar, CStartTime, KafkaSettings.BeforeStartTime,
         CStopTime, KafkaSettings.AfterStopTime);
     CTopic->start();
-    Streamers.push_back(std::move(CTopic));
+    Streamers.emplace(std::move(CTopic));
   }
+  Executor.sendLowPriorityWork([=](){ checkIfStreamsAreDone(); });
+}
+using std::chrono_literals::operator""ms;
+void StreamController::checkIfStreamsAreDone() {
+  for (auto &Stream : Streamers) {
+    if (Stream->isDone()) {
+      Streamers.erase(Stream);
+    }
+  }
+  if (Streamers.empty()) {
+    StreamersRemaining.store(false);
+  }
+  std::this_thread::sleep_for(50ms);
+  Executor.sendLowPriorityWork([=](){checkIfStreamsAreDone();});
 }
 
 } // namespace FileWriter

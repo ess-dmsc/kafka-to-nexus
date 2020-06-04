@@ -63,7 +63,7 @@ TEST_F(MessageClassTest, Success) {
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   auto CurrentMessage = FlatbufferMessage(TestData.get(), 8);
   EXPECT_TRUE(CurrentMessage.isValid());
-  EXPECT_EQ(CurrentMessage.getTimestamp(), std::uint64_t(42));
+  EXPECT_EQ(CurrentMessage.getTimestamp(), std::int64_t(42));
   EXPECT_EQ(CurrentMessage.getSourceName(), "SomeSourceName");
   EXPECT_EQ(CurrentMessage.size(), size_t(8));
 }

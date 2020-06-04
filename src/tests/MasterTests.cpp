@@ -133,7 +133,7 @@ public:
     std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     Reporter = std::make_unique<Status::StatusReporter>(
-        std::chrono::milliseconds{1000}, ProducerTopic);
+        std::chrono::milliseconds{1000}, "ServiceId", ProducerTopic);
   };
 
   MainOpt MainOpts;
