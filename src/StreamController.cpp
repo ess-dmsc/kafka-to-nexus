@@ -86,17 +86,17 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
         StreamMetricRegistrar, CStartTime, KafkaSettings.BeforeStartTime,
         CStopTime, KafkaSettings.AfterStopTime);
     CTopic->start();
-    Streamers.emplace(std::move(CTopic));
+    Streamers.emplace_back(std::move(CTopic));
   }
   Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
 }
 using std::chrono_literals::operator""ms;
 void StreamController::checkIfStreamsAreDone() {
-  for (auto &Stream : Streamers) {
-    if (Stream->isDone()) {
-      Streamers.erase(Stream);
-    }
-  }
+  Streamers.erase(
+      std::remove_if(Streamers.begin(), Streamers.end(),
+                     [](auto const &Elem) { return Elem->isDone(); }),
+      Streamers.end());
+
   if (Streamers.empty()) {
     StreamersRemaining.store(false);
   }

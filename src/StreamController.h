@@ -18,6 +18,7 @@
 #include "ThreadedExecutor.h"
 #include <atomic>
 #include <set>
+#include <vector>
 
 namespace FileWriter {
 class FileWriterTask;
@@ -74,7 +75,7 @@ private:
   void checkIfStreamsAreDone();
   std::chrono::system_clock::duration CurrentMetadataTimeOut;
   std::atomic<bool> StreamersRemaining{true};
-  std::set<std::unique_ptr<Stream::Topic>> Streamers;
+  std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;

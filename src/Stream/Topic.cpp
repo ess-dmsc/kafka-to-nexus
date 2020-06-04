@@ -51,7 +51,7 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
                                   std::string const &Topic) {
   try {
     auto FoundPartitions = getPartitionsForTopicInternal(
-        Settings.Address, Topic, Settings.MinMetadataTimeout);
+        Settings.Address, Topic, CurrentMetadataTimeOut);
     Executor.sendWork([=]() {
       CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
       getOffsetsForPartitions(Settings, Topic, FoundPartitions);
@@ -130,17 +130,16 @@ void Topic::createStreams(
         CRegistrar, StartConsumeTime, StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout);
     TempPartition->start();
-    ConsumerThreads.emplace(std::move(TempPartition));
+    ConsumerThreads.emplace_back(std::move(TempPartition));
   }
   Executor.sendLowPriorityWork([=]() { checkIfDone(); });
 }
 
 void Topic::checkIfDone() {
-  for (auto &Partition : ConsumerThreads) {
-    if (Partition->hasFinished()) {
-      ConsumerThreads.erase(Partition);
-    }
-  }
+  ConsumerThreads.erase(
+      std::remove_if(ConsumerThreads.begin(), ConsumerThreads.end(),
+                     [](auto const &Elem) { return Elem->hasFinished(); }),
+      ConsumerThreads.end());
   if (ConsumerThreads.empty()) {
     IsDone.store(true);
   }

@@ -17,7 +17,7 @@
 #include "ThreadedExecutor.h"
 #include "logger.h"
 #include <chrono>
-#include <set>
+#include <vector>
 
 namespace Stream {
 
@@ -80,7 +80,7 @@ protected:
 
   void checkIfDone();
 
-  std::set<std::unique_ptr<Partition>> ConsumerThreads;
+  std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
   ThreadedExecutor Executor; // Must be last
 };
