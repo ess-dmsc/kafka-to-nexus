@@ -21,6 +21,9 @@ Requires Python 3.6+.
 * Run `python -m pytest -s .` from the `system-tests/` directory
 
 * Optionally use `--local-build <PATH_TO_BUILD_DIR>` to run against a local build of the file writer rather than rebuilding in a docker container. Note that the build directory is the one containing the `bin` directory.
+
+* To run a single test, use the `-k` argument (e.g.) `python -m pytest -s . -k 'test_two_different_writer_modules_with_same_flatbuffer_id'`.
+
 Can also use `--wait-to-attach-debugger` to cause the system tests to display the process ID of the file writer and give opportunity for you to attach a debugger before continuing.
 
 Note: these tests may take up to 30 minutes to run.

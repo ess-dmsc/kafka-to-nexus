@@ -67,9 +67,9 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
   std::map<std::string, Stream::SrcToDst> TopicSrcMap;
   for (auto &Src : WriterTask->sources()) {
     if (KnownTopicNames.find(Src.topic()) != KnownTopicNames.end()) {
-      TopicSrcMap[Src.topic()].push_back({Src.getHash(), Src.getWriterPtr(),
+      TopicSrcMap[Src.topic()].push_back({Src.getSrcHash(), Src.getModuleHash(), Src.getWriterPtr(),
                                           Src.sourcename(),
-                                          Src.flatbufferID()});
+                                          Src.flatbufferID(), Src.writerModuleID()});
     } else {
       LOG_ERROR("Unable to set up consumer for source {} on topic {} as this "
                 "topic does not exist.",

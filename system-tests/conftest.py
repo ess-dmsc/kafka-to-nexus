@@ -154,12 +154,14 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     if local_path is not None:
         # Launch local build of file writer
         full_path_of_file_writer_exe = os.path.join(local_path, "bin", "kafka-to-nexus")
+        log_file = open("logs/file-writer-logs.txt", "w")
         proc = Popen(
             [
                 full_path_of_file_writer_exe,
                 "-c",
                 "./config-files/local_file_writer_config.ini",
-            ]
+            ],
+            stdout=log_file,
         )
         if wait_for_debugger:
             proc.send_signal(

@@ -23,12 +23,14 @@ namespace Stream {
 
 // Pollution of namespace, fix.
 struct SrcDstKey {
-  FileWriter::FlatbufferMessage::SrcHash Hash;
+  FileWriter::FlatbufferMessage::SrcHash SrcHash;
+  FileWriter::FlatbufferMessage::SrcHash WriteHash;
   Message::DestPtrType Destination;
   std::string SourceName;
   std::string FlatbufferId;
+  std::string WriterModuleId;
   std::string getMetricsNameString() const {
-    return SourceName + "_" + FlatbufferId;
+    return SourceName + "_" + WriterModuleId;
   }
 };
 using SrcToDst = std::vector<SrcDstKey>;
@@ -89,8 +91,8 @@ protected:
   time_point StopTime;
   duration StopTimeLeeway;
   PartitionFilter StopTester;
-  std::map<FileWriter::FlatbufferMessage::SrcHash,
-           std::unique_ptr<SourceFilter>>
+  std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+           std::unique_ptr<SourceFilter>>>
       MsgFilters;
   ThreadedExecutor Executor; // Must be last
 };

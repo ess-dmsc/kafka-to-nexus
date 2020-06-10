@@ -32,7 +32,7 @@ public:
     DestIDs.push_back(NewDestination);
   };
 
-  virtual bool filterMessage(FileWriter::FlatbufferMessage &&InMsg);
+  virtual bool filterMessage(FileWriter::FlatbufferMessage InMsg);
   void setStopTime(time_point StopTime);
   time_point getStopTime() const { return Stop; }
   virtual bool hasFinished() const;

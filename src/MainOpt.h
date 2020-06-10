@@ -20,8 +20,6 @@
 
 // POD
 struct MainOpt {
-  bool use_signal_handler = true;
-
   /// Write in HDF's Single Writer Multiple Reader (SWMR) mode
   bool UseHdfSwmr = true;
 

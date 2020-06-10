@@ -40,9 +40,10 @@ public:
 TEST_F(SourceTests, ConstructorSetsMembers) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
+  std::string FlatbufferId("fbid");
   std::string ModuleName("test");
   auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
+  Source TestSource(SourceName, FlatbufferId, ModuleName, TopicName, std::move(WriterModule));
   ASSERT_EQ(TestSource.topic(), TopicName);
   ASSERT_EQ(TestSource.sourcename(), SourceName);
 }
@@ -50,9 +51,10 @@ TEST_F(SourceTests, ConstructorSetsMembers) {
 TEST_F(SourceTests, MovedSourceHasCorrectState) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
+  std::string FlatbufferId("fbid");
   std::string ModuleName("test");
   auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
+  Source TestSource(SourceName, FlatbufferId, ModuleName, TopicName, std::move(WriterModule));
   auto TestSource2 = std::move(TestSource);
   ASSERT_EQ(TestSource2.topic(), TopicName);
   ASSERT_EQ(TestSource2.sourcename(), SourceName);

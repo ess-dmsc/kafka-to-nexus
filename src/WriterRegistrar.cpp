@@ -28,12 +28,12 @@ WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID,
   return std::hash<std::string>{}(ID + ModuleName);
 }
 
-std::map<ModuleFlatbufferID, std::string> getFactoryIdsAndNames() {
-  std::map<std::string, std::string> ReturnMap;
+std::vector<std::pair<ModuleFlatbufferID, std::string>> getFactoryIdsAndNames() {
+  std::vector<std::pair<std::string, std::string>> ReturnList;
   for (auto const &Item : getFactories()) {
-    ReturnMap.insert({Item.second.Id, Item.second.Name});
+    ReturnList.push_back({Item.second.Id, Item.second.Name});
   }
-  return ReturnMap;
+  return ReturnList;
 }
 
 FactoryAndID const find(std::string const &ModuleName) {

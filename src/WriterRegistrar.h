@@ -30,7 +30,7 @@ WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID,
 /// \brief Get all registered modules.
 ///
 /// \return A reference to the map of registered modules.
-std::map<std::string, std::string> getFactoryIdsAndNames();
+std::vector<std::pair<ModuleFlatbufferID, std::string>> getFactoryIdsAndNames();
 
 /// \brief Registers a new writer module. Called by `Registrar`.
 ///

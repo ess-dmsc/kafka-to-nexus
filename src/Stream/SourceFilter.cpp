@@ -36,7 +36,7 @@ void SourceFilter::sendBufferedMessage() {
   }
 }
 
-bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage &&InMsg) {
+bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage InMsg) {
   MessagesReceived++;
   if (not InMsg.isValid()) {
     MessagesDiscarded++;

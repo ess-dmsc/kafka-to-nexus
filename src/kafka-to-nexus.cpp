@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
          FileWriter::FlatbufferReaderRegistry::getReaders()) {
       fmt::print("---- {}\n", ReaderPair.first);
     }
-    fmt::print("\n--Known writer modules\n");
+    fmt::print("\n-- Known writer modules\n");
     for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
       fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
     }
