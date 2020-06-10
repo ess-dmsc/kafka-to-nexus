@@ -13,6 +13,10 @@
 #include "helpers/RdKafkaMocks.h"
 #include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
+#include <h5cpp/hdf5.hpp>
+#include "WriterModuleBase.h"
+#include "Metrics/Registrar.h"
+#include "Stream/MessageWriter.h"
 
 using std::chrono_literals::operator""s;
 using trompeloeil::_;
@@ -23,7 +27,7 @@ public:
       : SourceFilter(std::chrono::system_clock::now(),
                      std::chrono::system_clock::now(), nullptr,
                      Metrics::Registrar("some_reg", {})) {}
-  MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage &&Message),
+  MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage Message),
              override);
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
@@ -82,6 +86,26 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
   Future.wait();
 }
 
+class MessageWriterStandIn : public Stream::MessageWriter {
+public:
+  MessageWriterStandIn() : Stream::MessageWriter(Metrics::Registrar("test", {})) {}
+  void addMessage(Stream::Message const&) override {}
+protected:
+  void writeMsgImpl(WriterModule::Base *,
+                    FileWriter::FlatbufferMessage const &) override {}
+};
+
+class WriterStandIn : public WriterModule::Base {
+public:
+  WriterStandIn() = default;
+  void parse_config(std::string const &) override {}
+  WriterModule::InitResult init_hdf(hdf5::node::Group &,
+                      std::string const &) override {return {};}
+  WriterModule::InitResult reopen(hdf5::node::Group &) override {return {};}
+  void write(FileWriter::FlatbufferMessage const &) override {}
+};
+
+
 class PartitionTest : public ::testing::Test {
 public:
   auto createTestedInstance(time_point StopTime = time_point::max()) {
@@ -95,13 +119,13 @@ public:
     return Temp;
   }
   Kafka::MockConsumer *Consumer{nullptr};
-
   int UsedPartitionId{0};
   std::string TopicName{"some_topic"};
   size_t UsedFilterHash{
       FileWriter::calcSourceHash("zzzz", zzzzFbReader::UsedSourceName)};
+
   Stream::SrcToDst UsedMap{
-      Stream::SrcDstKey{UsedFilterHash, nullptr, "some_name", "idid"}};
+      Stream::SrcDstKey{UsedFilterHash, UsedFilterHash, nullptr, "some_name", "idid", "idid_alt"}};
   time_point Start{std::chrono::system_clock::now()};
   time_point Stop{std::chrono::system_clock::time_point::max()};
   duration StopLeeway{5s};
@@ -250,9 +274,11 @@ TEST_F(PartitionTest, SetStopTimePropagatesToFilters) {
 TEST_F(PartitionTest, IfSourceHashUnknownThenNotProcessed) {
   auto UnderTest = createTestedInstance();
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr = TestFilter.get();
+  REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   UnderTest->MsgFilters.clear();
   size_t SomeOtherHash{42};
-  UnderTest->MsgFilters[SomeOtherHash] = std::move(TestFilter);
+  UnderTest->MsgFilters.push_back({SomeOtherHash, std::move(TestFilter)});
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
@@ -263,7 +289,8 @@ TEST_F(PartitionTest, IfSourceHashIsKnownThenItIsProcessed) {
   auto UnderTest = createTestedInstance();
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
-  UnderTest->MsgFilters.at(UsedFilterHash) = std::move(TestFilter);
+  UnderTest->MsgFilters.clear();
+  UnderTest->MsgFilters.push_back({UsedFilterHash, std::move(TestFilter)});
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -277,7 +304,8 @@ TEST_F(PartitionTest, FilterNotRemovedIfNotDone) {
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
   auto OldSize = UnderTest->MsgFilters.size();
-  UnderTest->MsgFilters.at(UsedFilterHash) = std::move(TestFilter);
+  UnderTest->MsgFilters.clear();
+  UnderTest->MsgFilters.push_back({UsedFilterHash, std::move(TestFilter)});
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -291,7 +319,8 @@ TEST_F(PartitionTest, FilterIsRemovedWhenDone) {
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
   auto OldSize = UnderTest->MsgFilters.size();
-  UnderTest->MsgFilters.at(UsedFilterHash) = std::move(TestFilter);
+  UnderTest->MsgFilters.clear();
+  UnderTest->MsgFilters.push_back({UsedFilterHash, std::move(TestFilter)});
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(true);
   setExtractorModule<zzzzFbReader>("zzzz");

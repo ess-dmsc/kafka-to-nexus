@@ -146,9 +146,9 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
       CFilter.second->filterMessage(FbMsg);
     }
   }
-  std::remove_if(MsgFilters.begin(), MsgFilters.end(), [](auto &Item){
+  MsgFilters.erase(std::remove_if(MsgFilters.begin(), MsgFilters.end(), [](auto &Item){
     return Item.second->hasFinished();
-  });
+  }), MsgFilters.end());
 }
 
 } // namespace Stream
