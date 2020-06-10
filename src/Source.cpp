@@ -14,7 +14,7 @@ namespace FileWriter {
 Source::Source(std::string Name, std::string FlatbufferID, std::string ModuleID,
                std::string Topic, WriterModule::ptr Writer)
     : SourceName(std::move(Name)), SchemaID(std::move(FlatbufferID)),
-      WriterModuleID(ModuleID), TopicName(std::move(Topic)),
+      WriterModuleID(std::move(ModuleID)), TopicName(std::move(Topic)),
       SrcHash(calcSourceHash(SchemaID, SourceName)),
       ModuleHash(calcSourceHash(ModuleID, SourceName)),
       WriterModule(std::move(Writer)) {}

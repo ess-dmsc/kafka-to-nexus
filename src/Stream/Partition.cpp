@@ -32,6 +32,9 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
       WriterToSourceHashMap;
   for (auto &SrcDestInfo : Map) {
     if (TempFilterMap.find(SrcDestInfo.WriteHash) == TempFilterMap.end()) {
+      // Note that the cppcheck warning we are suppressing here is an actual false positive
+      // due to side effects of instantiating the SourceFilter
+      // cppcheck-suppress stlFindInsert
       TempFilterMap.emplace(SrcDestInfo.WriteHash,
                             std::make_unique<SourceFilter>(
                                 Start, Stop, Writer,
