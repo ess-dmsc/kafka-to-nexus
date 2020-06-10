@@ -24,17 +24,22 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
   }
-  std::map<FileWriter::FlatbufferMessage::SrcHash,std::unique_ptr<SourceFilter>> TempFilterMap;
-  std::map<FileWriter::FlatbufferMessage::SrcHash, FileWriter::FlatbufferMessage::SrcHash> WriterToSourceHashMap;
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           std::unique_ptr<SourceFilter>>
+      TempFilterMap;
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           FileWriter::FlatbufferMessage::SrcHash>
+      WriterToSourceHashMap;
   for (auto &SrcDestInfo : Map) {
     if (TempFilterMap.find(SrcDestInfo.WriteHash) == TempFilterMap.end()) {
       TempFilterMap.emplace(SrcDestInfo.WriteHash,
-                         std::make_unique<SourceFilter>(
-                             Start, Stop, Writer,
-                             RegisterMetric.getNewRegistrar(
-                                 SrcDestInfo.getMetricsNameString())));
+                            std::make_unique<SourceFilter>(
+                                Start, Stop, Writer,
+                                RegisterMetric.getNewRegistrar(
+                                    SrcDestInfo.getMetricsNameString())));
     }
-    TempFilterMap[SrcDestInfo.WriteHash]->addDestinationPtr(SrcDestInfo.Destination);
+    TempFilterMap[SrcDestInfo.WriteHash]->addDestinationPtr(
+        SrcDestInfo.Destination);
     WriterToSourceHashMap[SrcDestInfo.WriteHash] = SrcDestInfo.SrcHash;
   }
   for (auto &Item : TempFilterMap) {
@@ -135,9 +140,9 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
     FlatbufferErrors++;
     return;
   }
-  if (std::any_of(MsgFilters.begin(), MsgFilters.end(), [&FbMsg](auto &Item){
-                                  return Item.first == FbMsg.getSourceHash();
-                                 })) {
+  if (std::any_of(MsgFilters.begin(), MsgFilters.end(), [&FbMsg](auto &Item) {
+        return Item.first == FbMsg.getSourceHash();
+      })) {
     MessagesProcessed++;
   }
   for (size_t i = 0; i < MsgFilters.size(); ++i) {
@@ -146,9 +151,10 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
       CFilter.second->filterMessage(FbMsg);
     }
   }
-  MsgFilters.erase(std::remove_if(MsgFilters.begin(), MsgFilters.end(), [](auto &Item){
-    return Item.second->hasFinished();
-  }), MsgFilters.end());
+  MsgFilters.erase(
+      std::remove_if(MsgFilters.begin(), MsgFilters.end(),
+                     [](auto &Item) { return Item.second->hasFinished(); }),
+      MsgFilters.end());
 }
 
 } // namespace Stream

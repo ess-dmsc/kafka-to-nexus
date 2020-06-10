@@ -8,15 +8,15 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FlatbufferReader.h"
+#include "Metrics/Registrar.h"
+#include "Stream/MessageWriter.h"
 #include "Stream/Partition.h"
+#include "WriterModuleBase.h"
 #include "helpers/KafkaMocks.h"
 #include "helpers/RdKafkaMocks.h"
 #include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
-#include "WriterModuleBase.h"
-#include "Metrics/Registrar.h"
-#include "Stream/MessageWriter.h"
 
 using std::chrono_literals::operator""s;
 using trompeloeil::_;
@@ -88,8 +88,10 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
 
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
-  MessageWriterStandIn() : Stream::MessageWriter(Metrics::Registrar("test", {})) {}
-  void addMessage(Stream::Message const&) override {}
+  MessageWriterStandIn()
+      : Stream::MessageWriter(Metrics::Registrar("test", {})) {}
+  void addMessage(Stream::Message const &) override {}
+
 protected:
   void writeMsgImpl(WriterModule::Base *,
                     FileWriter::FlatbufferMessage const &) override {}
@@ -100,11 +102,12 @@ public:
   WriterStandIn() = default;
   void parse_config(std::string const &) override {}
   WriterModule::InitResult init_hdf(hdf5::node::Group &,
-                      std::string const &) override {return {};}
-  WriterModule::InitResult reopen(hdf5::node::Group &) override {return {};}
+                                    std::string const &) override {
+    return {};
+  }
+  WriterModule::InitResult reopen(hdf5::node::Group &) override { return {}; }
   void write(FileWriter::FlatbufferMessage const &) override {}
 };
-
 
 class PartitionTest : public ::testing::Test {
 public:
@@ -124,8 +127,9 @@ public:
   size_t UsedFilterHash{
       FileWriter::calcSourceHash("zzzz", zzzzFbReader::UsedSourceName)};
 
-  Stream::SrcToDst UsedMap{
-      Stream::SrcDstKey{UsedFilterHash, UsedFilterHash, nullptr, "some_name", "idid", "idid_alt"}};
+  Stream::SrcToDst UsedMap{Stream::SrcDstKey{UsedFilterHash, UsedFilterHash,
+                                             nullptr, "some_name", "idid",
+                                             "idid_alt"}};
   time_point Start{std::chrono::system_clock::now()};
   time_point Stop{std::chrono::system_clock::time_point::max()};
   duration StopLeeway{5s};

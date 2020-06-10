@@ -214,8 +214,9 @@ void JobCreator::addStreamSourceToWriterModule(
       }
 
       // Create a Source instance for the stream and add to the task.
-      Source ThisSource(StreamSettings.Source, AcceptedFlatbufferID, StreamSettings.Module,
-                        StreamSettings.Topic, move(HDFWriterModule));
+      Source ThisSource(StreamSettings.Source, AcceptedFlatbufferID,
+                        StreamSettings.Module, StreamSettings.Topic,
+                        move(HDFWriterModule));
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
       Logger->warn(

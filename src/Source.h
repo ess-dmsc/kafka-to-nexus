@@ -20,8 +20,8 @@ namespace FileWriter {
 /// \brief Represents a sourcename on a topic.
 class Source {
 public:
-  Source(std::string Name, std::string FlatbufferID, std::string ModuleID, std::string Topic,
-         WriterModule::ptr Writer);
+  Source(std::string Name, std::string FlatbufferID, std::string ModuleID,
+         std::string Topic, WriterModule::ptr Writer);
   Source(Source &&) = default;
   ~Source() = default;
   std::string const &topic() const;

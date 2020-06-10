@@ -92,7 +92,7 @@ protected:
   duration StopTimeLeeway;
   PartitionFilter StopTester;
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
-           std::unique_ptr<SourceFilter>>>
+                        std::unique_ptr<SourceFilter>>>
       MsgFilters;
   ThreadedExecutor Executor; // Must be last
 };
