@@ -10,9 +10,11 @@ from time import sleep
 from datetime import datetime
 import pytest
 
+
 def test(condition, fail_string):
     if not condition:
         pytest.fail(fail_string)
+
 
 def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
     producer = create_producer()
@@ -46,14 +48,20 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
     with OpenNexusFileWhenAvailable(filepath) as file:
         test(
             len(file["entry/sample/dataset1/time"][:]) > 0
-            and len(file["entry/sample/dataset1/value"][:]) > 0
-        , "f142 module should have written this dataset, it should have written a value and time")
+            and len(file["entry/sample/dataset1/value"][:]) > 0,
+            "f142 module should have written this dataset, it should have written a value and time",
+        )
 
         test(
-            "cue_timestamp_zero" not in file["entry/sample/dataset2"]
-        , "f142_test module should have written this dataset, it writes cue_index but no cue_timestamp_zero")
-        test(len(file["entry/sample/dataset2/cue_index"][:]) > 0, "Expected index values, found none.")
+            "cue_timestamp_zero" not in file["entry/sample/dataset2"],
+            "f142_test module should have written this dataset, it writes cue_index but no cue_timestamp_zero",
+        )
+        test(
+            len(file["entry/sample/dataset2/cue_index"][:]) > 0,
+            "Expected index values, found none.",
+        )
         for i in range(len(file["entry/sample/dataset2/cue_index"][:])):
             test(
-            file["entry/sample/dataset2/cue_index"][i] == i
-        , "Expect consecutive integers to be written by f142_test")
+                file["entry/sample/dataset2/cue_index"][i] == i,
+                "Expect consecutive integers to be written by f142_test",
+            )
