@@ -11,7 +11,7 @@ from datetime import datetime
 import pytest
 
 
-def test(condition, fail_string):
+def check(condition, fail_string):
     if not condition:
         pytest.fail(fail_string)
 
@@ -32,7 +32,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
             int(start_time + i * 1000),
             source_name="test_source_2",
         )
-    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
     # Start file writing
     job_id = publish_run_start_message(
         producer,
@@ -46,22 +46,22 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
 
     filepath = "output-files/output_file_multiple_modules.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
-        test(
+        check(
             len(file["entry/sample/dataset1/time"][:]) > 0
             and len(file["entry/sample/dataset1/value"][:]) > 0,
             "f142 module should have written this dataset, it should have written a value and time",
         )
 
-        test(
+        check(
             "cue_timestamp_zero" not in file["entry/sample/dataset2"],
             "f142_test module should have written this dataset, it writes cue_index but no cue_timestamp_zero",
         )
-        test(
+        check(
             len(file["entry/sample/dataset2/cue_index"][:]) > 0,
             "Expected index values, found none.",
         )
         for i in range(len(file["entry/sample/dataset2/cue_index"][:])):
-            test(
+            check(
                 file["entry/sample/dataset2/cue_index"][i] == i,
                 "Expect consecutive integers to be written by f142_test",
             )

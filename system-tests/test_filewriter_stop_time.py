@@ -13,7 +13,7 @@ import json
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 
-def test(condition, fail_string):
+def check(condition, fail_string):
     if not condition:
         pytest.fail(fail_string)
 
@@ -25,7 +25,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     publish_f142_message(
         producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
     )
-    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
 
     topic = "TEST_writerCommand"
     publish_run_start_message(
@@ -37,7 +37,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         start_time = int(start_time),
         stop_time=int(stop_time),
     )
-    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
     sleep(20)
     job_id = publish_run_start_message(
         producer,
@@ -46,7 +46,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         topic=topic,
         job_id="should_start_but_not_stop",
     )
-    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
     sleep(10)
     msgs = consume_everything("TEST_writerStatus")
 
@@ -64,7 +64,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
 
     # Clean up by stopping writing
     publish_run_stop_message(producer, job_id=job_id)
-    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
     sleep(3)
 
 
@@ -101,7 +101,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
                 )
             else:
                 publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
-    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
 
     command_topic = "TEST_writerCommand"
     start_time = 1_560_330_000_002
