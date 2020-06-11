@@ -31,9 +31,11 @@ WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID,
 std::vector<std::pair<ModuleFlatbufferID, std::string>>
 getFactoryIdsAndNames() {
   std::vector<std::pair<std::string, std::string>> ReturnList;
-  for (auto const &Item : getFactories()) { // cppcheck-suppress useStlAlgorithm
-    ReturnList.push_back({Item.second.Id, Item.second.Name});
-  }
+  std::transform(getFactories().cbegin(), getFactories().cend(),
+                 std::back_inserter(ReturnList),
+                 [](auto &Item) -> std::pair<std::string, std::string> {
+                   return {Item.second.Id, Item.second.Name};
+                 });
   return ReturnList;
 }
 
