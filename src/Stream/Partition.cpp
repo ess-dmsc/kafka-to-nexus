@@ -37,9 +37,9 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
     if (TempFilterMap.find(SrcDestInfo.WriteHash) == TempFilterMap.end()) {
       TempFilterMap.emplace(SrcDestInfo.WriteHash,
                             std::make_unique<SourceFilter>(
-                                     Start, Stop, Writer,
-                                     RegisterMetric.getNewRegistrar(
-                                         SrcDestInfo.getMetricsNameString())));
+                                Start, Stop, Writer,
+                                RegisterMetric.getNewRegistrar(
+                                    SrcDestInfo.getMetricsNameString())));
     }
     TempFilterMap[SrcDestInfo.WriteHash]->addDestinationPtr(
         SrcDestInfo.Destination);
