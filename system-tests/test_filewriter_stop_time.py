@@ -13,9 +13,11 @@ import json
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 
+
 def test(condition, fail_string):
     if not condition:
         pytest.fail(fail_string)
+
 
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     producer = create_producer()
@@ -34,7 +36,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         "output_file_with_stop_time.nxs",
         topic=topic,
         job_id="should_start_then_stop",
-        start_time = int(start_time),
+        start_time=int(start_time),
         stop_time=int(stop_time),
     )
     test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
@@ -115,7 +117,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         stop_time=stop_time,
         topic=command_topic,
     )
-    
+
     sleep(10)
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
