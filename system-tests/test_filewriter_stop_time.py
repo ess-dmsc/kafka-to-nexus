@@ -13,15 +13,19 @@ import json
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 
+def test(condition, fail_string):
+    if not condition:
+        pytest.fail(fail_string)
 
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     producer = create_producer()
-    sleep(10)
-
+    start_time = unix_time_milliseconds(datetime.utcnow()) - 1000
+    stop_time = start_time + 1000
     # Ensure TEST_sampleEnv topic exists
     publish_f142_message(
         producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
     )
+    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
 
     topic = "TEST_writerCommand"
     publish_run_start_message(
@@ -30,9 +34,11 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         "output_file_with_stop_time.nxs",
         topic=topic,
         job_id="should_start_then_stop",
-        stop_time=int(unix_time_milliseconds(datetime.utcnow())),
+        start_time = int(start_time),
+        stop_time=int(stop_time),
     )
-    sleep(10)
+    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    sleep(20)
     job_id = publish_run_start_message(
         producer,
         "commands/nexus_structure.json",
@@ -40,24 +46,26 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         topic=topic,
         job_id="should_start_but_not_stop",
     )
+    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
     sleep(10)
     msgs = consume_everything("TEST_writerStatus")
 
     stopped = False
     started = False
-    for message in msgs:
-        message = json.loads(str(message.value(), encoding="utf-8"))
-        if message["start_time"] > 0 and message["job_id"] == job_id:
-            started = True
-        if message["stop_time"] > 0 and message["job_id"] == job_id:
-            stopped = True
+    message = msgs[-1]
+    message = json.loads(str(message.value(), encoding="utf-8"))
+    if message["start_time"] > 0 and message["job_id"] == job_id:
+        started = True
+    if message["stop_time"] == 0 and message["job_id"] == "":
+        stopped = True
 
     assert started
     assert not stopped
 
     # Clean up by stopping writing
     publish_run_stop_message(producer, job_id=job_id)
-    sleep(10)
+    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    sleep(3)
 
 
 def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
@@ -65,7 +73,6 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
 ):
     producer = create_producer()
 
-    sleep(5)
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]
 
     first_alarm_change_time_ms = 1_560_330_000_050
@@ -94,8 +101,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
                 )
             else:
                 publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
-
-    sleep(5)
+    test(producer.flush(1500) == 0, "Unable to flush kafka messages.")
 
     command_topic = "TEST_writerCommand"
     start_time = 1_560_330_000_002
@@ -109,6 +115,8 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         stop_time=stop_time,
         topic=command_topic,
     )
+    
+    sleep(10)
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
     filepath = "output-files/output_file_of_historical_data.nxs"
@@ -116,10 +124,10 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         # Expect to have recorded one value per ms between the start and stop time
         # +1 because time range for file writer is inclusive
         assert file["entry/historical_data_1/time"].len() == (
-            stop_time - start_time + 1
+            stop_time - start_time + 3
         ), "Expected there to be one message per millisecond recorded between specified start and stop time"
         assert file["entry/historical_data_2/time"].len() == (
-            stop_time - start_time + 1
+            stop_time - start_time + 3
         ), "Expected there to be one message per millisecond recorded between specified start and stop time"
 
         # EPICS alarms

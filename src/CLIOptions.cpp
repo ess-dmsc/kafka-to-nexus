@@ -77,6 +77,17 @@ void addMillisecondOption(CLI::App &App, const std::string &Name,
   App.add_option(Name, Fun, Description, Defaulted);
 }
 
+void addSecondsDurationOption(CLI::App &App, const std::string &Name,
+                          std::chrono::system_clock::duration &MSArg,
+                          const std::string &Description = "",
+                          bool Defaulted = false) {
+  CLI::callback_t Fun = [&MSArg](CLI::results_t Results) {
+    MSArg = std::chrono::seconds(std::stoi(Results[0]));
+    return true;
+  };
+  App.add_option(Name, Fun, Description, Defaulted);
+}
+
 CLI::Option *SetKeyValueOptions(CLI::App &App, const std::string &Name,
                                 const std::string &Description, bool Defaulted,
                                 const CLI::callback_t &Fun) {
@@ -183,6 +194,12 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addMillisecondOption(App, "--streamer-ms-after-stop",
                        MainOptions.StreamerConfiguration.AfterStopTime,
                        "Streamer option - milliseconds after stop time", true);
+  addSecondsDurationOption(App, "--kafka-metadata-max-timeout-seconds",
+                 MainOptions.StreamerConfiguration.BrokerSettings.MaxMetadataTimeout,
+                 "Max timout for kafka metadata calls. Note: metadata calls block the application.", true);
+  addSecondsDurationOption(App, "--kafka-error-timeout-seconds",
+                   MainOptions.StreamerConfiguration.BrokerSettings.KafkaErrorTimeout,
+                           "Number of seconds to wait for recovery from kafka error before abandoning stream.", true);
   addKafkaOption(
       App, "-S,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,

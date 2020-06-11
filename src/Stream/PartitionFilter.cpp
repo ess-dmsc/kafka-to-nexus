@@ -26,12 +26,12 @@ bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
   switch (CurrentPollStatus) {
   case Kafka::PollStatus::Empty:
   case Kafka::PollStatus::Message:
-  case Kafka::PollStatus::TimedOut:
     HasError = false;
     return false;
   case Kafka::PollStatus::EndOfPartition:
     HasError = false;
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
+  case Kafka::PollStatus::TimedOut:
   case Kafka::PollStatus::Error:
     if (not HasError) {
       HasError = true;
