@@ -47,7 +47,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         job_id="should_start_but_not_stop",
     )
     check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
-    sleep(10)
+    sleep(20)
     msgs = consume_everything("TEST_writerStatus")
 
     stopped = False
@@ -116,7 +116,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         topic=command_topic,
     )
 
-    sleep(10)
+    sleep(20)
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
     filepath = "output-files/output_file_of_historical_data.nxs"
