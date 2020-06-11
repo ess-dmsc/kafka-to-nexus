@@ -13,9 +13,11 @@ import json
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 
+
 def check(condition, fail_string):
     if not condition:
         pytest.fail(fail_string)
+
 
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     producer = create_producer()
