@@ -40,7 +40,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         stop_time=int(stop_time),
     )
     check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
-    sleep(20)
+    sleep(30)
     job_id = publish_run_start_message(
         producer,
         "commands/nexus_structure.json",
@@ -49,7 +49,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         job_id="should_start_but_not_stop",
     )
     check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
-    sleep(20)
+    sleep(30)
     msgs = consume_everything("TEST_writerStatus")
 
     stopped = False
