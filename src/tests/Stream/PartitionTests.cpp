@@ -324,7 +324,7 @@ TEST_F(PartitionTest, FilterIsRemovedWhenDone) {
   auto TestFilterPtr = TestFilter.get();
   auto OldSize = UnderTest->MsgFilters.size();
   UnderTest->MsgFilters.clear();
-  UnderTest->MsgFilters.push_back({UsedFilterHash, std::move(TestFilter)});
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter));
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(true);
   setExtractorModule<zzzzFbReader>("zzzz");
