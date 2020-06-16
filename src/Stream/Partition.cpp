@@ -47,7 +47,7 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   }
   for (auto &Item : TempFilterMap) {
     auto UsedHash = WriterToSourceHashMap[Item.first];
-    MsgFilters.push_back({UsedHash, std::move(Item.second)});
+    MsgFilters.emplace_back(UsedHash, std::move(Item.second));
   }
 
   RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
