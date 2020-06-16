@@ -152,7 +152,8 @@ set(kafka_to_nexus_INC
         Stream/SourceFilter.h
         Stream/Partition.h
         Stream/Topic.h
-        ThreadedExecutor.h TimeUtility.h)
+        ThreadedExecutor.h
+        TimeUtility.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}
