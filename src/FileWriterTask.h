@@ -17,7 +17,6 @@
 #include <vector>
 
 namespace FileWriter {
-class DemuxTopic;
 
 /// JSON parsing exception.
 class ParseError : public std::runtime_error {
@@ -86,7 +85,7 @@ public:
   /// Get the group for the HDF file.
   ///
   /// \return The group.
-  hdf5::node::Group hdfGroup();
+  hdf5::node::Group hdfGroup() const;
 
 private:
   std::string Filename;

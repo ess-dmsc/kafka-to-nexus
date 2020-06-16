@@ -42,7 +42,6 @@ set(UnitTests_SRC
     )
 
 set(UnitTests_INC
-        StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
         helpers/RdKafkaMocks.h
         helpers/KafkaMocks.h

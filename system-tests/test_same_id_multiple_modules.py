@@ -32,7 +32,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
             int(start_time + i * 1000),
             source_name="test_source_2",
         )
-    check(producer.flush(1500) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(1.5) == 0, "Unable to flush kafka messages.")
     # Start file writing
     job_id = publish_run_start_message(
         producer,
