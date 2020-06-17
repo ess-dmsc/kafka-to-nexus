@@ -853,7 +853,7 @@ void checkHDFVersion(SharedLogger const &Logger) {
 }
 
 void HDFFile::init(std::string const &Filename,
-                   nlohmann::json const &NexusStructure, nlohmann::json const &,
+                   nlohmann::json const &NexusStructure,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
   if (std::ifstream(Filename).good()) {
     // File exists already

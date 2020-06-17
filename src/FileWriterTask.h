@@ -44,11 +44,9 @@ public:
   /// Initialise the HDF file.
   ///
   /// \param NexusStructure The structure of the NeXus file.
-  /// \param ConfigFile The configuration information.
   /// \param HdfInfo The HDF information for the stream.
   /// \param UseSwmr Whether to use SWMR.
   void InitialiseHdf(std::string const &NexusStructure,
-                     std::string const &ConfigFile,
                      std::vector<StreamHDFInfo> &HdfInfo, bool UseSwmr);
 
   /// \brief  Set the `JobID`.

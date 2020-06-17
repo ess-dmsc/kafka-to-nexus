@@ -32,8 +32,7 @@ JobCreator::initializeHDF(FileWriterTask &Task,
   try {
     json const NexusStructure = json::parse(NexusStructureString);
     std::vector<StreamHDFInfo> StreamHDFInfoList;
-    json ConfigFile = json::parse("{}");
-    Task.InitialiseHdf(NexusStructure.dump(), ConfigFile.dump(),
+    Task.InitialiseHdf(NexusStructure.dump(),
                        StreamHDFInfoList, UseSwmr);
     return StreamHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
