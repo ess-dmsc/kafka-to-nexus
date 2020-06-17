@@ -35,8 +35,8 @@ public:
 class StreamController : public IStreamController {
 public:
   StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
-                   std::string const &ServiceID,
-                   FileWriter::StreamerOptions Settings,
+                   std::string ServiceID,
+                   FileWriter::StreamerOptions const &Settings,
                    Metrics::Registrar const &Registrar);
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
