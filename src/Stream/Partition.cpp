@@ -47,7 +47,7 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   }
   for (auto &Item : TempFilterMap) {
     auto UsedHash = WriterToSourceHashMap[Item.first];
-    MsgFilters.push_back({UsedHash, std::move(Item.second)});
+    MsgFilters.emplace_back(UsedHash, std::move(Item.second));
   }
 
   RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
@@ -153,8 +153,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
       })) {
     MessagesProcessed++;
   }
-  for (size_t i = 0; i < MsgFilters.size(); ++i) {
-    auto &CFilter = MsgFilters[i];
+  for (auto &CFilter : MsgFilters) {
     if (CFilter.first == FbMsg.getSourceHash()) {
       CFilter.second->filterMessage(FbMsg);
     }
