@@ -282,7 +282,7 @@ TEST_F(PartitionTest, IfSourceHashUnknownThenNotProcessed) {
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   UnderTest->MsgFilters.clear();
   size_t SomeOtherHash{42};
-  UnderTest->MsgFilters.push_back({SomeOtherHash, std::move(TestFilter)});
+  UnderTest->MsgFilters.emplace_back(SomeOtherHash, std::move(TestFilter));
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
@@ -294,7 +294,7 @@ TEST_F(PartitionTest, IfSourceHashIsKnownThenItIsProcessed) {
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
   UnderTest->MsgFilters.clear();
-  UnderTest->MsgFilters.push_back({UsedFilterHash, std::move(TestFilter)});
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter));
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -309,7 +309,7 @@ TEST_F(PartitionTest, FilterNotRemovedIfNotDone) {
   auto TestFilterPtr = TestFilter.get();
   auto OldSize = UnderTest->MsgFilters.size();
   UnderTest->MsgFilters.clear();
-  UnderTest->MsgFilters.push_back({UsedFilterHash, std::move(TestFilter)});
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter));
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
