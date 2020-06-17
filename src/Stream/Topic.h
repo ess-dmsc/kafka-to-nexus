@@ -79,6 +79,7 @@ protected:
                                 duration TimeOut) const;
 
   void checkIfDone();
+  virtual void checkIfDoneTask();
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;

@@ -33,6 +33,10 @@ public:
       : Stream::Topic(Settings, Topic, Map, Writer, RegisterMetric, StartTime,
                       StartTimeLeeway, StopTime, StopTimeLeeway,
                       std::move(CreateConsumers)) {}
+  virtual void checkIfDoneTask() override {
+    // Do nothing to prevent repeated calling of checkIfDone()
+  }
+  using Topic::checkIfDone;
   using Topic::ConsumerThreads;
   using Topic::CurrentMetadataTimeOut;
   using Topic::Executor;
@@ -200,3 +204,87 @@ TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
     EXPECT_EQ(Partition->getTopicName(), UsedTopicName);
   }
 }
+
+class PartitionStandInAlt : public Stream::Partition {
+public:
+  PartitionStandInAlt()
+      : Stream::Partition({}, 0, "", {}, nullptr, Metrics::Registrar("", {}), {}, {},
+  {}, {}) {}
+  MAKE_CONST_MOCK0(hasFinished, bool(), override);
+};
+
+TEST_F(TopicTest, IsNotDoneAlt1) {
+  auto UnderTest = createTestedInstance();
+
+  auto Partition1 = std::make_unique<PartitionStandInAlt>();
+  auto Partition1Ptr = Partition1.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
+  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(false);
+
+  UnderTest->checkIfDone();
+  EXPECT_FALSE(UnderTest->isDone());
+}
+
+TEST_F(TopicTest, IsNotDoneAlt2) {
+  auto UnderTest = createTestedInstance();
+
+  auto Partition1 = std::make_unique<PartitionStandInAlt>();
+  auto Partition1Ptr = Partition1.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
+  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(false);
+
+  auto Partition2 = std::make_unique<PartitionStandInAlt>();
+  auto Partition2Ptr = Partition2.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition2));
+  REQUIRE_CALL(*Partition2Ptr, hasFinished()).TIMES(1).RETURN(true);
+
+  UnderTest->checkIfDone();
+  EXPECT_FALSE(UnderTest->isDone());
+}
+
+TEST_F(TopicTest, IsNotDoneAlt3) {
+  auto UnderTest = createTestedInstance();
+
+  auto Partition1 = std::make_unique<PartitionStandInAlt>();
+  auto Partition1Ptr = Partition1.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
+  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(true);
+
+  auto Partition2 = std::make_unique<PartitionStandInAlt>();
+  auto Partition2Ptr = Partition2.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition2));
+  REQUIRE_CALL(*Partition2Ptr, hasFinished()).TIMES(1).RETURN(false);
+
+  UnderTest->checkIfDone();
+  EXPECT_FALSE(UnderTest->isDone());
+}
+
+TEST_F(TopicTest, IsDoneAlt1) {
+  auto UnderTest = createTestedInstance();
+
+  auto Partition1 = std::make_unique<PartitionStandInAlt>();
+  auto Partition1Ptr = Partition1.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
+  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(true);
+
+  UnderTest->checkIfDone();
+  EXPECT_TRUE(UnderTest->isDone());
+}
+
+TEST_F(TopicTest, IsDoneAlt2) {
+  auto UnderTest = createTestedInstance();
+
+  auto Partition1 = std::make_unique<PartitionStandInAlt>();
+  auto Partition1Ptr = Partition1.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
+  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(true);
+
+  auto Partition2 = std::make_unique<PartitionStandInAlt>();
+  auto Partition2Ptr = Partition2.get();
+  UnderTest->ConsumerThreads.emplace_back(std::move(Partition2));
+  REQUIRE_CALL(*Partition2Ptr, hasFinished()).TIMES(1).RETURN(true);
+
+  UnderTest->checkIfDone();
+  EXPECT_TRUE(UnderTest->isDone());
+}
+

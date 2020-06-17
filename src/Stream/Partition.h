@@ -51,7 +51,7 @@ public:
 
   void setStopTime(time_point Stop);
 
-  bool hasFinished() const;
+  virtual bool hasFinished() const;
   auto getPartitionID() const { return PartitionID; }
   auto getTopicName() const { return Topic; }
 

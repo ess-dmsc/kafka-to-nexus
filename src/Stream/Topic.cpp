@@ -117,6 +117,10 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
   }
 }
 
+void Topic::checkIfDoneTask() {
+  Executor.sendLowPriorityWork([=]() { checkIfDone(); });
+}
+
 void Topic::createStreams(
     Kafka::BrokerSettings const &Settings, std::string const &Topic,
     std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
@@ -132,7 +136,7 @@ void Topic::createStreams(
     TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));
   }
-  Executor.sendLowPriorityWork([=]() { checkIfDone(); });
+  checkIfDoneTask();
 }
 
 void Topic::checkIfDone() {
@@ -144,6 +148,6 @@ void Topic::checkIfDone() {
     IsDone.store(true);
   }
   std::this_thread::sleep_for(50ms);
-  Executor.sendLowPriorityWork([=]() { checkIfDone(); });
+  checkIfDoneTask();
 }
 } // namespace Stream
