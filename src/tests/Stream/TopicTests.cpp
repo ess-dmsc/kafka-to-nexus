@@ -208,8 +208,8 @@ TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
 class PartitionStandInAlt : public Stream::Partition {
 public:
   PartitionStandInAlt()
-      : Stream::Partition({}, 0, "", {}, nullptr, Metrics::Registrar("", {}), {}, {},
-  {}, {}) {}
+      : Stream::Partition({}, 0, "", {}, nullptr, Metrics::Registrar("", {}),
+                          {}, {}, {}, {}) {}
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
 
@@ -287,4 +287,3 @@ TEST_F(TopicTest, IsDoneAlt2) {
   UnderTest->checkIfDone();
   EXPECT_TRUE(UnderTest->isDone());
 }
-
