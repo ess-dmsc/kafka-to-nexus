@@ -1,7 +1,6 @@
 from helpers.kafkahelpers import (
     create_producer,
     publish_run_start_message,
-    publish_run_stop_message,
     publish_f142_message,
 )
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
@@ -34,7 +33,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
         )
     check(producer.flush(1.5) == 0, "Unable to flush kafka messages.")
     # Start file writing
-    job_id = publish_run_start_message(
+    publish_run_start_message(
         producer,
         "commands/nexus_structure_multiple_modules.json",
         "output_file_multiple_modules.nxs",
@@ -46,22 +45,17 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
 
     filepath = "output-files/output_file_multiple_modules.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
-        check(
+        assert (
             len(file["entry/sample/dataset1/time"][:]) > 0
-            and len(file["entry/sample/dataset1/value"][:]) > 0,
-            "f142 module should have written this dataset, it should have written a value and time",
-        )
+            and len(file["entry/sample/dataset1/value"][:]) > 0
+        ), "f142 module should have written this dataset, it should have written a value and time"
 
-        check(
-            "cue_timestamp_zero" not in file["entry/sample/dataset2"],
-            "f142_test module should have written this dataset, it writes cue_index but no cue_timestamp_zero",
-        )
-        check(
-            len(file["entry/sample/dataset2/cue_index"][:]) > 0,
-            "Expected index values, found none.",
-        )
+        assert (
+            "cue_timestamp_zero" not in file["entry/sample/dataset2"]
+        ), "f142_test module should have written this dataset, it writes cue_index but no cue_timestamp_zero"
+        assert (
+            len(file["entry/sample/dataset2/cue_index"][:]) > 0), "Expected index values, found none."
         for i in range(len(file["entry/sample/dataset2/cue_index"][:])):
-            check(
-                file["entry/sample/dataset2/cue_index"][i] == i,
-                "Expect consecutive integers to be written by f142_test",
-            )
+            assert (
+                file["entry/sample/dataset2/cue_index"][i] == i
+            ), "Expect consecutive integers to be written by f142_test"
