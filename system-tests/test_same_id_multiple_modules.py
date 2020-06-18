@@ -54,7 +54,8 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
             "cue_timestamp_zero" not in file["entry/sample/dataset2"]
         ), "f142_test module should have written this dataset, it writes cue_index but no cue_timestamp_zero"
         assert (
-            len(file["entry/sample/dataset2/cue_index"][:]) > 0), "Expected index values, found none."
+            len(file["entry/sample/dataset2/cue_index"][:]) > 0
+        ), "Expected index values, found none."
         for i in range(len(file["entry/sample/dataset2/cue_index"][:])):
             assert (
                 file["entry/sample/dataset2/cue_index"][i] == i
