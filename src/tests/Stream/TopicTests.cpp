@@ -259,7 +259,7 @@ TEST_F(TopicTest, IsNotDoneAlt3) {
   EXPECT_FALSE(UnderTest->isDone());
 }
 
-TEST_F(TopicTest, IsDoneAlt2) {
+TEST_F(TopicTest, TopicIsDoneIfAllItsPartitionsAreFinished) {
   auto UnderTest = createTestedInstance();
 
   auto Partition1 = std::make_unique<PartitionStandInAlt>();
