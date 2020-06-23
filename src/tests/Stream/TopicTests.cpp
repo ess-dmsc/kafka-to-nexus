@@ -259,18 +259,6 @@ TEST_F(TopicTest, IsNotDoneAlt3) {
   EXPECT_FALSE(UnderTest->isDone());
 }
 
-TEST_F(TopicTest, IsDoneAlt1) {
-  auto UnderTest = createTestedInstance();
-
-  auto Partition1 = std::make_unique<PartitionStandInAlt>();
-  auto Partition1Ptr = Partition1.get();
-  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
-  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(true);
-
-  UnderTest->checkIfDone();
-  EXPECT_TRUE(UnderTest->isDone());
-}
-
 TEST_F(TopicTest, IsDoneAlt2) {
   auto UnderTest = createTestedInstance();
 
