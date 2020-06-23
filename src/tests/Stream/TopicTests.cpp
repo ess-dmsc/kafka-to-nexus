@@ -213,36 +213,7 @@ public:
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
 
-TEST_F(TopicTest, IsNotDoneAlt1) {
-  auto UnderTest = createTestedInstance();
-
-  auto Partition1 = std::make_unique<PartitionStandInAlt>();
-  auto Partition1Ptr = Partition1.get();
-  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
-  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(false);
-
-  UnderTest->checkIfDone();
-  EXPECT_FALSE(UnderTest->isDone());
-}
-
-TEST_F(TopicTest, IsNotDoneAlt2) {
-  auto UnderTest = createTestedInstance();
-
-  auto Partition1 = std::make_unique<PartitionStandInAlt>();
-  auto Partition1Ptr = Partition1.get();
-  UnderTest->ConsumerThreads.emplace_back(std::move(Partition1));
-  REQUIRE_CALL(*Partition1Ptr, hasFinished()).TIMES(1).RETURN(false);
-
-  auto Partition2 = std::make_unique<PartitionStandInAlt>();
-  auto Partition2Ptr = Partition2.get();
-  UnderTest->ConsumerThreads.emplace_back(std::move(Partition2));
-  REQUIRE_CALL(*Partition2Ptr, hasFinished()).TIMES(1).RETURN(true);
-
-  UnderTest->checkIfDone();
-  EXPECT_FALSE(UnderTest->isDone());
-}
-
-TEST_F(TopicTest, IsNotDoneAlt3) {
+TEST_F(TopicTest, TopicIsNotDoneIfAnyOfItsPartitionsAreNotFinished) {
   auto UnderTest = createTestedInstance();
 
   auto Partition1 = std::make_unique<PartitionStandInAlt>();

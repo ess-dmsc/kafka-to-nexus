@@ -333,7 +333,7 @@ TEST_F(PartitionTest, FilterIsRemovedWhenDone) {
   EXPECT_EQ(UnderTest->MsgFilters.size(), OldSize - 1);
 }
 
-TEST_F(PartitionTest, MultipleFiltersIsRemovedWhenDone) {
+TEST_F(PartitionTest, MultipleFiltersAreRemovedWhenDone) {
   auto UnderTest = createTestedInstance();
   UnderTest->MsgFilters.clear();
 
@@ -355,7 +355,7 @@ TEST_F(PartitionTest, MultipleFiltersIsRemovedWhenDone) {
   EXPECT_EQ(UnderTest->MsgFilters.size(), 0u);
 }
 
-TEST_F(PartitionTest, HasNotFinishedAlt1) {
+TEST_F(PartitionTest, PartitionHasNotFinishedIfAnyOfItsFiltersHaveNotFinished) {
   auto UnderTest = createTestedInstance();
   UnderTest->MsgFilters.clear();
 
@@ -455,7 +455,7 @@ TEST_F(PartitionTest, HasFinishedAlt1) {
   EXPECT_TRUE(UnderTest->hasFinished());
 }
 
-TEST_F(PartitionTest, HasFinishedAlt2) {
+TEST_F(PartitionTest, PartitionHasFinishedIfAllItsFiltersHaveFinished) {
   auto UnderTest = createTestedInstance();
   UnderTest->MsgFilters.clear();
 
