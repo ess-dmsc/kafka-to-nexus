@@ -27,7 +27,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     publish_f142_message(
         producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
     )
-    check(producer.flush(1.5) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(5) == 0, "Unable to flush kafka messages.")
 
     topic = "TEST_writerCommand"
     publish_run_start_message(
@@ -39,7 +39,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         start_time=int(start_time),
         stop_time=int(stop_time),
     )
-    check(producer.flush(1.5) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(5) == 0, "Unable to flush kafka messages.")
     sleep(30)
     job_id = publish_run_start_message(
         producer,
@@ -48,7 +48,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         topic=topic,
         job_id="should_start_but_not_stop",
     )
-    check(producer.flush(1.5) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(5) == 0, "Unable to flush kafka messages.")
     sleep(30)
     msgs = consume_everything("TEST_writerStatus")
 
@@ -66,7 +66,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
 
     # Clean up by stopping writing
     publish_run_stop_message(producer, job_id=job_id)
-    check(producer.flush(1.5) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(5) == 0, "Unable to flush kafka messages.")
     sleep(3)
 
 
@@ -103,7 +103,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
                 )
             else:
                 publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
-    check(producer.flush(1.5) == 0, "Unable to flush kafka messages.")
+    check(producer.flush(5) == 0, "Unable to flush kafka messages.")
 
     command_topic = "TEST_writerCommand"
     start_time = 1_560_330_000_002
