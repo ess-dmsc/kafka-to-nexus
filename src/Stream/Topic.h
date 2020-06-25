@@ -17,7 +17,7 @@
 #include "ThreadedExecutor.h"
 #include "logger.h"
 #include <chrono>
-#include <set>
+#include <vector>
 
 namespace Stream {
 
@@ -27,7 +27,8 @@ public:
         SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway,
-        std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers);
+        std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
+            std::make_unique<Kafka::ConsumerFactory>());
 
   /// \brief Must be called after the constructor.
   /// \note This function exist in order to make unit testing possible.
@@ -35,9 +36,12 @@ public:
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
+  bool isDone() { return IsDone.load(); };
+
   virtual ~Topic() = default;
 
 protected:
+  std::atomic_bool IsDone{false};
   Kafka::BrokerSettings KafkaSettings;
   std::string TopicName;
   SrcToDst DataMap;
@@ -73,6 +77,9 @@ protected:
   getPartitionsForTopicInternal(std::string const &Broker,
                                 std::string const &Topic,
                                 duration TimeOut) const;
+
+  void checkIfDone();
+  virtual void checkIfDoneTask();
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;

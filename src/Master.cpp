@@ -32,17 +32,15 @@ FileWriterState getNextState(Msg const &Command,
             StopInfo.StopTime = getCurrentTimeStampMS();
           }
           return States::StopRequested{StopInfo};
-        } else {
-          throw std::runtime_error("Start command is not allowed when writing");
         }
+        throw std::runtime_error("Start command is not allowed when writing");
       } else {
         if (CommandParser::isStartCommand(Command)) {
           auto const StartInfo =
               CommandParser::extractStartInformation(Command, TimeStamp);
           return States::StartRequested{StartInfo};
-        } else {
-          throw std::runtime_error("Stop command is not allowed when idle");
         }
+        throw std::runtime_error("Stop command is not allowed when idle");
       }
     }
   } catch (std::runtime_error const &Error) {
@@ -53,9 +51,11 @@ FileWriterState getNextState(Msg const &Command,
 
 Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
                std::unique_ptr<IJobCreator> Creator,
-               std::unique_ptr<Status::StatusReporter> Reporter)
+               std::unique_ptr<Status::StatusReporter> Reporter,
+               Metrics::Registrar const &Registrar)
     : Logger(getLogger()), MainConfig(Config), CmdListener(std::move(Listener)),
-      Creator_(std::move(Creator)), Reporter(std::move(Reporter)) {
+      Creator_(std::move(Creator)), Reporter(std::move(Reporter)),
+      MasterMetricsRegistrar(Registrar) {
   CmdListener->start();
   Logger->info("getFileWriterProcessId: {}", Config.ServiceID);
 }
@@ -82,8 +82,8 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
     CurrentState = States::Writing();
     Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
                                 StartInfo.StartTime, StartInfo.StopTime});
-    CurrentStreamController =
-        Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
+    CurrentStreamController = Creator_->createFileWritingJob(
+        StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
     setToIdle();

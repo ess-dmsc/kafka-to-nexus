@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "WriterModuleBase.h"
 #include "logger.h"
@@ -16,31 +17,29 @@
 
 namespace FileWriter {
 
-enum class ProcessMessageResult;
-
 /// \brief Represents a sourcename on a topic.
-///
-/// The sourcename can be empty. This is meant for highest efficiency on topics
-/// which are exclusively used for only one sourcename.
 class Source {
 public:
-  Source(std::string Name, std::string ID, std::string Topic,
-         WriterModule::ptr Writer);
+  Source(std::string Name, std::string FlatbufferID, std::string ModuleID,
+         std::string Topic, WriterModule::ptr Writer);
   Source(Source &&) = default;
   ~Source() = default;
   std::string const &topic() const;
   std::string const &sourcename() const;
-  FlatbufferMessage::SrcHash getHash() const { return Hash; };
-  ProcessMessageResult process_message(FlatbufferMessage const &Message);
-  std::shared_ptr<HDFFile> HDFFileForSWMR = nullptr;
+  std::string const &flatbufferID() const { return SchemaID; };
+  std::string const &writerModuleID() const { return WriterModuleID; };
+  FlatbufferMessage::SrcHash getSrcHash() const { return SrcHash; };
+  FlatbufferMessage::SrcHash getModuleHash() const { return ModuleHash; };
+  WriterModule::Base *getWriterPtr() { return WriterModule.get(); }
 
 private:
   std::string SourceName;
   std::string SchemaID;
+  std::string WriterModuleID;
   std::string TopicName;
-  FlatbufferMessage::SrcHash Hash;
+  FlatbufferMessage::SrcHash SrcHash;
+  FlatbufferMessage::SrcHash ModuleHash;
   std::unique_ptr<WriterModule::Base> WriterModule;
-  SharedLogger Logger = getLogger();
 };
 
 } // namespace FileWriter

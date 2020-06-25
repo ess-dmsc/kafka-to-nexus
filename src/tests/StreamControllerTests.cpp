@@ -10,7 +10,6 @@
 #include "FileWriterTask.h"
 #include "Kafka/Producer.h"
 #include "StreamController.h"
-#include "Streamer.h"
 #include <gtest/gtest.h>
 
 class ProducerStandIn : public Kafka::Producer {
@@ -27,9 +26,9 @@ public:
     FileWriterTask =
         std::make_unique<FileWriter::FileWriterTask>("Not Important");
     FileWriterTask->setJobId(JobId);
-    std::map<std::string, FileWriter::Streamer> Streamers;
     StreamController = std::make_unique<FileWriter::StreamController>(
-        std::move(FileWriterTask), "ServiceID", std::move(Streamers));
+        std::move(FileWriterTask), "ServiceID", FileWriter::StreamerOptions(),
+        Metrics::Registrar("some-app", {}));
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;

@@ -14,7 +14,6 @@ set(UnitTests_SRC
         JsonTests.cpp
         URITests.cpp
         CommandHandlerTests.cpp
-        DemuxerTests.cpp
         MessageTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
@@ -30,7 +29,6 @@ set(UnitTests_SRC
         Metrics/MetricsReporterTest.cpp
         Metrics/LogSinkTest.cpp
         MasterTests.cpp
-        StreamerTests.cpp
         MetaDataQueryTests.cpp
         Stream/PartitionFilterTest.cpp
         Stream/MessageWriterTests.cpp
@@ -44,7 +42,6 @@ set(UnitTests_SRC
     )
 
 set(UnitTests_INC
-        StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
         helpers/RdKafkaMocks.h
         helpers/KafkaMocks.h

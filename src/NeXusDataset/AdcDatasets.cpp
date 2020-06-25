@@ -12,7 +12,7 @@ ThresholdTime::ThresholdTime(hdf5::node::Group const &Parent, Mode CMode,
     auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
-};
+}
 
 PeakTime::PeakTime(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize)
@@ -24,6 +24,6 @@ PeakTime::PeakTime(hdf5::node::Group const &Parent, Mode CMode,
     auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
-};
+}
 
 } // namespace NeXusDataset

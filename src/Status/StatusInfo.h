@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "TimeUtility.h"
 #include <chrono>
 #include <string>
 
@@ -18,7 +19,7 @@ struct StatusInfo {
   std::string JobId{""};
   std::string Filename{""};
   std::chrono::milliseconds StartTime{0};
-  std::chrono::milliseconds StopTime{0};
+  time_point StopTime{0ms};
 };
 
 } // namespace Status

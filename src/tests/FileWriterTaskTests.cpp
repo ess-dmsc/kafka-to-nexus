@@ -29,11 +29,11 @@ TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
 
 TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
   FileWriter::FileWriterTask Task("SomeID");
-  FileWriter::Source Src("Src1", "Id1", "Topic1", nullptr);
+  FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);
 
   Task.addSource(std::move(Src));
 
-  ASSERT_EQ(1u, Task.demuxers().size());
+  ASSERT_EQ(1u, Task.sources().size());
 }
 
 TEST(FileWriterTask, SettingJobIdSetsID) {

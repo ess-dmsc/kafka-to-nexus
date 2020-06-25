@@ -8,11 +8,15 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FlatbufferReader.h"
+#include "Metrics/Registrar.h"
+#include "Stream/MessageWriter.h"
 #include "Stream/Partition.h"
+#include "WriterModuleBase.h"
 #include "helpers/KafkaMocks.h"
 #include "helpers/RdKafkaMocks.h"
 #include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
+#include <h5cpp/hdf5.hpp>
 
 using std::chrono_literals::operator""s;
 using trompeloeil::_;
@@ -23,7 +27,7 @@ public:
       : SourceFilter(std::chrono::system_clock::now(),
                      std::chrono::system_clock::now(), nullptr,
                      Metrics::Registrar("some_reg", {})) {}
-  MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage &&Message),
+  MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage Message),
              override);
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
@@ -49,9 +53,9 @@ public:
   PartitionStandIn(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                    int Partition, std::string TopicName,
                    Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
-                   Metrics::Registrar RegisterMetric, Stream::time_point Start,
-                   Stream::time_point Stop, Stream::duration StopLeeway,
-                   Stream::duration KafkaErrorTimeout)
+                   Metrics::Registrar RegisterMetric, time_point Start,
+                   time_point Stop, duration StopLeeway,
+                   duration KafkaErrorTimeout)
       : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
                           Map, Writer, std::move(RegisterMetric), Start, Stop,
                           StopLeeway, KafkaErrorTimeout) {}
@@ -82,10 +86,32 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
   Future.wait();
 }
 
+class MessageWriterStandIn : public Stream::MessageWriter {
+public:
+  MessageWriterStandIn()
+      : Stream::MessageWriter(Metrics::Registrar("test", {})) {}
+  void addMessage(Stream::Message const &) override {}
+
+protected:
+  void writeMsgImpl(WriterModule::Base *,
+                    FileWriter::FlatbufferMessage const &) override {}
+};
+
+class WriterStandIn : public WriterModule::Base {
+public:
+  WriterStandIn() = default;
+  void parse_config(std::string const &) override {}
+  WriterModule::InitResult init_hdf(hdf5::node::Group &,
+                                    std::string const &) override {
+    return {};
+  }
+  WriterModule::InitResult reopen(hdf5::node::Group &) override { return {}; }
+  void write(FileWriter::FlatbufferMessage const &) override {}
+};
+
 class PartitionTest : public ::testing::Test {
 public:
-  auto createTestedInstance(Stream::time_point StopTime =
-                                std::chrono::system_clock::time_point::max()) {
+  auto createTestedInstance(time_point StopTime = time_point::max()) {
     Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
@@ -96,17 +122,18 @@ public:
     return Temp;
   }
   Kafka::MockConsumer *Consumer{nullptr};
-
   int UsedPartitionId{0};
   std::string TopicName{"some_topic"};
   size_t UsedFilterHash{
       FileWriter::calcSourceHash("zzzz", zzzzFbReader::UsedSourceName)};
-  Stream::SrcToDst UsedMap{
-      Stream::SrcDstKey{UsedFilterHash, nullptr, "some_name", "idid"}};
-  Stream::time_point Start{std::chrono::system_clock::now()};
-  Stream::time_point Stop{std::chrono::system_clock::time_point::max()};
-  Stream::duration StopLeeway{5s};
-  Stream::duration ErrorTimeout{10s};
+
+  Stream::SrcToDst UsedMap{Stream::SrcDstKey{UsedFilterHash, UsedFilterHash,
+                                             nullptr, "some_name", "idid",
+                                             "idid_alt"}};
+  time_point Start{std::chrono::system_clock::now()};
+  time_point Stop{std::chrono::system_clock::time_point::max()};
+  duration StopLeeway{5s};
+  duration ErrorTimeout{10s};
   Metrics::Registrar Registrar{"some_name", {}};
   std::array<char, 9> SomeData{'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z'};
 };
@@ -251,9 +278,11 @@ TEST_F(PartitionTest, SetStopTimePropagatesToFilters) {
 TEST_F(PartitionTest, IfSourceHashUnknownThenNotProcessed) {
   auto UnderTest = createTestedInstance();
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr = TestFilter.get();
+  REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   UnderTest->MsgFilters.clear();
   size_t SomeOtherHash{42};
-  UnderTest->MsgFilters[SomeOtherHash] = std::move(TestFilter);
+  UnderTest->MsgFilters.emplace_back(SomeOtherHash, std::move(TestFilter));
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
@@ -264,7 +293,8 @@ TEST_F(PartitionTest, IfSourceHashIsKnownThenItIsProcessed) {
   auto UnderTest = createTestedInstance();
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
-  UnderTest->MsgFilters.at(UsedFilterHash) = std::move(TestFilter);
+  UnderTest->MsgFilters.clear();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter));
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -278,7 +308,8 @@ TEST_F(PartitionTest, FilterNotRemovedIfNotDone) {
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
   auto OldSize = UnderTest->MsgFilters.size();
-  UnderTest->MsgFilters.at(UsedFilterHash) = std::move(TestFilter);
+  UnderTest->MsgFilters.clear();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter));
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -292,11 +323,162 @@ TEST_F(PartitionTest, FilterIsRemovedWhenDone) {
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
   auto OldSize = UnderTest->MsgFilters.size();
-  UnderTest->MsgFilters.at(UsedFilterHash) = std::move(TestFilter);
+  UnderTest->MsgFilters.clear();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter));
   REQUIRE_CALL(*TestFilterPtr, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, hasFinished()).TIMES(1).RETURN(true);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
   UnderTest->processMessage(Msg);
   EXPECT_EQ(UnderTest->MsgFilters.size(), OldSize - 1);
+}
+
+TEST_F(PartitionTest, MultipleFiltersAreRemovedWhenDone) {
+  auto UnderTest = createTestedInstance();
+  UnderTest->MsgFilters.clear();
+
+  auto TestFilter1 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr1 = TestFilter1.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter1));
+  REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(true);
+
+  auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr2 = TestFilter2.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter2));
+  REQUIRE_CALL(*TestFilterPtr2, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(true);
+  EXPECT_EQ(UnderTest->MsgFilters.size(), 2u);
+  setExtractorModule<zzzzFbReader>("zzzz");
+  FileWriter::Msg Msg(SomeData.data(), SomeData.size());
+  UnderTest->processMessage(Msg);
+  EXPECT_EQ(UnderTest->MsgFilters.size(), 0u);
+}
+
+TEST_F(PartitionTest, PartitionHasNotFinishedIfAnyOfItsFiltersHaveNotFinished) {
+  auto UnderTest = createTestedInstance();
+  UnderTest->MsgFilters.clear();
+
+  auto TestFilter1 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr1 = TestFilter1.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter1));
+  REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(true);
+
+  auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr2 = TestFilter2.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter2));
+  REQUIRE_CALL(*TestFilterPtr2, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(false);
+
+  FileWriter::MessageMetaData MetaData{
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  Kafka::MockConsumer::PollReturnType PollReturn{
+      Kafka::PollStatus::Message,
+      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+
+  setExtractorModule<zzzzFbReader>("zzzz");
+  UnderTest->pollForMessage();
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(PartitionTest, HasNotFinishedAlt2) {
+  auto UnderTest = createTestedInstance();
+  UnderTest->MsgFilters.clear();
+
+  auto TestFilter1 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr1 = TestFilter1.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter1));
+  REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(false);
+
+  auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr2 = TestFilter2.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter2));
+  REQUIRE_CALL(*TestFilterPtr2, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(true);
+
+  FileWriter::MessageMetaData MetaData{
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  Kafka::MockConsumer::PollReturnType PollReturn{
+      Kafka::PollStatus::Message,
+      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+
+  setExtractorModule<zzzzFbReader>("zzzz");
+  UnderTest->pollForMessage();
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(PartitionTest, HasNotFinishedAlt3) {
+  auto UnderTest = createTestedInstance();
+  UnderTest->MsgFilters.clear();
+
+  auto TestFilter1 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr1 = TestFilter1.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter1));
+  REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(false);
+
+  FileWriter::MessageMetaData MetaData{
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  Kafka::MockConsumer::PollReturnType PollReturn{
+      Kafka::PollStatus::Message,
+      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+
+  setExtractorModule<zzzzFbReader>("zzzz");
+  UnderTest->pollForMessage();
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(PartitionTest, HasFinishedAlt1) {
+  auto UnderTest = createTestedInstance();
+  UnderTest->MsgFilters.clear();
+
+  auto TestFilter1 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr1 = TestFilter1.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter1));
+  REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(true);
+
+  FileWriter::MessageMetaData MetaData{
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  Kafka::MockConsumer::PollReturnType PollReturn{
+      Kafka::PollStatus::Message,
+      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+
+  setExtractorModule<zzzzFbReader>("zzzz");
+  UnderTest->pollForMessage();
+  EXPECT_TRUE(UnderTest->hasFinished());
+}
+
+TEST_F(PartitionTest, PartitionHasFinishedIfAllItsFiltersHaveFinished) {
+  auto UnderTest = createTestedInstance();
+  UnderTest->MsgFilters.clear();
+
+  auto TestFilter1 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr1 = TestFilter1.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter1));
+  REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(true);
+
+  auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
+  auto TestFilterPtr2 = TestFilter2.get();
+  UnderTest->MsgFilters.emplace_back(UsedFilterHash, std::move(TestFilter2));
+  REQUIRE_CALL(*TestFilterPtr2, filterMessage(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(true);
+
+  FileWriter::MessageMetaData MetaData{
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  Kafka::MockConsumer::PollReturnType PollReturn{
+      Kafka::PollStatus::Message,
+      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+
+  setExtractorModule<zzzzFbReader>("zzzz");
+  UnderTest->pollForMessage();
+  EXPECT_TRUE(UnderTest->hasFinished());
 }

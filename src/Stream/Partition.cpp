@@ -24,19 +24,37 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
   }
-
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           std::unique_ptr<SourceFilter>>
+      TempFilterMap;
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           FileWriter::FlatbufferMessage::SrcHash>
+      WriterToSourceHashMap;
   for (auto &SrcDestInfo : Map) {
-    MsgFilters.emplace(SrcDestInfo.Hash,
-                       std::make_unique<SourceFilter>(
-                           Start, Stop, Writer,
-                           RegisterMetric.getNewRegistrar(
-                               SrcDestInfo.getMetricsNameString())));
-    MsgFilters[SrcDestInfo.Hash]->addDestinationPtr(SrcDestInfo.Destination);
+    // Note that the cppcheck warning we are suppressing here is an actual
+    // false positive due to side effects of instantiating the SourceFilter
+    if (TempFilterMap.find(SrcDestInfo.WriteHash) == TempFilterMap.end()) {
+      TempFilterMap.emplace(SrcDestInfo.WriteHash,
+                            // cppcheck-suppress stlFindInsert
+                            std::make_unique<SourceFilter>(
+                                Start, Stop, Writer,
+                                RegisterMetric.getNewRegistrar(
+                                    SrcDestInfo.getMetricsNameString())));
+    }
+    TempFilterMap[SrcDestInfo.WriteHash]->addDestinationPtr(
+        SrcDestInfo.Destination);
+    WriterToSourceHashMap[SrcDestInfo.WriteHash] = SrcDestInfo.SrcHash;
+  }
+  for (auto &Item : TempFilterMap) {
+    auto UsedHash = WriterToSourceHashMap[Item.first];
+    MsgFilters.emplace_back(UsedHash, std::move(Item.second));
   }
 
   RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
   RegisterMetric.registerMetric(
       KafkaErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(
+      EndOfPartition, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
   RegisterMetric.registerMetric(MessagesProcessed, {Metrics::LogTo::CARBON});
   RegisterMetric.registerMetric(
@@ -51,6 +69,7 @@ void Partition::start() { addPollTask(); }
 
 void Partition::setStopTime(time_point Stop) {
   Executor.sendWork([=]() {
+    StopTime = Stop;
     StopTester.setStopTime(Stop);
     for (auto &Filter : MsgFilters) {
       Filter.second->setStopTime(Stop);
@@ -84,6 +103,9 @@ void Partition::pollForMessage() {
   switch (Msg.first) {
   case Kafka::PollStatus::Message:
     MessagesReceived++;
+    break;
+  case Kafka::PollStatus::EndOfPartition:
+    EndOfPartition++;
     break;
   case Kafka::PollStatus::TimedOut:
     KafkaTimeouts++;
@@ -126,14 +148,20 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
     FlatbufferErrors++;
     return;
   }
-  auto CurrentFilter = MsgFilters.find(FbMsg.getSourceHash());
-  if (CurrentFilter != MsgFilters.end() and
-      CurrentFilter->second->filterMessage(std::move(FbMsg))) {
+  if (std::any_of(MsgFilters.begin(), MsgFilters.end(), [&FbMsg](auto &Item) {
+        return Item.first == FbMsg.getSourceHash();
+      })) {
     MessagesProcessed++;
-    if (CurrentFilter->second->hasFinished()) {
-      MsgFilters.erase(CurrentFilter->first);
+  }
+  for (auto &CFilter : MsgFilters) {
+    if (CFilter.first == FbMsg.getSourceHash()) {
+      CFilter.second->filterMessage(FbMsg);
     }
   }
+  MsgFilters.erase(
+      std::remove_if(MsgFilters.begin(), MsgFilters.end(),
+                     [](auto &Item) { return Item.second->hasFinished(); }),
+      MsgFilters.end());
 }
 
 } // namespace Stream

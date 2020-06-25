@@ -66,8 +66,8 @@ class FakeJobCreator : public IJobCreator {
 public:
   std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const &StartInfo,
-                       MainOpt & /*Settings*/,
-                       SharedLogger const & /*Logger*/) override {
+                       MainOpt & /*Settings*/, SharedLogger const & /*Logger*/,
+                       Metrics::Registrar) override {
     return std::make_unique<FakeStreamController>(StartInfo.JobID);
   };
 };
@@ -76,8 +76,8 @@ class FakeJobCreatorThatThrows : public IJobCreator {
 public:
   std::unique_ptr<IStreamController>
   createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
-                       MainOpt & /*Settings*/,
-                       SharedLogger const & /*Logger*/) override {
+                       MainOpt & /*Settings*/, SharedLogger const & /*Logger*/,
+                       Metrics::Registrar) override {
     throw std::runtime_error("Something went wrong");
   };
 };
@@ -133,7 +133,7 @@ public:
     std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     Reporter = std::make_unique<Status::StatusReporter>(
-        std::chrono::milliseconds{1000}, ProducerTopic);
+        std::chrono::milliseconds{1000}, "ServiceId", ProducerTopic);
   };
 
   MainOpt MainOpts;
@@ -154,8 +154,8 @@ TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
                       Msg(StartCommand.data(), StartCommand.size()));
 
   auto Master = std::make_unique<FileWriter::Master>(
-      MainOpts, std::move(CmdListener), std::move(Creator),
-      std::move(Reporter));
+      MainOpts, std::move(CmdListener), std::move(Creator), std::move(Reporter),
+      Metrics::Registrar("some_reg", {}));
 
   Master->run();
   ASSERT_TRUE(Master->isWriting());
@@ -168,8 +168,8 @@ TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
                       Msg(StopCommand.data(), StopCommand.size()));
 
   auto Master = std::make_unique<FileWriter::Master>(
-      MainOpts, std::move(CmdListener), std::move(Creator),
-      std::move(Reporter));
+      MainOpts, std::move(CmdListener), std::move(Creator), std::move(Reporter),
+      Metrics::Registrar("some_reg", {}));
   // Process start message
   Master->run();
 
@@ -184,7 +184,7 @@ TEST_F(MasterTests, IfStartingThrowsThenEntersNotWritingState) {
 
   auto Master = std::make_unique<FileWriter::Master>(
       MainOpts, std::move(CmdListener), std::move(ThrowingCreator),
-      std::move(Reporter));
+      std::move(Reporter), Metrics::Registrar("some_reg", {}));
 
   Master->run();
 
@@ -201,8 +201,8 @@ TEST_F(MasterTests, IfStoppedMessageContainsWrongJobIdThenIgnored) {
                       Msg(WrongIdCommand.data(), WrongIdCommand.size()));
 
   auto Master = std::make_unique<FileWriter::Master>(
-      MainOpts, std::move(CmdListener), std::move(Creator),
-      std::move(Reporter));
+      MainOpts, std::move(CmdListener), std::move(Creator), std::move(Reporter),
+      Metrics::Registrar("some_reg", {}));
   // Process start message
   Master->run();
 

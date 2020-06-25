@@ -19,7 +19,7 @@ void StatusReporterBase::updateStatusInfo(StatusInfo const &NewInfo) {
 
 void StatusReporterBase::updateStopTime(std::chrono::milliseconds StopTime) {
   const std::lock_guard<std::mutex> lock(StatusMutex);
-  Status.StopTime = StopTime;
+  Status.StopTime = time_point(StopTime);
 }
 
 void StatusReporterBase::resetStatusInfo() {
@@ -32,9 +32,10 @@ std::string StatusReporterBase::createReport() const {
 
   Info["update_interval"] = Period.count();
   Info["job_id"] = Status.JobId;
+  Info["service_id"] = ServiceIdentifier;
   Info["file_being_written"] = Status.Filename;
   Info["start_time"] = Status.StartTime.count();
-  Info["stop_time"] = Status.StopTime.count();
+  Info["stop_time"] = toMilliSeconds(Status.StopTime);
 
   return Info.dump();
 }

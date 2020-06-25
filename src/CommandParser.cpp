@@ -72,7 +72,10 @@ extractStartInformation(Msg const &CommandMessage,
   } else {
     Result.StartTime = DefaultStartTime;
   }
-  Result.StopTime = std::chrono::milliseconds{RunStartData->stop_time()};
+  if (RunStartData->stop_time() != 0) {
+    Result.StopTime =
+        time_point(std::chrono::milliseconds{RunStartData->stop_time()});
+  }
   Result.NexusStructure = RunStartData->nexus_structure()->str();
   Result.JobID = RunStartData->job_id()->str();
   if (RunStartData->service_id() != nullptr) {

@@ -12,6 +12,7 @@
 #include "CommandParser.h"
 #include "Kafka/PollStatus.h"
 #include "MainOpt.h"
+#include "Metrics/Registrar.h"
 #include "Msg.h"
 #include "States.h"
 #include <atomic>
@@ -41,7 +42,8 @@ class Master {
 public:
   Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
          std::unique_ptr<IJobCreator> Creator,
-         std::unique_ptr<Status::StatusReporter> Reporter);
+         std::unique_ptr<Status::StatusReporter> Reporter,
+         Metrics::Registrar const &Registrar);
   virtual ~Master() = default;
 
   /// \brief Sets up command listener and handles any commands received.
@@ -58,6 +60,7 @@ private:
   std::unique_ptr<IJobCreator> Creator_;
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporter> Reporter;
+  Metrics::Registrar MasterMetricsRegistrar;
   FileWriterState CurrentState = States::Idle();
   virtual void startWriting(StartCommandInfo const &StartInfo);
   virtual void requestStopWriting(StopCommandInfo const &StopInfo);

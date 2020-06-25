@@ -17,24 +17,23 @@
 #include "SourceFilter.h"
 #include "Stream/MessageWriter.h"
 #include "ThreadedExecutor.h"
-#include <chrono>
+#include "TimeUtility.h"
 
 namespace Stream {
 
 // Pollution of namespace, fix.
 struct SrcDstKey {
-  FileWriter::FlatbufferMessage::SrcHash Hash;
+  FileWriter::FlatbufferMessage::SrcHash SrcHash;
+  FileWriter::FlatbufferMessage::SrcHash WriteHash;
   Message::DestPtrType Destination;
   std::string SourceName;
   std::string FlatbufferId;
+  std::string WriterModuleId;
   std::string getMetricsNameString() const {
-    return SourceName + "_" + FlatbufferId;
+    return SourceName + "_" + WriterModuleId;
   }
 };
 using SrcToDst = std::vector<SrcDstKey>;
-using std::chrono_literals::operator""ms;
-using std::chrono_literals::operator""s;
-using time_point = std::chrono::system_clock::time_point;
 
 class Partition {
 public:
@@ -52,7 +51,7 @@ public:
 
   void setStopTime(time_point Stop);
 
-  bool hasFinished() const;
+  virtual bool hasFinished() const;
   auto getPartitionID() const { return PartitionID; }
   auto getTopicName() const { return Topic; }
 
@@ -66,6 +65,9 @@ protected:
                                    "Number of messages received from broker."};
   Metrics::Metric MessagesProcessed{
       "processed", "Number of messages queued up for writing."};
+  Metrics::Metric EndOfPartition{
+      "end_of_partition",
+      "Number of times we reached the end of the partition."};
   Metrics::Metric BadOffsets{"bad_offsets",
                              "Number of messages received with bad offsets.",
                              Metrics::Severity::ERROR};
@@ -92,8 +94,8 @@ protected:
   time_point StopTime;
   duration StopTimeLeeway;
   PartitionFilter StopTester;
-  std::map<FileWriter::FlatbufferMessage::SrcHash,
-           std::unique_ptr<SourceFilter>>
+  std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                        std::unique_ptr<SourceFilter>>>
       MsgFilters;
   ThreadedExecutor Executor; // Must be last
 };

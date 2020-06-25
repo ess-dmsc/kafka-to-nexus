@@ -77,6 +77,17 @@ void addMillisecondOption(CLI::App &App, const std::string &Name,
   App.add_option(Name, Fun, Description, Defaulted);
 }
 
+void addSecondsDurationOption(CLI::App &App, const std::string &Name,
+                              std::chrono::system_clock::duration &MSArg,
+                              const std::string &Description = "",
+                              bool Defaulted = false) {
+  CLI::callback_t Fun = [&MSArg](CLI::results_t Results) {
+    MSArg = std::chrono::seconds(std::stoi(Results[0]));
+    return true;
+  };
+  App.add_option(Name, Fun, Description, Defaulted);
+}
+
 CLI::Option *SetKeyValueOptions(CLI::App &App, const std::string &Name,
                                 const std::string &Description, bool Defaulted,
                                 const CLI::callback_t &Fun) {
@@ -162,17 +173,14 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "
                  "commands");
-  App.add_flag("--logpid-sleep", MainOptions.logpid_sleep);
-  App.add_flag("--use-signal-handler", MainOptions.use_signal_handler);
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
-  App.add_option("--teamid", MainOptions.teamid);
   App.add_option(
       "--service-id", MainOptions.ServiceID,
       "Used as the service identifier in status messages and as an"
       "extra metrics ID string. Only used by the metrics system if present. "
       "Will"
-      "make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
+      " make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
@@ -186,17 +194,18 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addMillisecondOption(App, "--streamer-ms-after-stop",
                        MainOptions.StreamerConfiguration.AfterStopTime,
                        "Streamer option - milliseconds after stop time", true);
-  addMillisecondOption(App, "--streamer-start-time",
-                       MainOptions.StreamerConfiguration.StartTimestamp,
-                       "Streamer option - start timestamp (milliseconds)",
-                       true);
-  addMillisecondOption(App, "--streamer-stop-time",
-                       MainOptions.StreamerConfiguration.StopTimestamp,
-                       "Streamer option - stop timestamp (milliseconds)", true);
-  addMillisecondOption(
-      App, "--stream-master-topic-write-interval",
-      MainOptions.topic_write_duration,
-      "Stream-master option - topic write interval (milliseconds)");
+  addSecondsDurationOption(
+      App, "--kafka-metadata-max-timeout-seconds",
+      MainOptions.StreamerConfiguration.BrokerSettings.MaxMetadataTimeout,
+      "Max timout for kafka metadata calls. Note: metadata calls block the "
+      "application.",
+      true);
+  addSecondsDurationOption(
+      App, "--kafka-error-timeout-seconds",
+      MainOptions.StreamerConfiguration.BrokerSettings.KafkaErrorTimeout,
+      "Number of seconds to wait for recovery from kafka error before "
+      "abandoning stream.",
+      true);
   addKafkaOption(
       App, "-S,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,

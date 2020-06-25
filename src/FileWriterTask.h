@@ -17,7 +17,6 @@
 #include <vector>
 
 namespace FileWriter {
-class DemuxTopic;
 
 /// JSON parsing exception.
 class ParseError : public std::runtime_error {
@@ -37,8 +36,7 @@ public:
   ///
   /// \param TaskID The service ID.
   explicit FileWriterTask(std::string TaskID)
-      : ServiceId(std::move(TaskID)), File(std::make_shared<HDFFile>()),
-        Logger(getLogger()){};
+      : ServiceId(std::move(TaskID)), Logger(getLogger()){};
 
   /// Destructor.
   ~FileWriterTask();
@@ -70,7 +68,7 @@ public:
   /// \brief Get the list of demuxers.
   ///
   /// \return The demux topics.
-  std::map<std::string, std::shared_ptr<DemuxTopic>> &demuxers();
+  std::vector<Source> &sources();
 
   /// \brief  Get the job ID of the file being written.
   ///
@@ -87,19 +85,14 @@ public:
   /// \return The group.
   hdf5::node::Group hdfGroup() const;
 
-  /// Get whether SWMR is enabled for this task.
-  ///
-  /// \return true if enabled.
-  bool swmrEnabled() const;
-
 private:
   std::string Filename;
-  std::map<std::string, std::shared_ptr<DemuxTopic>> TopicNameToDemuxerMap;
+  std::vector<Source> SourceToModuleMap;
   void closeFile();
   void reopenFile();
   std::string JobId;
   std::string ServiceId;
-  std::shared_ptr<HDFFile> File;
+  HDFFile File;
   SharedLogger Logger;
 };
 

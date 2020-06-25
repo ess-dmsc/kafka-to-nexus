@@ -1096,14 +1096,4 @@ void HDFFile::finalize() {
   }
 }
 
-void HDFFile::SWMRFlush() {
-  auto Now = CLOCK::now();
-  if (Now - SWMRFlushLast > SWMRFlushInterval) {
-    flush();
-    SWMRFlushLast = Now;
-  }
-}
-
-bool HDFFile::isSWMREnabled() const { return SWMREnabled; }
-
 } // namespace FileWriter

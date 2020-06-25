@@ -10,6 +10,7 @@
 #pragma once
 
 #include "Kafka/MetadataException.h"
+#include "TimeUtility.h"
 #include <chrono>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
@@ -17,8 +18,6 @@
 #include <string>
 
 namespace Kafka {
-using time_point = std::chrono::system_clock::time_point;
-using duration = std::chrono::system_clock::duration;
 
 const RdKafka::TopicMetadata *
 findKafkaTopic(const std::string &Topic,

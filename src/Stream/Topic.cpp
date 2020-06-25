@@ -20,8 +20,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              Metrics::Registrar &RegisterMetric, time_point StartTime,
              duration StartTimeLeeway, time_point StopTime,
              duration StopTimeLeeway,
-             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
-                 std::make_unique<Kafka::ConsumerFactory>())
+             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
@@ -52,7 +51,7 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
                                   std::string const &Topic) {
   try {
     auto FoundPartitions = getPartitionsForTopicInternal(
-        Settings.Address, Topic, Settings.MinMetadataTimeout);
+        Settings.Address, Topic, CurrentMetadataTimeOut);
     Executor.sendWork([=]() {
       CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
       getOffsetsForPartitions(Settings, Topic, FoundPartitions);
@@ -118,6 +117,10 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
   }
 }
 
+void Topic::checkIfDoneTask() {
+  Executor.sendLowPriorityWork([=]() { checkIfDone(); });
+}
+
 void Topic::createStreams(
     Kafka::BrokerSettings const &Settings, std::string const &Topic,
     std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
@@ -133,5 +136,18 @@ void Topic::createStreams(
     TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));
   }
+  checkIfDoneTask();
+}
+
+void Topic::checkIfDone() {
+  ConsumerThreads.erase(
+      std::remove_if(ConsumerThreads.begin(), ConsumerThreads.end(),
+                     [](auto const &Elem) { return Elem->hasFinished(); }),
+      ConsumerThreads.end());
+  if (ConsumerThreads.empty()) {
+    IsDone.store(true);
+  }
+  std::this_thread::sleep_for(50ms);
+  checkIfDoneTask();
 }
 } // namespace Stream

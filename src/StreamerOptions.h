@@ -10,7 +10,7 @@
 #pragma once
 
 #include "Kafka/BrokerSettings.h"
-#include <chrono>
+#include "TimeUtility.h"
 
 namespace FileWriter {
 
@@ -18,7 +18,7 @@ namespace FileWriter {
 struct StreamerOptions {
   Kafka::BrokerSettings BrokerSettings;
   std::chrono::milliseconds StartTimestamp{0};
-  std::chrono::milliseconds StopTimestamp{0};
+  time_point StopTimestamp{time_point::max()};
   std::chrono::milliseconds BeforeStartTime{1000};
   std::chrono::milliseconds AfterStopTime{1000};
 };

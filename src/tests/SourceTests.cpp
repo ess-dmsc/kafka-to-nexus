@@ -11,7 +11,6 @@
 #include "helpers/StubWriterModule.h"
 #include <AccessMessageMetadata/ev42/ev42_Extractor.h>
 #include <FlatbufferMessage.h>
-#include <ProcessMessageResult.h>
 #include <Source.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
@@ -25,18 +24,6 @@ using FileWriter::FlatbufferMessage;
 using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 using WriterModule::Base;
-
-flatbuffers::DetachedBuffer createEventMessageBuffer() {
-  flatbuffers::FlatBufferBuilder Builder;
-  AccessMessageMetadata::EventMessageBuilder EventMessage(Builder);
-  EventMessage.add_pulse_time(
-      1); // avoid 0 pulse time which is detected as a validation error
-  Builder.Finish(EventMessage.Finish(),
-                 AccessMessageMetadata::EventMessageIdentifier());
-
-  // Note, Release gives us a "DetachedBuffer" which owns the data
-  return Builder.Release();
-}
 
 class SourceTests : public ::testing::Test {
 public:
@@ -53,9 +40,11 @@ public:
 TEST_F(SourceTests, ConstructorSetsMembers) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
+  std::string FlatbufferId("fbid");
   std::string ModuleName("test");
   auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
+  Source TestSource(SourceName, FlatbufferId, ModuleName, TopicName,
+                    std::move(WriterModule));
   ASSERT_EQ(TestSource.topic(), TopicName);
   ASSERT_EQ(TestSource.sourcename(), SourceName);
 }
@@ -63,52 +52,12 @@ TEST_F(SourceTests, ConstructorSetsMembers) {
 TEST_F(SourceTests, MovedSourceHasCorrectState) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
+  std::string FlatbufferId("fbid");
   std::string ModuleName("test");
   auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
+  Source TestSource(SourceName, FlatbufferId, ModuleName, TopicName,
+                    std::move(WriterModule));
   auto TestSource2 = std::move(TestSource);
   ASSERT_EQ(TestSource2.topic(), TopicName);
   ASSERT_EQ(TestSource2.sourcename(), SourceName);
-}
-
-TEST_F(SourceTests, ProcessMessagePassesMessageToWriterModule) {
-  std::string SourceName("TestSourceName");
-  std::string TopicName("TestTopicName");
-  std::string ModuleName("ev42");
-  auto WriterModule = std::make_unique<WriterModuleMock>();
-  REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)));
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
-  auto MessageBuffer = createEventMessageBuffer();
-  FileWriter::FlatbufferMessage Message(MessageBuffer.data(),
-                                        MessageBuffer.size());
-  ASSERT_EQ(FileWriter::ProcessMessageResult::OK,
-            TestSource.process_message(Message));
-}
-
-TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
-  std::string SourceName("TestSourceName");
-  std::string TopicName("TestTopicName");
-  std::string ModuleName("ev42");
-  auto WriterModule = std::make_unique<WriterModuleMock>();
-  REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)))
-      .THROW(WriterModule::WriterException("IO Error"));
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
-  auto MessageBuffer = createEventMessageBuffer();
-  FileWriter::FlatbufferMessage Message(MessageBuffer.data(),
-                                        MessageBuffer.size());
-  ASSERT_EQ(FileWriter::ProcessMessageResult::ERR,
-            TestSource.process_message(Message));
-}
-
-TEST_F(SourceTests, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
-  std::string SourceName("TestSourceName");
-  std::string TopicName("TestTopicName");
-  std::string ModuleName("test");
-  auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
-  auto MessageBuffer = createEventMessageBuffer();
-  FileWriter::FlatbufferMessage Message(MessageBuffer.data(),
-                                        MessageBuffer.size());
-  ASSERT_EQ(FileWriter::ProcessMessageResult::ERR,
-            TestSource.process_message(Message));
 }
