@@ -15,13 +15,23 @@
 
 namespace Status {
 
-struct StatusInfo {
+// This info changes each write job
+struct JobStatusInfo {
   std::string JobId{""};
   std::string Filename{""};
   std::chrono::milliseconds StartTime{0};
   time_point StopTime{0ms};
+};
+
+// This info is constant for this instance of the software
+struct ApplicationStatusInfo {
   // Time interval between publishing status messages
-  std::chrono::milliseconds UpdateInterval{0};
+  std::chrono::milliseconds const UpdateInterval;
+  std::string const ApplicationName;
+  std::string const ApplicationVersion;
+  std::string const HostName;
+  std::string const ServiceID;
+  uint32_t const ProcessID;
 };
 
 } // namespace Status

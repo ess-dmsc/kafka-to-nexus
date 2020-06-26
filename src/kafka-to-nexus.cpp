@@ -17,6 +17,7 @@
 #include "Metrics/LogSink.h"
 #include "Metrics/Registrar.h"
 #include "Metrics/Reporter.h"
+#include "Status/StatusInfo.h"
 #include "Status/StatusReporter.h"
 #include "Version.h"
 #include "WriterRegistrar.h"
@@ -35,24 +36,34 @@ void signal_handler(int Signal) {
 }
 
 std::unique_ptr<Status::StatusReporter>
-createStatusReporter(MainOpt const &MainConfig) {
+createStatusReporter(MainOpt const &MainConfig,
+                     std::string const &ApplicationName,
+                     std::string const &ApplicationVersion) {
   Kafka::BrokerSettings BrokerSettings;
   BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
   auto StatusProducer = std::make_shared<Kafka::Producer>(BrokerSettings);
   auto StatusProducerTopic = std::make_unique<Kafka::ProducerTopic>(
       StatusProducer, MainConfig.KafkaStatusURI.Topic);
-  return std::make_unique<Status::StatusReporter>(
-      MainConfig.StatusMasterIntervalMS, MainConfig.ServiceID,
-      StatusProducerTopic);
+  auto const StatusInformation =
+      Status::ApplicationStatusInfo{MainConfig.StatusMasterIntervalMS,
+                                    ApplicationName,
+                                    ApplicationVersion,
+                                    "HOSTNAME",
+                                    MainConfig.ServiceID,
+                                    0};
+  return std::make_unique<Status::StatusReporter>(StatusProducerTopic,
+                                                  StatusInformation);
 }
 
 int main(int argc, char **argv) {
+  std::string const ApplicationName = "kafka-to-nexus";
+  std::string const ApplicationVersion = GetVersion();
   CLI::App App{fmt::format(
-      "kafka-to-nexus {:.7} (ESS, BrightnESS)\n"
+      "{} {:.7} (ESS, BrightnESS)\n"
       "https://github.com/ess-dmsc/kafka-to-nexus\n\n"
       "Writes NeXus files in a format specified with a json template.\n"
       "Writer modules can be used to populate the file from Kafka topics.\n",
-      GetVersion())};
+      ApplicationName, ApplicationVersion)};
   auto Options = std::make_unique<MainOpt>();
   Options->init();
   setCLIOptions(App, *Options);
@@ -97,7 +108,7 @@ int main(int argc, char **argv) {
         std::make_unique<Metrics::CarbonSink>(HostName, Port), 500ms));
   }
 
-  Metrics::Registrar MainRegistrar("kakfa-to-nexus", MetricsReporters);
+  Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
   auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceID);
 
   std::signal(SIGINT, signal_handler);
@@ -106,7 +117,7 @@ int main(int argc, char **argv) {
   FileWriter::Master Master(
       *Options, std::make_unique<FileWriter::CommandListener>(*Options),
       std::make_unique<FileWriter::JobCreator>(),
-      createStatusReporter(*Options), UsedRegistrar);
+      createStatusReporter(*Options, ApplicationName, ApplicationVersion), UsedRegistrar);
   std::atomic<bool> Running{true};
   std::thread MasterThread([&Master, Logger, &Running] {
     try {

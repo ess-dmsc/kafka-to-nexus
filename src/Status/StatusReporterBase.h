@@ -24,18 +24,18 @@ namespace Status {
 
 class StatusReporterBase {
 public:
-  StatusReporterBase(std::chrono::milliseconds Interval,
-                     std::string const &ServiceId,
-                     std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic)
-      : Period(Interval), ServiceIdentifier(ServiceId),
-        StatusProducerTopic(std::move(StatusProducerTopic)) {}
+  StatusReporterBase(std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic,
+                     ApplicationStatusInfo StatusInformation)
+      : Period(StatusInformation.UpdateInterval),
+        StatusProducerTopic(std::move(StatusProducerTopic)),
+        StaticStatusInformation(std::move(StatusInformation)) {}
 
   virtual ~StatusReporterBase() = default;
 
   /// \brief Set the slow changing information to report.
   ///
   /// \param NewInfo The new information to report
-  void updateStatusInfo(StatusInfo const &NewInfo);
+  void updateStatusInfo(JobStatusInfo const &NewInfo);
 
   /// \brief Update the stop time to be reported.
   ///
@@ -61,11 +61,11 @@ protected:
   void reportStatus();
 
 private:
-  std::string const ServiceIdentifier;
   virtual void postReportStatusActions(){};
-  StatusInfo Status{};
+  JobStatusInfo Status{};
   mutable std::mutex StatusMutex;
   std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic;
+  ApplicationStatusInfo const StaticStatusInformation;
 };
 
 } // namespace Status

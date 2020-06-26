@@ -41,10 +41,17 @@ public:
     std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     ReporterPtr = std::make_unique<Status::StatusReporterBase>(
-        std::chrono::milliseconds{100}, "ServiceId", std::move(ProducerTopic));
+        std::move(ProducerTopic), TestStatusInformation);
   }
 
   std::unique_ptr<Status::StatusReporterBase> ReporterPtr;
+  Status::ApplicationStatusInfo const TestStatusInformation =
+      Status::ApplicationStatusInfo{std::chrono::milliseconds(100),
+                                    "test_application",
+                                    "test_version",
+                                    "test_host_name",
+                                    "test_service_id",
+                                    0};
 };
 
 TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
@@ -52,25 +59,38 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(StatusMsg.JobId, "");
-  ASSERT_EQ(StatusMsg.Filename, "");
-  ASSERT_EQ(StatusMsg.StartTime.count(), 0);
-  ASSERT_EQ(toMilliSeconds(StatusMsg.StopTime), 0);
+  ASSERT_EQ(StatusMsg.first.JobId, "");
+  ASSERT_EQ(StatusMsg.first.Filename, "");
+  ASSERT_EQ(StatusMsg.first.StartTime.count(), 0);
+  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
-  Status::StatusInfo const Info{"1234", "file1.nxs", 1234567890ms,
-                                time_point(19876543210ms)};
+  Status::JobStatusInfo const Info{"1234", "file1.nxs",
+                                   std::chrono::milliseconds(1234567890),
+                                   time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   auto JSONReport = ReporterPtr->createJSONReport();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(StatusMsg.JobId, Info.JobId);
-  ASSERT_EQ(StatusMsg.Filename, Info.Filename);
-  ASSERT_EQ(StatusMsg.StartTime, Info.StartTime);
-  ASSERT_EQ(StatusMsg.StopTime, Info.StopTime);
+  // Write job status information
+  ASSERT_EQ(StatusMsg.first.JobId, Info.JobId);
+  ASSERT_EQ(StatusMsg.first.Filename, Info.Filename);
+  ASSERT_EQ(StatusMsg.first.StartTime.count(), Info.StartTime.count());
+  ASSERT_EQ(StatusMsg.first.StopTime, Info.StopTime);
+
+  // Application status information
+  ASSERT_EQ(StatusMsg.second.UpdateInterval,
+            TestStatusInformation.UpdateInterval);
+  ASSERT_EQ(StatusMsg.second.ApplicationName,
+            TestStatusInformation.ApplicationName);
+  ASSERT_EQ(StatusMsg.second.ApplicationVersion,
+            TestStatusInformation.ApplicationVersion);
+  ASSERT_EQ(StatusMsg.second.ServiceID, TestStatusInformation.ServiceID);
+  ASSERT_EQ(StatusMsg.second.HostName, TestStatusInformation.HostName);
+  ASSERT_EQ(StatusMsg.second.ProcessID, TestStatusInformation.ProcessID);
 }
 
 TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
@@ -81,12 +101,13 @@ TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(toMilliSeconds(StatusMsg.StopTime), StopTime.count());
+  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), StopTime.count());
 }
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
-  Status::StatusInfo const Info{"1234", "file1.nxs", 1234567890ms,
-                                time_point(19876543210ms)};
+  Status::JobStatusInfo const Info{"1234", "file1.nxs",
+                                   std::chrono::milliseconds(1234567890),
+                                   time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();
@@ -94,8 +115,8 @@ TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(StatusMsg.JobId, "");
-  ASSERT_EQ(StatusMsg.Filename, "");
-  ASSERT_EQ(StatusMsg.StartTime.count(), 0);
-  ASSERT_EQ(toMilliSeconds(StatusMsg.StopTime), 0);
+  ASSERT_EQ(StatusMsg.first.JobId, "");
+  ASSERT_EQ(StatusMsg.first.Filename, "");
+  ASSERT_EQ(StatusMsg.first.StartTime.count(), 0);
+  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
 }

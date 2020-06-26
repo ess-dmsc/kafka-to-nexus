@@ -9,13 +9,16 @@
 
 #pragma once
 
+#include <utility>
+
 namespace flatbuffers {
 class DetachedBuffer;
 }
 
 namespace Status {
-struct StatusInfo;
-}
+struct JobStatusInfo;
+struct ApplicationStatusInfo;
+} // namespace Status
 
-Status::StatusInfo
+std::pair<Status::JobStatusInfo, Status::ApplicationStatusInfo>
 deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message);
