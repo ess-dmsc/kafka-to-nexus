@@ -26,11 +26,21 @@ void StatusReporterBase::resetStatusInfo() {
   updateStatusInfo({"", "", std::chrono::milliseconds(0)});
 }
 
-std::string StatusReporterBase::createReport() const {
+Kafka::ProducerMessage
+StatusReporterBase::createReport(std::string const &JSONReport) const {
+  std::lock_guard<std::mutex> const lock(StatusMutex);
+
+  // Info["update_interval"] = Period.count();
+  UNUSED_ARG(JSONReport);
+
+  return {};
+}
+
+// Create the JSON part of the status message
+std::string StatusReporterBase::createJSONReport() const {
   auto Info = nlohmann::json::object();
   std::lock_guard<std::mutex> const lock(StatusMutex);
 
-  Info["update_interval"] = Period.count();
   Info["job_id"] = Status.JobId;
   Info["service_id"] = ServiceIdentifier;
   Info["file_being_written"] = Status.Filename;
@@ -45,9 +55,12 @@ void StatusReporterBase::reportStatus() {
     return;
   }
 
-  auto const StatusReport = createReport();
-  Logger->debug("status: {}", StatusReport);
-  StatusProducerTopic->produce(StatusReport);
+  auto const StatusJSONReport = createJSONReport();
+  Logger->debug("status: {}", StatusJSONReport);
+
+  auto StatusReportMessage =
+      std::make_unique<Kafka::ProducerMessage>(createReport(StatusJSONReport));
+  StatusProducerTopic->produce(std::move(StatusReportMessage));
   postReportStatusActions();
 }
 

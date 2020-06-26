@@ -31,13 +31,11 @@ public:
 
   /// \brief Send a message to Kafka for publishing on this topic.
   ///
-  /// Note: this copies the provided data, so use only for low volume
-  /// publishing.
-  ///
-  /// \param MsgData The message to publish
+  /// \param Msg The message to publish
   /// \return 0 if message is successfully passed to RdKafka to be published, 1
   /// otherwise
-  virtual int produce(const std::string &MsgData);
+  virtual int produce(std::unique_ptr<Kafka::ProducerMessage> Msg);
+
   std::string name() const;
 
 private:
@@ -47,6 +45,5 @@ private:
   std::unique_ptr<RdKafka::Topic> RdKafkaTopic;
   std::string Name;
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  int produce(std::unique_ptr<Kafka::ProducerMessage> Msg);
 };
 } // namespace Kafka

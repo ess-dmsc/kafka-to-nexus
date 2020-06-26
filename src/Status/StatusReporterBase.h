@@ -43,10 +43,13 @@ public:
   /// Used when a file has finished writing.
   void resetStatusInfo();
 
-  /// \brief Generate a report.
+  /// \brief Generate a FlatBuffer serialised report.
   ///
-  /// \return The report as stringified JSON.
-  std::string createReport() const;
+  /// \return The report as message to publish.
+  Kafka::ProducerMessage createReport(std::string const &JSONReport) const;
+
+  /// Create the JSON part of the status report.
+  std::string createJSONReport() const;
 
 protected:
   std::chrono::milliseconds const Period;

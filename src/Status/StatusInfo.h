@@ -20,6 +20,8 @@ struct StatusInfo {
   std::string Filename{""};
   std::chrono::milliseconds StartTime{0};
   time_point StopTime{0ms};
+  // Time interval between publishing status messages
+  std::chrono::milliseconds UpdateInterval{0};
 };
 
 } // namespace Status

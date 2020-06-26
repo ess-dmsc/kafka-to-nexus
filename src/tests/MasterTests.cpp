@@ -93,9 +93,11 @@ public:
 class ProducerTopicStandIn : public Kafka::ProducerTopic {
 public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
-                       std::string const &TopicName)
+                       std::string TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
-  int produce(const std::string & /*MsgData*/) override { return 0; }
+  int produce(std::unique_ptr<Kafka::ProducerMessage> /*Msg*/) override {
+    return 0;
+  }
 };
 
 class FakeCommandListener : public CommandListener {

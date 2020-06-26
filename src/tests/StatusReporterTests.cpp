@@ -26,7 +26,9 @@ public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
                        std::string TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
-  int produce(const std::string & /*MsgData*/) override { return 0; }
+  int produce(std::unique_ptr<Kafka::ProducerMessage> /*Msg*/) override {
+    return 0;
+  }
 };
 
 class StatusReporterTests : public ::testing::Test {
@@ -46,10 +48,9 @@ public:
 };
 
 TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
-  auto Report = ReporterPtr->createReport();
+  auto Report = ReporterPtr->createJSONReport();
   auto Json = nlohmann::json::parse(Report);
 
-  ASSERT_EQ(Json["update_interval"], 100);
   ASSERT_EQ(Json["job_id"], "");
   ASSERT_EQ(Json["file_being_written"], "");
   ASSERT_EQ(Json["start_time"], 0);
@@ -61,7 +62,7 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
                                 time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
-  auto const Report = ReporterPtr->createReport();
+  auto const Report = ReporterPtr->createJSONReport();
   auto const Json = nlohmann::json::parse(Report);
 
   ASSERT_EQ(Json["job_id"], Info.JobId);
@@ -74,7 +75,7 @@ TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
   auto const StopTime = 1234567890ms;
   ReporterPtr->updateStopTime(StopTime);
 
-  auto const Report = ReporterPtr->createReport();
+  auto const Report = ReporterPtr->createJSONReport();
   auto const Json = nlohmann::json::parse(Report);
 
   ASSERT_EQ(Json["stop_time"], StopTime.count());
@@ -86,10 +87,9 @@ TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();
-  auto Report = ReporterPtr->createReport();
+  auto Report = ReporterPtr->createJSONReport();
   auto Json = nlohmann::json::parse(Report);
 
-  ASSERT_EQ(Json["update_interval"], 100);
   ASSERT_EQ(Json["job_id"], "");
   ASSERT_EQ(Json["file_being_written"], "");
   ASSERT_EQ(Json["start_time"], 0);

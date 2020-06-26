@@ -21,17 +21,16 @@ Status::StatusInfo deserialiseStatusMessage(FileWriter::Msg Message) {
       flatbuffers::GetString(statusData->service_id());
   std::string const HostName = flatbuffers::GetString(statusData->host_name());
   uint32_t const ProcessId = statusData->process_id();
-  uint32_t const UpdateInterval = statusData->update_interval();
+  auto const UpdateInterval =
+      std::chrono::milliseconds{statusData->update_interval()};
+  std::string const StatusJSONString =
+      flatbuffers::GetString(statusData->status_json());
 
   UNUSED_ARG(SoftwareName);
   UNUSED_ARG(SoftwareVersion);
   UNUSED_ARG(ServiceId);
   UNUSED_ARG(HostName);
   UNUSED_ARG(ProcessId);
-  UNUSED_ARG(UpdateInterval);
-
-  std::string const StatusJSONString =
-      flatbuffers::GetString(statusData->status_json());
 
   auto const StatusJSON = json::parse(StatusJSONString);
   auto const JobId = find<std::string>("job_id", StatusJSON);
@@ -41,5 +40,6 @@ Status::StatusInfo deserialiseStatusMessage(FileWriter::Msg Message) {
 
   return Status::StatusInfo{JobId.value_or(""), Filename.value_or(""),
                             std::chrono::milliseconds{StartTime.value_or(0)},
-                            std::chrono::milliseconds{StopTime.value_or(0)}};
+                            std::chrono::milliseconds{StopTime.value_or(0)},
+                            UpdateInterval};
 }
