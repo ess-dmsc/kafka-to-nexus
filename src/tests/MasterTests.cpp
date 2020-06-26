@@ -139,8 +139,8 @@ public:
         Status::ApplicationStatusInfo{std::chrono::milliseconds(1000),
                                       "test_application",
                                       "test_version",
-                                      "HOSTNAME",
-                                      "SERVICE_ID",
+                                      "test_host_name",
+                                      "test_service_id",
                                       0};
     Reporter = std::make_unique<Status::StatusReporter>(ProducerTopic,
                                                         TestStatusInformation);
