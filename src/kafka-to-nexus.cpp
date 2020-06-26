@@ -10,6 +10,7 @@
 #include "CLIOptions.h"
 #include "CommandListener.h"
 #include "FlatbufferReader.h"
+#include "GetHostNameAndPID.h"
 #include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
@@ -48,9 +49,9 @@ createStatusReporter(MainOpt const &MainConfig,
       Status::ApplicationStatusInfo{MainConfig.StatusMasterIntervalMS,
                                     ApplicationName,
                                     ApplicationVersion,
-                                    "HOSTNAME",
+                                    getHostName(),
                                     MainConfig.ServiceID,
-                                    0};
+                                    getPID()};
   return std::make_unique<Status::StatusReporter>(StatusProducerTopic,
                                                   StatusInformation);
 }
