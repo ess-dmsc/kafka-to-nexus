@@ -10,6 +10,12 @@
 #include "StatusReporter.h"
 #include "json.h"
 
+#include <flatbuffers/flatbuffers.h>
+
+namespace FlatBuffer {
+#include <x5f2_status_generated.h>
+}
+
 namespace Status {
 
 void StatusReporterBase::updateStatusInfo(StatusInfo const &NewInfo) {
@@ -26,14 +32,23 @@ void StatusReporterBase::resetStatusInfo() {
   updateStatusInfo({"", "", std::chrono::milliseconds(0)});
 }
 
-Kafka::ProducerMessage
+flatbuffers::DetachedBuffer
 StatusReporterBase::createReport(std::string const &JSONReport) const {
   std::lock_guard<std::mutex> const lock(StatusMutex);
 
-  // Info["update_interval"] = Period.count();
-  UNUSED_ARG(JSONReport);
+  flatbuffers::FlatBufferBuilder Builder;
 
-  return {};
+  auto SoftwareName = Builder.CreateString("SOFTWARE_NAME");
+  auto SoftwareVersion = Builder.CreateString("SOFTWARE_VERSION");
+  auto ServiceId = Builder.CreateString("SERVICE_ID");
+  auto HostName = Builder.CreateString("HOST_NAME");
+  uint32_t ProcessId = 0;
+  uint32_t UpdateInterval = Period.count();
+  auto JSONStatus = Builder.CreateString(JSONReport);
+
+  auto MsgBuffer = FlatBuffer::CreateStatus(Builder, SoftwareName, SoftwareVersion, ServiceId, HostName, ProcessId, UpdateInterval, JSONStatus);
+  FlatBuffer::FinishStatusBuffer(Builder, MsgBuffer);
+  return Builder.Release();
 }
 
 // Create the JSON part of the status message
@@ -58,9 +73,7 @@ void StatusReporterBase::reportStatus() {
   auto const StatusJSONReport = createJSONReport();
   Logger->debug("status: {}", StatusJSONReport);
 
-  auto StatusReportMessage =
-      std::make_unique<Kafka::ProducerMessage>(createReport(StatusJSONReport));
-  StatusProducerTopic->produce(std::move(StatusReportMessage));
+  StatusProducerTopic->produce(createReport(StatusJSONReport));
   postReportStatusActions();
 }
 

@@ -12,8 +12,9 @@ namespace FlatBuffer {
 
 using nlohmann::json;
 
-Status::StatusInfo deserialiseStatusMessage(Kafka::ProducerMessage Message) {
-  const auto statusData = FlatBuffer::GetStatus(Message.data);
+Status::StatusInfo
+deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message) {
+  const auto statusData = FlatBuffer::GetStatus(Message.data());
   std::string const SoftwareName =
       flatbuffers::GetString(statusData->software_name());
   std::string const SoftwareVersion =

@@ -9,6 +9,7 @@
 
 #include "ProducerTopic.h"
 #include "ProducerMessage.h"
+#include <flatbuffers/flatbuffers.h>
 #include <vector>
 
 namespace Kafka {
@@ -34,6 +35,13 @@ struct Msg_ : public ProducerMessage {
     size = v.size();
   }
 };
+
+int ProducerTopic::produce(flatbuffers::DetachedBuffer const &MsgData) {
+  auto MsgPtr = new Msg_;
+  std::copy(MsgData.data(), MsgData.data() + MsgData.size(), std::back_inserter(MsgPtr->v));
+  MsgPtr->finalize();
+  return produce(std::unique_ptr<ProducerMessage>(MsgPtr));
+}
 
 int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
   void const *key = nullptr;

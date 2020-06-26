@@ -9,12 +9,13 @@
 
 #pragma once
 
-namespace Kafka {
-struct ProducerMessage;
+namespace flatbuffers {
+class DetachedBuffer;
 }
 
 namespace Status {
 struct StatusInfo;
 }
 
-Status::StatusInfo deserialiseStatusMessage(Kafka::ProducerMessage Message);
+Status::StatusInfo
+deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message);

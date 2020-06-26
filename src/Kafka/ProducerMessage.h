@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace Kafka {
 struct ProducerMessage {
   virtual ~ProducerMessage() = default;

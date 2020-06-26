@@ -16,6 +16,10 @@
 #include <chrono>
 #include <mutex>
 
+namespace flatbuffers {
+class DetachedBuffer;
+}
+
 namespace Status {
 
 class StatusReporterBase {
@@ -45,8 +49,8 @@ public:
 
   /// \brief Generate a FlatBuffer serialised report.
   ///
-  /// \return The report as message to publish.
-  Kafka::ProducerMessage createReport(std::string const &JSONReport) const;
+  /// \return The report message buffer.
+  flatbuffers::DetachedBuffer createReport(std::string const &JSONReport) const;
 
   /// Create the JSON part of the status report.
   std::string createJSONReport() const;

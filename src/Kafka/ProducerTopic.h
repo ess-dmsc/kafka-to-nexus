@@ -14,9 +14,11 @@
 #include <memory>
 #include <string>
 
-namespace Kafka {
+namespace flatbuffers {
+class DetachedBuffer;
+}
 
-struct ProducerMessage;
+namespace Kafka {
 
 class TopicCreationError : public std::runtime_error {
 public:
@@ -34,11 +36,12 @@ public:
   /// \param Msg The message to publish
   /// \return 0 if message is successfully passed to RdKafka to be published, 1
   /// otherwise
-  virtual int produce(std::unique_ptr<Kafka::ProducerMessage> Msg);
+  virtual int produce(flatbuffers::DetachedBuffer const &MsgData);
 
   std::string name() const;
 
 private:
+  int produce(std::unique_ptr<Kafka::ProducerMessage> Msg);
   std::unique_ptr<RdKafka::Conf> ConfigPtr{
       RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC)};
   std::shared_ptr<Producer> KafkaProducer;
