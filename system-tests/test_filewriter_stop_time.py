@@ -58,7 +58,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     started = False
     message = msgs[-1]
     status_info = deserialise_x5f2(message.value())
-    message = json.loads(str(status_info["status_json"], encoding="utf-8"))
+    message = json.loads(status_info.status_json)
     if message["start_time"] > 0 and message["job_id"] == job_id:
         started = True
     if message["stop_time"] == 0 and message["job_id"] == "":

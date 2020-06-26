@@ -94,7 +94,7 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose):
     running = False
     for message in msgs:
         status_info = deserialise_x5f2(message.value())
-        message = json.loads(str(status_info["status_json"], encoding="utf-8"))
+        message = json.loads(status_info.status_json)
         if message["file_being_written"] == "":
             running = False
         else:
