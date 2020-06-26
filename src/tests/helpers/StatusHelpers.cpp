@@ -37,8 +37,8 @@ deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message) {
   auto const StatusJSON = json::parse(StatusJSONString);
   auto const JobId = find<std::string>("job_id", StatusJSON);
   auto const Filename = find<std::string>("file_being_written", StatusJSON);
-  auto const StartTime = find<uint32_t>("start_time", StatusJSON);
-  auto const StopTime = find<uint32_t>("stop_time", StatusJSON);
+  auto const StartTime = find<uint64_t>("start_time", StatusJSON);
+  auto const StopTime = find<uint64_t>("stop_time", StatusJSON);
 
   return Status::StatusInfo{JobId.value_or(""), Filename.value_or(""),
                             std::chrono::milliseconds{StartTime.value_or(0)},

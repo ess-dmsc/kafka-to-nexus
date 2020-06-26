@@ -11,6 +11,7 @@ from datetime import datetime
 import json
 from time import sleep
 import pytest
+from streaming_data_types.status_x5f2 import deserialise_x5f2
 
 
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
@@ -56,7 +57,8 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
     writer1msg = consumer.poll()
 
     # Check filewriter1's job queue is not empty
-    assert b'"file_being_written":""' not in writer1msg.value()
+    status_info = deserialise_x5f2(writer1msg.value())
+    assert json.loads(str(status_info["status_json"], encoding="utf-8"))["file_being_written"] != ""
 
 
 def test_ignores_commands_with_incorrect_job_id(docker_compose):
@@ -91,7 +93,8 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose):
     # indicates that is still running
     running = False
     for message in msgs:
-        message = json.loads(str(message.value(), encoding="utf-8"))
+        status_info = deserialise_x5f2(message.value())
+        message = json.loads(str(status_info["status_json"], encoding="utf-8"))
         if message["file_being_written"] == "":
             running = False
         else:
