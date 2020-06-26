@@ -48,13 +48,14 @@ public:
 };
 
 TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
-  auto Report = ReporterPtr->createJSONReport();
-  auto Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["job_id"], "");
-  ASSERT_EQ(Json["file_being_written"], "");
-  ASSERT_EQ(Json["start_time"], 0);
-  ASSERT_EQ(Json["stop_time"], 0);
+  ASSERT_EQ(StatusMsg.JobId, "");
+  ASSERT_EQ(StatusMsg.Filename, "");
+  ASSERT_EQ(StatusMsg.StartTime.count(), 0);
+  ASSERT_EQ(StatusMsg.StopTime.count(), 0);
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {

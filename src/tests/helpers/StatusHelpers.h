@@ -9,12 +9,12 @@
 
 #pragma once
 
-namespace FileWriter {
-struct Msg;
+namespace Kafka {
+struct ProducerMessage;
 }
 
 namespace Status {
 struct StatusInfo;
 }
 
-Status::StatusInfo deserialiseStatusMessage(FileWriter::Msg Message);
+Status::StatusInfo deserialiseStatusMessage(Kafka::ProducerMessage Message);

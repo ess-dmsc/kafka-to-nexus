@@ -1,7 +1,8 @@
 #include "StatusHelpers.h"
-#include "Msg.h"
+#include "Kafka/ProducerMessage.h"
 #include "Status/StatusInfo.h"
 #include "json.h"
+#include "logger.h"
 
 #include <flatbuffers/flatbuffers.h>
 
@@ -11,8 +12,8 @@ namespace FlatBuffer {
 
 using nlohmann::json;
 
-Status::StatusInfo deserialiseStatusMessage(FileWriter::Msg Message) {
-  const auto statusData = FlatBuffer::GetStatus(Message.data());
+Status::StatusInfo deserialiseStatusMessage(Kafka::ProducerMessage Message) {
+  const auto statusData = FlatBuffer::GetStatus(Message.data);
   std::string const SoftwareName =
       flatbuffers::GetString(statusData->software_name());
   std::string const SoftwareVersion =
