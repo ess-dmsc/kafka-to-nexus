@@ -35,7 +35,7 @@ Status::StatusInfo deserialiseStatusMessage(FileWriter::Msg Message) {
 
   auto const StatusJSON = json::parse(StatusJSONString);
   auto const JobId = find<std::string>("job_id", StatusJSON);
-  auto const Filename = find<std::string>("filename", StatusJSON);
+  auto const Filename = find<std::string>("file_being_written", StatusJSON);
   auto const StartTime = find<uint32_t>("start_time", StatusJSON);
   auto const StopTime = find<uint32_t>("stop_time", StatusJSON);
 
