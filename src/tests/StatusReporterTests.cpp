@@ -9,10 +9,9 @@
 
 #include "Status/StatusReporterBase.h"
 #include "helpers/StatusHelpers.h"
+#include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <nlohmann/json.hpp>
-#include<flatbuffers/flatbuffers.h>
 
 class ProducerStandIn : public Kafka::Producer {
 public:
@@ -27,7 +26,7 @@ public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
                        std::string TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
-  int produce(flatbuffers::DetachedBuffer const &/*Msg*/) override {
+  int produce(flatbuffers::DetachedBuffer const & /*Msg*/) override {
     return 0;
   }
 };
@@ -56,7 +55,7 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
   ASSERT_EQ(StatusMsg.JobId, "");
   ASSERT_EQ(StatusMsg.Filename, "");
   ASSERT_EQ(StatusMsg.StartTime.count(), 0);
-  ASSERT_EQ(StatusMsg.StopTime.count(), 0);
+  ASSERT_EQ(toMilliSeconds(StatusMsg.StopTime), 0);
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
@@ -64,23 +63,25 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
                                 time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
-  auto const Report = ReporterPtr->createJSONReport();
-  auto const Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["job_id"], Info.JobId);
-  ASSERT_EQ(Json["file_being_written"], Info.Filename);
-  ASSERT_EQ(Json["start_time"], Info.StartTime.count());
-  ASSERT_EQ(Json["stop_time"], toMilliSeconds(Info.StopTime));
+  ASSERT_EQ(StatusMsg.JobId, Info.JobId);
+  ASSERT_EQ(StatusMsg.Filename, Info.Filename);
+  ASSERT_EQ(StatusMsg.StartTime, Info.StartTime);
+  ASSERT_EQ(StatusMsg.StopTime, Info.StopTime);
 }
 
 TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
   auto const StopTime = 1234567890ms;
   ReporterPtr->updateStopTime(StopTime);
 
-  auto const Report = ReporterPtr->createJSONReport();
-  auto const Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["stop_time"], StopTime.count());
+  ASSERT_EQ(toMilliSeconds(StatusMsg.StopTime), StopTime.count());
 }
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
@@ -89,11 +90,12 @@ TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();
-  auto Report = ReporterPtr->createJSONReport();
-  auto Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["job_id"], "");
-  ASSERT_EQ(Json["file_being_written"], "");
-  ASSERT_EQ(Json["start_time"], 0);
-  ASSERT_EQ(Json["stop_time"], 0);
+  ASSERT_EQ(StatusMsg.JobId, "");
+  ASSERT_EQ(StatusMsg.Filename, "");
+  ASSERT_EQ(StatusMsg.StartTime.count(), 0);
+  ASSERT_EQ(toMilliSeconds(StatusMsg.StopTime), 0);
 }
