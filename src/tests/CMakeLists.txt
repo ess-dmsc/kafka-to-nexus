@@ -39,6 +39,8 @@ set(UnitTests_SRC
         $<TARGET_OBJECTS:fb_metadata>
         ThreadedExecutorTests.cpp
         $<TARGET_OBJECTS:NeXusDatasetTests>
+        StatusReporterTests.cpp
+        helpers/StatusHelpers.cpp
     )
 
 set(UnitTests_INC
@@ -51,7 +53,8 @@ set(UnitTests_INC
         Metrics/MockSink.h
         Metrics/MockReporter.h
         helpers/SetExtractorModule.h
-        StatusReporterTests.cpp)
+        helpers/StatusHelpers.h
+   )
 
 add_executable(UnitTests
         ${UnitTests_SRC}

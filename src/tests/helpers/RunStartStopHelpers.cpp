@@ -1,3 +1,4 @@
+#include "RunStartStopHelpers.h"
 #include "Msg.h"
 
 #include <6s4t_run_stop_generated.h>

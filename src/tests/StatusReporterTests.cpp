@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Status/StatusReporterBase.h"
+#include "helpers/StatusHelpers.h"
 #include <gtest/gtest.h>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -23,7 +24,7 @@ public:
 class ProducerTopicStandIn : public Kafka::ProducerTopic {
 public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
-                       std::string const &TopicName)
+                       std::string TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
   int produce(const std::string & /*MsgData*/) override { return 0; }
 };
