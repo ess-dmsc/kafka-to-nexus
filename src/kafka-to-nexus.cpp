@@ -118,7 +118,8 @@ int main(int argc, char **argv) {
   FileWriter::Master Master(
       *Options, std::make_unique<FileWriter::CommandListener>(*Options),
       std::make_unique<FileWriter::JobCreator>(),
-      createStatusReporter(*Options, ApplicationName, ApplicationVersion), UsedRegistrar);
+      createStatusReporter(*Options, ApplicationName, ApplicationVersion),
+      UsedRegistrar);
   std::atomic<bool> Running{true};
   std::thread MasterThread([&Master, Logger, &Running] {
     try {
