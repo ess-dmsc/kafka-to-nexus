@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unistd.h>
+
 static std::string getHostName() {
   size_t const MaxHostNameLength = 20;
   char Hostname[MaxHostNameLength];
