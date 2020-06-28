@@ -43,7 +43,8 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
 
     for i in range(30):
         msg = consumer.poll()
-        if b'"file_being_written":""' in msg.value():
+        status_info = deserialise_x5f2(msg.value())
+        if json.loads(json.loads(status_info.status_json))["file_being_written"] == "":
             # Filewriter2 is not currently writing a file => stop command has been processed.
             stopped = True
             break
@@ -59,7 +60,7 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
     # Check filewriter1's job queue is not empty
     status_info = deserialise_x5f2(writer1msg.value())
     assert (
-        json.loads(str(status_info["status_json"], encoding="utf-8"))[
+        json.loads(json.loads(status_info.status_json))[
             "file_being_written"
         ]
         != ""
@@ -96,13 +97,12 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose):
 
     # Poll a few times on the status topic and check the final message read
     # indicates that is still running
-    running = False
-    for message in msgs:
-        status_info = deserialise_x5f2(message.value())
-        message = json.loads(status_info.status_json)
-        if message["file_being_written"] == "":
-            running = False
-        else:
-            running = True
+    message = msgs[-1]
+    status_info = deserialise_x5f2(message.value())
+    message = json.loads(status_info.status_json)
+    if message["file_being_written"] == "":
+        running = False
+    else:
+        running = True
 
     assert running
