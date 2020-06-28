@@ -207,7 +207,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       "abandoning stream.",
       true);
   addKafkaOption(
-      App, "-S,--kafka-config",
+      App, "-X,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,
       "LibRDKafka options");
   App.add_option("--use-hdf-swmr", MainOptions.UseHdfSwmr,
