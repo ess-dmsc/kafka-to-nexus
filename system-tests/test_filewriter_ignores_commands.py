@@ -46,7 +46,7 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
         if msg is None or msg.error():
             continue
         status_info = deserialise_x5f2(msg.value())
-        if json.loads(json.loads(status_info.status_json))["file_being_written"] == "":
+        if json.loads(status_info.status_json)["file_being_written"] == "":
             # Filewriter2 is not currently writing a file => stop command has been processed.
             stopped = True
             break
