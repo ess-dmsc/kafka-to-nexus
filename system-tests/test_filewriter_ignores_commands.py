@@ -59,12 +59,7 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
 
     # Check filewriter1's job queue is not empty
     status_info = deserialise_x5f2(writer1msg.value())
-    assert (
-        json.loads(json.loads(status_info.status_json))[
-            "file_being_written"
-        ]
-        != ""
-    )
+    assert json.loads(json.loads(status_info.status_json))["file_being_written"] != ""
 
 
 def test_ignores_commands_with_incorrect_job_id(docker_compose):
