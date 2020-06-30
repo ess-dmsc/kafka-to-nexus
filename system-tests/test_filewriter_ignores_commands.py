@@ -14,7 +14,7 @@ import pytest
 from streaming_data_types.status_x5f2 import deserialise_x5f2
 
 
-@pytest.skip("This behaviour is not implemented currently")
+@pytest.mark.skip("This behaviour is not implemented currently")
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)
