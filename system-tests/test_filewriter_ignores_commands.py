@@ -14,34 +14,39 @@ import pytest
 from streaming_data_types.status_x5f2 import deserialise_x5f2
 
 
+pytest.skip("This behaviour is not implemented currently, ")
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)
     service_id_1 = "filewriter1"
+    service_id_2 = "filewriter2"
+    command_topic = "TEST_writerCommandMultiple"
     job_id = publish_run_start_message(
         producer,
         "commands/nexus_structure.json",
         nexus_filename="output_file_ignores_stop_1.nxs",
+        topic=command_topic,
         service_id=service_id_1,
     )
     publish_run_start_message(
         producer,
         "commands/nexus_structure.json",
         nexus_filename="output_file_ignores_stop_2.nxs",
-        service_id="filewriter2",
+        topic=command_topic,
+        service_id=service_id_2,
     )
 
     sleep(10)
 
-    publish_run_stop_message(producer, job_id, service_id=service_id_1)
+    publish_run_stop_message(producer, job_id, topic=command_topic, service_id=service_id_2)
 
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus2"])
 
     # Poll a few times on the status topic to see if the filewriter2 has stopped writing.
     stopped = False
-
-    for i in range(30):
+    maximum_tries = 30
+    for i in range(maximum_tries):
         msg = consumer.poll()
         if msg is None or msg.error():
             continue
@@ -50,6 +55,8 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
             # Filewriter2 is not currently writing a file => stop command has been processed.
             stopped = True
             break
+        if i == maximum_tries - 1:
+            pytest.fail("filewriter2 failed to stop after being sent stop message")
         sleep(1)
 
     assert stopped
