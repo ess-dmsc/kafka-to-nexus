@@ -14,7 +14,7 @@ import pytest
 from streaming_data_types.status_x5f2 import deserialise_x5f2
 
 
-pytest.skip("This behaviour is not implemented currently, ")
+@pytest.skip("This behaviour is not implemented currently")
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)
@@ -38,7 +38,9 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
 
     sleep(10)
 
-    publish_run_stop_message(producer, job_id, topic=command_topic, service_id=service_id_2)
+    publish_run_stop_message(
+        producer, job_id, topic=command_topic, service_id=service_id_2
+    )
 
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus2"])
@@ -93,9 +95,7 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose):
     sleep(10)
 
     # Request stop but with slightly wrong job_id
-    publish_run_stop_message(
-        producer, job_id[:-1],
-    )
+    publish_run_stop_message(producer, job_id[:-1])
 
     msgs = consume_everything("TEST_writerStatus")
 
