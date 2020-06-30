@@ -12,6 +12,8 @@ from datetime import datetime
 import json
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
+from streaming_data_types.status_x5f2 import deserialise_x5f2
+import pytest
 
 
 def check(condition, fail_string):
@@ -55,7 +57,8 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     stopped = False
     started = False
     message = msgs[-1]
-    message = json.loads(str(message.value(), encoding="utf-8"))
+    status_info = deserialise_x5f2(message.value())
+    message = json.loads(status_info.status_json)
     if message["start_time"] > 0 and message["job_id"] == job_id:
         started = True
     if message["stop_time"] == 0 and message["job_id"] == "":

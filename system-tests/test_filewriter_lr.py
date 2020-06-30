@@ -9,6 +9,7 @@ from helpers.kafkahelpers import (
 )
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from math import isclose
+from streaming_data_types.status_x5f2 import deserialise_x5f2
 
 
 def change_pv_value(pvname, value):
@@ -71,4 +72,4 @@ def test_long_run(docker_compose_long_running):
     with open("logs/lr_status_messages.log", "w+") as file:
         status_messages = consume_everything("TEST_writerStatus")
         for msg in status_messages:
-            file.write(str(msg.value(), encoding="utf-8") + "\n")
+            file.write(str(deserialise_x5f2(msg.value())) + "\n")

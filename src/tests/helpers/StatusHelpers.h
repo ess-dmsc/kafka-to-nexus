@@ -9,12 +9,16 @@
 
 #pragma once
 
-#include <cstdint>
+#include <utility>
 
-namespace Kafka {
-struct ProducerMessage {
-  virtual ~ProducerMessage() = default;
-  unsigned char *data;
-  uint32_t size;
-};
-} // namespace Kafka
+namespace flatbuffers {
+class DetachedBuffer;
+}
+
+namespace Status {
+struct JobStatusInfo;
+struct ApplicationStatusInfo;
+} // namespace Status
+
+std::pair<Status::JobStatusInfo, Status::ApplicationStatusInfo>
+deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message);

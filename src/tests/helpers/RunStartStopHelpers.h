@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <nonstd/optional.hpp>
+
 namespace FileWriter {
 struct Msg;
 }

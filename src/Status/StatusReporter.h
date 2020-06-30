@@ -17,11 +17,10 @@ namespace Status {
 
 class StatusReporter : public StatusReporterBase {
 public:
-  StatusReporter(std::chrono::milliseconds Interval,
-                 std::string const &ServiceId,
-                 std::unique_ptr<Kafka::ProducerTopic> &StatusProducerTopic)
-      : StatusReporterBase(Interval, ServiceId, std::move(StatusProducerTopic)),
-        IO(), AsioTimer(IO, Interval) {
+  StatusReporter(std::unique_ptr<Kafka::ProducerTopic> &StatusProducerTopic,
+                 ApplicationStatusInfo const &StatusInformation)
+      : StatusReporterBase(std::move(StatusProducerTopic), StatusInformation),
+        IO(), AsioTimer(IO, StatusInformation.UpdateInterval) {
     this->start();
   }
 

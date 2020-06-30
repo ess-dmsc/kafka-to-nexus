@@ -14,6 +14,7 @@
 #include "JobCreator.h"
 #include "Master.h"
 #include "Msg.h"
+#include "Status/StatusInfo.h"
 #include "Status/StatusReporter.h"
 #include "helpers/FakeStreamController.h"
 #include "helpers/RdKafkaMocks.h"
@@ -93,9 +94,11 @@ public:
 class ProducerTopicStandIn : public Kafka::ProducerTopic {
 public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
-                       std::string const &TopicName)
+                       std::string TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
-  int produce(const std::string & /*MsgData*/) override { return 0; }
+  int produce(flatbuffers::DetachedBuffer const & /*Msg*/) override {
+    return 0;
+  }
 };
 
 class FakeCommandListener : public CommandListener {
@@ -132,8 +135,15 @@ public:
         std::make_shared<ProducerStandIn>(BrokerSettings);
     std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
-    Reporter = std::make_unique<Status::StatusReporter>(
-        std::chrono::milliseconds{1000}, "ServiceId", ProducerTopic);
+    Status::ApplicationStatusInfo const TestStatusInformation =
+        Status::ApplicationStatusInfo{std::chrono::milliseconds(1000),
+                                      "test_application",
+                                      "test_version",
+                                      "test_host_name",
+                                      "test_service_id",
+                                      0};
+    Reporter = std::make_unique<Status::StatusReporter>(ProducerTopic,
+                                                        TestStatusInformation);
   };
 
   MainOpt MainOpts;

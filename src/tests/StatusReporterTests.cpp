@@ -8,9 +8,10 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Status/StatusReporterBase.h"
+#include "helpers/StatusHelpers.h"
+#include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <nlohmann/json.hpp>
 
 class ProducerStandIn : public Kafka::Producer {
 public:
@@ -23,9 +24,11 @@ public:
 class ProducerTopicStandIn : public Kafka::ProducerTopic {
 public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
-                       std::string const &TopicName)
+                       std::string TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
-  int produce(const std::string & /*MsgData*/) override { return 0; }
+  int produce(flatbuffers::DetachedBuffer const & /*Msg*/) override {
+    return 0;
+  }
 };
 
 class StatusReporterTests : public ::testing::Test {
@@ -38,59 +41,82 @@ public:
     std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     ReporterPtr = std::make_unique<Status::StatusReporterBase>(
-        std::chrono::milliseconds{100}, "ServiceId", std::move(ProducerTopic));
+        std::move(ProducerTopic), TestStatusInformation);
   }
 
   std::unique_ptr<Status::StatusReporterBase> ReporterPtr;
+  Status::ApplicationStatusInfo const TestStatusInformation =
+      Status::ApplicationStatusInfo{std::chrono::milliseconds(100),
+                                    "test_application",
+                                    "test_version",
+                                    "test_host_name",
+                                    "test_service_id",
+                                    0};
 };
 
 TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
-  auto Report = ReporterPtr->createReport();
-  auto Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["update_interval"], 100);
-  ASSERT_EQ(Json["job_id"], "");
-  ASSERT_EQ(Json["file_being_written"], "");
-  ASSERT_EQ(Json["start_time"], 0);
-  ASSERT_EQ(Json["stop_time"], 0);
+  ASSERT_EQ(StatusMsg.first.JobId, "");
+  ASSERT_EQ(StatusMsg.first.Filename, "");
+  ASSERT_EQ(StatusMsg.first.StartTime.count(), 0);
+  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
-  Status::StatusInfo const Info{"1234", "file1.nxs", 1234567890ms,
-                                time_point(19876543210ms)};
+  Status::JobStatusInfo const Info{"1234", "file1.nxs",
+                                   std::chrono::milliseconds(1234567890),
+                                   time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
-  auto const Report = ReporterPtr->createReport();
-  auto const Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["job_id"], Info.JobId);
-  ASSERT_EQ(Json["file_being_written"], Info.Filename);
-  ASSERT_EQ(Json["start_time"], Info.StartTime.count());
-  ASSERT_EQ(Json["stop_time"], toMilliSeconds(Info.StopTime));
+  // Write job status information
+  ASSERT_EQ(StatusMsg.first.JobId, Info.JobId);
+  ASSERT_EQ(StatusMsg.first.Filename, Info.Filename);
+  ASSERT_EQ(StatusMsg.first.StartTime.count(), Info.StartTime.count());
+  ASSERT_EQ(StatusMsg.first.StopTime, Info.StopTime);
+
+  // Application status information
+  ASSERT_EQ(StatusMsg.second.UpdateInterval,
+            TestStatusInformation.UpdateInterval);
+  ASSERT_EQ(StatusMsg.second.ApplicationName,
+            TestStatusInformation.ApplicationName);
+  ASSERT_EQ(StatusMsg.second.ApplicationVersion,
+            TestStatusInformation.ApplicationVersion);
+  ASSERT_EQ(StatusMsg.second.ServiceID, TestStatusInformation.ServiceID);
+  ASSERT_EQ(StatusMsg.second.HostName, TestStatusInformation.HostName);
+  ASSERT_EQ(StatusMsg.second.ProcessID, TestStatusInformation.ProcessID);
 }
 
 TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
   auto const StopTime = 1234567890ms;
   ReporterPtr->updateStopTime(StopTime);
 
-  auto const Report = ReporterPtr->createReport();
-  auto const Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["stop_time"], StopTime.count());
+  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), StopTime.count());
 }
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
-  Status::StatusInfo const Info{"1234", "file1.nxs", 1234567890ms,
-                                time_point(19876543210ms)};
+  Status::JobStatusInfo const Info{"1234", "file1.nxs",
+                                   std::chrono::milliseconds(1234567890),
+                                   time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();
-  auto Report = ReporterPtr->createReport();
-  auto Json = nlohmann::json::parse(Report);
+  auto JSONReport = ReporterPtr->createJSONReport();
+  auto Report = ReporterPtr->createReport(JSONReport);
+  auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(Json["update_interval"], 100);
-  ASSERT_EQ(Json["job_id"], "");
-  ASSERT_EQ(Json["file_being_written"], "");
-  ASSERT_EQ(Json["start_time"], 0);
-  ASSERT_EQ(Json["stop_time"], 0);
+  ASSERT_EQ(StatusMsg.first.JobId, "");
+  ASSERT_EQ(StatusMsg.first.Filename, "");
+  ASSERT_EQ(StatusMsg.first.StartTime.count(), 0);
+  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
 }

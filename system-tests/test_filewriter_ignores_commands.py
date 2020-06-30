@@ -11,41 +11,54 @@ from datetime import datetime
 import json
 from time import sleep
 import pytest
+from streaming_data_types.status_x5f2 import deserialise_x5f2
 
 
+@pytest.mark.skip("This behaviour is not implemented currently")
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)
     service_id_1 = "filewriter1"
+    service_id_2 = "filewriter2"
+    command_topic = "TEST_writerCommandMultiple"
     job_id = publish_run_start_message(
         producer,
         "commands/nexus_structure.json",
         nexus_filename="output_file_ignores_stop_1.nxs",
+        topic=command_topic,
         service_id=service_id_1,
     )
     publish_run_start_message(
         producer,
         "commands/nexus_structure.json",
         nexus_filename="output_file_ignores_stop_2.nxs",
-        service_id="filewriter2",
+        topic=command_topic,
+        service_id=service_id_2,
     )
 
     sleep(10)
 
-    publish_run_stop_message(producer, job_id, service_id=service_id_1)
+    publish_run_stop_message(
+        producer, job_id, topic=command_topic, service_id=service_id_2
+    )
 
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus2"])
 
     # Poll a few times on the status topic to see if the filewriter2 has stopped writing.
     stopped = False
-
-    for i in range(30):
+    maximum_tries = 30
+    for i in range(maximum_tries):
         msg = consumer.poll()
-        if b'"file_being_written":""' in msg.value():
+        if msg is None or msg.error():
+            continue
+        status_info = deserialise_x5f2(msg.value())
+        if json.loads(status_info.status_json)["file_being_written"] == "":
             # Filewriter2 is not currently writing a file => stop command has been processed.
             stopped = True
             break
+        if i == maximum_tries - 1:
+            pytest.fail("filewriter2 failed to stop after being sent stop message")
         sleep(1)
 
     assert stopped
@@ -56,7 +69,8 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
     writer1msg = consumer.poll()
 
     # Check filewriter1's job queue is not empty
-    assert b'"file_being_written":""' not in writer1msg.value()
+    status_info = deserialise_x5f2(writer1msg.value())
+    assert json.loads(json.loads(status_info.status_json))["file_being_written"] != ""
 
 
 def test_ignores_commands_with_incorrect_job_id(docker_compose):
@@ -81,20 +95,18 @@ def test_ignores_commands_with_incorrect_job_id(docker_compose):
     sleep(10)
 
     # Request stop but with slightly wrong job_id
-    publish_run_stop_message(
-        producer, job_id[:-1],
-    )
+    publish_run_stop_message(producer, job_id[:-1])
 
     msgs = consume_everything("TEST_writerStatus")
 
     # Poll a few times on the status topic and check the final message read
     # indicates that is still running
-    running = False
-    for message in msgs:
-        message = json.loads(str(message.value(), encoding="utf-8"))
-        if message["file_being_written"] == "":
-            running = False
-        else:
-            running = True
+    message = msgs[-1]
+    status_info = deserialise_x5f2(message.value())
+    message = json.loads(status_info.status_json)
+    if message["file_being_written"] == "":
+        running = False
+    else:
+        running = True
 
     assert running
