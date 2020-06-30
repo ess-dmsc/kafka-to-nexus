@@ -33,7 +33,7 @@ public:
 
   /// \brief Send a message to Kafka for publishing on this topic.
   ///
-  /// \param Msg The message to publish
+  /// \param MsgData The message to publish
   /// \return 0 if message is successfully passed to RdKafka to be published, 1
   /// otherwise
   virtual int produce(flatbuffers::DetachedBuffer const &MsgData);
