@@ -1,51 +1,52 @@
 from helpers.kafkahelpers import (
     create_producer,
-    send_writer_command,
+    publish_run_start_message,
+    publish_run_stop_message,
     publish_ep00_message,
 )
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
-from helpers.flatbufferhelpers import _millseconds_to_nanoseconds
+from helpers.timehelpers import milliseconds_to_nanoseconds, current_unix_time_ms
 from time import sleep
-from helpers.ep00.EventType import EventType
+from streaming_data_types.fbschemas.epics_connection_info_ep00.EventType import (
+    EventType,
+)
 
 
 def test_ep00(docker_compose):
     producer = create_producer()
-    # Push epics connection status
-    topic = "TEST-epics-connection-status"
-    timestamp = int(docker_compose)
-    # Create topic in kafka broker
-    publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, timestamp)
+    topic = "TEST_epics-connection-status"
     sleep(10)
 
     # Start file writing
-    send_writer_command(
-        "commands/writing-epics-status-command.json",
+    job_id = publish_run_start_message(
         producer,
-        start_time=docker_compose,
+        "commands/nexus_structure_epics_status.json",
+        "output_file_ep00.nxs",
+        start_time=current_unix_time_ms(),
     )
     producer.flush()
     sleep(5)
+    first_timestamp = current_unix_time_ms()
+    publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, first_timestamp)
+    second_timestamp = current_unix_time_ms()
     publish_ep00_message(
-        producer, topic, EventType.CONNECTED, kafka_timestamp=timestamp + 1
+        producer, topic, EventType.CONNECTED, kafka_timestamp=second_timestamp
     )
 
     # Give it some time to accumulate data
     sleep(10)
 
     # Stop file writing
-    send_writer_command("commands/stop-command.json", producer)
-    sleep(10)
-    send_writer_command("commands/writer-exit.json", producer)
+    publish_run_stop_message(producer, job_id)
     producer.flush()
 
     filepath = "output-files/output_file_ep00.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
         assert file["EpicsConnectionStatus/connection_status_time"][
             0
-        ] == _millseconds_to_nanoseconds(timestamp)
+        ] == milliseconds_to_nanoseconds(first_timestamp)
         assert file["EpicsConnectionStatus/connection_status"][0] == b"NEVER_CONNECTED"
         assert file["EpicsConnectionStatus/connection_status_time"][
             1
-        ] == _millseconds_to_nanoseconds(timestamp + 1)
+        ] == milliseconds_to_nanoseconds(second_timestamp)
         assert file["EpicsConnectionStatus/connection_status"][1] == b"CONNECTED"
