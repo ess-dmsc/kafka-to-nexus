@@ -31,10 +31,11 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class Base {
 public:
-  Base(bool AcceptRepeatedTimestamps) : WriteRepeatedTimestamps(AcceptRepeatedTimestamps) {}
+  Base(bool AcceptRepeatedTimestamps)
+      : WriteRepeatedTimestamps(AcceptRepeatedTimestamps) {}
   virtual ~Base() = default;
 
-  bool acceptsRepeatedTimestamps() {return WriteRepeatedTimestamps;}
+  bool acceptsRepeatedTimestamps() { return WriteRepeatedTimestamps; }
 
   /// \brief Parses the configuration of a stream.
   ///
@@ -74,6 +75,7 @@ public:
   ///
   /// \param msg The message to process
   virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
+
 private:
   bool WriteRepeatedTimestamps;
 };

@@ -24,7 +24,8 @@ public:
 
 class SourceFilterStandIn : public Stream::SourceFilter {
 public:
-  SourceFilterStandIn(time_point Start, time_point Stop, bool AcceptRepeatedTimestamp,
+  SourceFilterStandIn(time_point Start, time_point Stop,
+                      bool AcceptRepeatedTimestamp,
                       Stream::MessageWriter *Writer, Metrics::Registrar Reg)
       : SourceFilter(Start, Stop, AcceptRepeatedTimestamp, Writer, Reg) {}
   using SourceFilter::MessagesDiscarded;
@@ -41,8 +42,8 @@ public:
   Metrics::Registrar SomeRegistrar{"test_reg", {}};
   auto getTestFilter(bool AcceptRepeatedTimestamp = true) {
     return std::make_unique<SourceFilterStandIn>(
-        StartTime, std::chrono::system_clock::time_point::max(), AcceptRepeatedTimestamp, &Writer,
-        SomeRegistrar);
+        StartTime, std::chrono::system_clock::time_point::max(),
+        AcceptRepeatedTimestamp, &Writer, SomeRegistrar);
   }
 };
 
