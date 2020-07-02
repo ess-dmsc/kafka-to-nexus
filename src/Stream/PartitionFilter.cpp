@@ -24,7 +24,6 @@ PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
 
 bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
   switch (CurrentPollStatus) {
-  case Kafka::PollStatus::Empty:
   case Kafka::PollStatus::Message:
     HasError = false;
     return false;

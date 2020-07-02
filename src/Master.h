@@ -65,7 +65,6 @@ private:
   virtual void startWriting(StartCommandInfo const &StartInfo);
   virtual void requestStopWriting(StopCommandInfo const &StopInfo);
   virtual bool hasWritingStopped();
-  virtual std::pair<Kafka::PollStatus, Msg> pollForMessage();
   virtual void moveToNewState(FileWriterState const &NewState);
   virtual FileWriterState handleCommand(Msg const &CommandMessage);
   void setToIdle();

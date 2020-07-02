@@ -32,7 +32,7 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
       .TIMES(1)
       .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
   // cppcheck-suppress knownArgument
-  REQUIRE_CALL(*Message, len()).TIMES(2).RETURN(TestPayload.size());
+  REQUIRE_CALL(*Message, len()).TIMES(1).RETURN(TestPayload.size());
   RdKafka::MessageTimestamp TimeStamp;
   TimeStamp.timestamp = 1;
   TimeStamp.type = RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME;
@@ -56,29 +56,6 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
         std::make_unique<Kafka::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
     ASSERT_EQ(ConsumedMessage.first, PollStatus::Message);
-  }
-}
-
-TEST_F(
-    ConsumerTests,
-    pollReturnsConsumerMessageWithEmptyPollStatusIfKafkaErrorMessageIsEmpty) {
-  auto *Message = new MockMessage;
-  REQUIRE_CALL(*Message, err())
-      .TIMES(1)
-      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
-  REQUIRE_CALL(*Message, len()).TIMES(1).RETURN(0);
-
-  REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
-  REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
-  // Put this in scope to call standin destructor
-  {
-    auto Consumer = std::make_unique<Kafka::Consumer>(
-        std::move(RdConsumer),
-        std::unique_ptr<RdKafka::Conf>(
-            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-        std::make_unique<Kafka::KafkaEventCb>());
-    auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage.first, PollStatus::Empty);
   }
 }
 
