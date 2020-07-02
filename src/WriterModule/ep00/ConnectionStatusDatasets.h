@@ -43,4 +43,4 @@ public:
       : FixedSizeString(Parent, "connection_status", CMode, StringSize,
                         ChunkSize){};
 };
-}
+} // namespace NeXusDataset
