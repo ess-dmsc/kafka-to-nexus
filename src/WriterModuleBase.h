@@ -16,7 +16,6 @@
 
 namespace WriterModule {
 
-class FlatbufferMessage;
 enum class InitResult { ERROR = -1, OK = 0 };
 
 /// \brief Writes a given flatbuffer to HDF.

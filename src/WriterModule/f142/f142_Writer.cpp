@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "f142_Writer.h"
-#include "HDFFile.h"
 #include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
