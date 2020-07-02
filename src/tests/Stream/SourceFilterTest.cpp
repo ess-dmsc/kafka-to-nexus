@@ -26,7 +26,7 @@ class SourceFilterStandIn : public Stream::SourceFilter {
 public:
   SourceFilterStandIn(time_point Start, time_point Stop,
                       Stream::MessageWriter *Writer, Metrics::Registrar Reg)
-      : SourceFilter(Start, Stop, Writer, Reg) {}
+      : SourceFilter(Start, Stop, true, Writer, Reg) {}
   using SourceFilter::MessagesDiscarded;
   using SourceFilter::MessagesReceived;
   using SourceFilter::MessagesTransmitted;

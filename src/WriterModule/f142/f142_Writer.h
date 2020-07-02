@@ -37,7 +37,7 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  f142_Writer() = default;
+  f142_Writer() : WriterModule::Base(false) {}
   ~f142_Writer() override = default;
 
   enum class Type {

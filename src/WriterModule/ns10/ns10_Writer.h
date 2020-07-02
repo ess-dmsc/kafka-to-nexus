@@ -23,7 +23,7 @@ namespace ns10 {
 
 class ns10_Writer : public WriterModule::Base {
 public:
-  ns10_Writer() = default;
+  ns10_Writer() : WriterModule::Base(false) {}
   ~ns10_Writer() override = default;
 
   void parse_config(std::string const &ConfigurationStream) override;
