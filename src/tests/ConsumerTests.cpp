@@ -32,7 +32,7 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
       .TIMES(1)
       .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
   // cppcheck-suppress knownArgument
-  REQUIRE_CALL(*Message, len()).TIMES(2).RETURN(TestPayload.size());
+  REQUIRE_CALL(*Message, len()).TIMES(1).RETURN(TestPayload.size());
   RdKafka::MessageTimestamp TimeStamp;
   TimeStamp.timestamp = 1;
   TimeStamp.type = RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME;
@@ -59,14 +59,11 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   }
 }
 
-TEST_F(
-    ConsumerTests,
-    pollReturnsConsumerMessageWithEmptyPollStatusIfKafkaErrorMessageIsEmpty) {
+TEST_F(ConsumerTests, pollReturnsConsumerMessageWithEmptyPollStatusIfTimedOut) {
   auto *Message = new MockMessage;
   REQUIRE_CALL(*Message, err())
       .TIMES(1)
-      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
-  REQUIRE_CALL(*Message, len()).TIMES(1).RETURN(0);
+      .RETURN(RdKafka::ErrorCode::ERR__TIMED_OUT);
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
   REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
@@ -78,28 +75,7 @@ TEST_F(
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<Kafka::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage.first, PollStatus::Empty);
-  }
-}
-
-TEST_F(ConsumerTests,
-       pollReturnsConsumerMessageWithEmptyPollStatusIfEndofPartition) {
-  auto *Message = new MockMessage;
-  REQUIRE_CALL(*Message, err())
-      .TIMES(1)
-      .RETURN(RdKafka::ErrorCode::ERR__PARTITION_EOF);
-
-  REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
-  REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
-  // Put this in scope to call standin destructor
-  {
-    auto Consumer = std::make_unique<Kafka::Consumer>(
-        std::move(RdConsumer),
-        std::unique_ptr<RdKafka::Conf>(
-            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-        std::make_unique<Kafka::KafkaEventCb>());
-    auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage.first, PollStatus::EndOfPartition);
+    ASSERT_EQ(ConsumedMessage.first, PollStatus::TimedOut);
   }
 }
 

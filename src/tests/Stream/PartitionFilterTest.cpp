@@ -44,11 +44,6 @@ TEST_F(PartitionFilterTest, ErrorStateNoStopAlt) {
 
 TEST_F(PartitionFilterTest, OnTimeoutHasErrorState) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
-  EXPECT_TRUE(UnderTest.hasErrorState());
-}
-
-TEST_F(PartitionFilterTest, OnEmptyNoStopFlagged) {
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Empty));
   EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
@@ -65,45 +60,17 @@ TEST_F(PartitionFilterTest, AfterErrorRecoversOnValidMessageWithDelay) {
   EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
-TEST_F(PartitionFilterTest, AfterErrorRecoversOnEOP) {
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
-  EXPECT_FALSE(
-      UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
-  EXPECT_FALSE(UnderTest.hasErrorState());
-}
-
-TEST_F(PartitionFilterTest, AfterErrorRecoversOnEOPWithDelay) {
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
-  std::this_thread::sleep_for(40ms);
-  EXPECT_FALSE(
-      UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
-  EXPECT_FALSE(UnderTest.hasErrorState());
-}
-
-TEST_F(PartitionFilterTest, AfterErrorStateRecoversOnEmpty) {
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Empty));
-  EXPECT_FALSE(UnderTest.hasErrorState());
-}
-
-TEST_F(PartitionFilterTest, AfterErrorStateRecoversOnEmptyWithDelay) {
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
-  std::this_thread::sleep_for(40ms);
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Empty));
-  EXPECT_FALSE(UnderTest.hasErrorState());
-}
-
-TEST_F(PartitionFilterTest, AfterErrorStateNoRecoveryOnTimeOut) {
+TEST_F(PartitionFilterTest, AfterErrorStateRecoveryOnTimeOut) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
-  EXPECT_TRUE(UnderTest.hasErrorState());
+  EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
-TEST_F(PartitionFilterTest, AfterErrorStateNoRecoveryOnTimeOutWithDelay) {
+TEST_F(PartitionFilterTest, AfterErrorStateRecoveryOnTimeOutWithDelay) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
   std::this_thread::sleep_for(40ms);
-  EXPECT_TRUE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
-  EXPECT_TRUE(UnderTest.hasErrorState());
+  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
+  EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
 TEST_F(PartitionFilterTest, AfterErrorStateRecoversOnStopWithinLeeway) {
@@ -122,17 +89,6 @@ TEST_F(PartitionFilterTest, PartitionShouldNotStopOnErrorWithinLeeway) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
 }
 
-TEST_F(PartitionFilterTest, PartitionShouldNotStopOnEmptyWithinLeeway) {
-  UnderTest.setStopTime(std::chrono::system_clock::now() - 5ms);
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Empty));
-}
-
-TEST_F(PartitionFilterTest, PartitionShouldNotStopOnEOPWithinLeeway) {
-  UnderTest.setStopTime(std::chrono::system_clock::now() - 5ms);
-  EXPECT_FALSE(
-      UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
-}
-
 TEST_F(PartitionFilterTest, PartitionShouldNotStopOnTimeOutWithinLeeway) {
   UnderTest.setStopTime(std::chrono::system_clock::now() - 5ms);
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
@@ -143,19 +99,9 @@ TEST_F(PartitionFilterTest, PartitionShouldNotStopOnMessageOutsideLeeway) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Message));
 }
 
-TEST_F(PartitionFilterTest, PartitionShouldNotStopOnEmptyOutsideLeeway) {
+TEST_F(PartitionFilterTest, PartitionShouldStopOnTimeOutOutsideLeeway) {
   UnderTest.setStopTime(std::chrono::system_clock::now() - 15ms);
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Empty));
-}
-
-TEST_F(PartitionFilterTest, PartitionShouldStopOnEOPOutsideLeeway) {
-  UnderTest.setStopTime(std::chrono::system_clock::now() - 15ms);
-  EXPECT_TRUE(UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
-}
-
-TEST_F(PartitionFilterTest, PartitionShouldNotStopOnTimeOutOutsideLeeway) {
-  UnderTest.setStopTime(std::chrono::system_clock::now() - 15ms);
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
+  EXPECT_TRUE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
 }
 
 TEST_F(PartitionFilterTest, PartitionShouldStopNotOnErrorOutsideLeeway) {
