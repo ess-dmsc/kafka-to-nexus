@@ -17,7 +17,7 @@ If all is fine and the file-writer is idle then the JSON would be something like
     "file_being_written": "",
     "job_id": "",
     "start_time": 0,
-    "stop_time": 0,
+    "stop_time": 0
 }
 ```
 
@@ -28,7 +28,7 @@ If a file is being written then it would be something like this:
     "file_being_written": "some_file.nxs",
     "job_id": "1234",
     "start_time": 1580460273162,
-    "stop_time":  9223372036854,
+    "stop_time":  9223372036854
 }
 ```
 
