@@ -331,7 +331,6 @@ std::unique_ptr<RdKafka::Metadata> Consumer::metadataCall() {
 std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
   auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
       KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
-
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR: {
     auto MetaData = FileWriter::MessageMetaData{
@@ -346,8 +345,6 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
     // No message or event within time out - this is usually normal (see
     // librdkafka docs)
     return {PollStatus::TimedOut, FileWriter::Msg()};
-  case RdKafka::ERR__PARTITION_EOF:
-    return {PollStatus::EndOfPartition, FileWriter::Msg()};
   default:
     // Everything else is an error
     return {PollStatus::Error, FileWriter::Msg()};

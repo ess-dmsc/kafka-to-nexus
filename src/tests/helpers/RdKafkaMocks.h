@@ -145,6 +145,8 @@ public:
   MAKE_MOCK1(oauthbearer_set_token_failure,
              RdKafka::ErrorCode(const std::string &), override);
 
+  MAKE_MOCK0(groupMetadata, RdKafka::ConsumerGroupMetadata *(), override);
+
 private:
   int metadataCallCounter = 0;
 };
@@ -157,7 +159,7 @@ public:
   MAKE_MOCK0(c_ptr, rd_kafka_topic_s *(), override);
 };
 
-class MockProducer : public RdKafka::Producer {
+class MockProducer : public trompeloeil::mock_interface<RdKafka::Producer> {
 public:
   MAKE_CONST_MOCK0(name, const std::string(), override);
   MAKE_CONST_MOCK0(memberid, const std::string(), override);
@@ -224,6 +226,13 @@ public:
                                  RdKafka::Headers *, void *),
               override);
   MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
+#if RD_KAFKA_VERSION >= 0x010400ff
+  IMPLEMENT_MOCK1(init_transactions);
+  IMPLEMENT_MOCK0(begin_transaction);
+  IMPLEMENT_MOCK3(send_offsets_to_transaction);
+  IMPLEMENT_MOCK1(commit_transaction);
+  IMPLEMENT_MOCK1(abort_transaction);
+#endif
 };
 
 class MockConf : public RdKafka::Conf {
