@@ -145,8 +145,6 @@ public:
   MAKE_MOCK1(oauthbearer_set_token_failure,
              RdKafka::ErrorCode(const std::string &), override);
 
-  MAKE_MOCK0(groupMetadata, RdKafka::ConsumerGroupMetadata *(), override);
-
 private:
   int metadataCallCounter = 0;
 };
