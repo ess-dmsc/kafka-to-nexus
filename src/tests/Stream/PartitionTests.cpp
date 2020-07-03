@@ -153,15 +153,6 @@ TEST_F(PartitionTest, IfStopTimeTooCloseToMaxThenItIsBackedOff) {
   EXPECT_EQ(UnderTest->StopTime, StopTime - StopLeeway);
 }
 
-TEST_F(PartitionTest, EmptyMessageIsIgnored) {
-  auto UnderTest = createTestedInstance();
-  Kafka::MockConsumer::PollReturnType PollReturn;
-  PollReturn.first = Kafka::PollStatus::Empty;
-  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
-  UnderTest->pollForMessage();
-  EXPECT_EQ(int(UnderTest->MessagesReceived), 0);
-}
-
 TEST_F(PartitionTest, ActualMessageIsCounted) {
   Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::Message;
@@ -191,9 +182,9 @@ TEST_F(PartitionTest, ErrorMessageIsCountedButThenIgnored) {
   EXPECT_EQ(int(UnderTest->KafkaErrors), 1);
 }
 
-TEST_F(PartitionTest, EndOfPartitionMessageIsIgnored) {
+TEST_F(PartitionTest, TimeOutIsIgnored) {
   Kafka::MockConsumer::PollReturnType PollReturn;
-  PollReturn.first = Kafka::PollStatus::EndOfPartition;
+  PollReturn.first = Kafka::PollStatus::TimedOut;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();

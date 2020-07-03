@@ -107,7 +107,7 @@ public:
   void start() override{};
   std::pair<Kafka::PollStatus, Msg> poll() override {
     if (StoredMessages.empty()) {
-      return {Kafka::PollStatus::Empty, Msg()};
+      return {Kafka::PollStatus::Message, Msg()};
     }
     auto Message = std::move(StoredMessages.front());
     StoredMessages.pop_front();

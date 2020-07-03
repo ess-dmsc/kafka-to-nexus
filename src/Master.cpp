@@ -118,16 +118,8 @@ void Master::moveToNewState(FileWriterState const &NewState) {
   }
 }
 
-std::pair<Kafka::PollStatus, Msg> Master::pollForMessage() {
-  auto KafkaMessage = CmdListener->poll();
-  if (KafkaMessage.first == Kafka::PollStatus::Message) {
-    return KafkaMessage;
-  }
-  return {Kafka::PollStatus::Empty, Msg()};
-}
-
 void Master::run() {
-  auto const KafkaMessage = pollForMessage();
+  auto const KafkaMessage = CmdListener->poll();
   if (KafkaMessage.first == Kafka::PollStatus::Message) {
     Logger->debug("Command received");
     moveToNewState(this->handleCommand(KafkaMessage.second));

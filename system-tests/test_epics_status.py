@@ -37,7 +37,7 @@ def test_ep00(docker_compose):
     sleep(10)
 
     # Stop file writing
-    publish_run_stop_message(producer, job_id)
+    publish_run_stop_message(producer, job_id, stop_time=current_unix_time_ms())
     producer.flush()
 
     filepath = "output-files/output_file_ep00.nxs"

@@ -65,9 +65,6 @@ protected:
                                    "Number of messages received from broker."};
   Metrics::Metric MessagesProcessed{
       "processed", "Number of messages queued up for writing."};
-  Metrics::Metric EndOfPartition{
-      "end_of_partition",
-      "Number of times we reached the end of the partition."};
   Metrics::Metric BadOffsets{"bad_offsets",
                              "Number of messages received with bad offsets.",
                              Metrics::Severity::ERROR};
