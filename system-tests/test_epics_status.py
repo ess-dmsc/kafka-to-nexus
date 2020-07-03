@@ -14,7 +14,7 @@ from streaming_data_types.fbschemas.epics_connection_info_ep00.EventType import 
 
 def test_ep00(docker_compose):
     producer = create_producer()
-    topic = "TEST_epics-connection-status"
+    topic = "TEST_epicsConnectionStatus"
     sleep(10)
 
     # Start file writing
@@ -24,7 +24,6 @@ def test_ep00(docker_compose):
         "output_file_ep00.nxs",
         start_time=current_unix_time_ms(),
     )
-    producer.flush()
     sleep(5)
     first_timestamp = current_unix_time_ms()
     publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, first_timestamp)
@@ -38,7 +37,6 @@ def test_ep00(docker_compose):
 
     # Stop file writing
     publish_run_stop_message(producer, job_id, stop_time=current_unix_time_ms())
-    producer.flush()
 
     filepath = "output-files/output_file_ep00.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:

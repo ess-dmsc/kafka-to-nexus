@@ -7,7 +7,7 @@ from streaming_data_types.logdata_f142 import serialise_f142
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 
 
-def create_producer():
+def create_producer() -> Producer:
     producer_config = {
         "bootstrap.servers": "localhost:9092",
         "message.max.bytes": "20000000",
@@ -38,6 +38,7 @@ def publish_run_start_message(
         service_id=service_id,
     )
     producer.produce(topic, bytes(runstart_message))
+    producer.poll(0)
     producer.flush()
     return job_id
 
@@ -52,6 +53,7 @@ def publish_run_stop_message(
     runstop_message = serialise_6s4t(job_id, service_id=service_id, stop_time=stop_time)
 
     producer.produce(topic, bytes(runstop_message))
+    producer.poll(0)
     producer.flush()
     return job_id
 
@@ -111,6 +113,7 @@ def publish_f142_message(
     )
     producer.produce(topic, f142_message, timestamp=kafka_timestamp)
     producer.poll(0)
+    producer.flush()
 
 
 def publish_ep00_message(
@@ -122,3 +125,5 @@ def publish_ep00_message(
         _millseconds_to_nanoseconds(kafka_timestamp), status, source_name
     )
     producer.produce(topic, ep00_message, timestamp=kafka_timestamp)
+    producer.poll(0)
+    producer.flush()

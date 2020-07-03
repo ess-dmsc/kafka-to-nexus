@@ -2,7 +2,7 @@ version: '2'
 
 services:
   kafka:
-    image: wurstmeister/kafka:1.0.0
+    image: wurstmeister/kafka:2.12-2.5.0
     depends_on:
       - zookeeper
     hostname: kafka
@@ -15,7 +15,7 @@ services:
       KAFKA_MESSAGE_MAX_BYTES: 20000000
       KAFKA_BROKER_ID: 0
       KAFKA_LOG_RETENTION_MS: -1  # keep data forever, required for tests involving fake "historical" data
-      KAFKA_CREATE_TOPICS: "TEST_writerCommand:1:1,TEST_writerCommandMultiple:1:1,TEST_writerCommandLR:1:1,TEST_forwarderConfig:1:1,TEST_forwarderDataLR:1:1,TEST_historicalData1:1:1,TEST_historicalData2:1:1,TEST_historicalData3:1:1,TEST_emptyTopic:1:1,TEST_epics-connection-status:1:1"
+      KAFKA_CREATE_TOPICS: "TEST_writerCommand:1:1,TEST_writerCommandMultiple:1:1,TEST_writerCommandLR:1:1,TEST_forwarderConfig:1:1,TEST_forwarderDataLR:1:1,TEST_historicalData1:1:1,TEST_historicalData2:1:1,TEST_historicalData3:1:1,TEST_emptyTopic:1:1,TEST_epicsConnectionStatus:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
