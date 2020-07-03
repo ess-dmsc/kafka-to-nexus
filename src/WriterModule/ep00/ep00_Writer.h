@@ -14,7 +14,7 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
-  ep00_Writer() = default;
+  ep00_Writer() : WriterModule::Base(false) {}
   ~ep00_Writer() override = default;
 
 private:
