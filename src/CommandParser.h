@@ -7,30 +7,27 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/// \file This file defines the different success and failure status that the
-/// `StreamMaster` and the `Streamer` can incur. These error object have some
-/// utility methods that can be used to test the more common situations.
-
 #pragma once
+
+#include "TimeUtility.h"
 
 #include "URI.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
-#include <chrono>
 
 namespace FileWriter {
+
+struct Msg;
 
 struct StartCommandInfo {
   std::string JobID;
   std::string Filename;
   std::string NexusStructure;
   std::string ServiceID;
-  bool UseSwmr;
-  bool AbortOnStreamFailure;
   uri::URI BrokerInfo{"localhost:9092"};
   std::chrono::milliseconds StartTime{0};
-  std::chrono::milliseconds StopTime{0};
+  time_point StopTime{time_point::max()};
 };
 
 struct StopCommandInfo {
@@ -40,55 +37,23 @@ struct StopCommandInfo {
 };
 
 namespace CommandParser {
-static std::string const StartCommand = "filewriter_new";
-static std::string const StopCommand = "filewriter_stop";
-static std::string const ExitCommand = "filewriter_exit";
-static std::string const StopAllWritingCommand = "file_writer_tasks_clear_all";
-
 /// \brief Extract the information from the start command.
 ///
 /// \param JSONCommand The JSON Command.
 /// \param DefaultStartTime The start time to use if not supplied in the JSON
 /// \return The start information.
 StartCommandInfo extractStartInformation(
-    const nlohmann::json &JSONCommand,
+    Msg const &CommandMessage,
     std::chrono::milliseconds DefaultStartTime = getCurrentTimeStampMS());
 
 /// \brief Extract the information from the stop command.
 ///
 /// \param JSONCommand The JSON Command.
 /// \return The stop information.
-StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand);
+StopCommandInfo extractStopInformation(Msg const &CommandMessage);
 
-/// \brief Extract the command name from the command.
-///
-/// Note: the command is converted to lower-case.
-///
-/// \param JSONCommand The JSON Command.
-/// \return The command name.
-std::string extractCommandName(const nlohmann::json &JSONCommand);
-
-/// \brief Extract the broker from the command.
-///
-/// \param JSONCommand The JSON Command.
-/// \return The broker details.
-uri::URI extractBroker(nlohmann::json const &JSONCommand);
-
-/// \brief Extract the job ID from the command.
-///
-/// \param JSONCommand The JSON Command.
-/// \return The job ID.
-std::string extractJobID(nlohmann::json const &JSONCommand);
-
-/// \brief Extract a value as a time-stamp.
-///
-/// \param Key The key for the value to extract.
-/// \param JSONCommand The JSON Command.
-/// \param DefaultTime The time to use if the key does not exist.
-/// \return The extract (or default) time.
-std::chrono::milliseconds
-extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
-            std::chrono::milliseconds const &DefaultTime);
+bool isStartCommand(Msg const &CommandMessage);
+bool isStopCommand(Msg const &CommandMessage);
 
 /// \brief Extract the specified value.
 ///
@@ -123,5 +88,5 @@ T getOptionalValue(std::string const &Key, nlohmann::json const &JSONCommand,
 
   return Default;
 }
-}
+} // namespace CommandParser
 } // namespace FileWriter

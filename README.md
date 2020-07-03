@@ -1,5 +1,4 @@
 [![Build Status](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/badge/icon)](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/)
-[![codecov](https://codecov.io/gh/ess-dmsc/kafka-to-nexus/branch/master/graph/badge.svg)](https://codecov.io/gh/ess-dmsc/kafka-to-nexus)
 [![DOI](https://zenodo.org/badge/81435658.svg)](https://zenodo.org/badge/latestdoi/81435658)
 
 
@@ -11,34 +10,33 @@ Part of the ESS data streaming pipeline.
 ## Usage
 
 ```
-  -h,--help                   Print this help message and exit
-  --version                   Print application version and exit
-  --commands-json TEXT:FILE   Specify a json file to set config
-  --command-uri URI REQUIRED  <host[:port][/topic]> Kafka broker/topic to listen for commands
-  --status-uri URI            <host[:port][/topic]> Kafka broker/topic to publish status updates on
-  --graylog-logger-address URI
-                              <host:port> Log to Graylog via graylog_logger library
-  -v,--verbosity              Set log message level. Set to 0 - 5 or one of
-                              `Trace`, `Debug`, `Info`, `Warning`, `Error`
-                              or `Critical`. Ex: "-v Debug". Default: `Error`
-  --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which gets prepended to the HDF output filenames in the file write commands
-  --logpid-sleep              
-  --use-signal-handler        
-  --log-file TEXT             Specify file to log to
-  --teamid UINT               
-  --service-id TEXT           Identifier string for this filewriter instance. Otherwise by default a string containing hostname and process id.
-  --status-master-interval UINT=2000
-                              Interval in milliseconds for status updates
-  --list_modules              List registered read and writer parts of file-writing modules and then exit.
-  --streamer-ms-before-start  Streamer option - milliseconds before start time
-  --streamer-ms-after-stop    Streamer option - milliseconds after stop time
-  --streamer-start-time       Streamer option - start timestamp (milliseconds)
-  --streamer-stop-time        Streamer option - stop timestamp (milliseconds)
-  --stream-master-topic-write-interval
-                              Stream-master option - topic write interval (milliseconds)
-  -S,--kafka-config KEY VALUE ...
-                              LibRDKafka options
-  -c,--config-file TEXT       Read configuration from an ini file
+   -h,--help                   Print this help message and exit
+   --version                   Print application version and exit
+   --command-uri URI REQUIRED  <host[:port][/topic]> Kafka broker/topic to listen for commands
+   --status-uri URI REQUIRED   <host[:port][/topic]> Kafka broker/topic to publish status updates on
+   --graylog-logger-address URI
+                               <host:port> Log to Graylog via graylog_logger library
+   -v,--verbosity              Set log message level. Set to 0 - 5 or one of
+                                 `Trace`, `Debug`, `Info`, `Warning`, `Error`
+                                 or `Critical`. Ex: "-v Debug". Default: `Error`
+   --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which gets prepended to the HDF output filenames in the file write commands
+   --logpid-sleep              
+   --use-signal-handler        
+   --log-file TEXT             Specify file to log to
+   --teamid UINT               
+   --service-id TEXT           Identifier string for this filewriter instance. Otherwise by default a string containing hostname and process id.
+   --list_modules              List registered read and writer parts of file-writing modules and then exit.
+   --status-master-interval    Interval in milliseconds for status updates
+   --streamer-ms-before-start  Streamer option - milliseconds before start time
+   --streamer-ms-after-stop    Streamer option - milliseconds after stop time
+   --streamer-start-time       Streamer option - start timestamp (milliseconds)
+   --streamer-stop-time        Streamer option - stop timestamp (milliseconds)
+   --stream-master-topic-write-interval
+                               Stream-master option - topic write interval (milliseconds)
+   -S,--kafka-config KEY VALUE ...
+                               LibRDKafka options
+   -c,--config-file TEXT       Read configuration from an ini file
+ 
 ```
 
 ### Configuration Files
@@ -99,8 +97,9 @@ make
 ```
 
 There are additional CMake flags for adjusting the build:
-* `-DRUN_DOXYGEN=TRUE` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
-* `-DBUILD_TESTS=FALSE` to skip building the unit tests
+* `-DRUN_DOXYGEN=ON` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
+* `-DBUILD_TESTS=OFF` to skip building the unit tests
+* `-DHTML_COVERAGE_REPORT=ON` to generate an html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
 
 ### Running the unit tests
 
@@ -113,7 +112,7 @@ From the build directory:
 ### Running on OSX
 
 When using Conan on OSX, due to the way paths to dependencies are handled,
-the `activate_run.sh` file must be sourced before running the application. The
+the `activate_run.sh` file may need to be sourced before running the application. The
 `deactivate_run.sh` can be sourced to undo the changes afterwards.
 
 ### System tests

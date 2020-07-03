@@ -7,24 +7,23 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <KafkaW/ConsumerFactory.h>
+#include <Kafka/ConsumerFactory.h>
 
 #include "CommandListener.h"
-#include "KafkaW/PollStatus.h"
+#include "Kafka/PollStatus.h"
 #include "Msg.h"
 
 namespace FileWriter {
 
 using std::string;
 
-CommandListener::CommandListener(MainOpt &config) : config(config) {}
+CommandListener::CommandListener(MainOpt &Config) : config(Config) {}
 
 void CommandListener::start() {
-  KafkaW::BrokerSettings BrokerSettings =
+  Kafka::BrokerSettings BrokerSettings =
       config.StreamerConfiguration.BrokerSettings;
-  BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
-  consumer = KafkaW::createConsumer(BrokerSettings, BrokerSettings.Address);
+  consumer = Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
   if (consumer->topicPresent(config.CommandBrokerURI.Topic))
     consumer->addTopic(config.CommandBrokerURI.Topic);
   else {
@@ -37,7 +36,7 @@ void CommandListener::start() {
   }
 }
 
-std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> CommandListener::poll() {
+std::pair<Kafka::PollStatus, Msg> CommandListener::poll() {
   return consumer->poll();
 }
 

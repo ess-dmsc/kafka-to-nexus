@@ -22,10 +22,10 @@ public:
     std::map<std::string, ReaderPtr> &Readers =
         FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    TestData = std::make_unique<char[]>(8);
+    TestData = std::make_unique<uint8_t[]>(8);
   }
   const std::string TestKey{"temp"};
-  std::unique_ptr<char[]> TestData{nullptr};
+  std::unique_ptr<uint8_t[]> TestData{nullptr};
 };
 
 class MsgDummyReader1 : public FlatbufferReader {
@@ -63,7 +63,7 @@ TEST_F(MessageClassTest, Success) {
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   auto CurrentMessage = FlatbufferMessage(TestData.get(), 8);
   EXPECT_TRUE(CurrentMessage.isValid());
-  EXPECT_EQ(CurrentMessage.getTimestamp(), std::uint64_t(42));
+  EXPECT_EQ(CurrentMessage.getTimestamp(), std::int64_t(42));
   EXPECT_EQ(CurrentMessage.getSourceName(), "SomeSourceName");
   EXPECT_EQ(CurrentMessage.size(), size_t(8));
 }

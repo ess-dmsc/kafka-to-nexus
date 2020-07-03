@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "KafkaW/Consumer.h"
+#include "Kafka/Consumer.h"
 #include "MainOpt.h"
 #include "logger.h"
 
@@ -18,18 +18,18 @@ namespace FileWriter {
 /// Check for new commands on the topic, return them to the Master.
 class CommandListener {
 public:
-  explicit CommandListener(MainOpt &config);
-  ~CommandListener() = default;
+  explicit CommandListener(MainOpt &Config);
+  virtual ~CommandListener() = default;
 
   /// Start listening to command messages.
-  void start();
+  virtual void start();
 
   /// Check for new command packets and return one if there is.
-  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll();
+  virtual std::pair<Kafka::PollStatus, Msg> poll();
 
 private:
   MainOpt &config;
-  std::unique_ptr<KafkaW::ConsumerInterface> consumer;
+  std::unique_ptr<Kafka::ConsumerInterface> consumer;
   SharedLogger Logger = getLogger();
 };
 } // namespace FileWriter

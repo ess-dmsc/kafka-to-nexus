@@ -11,3 +11,6 @@ See [CONTRIBUTING.MD](CONTRIBUTING.MD) for more information on code standards et
 
 - [ ] Nominate for code review 
 
+### Reminder
+
+*Changes should be documented in `changes.md`*

@@ -461,7 +461,7 @@ void writeAttrOfSpecifiedType(std::string const &DType,
 /// \param jsv    Json value object of attributes.
 void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              nlohmann::json const &Values) {
-  for (auto It = Values.begin(); It != Values.end(); ++It) {
+  for (auto It = Values.cbegin(); It != Values.cend(); ++It) {
 
     auto const Name = It.key();
     writeScalarAttribute(Node, Name, It.value());
@@ -853,7 +853,7 @@ void checkHDFVersion(SharedLogger const &Logger) {
 }
 
 void HDFFile::init(std::string const &Filename,
-                   nlohmann::json const &NexusStructure, nlohmann::json const &,
+                   nlohmann::json const &NexusStructure,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
   if (std::ifstream(Filename).good()) {
     // File exists already
@@ -865,10 +865,10 @@ void HDFFile::init(std::string const &Filename,
     hdf5::property::FileAccessList fapl;
 
     if (UseHDFSWMR) {
-      H5File =
-          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
-                                           hdf5::file::AccessFlags::SWMR_WRITE,
-                             fcpl, fapl);
+      H5File = hdf5::file::create(Filename,
+                                  hdf5::file::AccessFlags::TRUNCATE |
+                                      hdf5::file::AccessFlags::SWMR_WRITE,
+                                  fcpl, fapl);
       SWMREnabled = true;
     } else {
       H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
@@ -1095,15 +1095,5 @@ void HDFFile::finalize() {
         std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
   }
 }
-
-void HDFFile::SWMRFlush() {
-  auto Now = CLOCK::now();
-  if (Now - SWMRFlushLast > SWMRFlushInterval) {
-    flush();
-    SWMRFlushLast = Now;
-  }
-}
-
-bool HDFFile::isSWMREnabled() const { return SWMREnabled; }
 
 } // namespace FileWriter

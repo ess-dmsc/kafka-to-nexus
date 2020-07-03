@@ -8,13 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FileWriterTask.h"
-#include "EventLogger.h"
 #include "HDFFile.h"
 #include "Source.h"
 #include "helper.h"
 #include "logger.h"
 #include <atomic>
-#include <thread>
 
 namespace FileWriter {
 
@@ -22,7 +20,7 @@ namespace {
 
 using nlohmann::json;
 
-json hdf_parse(std::string const &Structure, SharedLogger Logger) {
+json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
   try {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
@@ -33,23 +31,15 @@ json hdf_parse(std::string const &Structure, SharedLogger Logger) {
 }
 } // namespace
 
-std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
+std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
-  Demuxers.clear();
   try {
     File.close();
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Close, ServiceId, JobId,
-               "File closed");
-    }
   } catch (std::exception const &E) {
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Fail, ServiceId, JobId,
-               fmt::format("Exception while finishing FileWriterTask: {}",
-                           E.what()));
-    }
+    Logger->error(fmt::format(
+        "Exception while closing file in ~FileWriterTask: {}", E.what()));
   }
 }
 
@@ -63,35 +53,17 @@ void FileWriterTask::setFilename(std::string const &Prefix,
 }
 
 void FileWriterTask::addSource(Source &&Source) {
-  if (swmrEnabled()) {
-    Source.HDFFileForSWMR = &File;
-  }
-
-  // If source already exists then replace
-  for (auto &Demux : Demuxers) {
-    // cppcheck-suppress useStlAlgorithm
-    if (Demux.topic() == Source.topic()) {
-      Demux.add_source(std::move(Source));
-      return;
-    }
-  }
-
-  // Add new source
-  Demuxers.emplace_back(Source.topic());
-  auto &Demux = Demuxers.back();
-  Demux.add_source(std::move(Source));
+  SourceToModuleMap.push_back(std::move(Source));
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
-                                   std::string const &ConfigFile,
                                    std::vector<StreamHDFInfo> &HdfInfo,
                                    bool UseSwmr) {
   auto NexusStructureJson = hdf_parse(NexusStructure, Logger);
-  auto ConfigFileJson = hdf_parse(ConfigFile, Logger);
 
   try {
     Logger->info("Creating HDF file {}", Filename);
-    File.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo, UseSwmr);
+    File.init(Filename, NexusStructureJson, HdfInfo, UseSwmr);
     // The HDF file is closed and re-opened to (optionally) support SWMR and
     // parallel writing.
     closeFile();
@@ -109,41 +81,19 @@ void FileWriterTask::reopenFile() {
   try {
     File.reopen(Filename);
   } catch (std::exception const &E) {
-    Logger->error("Exception: {}", E.what());
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Error, ServiceId, JobId,
-               fmt::format("Exception: {}", E.what()));
-    }
+    Logger->error("Exception when reopening file: {}", E.what());
     throw;
   }
 }
 
 std::string FileWriterTask::jobID() const { return JobId; }
 
-hdf5::node::Group FileWriterTask::hdfGroup() { return File.H5File.root(); }
-
-bool FileWriterTask::swmrEnabled() const { return File.isSWMREnabled(); }
+hdf5::node::Group FileWriterTask::hdfGroup() const {
+  return File.H5File.root();
+}
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
-json FileWriterTask::stats() const {
-  auto Topics = json::object();
-  for (auto &Demux : Demuxers) {
-    auto DemuxStats = json::object();
-    DemuxStats["messages_processed"] = Demux.messages_processed.load();
-    DemuxStats["error_message_too_small"] =
-        Demux.error_message_too_small.load();
-    DemuxStats["error_no_flatbuffer_reader"] =
-        Demux.error_no_flatbuffer_reader.load();
-    DemuxStats["error_no_source_instance"] =
-        Demux.error_no_source_instance.load();
-    Topics[Demux.topic()] = DemuxStats;
-  }
-  auto FWT = json::object();
-  FWT["filename"] = Filename;
-  FWT["topics"] = Topics;
-  return FWT;
-}
 std::string FileWriterTask::filename() const { return Filename; }
 
 } // namespace FileWriter

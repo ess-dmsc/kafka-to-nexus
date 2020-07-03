@@ -7,98 +7,121 @@
 // Screaming Udder!                              https://esss.se
 
 /// \file This file defines the different success and failure status that the
-/// `StreamMaster` and the `Streamer` can incur. These error object have some
-/// utility methods that can be used to test the more common situations.
+/// `StreamController` and the `Streamer` can incur. These error object have
+/// some utility methods that can be used to test the more common situations.
+
+#include <6s4t_run_stop_generated.h>
+#include <pl72_run_start_generated.h>
+#include <sstream>
 
 #include "CommandParser.h"
+#include "Msg.h"
+
+namespace {
+void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
+  std::stringstream Errors;
+  if (RunStartData->job_id() == nullptr ||
+      RunStartData->job_id()->size() == 0) {
+    Errors << "Job ID missing, this field is required\n";
+  }
+
+  if (RunStartData->nexus_structure() == nullptr ||
+      RunStartData->nexus_structure()->size() == 0) {
+    Errors << "NeXus Structure missing, this field is "
+              "required\n";
+  }
+
+  if (RunStartData->filename() == nullptr ||
+      RunStartData->filename()->size() == 0) {
+    Errors << "Filename missing, this field is required\n";
+  }
+
+  if (RunStartData->broker() == nullptr ||
+      RunStartData->broker()->size() == 0) {
+    Errors << "Broker missing, this field is required\n";
+  } else {
+    try {
+      uri::URI(RunStartData->broker()->str());
+    } catch (const std::runtime_error &URIError) {
+      Errors << "Unable to parse broker address\n";
+    }
+  }
+
+  std::string const ErrorsString = Errors.str();
+  if (!ErrorsString.empty()) {
+    throw std::runtime_error(fmt::format(
+        "Errors encountered parsing run start message:\n{}", ErrorsString));
+  }
+}
+} // namespace
 
 namespace FileWriter {
 namespace CommandParser {
 
 StartCommandInfo
-extractStartInformation(const nlohmann::json &JSONCommand,
+extractStartInformation(Msg const &CommandMessage,
                         std::chrono::milliseconds DefaultStartTime) {
-  if (extractCommandName(JSONCommand) != StartCommand) {
-    throw std::runtime_error("Command was not a start command");
-  }
-
   StartCommandInfo Result;
 
-  // Required items
-  Result.JobID = extractJobID(JSONCommand);
-  Result.NexusStructure =
-      getRequiredValue<nlohmann::json>("nexus_structure", JSONCommand).dump();
-  auto FileAttributes =
-      getRequiredValue<nlohmann::json>("file_attributes", JSONCommand);
-  Result.Filename = getRequiredValue<std::string>("file_name", FileAttributes);
-  Result.BrokerInfo = extractBroker(JSONCommand);
+  auto const RunStartData = GetRunStart(CommandMessage.data());
 
-  // Optional items
-  Result.StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
-  Result.StopTime =
-      extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  Result.UseSwmr = getOptionalValue<bool>("use_hdf_swmr", JSONCommand, true);
-  Result.AbortOnStreamFailure = getOptionalValue<bool>(
-      "abort_on_uninitialised_stream", JSONCommand, false);
-  Result.ServiceID =
-      getOptionalValue<std::string>("service_id", JSONCommand, "");
+  checkRequiredFieldsArePresent(RunStartData);
+
+  if (RunStartData->start_time() > 0) {
+    Result.StartTime = std::chrono::milliseconds{RunStartData->start_time()};
+  } else {
+    Result.StartTime = DefaultStartTime;
+  }
+  if (RunStartData->stop_time() != 0) {
+    Result.StopTime =
+        time_point(std::chrono::milliseconds{RunStartData->stop_time()});
+  }
+  Result.NexusStructure = RunStartData->nexus_structure()->str();
+  Result.JobID = RunStartData->job_id()->str();
+  if (RunStartData->service_id() != nullptr) {
+    Result.ServiceID = RunStartData->service_id()->str();
+  }
+  Result.BrokerInfo = uri::URI(RunStartData->broker()->str());
+  Result.Filename = RunStartData->filename()->str();
 
   return Result;
 }
 
-StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand) {
-  if (extractCommandName(JSONCommand) != StopCommand) {
-    throw std::runtime_error("Command was not a stop command");
+StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
+  auto const RunStopData = GetRunStop(CommandMessage.data());
+
+  if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {
+    throw std::runtime_error("Errors encountered parsing run stop message:\n"
+                             "Job ID missing, this field is required");
   }
 
   StopCommandInfo Result;
-
-  // Required items
-  Result.JobID = extractJobID(JSONCommand);
-
-  // Optional items
-  Result.StopTime =
-      extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  Result.ServiceID =
-      getOptionalValue<std::string>("service_id", JSONCommand, "");
+  Result.JobID = RunStopData->job_id()->str();
+  Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
+  if (RunStopData->service_id() != nullptr) {
+    Result.ServiceID = RunStopData->service_id()->str();
+  }
 
   return Result;
 }
 
-uri::URI extractBroker(nlohmann::json const &JSONCommand) {
-  std::string Broker = getRequiredValue<std::string>("broker", JSONCommand);
-  try {
-    uri::URI BrokerInfo{Broker};
-    return BrokerInfo;
-  } catch (std::runtime_error &e) {
-    throw std::runtime_error(
-        fmt::format("Unable to parse broker {} in command message", Broker));
-  }
+bool isStartCommand(Msg const &CommandMessage) {
+  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          RunStartIdentifier());
+
+  // Ideally we would run Verify on the buffer, but there is currently a problem
+  // making verifiable flatbuffer messages from python (Nicos).
+  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
-std::string extractJobID(nlohmann::json const &JSONCommand) {
-  auto JobID = getRequiredValue<std::string>("job_id", JSONCommand);
-  if (JobID.empty()) {
-    throw std::runtime_error("Missing key job_id from command JSON");
-  }
-  return JobID;
+bool isStopCommand(Msg const &CommandMessage) {
+  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          RunStopIdentifier());
+
+  // Ideally we would run Verify on the buffer, but there is currently a problem
+  // making verifiable flatbuffer messages from python (Nicos).
+  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
-std::chrono::milliseconds
-extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
-            std::chrono::milliseconds const &DefaultTime) {
-  auto RawTime = getOptionalValue<uint64_t>(Key, JSONCommand, 0);
-  if (RawTime > 0) {
-    return std::chrono::milliseconds{RawTime};
-  } else {
-    return DefaultTime;
-  }
-}
-
-std::string extractCommandName(const nlohmann::json &JSONCommand) {
-  auto Cmd = getRequiredValue<std::string>("cmd", JSONCommand);
-  std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(), ::tolower);
-  return Cmd;
-}
-}
-}
+} // namespace CommandParser
+} // namespace FileWriter

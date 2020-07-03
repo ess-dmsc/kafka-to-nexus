@@ -9,10 +9,9 @@
 
 #pragma once
 
-#include "DemuxTopic.h"
-#include "KafkaW/ProducerTopic.h"
 #include "Source.h"
 #include "json.h"
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -31,16 +30,13 @@ public:
 /// It contains the list of `Source` and `DemuxTopic`
 /// and makes those available to the FileMaster and `Streamer`.
 /// Created by `Master` on command message and passed to FileMaster in vector.
-class FileWriterTask final {
+class FileWriterTask {
 public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  /// \param StatusProducer_ The status producer.
-  FileWriterTask(std::string TaskID,
-                 std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
-      : ServiceId(std::move(TaskID)),
-        StatusProducer(std::move(StatusProducerPtr)), Logger(getLogger()){};
+  explicit FileWriterTask(std::string TaskID)
+      : ServiceId(std::move(TaskID)), Logger(getLogger()){};
 
   /// Destructor.
   ~FileWriterTask();
@@ -48,11 +44,9 @@ public:
   /// Initialise the HDF file.
   ///
   /// \param NexusStructure The structure of the NeXus file.
-  /// \param ConfigFile The configuration information.
   /// \param HdfInfo The HDF information for the stream.
   /// \param UseSwmr Whether to use SWMR.
   void InitialiseHdf(std::string const &NexusStructure,
-                     std::string const &ConfigFile,
                      std::vector<StreamHDFInfo> &HdfInfo, bool UseSwmr);
 
   /// \brief  Set the `JobID`.
@@ -74,19 +68,14 @@ public:
   /// \brief Get the list of demuxers.
   ///
   /// \return The demux topics.
-  std::vector<DemuxTopic> &demuxers();
+  std::vector<Source> &sources();
 
   /// \brief  Get the job ID of the file being written.
   ///
   /// \return The job ID.
   std::string jobID() const;
 
-  /// \brief  Return statistics about this job as JSON.
-  nlohmann::json stats() const;
-
-  /// \brief  Name of the file being written.
-  ///
-  /// Important for reopening of files.
+  /// \brief  Get the name of the file being written.
   ///
   /// \return The file name.
   std::string filename() const;
@@ -94,21 +83,15 @@ public:
   /// Get the group for the HDF file.
   ///
   /// \return The group.
-  hdf5::node::Group hdfGroup();
-
-  /// Get whether SWMR is enabled for this task.
-  ///
-  /// \return true if enabled.
-  bool swmrEnabled() const;
+  hdf5::node::Group hdfGroup() const;
 
 private:
   std::string Filename;
-  std::vector<DemuxTopic> Demuxers;
+  std::vector<Source> SourceToModuleMap;
   void closeFile();
   void reopenFile();
   std::string JobId;
   std::string ServiceId;
-  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   HDFFile File;
   SharedLogger Logger;
 };

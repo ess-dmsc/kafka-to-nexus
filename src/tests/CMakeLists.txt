@@ -1,70 +1,78 @@
-find_package(Trompeloeil REQUIRED)
+find_package(trompeloeil REQUIRED)
+
+get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
+
+add_subdirectory(WriterModule)
+add_subdirectory(AccessMessageMetadata)
+add_subdirectory(NeXusDataset)
 
 set(UnitTests_SRC
         UnitTests.cpp
         HDFFileAttributesTests.cpp
         helpers/HDFFileTestHelper.cpp
+        helpers/RunStartStopHelpers.cpp
         JsonTests.cpp
-        StatusTests.cpp
         URITests.cpp
-        StatusWriterTests.cpp
         CommandHandlerTests.cpp
-        FastSampleEnvironmentWriterTests.cpp
-        EventWriterTests.cpp
-        NeXusDatasetTests.cpp
-        ReaderRegistrationTests.cpp
-        WriterRegistrationTests.cpp
-        TemplateWriterTests.cpp
-        DemuxerTests.cpp
         MessageTests.cpp
-        StreamerTests.cpp
-        Schema_f142Tests.cpp
-        AreaDetectorTests.cpp
-        EventLoggerTests.cpp
-        MainOptTests.cpp
-        EventHistogramWriterTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
         ProducerTests.cpp
         ProducerDeliveryTests.cpp
-        helpers/ev42_synth.cpp
-        helpers/f142_synth.cpp
         ConsumerTests.cpp
-        ChopperTimeStampWriterTests.cpp
-        NicosCacheWriterTests.cpp
-        EpicsConnectionStatusTests.cpp
-        StreamMasterTests.cpp
-        StreamsControllerTests.cpp
+        StreamControllerTests.cpp
         CommandParserTests.cpp
-        ExtensibleDatasetTests.cpp
-        )
+        Metrics/MetricsRegistrarTest.cpp
+        Metrics/MetricTest.cpp
+        Metrics/CarbonConnectionTest.cpp
+        Metrics/CarbonTestServer.cpp
+        Metrics/MetricsReporterTest.cpp
+        Metrics/LogSinkTest.cpp
+        MasterTests.cpp
+        MetaDataQueryTests.cpp
+        Stream/PartitionFilterTest.cpp
+        Stream/MessageWriterTests.cpp
+        Stream/SourceFilterTest.cpp
+        Stream/PartitionTests.cpp
+        Stream/TopicTests.cpp
+        $<TARGET_OBJECTS:writer_module>
+        $<TARGET_OBJECTS:fb_metadata>
+        ThreadedExecutorTests.cpp
+        $<TARGET_OBJECTS:NeXusDatasetTests>
+        StatusReporterTests.cpp
+        helpers/StatusHelpers.cpp
+    )
 
 set(UnitTests_INC
-        StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
-        helpers/ev42_synth.h
-        helpers/f142_synth.h
-        helpers/KafkaWMocks.h
-        helpers/FakeStreamMaster.h
-        )
+        helpers/RdKafkaMocks.h
+        helpers/KafkaMocks.h
+        helpers/FakeStreamController.h
+        helpers/RunStartStopHelpers.h
+        Metrics/CarbonTestServer.h
+        Metrics/MockSink.h
+        Metrics/MockReporter.h
+        helpers/SetExtractorModule.h
+        helpers/StatusHelpers.h
+   )
 
 add_executable(UnitTests
         ${UnitTests_SRC}
         ${UnitTests_INC}
+        $<TARGET_OBJECTS:NeXusDataset>
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         ${WRITER_MODULES}
+        ${FB_METADATA_EXTRACTORS}
         )
 
-add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
-target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
+target_include_directories(UnitTests PRIVATE ${path_include_common} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(UnitTests
+        trompeloeil::trompeloeil
         ${libraries_common}
-        fmt::fmt
         ${CONAN_LIBS_GTEST}
         )
 
-get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
 
 enable_testing()

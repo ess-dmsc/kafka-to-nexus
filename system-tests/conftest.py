@@ -127,18 +127,9 @@ def build_filewriter_image(request):
     if request.config.getoption(LOCAL_BUILD) is None:
         client = docker.from_env()
         print("Building Filewriter image", flush=True)
-        build_args = {}
-        if "http_proxy" in os.environ:
-            build_args["http_proxy"] = os.environ["http_proxy"]
-        if "https_proxy" in os.environ:
-            build_args["https_proxy"] = os.environ["https_proxy"]
-        if "local_conan_server" in os.environ:
-            build_args["local_conan_server"] = os.environ["local_conan_server"]
-        image, logs = client.images.build(
-            path="../", tag="kafka-to-nexus:latest", rm=False, buildargs=build_args
-        )
-        for item in logs:
-            print(item, flush=True)
+        from create_filewriter_image import create_filewriter_image
+
+        create_filewriter_image()
 
 
 def run_containers(cmd, options):
@@ -163,12 +154,14 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     if local_path is not None:
         # Launch local build of file writer
         full_path_of_file_writer_exe = os.path.join(local_path, "bin", "kafka-to-nexus")
+        log_file = open("logs/file-writer-logs.txt", "w")
         proc = Popen(
             [
                 full_path_of_file_writer_exe,
                 "-c",
                 "./config-files/local_file_writer_config.ini",
-            ]
+            ],
+            stdout=log_file,
         )
         if wait_for_debugger:
             proc.send_signal(
@@ -264,10 +257,6 @@ def docker_compose(request):
     options = common_options
     if request.config.getoption(LOCAL_BUILD) is None:
         options["--file"] = ["docker-compose.yml"]
-    else:
-        # Only run the producer via docker-compose, not the file writer image,
-        # as we're using a local build of the file writer
-        options["--file"] = ["docker-compose-producer.yml"]
     return build_and_run(
         options,
         request,
@@ -298,10 +287,6 @@ def docker_compose_stop_command(request):
     options = common_options
     if request.config.getoption(LOCAL_BUILD) is None:
         options["--file"] = ["docker-compose.yml"]
-    else:
-        # Only run the producer via docker-compose, not the file writer image,
-        # as we're using a local build of the file writer
-        options["--file"] = ["docker-compose-producer.yml"]
     return build_and_run(
         options,
         request,

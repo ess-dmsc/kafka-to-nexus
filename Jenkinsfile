@@ -7,17 +7,16 @@ project = "kafka-to-nexus"
 
 // 'no_graylog' builds code with plain spdlog conan package instead of ess-dmsc spdlog-graylog.
 // It fails to build in case graylog functionality was used without prior checking if graylog was available.
-clangformat_os = "debian9"
-test_and_coverage_os = "centos7"
+clangformat_os = "ubuntu1804"
+test_and_coverage_os = "ubuntu1804"
 release_os = "centos7-release"
 no_graylog = "centos7-no_graylog"
 
 container_build_nodes = [
-  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
-  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
-  'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
-  'debian9': ContainerBuildNode.getDefaultContainerBuildNode('debian9'),
-  'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804')
+  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804-gcc8'),
+  'alpine': ContainerBuildNode.getDefaultContainerBuildNode('alpine') // gcc 9.2
 ]
 
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
@@ -28,7 +27,7 @@ def num_artifacts_to_keep
 if (env.BRANCH_NAME == 'master') {
   num_artifacts_to_keep = '5'
 } else {
-  num_artifacts_to_keep = '1'
+  num_artifacts_to_keep = '2'
 }
 
 // Set number of old builds to keep.
@@ -56,6 +55,16 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage
 
   pipeline_builder.stage("${container.key}: Dependencies") {
+    if (container.key == "alpine") {
+      // Dirty hack to override flatbuffers/1.11.0 with 1.10 as a bug means 1.11 doesn't build on alpine
+      // Fixed at HEAD, so can be removed when flatbuffers 1.12 is released
+      // Explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
+      container.sh """
+        sed -i '10iflatbuffers/1.10.0@google/stable' ${pipeline_builder.project}/conan/conanfile.txt
+        conan install "boost_build/1.69.0@bincrafters/stable" --build
+      """
+    }
+
     def conan_remote = "ess-dmsc-local"
     if (container.key == no_graylog) {
       container.sh """
@@ -82,14 +91,14 @@ builders = pipeline_builder.createBuilders { container ->
     if (container.key != release_os && container.key != no_graylog) {
       def coverage_on
       if (container.key == test_and_coverage_os) {
-        coverage_on = '-DCOV=1'
+        coverage_on = '-DCOV=ON'
       } else {
         coverage_on = ''
       }
 
       def doxygen_on
       if (container.key == clangformat_os) {
-        doxygen_on = '-DRUN_DOXYGEN=TRUE'
+        doxygen_on = '-DRUN_DOXYGEN=ON'
       } else {
         doxygen_on = ''
       }
@@ -97,16 +106,25 @@ builders = pipeline_builder.createBuilders { container ->
       container.sh """
         cd build
         . ./activate_run.sh
-        cmake ${coverage_on} ${doxygen_on} ../${pipeline_builder.project}
+        cmake ${coverage_on} ${doxygen_on} -GNinja ../${pipeline_builder.project}
       """
     } else {
+      def graylog_cmake_option
+      if (container.key == no_graylog) {
+        graylog_cmake_option = '-DUSE_GRAYLOG_LOGGER=OFF'
+      } else {
+        graylog_cmake_option = '-DUSE_GRAYLOG_LOGGER=ON'
+      }
+
       container.sh """
         cd build
         . ./activate_run.sh
         cmake \
+          -GNinja \
           -DCMAKE_BUILD_TYPE=Release \
           -DCONAN=MANUAL \
           -DCMAKE_SKIP_RPATH=FALSE \
+          ${graylog_cmake_option} \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
           -DBUILD_TESTS=FALSE \
@@ -119,40 +137,52 @@ builders = pipeline_builder.createBuilders { container ->
     container.sh """
     cd build
     . ./activate_run.sh
-    make -j4 all VERBOSE=1
+    ninja all
     """
   }  // stage
 
   pipeline_builder.stage("${container.key}: Test") {
     // env.CHANGE_ID is set for pull request builds.
-    if (container.key == test_and_coverage_os && !env.CHANGE_ID) {
+    if (container.key == test_and_coverage_os) {
       def test_output = "TestResults.xml"
       container.sh """
         cd build
         . ./activate_run.sh
         ./bin/UnitTests -- --gtest_output=xml:${test_output}
-        make coverage
-        lcov --directory . --capture --output-file coverage.info
-        lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
+        ninja coverage
       """
 
       container.copyFrom('build', '.')
       junit "build/${test_output}"
 
-      withCredentials([
-        string(
-          credentialsId: 'kafka-to-nexus-codecov-token',
-          variable: 'TOKEN'
-        )
-      ]) {
-        container.sh """
-          cd ${pipeline_builder.project}
-          export WORKSPACE='.'
-          export JENKINS_URL=${JENKINS_URL}
-          python3.6 -m pip install --user codecov
-          python3.6 -m codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.info
-        """
-      }  // withCredentials
+      step([
+          $class: 'CoberturaPublisher',
+          autoUpdateHealth: true,
+          autoUpdateStability: true,
+          coberturaReportFile: 'build/coverage.xml',
+          failUnhealthy: false,
+          failUnstable: false,
+          maxNumberOfBuilds: 0,
+          onlyStable: false,
+          sourceEncoding: 'ASCII',
+          zoomCoverageChart: true
+      ])
+
+      if (env.CHANGE_ID) {
+        coverage_summary = sh (
+            script: "sed -n -e '/^TOTAL/p' build/coverage.txt",
+            returnStdout: true
+        ).trim()
+
+        def repository_url = scm.userRemoteConfigs[0].url
+        def repository_name = repository_url.replace("git@github.com:","").replace(".git","").replace("https://github.com/","")
+        def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
+
+        withCredentials([string(credentialsId: 'cow-bot-token', variable: 'GITHUB_TOKEN')]) {
+          sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${env.CHANGE_ID}/comments\""
+        }
+      }
+
     } else if (container.key != release_os && container.key != no_graylog) {
       def test_dir
       test_dir = 'bin'
@@ -193,7 +223,6 @@ builders = pipeline_builder.createBuilders { container ->
       try {
         // Do black format of python scripts
         container.sh """
-          python3.6 -m pip install --user black
           /home/jenkins/.local/bin/black --version
           cd ${project}
           /home/jenkins/.local/bin/black system-tests
@@ -243,7 +272,7 @@ builders = pipeline_builder.createBuilders { container ->
         container.sh """
           cd build
           pwd
-          make docs 2> ${test_output}
+          ninja docs 2> ${test_output}
         """
         container.copyFrom("build/${test_output}", '.')
         archiveArtifacts "${test_output}"
@@ -334,7 +363,7 @@ def get_macos_pipeline() {
           }
 
           try {
-            sh "make -j4 all UnitTests VERBOSE=1"
+            sh "make -j4 all UnitTests"
             sh ". ./activate_run.sh && ./bin/UnitTests"
           } catch (e) {
             failure_function(e, 'MacOSX / build+test failed')

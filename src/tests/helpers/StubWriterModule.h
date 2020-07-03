@@ -9,9 +9,11 @@
 
 #pragma once
 #include "FlatbufferMessage.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 
-class StubWriterModule : public FileWriter::HDFWriterModule {
+using WriterModule::InitResult;
+
+class StubWriterModule : public WriterModule::Base {
 public:
   void parse_config(std::string const & /*ConfigurationStream*/) override {}
   InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/,
@@ -22,5 +24,4 @@ public:
     return InitResult::OK;
   }
   void write(FileWriter::FlatbufferMessage const & /*Message*/) override {}
-  std::int32_t close() override { return 0; }
 };

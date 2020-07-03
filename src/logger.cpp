@@ -14,7 +14,6 @@
 #include <string>
 #ifdef HAVE_GRAYLOG_LOGGER
 #include <graylog_logger/GraylogInterface.hpp>
-#include <graylog_logger/Log.hpp>
 #include <spdlog/sinks/graylog_sink.h>
 #endif
 
@@ -49,7 +48,7 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
   ConsoleSink->set_pattern("[%H:%M:%S.%f] [%l] [processID: %P]: %v");
   sinks.push_back(ConsoleSink);
   auto combined_logger = std::make_shared<spdlog::logger>(
-      "filewriterlogger", begin(sinks), end(sinks));
+      "filewriterlogger", cbegin(sinks), cend(sinks));
   spdlog::register_logger(combined_logger);
   combined_logger->set_level(LoggingLevel);
   combined_logger->flush_on(spdlog::level::err);

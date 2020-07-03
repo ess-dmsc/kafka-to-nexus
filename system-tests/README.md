@@ -6,6 +6,8 @@ It uses Docker containers to create containerised instances of Kafka and other c
 
 ### Usage
 
+Requires Python 3.6+.
+
 [optional] Set up a Python virtual environment and activate it (see [here](https://virtualenv.pypa.io/en/stable/))
 
 * Install Docker
@@ -14,10 +16,15 @@ It uses Docker containers to create containerised instances of Kafka and other c
 
 * Stop and remove any containers that may interfere with the system tests, e.g IOC or Kafka containers and containers from previous runs. To stop and remove all containers use `docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)`
 
+* If you have a local conan server then set environment variable `local_conan_server=<ADDRESS OF SERVER>`, if there are binaries for conan packages on the server this makes a huge difference in time taken to build the file writer docker image.
+
 * Run `python -m pytest -s .` from the `system-tests/` directory
 
 * Optionally use `--local-build <PATH_TO_BUILD_DIR>` to run against a local build of the file writer rather than rebuilding in a docker container. Note that the build directory is the one containing the `bin` directory.
-Can also use `--wait-to-attach-debugger` to cause the system tests to display the process ID of the file writer and give opportunity for you to attach a debugger before continuing.
+
+* To run a single test, use the `-k` argument (e.g.) `python -m pytest -s . -k 'test_two_different_writer_modules_with_same_flatbuffer_id'`.
+
+* Can also use `--wait-to-attach-debugger true` to cause the system tests to display the process ID of the file writer and give opportunity for you to attach a debugger before continuing.
 
 Note: these tests may take up to 30 minutes to run.
 
@@ -36,6 +43,15 @@ In some tests, command messages in `JSON` form are sent to Kafka to change the c
 Most tests check the NeXus file created by the file-writer contains the correct static and streamed data, however, some tests instead test that the status of the file writer matches expectation, by consuming status messages from Kafka.
 
 Log files are placed in the `logs` folder in `system-tests` provided that the `ini` file is using the `--log-file` flag and the docker-compose file mounts the `logs` directory.
+
+#### *kafka-to-nexus* docker image
+For performance reasons the docker image containing the filewriter is generated using a Python script (*create\_filewriter\_image.py*) rather than a Dockerfile. By default, this script will leave behind a container which can be re-used by the script for, relatively speaking, quickly generating a new image. If you for whatever reason want a smaller docker image, you can run the script for generating the image like this:
+
+```
+python create_filewriter_image.py --do-cleanup
+```
+
+Note that this will delete the container when it is done and thus require more time next time it is executed.
 
 ### Creating tests
 

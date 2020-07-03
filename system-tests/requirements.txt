@@ -1,7 +1,8 @@
-pytest
-confluent-kafka
-docker-compose
-docker
+pytest>=4.3.0
+confluent-kafka>=0.11.5
+docker-compose>=1.20.0
+docker>=3.4.1
 h5py>=2.10.0
-flatbuffers
-black
+flatbuffers>=1.11
+black==19.3b0
+ess-streaming_data_types>=0.8.0

@@ -31,6 +31,8 @@ struct URI {
   /// contains `host:port`.
   std::string HostPort;
 
+  std::string Host;
+
   /// \brief The port number if specified, or zero to indicate that the port is
   /// not specified.
   uint32_t Port = 0;

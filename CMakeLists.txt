@@ -3,30 +3,57 @@ project("kafka-to-nexus")
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+set(SRC_CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH ${SRC_CMAKE_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
-include(${CMAKE_MODULE_PATH}/Versioning.cmake)
+include(${SRC_CMAKE_MODULE_PATH}/Versioning.cmake)
 set_version()
 set(VERSION_INCLUDE_DIR ${CMAKE_BINARY_DIR}/version)
 create_version_header(
-  ${CMAKE_MODULE_PATH}/templates/Version.h.in
+  ${SRC_CMAKE_MODULE_PATH}/templates/Version.h.in
   ${VERSION_INCLUDE_DIR}/Version.h
 )
 
+# Extra warnings and treat warnings as errors
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
-if(CMAKE_COMPILER_IS_GNUCXX AND COV)
+set(HTML_COVERAGE_REPORT OFF CACHE BOOL "Generate test coverage report as html, find in <BUILD_DIR>/coverage/index.html")
+if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
   include(CodeCoverage)
-  setup_target_for_coverage(coverage UnitTests coverage)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_COVERAGE}")
+  append_coverage_compiler_flags()
+  # Exclude tests and Metric sink implementations that do network IO from test coverage
+  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log* src/WriterModule/f142_test/)
+  if (HTML_COVERAGE_REPORT)
+    setup_target_for_coverage_gcovr_html(NAME coverage
+                                         EXECUTABLE UnitTests
+                                         EXCLUDE ${COVERAGE_EXCLUDE}
+                                         DEPENDENCIES UnitTests)
+  else()
+    setup_target_for_coverage_gcovr_xml(NAME coverage
+                                        EXECUTABLE UnitTests
+                                        EXCLUDE ${COVERAGE_EXCLUDE}
+                                        DEPENDENCIES UnitTests)
+  endif()
+endif()
+
+# Use gold linker if available on system (it is faster than default GNU linker)
+if (UNIX AND NOT APPLE)
+  execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=gold -Wl,--version ERROR_QUIET OUTPUT_VARIABLE ld_version)
+  if ("${ld_version}" MATCHES "GNU gold")
+    message(STATUS "Using gold linker")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
+  endif()
 endif()
 
 set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
+set(CONAN_FILE "conanfile.txt" CACHE STRING "Name of the conanfile to use, must be placed in the project's conan directory")
 set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
 
 if(${CONAN} MATCHES "AUTO")
-  include(${CMAKE_MODULE_PATH}/conan.cmake)
-  conan_cmake_run(CONANFILE conan/conanfile.txt
+  include(${SRC_CMAKE_MODULE_PATH}/conan.cmake)
+  conan_cmake_run(CONANFILE conan/${CONAN_FILE}
           PROFILE ${CONAN_PROFILE}
           BASIC_SETUP ${OUTPUT_DIRS}
           BUILD_TYPE "None"
@@ -39,7 +66,9 @@ elseif(${CONAN} MATCHES "MANUAL")
   else()
     message(FATAL_ERROR "CONAN set to MANUAL but no file named conanbuildinfo.cmake found in build directory")
   endif()
-elseif(NOT ${CONAN} MATCHES "DISABLE")
+elseif(${CONAN} MATCHES "DISABLE")
+  message(WARNING "Conan is disabled so you will need to put your own cmake find modules in the project's \"cmake\" directory")
+else()
   message(FATAL_ERROR "Unrecognised option for CONAN, use AUTO, MANUAL or DISABLE")
 endif()
 

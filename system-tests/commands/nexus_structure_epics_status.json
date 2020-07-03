@@ -1,0 +1,18 @@
+{
+  "children": [
+    {
+      "type": "group",
+      "name": "EpicsConnectionStatus",
+      "children": [
+        {
+          "type": "stream",
+          "stream": {
+            "topic": "TEST_epicsConnectionStatus",
+            "source": "SIMPLE:DOUBLE",
+            "writer_module": "ep00"
+          }
+        }
+      ]
+    }
+  ]
+}

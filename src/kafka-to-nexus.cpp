@@ -8,17 +8,23 @@
 // Screaming Udder!                              https://esss.se
 
 #include "CLIOptions.h"
+#include "CommandListener.h"
 #include "FlatbufferReader.h"
-#include "HDFWriterModule.h"
+#include "GetHostNameAndPID.h"
+#include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
-#include "URI.h"
+#include "Metrics/CarbonSink.h"
+#include "Metrics/LogSink.h"
+#include "Metrics/Registrar.h"
+#include "Metrics/Reporter.h"
+#include "Status/StatusInfo.h"
+#include "Status/StatusReporter.h"
 #include "Version.h"
+#include "WriterRegistrar.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
 #include <csignal>
-#include <cstdio>
-#include <cstdlib>
 #include <string>
 
 // These should only be visible in this translation unit
@@ -30,13 +36,35 @@ void signal_handler(int Signal) {
   SignalId = Signal;
 }
 
+std::unique_ptr<Status::StatusReporter>
+createStatusReporter(MainOpt const &MainConfig,
+                     std::string const &ApplicationName,
+                     std::string const &ApplicationVersion) {
+  Kafka::BrokerSettings BrokerSettings;
+  BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
+  auto StatusProducer = std::make_shared<Kafka::Producer>(BrokerSettings);
+  auto StatusProducerTopic = std::make_unique<Kafka::ProducerTopic>(
+      StatusProducer, MainConfig.KafkaStatusURI.Topic);
+  auto const StatusInformation =
+      Status::ApplicationStatusInfo{MainConfig.StatusMasterIntervalMS,
+                                    ApplicationName,
+                                    ApplicationVersion,
+                                    getHostName(),
+                                    MainConfig.ServiceID,
+                                    getPID()};
+  return std::make_unique<Status::StatusReporter>(StatusProducerTopic,
+                                                  StatusInformation);
+}
+
 int main(int argc, char **argv) {
+  std::string const ApplicationName = "kafka-to-nexus";
+  std::string const ApplicationVersion = GetVersion();
   CLI::App App{fmt::format(
-      "kafka-to-nexus {:.7} (ESS, BrightnESS)\n"
+      "{} {:.7} (ESS, BrightnESS)\n"
       "https://github.com/ess-dmsc/kafka-to-nexus\n\n"
       "Writes NeXus files in a format specified with a json template.\n"
       "Writer modules can be used to populate the file from Kafka topics.\n",
-      GetVersion())};
+      ApplicationName, ApplicationVersion)};
   auto Options = std::make_unique<MainOpt>();
   Options->init();
   setCLIOptions(App, *Options);
@@ -57,34 +85,47 @@ int main(int argc, char **argv) {
   setupLoggerFromOptions(*Options);
   auto Logger = getLogger();
 
-  if (!Options->CommandsJsonFilename.empty()) {
-    Options->parseJsonCommands();
-  }
-
   if (Options->ListWriterModules) {
-    fmt::print("Registered writer/reader classes\n");
-    fmt::print("\n--Identifiers of FlatbufferReader instances\n");
+    fmt::print("\n-- Known flatbuffer metadata extractors\n");
     for (auto &ReaderPair :
          FileWriter::FlatbufferReaderRegistry::getReaders()) {
       fmt::print("---- {}\n", ReaderPair.first);
     }
-    fmt::print("\n--Identifiers of HDFWriterModule factories\n");
-    for (auto &WriterPair :
-         FileWriter::HDFWriterModuleRegistry::getFactories()) {
-      fmt::print("---- {}\n", WriterPair.first);
+    fmt::print("\n-- Known writer modules\n");
+    for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
+      fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
     }
-    fmt::print("\nDone, exiting\n");
     return 0;
   }
+  using std::chrono_literals::operator""ms;
+  std::vector<std::shared_ptr<Metrics::Reporter>> MetricsReporters;
+  MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
+      std::make_unique<Metrics::LogSink>(), 500ms));
 
-  if (Options->use_signal_handler) {
-    std::signal(SIGINT, signal_handler);
-    std::signal(SIGTERM, signal_handler);
+  if (not Options->GrafanaCarbonAddress.HostPort.empty()) {
+    auto HostName = Options->GrafanaCarbonAddress.Host;
+    auto Port = Options->GrafanaCarbonAddress.Port;
+    MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
+        std::make_unique<Metrics::CarbonSink>(HostName, Port), 500ms));
   }
-  FileWriter::Master Master(*Options);
-  std::thread MasterThread([&Master, Logger] {
+
+  Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
+  auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceID);
+
+  std::signal(SIGINT, signal_handler);
+  std::signal(SIGTERM, signal_handler);
+
+  FileWriter::Master Master(
+      *Options, std::make_unique<FileWriter::CommandListener>(*Options),
+      std::make_unique<FileWriter::JobCreator>(),
+      createStatusReporter(*Options, ApplicationName, ApplicationVersion),
+      UsedRegistrar);
+  std::atomic<bool> Running{true};
+  std::thread MasterThread([&Master, Logger, &Running] {
     try {
-      Master.run();
+      while (Running) {
+        Master.run();
+      }
     } catch (std::system_error const &e) {
       Logger->critical(
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
@@ -100,11 +141,11 @@ int main(int argc, char **argv) {
     }
   });
 
-  while (!Master.runLoopExited()) {
+  while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
       Logger->debug("SIGNAL {}", SignalId);
-      Master.stop();
+      Running = false;
       GotSignal = false;
       break;
     }

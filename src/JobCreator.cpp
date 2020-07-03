@@ -11,14 +11,13 @@
 
 #include "JobCreator.h"
 #include "CommandParser.h"
-#include "EventLogger.h"
 #include "FileWriterTask.h"
-#include "HDFWriterModule.h"
 #include "Msg.h"
-#include "StreamMaster.h"
+#include "StreamController.h"
+#include "WriterModuleBase.h"
+#include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
-#include <chrono>
 
 using std::vector;
 
@@ -30,12 +29,15 @@ std::vector<StreamHDFInfo>
 JobCreator::initializeHDF(FileWriterTask &Task,
                           std::string const &NexusStructureString,
                           bool UseSwmr) {
-  json NexusStructure = json::parse(NexusStructureString);
-  std::vector<StreamHDFInfo> StreamHDFInfoList;
-  json ConfigFile = json::parse("{}");
-  Task.InitialiseHdf(NexusStructure.dump(), ConfigFile.dump(),
-                     StreamHDFInfoList, UseSwmr);
-  return StreamHDFInfoList;
+  try {
+    json const NexusStructure = json::parse(NexusStructureString);
+    std::vector<StreamHDFInfo> StreamHDFInfoList;
+    Task.InitialiseHdf(NexusStructure.dump(), StreamHDFInfoList, UseSwmr);
+    return StreamHDFInfoList;
+  } catch (nlohmann::detail::exception const &Error) {
+    throw std::runtime_error(
+        fmt::format("Could not parse NeXus structure JSON '{}'", Error.what()));
+  }
 }
 
 StreamSettings
@@ -63,36 +65,34 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
 
 void setUpHdfStructure(StreamSettings const &StreamSettings,
                        std::unique_ptr<FileWriterTask> const &Task) {
-  HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+  WriterModule::Registry::FactoryAndID ModuleFactory;
   try {
-    ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+    ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
   } catch (std::exception const &E) {
     throw std::runtime_error(
         fmt::format("Error while getting '{}',  source: {}  what: {}",
                     StreamSettings.Module, StreamSettings.Source, E.what()));
   }
 
-  auto HDFWriterModule = ModuleFactory();
+  auto HDFWriterModule = ModuleFactory.first();
   if (!HDFWriterModule) {
     throw std::runtime_error(fmt::format(
-        "Can not create a HDFWriterModule for '{}'", StreamSettings.Module));
+        "Can not create a writer module for '{}'", StreamSettings.Module));
   }
 
   auto RootGroup = Task->hdfGroup();
   try {
     HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Exception while HDFWriterModule::parse_config  module: {} "
-                    " source: {}  what: {}",
-                    StreamSettings.Module, StreamSettings.Source, E.what())));
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Exception while WriterModule::Base::parse_config  module: {} "
+        " source: {}  what: {}",
+        StreamSettings.Module, StreamSettings.Source, E.what())));
   }
 
   auto StreamGroup = hdf5::node::get_group(
       RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, StreamSettings.Attributes);
-  HDFWriterModule->close();
-  HDFWriterModule.reset();
 }
 
 /// Helper to extract information about the provided streams.
@@ -129,25 +129,21 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   return StreamSettingsList;
 }
 
-std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
-    StartCommandInfo const &StartInfo,
-    std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-    MainOpt &Settings) {
-  auto Task =
-      std::make_unique<FileWriterTask>(Settings.ServiceID, StatusProducer);
+std::unique_ptr<IStreamController>
+JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
+                                 MainOpt &Settings, SharedLogger const &Logger,
+                                 Metrics::Registrar Registrar) {
+  auto Task = std::make_unique<FileWriterTask>(Settings.ServiceID);
   Task->setJobId(StartInfo.JobID);
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
-  logEvent(StatusProducer, StatusCode::Start, Settings.ServiceID, Task->jobID(),
-           "Start job");
-
   std::vector<StreamHDFInfo> StreamHDFInfoList =
-      initializeHDF(*Task, StartInfo.NexusStructure, StartInfo.UseSwmr);
+      initializeHDF(*Task, StartInfo.NexusStructure, Settings.UseHdfSwmr);
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
 
-  if (StartInfo.AbortOnStreamFailure) {
+  if (Settings.AbortOnUninitialisedStream) {
     for (auto const &Item : StreamHDFInfoList) {
       // cppcheck-suppress useStlAlgorithm
       if (!Item.InitialisedOk) {
@@ -161,47 +157,37 @@ std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
-  Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
-
-  Logger->info("Start time: {}ms",
-               Settings.StreamerConfiguration.StartTimestamp.count());
-  if (Settings.StreamerConfiguration.StopTimestamp.count() > 0) {
-    Logger->info("Stop time: {}ms",
-                 Settings.StreamerConfiguration.StopTimestamp.count());
-  }
+  Settings.StreamerConfiguration.StopTimestamp = time_point(StartInfo.StopTime);
+  Settings.StreamerConfiguration.BrokerSettings.Address =
+      StartInfo.BrokerInfo.HostPort;
 
   Logger->info("Write file with job_id: {}", Task->jobID());
-  auto s = StreamMaster::createStreamMaster(
-      StartInfo.BrokerInfo.HostPort, std::move(Task), Settings, StatusProducer);
-  s->report(Settings.StatusMasterIntervalMS);
-  if (Settings.topic_write_duration.count() != 0) {
-    s->setTopicWriteDuration(Settings.topic_write_duration);
-  }
-  s->start();
-
-  return s;
+  return std::make_unique<StreamController>(std::move(Task), Settings.ServiceID,
+                                            Settings.StreamerConfiguration,
+                                            Registrar);
 }
 
 void JobCreator::addStreamSourceToWriterModule(
-    std::vector<StreamSettings> &StreamSettingsList,
+    vector<StreamSettings> const &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   auto Logger = getLogger();
 
   for (auto const &StreamSettings : StreamSettingsList) {
     Logger->trace("Add Source: {}", StreamSettings.Topic);
-    HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+    WriterModule::Registry::FactoryAndID ModuleFactory;
 
     try {
-      ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+      ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
     } catch (std::exception const &E) {
-      Logger->info("Module '{}' is not available, error {}",
+      Logger->info("WriterModule '{}' is not available, error {}",
                    StreamSettings.Module, E.what());
       continue;
     }
 
-    auto HDFWriterModule = ModuleFactory();
+    auto AcceptedFlatbufferID = ModuleFactory.second;
+    auto HDFWriterModule = ModuleFactory.first();
     if (!HDFWriterModule) {
-      Logger->info("Can not create a HDFWriterModule for '{}'",
+      Logger->info("Can not create a writer module for '{}'",
                    StreamSettings.Module);
       continue;
     }
@@ -214,20 +200,21 @@ void JobCreator::addStreamSourceToWriterModule(
         auto StreamGroup = hdf5::node::get_group(
             RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
         auto Err = HDFWriterModule->reopen({StreamGroup});
-        if (Err != HDFWriterModule_detail::InitResult::OK) {
+        if (Err != WriterModule::InitResult::OK) {
           Logger->error("can not reopen HDF file for stream {}",
                         StreamSettings.StreamHDFInfoObj.HDFParentName);
           continue;
         }
       } catch (std::runtime_error const &e) {
-        Logger->error("Exception on HDFWriterModule->reopen(): {}", e.what());
+        Logger->error("Exception on WriterModule::Base->reopen(): {}",
+                      e.what());
         continue;
       }
 
       // Create a Source instance for the stream and add to the task.
-      Source ThisSource(StreamSettings.Source, StreamSettings.Module,
+      Source ThisSource(StreamSettings.Source, AcceptedFlatbufferID,
+                        StreamSettings.Module, StreamSettings.Topic,
                         move(HDFWriterModule));
-      ThisSource.setTopic(StreamSettings.Topic);
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
       Logger->warn(

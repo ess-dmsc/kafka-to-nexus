@@ -26,14 +26,13 @@ struct StreamHDFInfo {
   bool InitialisedOk = false;
 };
 
-class HDFFile final {
+class HDFFile {
 public:
   HDFFile();
 
   ~HDFFile();
 
   void init(const std::string &Filename, nlohmann::json const &NexusStructure,
-            nlohmann::json const &ConfigFile,
             std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR);
 
   void init(const std::string &NexusStructure,
@@ -47,12 +46,6 @@ public:
   void flush();
   void close();
   void finalize();
-
-  /// If using SWMR, gets invoked by Source and can trigger a flush of the HDF
-  /// file.
-  void SWMRFlush();
-
-  bool isSWMREnabled() const;
 
   hdf5::file::File H5File;
   hdf5::node::Group RootGroup;

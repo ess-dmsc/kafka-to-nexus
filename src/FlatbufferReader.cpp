@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FlatbufferReader.h"
-#include <flatbuffers/flatbuffers.h>
 #include <stdexcept>
 
 namespace FileWriter {
