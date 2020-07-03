@@ -3,6 +3,6 @@
 inline static const std::string GetVersion() {
   // The following line is executed only once on startup or on first call to
   // function.
-  const static std::string Version = "@VERSION_STRING@";
+  const static std::string Version = "3.0.0";
   return Version;
 }
