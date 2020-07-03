@@ -59,8 +59,7 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   }
 }
 
-TEST_F(ConsumerTests,
-       pollReturnsConsumerMessageWithEmptyPollStatusIfTimedOut) {
+TEST_F(ConsumerTests, pollReturnsConsumerMessageWithEmptyPollStatusIfTimedOut) {
   auto *Message = new MockMessage;
   REQUIRE_CALL(*Message, err())
       .TIMES(1)
