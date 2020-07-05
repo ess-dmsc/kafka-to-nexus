@@ -34,7 +34,7 @@ public:
       : WriteRepeatedTimestamps(AcceptRepeatedTimestamps) {}
   virtual ~Base() = default;
 
-  bool acceptsRepeatedTimestamps() { return WriteRepeatedTimestamps; }
+  bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
 
   /// \brief Parses the configuration of a stream.
   ///
