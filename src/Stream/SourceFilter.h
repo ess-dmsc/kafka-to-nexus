@@ -26,7 +26,8 @@ class SourceFilter {
 public:
   SourceFilter() = default;
   SourceFilter(time_point StartTime, time_point StopTime,
-               MessageWriter *Destination, Metrics::Registrar RegisterMetric);
+               bool AcceptRepeatedTimestamps, MessageWriter *Destination,
+               Metrics::Registrar RegisterMetric);
   virtual ~SourceFilter();
   void addDestinationPtr(Message::DestPtrType NewDestination) {
     DestIDs.push_back(NewDestination);
@@ -48,6 +49,7 @@ protected:
   void sendBufferedMessage();
   time_point Start;
   time_point Stop;
+  bool WriteRepeatedTimestamps;
   int64_t CurrentTimeStamp{0};
   MessageWriter *Dest{nullptr};
   bool IsDone{false};

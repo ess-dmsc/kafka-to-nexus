@@ -25,8 +25,9 @@ public:
 class SourceFilterStandIn : public Stream::SourceFilter {
 public:
   SourceFilterStandIn(time_point Start, time_point Stop,
+                      bool AcceptRepeatedTimestamp,
                       Stream::MessageWriter *Writer, Metrics::Registrar Reg)
-      : SourceFilter(Start, Stop, Writer, Reg) {}
+      : SourceFilter(Start, Stop, AcceptRepeatedTimestamp, Writer, Reg) {}
   using SourceFilter::MessagesDiscarded;
   using SourceFilter::MessagesReceived;
   using SourceFilter::MessagesTransmitted;
@@ -39,10 +40,10 @@ public:
   time_point StartTime{std::chrono::system_clock::now()};
   MessageWriterStandIn Writer;
   Metrics::Registrar SomeRegistrar{"test_reg", {}};
-  auto getTestFilter() {
+  auto getTestFilter(bool AcceptRepeatedTimestamp = true) {
     return std::make_unique<SourceFilterStandIn>(
-        StartTime, std::chrono::system_clock::time_point::max(), &Writer,
-        SomeRegistrar);
+        StartTime, std::chrono::system_clock::time_point::max(),
+        AcceptRepeatedTimestamp, &Writer, SomeRegistrar);
   }
 };
 
@@ -141,7 +142,7 @@ TEST_F(SourceFilterTest, SameTSBeforeStart) {
 
 using std::chrono_literals::operator""ms;
 
-TEST_F(SourceFilterTest, SameTSAfterStart) {
+TEST_F(SourceFilterTest, SameTSAfterStartAccepted) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
   UnderTest->addDestinationPtr(0);
@@ -153,6 +154,21 @@ TEST_F(SourceFilterTest, SameTSAfterStart) {
   EXPECT_TRUE(UnderTest->MessagesReceived == 2);
   EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
   EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
+  EXPECT_FALSE(UnderTest->hasFinished());
+}
+
+TEST_F(SourceFilterTest, SameTSAfterStartRejected) {
+  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+  auto UnderTest = getTestFilter(false);
+  UnderTest->addDestinationPtr(0);
+  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
+  auto TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  TestMsg = generateMsg();
+  UnderTest->filterMessage(std::move(TestMsg));
+  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
+  EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
+  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
   EXPECT_FALSE(UnderTest->hasFinished());
 }
 

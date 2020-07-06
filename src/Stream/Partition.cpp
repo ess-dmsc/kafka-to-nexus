@@ -37,7 +37,8 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
       TempFilterMap.emplace(SrcDestInfo.WriteHash,
                             // cppcheck-suppress stlFindInsert
                             std::make_unique<SourceFilter>(
-                                Start, Stop, Writer,
+                                Start, Stop,
+                                SrcDestInfo.AcceptsRepeatedTimestamps, Writer,
                                 RegisterMetric.getNewRegistrar(
                                     SrcDestInfo.getMetricsNameString())));
     }

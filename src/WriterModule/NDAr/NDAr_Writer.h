@@ -28,7 +28,7 @@ using FileWriterBase = WriterModule::Base;
 /// See parent class for documentation.
 class NDAr_Writer : public FileWriterBase {
 public:
-  NDAr_Writer() = default;
+  NDAr_Writer() : WriterModule::Base(false) {}
   ~NDAr_Writer() override = default;
 
   void parse_config(std::string const &ConfigurationStream) override;
