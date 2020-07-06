@@ -104,134 +104,6 @@ void Consumer::assignToPartitions(
         "Could not assign partitions of topic {}, RdKafka error: \"{}\"", Topic,
         err2str(ErrorCode)));
   }
-  CurrentTopic = Topic;
-  CurrentNumberOfPartitions = TopicPartitionsWithOffsets.size();
-}
-
-std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
-  auto NumberOfPartitions = queryTopicPartitions(Topic).size();
-  std::vector<RdKafka::TopicPartition *> TopicPartitions;
-  for (uint64_t i = 0; i < NumberOfPartitions; i++) {
-    auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
-    TopicPartitions.push_back(TopicPartition);
-  }
-
-  auto Error = KafkaConsumer->position(TopicPartitions);
-  if (Error != RdKafka::ErrorCode::ERR_NO_ERROR) {
-    Logger->error("Kafka error while getting current offsets for topic {}: {}",
-                  Topic, Error);
-    throw std::runtime_error(fmt::format(
-        "Kafka error while getting offsets for topic {}: {}", Topic, Error));
-  }
-
-  auto Offsets = getOffsets(TopicPartitions);
-  deletePartitions(TopicPartitions);
-
-  return Offsets;
-}
-
-std::vector<RdKafka::TopicPartition *>
-Consumer::offsetsForTimesForTopic(std::string const &Topic,
-                                  std::chrono::milliseconds const Time) {
-  auto NumberOfPartitions = getNumberOfPartitionsInTopic(Topic);
-  std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
-  for (uint64_t i = 0; i < NumberOfPartitions; i++) {
-    auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
-    TopicPartition->set_offset(Time.count());
-    TopicPartitionsWithTimestamp.push_back(TopicPartition);
-  }
-
-  uint32_t LoopCounter = 0;
-  uint32_t WarnOnNRetries = 10;
-  while (!queryOffsetsForTimes(TopicPartitionsWithTimestamp)) {
-    if (LoopCounter == WarnOnNRetries) {
-      Logger->warn("Cannot contact broker, retrying until connection is "
-                   "established...");
-      LoopCounter = 0;
-    }
-    LoopCounter++;
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-  }
-  Logger->debug("Successfully queried offsets for times");
-
-  return TopicPartitionsWithTimestamp;
-}
-
-/// Returns the number of partitions in the topic, if the provided Topic name is
-/// the current assignment then number of partitions is already known and we can
-/// avoid a metadata request.
-///
-/// \param Topic Name of the topic.
-/// \return Number of partitions in the named topic.
-size_t Consumer::getNumberOfPartitionsInTopic(const std::string &Topic) {
-  size_t NumberOfPartitions;
-  if (Topic == CurrentTopic && CurrentNumberOfPartitions != 0) {
-    NumberOfPartitions = CurrentNumberOfPartitions;
-  } else {
-    NumberOfPartitions = queryTopicPartitions(Topic).size();
-  }
-  return NumberOfPartitions;
-}
-
-/// Get offsets for times, returns true if successful and false otherwise
-/// Timestamps in provided topic partitions' offset field will be replaced with
-/// offset if successful.
-///
-/// \param TopicPartitionsWithTimestamp topic partitions container timestamp in
-/// the offset field.
-/// \return true if successful.
-bool Consumer::queryOffsetsForTimes(
-    std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithTimestamp) {
-  auto ErrorCode = KafkaConsumer->offsetsForTimes(
-      TopicPartitionsWithTimestamp,
-      ConsumerBrokerSettings.OffsetsForTimesTimeoutMS);
-
-  switch (ErrorCode) {
-  case RdKafka::ERR_NO_ERROR:
-    return true;
-  case RdKafka::ERR__TRANSPORT:
-    return false;
-  case RdKafka::ERR__TIMED_OUT:
-    return false;
-  default:
-    Logger->error("Kafka error while getting offsets for timestamp: {}",
-                  ErrorCode);
-    throw std::runtime_error(fmt::format(
-        "Kafka error while getting offsets for timestamp: {}", ErrorCode));
-  }
-}
-
-std::vector<int64_t>
-Consumer::offsetsForTimesAllPartitions(std::string const &Topic,
-                                       std::chrono::milliseconds const Time) {
-  auto TopicPartitions = offsetsForTimesForTopic(Topic, Time);
-  auto Offsets = getOffsets(TopicPartitions);
-  deletePartitions(TopicPartitions);
-  return Offsets;
-}
-
-void Consumer::deletePartitions(
-    std::vector<RdKafka::TopicPartition *> const &TopicPartitions) {
-  for_each(TopicPartitions.cbegin(), TopicPartitions.cend(),
-           [](RdKafka::TopicPartition *Partition) { delete Partition; });
-}
-
-std::vector<int64_t> Consumer::getOffsets(
-    std::vector<RdKafka::TopicPartition *> const &TopicPartitions) {
-  std::vector<int64_t> Offsets(TopicPartitions.size(), 0);
-  for (auto TopicPartition : TopicPartitions) {
-    Offsets[TopicPartition->partition()] = TopicPartition->offset();
-  }
-  return Offsets;
-}
-
-void Consumer::addTopicAtTimestamp(std::string const &Topic,
-                                   std::chrono::milliseconds const StartTime) {
-  Logger->info("Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}", Topic,
-               StartTime.count());
-
-  auto TopicPartitions = offsetsForTimesForTopic(Topic, StartTime);
-  assignToPartitions(Topic, TopicPartitions);
 }
 
 void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
@@ -250,17 +122,6 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
         "Could not assign topic-partition of topic {}, RdKafka error: \"{}\"",
         Topic, err2str(ReturnCode)));
   }
-  CurrentTopic = Topic;
-  CurrentNumberOfPartitions = 1;
-}
-
-int64_t Consumer::getHighWatermarkOffset(std::string const &Topic,
-                                         int32_t Partition) {
-  int64_t LowWatermark, HighWatermark;
-  // Note, does not query broker
-  KafkaConsumer->get_watermark_offsets(Topic, Partition, &LowWatermark,
-                                       &HighWatermark);
-  return HighWatermark;
 }
 
 std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
@@ -275,16 +136,6 @@ std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
   }
   sort(TopicPartitionNumbers.begin(), TopicPartitionNumbers.end());
   return TopicPartitionNumbers;
-}
-
-bool Consumer::topicPresent(const std::string &TopicName) {
-  try {
-    std::unique_ptr<RdKafka::Metadata> KafkaMetadata = getMetadata();
-    findTopic(TopicName, *KafkaMetadata);
-  } catch (std::runtime_error &e) {
-    return false;
-  }
-  return true;
 }
 
 /// Gets metadata from the Kafka broker, if unsuccessful then keeps trying
