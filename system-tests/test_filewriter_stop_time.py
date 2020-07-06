@@ -107,6 +107,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
             else:
                 publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
     check(producer.flush(5) == 0, "Unable to flush kafka messages.")
+    sleep(5)
 
     command_topic = "TEST_writerCommand"
     start_time = 1_560_330_000_002
