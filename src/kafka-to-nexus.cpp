@@ -69,9 +69,8 @@ bool tryToFindTopics(std::string CommandTopic, std::string StatusTopic,
     }
     if (ListOfTopics.find(StatusTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
-          "Unable to find status topic with name \"{}\".", StatusTopic);
-      LOG_ERROR(MsgString);
-      throw std::runtime_error(MsgString);
+          "Status topic with name \"{}\" was not found.", StatusTopic);
+      LOG_WARN(MsgString);
     }
   } catch (MetadataException const &E) {
     LOG_WARN("Meta data query failed with message: {}", E.what());
