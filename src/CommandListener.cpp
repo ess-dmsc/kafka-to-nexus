@@ -20,7 +20,7 @@ using std::string;
 CommandListener::CommandListener(MainOpt &Config) : config(Config) {}
 
 void CommandListener::start() {
-  Kafka::BrokerSettings &BrokerSettings =
+  Kafka::BrokerSettings BrokerSettings =
       config.StreamerConfiguration.BrokerSettings;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
   Consumer = Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
