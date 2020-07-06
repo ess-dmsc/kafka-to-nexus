@@ -18,6 +18,8 @@
 #include "Metrics/LogSink.h"
 #include "Metrics/Registrar.h"
 #include "Metrics/Reporter.h"
+#include "Kafka/MetaDataQuery.h"
+#include "Kafka/MetadataException.h"
 #include "Status/StatusInfo.h"
 #include "Status/StatusReporter.h"
 #include "Version.h"
@@ -28,12 +30,11 @@
 #include <string>
 
 // These should only be visible in this translation unit
-static std::atomic_bool GotSignal{false};
-static std::atomic_int SignalId{0};
+static std::atomic_bool Running{true};
 
 void signal_handler(int Signal) {
-  GotSignal = true;
-  SignalId = Signal;
+  Running = false;
+  LOG_DEBUG("Got SIGNAL {}", Signal);
 }
 
 std::unique_ptr<Status::StatusReporter>
@@ -54,6 +55,26 @@ createStatusReporter(MainOpt const &MainConfig,
                                     getPID()};
   return std::make_unique<Status::StatusReporter>(StatusProducerTopic,
                                                   StatusInformation);
+}
+
+bool tryToFindTopics(std::string CommandTopic, std::string StatusTopic, std::string Broker, duration TimeOut) {
+  try {
+    auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut);
+    if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
+      auto MsgString = fmt::format("Unable to find command topic with name \"{}\".", CommandTopic);
+      LOG_ERROR(MsgString);
+      throw std::runtime_error(MsgString);
+    }
+    if (ListOfTopics.find(StatusTopic) == ListOfTopics.end()) {
+      auto MsgString = fmt::format("Unable to find status topic with name \"{}\".", StatusTopic);
+      LOG_ERROR(MsgString);
+      throw std::runtime_error(MsgString);
+    }
+  } catch (MetadataException const &E) {
+    LOG_WARN("Meta data query failed with message: {}", E.what());
+    return false;
+  }
+  return true;
 }
 
 int main(int argc, char **argv) {
@@ -115,43 +136,59 @@ int main(int argc, char **argv) {
   std::signal(SIGINT, signal_handler);
   std::signal(SIGTERM, signal_handler);
 
-  FileWriter::Master Master(
-      *Options, std::make_unique<FileWriter::CommandListener>(*Options),
-      std::make_unique<FileWriter::JobCreator>(),
-      createStatusReporter(*Options, ApplicationName, ApplicationVersion),
-      UsedRegistrar);
-  std::atomic<bool> Running{true};
-  std::thread MasterThread([&Master, Logger, &Running] {
+  std::unique_ptr<FileWriter::Master> MasterPtr;
+
+  auto GenerateMaster = [&](){
+    return std::make_unique<FileWriter::Master>(*Options, std::make_unique<FileWriter::CommandListener>(*Options),
+                                                std::make_unique<FileWriter::JobCreator>(),
+                                                createStatusReporter(*Options, ApplicationName, ApplicationVersion),
+                                                UsedRegistrar);
+  };
+
+  bool FindTopicMode{true};
+  duration CMetaDataTimeout{Options->StreamerConfiguration.BrokerSettings.MinMetadataTimeout};
+  auto CommandTopic = Options->CommandBrokerURI.Topic;
+  auto StatusTopic = Options->KafkaStatusURI.Topic;
+  LOG_DEBUG("Starting run loop.");
+  LOG_DEBUG("Retrieving topic names from broker.");
+  while (Running) {
     try {
-      while (Running) {
-        Master.run();
+      if (FindTopicMode) {
+        if (tryToFindTopics(CommandTopic, StatusTopic, Options->CommandBrokerURI.HostPort, CMetaDataTimeout)) {
+          LOG_DEBUG("Command and status topics found, starting master.");
+          MasterPtr = GenerateMaster();
+          FindTopicMode = false;
+        } else {
+          CMetaDataTimeout *= 2;
+          if (CMetaDataTimeout > Options->StreamerConfiguration.BrokerSettings.MaxMetadataTimeout) {
+            CMetaDataTimeout = Options->StreamerConfiguration.BrokerSettings.MaxMetadataTimeout;
+          }
+          LOG_WARN("Meta data call for retrieving command (\"{}\") and status (\"{}\") topics "
+                   "from the broker failed. Re-trying with a "
+                   "timeout of {} ms.",
+                   CommandTopic, StatusTopic,
+                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                       CMetaDataTimeout)
+                       .count());
+        }
+      } else {
+        MasterPtr->run();
       }
     } catch (std::system_error const &e) {
       Logger->critical(
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
           e.code().value(), e.code().category().name(), e.code().message(),
           e.what());
-      throw;
+      break;
     } catch (std::runtime_error const &e) {
       Logger->critical("std::runtime_error  what: {}", e.what());
-      throw;
+      break;
     } catch (std::exception const &e) {
       Logger->critical("std::exception  what: {}", e.what());
-      throw;
-    }
-  });
-
-  while (true) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if (GotSignal) {
-      Logger->debug("SIGNAL {}", SignalId);
-      Running = false;
-      GotSignal = false;
       break;
     }
   }
-
-  MasterThread.join();
+  Logger->debug("Exiting.");
   Logger->flush();
   return 0;
 }

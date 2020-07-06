@@ -70,10 +70,6 @@ struct MainOpt {
   /// (e.g. list of current file writings).
   std::chrono::milliseconds StatusMasterIntervalMS{2000};
 
-  /// \brief Max interval (in std::chrono::milliseconds) to spend writing each
-  /// topic before switch to the next.
-  std::chrono::milliseconds topic_write_duration;
-
   // The constructor was removed because of the issue with the integration test
   // (see cpp file for more details).
   void init();
