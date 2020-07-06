@@ -30,7 +30,7 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  f142_TestWriter() = default;
+  f142_TestWriter() : WriterModule::Base(false) {}
   ~f142_TestWriter() override = default;
 
 protected:

@@ -25,7 +25,7 @@ class SourceFilterStandInAlt : public Stream::SourceFilter {
 public:
   SourceFilterStandInAlt()
       : SourceFilter(std::chrono::system_clock::now(),
-                     std::chrono::system_clock::now(), nullptr,
+                     std::chrono::system_clock::now(), true, nullptr,
                      Metrics::Registrar("some_reg", {})) {}
   MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage Message),
              override);
@@ -99,7 +99,7 @@ protected:
 
 class WriterStandIn : public WriterModule::Base {
 public:
-  WriterStandIn() = default;
+  WriterStandIn() : WriterModule::Base(true) {}
   void parse_config(std::string const &) override {}
   WriterModule::InitResult init_hdf(hdf5::node::Group &,
                                     std::string const &) override {
@@ -129,7 +129,7 @@ public:
 
   Stream::SrcToDst UsedMap{Stream::SrcDstKey{UsedFilterHash, UsedFilterHash,
                                              nullptr, "some_name", "idid",
-                                             "idid_alt"}};
+                                             "idid_alt", true}};
   time_point Start{std::chrono::system_clock::now()};
   time_point Stop{std::chrono::system_clock::time_point::max()};
   duration StopLeeway{5s};

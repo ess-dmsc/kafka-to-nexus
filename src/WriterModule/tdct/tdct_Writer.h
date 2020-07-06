@@ -25,7 +25,7 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 /// See parent class for documentation.
 class tdct_Writer : public WriterModule::Base {
 public:
-  tdct_Writer() = default;
+  tdct_Writer() : WriterModule::Base(false) {}
   ~tdct_Writer() override = default;
 
   void parse_config(std::string const &) override;

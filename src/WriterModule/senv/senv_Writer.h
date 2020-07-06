@@ -32,7 +32,7 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
 /// See parent class for documentation.
 class senv_Writer : public FileWriterBase {
 public:
-  senv_Writer() = default;
+  senv_Writer() : FileWriterBase(false) {}
   ~senv_Writer() override = default;
 
   void parse_config(std::string const &) override;

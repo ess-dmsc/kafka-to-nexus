@@ -12,9 +12,11 @@
 namespace Stream {
 
 SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
+                           bool AcceptRepeatedTimestamps,
                            MessageWriter *Destination,
                            Metrics::Registrar RegisterMetric)
-    : Start(StartTime), Stop(StopTime), Dest(Destination) {
+    : Start(StartTime), Stop(StopTime),
+      WriteRepeatedTimestamps(AcceptRepeatedTimestamps), Dest(Destination) {
   RegisterMetric.registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::LOG_MSG});
@@ -46,6 +48,9 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage InMsg) {
 
   if (InMsg.getTimestamp() == CurrentTimeStamp) {
     RepeatedTimestamp++;
+    if (not WriteRepeatedTimestamps) {
+      return false;
+    }
   } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
     UnorderedTimestamp++;
   }
