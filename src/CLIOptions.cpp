@@ -209,8 +209,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addSecondsDurationOption(
       App, "--data-flush-interval",
       MainOptions.StreamerConfiguration.DataFlushInterval,
-      "(Max) amount of time between flushing of data to file.",
-      true);
+      "(Max) amount of time between flushing of data to file.", true);
   addKafkaOption(
       App, "-X,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,

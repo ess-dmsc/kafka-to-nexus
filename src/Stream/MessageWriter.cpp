@@ -25,8 +25,13 @@ ModuleHash generateSrcHash(std::string const &Source,
 static const ModuleHash UnknownModuleHash{
     generateSrcHash("Unknown source", "Unknown fb-id")};
 
-MessageWriter::MessageWriter(std::function<void()> FlushFunction, duration FlushIntervalTime, Metrics::Registrar const &MetricReg)
-    : FlushDataFunction(FlushFunction), Registrar(MetricReg.getNewRegistrar("writer")), WriterThread(&MessageWriter::threadFunction, this), FlushInterval(FlushIntervalTime) {
+MessageWriter::MessageWriter(std::function<void()> FlushFunction,
+                             duration FlushIntervalTime,
+                             Metrics::Registrar const &MetricReg)
+    : FlushDataFunction(FlushFunction),
+      Registrar(MetricReg.getNewRegistrar("writer")),
+      WriterThread(&MessageWriter::threadFunction, this),
+      FlushInterval(FlushIntervalTime) {
   Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
   Registrar.registerMetric(WriteErrors,
                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
@@ -88,7 +93,7 @@ void MessageWriter::threadFunction() {
       NextFlushTime += FlushPeriods * FlushInterval;
     }
   };
-  auto WriteOperation = [&](){
+  auto WriteOperation = [&]() {
     CheckTimeCounter = 0;
     while (WriteJobs.try_dequeue(CurrentJob)) {
       CurrentJob();

@@ -15,9 +15,9 @@
 #include "Message.h"
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
-#include <concurrentqueue/concurrentqueue.h>
-#include "logger.h"
 #include "TimeUtility.h"
+#include "logger.h"
+#include <concurrentqueue/concurrentqueue.h>
 #include <map>
 #include <thread>
 
@@ -29,7 +29,9 @@ namespace Stream {
 
 class MessageWriter {
 public:
-  explicit MessageWriter(std::function<void()> FlushFunction, duration FlushIntervalTime, Metrics::Registrar const &MetricReg);
+  explicit MessageWriter(std::function<void()> FlushFunction,
+                         duration FlushIntervalTime,
+                         Metrics::Registrar const &MetricReg);
 
   virtual ~MessageWriter();
 
@@ -48,7 +50,7 @@ protected:
                             FileWriter::FlatbufferMessage const &Msg);
   virtual void threadFunction();
 
-  virtual void flushData() {FlushDataFunction();};
+  virtual void flushData() { FlushDataFunction(); };
   std::function<void()> FlushDataFunction;
 
   SharedLogger Log{getLogger()};

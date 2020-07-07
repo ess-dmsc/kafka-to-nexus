@@ -966,7 +966,7 @@ void HDFFile::reopen(std::string const &Filename) {
         hdf5::file::AccessFlags::READWRITE);
 
     FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
-          hdf5::file::AccessFlags::SWMR_WRITE);
+        hdf5::file::AccessFlags::SWMR_WRITE);
     H5File = hdf5::file::open(Filename, FAFL, fapl);
   } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);

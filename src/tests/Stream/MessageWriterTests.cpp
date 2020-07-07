@@ -29,7 +29,7 @@ public:
 class DataMessageWriterStandIn : public Stream::MessageWriter {
 public:
   explicit DataMessageWriterStandIn(Metrics::Registrar const &Registrar)
-      : MessageWriter([](){}, 1s, Registrar) {}
+      : MessageWriter([]() {}, 1s, Registrar) {}
   using Stream::MessageWriter::WriteJobs;
 };
 
