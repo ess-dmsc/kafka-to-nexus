@@ -854,7 +854,7 @@ void checkHDFVersion(SharedLogger const &Logger) {
 
 void HDFFile::init(std::string const &Filename,
                    nlohmann::json const &NexusStructure,
-                   std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
+                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
   if (std::ifstream(Filename).good()) {
     // File exists already
     throw std::runtime_error(
@@ -863,17 +863,10 @@ void HDFFile::init(std::string const &Filename,
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-
-    if (UseHDFSWMR) {
-      H5File = hdf5::file::create(Filename,
-                                  hdf5::file::AccessFlags::TRUNCATE |
-                                      hdf5::file::AccessFlags::SWMR_WRITE,
-                                  fcpl, fapl);
-      SWMREnabled = true;
-    } else {
-      H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
-                                  fcpl, fapl);
-    }
+    H5File = hdf5::file::create(Filename,
+                                hdf5::file::AccessFlags::TRUNCATE |
+                                    hdf5::file::AccessFlags::SWMR_WRITE,
+                                fcpl, fapl);
     this->Filename = Filename;
     init(NexusStructure, StreamHDFInfo);
   } catch (std::exception const &E) {
@@ -971,10 +964,9 @@ void HDFFile::reopen(std::string const &Filename) {
 
     auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
         hdf5::file::AccessFlags::READWRITE);
-    if (SWMREnabled) {
-      FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
+
+    FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
           hdf5::file::AccessFlags::SWMR_WRITE);
-    }
     H5File = hdf5::file::open(Filename, FAFL, fapl);
   } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);

@@ -59,8 +59,7 @@ private:
       std::unique_ptr<FileWriterTask> &Task);
 
   static std::vector<StreamHDFInfo>
-  initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
-                bool UseSwmr);
+  initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 };
 
 /// \brief Extract information about the stream.

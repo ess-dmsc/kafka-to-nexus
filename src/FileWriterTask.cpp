@@ -57,14 +57,13 @@ void FileWriterTask::addSource(Source &&Source) {
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
-                                   std::vector<StreamHDFInfo> &HdfInfo,
-                                   bool UseSwmr) {
+                                   std::vector<StreamHDFInfo> &HdfInfo) {
   auto NexusStructureJson = hdf_parse(NexusStructure, Logger);
 
   try {
     Logger->info("Creating HDF file {}", Filename);
-    File.init(Filename, NexusStructureJson, HdfInfo, UseSwmr);
-    // The HDF file is closed and re-opened to (optionally) support SWMR and
+    File.init(Filename, NexusStructureJson, HdfInfo);
+    // The HDF file is closed and re-opened to support SWMR and
     // parallel writing.
     closeFile();
     reopenFile();

@@ -25,8 +25,8 @@ ModuleHash generateSrcHash(std::string const &Source,
 static const ModuleHash UnknownModuleHash{
     generateSrcHash("Unknown source", "Unknown fb-id")};
 
-MessageWriter::MessageWriter(Metrics::Registrar const &MetricReg)
-    : Registrar(MetricReg.getNewRegistrar("writer")) {
+MessageWriter::MessageWriter(duration FlushIntervalTime, Metrics::Registrar const &MetricReg)
+    : Registrar(MetricReg.getNewRegistrar("writer")), WriterThread(&MessageWriter::threadFunction, this), FlushInterval(FlushIntervalTime) {
   Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
   Registrar.registerMetric(WriteErrors,
                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
@@ -36,8 +36,15 @@ MessageWriter::MessageWriter(Metrics::Registrar const &MetricReg)
                            {Metrics::LogTo::LOG_MSG});
 }
 
+MessageWriter::~MessageWriter() {
+  RunThread = false;
+  if (WriterThread.joinable()) {
+    WriterThread.join();
+  }
+}
+
 void MessageWriter::addMessage(Message const &Msg) {
-  Executor.sendWork([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
+  WriteJobs.enqueue([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
 }
 
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
@@ -66,6 +73,34 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
   } catch (std::exception &E) {
     WriteErrors++;
     Log->critical("Unknown file writing error: {}", E.what());
+  }
+}
+
+void MessageWriter::threadFunction() {
+  int CheckTimeCounter{0};
+  JobType CurrentJob;
+  time_point NextFlushTime{system_clock::now() + FlushInterval};
+  auto FlushOperation = [&]() {
+    auto Now = system_clock::now();
+    if (Now >= NextFlushTime) {
+      flushData();
+      auto FlushPeriods = int((Now - NextFlushTime) / FlushInterval) + 1;
+      NextFlushTime += FlushPeriods * FlushInterval;
+    }
+  };
+
+  while (RunThread) {
+    CheckTimeCounter = 0;
+    while (WriteJobs.try_dequeue(CurrentJob)) {
+      CurrentJob();
+      ++CheckTimeCounter;
+      if (CheckTimeCounter > MaxTimeCheckCounter) {
+        FlushOperation();
+        CheckTimeCounter = 0;
+      }
+    }
+    FlushOperation();
+    std::this_thread::sleep_for(SleepTime);
   }
 }
 

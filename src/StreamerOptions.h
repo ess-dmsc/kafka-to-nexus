@@ -16,6 +16,8 @@ namespace FileWriter {
 
 /// Contains configuration parameters for the Streamer
 struct StreamerOptions {
+  // Amount of time between flushing of data to file.
+  duration DataFlushInterval{1s};
   Kafka::BrokerSettings BrokerSettings;
   std::chrono::milliseconds StartTimestamp{0};
   time_point StopTimestamp{time_point::max()};

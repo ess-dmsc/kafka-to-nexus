@@ -20,9 +20,6 @@
 
 // POD
 struct MainOpt {
-  /// Write in HDF's Single Writer Multiple Reader (SWMR) mode
-  bool UseHdfSwmr = true;
-
   /// If true the filewriter aborts the whole job if one or more streams are
   /// misconfigured and fail to start
   bool AbortOnUninitialisedStream = false;
@@ -69,10 +66,6 @@ struct MainOpt {
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
   std::chrono::milliseconds StatusMasterIntervalMS{2000};
-
-  /// \brief Max interval (in std::chrono::milliseconds) to spend writing each
-  /// topic before switch to the next.
-  std::chrono::milliseconds topic_write_duration;
 
   // The constructor was removed because of the issue with the integration test
   // (see cpp file for more details).
