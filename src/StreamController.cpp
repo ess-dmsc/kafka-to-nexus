@@ -13,7 +13,7 @@ StreamController::StreamController(
     Metrics::Registrar const &Registrar)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
-      WriterThread(Settings.DataFlushInterval, Registrar.getNewRegistrar("stream")),
+      WriterThread([&FileWriterTask](){FileWriterTask->flushDataToFile();}, Settings.DataFlushInterval, Registrar.getNewRegistrar("stream")),
       ServiceId(std::move(ServiceID)), KafkaSettings(Settings) {
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;

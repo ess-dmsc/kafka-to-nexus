@@ -85,6 +85,8 @@ public:
   /// \return The group.
   hdf5::node::Group hdfGroup() const;
 
+  void flushDataToFile();
+
 private:
   std::string Filename;
   std::vector<Source> SourceToModuleMap;

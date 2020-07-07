@@ -95,4 +95,8 @@ void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 std::string FileWriterTask::filename() const { return Filename; }
 
+void FileWriterTask::flushDataToFile() {
+  File.flush();
+}
+
 } // namespace FileWriter

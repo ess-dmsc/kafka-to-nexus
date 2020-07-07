@@ -25,8 +25,8 @@ ModuleHash generateSrcHash(std::string const &Source,
 static const ModuleHash UnknownModuleHash{
     generateSrcHash("Unknown source", "Unknown fb-id")};
 
-MessageWriter::MessageWriter(duration FlushIntervalTime, Metrics::Registrar const &MetricReg)
-    : Registrar(MetricReg.getNewRegistrar("writer")), WriterThread(&MessageWriter::threadFunction, this), FlushInterval(FlushIntervalTime) {
+MessageWriter::MessageWriter(std::function<void()> FlushFunction, duration FlushIntervalTime, Metrics::Registrar const &MetricReg)
+    : FlushDataFunction(FlushFunction), Registrar(MetricReg.getNewRegistrar("writer")), WriterThread(&MessageWriter::threadFunction, this), FlushInterval(FlushIntervalTime) {
   Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
   Registrar.registerMetric(WriteErrors,
                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
@@ -88,8 +88,7 @@ void MessageWriter::threadFunction() {
       NextFlushTime += FlushPeriods * FlushInterval;
     }
   };
-
-  while (RunThread) {
+  auto WriteOperation = [&](){
     CheckTimeCounter = 0;
     while (WriteJobs.try_dequeue(CurrentJob)) {
       CurrentJob();
@@ -99,9 +98,13 @@ void MessageWriter::threadFunction() {
         CheckTimeCounter = 0;
       }
     }
+  };
+  while (RunThread) {
+    WriteOperation();
     FlushOperation();
     std::this_thread::sleep_for(SleepTime);
   }
+  WriteOperation();
 }
 
 } // namespace Stream

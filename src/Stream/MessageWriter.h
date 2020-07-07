@@ -29,7 +29,7 @@ namespace Stream {
 
 class MessageWriter {
 public:
-  explicit MessageWriter(duration FlushIntervalTime, Metrics::Registrar const &MetricReg);
+  explicit MessageWriter(std::function<void()> FlushFunction, duration FlushIntervalTime, Metrics::Registrar const &MetricReg);
 
   virtual ~MessageWriter();
 
@@ -48,7 +48,8 @@ protected:
                             FileWriter::FlatbufferMessage const &Msg);
   virtual void threadFunction();
 
-  virtual void flushData() {};
+  virtual void flushData() {FlushDataFunction();};
+  std::function<void()> FlushDataFunction;
 
   SharedLogger Log{getLogger()};
   Metrics::Metric WritesDone{"writes_done",
