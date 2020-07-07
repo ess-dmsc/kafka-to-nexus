@@ -29,7 +29,7 @@ public:
 
 private:
   MainOpt &config;
-  std::unique_ptr<Kafka::ConsumerInterface> consumer;
+  std::unique_ptr<Kafka::ConsumerInterface> Consumer;
   SharedLogger Logger = getLogger();
 };
 } // namespace FileWriter

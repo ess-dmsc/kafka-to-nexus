@@ -23,21 +23,12 @@ void CommandListener::start() {
   Kafka::BrokerSettings BrokerSettings =
       config.StreamerConfiguration.BrokerSettings;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
-  consumer = Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
-  if (consumer->topicPresent(config.CommandBrokerURI.Topic))
-    consumer->addTopic(config.CommandBrokerURI.Topic);
-  else {
-    Logger->error(
-        "Topic {} not in broker. Could not start listener for topic {}.",
-        config.CommandBrokerURI.Topic, config.CommandBrokerURI.Topic);
-    throw std::runtime_error(fmt::format(
-        "Topic {} not in broker. Could not start listener for topic {}.",
-        config.CommandBrokerURI.Topic, config.CommandBrokerURI.Topic));
-  }
+  Consumer = Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
+  Consumer->addTopic(config.CommandBrokerURI.Topic);
 }
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::poll() {
-  return consumer->poll();
+  return Consumer->poll();
 }
 
 } // namespace FileWriter
