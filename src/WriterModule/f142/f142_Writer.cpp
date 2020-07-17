@@ -195,9 +195,7 @@ ReturnType extractScalarValue(const LogData *LogDataMessage) {
 template <typename DataType, typename ValueType, class DatasetType>
 void appendScalarData(DatasetType &Dataset, const LogData *LogDataMessage) {
   auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
-  Dataset.appendArray(ArrayAdapter<const DataType>(&ScalarValue, 1), {
-                                                                         1,
-                                                                     });
+  Dataset.appendArray(ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
 }
 
 std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
