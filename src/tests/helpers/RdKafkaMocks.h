@@ -136,7 +136,7 @@ public:
   MAKE_MOCK1(subscription, RdKafka::ErrorCode(std::vector<std::string> &),
              override);
   MAKE_MOCK1(controllerid, int32_t(int), override);
-  MAKE_MOCK1(fatal_error, RdKafka::ErrorCode(std::string &), override);
+  MAKE_CONST_MOCK1(fatal_error, RdKafka::ErrorCode(std::string &), override);
   MAKE_MOCK5(oauthbearer_set_token,
              RdKafka::ErrorCode(const std::string &, int64_t,
                                 const std::string &,
@@ -144,6 +144,7 @@ public:
              override);
   MAKE_MOCK1(oauthbearer_set_token_failure,
              RdKafka::ErrorCode(const std::string &), override);
+  MAKE_MOCK0(groupMetadata, RdKafka::ConsumerGroupMetadata *(), override);
 
 private:
   int metadataCallCounter = 0;
@@ -210,7 +211,7 @@ public:
              override);
   MAKE_MOCK1(flush, RdKafka::ErrorCode(int), override);
   MAKE_MOCK1(controllerid, int32_t(int), override);
-  MAKE_MOCK1(fatal_error, RdKafka::ErrorCode(std::string &), override);
+  MAKE_CONST_MOCK1(fatal_error, RdKafka::ErrorCode(std::string &), override);
   MAKE_MOCK5(oauthbearer_set_token,
              RdKafka::ErrorCode(const std::string &, int64_t,
                                 const std::string &,
@@ -224,13 +225,11 @@ public:
                                  RdKafka::Headers *, void *),
               override);
   MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
-#if RD_KAFKA_VERSION >= 0x010400ff
   IMPLEMENT_MOCK1(init_transactions);
   IMPLEMENT_MOCK0(begin_transaction);
   IMPLEMENT_MOCK3(send_offsets_to_transaction);
   IMPLEMENT_MOCK1(commit_transaction);
   IMPLEMENT_MOCK1(abort_transaction);
-#endif
 };
 
 class MockConf : public RdKafka::Conf {
