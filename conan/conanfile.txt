@@ -2,11 +2,11 @@
 gtest/1.10.0
 fmt/6.1.2
 h5cpp/2cfb0ad@ess-dmsc/stable
-librdkafka/1.2.0@ess-dmsc/stable
+librdkafka/1.5.0@ess-dmsc/stable
 jsonformoderncpp/3.7.3@vthiery/stable
-streaming-data-types/96fd730@ess-dmsc/stable
-CLI11/1.9.0@cliutils/stable
-trompeloeil/v36@rollbear/stable
+streaming-data-types/3966e53@ess-dmsc/stable
+CLI11/1.9.1@cliutils/stable
+trompeloeil/v38@rollbear/stable
 spdlog-graylog/1.5.0-dm1@ess-dmsc/stable
 date/4b46deb@ess-dmsc/stable
 asio/1.13.0
