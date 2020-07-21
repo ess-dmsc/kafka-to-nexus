@@ -7,3 +7,8 @@ This feature is turned on for all writer modules except event messages (`ev42`).
 to ignore repeated updates from the Forwarder, which are sent to ensure there is an update available on Kafka
 from shortly before the start of each file being written.
 - The application is no longer (completely) blocking when doing initial set-up kafka meta data calls.
+- Updated dependencies:
+  - librdkafka
+  -  streaming-data-types
+  -  CLI11
+  -  trompeloeil
