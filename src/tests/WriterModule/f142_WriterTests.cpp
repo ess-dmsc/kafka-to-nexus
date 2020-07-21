@@ -362,6 +362,30 @@ TEST_F(f142WriteData, WriteOneElement) {
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
 
+TEST_F(f142WriteData, WriteOneDefaultValueElement) {
+  f142_WriterStandIn TestWriter;
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+  // 0 is the default value for a number in flatbuffers, so it doesn't actually
+  // end up in buffer. We'll test this specifically, because it has
+  // caused a bug in the past.
+  double ElementValue{0.0};
+  std::uint64_t Timestamp{11};
+  auto FlatbufferData = generateFlatbufferMessage(ElementValue, Timestamp);
+  EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
+  EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
+  TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
+                                                 FlatbufferData.second));
+  ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
+  ASSERT_EQ(TestWriter.Timestamp.dataspace().size(), 1);
+  std::vector<double> WrittenValues(1);
+  TestWriter.Values.read(WrittenValues);
+  EXPECT_EQ(WrittenValues.at(0), ElementValue);
+  std::vector<std::uint64_t> WrittenTimes(1);
+  TestWriter.Timestamp.read(WrittenTimes);
+  EXPECT_EQ(WrittenTimes.at(0), Timestamp);
+}
+
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
 generateFlatbufferArrayMessage(std::vector<double> Value, uint64_t Timestamp) {
   auto ValueFunc = [Value](auto &Builder) {
