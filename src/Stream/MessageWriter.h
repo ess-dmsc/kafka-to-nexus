@@ -67,7 +67,7 @@ protected:
   std::thread WriterThread;
   std::atomic_bool RunThread{true};
   const duration SleepTime{10ms};
-  duration FlushInterval{1s};
+  duration FlushInterval{10s};
   const int MaxTimeCheckCounter{200};
 };
 
