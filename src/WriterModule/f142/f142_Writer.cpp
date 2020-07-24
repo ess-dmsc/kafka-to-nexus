@@ -186,6 +186,18 @@ void appendData(DatasetType &Dataset, const void *Pointer, size_t Size) {
       });
 }
 
+template <typename FBValueType, typename ReturnType>
+ReturnType extractScalarValue(const LogData *LogDataMessage) {
+  auto ScalarValue = LogDataMessage->value_as<FBValueType>();
+  return ScalarValue->value();
+}
+
+template <typename DataType, typename ValueType, class DatasetType>
+void appendScalarData(DatasetType &Dataset, const LogData *LogDataMessage) {
+  auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
+  Dataset.appendArray(ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
+}
+
 std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
     {AlarmStatus::NO_ALARM, "NO_ALARM"},
     {AlarmStatus::WRITE_ACCESS, "WRITE_ACCESS"},
@@ -234,56 +246,77 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     DataPtr = reinterpret_cast<void const *>(
         reinterpret_cast<int const *>(DataPtr) + 2);
   };
+
   switch (Type) {
   case Value::ArrayByte:
-    extractArrayInfo(); // fallthrough
-  case Value::Byte:
+    extractArrayInfo();
     appendData<const std::int8_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::Byte:
+    appendScalarData<const std::int8_t, Byte>(Values, LogDataMessage);
+    break;
   case Value::ArrayUByte:
-    extractArrayInfo(); // fallthrough
-  case Value::UByte:
+    extractArrayInfo();
     appendData<const std::uint8_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::UByte:
+    appendScalarData<const std::uint8_t, UByte>(Values, LogDataMessage);
+    break;
   case Value::ArrayShort:
-    extractArrayInfo(); // fallthrough
-  case Value::Short:
+    extractArrayInfo();
     appendData<const std::int16_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::Short:
+    appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
+    break;
   case Value::ArrayUShort:
-    extractArrayInfo(); // fallthrough
-  case Value::UShort:
+    extractArrayInfo();
     appendData<const std::uint16_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::UShort:
+    appendScalarData<const std::uint16_t, UShort>(Values, LogDataMessage);
+    break;
   case Value::ArrayInt:
-    extractArrayInfo(); // fallthrough
-  case Value::Int:
+    extractArrayInfo();
     appendData<const std::int32_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::Int:
+    appendScalarData<const std::int32_t, Int>(Values, LogDataMessage);
+    break;
   case Value::ArrayUInt:
-    extractArrayInfo(); // fallthrough
-  case Value::UInt:
+    extractArrayInfo();
     appendData<const std::uint32_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::UInt:
+    appendScalarData<const std::uint32_t, UInt>(Values, LogDataMessage);
+    break;
   case Value::ArrayLong:
-    extractArrayInfo(); // fallthrough
-  case Value::Long:
+    extractArrayInfo();
     appendData<const std::int64_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::Long:
+    appendScalarData<const std::int64_t, Long>(Values, LogDataMessage);
+    break;
   case Value::ArrayULong:
-    extractArrayInfo(); // fallthrough
-  case Value::ULong:
+    extractArrayInfo();
     appendData<const std::uint64_t>(Values, DataPtr, NrOfElements);
     break;
+  case Value::ULong:
+    appendScalarData<const std::uint64_t, ULong>(Values, LogDataMessage);
+    break;
   case Value::ArrayFloat:
-    extractArrayInfo(); // fallthrough
-  case Value::Float:
+    extractArrayInfo();
     appendData<const float>(Values, DataPtr, NrOfElements);
     break;
+  case Value::Float:
+    appendScalarData<const float, Float>(Values, LogDataMessage);
+    break;
   case Value::ArrayDouble:
-    extractArrayInfo(); // fallthrough
-  case Value::Double:
+    extractArrayInfo();
     appendData<const double>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::Double:
+    appendScalarData<const double, Double>(Values, LogDataMessage);
     break;
   default:
     throw WriterModule::WriterException(
