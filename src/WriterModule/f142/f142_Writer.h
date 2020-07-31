@@ -17,7 +17,7 @@
 #include <chrono>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <nonstd/optional.hpp>
+#include <optional>
 #include <vector>
 
 namespace WriterModule {
@@ -83,7 +83,7 @@ protected:
   uint64_t ValueIndexInterval = std::numeric_limits<uint64_t>::max();
   size_t ArraySize{1};
   size_t ChunkSize{64 * 1024};
-  nonstd::optional<std::string> ValueUnits;
+  std::optional<std::string> ValueUnits;
 };
 
 } // namespace f142

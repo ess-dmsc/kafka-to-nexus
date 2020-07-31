@@ -36,7 +36,7 @@ TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
   auto const NewState =
       getNextState(StartCommand, std::chrono::milliseconds{0}, CurrentState);
 
-  ASSERT_TRUE(mpark::get_if<States::StartRequested>(&NewState));
+  ASSERT_TRUE(std::get_if<States::StartRequested>(&NewState));
 }
 
 TEST(GetNewStateTests, IfWritingThenOnStartCommandNoStateChange) {
@@ -44,7 +44,7 @@ TEST(GetNewStateTests, IfWritingThenOnStartCommandNoStateChange) {
   auto const NewState =
       getNextState(StartCommand, std::chrono::milliseconds{0}, CurrentState);
 
-  ASSERT_TRUE(mpark::get_if<States::Writing>(&NewState));
+  ASSERT_TRUE(std::get_if<States::Writing>(&NewState));
 }
 
 TEST(GetNewStateTests, IfWritingThenOnStopCommandStopIsRequested) {
@@ -52,7 +52,7 @@ TEST(GetNewStateTests, IfWritingThenOnStopCommandStopIsRequested) {
   auto const NewState =
       getNextState(StopCommand, std::chrono::milliseconds{0}, CurrentState);
 
-  ASSERT_TRUE(mpark::get_if<States::StopRequested>(&NewState));
+  ASSERT_TRUE(std::get_if<States::StopRequested>(&NewState));
 }
 
 TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
@@ -60,7 +60,7 @@ TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
   auto const NewState =
       getNextState(StopCommand, std::chrono::milliseconds{0}, CurrentState);
 
-  ASSERT_TRUE(mpark::get_if<States::Idle>(&NewState));
+  ASSERT_TRUE(std::get_if<States::Idle>(&NewState));
 }
 
 class FakeJobCreator : public IJobCreator {

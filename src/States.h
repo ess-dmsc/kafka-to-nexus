@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <mpark/variant.hpp>
+#include <variant>
 
 struct MainOpt;
 
@@ -29,7 +29,7 @@ struct StopRequested {
 };
 } // namespace States
 
-using FileWriterState = mpark::variant<States::Idle, States::StartRequested,
-                                       States::Writing, States::StopRequested>;
+using FileWriterState = std::variant<States::Idle, States::StartRequested,
+                                     States::Writing, States::StopRequested>;
 
 } // namespace FileWriter

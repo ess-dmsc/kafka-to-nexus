@@ -50,7 +50,7 @@ void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
 void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
                       hdf5::Dimensions const &Shape,
                       hdf5::Dimensions const &ChunkSize,
-                      nonstd::optional<std::string> const &ValueUnits) {
+                      std::optional<std::string> const &ValueUnits) {
   using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::int8, [&]() { makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
