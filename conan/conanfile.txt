@@ -1,7 +1,7 @@
 [requires]
 gtest/1.10.0
 fmt/6.1.2
-h5cpp/2cfb0ad@ess-dmsc/stable
+h5cpp/897cec0@ess-dmsc/testing
 librdkafka/1.5.0@ess-dmsc/stable
 jsonformoderncpp/3.7.3@vthiery/stable
 streaming-data-types/3966e53@ess-dmsc/stable
@@ -26,7 +26,8 @@ flatbuffers:shared=True
 gtest:shared=False
 hdf5:shared=True
 librdkafka:shared=True
-date:disable_string_view=True
+date:disable_string_view=False
+h5cpp:with_boost=False
 
 [imports]
 ., *.dylib* -> ./lib @ keep_path=False

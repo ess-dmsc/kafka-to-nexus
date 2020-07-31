@@ -16,6 +16,7 @@
 #include <h5cpp/hdf5.hpp>
 #include <string>
 #include <vector>
+#include <deque>
 
 namespace FileWriter {
 
