@@ -8,13 +8,14 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFFile.h"
+#include "Filesystem.h"
 #include "Version.h"
 #include "json.h"
 #include <date/date.h>
 #include <date/tz.h>
 #include <flatbuffers/flatbuffers.h>
-#include <stack>
 #include <fstream>
+#include <stack>
 
 namespace FileWriter {
 
@@ -880,8 +881,7 @@ void HDFFile::init(std::string const &Filename,
   } catch (std::exception const &E) {
     Logger->error(
         "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
-        std::filesystem::current_path().string(), Filename,
-        hdf5::error::print_nested(E));
+        fs::current_path().string(), Filename, hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
   this->NexusStructure = NexusStructure;
@@ -960,8 +960,7 @@ void HDFFile::close() {
                   H5File.id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
-        std::filesystem::current_path().string(),
-        H5File.id().file_name().string(), Trace)));
+        fs::current_path().string(), H5File.id().file_name().string(), Trace)));
   }
 }
 
@@ -981,10 +980,10 @@ void HDFFile::reopen(std::string const &Filename) {
     auto Trace = hdf5::error::print_nested(E);
     Logger->error(
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
-        std::filesystem::current_path().string(), Filename, Trace);
+        fs::current_path().string(), Filename, Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to reopen.  Current Path: {}  Filename: {}  Trace:\n{}",
-        std::filesystem::current_path().string(), Filename, Trace)));
+        fs::current_path().string(), Filename, Trace)));
   }
 }
 
