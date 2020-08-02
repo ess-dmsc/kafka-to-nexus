@@ -51,6 +51,7 @@
 #endif
 
 // Check if the header "<filesystem>" exists
+// cppcheck-suppress preprocessorErrorDirective
 #elif __has_include(<experimental/filesystem>)
 #define INCLUDE_STD_FILESYSTEM_EXPERIMENTAL 1
 
