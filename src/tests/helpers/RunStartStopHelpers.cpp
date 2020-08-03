@@ -2,14 +2,14 @@
 #include "Msg.h"
 
 #include <6s4t_run_stop_generated.h>
-#include <nonstd/optional.hpp>
+#include <optional>
 #include <pl72_run_start_generated.h>
 
 namespace RunStartStopHelpers {
 FileWriter::Msg buildRunStartMessage(
     std::string const &InstrumentName, std::string const &RunName,
     std::string const &NexusStructure, std::string const &JobID,
-    nonstd::optional<std::string> const &ServiceID, std::string const &Broker,
+    std::optional<std::string> const &ServiceID, std::string const &Broker,
     std::string const &Filename, uint64_t StartTime, uint64_t StopTime) {
   flatbuffers::FlatBufferBuilder Builder;
 
@@ -46,7 +46,7 @@ FileWriter::Msg buildRunStartMessage(
 FileWriter::Msg
 buildRunStopMessage(uint64_t StopTime, std::string const &RunName,
                     std::string const &JobID,
-                    nonstd::optional<std::string> const &ServiceID) {
+                    std::optional<std::string> const &ServiceID) {
   flatbuffers::FlatBufferBuilder Builder;
 
   const auto RunIDOffset = Builder.CreateString(RunName);

@@ -10,7 +10,7 @@
 #include <6s4t_run_stop_generated.h>
 #include <chrono>
 #include <gtest/gtest.h>
-#include <nonstd/optional.hpp>
+#include <optional>
 #include <pl72_run_start_generated.h>
 
 #include "CommandParser.h"
@@ -23,7 +23,7 @@ std::string const InstrumentNameInput = "TEST";
 std::string const RunNameInput = "42";
 std::string const NexusStructureInput = "{}";
 std::string const JobIDInput = "qw3rty";
-nonstd::optional<std::string> const ServiceIDInput = "filewriter1";
+std::optional<std::string> const ServiceIDInput = "filewriter1";
 std::string const BrokerInput = "somehost:1234";
 std::string const FilenameInput = "a-dummy-name-01.h5";
 uint64_t const StartTimeInput = 123456789000;
@@ -151,7 +151,7 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
 }
 
 TEST(CommandParserStartTests, IfBlankServiceIdThenIsBlank) {
-  nonstd::optional<std::string> const EmptyServiceID = "";
+  std::optional<std::string> const EmptyServiceID = "";
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
       EmptyServiceID, BrokerInput, FilenameInput, StartTimeInput,
@@ -164,7 +164,7 @@ TEST(CommandParserStartTests, IfBlankServiceIdThenIsBlank) {
 }
 
 TEST(CommandParserStartTests, IfMissingServiceIdThenIsBlank) {
-  nonstd::optional<std::string> const NoServiceID = nonstd::nullopt;
+  std::optional<std::string> const NoServiceID = std::nullopt;
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
       NoServiceID, BrokerInput, FilenameInput, StartTimeInput, StopTimeInput);
@@ -205,7 +205,7 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
 }
 
 TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
-  nonstd::optional<std::string> const EmptyServiceID = "";
+  std::optional<std::string> const EmptyServiceID = "";
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
                                            JobIDInput, EmptyServiceID);
 
@@ -216,7 +216,7 @@ TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
 }
 
 TEST(CommandParserStopTests, IfMissingServiceIdThenIsBlank) {
-  nonstd::optional<std::string> const NoServiceID = nonstd::nullopt;
+  std::optional<std::string> const NoServiceID = std::nullopt;
   auto MessageBuffer =
       buildRunStopMessage(StopTimeInput, RunNameInput, JobIDInput, NoServiceID);
 

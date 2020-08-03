@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <nonstd/optional.hpp>
+#include <optional>
 
 namespace FileWriter {
 struct Msg;
@@ -19,11 +19,11 @@ namespace RunStartStopHelpers {
 FileWriter::Msg buildRunStartMessage(
     std::string const &InstrumentName, std::string const &RunName,
     std::string const &NexusStructure, std::string const &JobID,
-    nonstd::optional<std::string> const &ServiceID, std::string const &Broker,
+    std::optional<std::string> const &ServiceID, std::string const &Broker,
     std::string const &Filename, uint64_t StartTime, uint64_t StopTime);
 
 FileWriter::Msg
 buildRunStopMessage(uint64_t StopTime, std::string const &RunName,
                     std::string const &JobID,
-                    nonstd::optional<std::string> const &ServiceID);
+                    std::optional<std::string> const &ServiceID);
 } // namespace RunStartStopHelpers

@@ -17,7 +17,6 @@
 #include "States.h"
 #include <atomic>
 #include <memory>
-#include <mpark/variant.hpp>
 #include <string>
 #include <vector>
 

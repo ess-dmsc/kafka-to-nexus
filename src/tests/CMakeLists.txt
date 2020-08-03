@@ -73,6 +73,10 @@ target_link_libraries(UnitTests
         ${CONAN_LIBS_GTEST}
         )
 
+# Link stdc++fs or c++experimental to get std::experimental::filesystem when necessary
+target_link_libraries(UnitTests $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
+target_link_libraries(UnitTests $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11.0>>:c++fs>)
+
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
 
 enable_testing()

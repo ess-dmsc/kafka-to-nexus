@@ -13,6 +13,7 @@
 #include "logger.h"
 #include <H5Ipublic.h>
 #include <chrono>
+#include <deque>
 #include <h5cpp/hdf5.hpp>
 #include <string>
 #include <vector>

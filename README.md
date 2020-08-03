@@ -75,7 +75,8 @@ The following minimum software is required to get started:
 - Conan
 - CMake >= 3.1.0
 - Git
-- A C++14 compatible compiler (preferably GCC or Clang)
+- A C++17 compatible compiler (preferably GCC or Clang).
+GCC >=8 and AppleClang >=10 are good enough; complete C++17 support is not required.
 - Doxygen (only required if you would like to generate the documentation)
 
 Conan will install all the other required packages.
