@@ -16,6 +16,7 @@
 #include "logger.h"
 #include <chrono>
 #include <functional>
+#include <variant>
 
 namespace FileWriter {
 
@@ -25,7 +26,7 @@ FileWriterState getNextState(Msg const &Command,
   try {
     if (CommandParser::isStopCommand(Command) ||
         CommandParser::isStartCommand(Command)) {
-      if (mpark::get_if<States::Writing>(&CurrentState)) {
+      if (std::get_if<States::Writing>(&CurrentState)) {
         if (CommandParser::isStopCommand(Command)) {
           auto StopInfo = CommandParser::extractStopInformation(Command);
           if (StopInfo.StopTime.count() == 0) {
@@ -111,9 +112,9 @@ bool Master::hasWritingStopped() {
 }
 
 void Master::moveToNewState(FileWriterState const &NewState) {
-  if (auto StartReq = mpark::get_if<States::StartRequested>(&NewState)) {
+  if (auto StartReq = std::get_if<States::StartRequested>(&NewState)) {
     startWriting(StartReq->StartInfo);
-  } else if (auto StopReq = mpark::get_if<States::StopRequested>(&NewState)) {
+  } else if (auto StopReq = std::get_if<States::StopRequested>(&NewState)) {
     requestStopWriting(StopReq->StopInfo);
   }
 }
@@ -133,7 +134,7 @@ void Master::run() {
 }
 
 bool Master::isWriting() const {
-  return mpark::get_if<States::Idle>(&CurrentState) == nullptr;
+  return std::get_if<States::Idle>(&CurrentState) == nullptr;
 }
 
 void Master::setToIdle() {

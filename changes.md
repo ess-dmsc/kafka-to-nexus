@@ -13,3 +13,6 @@ from shortly before the start of each file being written. ([#551](https://github
   - streaming-data-types
   - CLI11
   - trompeloeil
+- Codebase now requires C++17 to make use of `std::optional`, `std::variant` and `std::filesystem`. `filesystem` is 
+used from the `std::experimental` namespace when necessary to support gcc 8 and AppleClang 10. Compile times reduced by
+approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-to-nexus/pull/558)).

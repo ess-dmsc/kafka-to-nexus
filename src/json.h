@@ -10,14 +10,14 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <nonstd/optional.hpp>
+#include <optional>
 #include <string>
 
 template <typename T>
-nonstd::optional<T> find(std::string Key, nlohmann::json const &Json) {
+std::optional<T> find(std::string Key, nlohmann::json const &Json) {
   auto It = Json.find(Key);
   if (It != Json.end()) {
-    return nonstd::optional<T>(It.value().get<T>());
+    return std::optional<T>(It.value().get<T>());
   }
-  return nonstd::nullopt;
+  return std::nullopt;
 }
