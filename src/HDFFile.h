@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "StreamHDFInfo.h"
 #include "json.h"
 #include "logger.h"
 #include <H5Ipublic.h>
@@ -17,7 +18,6 @@
 #include <h5cpp/hdf5.hpp>
 #include <string>
 #include <vector>
-#include "StreamHDFInfo.h"
 
 namespace FileWriter {
 
@@ -26,21 +26,18 @@ public:
   virtual ~HDFFileBase() = default;
   virtual void flush();
 
-  auto hdfGroup() const {
-    return H5File.root();
-  }
+  auto hdfGroup() const { return H5File.root(); }
 
 protected:
-  auto& hdfFile() {
-    return H5File;
-  }
+  auto &hdfFile() { return H5File; }
   void init(const std::string &NexusStructure,
-                std::vector<StreamHDFInfo> &StreamHDFInfo);
+            std::vector<StreamHDFInfo> &StreamHDFInfo);
 
   void init(const nlohmann::json &NexusStructure,
-                std::vector<StreamHDFInfo> &StreamHDFInfo);
+            std::vector<StreamHDFInfo> &StreamHDFInfo);
 
   SharedLogger Logger = getLogger();
+
 private:
   hdf5::file::File H5File;
 };
@@ -50,6 +47,7 @@ public:
   HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
           std::vector<StreamHDFInfo> &StreamHDFInfo);
   virtual ~HDFFile();
+
 private:
   void createFileInRegularMode();
   void openFileInRegularMode();
@@ -60,6 +58,5 @@ private:
   std::string H5FileName;
   nlohmann::json StoredNexusStructure;
 };
-
 
 } // namespace FileWriter

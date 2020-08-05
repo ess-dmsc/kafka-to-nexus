@@ -8,11 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFOperations.h"
-#include <stack>
-#include <string>
+#include "json.h"
 #include <date/date.h>
 #include <date/tz.h>
-#include "json.h"
+#include <stack>
+#include <string>
 
 namespace HDFOperations {
 using nlohmann::json;
@@ -791,7 +791,7 @@ void createHDFStructures(
 }
 
 void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
-                     SharedLogger Logger) {
+              SharedLogger Logger) {
   if (!Json.is_object()) {
     throw std::runtime_error(fmt::format(
         "HDFFile addLinks: We expect a json object but got: {}", Json.dump()));
@@ -861,4 +861,4 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
   }
 }
 
-}
+} // namespace HDFOperations

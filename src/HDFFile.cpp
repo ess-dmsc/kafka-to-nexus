@@ -9,19 +9,21 @@
 
 #include "HDFFile.h"
 #include "Filesystem.h"
+#include "HDFOperations.h"
+#include "HDFVersionCheck.h"
 #include "Version.h"
 #include "json.h"
-#include "HDFVersionCheck.h"
-#include "HDFOperations.h"
 
 namespace FileWriter {
-using HDFOperations::writeStringAttribute;
+using HDFOperations::createHDFStructures;
 using HDFOperations::writeAttributesIfPresent;
 using HDFOperations::writeHDFISO8601AttributeCurrentTime;
-using HDFOperations::createHDFStructures;
+using HDFOperations::writeStringAttribute;
 
-HDFFile::HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
-                 std::vector<StreamHDFInfo> &StreamHDFInfo) : H5FileName(FileName) {
+HDFFile::HDFFile(std::string const &FileName,
+                 nlohmann::json const &NexusStructure,
+                 std::vector<StreamHDFInfo> &StreamHDFInfo)
+    : H5FileName(FileName) {
 // Keep this.  Will be used later to test against different lib versions
 #if H5_VERSION_GE(1, 8, 0) && H5_VERSION_LE(1, 10, 99)
   unsigned int maj, min, rel;
@@ -45,23 +47,24 @@ HDFFile::~HDFFile() {
     openFileInRegularMode();
     addLinks();
   } catch (std::exception const &E) {
-    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName, E.what());
+    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
+              E.what());
   }
 }
 
 void HDFFile::createFileInRegularMode() {
-  hdfFile() = hdf5::file::create(H5FileName,
-                                 hdf5::file::AccessFlags::EXCLUSIVE, {}, {});
+  hdfFile() = hdf5::file::create(H5FileName, hdf5::file::AccessFlags::EXCLUSIVE,
+                                 {}, {});
 }
 
 void HDFFileBase::init(const std::string &NexusStructure,
-                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
+                       std::vector<StreamHDFInfo> &StreamHDFInfo) {
   auto Document = nlohmann::json::parse(NexusStructure);
   init(Document, StreamHDFInfo);
 }
 
 void HDFFileBase::init(const nlohmann::json &NexusStructure,
-                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
+                       std::vector<StreamHDFInfo> &StreamHDFInfo) {
 
   try {
     hdf5::property::AttributeCreationList acpl;
@@ -120,12 +123,16 @@ void HDFFile::closeFile() {
                   hdfFile().id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
-        fs::current_path().string(), hdfFile().id().file_name().string(), Trace)));
+        fs::current_path().string(), hdfFile().id().file_name().string(),
+        Trace)));
   }
 }
 
 void HDFFile::openFileInSWMRMode() {
-  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE | hdf5::file::AccessFlags::SWMR_WRITE, {});
+  hdfFile() = hdf5::file::open(H5FileName,
+                               hdf5::file::AccessFlags::READWRITE |
+                                   hdf5::file::AccessFlags::SWMR_WRITE,
+                               {});
 }
 
 void HDFFileBase::flush() {
@@ -142,7 +149,8 @@ void HDFFileBase::flush() {
 }
 
 void HDFFile::openFileInRegularMode() {
-  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE, {});
+  hdfFile() =
+      hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE, {});
 }
 
 void HDFFile::addLinks() {

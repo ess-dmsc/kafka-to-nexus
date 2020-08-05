@@ -11,6 +11,7 @@
 #include "CommandListener.h"
 #include "FlatbufferReader.h"
 #include "GetHostNameAndPID.h"
+#include "HDFVersionCheck.h"
 #include "JobCreator.h"
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
@@ -28,7 +29,6 @@
 #include <CLI/CLI.hpp>
 #include <csignal>
 #include <string>
-#include "HDFVersionCheck.h"
 
 // These should only be visible in this translation unit
 static std::atomic_bool Running{true};

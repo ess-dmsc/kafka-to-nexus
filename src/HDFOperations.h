@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include "json.h"
-#include <string>
-#include "logger.h"
-#include <h5cpp/hdf5.hpp>
 #include "StreamHDFInfo.h"
+#include "json.h"
+#include "logger.h"
 #include <deque>
+#include <h5cpp/hdf5.hpp>
+#include <string>
 
 namespace HDFOperations {
 
@@ -90,4 +90,4 @@ void writeAttrOfSpecifiedType(std::string const &DType,
 void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
               SharedLogger Logger);
 
-}
+} // namespace HDFOperations
