@@ -387,21 +387,24 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               SharedLogger const &Logger) {
   try {
     std::map<std::string, std::function<void()>> WriteAttrMap{
-        {"uint8", [&](){writeAttrNumeric<uint8_t>(Node, Name, Values);}},
-        {"uint16", [&](){writeAttrNumeric<uint16_t>(Node, Name, Values);}},
-        {"uint32", [&](){writeAttrNumeric<uint32_t>(Node, Name, Values);}},
-        {"uint64", [&](){writeAttrNumeric<uint64_t>(Node, Name, Values);}},
-        {"int8", [&](){writeAttrNumeric<int8_t>(Node, Name, Values);}},
-        {"int16", [&](){writeAttrNumeric<int16_t>(Node, Name, Values);}},
-        {"int32", [&](){writeAttrNumeric<int32_t>(Node, Name, Values);}},
-        {"int64", [&](){writeAttrNumeric<int64_t>(Node, Name, Values);}},
-        {"float", [&](){writeAttrNumeric<float>(Node, Name, Values);}},
-        {"double", [&](){writeAttrNumeric<double>(Node, Name, Values);}},
-        {"string", [&](){writeAttrString(Node, Name, Values, StringSize, Encoding, Logger);}}
-    };
+        {"uint8", [&]() { writeAttrNumeric<uint8_t>(Node, Name, Values); }},
+        {"uint16", [&]() { writeAttrNumeric<uint16_t>(Node, Name, Values); }},
+        {"uint32", [&]() { writeAttrNumeric<uint32_t>(Node, Name, Values); }},
+        {"uint64", [&]() { writeAttrNumeric<uint64_t>(Node, Name, Values); }},
+        {"int8", [&]() { writeAttrNumeric<int8_t>(Node, Name, Values); }},
+        {"int16", [&]() { writeAttrNumeric<int16_t>(Node, Name, Values); }},
+        {"int32", [&]() { writeAttrNumeric<int32_t>(Node, Name, Values); }},
+        {"int64", [&]() { writeAttrNumeric<int64_t>(Node, Name, Values); }},
+        {"float", [&]() { writeAttrNumeric<float>(Node, Name, Values); }},
+        {"double", [&]() { writeAttrNumeric<double>(Node, Name, Values); }},
+        {"string", [&]() {
+           writeAttrString(Node, Name, Values, StringSize, Encoding, Logger);
+         }}};
     WriteAttrMap.at(DType)();
   } catch (std::exception const &) {
-    auto ErrorStr = fmt::format("Failed attribute write in {}/{} with data type {}", std::string(Node.link().path()), Name, DType);
+    auto ErrorStr =
+        fmt::format("Failed attribute write in {}/{} with data type {}",
+                    std::string(Node.link().path()), Name, DType);
     std::throw_with_nested(std::runtime_error(ErrorStr));
   }
 }
@@ -493,7 +496,9 @@ void writeStringDataset(
                   DataType, Dataspace, Dataspace,
                   hdf5::property::DatasetTransferList());
   } catch (const std::exception &e) {
-    auto ErrorStr = fmt::format("Failed to write variable-size string dataset {}/{}.", std::string(Parent.link().path()), Name);
+    auto ErrorStr =
+        fmt::format("Failed to write variable-size string dataset {}/{}.",
+                    std::string(Parent.link().path()), Name);
     std::throw_with_nested(std::runtime_error(ErrorStr));
   }
 }
@@ -562,34 +567,67 @@ void writeGenericDataset(const std::string &DataType,
       }
     }
     std::map<std::string, std::function<void()>> WriteDatasetMap{
-        {"uint8", [&](){writeNumericDataset<uint8_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                     Values);}},
-        {"uint16", [&](){writeNumericDataset<uint16_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                     Values);}},
-        {"uint32", [&](){writeNumericDataset<uint32_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                     Values);}},
-        {"uint64", [&](){writeNumericDataset<uint64_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                     Values);}},
-        {"int8", [&](){writeNumericDataset<int8_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                     Values);}},
-        {"int16", [&](){writeNumericDataset<int16_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                       Values);}},
-        {"int32", [&](){writeNumericDataset<int32_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                       Values);}},
-        {"int64", [&](){writeNumericDataset<int64_t>(Parent, Name, DatasetCreationList, Dataspace,
-                                                       Values);}},
-        {"float", [&](){writeNumericDataset<float>(Parent, Name, DatasetCreationList, Dataspace,
-                                                     Values);}},
-        {"double", [&](){writeNumericDataset<double>(Parent, Name, DatasetCreationList, Dataspace,
-                                                     Values);}},
-        {"string", [&](){
+        {"uint8",
+         [&]() {
+           writeNumericDataset<uint8_t>(Parent, Name, DatasetCreationList,
+                                        Dataspace, Values);
+         }},
+        {"uint16",
+         [&]() {
+           writeNumericDataset<uint16_t>(Parent, Name, DatasetCreationList,
+                                         Dataspace, Values);
+         }},
+        {"uint32",
+         [&]() {
+           writeNumericDataset<uint32_t>(Parent, Name, DatasetCreationList,
+                                         Dataspace, Values);
+         }},
+        {"uint64",
+         [&]() {
+           writeNumericDataset<uint64_t>(Parent, Name, DatasetCreationList,
+                                         Dataspace, Values);
+         }},
+        {"int8",
+         [&]() {
+           writeNumericDataset<int8_t>(Parent, Name, DatasetCreationList,
+                                       Dataspace, Values);
+         }},
+        {"int16",
+         [&]() {
+           writeNumericDataset<int16_t>(Parent, Name, DatasetCreationList,
+                                        Dataspace, Values);
+         }},
+        {"int32",
+         [&]() {
+           writeNumericDataset<int32_t>(Parent, Name, DatasetCreationList,
+                                        Dataspace, Values);
+         }},
+        {"int64",
+         [&]() {
+           writeNumericDataset<int64_t>(Parent, Name, DatasetCreationList,
+                                        Dataspace, Values);
+         }},
+        {"float",
+         [&]() {
+           writeNumericDataset<float>(Parent, Name, DatasetCreationList,
+                                      Dataspace, Values);
+         }},
+        {"double",
+         [&]() {
+           writeNumericDataset<double>(Parent, Name, DatasetCreationList,
+                                       Dataspace, Values);
+         }},
+        {"string",
+         [&]() {
            if (ElementSize == H5T_VARIABLE) {
-          writeStringDataset(Parent, Name, DatasetCreationList, Dataspace,
-                             *Values);
-        } else {
-          writeFixedSizeStringDataset(Parent, Name, DatasetCreationList,
-                                      Dataspace, ElementSize, Values, Logger);
-        }}},
+             writeStringDataset(Parent, Name, DatasetCreationList, Dataspace,
+                                *Values);
+           } else {
+             writeFixedSizeStringDataset(Parent, Name, DatasetCreationList,
+                                         Dataspace, ElementSize, Values,
+                                         Logger);
+           }
+         }},
     };
     WriteDatasetMap.at(DataType)();
   } catch (std::exception const &) {
