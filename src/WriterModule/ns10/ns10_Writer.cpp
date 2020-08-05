@@ -9,7 +9,7 @@
 
 #include "ns10_Writer.h"
 #include "FlatbufferMessage.h"
-#include "HDFFile.h"
+#include "HDFOperations.h"
 #include "WriterRegistrar.h"
 #include <ns10_cache_entry_generated.h>
 
@@ -69,7 +69,7 @@ ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup,
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::writeAttributes(HDFGroup, &AttributesJson, Logger);
+    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, Logger);
     if (HDFGroup.attributes.exists("NX_class")) {
       Logger->info("NX_class already specified!");
     } else {

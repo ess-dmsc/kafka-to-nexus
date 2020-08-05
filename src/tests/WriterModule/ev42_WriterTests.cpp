@@ -115,12 +115,11 @@ class EventWriterTests : public ::testing::Test {
 public:
   void SetUp() override {
     File = HDFFileTestHelper::createInMemoryTestFile("EventWriterTestFile.nxs");
-    TestGroup = File.H5File.root().create_group(TestGroupName);
+    TestGroup = File->hdfGroup().create_group(TestGroupName);
     setExtractorModule<AccessMessageMetadata::ev42_Extractor>("ev42");
   };
 
-  void TearDown() override { File.close(); };
-  FileWriter::HDFFile File;
+  std::unique_ptr<HDFFileTestHelper::DebugHDFFile> File;
   hdf5::node::Group TestGroup;
   std::string const TestGroupName = "test_group";
 };
@@ -133,7 +132,7 @@ TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
     Writer.parse_config("{}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
-  ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
+  ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
   EXPECT_TRUE(TestGroup.has_dataset("event_index"));
@@ -156,7 +155,7 @@ TEST_F(EventWriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
     Writer.parse_config("{}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
-  ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
+  ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
 
@@ -186,7 +185,7 @@ TEST_F(
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
-  ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
+  ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
   EXPECT_TRUE(TestGroup.has_dataset("event_index"));

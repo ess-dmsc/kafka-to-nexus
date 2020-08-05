@@ -29,10 +29,10 @@ TEST(HDFFileAttributesTest,
         }
       ]
     })"";
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
 
-  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+  auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
                   .attributes["the_answer_is"];
   int AttrValue{0};
@@ -57,10 +57,10 @@ TEST(HDFFileAttributesTest,
         }
       ]
     })"";
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithScalarStringAttr, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithScalarStringAttr, EmptyStreamHDFInfo);
 
-  auto StringAttr = hdf5::node::get_group(TestFile.RootGroup,
+  auto StringAttr = hdf5::node::get_group(TestFile->hdfGroup(),
                                           "/group_with_scalar_string_attr")
                         .attributes["hello"];
   ASSERT_EQ(StringAttr.datatype().get_class(), hdf5::datatype::Class::STRING);
@@ -94,18 +94,18 @@ TEST(HDFFileAttributesTest,
     ]
   })"";
 
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
 
   auto IntAttr =
-      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
+      hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_of_attrs")
           .attributes["integer_attribute"];
   int64_t IntValue{0};
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42);
 
   auto StringAttr =
-      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
+      hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_of_attrs")
           .attributes["string_attribute"];
   std::string StringValue;
   StringAttr.read(StringValue, StringAttr.datatype());
@@ -133,11 +133,11 @@ TEST(HDFFileAttributesTest,
     ]
   })"";
 
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithTypedAttrs, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithTypedAttrs, EmptyStreamHDFInfo);
 
   auto IntAttr =
-      hdf5::node::get_group(TestFile.RootGroup, "group_with_typed_attrs")
+      hdf5::node::get_group(TestFile->hdfGroup(), "group_with_typed_attrs")
           .attributes["uint32_attribute"];
   uint32_t IntValue{0};
   IntAttr.read(IntValue);
@@ -169,11 +169,11 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
     ]
   })"";
 
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
   auto ArrayAttr =
-      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_attrs")
+      hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
           .attributes["array_attribute"];
   std::vector<int> ArrayAttrValues(3);
   ArrayAttr.read(ArrayAttrValues);
@@ -182,7 +182,7 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   ASSERT_EQ(ArrayAttrValues[2], 3);
 
   auto ArrayStringAttr =
-      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_attrs")
+      hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
           .attributes["array_string_attribute"];
   std::vector<std::string> ArrayStringAttrValues(2);
   ArrayStringAttr.read(ArrayStringAttrValues);
@@ -254,12 +254,12 @@ TEST(HDFFileAttributesTest,
     ]
   })"";
 
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
 
   {
     auto StringAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_variable_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -271,7 +271,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_variable_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -283,7 +283,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_fixed_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     EXPECT_FALSE(Type.is_variable_length());
@@ -297,7 +297,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_fixed_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_FALSE(Type.is_variable_length());
@@ -313,7 +313,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_variable_ascii_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -325,7 +325,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_variable_ascii_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -337,7 +337,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_fixed_ascii_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_FALSE(Type.is_variable_length());
@@ -351,7 +351,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_fixed_ascii_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_FALSE(Type.is_variable_length());
@@ -382,11 +382,11 @@ TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
     ]
   })"";
 
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(Command, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(Command, EmptyStreamHDFInfo);
 
   {
-    auto StringAttr = hdf5::node::get_group(TestFile.RootGroup,
+    auto StringAttr = hdf5::node::get_group(TestFile->hdfGroup(),
                                             "group_with_object_of_attributes")
                           .attributes["some_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
@@ -417,10 +417,10 @@ TEST(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
 
-  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+  auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
                   .attributes["vec"];
   std::vector<double> AttrValue(3);
@@ -448,10 +448,10 @@ TEST(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
 
-  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+  auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
                   .attributes["vec"];
   std::vector<std::string> AttrValue(4);
@@ -479,10 +479,10 @@ TEST(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
 
-  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+  auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
                   .attributes["vec"];
   std::vector<std::string> AttrValue(4);
@@ -510,10 +510,10 @@ TEST(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
 
-  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+  auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
                   .attributes["vec"];
   std::vector<std::string> AttrValue(2);

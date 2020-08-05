@@ -14,7 +14,7 @@
 
 #include "helper.h"
 
-#include "HDFFile.h"
+#include "HDFOperations.h"
 #include "NDAr_Writer.h"
 #include "WriterRegistrar.h"
 #include <NDAr_NDArray_schema_generated.h>
@@ -105,7 +105,7 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::writeAttributes(HDFGroup, &AttributesJson, Logger);
+    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception &E) {
     Logger->error("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",

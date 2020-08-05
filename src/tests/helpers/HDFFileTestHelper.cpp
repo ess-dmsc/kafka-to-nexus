@@ -16,18 +16,24 @@ namespace HDFFileTestHelper {
 /// \param OnDisk Can set this to true to write to disk instead, can be useful
 /// whilst debugging
 /// \return The file object
-FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename,
+std::unique_ptr<DebugHDFFile> createInMemoryTestFile(const std::string &Filename,
                                            bool OnDisk) {
-  hdf5::property::FileAccessList Fapl;
-  if (!OnDisk) {
-    Fapl.driver(hdf5::file::MemoryDriver());
+  if (OnDisk) {
+    return std::make_unique<DiskHDFFile>(Filename);
   }
-
-  FileWriter::HDFFile TestFile;
-  TestFile.H5File =
-      hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE,
-                         hdf5::property::FileCreationList(), Fapl);
-
-  return TestFile;
+  return std::make_unique<InMemoryHDFFile>();
 }
+
+InMemoryHDFFile::InMemoryHDFFile() {
+  hdf5::property::FileAccessList Fapl;
+  Fapl.driver(hdf5::file::MemoryDriver());
+  hdfFile() = hdf5::file::create("unused", hdf5::file::AccessFlags::TRUNCATE,
+                                 {}, Fapl);
+}
+
+DiskHDFFile::DiskHDFFile(std::string const &FileName) {
+  hdfFile() = hdf5::file::create(FileName, hdf5::file::AccessFlags::TRUNCATE,
+                                 {}, {});
+}
+
 } // namespace HDFFileTestHelper

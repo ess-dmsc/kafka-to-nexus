@@ -49,16 +49,14 @@ public:
 
   void SetUp() override {
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
-    RootGroup = File.H5File.root();
+    RootGroup = File->hdfGroup();
     UsedGroup = RootGroup.create_group(NXLogGroup);
     setExtractorModule<AccessMessageMetadata::NDAr_Extractor>("NDAr");
   };
 
-  void TearDown() override { File.close(); };
-
   std::string TestFileName{"SomeTestFile.hdf5"};
   std::string NXLogGroup{"SomeParentName"};
-  FileWriter::HDFFile File;
+  std::unique_ptr<HDFFileTestHelper::DebugHDFFile> File;
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
 };

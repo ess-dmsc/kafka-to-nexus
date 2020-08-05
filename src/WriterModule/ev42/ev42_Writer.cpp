@@ -9,7 +9,7 @@
 
 #include <ev42_events_generated.h>
 
-#include "HDFFile.h"
+#include "HDFOperations.h"
 #include "WriterRegistrar.h"
 #include "ev42_Writer.h"
 #include "helper.h"
@@ -157,7 +157,7 @@ ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
       ClassAttribute.write("NXevent_data");
     }
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::writeAttributes(HDFGroup, &AttributesJson, Logger);
+    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     Logger->error("ev42 could not init hdf_parent: {}  trace: {}",

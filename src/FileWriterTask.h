@@ -38,8 +38,7 @@ public:
   explicit FileWriterTask(std::string TaskID)
       : ServiceId(std::move(TaskID)), Logger(getLogger()){};
 
-  /// Destructor.
-  ~FileWriterTask();
+  ~FileWriterTask() = default;
 
   /// Initialise the HDF file.
   ///
@@ -90,11 +89,9 @@ public:
 private:
   std::string Filename;
   std::vector<Source> SourceToModuleMap;
-  void closeFile();
-  void reopenFile();
   std::string JobId;
   std::string ServiceId;
-  HDFFile File;
+  std::unique_ptr<HDFFile> File;
   SharedLogger Logger;
 };
 

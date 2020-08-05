@@ -33,16 +33,6 @@ json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
 
 std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
-FileWriterTask::~FileWriterTask() {
-  Logger->trace("~FileWriterTask");
-  try {
-    File.close();
-  } catch (std::exception const &E) {
-    Logger->error(fmt::format(
-        "Exception while closing file in ~FileWriterTask: {}", E.what()));
-  }
-}
-
 void FileWriterTask::setFilename(std::string const &Prefix,
                                  std::string const &Name) {
   if (Prefix.empty()) {
@@ -62,39 +52,28 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
 
   try {
     Logger->info("Creating HDF file {}", Filename);
-    File.init(Filename, NexusStructureJson, HdfInfo);
-    // The HDF file is closed and re-opened to support SWMR and
-    // parallel writing.
-    closeFile();
-    reopenFile();
-
+    File = std::make_unique<HDFFile>(Filename, NexusStructureJson, HdfInfo);
   } catch (std::exception const &E) {
+    LOG_ERROR("Failed to initialize HDF file \"{}\". Error was: {}", Filename, E.what());
     std::throw_with_nested(std::runtime_error(
         fmt::format("can not initialize hdf file {}", Filename)));
-  }
-}
-
-void FileWriterTask::closeFile() { File.close(); }
-
-void FileWriterTask::reopenFile() {
-  try {
-    File.reopen(Filename);
-  } catch (std::exception const &E) {
-    Logger->error("Exception when reopening file: {}", E.what());
-    throw;
   }
 }
 
 std::string FileWriterTask::jobID() const { return JobId; }
 
 hdf5::node::Group FileWriterTask::hdfGroup() const {
-  return File.H5File.root();
+  return File->hdfGroup();
 }
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 std::string FileWriterTask::filename() const { return Filename; }
 
-void FileWriterTask::flushDataToFile() { File.flush(); }
+void FileWriterTask::flushDataToFile() {
+  if (File != nullptr) {
+    File->flush();
+  }
+}
 
 } // namespace FileWriter
