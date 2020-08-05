@@ -251,7 +251,7 @@ struct AlarmInfo {
 template <class ValFuncType>
 std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
     ValFuncType ValueFunc, Value ValueTypeId, std::uint64_t Timestamp,
-    nonstd::optional<AlarmInfo> EpicsAlarmChange = nonstd::nullopt) {
+    std::optional<AlarmInfo> EpicsAlarmChange = std::nullopt) {
   auto Builder = flatbuffers::FlatBufferBuilder();
   auto SourceNameOffset = Builder.CreateString("SomeSourceName");
   auto ValueOffset = ValueFunc(Builder);
@@ -276,7 +276,7 @@ std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessage(
     double Value, std::uint64_t Timestamp,
-    nonstd::optional<AlarmInfo> EpicsAlarmChange = nonstd::nullopt) {
+    std::optional<AlarmInfo> EpicsAlarmChange = std::nullopt) {
   auto ValueFunc = [Value](auto &Builder) {
     DoubleBuilder ValueBuilder(Builder);
     ValueBuilder.add_value(Value);
@@ -421,7 +421,7 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   uint64_t Timestamp{11};
   auto FlatbufferData = generateFlatbufferMessage(
       3.14, Timestamp,
-      nonstd::optional<AlarmInfo>(
+      std::optional<AlarmInfo>(
           {AlarmStatus::NO_CHANGE, AlarmSeverity::NO_CHANGE}));
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
@@ -460,7 +460,7 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
   AlarmWritingTestInfo TestAlarm = GetParam();
   auto FlatbufferData = generateFlatbufferMessage(
       3.14, TestAlarm.Timestamp,
-      nonstd::optional<AlarmInfo>({TestAlarm.Status, TestAlarm.Severity}));
+      std::optional<AlarmInfo>({TestAlarm.Status, TestAlarm.Severity}));
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
 
