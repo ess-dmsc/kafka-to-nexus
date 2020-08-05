@@ -14,6 +14,7 @@
 #include "logger.h"
 #include <h5cpp/hdf5.hpp>
 #include "StreamHDFInfo.h"
+#include <deque>
 
 namespace HDFOperations {
 
