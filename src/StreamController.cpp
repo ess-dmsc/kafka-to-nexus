@@ -13,7 +13,7 @@ StreamController::StreamController(
     Metrics::Registrar const &Registrar)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
-      WriterThread([&FileWriterTask]() { FileWriterTask->flushDataToFile(); },
+      WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
       ServiceId(std::move(ServiceID)), KafkaSettings(Settings) {
