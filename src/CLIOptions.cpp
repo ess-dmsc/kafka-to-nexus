@@ -206,13 +206,15 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       "Number of seconds to wait for recovery from kafka error before "
       "abandoning stream.",
       true);
+  addSecondsDurationOption(
+      App, "--data-flush-interval",
+      MainOptions.StreamerConfiguration.DataFlushInterval,
+      "(Max) amount of time between flushing of data to file, in seconds.",
+      true);
   addKafkaOption(
       App, "-X,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,
       "LibRDKafka options");
-  App.add_option("--use-hdf-swmr", MainOptions.UseHdfSwmr,
-                 "Write in HDF's Single Writer Multiple Reader (SWMR) mode",
-                 true);
   App.add_option("--abort-on-uninitialised-stream",
                  MainOptions.AbortOnUninitialisedStream,
                  "Writer aborts the whole job if one or more streams are "

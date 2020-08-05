@@ -20,9 +20,6 @@
 
 // POD
 struct MainOpt {
-  /// Write in HDF's Single Writer Multiple Reader (SWMR) mode
-  bool UseHdfSwmr = true;
-
   /// If true the filewriter aborts the whole job if one or more streams are
   /// misconfigured and fail to start
   bool AbortOnUninitialisedStream = false;

@@ -15,8 +15,9 @@
 #include "Message.h"
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
-#include "ThreadedExecutor.h"
+#include "TimeUtility.h"
 #include "logger.h"
+#include <concurrentqueue/concurrentqueue.h>
 #include <map>
 #include <thread>
 
@@ -28,7 +29,11 @@ namespace Stream {
 
 class MessageWriter {
 public:
-  explicit MessageWriter(Metrics::Registrar const &MetricReg);
+  explicit MessageWriter(std::function<void()> FlushFunction,
+                         duration FlushIntervalTime,
+                         Metrics::Registrar const &MetricReg);
+
+  virtual ~MessageWriter();
 
   virtual void addMessage(Message const &Msg);
 
@@ -43,6 +48,10 @@ public:
 protected:
   virtual void writeMsgImpl(WriterModule::Base *ModulePtr,
                             FileWriter::FlatbufferMessage const &Msg);
+  virtual void threadFunction();
+
+  virtual void flushData() { FlushDataFunction(); };
+  std::function<void()> FlushDataFunction;
 
   SharedLogger Log{getLogger()};
   Metrics::Metric WritesDone{"writes_done",
@@ -52,11 +61,14 @@ protected:
                               Metrics::Severity::ERROR};
   std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
   Metrics::Registrar Registrar;
-  static bool const LowPriorityExecutorExit{true};
-  ThreadedExecutor Executor{
-      MessageWriter::LowPriorityExecutorExit}; // Must be last to prevent
-                                               // accessing de-allocated
-                                               // resources
+
+  using JobType = std::function<void()>;
+  moodycamel::ConcurrentQueue<JobType> WriteJobs;
+  std::thread WriterThread;
+  std::atomic_bool RunThread{true};
+  const duration SleepTime{10ms};
+  duration FlushInterval{10s};
+  const int MaxTimeCheckCounter{200};
 };
 
 } // namespace Stream

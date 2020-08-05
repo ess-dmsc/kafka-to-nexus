@@ -29,8 +29,8 @@ public:
 class DataMessageWriterStandIn : public Stream::MessageWriter {
 public:
   explicit DataMessageWriterStandIn(Metrics::Registrar const &Registrar)
-      : MessageWriter(Registrar) {}
-  using MessageWriter::Executor;
+      : MessageWriter([]() {}, 1s, Registrar) {}
+  using Stream::MessageWriter::WriteJobs;
 };
 
 class DataMessageWriterTest : public ::testing::Test {
@@ -49,7 +49,7 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   {
     DataMessageWriterStandIn Writer{MetReg};
     Writer.addMessage(SomeMessage);
-    Writer.Executor.sendWork([&Writer]() {
+    Writer.WriteJobs.enqueue([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 1);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 0);
     });
@@ -65,11 +65,11 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
-    Writer.Executor.sendWork([&Writer]() {
+    Writer.WriteJobs.enqueue([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
     Writer.addMessage(SomeMessage);
-    Writer.Executor.sendWork([&Writer]() {
+    Writer.WriteJobs.enqueue([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 1);
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
@@ -103,11 +103,11 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
-    Writer.Executor.sendWork([&Writer]() {
+    Writer.WriteJobs.enqueue([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
     Writer.addMessage(SomeMessage);
-    Writer.Executor.sendWork([&Writer]() {
+    Writer.WriteJobs.enqueue([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 1);
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 2);

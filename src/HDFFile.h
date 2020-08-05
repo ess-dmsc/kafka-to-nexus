@@ -34,7 +34,7 @@ public:
   ~HDFFile();
 
   void init(const std::string &Filename, nlohmann::json const &NexusStructure,
-            std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR);
+            std::vector<StreamHDFInfo> &StreamHDFInfo);
 
   void init(const std::string &NexusStructure,
             std::vector<StreamHDFInfo> &StreamHDFInfo);
@@ -52,13 +52,10 @@ public:
   hdf5::node::Group RootGroup;
 
 private:
-  bool SWMREnabled = false;
   std::string Filename;
   nlohmann::json NexusStructure;
 
   using CLOCK = std::chrono::steady_clock;
-  std::chrono::milliseconds SWMRFlushInterval{10000};
-  std::chrono::time_point<CLOCK> SWMRFlushLast = CLOCK::now();
   SharedLogger Logger = getLogger();
 };
 

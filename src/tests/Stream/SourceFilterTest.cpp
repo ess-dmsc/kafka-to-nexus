@@ -18,7 +18,8 @@
 
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
-  MessageWriterStandIn() : MessageWriter(Metrics::Registrar("", {})) {}
+  MessageWriterStandIn()
+      : MessageWriter([]() {}, 1s, Metrics::Registrar("", {})) {}
   MAKE_MOCK1(addMessage, void(Stream::Message const &), override);
 };
 
