@@ -27,7 +27,7 @@ public:
 
 class DiskHDFFile : public DebugHDFFile {
 public:
-  DiskHDFFile(std::string const &FileName);
+  explicit DiskHDFFile(std::string const &FileName);
 };
 
 std::unique_ptr<DebugHDFFile>
