@@ -13,6 +13,7 @@
 #include <date/date.h>
 #include <date/tz.h>
 #include "json.h"
+#include <deque>
 
 namespace HDFOperations {
 using nlohmann::json;
