@@ -19,15 +19,12 @@
 namespace HDFOperations {
 
 bool findType(nlohmann::basic_json<> Attribute, std::string &DType);
-std::string h5VersionStringLinked();
+
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
                      SharedLogger const &Logger);
 
 void writeStringAttribute(hdf5::node::Node const &Node, std::string const &Name,
                           std::string const &Value);
-
-void checkHDFVersion(SharedLogger const &Logger);
-std::string H5VersionStringHeadersCompileTime();
 
 void createHDFStructures(
     const nlohmann::json *Value, hdf5::node::Group const &Parent,
@@ -44,9 +41,6 @@ void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values,
                               SharedLogger const &Logger);
-
-std::vector<std::string> populateStrings(const nlohmann::json *Values,
-                                         hssize_t GoalSize);
 
 void writeStringDataset(
     hdf5::node::Group const &Parent, const std::string &Name,
