@@ -27,12 +27,11 @@ using nlohmann::json;
 
 std::vector<StreamHDFInfo>
 JobCreator::initializeHDF(FileWriterTask &Task,
-                          std::string const &NexusStructureString,
-                          bool UseSwmr) {
+                          std::string const &NexusStructureString) {
   try {
     json const NexusStructure = json::parse(NexusStructureString);
     std::vector<StreamHDFInfo> StreamHDFInfoList;
-    Task.InitialiseHdf(NexusStructure.dump(), StreamHDFInfoList, UseSwmr);
+    Task.InitialiseHdf(NexusStructure.dump(), StreamHDFInfoList);
     return StreamHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
@@ -138,7 +137,7 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
   std::vector<StreamHDFInfo> StreamHDFInfoList =
-      initializeHDF(*Task, StartInfo.NexusStructure, Settings.UseHdfSwmr);
+      initializeHDF(*Task, StartInfo.NexusStructure);
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);

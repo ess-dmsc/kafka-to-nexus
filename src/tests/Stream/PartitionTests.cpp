@@ -89,7 +89,7 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
   MessageWriterStandIn()
-      : Stream::MessageWriter(Metrics::Registrar("test", {})) {}
+      : Stream::MessageWriter([]() {}, 1s, Metrics::Registrar("test", {})) {}
   void addMessage(Stream::Message const &) override {}
 
 protected:
