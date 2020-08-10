@@ -53,7 +53,9 @@ HDFFile::~HDFFile() {
 }
 
 void HDFFile::createFileInRegularMode() {
-  hdfFile() = hdf5::file::create(H5FileName, hdf5::file::AccessFlags::EXCLUSIVE,
+  hdfFile() = hdf5::file::create(H5FileName,
+                                 hdf5::file::AccessFlags::EXCLUSIVE |
+                                     hdf5::file::AccessFlags::SWMR_WRITE,
                                  {}, {});
 }
 
