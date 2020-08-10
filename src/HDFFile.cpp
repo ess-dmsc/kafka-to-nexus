@@ -24,13 +24,6 @@ HDFFile::HDFFile(std::string const &FileName,
                  nlohmann::json const &NexusStructure,
                  std::vector<StreamHDFInfo> &StreamHDFInfo)
     : H5FileName(FileName) {
-// Keep this.  Will be used later to test against different lib versions
-#if H5_VERSION_GE(1, 8, 0) && H5_VERSION_LE(1, 10, 99)
-  unsigned int maj, min, rel;
-  H5get_libversion(&maj, &min, &rel);
-#else
-  static_assert(false, "Unexpected HDF version");
-#endif
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
   }
