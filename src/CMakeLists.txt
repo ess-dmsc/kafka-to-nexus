@@ -96,7 +96,9 @@ set(kafka_to_nexus_SRC
         Stream/MessageWriter.cpp
         Stream/SourceFilter.cpp
         Stream/Partition.cpp
-        Stream/Topic.cpp)
+        Stream/Topic.cpp
+        HDFOperations.cpp
+        HDFVersionCheck.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -156,7 +158,10 @@ set(kafka_to_nexus_INC
         Stream/Topic.h
         ThreadedExecutor.h
         TimeUtility.h
-        GetHostNameAndPID.h)
+        GetHostNameAndPID.h
+        HDFOperations.h
+        HDFVersionCheck.h
+        StreamHDFInfo.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

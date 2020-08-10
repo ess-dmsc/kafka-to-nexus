@@ -11,6 +11,7 @@
 #include "CommandListener.h"
 #include "FlatbufferReader.h"
 #include "GetHostNameAndPID.h"
+#include "HDFVersionCheck.h"
 #include "JobCreator.h"
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
@@ -100,13 +101,17 @@ int main(int argc, char **argv) {
 
   if (Options->PrintVersion) {
     fmt::print("{}\n", GetVersion());
-    return 0;
+    return EXIT_SUCCESS;
   }
   App.clear();
 
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
   auto Logger = getLogger();
+  if (not versionOfHDF5IsOk()) {
+    Logger->error("Failed HDF5 version check. Exiting.");
+    return EXIT_FAILURE;
+  }
 
   if (Options->ListWriterModules) {
     fmt::print("\n-- Known flatbuffer metadata extractors\n");
@@ -118,7 +123,7 @@ int main(int argc, char **argv) {
     for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
       fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
     }
-    return 0;
+    return EXIT_SUCCESS;
   }
   using std::chrono_literals::operator""ms;
   std::vector<std::shared_ptr<Metrics::Reporter>> MetricsReporters;
@@ -199,5 +204,5 @@ int main(int argc, char **argv) {
   }
   Logger->debug("Exiting.");
   Logger->flush();
-  return 0;
+  return EXIT_SUCCESS;
 }

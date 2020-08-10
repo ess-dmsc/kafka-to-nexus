@@ -31,9 +31,9 @@ public:
   void SetUp() override {
     TestFile =
         HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
-    RootGroup = TestFile.H5File.root();
+    RootGroup = TestFile->hdfGroup();
   }
-  FileWriter::HDFFile TestFile;
+  std::unique_ptr<HDFFileTestHelper::DebugHDFFile> TestFile;
   hdf5::node::Group RootGroup;
 };
 
@@ -236,10 +236,10 @@ public:
   void SetUp() override {
     TestFile =
         HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
-    RootGroup = TestFile.H5File.root();
+    RootGroup = TestFile->hdfGroup();
     setExtractorModule<AccessMessageMetadata::f142_Extractor>("f142");
   }
-  FileWriter::HDFFile TestFile;
+  std::unique_ptr<HDFFileTestHelper::DebugHDFFile> TestFile;
   hdf5::node::Group RootGroup;
 };
 
@@ -446,10 +446,10 @@ public:
   void SetUp() override {
     TestFile = HDFFileTestHelper::createInMemoryTestFile("f142WriteAlarms.hdf5",
                                                          false);
-    RootGroup = TestFile.H5File.root();
+    RootGroup = TestFile->hdfGroup();
     setExtractorModule<AccessMessageMetadata::f142_Extractor>("f142");
   }
-  FileWriter::HDFFile TestFile;
+  std::unique_ptr<HDFFileTestHelper::DebugHDFFile> TestFile;
   hdf5::node::Group RootGroup;
 };
 

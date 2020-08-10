@@ -13,7 +13,7 @@
 /// \brief Implement classes required for writing chopper time stamps.
 
 #include "tdct_Writer.h"
-#include "HDFFile.h"
+#include "HDFOperations.h"
 #include "WriterRegistrar.h"
 #include <limits>
 #include <nlohmann/json.hpp>
@@ -53,7 +53,7 @@ tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::writeAttributes(HDFGroup, &AttributesJson, SharedLogger());
+    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, SharedLogger());
   } catch (std::exception &E) {
     Logger->error("Unable to initialise chopper time stamp tree in "
                   "HDF file with error message: \"{}\"",

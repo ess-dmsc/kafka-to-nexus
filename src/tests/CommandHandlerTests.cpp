@@ -15,7 +15,7 @@ TEST(ExtractStreamSettings, IfStreamNotDefinedThenThrows) {
     "type": "stream"
   })"""};
 
-  FileWriter::StreamHDFInfo Info;
+  StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
   ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
@@ -32,7 +32,7 @@ TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
     }
   })"""};
 
-  FileWriter::StreamHDFInfo Info;
+  StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
   ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
@@ -49,7 +49,7 @@ TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
     }
   })"""};
 
-  FileWriter::StreamHDFInfo Info;
+  StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
   ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
@@ -66,7 +66,7 @@ TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
     }
   })"""};
 
-  FileWriter::StreamHDFInfo Info;
+  StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
   ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
@@ -84,7 +84,7 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
     }
   })"""};
 
-  FileWriter::StreamHDFInfo Info;
+  StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
   auto Settings = FileWriter::extractStreamInformationFromJsonForSource(Info);
@@ -108,7 +108,7 @@ TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
     }
   })"""};
 
-  FileWriter::StreamHDFInfo Info;
+  StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
   auto Settings = FileWriter::extractStreamInformationFromJsonForSource(Info);

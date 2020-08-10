@@ -15,8 +15,23 @@
 
 namespace HDFFileTestHelper {
 
-FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename,
-                                           bool OnDisk = false);
+class DebugHDFFile : public FileWriter::HDFFileBase {
+public:
+  using FileWriter::HDFFileBase::init;
+};
+
+class InMemoryHDFFile : public DebugHDFFile {
+public:
+  InMemoryHDFFile();
+};
+
+class DiskHDFFile : public DebugHDFFile {
+public:
+  explicit DiskHDFFile(std::string const &FileName);
+};
+
+std::unique_ptr<DebugHDFFile>
+createInMemoryTestFile(const std::string &Filename, bool OnDisk = false);
 
 template <typename T>
 std::string
