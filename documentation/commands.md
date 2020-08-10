@@ -109,17 +109,23 @@ In the following example a dataset is defined:
         "type": "dataset",
         "dataset": {
           "size": [
-            5
+            2,
+            3
           ],
           "type": "int64"
         },
         "values": [
-          0,
-          1,
-          3,
-          2,
-          2
-        ],
+          [
+            0,
+            1,
+            3
+          ],
+          [
+            2,
+            2,
+            1
+          ]
+        ]
         "attributes": {
           "NX_class": "NXlog"
         }
