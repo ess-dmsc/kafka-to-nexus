@@ -38,6 +38,6 @@ deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message) {
               std::chrono::milliseconds{StartTime.value_or(0)},
               time_point{std::chrono::milliseconds{StopTime.value_or(0)}}},
           Status::ApplicationStatusInfo{UpdateInterval, SoftwareName,
-                                        SoftwareVersion, HostName, ServiceId,
+                                        SoftwareVersion, HostName, "No service name", ServiceId,
                                         ProcessId}};
 }

@@ -13,6 +13,7 @@
 #include "URI.h"
 #include "json.h"
 #include "logger.h"
+#include "helper.h"
 
 #include <chrono>
 #include <string>
@@ -29,7 +30,10 @@ struct MainOpt {
   /// This `service_id` is announced in the status updates.
   /// It is by default a combination of hostname and process id.
   /// Can be set via command line or configuration file.
-  std::string ServiceID;
+  std::string ServiceName;
+  void setServiceName(std::string NewServiceName);
+
+  std::string getServiceId() const;
 
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamController.
@@ -66,10 +70,9 @@ struct MainOpt {
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
   std::chrono::milliseconds StatusMasterIntervalMS{2000};
-
-  // The constructor was removed because of the issue with the integration test
-  // (see cpp file for more details).
-  void init();
+private:
+  std::string ServiceId{fmt::format("kafka-to-nexus:{}--pid:{}",
+                                    gethostname_wrapper(), getpid_wrapper())};
 };
 
 void setupLoggerFromOptions(MainOpt const &opt);

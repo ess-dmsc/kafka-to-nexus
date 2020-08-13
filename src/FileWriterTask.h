@@ -35,8 +35,7 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  explicit FileWriterTask(std::string TaskID)
-      : ServiceId(std::move(TaskID)), Logger(getLogger()){};
+  explicit FileWriterTask() : Logger(getLogger()){};
 
   ~FileWriterTask() = default;
 
@@ -90,7 +89,6 @@ private:
   std::string Filename;
   std::vector<Source> SourceToModuleMap;
   std::string JobId;
-  std::string ServiceId;
   std::unique_ptr<HDFFile> File;
   SharedLogger Logger;
 };

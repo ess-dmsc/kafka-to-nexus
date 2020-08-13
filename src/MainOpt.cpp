@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "MainOpt.h"
-#include "helper.h"
+#include <exception>
 
 using uri::URI;
 
@@ -16,12 +16,26 @@ using uri::URI;
 // test to fail, with the NeXus file being created, but no data written to it.
 // While the cause of this problem is not discovered and fixed, use the
 // following init function.
-void MainOpt::init() {
-  ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
-                          gethostname_wrapper(), getpid_wrapper());
-}
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename,
+  setUpLogging(opt.LoggingLevel, opt.LogFilename,
                opt.GraylogLoggerAddress);
+}
+
+void MainOpt::setServiceName(std::string NewServiceName) {
+  ServiceName = NewServiceName;
+  if (ServiceName.empty()) {
+      ServiceId = fmt::format("kafka-to-nexus:{}--pid:{}",
+                              gethostname_wrapper(), getpid_wrapper());
+  } else {
+      ServiceId = fmt::format("kafka-to-nexus--{}:{}--pid:{}", ServiceName,
+                              gethostname_wrapper(), getpid_wrapper());
+  }
+}
+
+std::string MainOpt::getServiceId() const {
+  if (ServiceId.empty()) {
+    throw std::runtime_error("Service id is empty.");
+  }
+  return ServiceId;
 }

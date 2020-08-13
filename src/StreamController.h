@@ -35,7 +35,6 @@ public:
 class StreamController : public IStreamController {
 public:
   StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
-                   std::string ServiceID,
                    FileWriter::StreamerOptions const &Settings,
                    Metrics::Registrar const &Registrar);
   ~StreamController() override;
@@ -79,7 +78,6 @@ private:
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;
-  std::string ServiceId;
   FileWriter::StreamerOptions KafkaSettings;
   ThreadedExecutor Executor; // Must be last
 };

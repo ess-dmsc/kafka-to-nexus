@@ -24,10 +24,10 @@ class StreamControllerTests : public ::testing::Test {
 public:
   void SetUp() override {
     FileWriterTask =
-        std::make_unique<FileWriter::FileWriterTask>("Not Important");
+        std::make_unique<FileWriter::FileWriterTask>();
     FileWriterTask->setJobId(JobId);
     StreamController = std::make_unique<FileWriter::StreamController>(
-        std::move(FileWriterTask), "ServiceID", FileWriter::StreamerOptions(),
+        std::move(FileWriterTask), FileWriter::StreamerOptions(),
         Metrics::Registrar("some-app", {}));
   };
   std::string JobId = "TestID";

@@ -50,6 +50,7 @@ public:
                                     "test_application",
                                     "test_version",
                                     "test_host_name",
+                                    "test service name",
                                     "test_service_id",
                                     0};
 };

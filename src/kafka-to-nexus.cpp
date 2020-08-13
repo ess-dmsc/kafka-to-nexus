@@ -52,7 +52,8 @@ createStatusReporter(MainOpt const &MainConfig,
                                     ApplicationName,
                                     ApplicationVersion,
                                     getHostName(),
-                                    MainConfig.ServiceID,
+                                    MainConfig.ServiceName,
+                                    MainConfig.getServiceId(),
                                     getPID()};
   return std::make_unique<Status::StatusReporter>(StatusProducerTopic,
                                                   StatusInformation);
@@ -90,7 +91,6 @@ int main(int argc, char **argv) {
       "Writer modules can be used to populate the file from Kafka topics.\n",
       ApplicationName, ApplicationVersion)};
   auto Options = std::make_unique<MainOpt>();
-  Options->init();
   setCLIOptions(App, *Options);
 
   try {
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
   }
 
   Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
-  auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceID);
+  auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceName);
 
   std::signal(SIGINT, signal_handler);
   std::signal(SIGTERM, signal_handler);

@@ -8,15 +8,14 @@
 
 namespace FileWriter {
 StreamController::StreamController(
-    std::unique_ptr<FileWriterTask> FileWriterTask, std::string ServiceID,
+    std::unique_ptr<FileWriterTask> FileWriterTask,
     FileWriter::StreamerOptions const &Settings,
     Metrics::Registrar const &Registrar)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
-                   Registrar.getNewRegistrar("stream")),
-      ServiceId(std::move(ServiceID)), KafkaSettings(Settings) {
+                   Registrar.getNewRegistrar("stream")), KafkaSettings(Settings) {
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();

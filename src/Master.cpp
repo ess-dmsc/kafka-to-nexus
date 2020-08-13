@@ -58,7 +58,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
       Creator_(std::move(Creator)), Reporter(std::move(Reporter)),
       MasterMetricsRegistrar(Registrar) {
   CmdListener->start();
-  Logger->info("getFileWriterProcessId: {}", Config.ServiceID);
+  Logger->info("file-writer service id: {}", Config.getServiceId());
 }
 
 FileWriterState Master::handleCommand(Msg const &CommandMessage) {

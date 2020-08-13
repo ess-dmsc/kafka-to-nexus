@@ -176,9 +176,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option(
-      "--service-id", MainOptions.ServiceID,
-      "Used as the service identifier in status messages and as an"
-      "extra metrics ID string. Only used by the metrics system if present. "
+      "--service-name", [&MainOptions](std::vector<std::string> ServiceNames) -> bool {MainOptions.setServiceName(ServiceNames.back());return true;},
+      "Used to generate the service identifier and as an extra metrics ID string. Only used by the metrics system if present. "
       "Will"
       " make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
