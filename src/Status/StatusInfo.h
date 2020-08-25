@@ -32,7 +32,7 @@ struct ApplicationStatusInfo {
   std::string const HostName;
   std::string const ServiceName;
   std::string const ServiceID;
-  uint32_t const ProcessID;
+  int32_t const ProcessID;
 };
 
 } // namespace Status

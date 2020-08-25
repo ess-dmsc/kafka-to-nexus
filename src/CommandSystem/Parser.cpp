@@ -14,8 +14,8 @@
 #include <pl72_run_start_generated.h>
 #include <sstream>
 
-#include "CommandParser.h"
 #include "Msg.h"
+#include "Parser.h"
 
 namespace {
 void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
@@ -55,13 +55,16 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
 }
 } // namespace
 
-namespace FileWriter {
-namespace CommandParser {
+namespace Command {
 
-StartCommandInfo
+namespace Parser {
+
+using FileWriter::Msg;
+
+Command::StartMessage
 extractStartInformation(Msg const &CommandMessage,
                         std::chrono::milliseconds DefaultStartTime) {
-  StartCommandInfo Result;
+  Command::StartMessage Result;
 
   auto const RunStartData = GetRunStart(CommandMessage.data());
 
@@ -87,7 +90,7 @@ extractStartInformation(Msg const &CommandMessage,
   return Result;
 }
 
-StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
+Command::StopMessage extractStopInformation(Msg const &CommandMessage) {
   auto const RunStopData = GetRunStop(CommandMessage.data());
 
   if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {
@@ -95,7 +98,7 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
                              "Job ID missing, this field is required");
   }
 
-  StopCommandInfo Result;
+  StopMessage Result;
   Result.JobID = RunStopData->job_id()->str();
   Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
   if (RunStopData->service_id() != nullptr) {
@@ -123,5 +126,5 @@ bool isStopCommand(Msg const &CommandMessage) {
   // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
-} // namespace CommandParser
-} // namespace FileWriter
+} // namespace Parser
+} // namespace Command

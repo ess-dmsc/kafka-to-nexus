@@ -18,8 +18,7 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
 
   // Create a unique group.id for this consumer
   SettingsCopy.KafkaConfiguration["group.id"] =
-      fmt::format("filewriter--streamer--host:{}--pid:{}--time:{}",
-                  gethostname_wrapper(), getpid_wrapper(),
+      fmt::format("filewriter--streamer--host:{}--pid:{}--time:{}", getHostName(), getPID(),
                   std::chrono::duration_cast<std::chrono::milliseconds>(
                       std::chrono::steady_clock::now().time_since_epoch())
                       .count());

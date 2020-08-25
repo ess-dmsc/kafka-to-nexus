@@ -63,7 +63,9 @@ set(kafka_to_nexus_SRC
         StreamController.cpp
         Master.cpp
         logger.cpp
-        CommandListener.cpp
+        CommandSystem/JobListener.cpp
+        CommandSystem/Handler.cpp
+        CommandSystem/Parser.cpp
         JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
@@ -81,7 +83,6 @@ set(kafka_to_nexus_SRC
         MainOpt.cpp
         CLIOptions.cpp
         StreamController.cpp
-        CommandParser.cpp
         WriterRegistrar.cpp
         Metrics/Reporter.cpp
         Metrics/Registrar.cpp
@@ -102,7 +103,10 @@ set(kafka_to_nexus_SRC
 
 set(kafka_to_nexus_INC
         JobCreator.h
-        CommandListener.h
+        CommandSystem/Commands.h
+        CommandSystem/JobListener.h
+        CommandSystem/Handler.h
+        CommandSystem/Parser.h
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h
@@ -134,7 +138,6 @@ set(kafka_to_nexus_INC
         CLIOptions.h
         Kafka/ConfigureKafka.cpp
         Kafka/ConfigureKafka.h
-        CommandParser.h
         WriterRegistrar.h
         Metrics/Registrar.h
         Metrics/Metric.h
@@ -158,7 +161,6 @@ set(kafka_to_nexus_INC
         Stream/Topic.h
         ThreadedExecutor.h
         TimeUtility.h
-        GetHostNameAndPID.h
         HDFOperations.h
         HDFVersionCheck.h
         StreamHDFInfo.h)

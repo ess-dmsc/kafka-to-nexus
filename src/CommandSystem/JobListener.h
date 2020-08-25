@@ -12,24 +12,28 @@
 #include "Kafka/Consumer.h"
 #include "MainOpt.h"
 #include "logger.h"
+#include "Msg.h"
 
-namespace FileWriter {
+namespace Command {
+
+using FileWriter::Msg;
 
 /// Check for new commands on the topic, return them to the Master.
-class CommandListener {
+class JobListener {
 public:
-  explicit CommandListener(MainOpt &Config);
-  virtual ~CommandListener() = default;
+  explicit JobListener(uri::URI JobPoolUri);
 
-  /// Start listening to command messages.
-  virtual void start();
+  virtual std::pair<Kafka::PollStatus, Msg> pollForJob();
 
-  /// Check for new command packets and return one if there is.
-  virtual std::pair<Kafka::PollStatus, Msg> poll();
+  void disconnectFromPool();
 
 private:
-  MainOpt &config;
+  // Do not change the ConsumerGroupId variable, it is vital to the working of the 
+  std::string const ConsumerGroupId{"kafka-to-nexus-worker-pool"};
+  std::string const BrokerAddress;
+  std::string const PoolTopic;
+  BrokerSettings
+  void setUpConsumer();
   std::unique_ptr<Kafka::ConsumerInterface> Consumer;
-  SharedLogger Logger = getLogger();
 };
-} // namespace FileWriter
+} // namespace Command

@@ -23,6 +23,23 @@
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
+#include <fstream>
+
+std::vector<char> readFileIntoVector(std::string const &FileName) {
+  std::vector<char> ret;
+  std::ifstream ifs(FileName, std::ios::binary | std::ios::ate);
+  if (!ifs.good()) {
+    return ret;
+  }
+  auto n1 = ifs.tellg();
+  if (n1 <= 0) {
+    return ret;
+  }
+  ret.resize(n1);
+  ifs.seekg(0);
+  ifs.read(ret.data(), n1);
+  return ret;
+}
 
 using json = nlohmann::json;
 using WriterModule::hs00::Dimension;

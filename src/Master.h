@@ -9,12 +9,11 @@
 
 #pragma once
 
-#include "CommandParser.h"
+#include "CommandSystem/Handler.h"
 #include "Kafka/PollStatus.h"
 #include "MainOpt.h"
 #include "Metrics/Registrar.h"
 #include "Msg.h"
-#include "States.h"
 #include <atomic>
 #include <memory>
 #include <string>
@@ -26,12 +25,7 @@ class StatusReporter;
 
 namespace FileWriter {
 class IJobCreator;
-class CommandListener;
 class IStreamController;
-
-FileWriterState getNextState(Msg const &Command,
-                             std::chrono::milliseconds TimeStamp,
-                             FileWriterState const &CurrentState);
 
 /// \brief Listens to the Kafka configuration topic and handles any requests.
 ///
@@ -39,7 +33,7 @@ FileWriterState getNextState(Msg const &Command,
 /// Reacts also to stop, and possibly other future commands.
 class Master {
 public:
-  Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
+  Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
          std::unique_ptr<IJobCreator> Creator,
          std::unique_ptr<Status::StatusReporter> Reporter,
          Metrics::Registrar const &Registrar);
@@ -52,20 +46,25 @@ public:
 
   bool isWriting() const;
 
+  virtual void setStopTime(std::chrono::milliseconds StopTime);
+  virtual void stopNow();
+  virtual void startWriting(Command::StartInfo const &StartInfo);
+
 private:
+  enum class WriterState {
+    Idle,
+    Writing
+  };
   SharedLogger Logger;
   MainOpt &MainConfig;
-  std::unique_ptr<CommandListener> CmdListener;
+  std::unique_ptr<Command::Handler> CommandAndControl;
   std::unique_ptr<IJobCreator> Creator_;
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporter> Reporter;
   Metrics::Registrar MasterMetricsRegistrar;
-  FileWriterState CurrentState = States::Idle();
-  virtual void startWriting(StartCommandInfo const &StartInfo);
-  virtual void requestStopWriting(StopCommandInfo const &StopInfo);
+  WriterState CurrentState{WriterState::Idle};
   virtual bool hasWritingStopped();
-  virtual void moveToNewState(FileWriterState const &NewState);
-  virtual FileWriterState handleCommand(Msg const &CommandMessage);
+//  virtual FileWriterState handleCommand(Msg const &CommandMessage);
   void setToIdle();
 };
 } // namespace FileWriter

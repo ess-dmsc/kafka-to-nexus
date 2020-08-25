@@ -145,14 +145,15 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                "Print application version and exit");
 
   addUriOption(
-      App, "--command-uri", MainOptions.CommandBrokerURI,
-      "<host[:port][/topic]> Kafka broker/topic to listen for commands")
+      App, "--command-status-uri", MainOptions.CommandBrokerURI,
+      "<host[:port][/topic]> Kafka broker/topic to listen for commands and to push status updates to.")
       ->required();
 
-  addUriOption(App, "--status-uri", MainOptions.KafkaStatusURI,
-               "<host[:port][/topic]> Kafka broker/topic to publish status "
-               "updates on")
+  addUriOption(
+      App, "--job-pool-uri", MainOptions.JobPoolURI,
+      "<host[:port][/topic]> Kafka broker/topic to listen for jobs")
       ->required();
+
   addUriOption(App, "--graylog-logger-address",
                MainOptions.GraylogLoggerAddress,
                "<host:port> Log to Graylog via graylog_logger library");
@@ -177,9 +178,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "Specify file to log to");
   App.add_option(
       "--service-name", [&MainOptions](std::vector<std::string> ServiceNames) -> bool {MainOptions.setServiceName(ServiceNames.back());return true;},
-      "Used to generate the service identifier and as an extra metrics ID string. Only used by the metrics system if present. "
-      "Will"
-      " make the metrics names take the form: \"kafka-to-nexus.[id].*\"");
+      "Used to generate the service identifier and as an extra metrics ID string."
+      "Will make the metrics names take the form: \"kafka-to-nexus.[service-name].*\"");
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");

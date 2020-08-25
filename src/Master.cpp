@@ -8,8 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Master.h"
-#include "CommandListener.h"
-#include "CommandParser.h"
 #include "JobCreator.h"
 #include "Status/StatusReporter.h"
 #include "helper.h"
@@ -20,90 +18,49 @@
 
 namespace FileWriter {
 
-FileWriterState getNextState(Msg const &Command,
-                             std::chrono::milliseconds TimeStamp,
-                             FileWriterState const &CurrentState) {
-  try {
-    if (CommandParser::isStopCommand(Command) ||
-        CommandParser::isStartCommand(Command)) {
-      if (std::get_if<States::Writing>(&CurrentState)) {
-        if (CommandParser::isStopCommand(Command)) {
-          auto StopInfo = CommandParser::extractStopInformation(Command);
-          if (StopInfo.StopTime.count() == 0) {
-            StopInfo.StopTime = getCurrentTimeStampMS();
-          }
-          return States::StopRequested{StopInfo};
-        }
-        throw std::runtime_error("Start command is not allowed when writing");
-      } else {
-        if (CommandParser::isStartCommand(Command)) {
-          auto const StartInfo =
-              CommandParser::extractStartInformation(Command, TimeStamp);
-          return States::StartRequested{StartInfo};
-        }
-        throw std::runtime_error("Stop command is not allowed when idle");
-      }
-    }
-  } catch (std::runtime_error const &Error) {
-    getLogger()->error("{}", Error.what());
-  }
-  return CurrentState;
-}
-
-Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
+Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
                std::unique_ptr<IJobCreator> Creator,
                std::unique_ptr<Status::StatusReporter> Reporter,
                Metrics::Registrar const &Registrar)
-    : Logger(getLogger()), MainConfig(Config), CmdListener(std::move(Listener)),
+    : Logger(getLogger()), MainConfig(Config), CommandAndControl(std::move(Listener)),
       Creator_(std::move(Creator)), Reporter(std::move(Reporter)),
       MasterMetricsRegistrar(Registrar) {
-  CmdListener->start();
+  CommandAndControl->registerStartFunction([this](auto StartInfo) {
+    this->startWriting(StartInfo);
+  });
+  CommandAndControl->registerSetStopTimeFunction([this](auto StopTime) {
+    this->setStopTime(StopTime);
+  });
+  CommandAndControl->registerStopNowFunction([this](){
+    this->stopNow();
+  });
+//  CmdListener->start();
   Logger->info("file-writer service id: {}", Config.getServiceId());
 }
 
-FileWriterState Master::handleCommand(Msg const &CommandMessage) {
-  // If Kafka message does not contain a timestamp then use current time.
-  auto TimeStamp = getCurrentTimeStampMS();
-
-  if (CommandMessage.getMetaData().TimestampType !=
-      RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
-    TimeStamp = CommandMessage.getMetaData().Timestamp;
-  } else {
-    Logger->info("Command doesn't contain timestamp, so using current time.");
-  }
-
-  return getNextState(CommandMessage, TimeStamp, CurrentState);
-}
-
-void Master::startWriting(StartCommandInfo const &StartInfo) {
-  Logger->info("Received request to start writing file with id : {} at "
-               "time {} ms",
-               StartInfo.JobID, StartInfo.StartTime.count());
+void Master::startWriting(Command::StartInfo const &StartInfo) {
   try {
-    CurrentState = States::Writing();
-    Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
-                                StartInfo.StartTime, StartInfo.StopTime});
     CurrentStreamController = Creator_->createFileWritingJob(
         StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
+    CurrentState = WriterState::Writing;
+    Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
+                                StartInfo.StartTime, StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
     setToIdle();
   }
 }
 
-void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
-  if (StopInfo.JobID != CurrentStreamController->getJobId()) {
-    Logger->info(
-        "Stop request's job id ({}) does not match running job's id ({}), "
-        "so ignoring",
-        StopInfo.JobID, CurrentStreamController->getJobId());
-    return;
-  }
+void Master::stopNow() {
+  throw std::runtime_error("Not implemented.");
+}
 
-  Logger->info("Received request to stop file with id : {} at time {} ms",
-               StopInfo.JobID, StopInfo.StopTime.count());
-  CurrentStreamController->setStopTime(StopInfo.StopTime);
-  Reporter->updateStopTime(StopInfo.StopTime);
+void Master::setStopTime(std::chrono::milliseconds StopTime) {
+  if (CurrentState != WriterState::Writing) {
+    throw std::runtime_error("Unable to set stop time when not in \"Writing\" state.");
+  }
+  CurrentStreamController->setStopTime(StopTime);
+  Reporter->updateStopTime(StopTime);
 }
 
 bool Master::hasWritingStopped() {
@@ -111,35 +68,22 @@ bool Master::hasWritingStopped() {
          CurrentStreamController->isDoneWriting();
 }
 
-void Master::moveToNewState(FileWriterState const &NewState) {
-  if (auto StartReq = std::get_if<States::StartRequested>(&NewState)) {
-    startWriting(StartReq->StartInfo);
-  } else if (auto StopReq = std::get_if<States::StopRequested>(&NewState)) {
-    requestStopWriting(StopReq->StopInfo);
-  }
-}
-
 void Master::run() {
-  auto const KafkaMessage = CmdListener->poll();
-  if (KafkaMessage.first == Kafka::PollStatus::Message) {
-    Logger->debug("Command received");
-    moveToNewState(this->handleCommand(KafkaMessage.second));
-  }
-
-  // Doesn't stop immediately when commanded to.
-  // Also, can stop even if not commanded to.
+  CommandAndControl->loopFunction();
+  // Handle error case
   if (hasWritingStopped()) {
     setToIdle();
   }
 }
 
 bool Master::isWriting() const {
-  return std::get_if<States::Idle>(&CurrentState) == nullptr;
+  return CurrentState == WriterState::Writing;
 }
 
 void Master::setToIdle() {
+  CommandAndControl->sendHasStoppedMessage();
   CurrentStreamController.reset(nullptr);
-  CurrentState = States::Idle();
+  CurrentState = WriterState::Idle;
   Reporter->resetStatusInfo();
 }
 

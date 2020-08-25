@@ -55,6 +55,9 @@ struct MainOpt {
   /// Kafka broker and topic where file writer commands are published.
   uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
 
+  /// Kafka broker and topic where file writer jobs are published.
+  uri::URI JobPoolURI{"localhost:9092/kafka-to-nexus.job_pool"};
+
   /// \brief Path for HDF output.
   ///
   /// This gets prepended to the HDF output filename given in the write
@@ -64,15 +67,12 @@ struct MainOpt {
   /// Used for command line argument.
   bool ListWriterModules = false;
 
-  /// Kafka topic where status updates are to be published.
-  uri::URI KafkaStatusURI{"localhost:9092/kafka-to-nexus.status"};
-
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
   std::chrono::milliseconds StatusMasterIntervalMS{2000};
 private:
-  std::string ServiceId{fmt::format("kafka-to-nexus:{}--pid:{}",
-                                    gethostname_wrapper(), getpid_wrapper())};
+  std::string getDefaultServiceId() const;
+  std::string ServiceId{getDefaultServiceId()};
 };
 
 void setupLoggerFromOptions(MainOpt const &opt);

@@ -10,6 +10,8 @@
 #include "MainOpt.h"
 #include <exception>
 
+constexpr size_t RandomStringLength{4};
+
 using uri::URI;
 
 // For reasons unknown, the presence of the constructor caused the integration
@@ -22,14 +24,17 @@ void setupLoggerFromOptions(MainOpt const &opt) {
                opt.GraylogLoggerAddress);
 }
 
+std::string MainOpt::getDefaultServiceId() const {
+  return fmt::format("kafka-to-nexus:{}--pid:{}--{}", getHostName(),
+                     getPID(), randomHexString(RandomStringLength));
+}
+
 void MainOpt::setServiceName(std::string NewServiceName) {
   ServiceName = NewServiceName;
   if (ServiceName.empty()) {
-      ServiceId = fmt::format("kafka-to-nexus:{}--pid:{}",
-                              gethostname_wrapper(), getpid_wrapper());
+      ServiceId = getDefaultServiceId();
   } else {
-      ServiceId = fmt::format("kafka-to-nexus--{}:{}--pid:{}", ServiceName,
-                              gethostname_wrapper(), getpid_wrapper());
+      ServiceId = fmt::format("{}--pid:{}--{}", ServiceName, getPID(), randomHexString(RandomStringLength));
   }
 }
 

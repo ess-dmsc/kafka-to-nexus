@@ -10,7 +10,6 @@
 /// \file  CommandHandler.cpp
 
 #include "JobCreator.h"
-#include "CommandParser.h"
 #include "FileWriterTask.h"
 #include "Msg.h"
 #include "StreamController.h"
@@ -18,6 +17,7 @@
 #include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
+#include "CommandSystem/Parser.h"
 
 using std::vector;
 
@@ -47,16 +47,16 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
 
   auto ConfigStreamInner =
-      CommandParser::getRequiredValue<json>("stream", ConfigStream);
+      Command::Parser::getRequiredValue<json>("stream", ConfigStream);
   StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
   StreamSettings.Topic =
-      CommandParser::getRequiredValue<std::string>("topic", ConfigStreamInner);
+      Command::Parser::getRequiredValue<std::string>("topic", ConfigStreamInner);
   StreamSettings.Source =
-      CommandParser::getRequiredValue<std::string>("source", ConfigStreamInner);
-  StreamSettings.Module = CommandParser::getRequiredValue<std::string>(
+      Command::Parser::getRequiredValue<std::string>("source", ConfigStreamInner);
+  StreamSettings.Module = Command::Parser::getRequiredValue<std::string>(
       "writer_module", ConfigStreamInner);
   StreamSettings.Attributes =
-      CommandParser::getOptionalValue<json>("attributes", ConfigStream, "")
+      Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
 
   return StreamSettings;
@@ -129,7 +129,7 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 }
 
 std::unique_ptr<IStreamController>
-JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
+JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
                                  MainOpt &Settings, SharedLogger const &Logger,
                                  Metrics::Registrar Registrar) {
   auto Task = std::make_unique<FileWriterTask>();

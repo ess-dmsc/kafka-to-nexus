@@ -9,17 +9,19 @@
 
 #include <Kafka/ConsumerFactory.h>
 
-#include "CommandListener.h"
+#include "JobListener.h"
 #include "Kafka/PollStatus.h"
 #include "Msg.h"
 
-namespace FileWriter {
+namespace Command {
 
 using std::string;
 
-CommandListener::CommandListener(MainOpt &Config) : config(Config) {}
+JobListener::JobListener(uri::URI JobPoolUri)  {
 
-void CommandListener::start() {
+}
+
+void JobListener::start() {
   Kafka::BrokerSettings BrokerSettings =
       config.StreamerConfiguration.BrokerSettings;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
@@ -27,8 +29,8 @@ void CommandListener::start() {
   Consumer->addTopic(config.CommandBrokerURI.Topic);
 }
 
-std::pair<Kafka::PollStatus, Msg> CommandListener::poll() {
+std::pair<Kafka::PollStatus, Msg> JobListener::poll() {
   return Consumer->poll();
 }
 
-} // namespace FileWriter
+} // namespace Command
