@@ -15,8 +15,7 @@ no_graylog = "centos7-no_graylog"
 container_build_nodes = [
   'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804-gcc8'),
-  'alpine': ContainerBuildNode.getDefaultContainerBuildNode('alpine') // gcc 9.2
+  'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804-gcc8')
 ]
 
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
