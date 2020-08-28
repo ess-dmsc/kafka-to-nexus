@@ -10,6 +10,7 @@
 #pragma once
 
 #include <chrono>
+#include <string>
 
 using time_point = std::chrono::system_clock::time_point;
 using duration = std::chrono::system_clock::duration;
@@ -39,4 +40,8 @@ static auto toMilliSeconds(time_point Timestamp) {
              Timestamp.time_since_epoch())
       .count();
 }
+
+std::string toUTCDateTime(time_point TimeStamp);
+std::string toLocalDateTime(time_point TimeStamp);
+
 #pragma GCC diagnostic pop

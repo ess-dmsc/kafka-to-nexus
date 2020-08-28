@@ -13,8 +13,12 @@
 #include <exception>
 #include <functional>
 #include "Commands.h"
+#include "JobListener.h"
+#include "CommandListener.h"
+#include "ResponseProducer.h"
 #include "Msg.h"
 #include "JobListener.h"
+#include "Kafka/BrokerSettings.h"
 
 namespace Command {
 
@@ -24,19 +28,22 @@ using StopNowFuncType = std::function<void()>;
 
 class Handler {
 public:
-  Handler(std::string ServiceIdentifier, uri::URI JobPoolUri, uri::URI CommandUri);
+  Handler(std::string ServiceIdentifier, Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri, uri::URI CommandTopicUri);
+  Handler(std::string ServiceIdentifier, std::unique_ptr<JobListener> JobConsumer, std::unique_ptr<CommandListener> CommandConsumer, std::unique_ptr<ResponseProducer> Response);
 
   void registerStartFunction(StartFuncType StartFunction);
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction);
   void registerStopNowFunction(StopNowFuncType StopNowFunction);
 
   void sendHasStoppedMessage();
-  void sendErrorEncounteredMessage([[maybe_unused]] std::string ErrorMessage);
+  void sendErrorEncounteredMessage(std::string ErrorMessage);
 
   void loopFunction();
 
 private:
   void handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId);
+  void handleStartCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId);
+  void handleStopCommand(FileWriter::Msg CommandMsg);
   std::string const ServiceId;
   std::string JobId;
   StartFuncType DoStart{
@@ -46,7 +53,10 @@ private:
   StopNowFuncType DoStopNow{
       []() { throw std::runtime_error("Not implemented."); }};
 
-  JobListener JobPool;
+  bool PollForJob{true};
+  std::unique_ptr<JobListener> JobPool;
+  std::unique_ptr<CommandListener> CommandSource;
+  std::unique_ptr<ResponseProducer> CommandResponse;
 };
 
 } //namespace Command

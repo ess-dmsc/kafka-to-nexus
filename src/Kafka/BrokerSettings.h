@@ -23,8 +23,6 @@ struct BrokerSettings {
   BrokerSettings() = default;
   std::string Address;
   int PollTimeoutMS = 500;
-  int MetadataTimeoutMS = 2000;
-  int OffsetsForTimesTimeoutMS = 2000;
   duration MinMetadataTimeout{
       100ms}; // When doing Kafka metadata calls, start with this timeout
   duration MaxMetadataTimeout{

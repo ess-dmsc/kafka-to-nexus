@@ -18,8 +18,6 @@
 
 namespace Kafka {
 
-class ProducerTopic;
-
 class Producer {
 public:
   /// The constructor.

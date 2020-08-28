@@ -17,9 +17,9 @@
 #include "logger.h"
 #include "Commands.h"
 
-namespace Command {
+using FileWriter::Msg;
 
-struct Msg;
+namespace Command {
 
 namespace Parser {
 /// \brief Extract the information from the start command.

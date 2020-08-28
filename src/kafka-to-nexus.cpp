@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 
   auto GenerateMaster = [&]() {
     return std::make_unique<FileWriter::Master>(
-        *Options, std::make_unique<Command::Handler>(),
+        *Options, std::make_unique<Command::Handler>(Options->getServiceId(), Options->StreamerConfiguration.BrokerSettings, Options->JobPoolURI, Options->CommandBrokerURI),
         std::make_unique<FileWriter::JobCreator>(),
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
         UsedRegistrar);

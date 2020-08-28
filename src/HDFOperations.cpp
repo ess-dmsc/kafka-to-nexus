@@ -9,10 +9,9 @@
 
 #include "HDFOperations.h"
 #include "json.h"
-#include <date/date.h>
-#include <date/tz.h>
 #include <stack>
 #include <string>
+#include "TimeUtility.h"
 
 namespace HDFOperations {
 using nlohmann::json;
@@ -186,28 +185,10 @@ void writeStringAttribute(hdf5::node::Node const &Node, const std::string &Name,
   at.write(Value, string_type);
 }
 
-template <typename T>
-static void writeHDFISO8601Attribute(hdf5::node::Node const &Node,
-                                     const std::string &Name, T &TimeStamp) {
-  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", TimeStamp);
-  writeStringAttribute(Node, Name, s2);
-}
-
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                          const std::string &Name,
-                                         SharedLogger const &Logger) {
-  const date::time_zone *CurrentTimeZone;
-  try {
-    CurrentTimeZone = date::current_zone();
-  } catch (const std::runtime_error &e) {
-    Logger->warn("Failed to detect time zone for use in ISO8601 "
-                 "timestamp in HDF file");
-    CurrentTimeZone = date::locate_zone("UTC");
-  }
-  auto now = date::make_zoned(
-      CurrentTimeZone,
-      date::floor<std::chrono::milliseconds>(std::chrono::system_clock::now()));
-  writeHDFISO8601Attribute(Node, Name, now);
+                                         SharedLogger const &) {
+  writeStringAttribute(Node, Name, toLocalDateTime(system_clock::now()));
 }
 
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,

@@ -10,7 +10,6 @@
 #pragma once
 
 #include "Kafka/Consumer.h"
-#include "CommandSystem/CommandListener.h"
 #include "MainOpt.h"
 #include "logger.h"
 #include "Msg.h"
@@ -20,16 +19,18 @@ namespace Command {
 using FileWriter::Msg;
 
 /// Check for new commands on the topic, return them to the Master.
-class JobListener : private CommandListener {
+class CommandListener {
 public:
-  JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings);
+  CommandListener(uri::URI CommandTopicUri, Kafka::BrokerSettings Settings);
 
-  std::pair<Kafka::PollStatus, Msg> pollForJob();
+  std::pair<Kafka::PollStatus, Msg> pollForCommand();
 
-  void disconnectFromPool();
-
-private:
-  // Do not change the ConsumerGroupId variable, it is vital to the workings of the worker pool
-  std::string const ConsumerGroupId{"kafka-to-nexus-worker-pool"};
+protected:
+  std::string const KafkaAddress;
+  std::string const CommandTopic;
+  Kafka::BrokerSettings KafkaSettings;
+  void setUpConsumer();
+  std::unique_ptr<Kafka::ConsumerInterface> Consumer;
+  duration CurrentTimeOut;
 };
 } // namespace Command

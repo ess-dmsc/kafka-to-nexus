@@ -17,20 +17,18 @@ namespace Command {
 
 using std::string;
 
-JobListener::JobListener(uri::URI JobPoolUri)  {
-
+JobListener::JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings) : CommandListener(JobPoolUri, Settings) {
+  KafkaSettings.KafkaConfiguration["group.id"] = ConsumerGroupId;
+  KafkaSettings.KafkaConfiguration["queued.min.messages"] = "1";
 }
 
-void JobListener::start() {
-  Kafka::BrokerSettings BrokerSettings =
-      config.StreamerConfiguration.BrokerSettings;
-  BrokerSettings.Address = config.CommandBrokerURI.HostPort;
-  Consumer = Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
-  Consumer->addTopic(config.CommandBrokerURI.Topic);
+std::pair<Kafka::PollStatus, Msg> JobListener::pollForJob() {
+  return pollForCommand();
 }
 
-std::pair<Kafka::PollStatus, Msg> JobListener::poll() {
-  return Consumer->poll();
+void JobListener::disconnectFromPool() {
+  CurrentTimeOut = KafkaSettings.MinMetadataTimeout;
+  Consumer.reset();
 }
 
 } // namespace Command

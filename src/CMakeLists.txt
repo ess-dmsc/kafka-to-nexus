@@ -64,6 +64,8 @@ set(kafka_to_nexus_SRC
         Master.cpp
         logger.cpp
         CommandSystem/JobListener.cpp
+        CommandSystem/CommandListener.cpp
+        CommandSystem/ResponseProducer.cpp
         CommandSystem/Handler.cpp
         CommandSystem/Parser.cpp
         JobCreator.cpp
@@ -99,12 +101,16 @@ set(kafka_to_nexus_SRC
         Stream/Partition.cpp
         Stream/Topic.cpp
         HDFOperations.cpp
-        HDFVersionCheck.cpp)
+        HDFVersionCheck.cpp
+        TimeUtility.cpp
+        )
 
 set(kafka_to_nexus_INC
         JobCreator.h
         CommandSystem/Commands.h
         CommandSystem/JobListener.h
+        CommandSystem/CommandListener.h
+        CommandSystem/ResponseProducer.h
         CommandSystem/Handler.h
         CommandSystem/Parser.h
         FileWriterTask.h
