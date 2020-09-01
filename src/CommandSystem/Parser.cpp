@@ -109,21 +109,15 @@ Command::StopMessage extractStopInformation(Msg const &CommandMessage) {
 }
 
 bool isStartCommand(Msg const &CommandMessage) {
-  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+  auto Verifier = flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStartBuffer(Verifier) and flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           RunStartIdentifier());
-
-  // Ideally we would run Verify on the buffer, but there is currently a problem
-  // making verifiable flatbuffer messages from python (Nicos).
-  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
 bool isStopCommand(Msg const &CommandMessage) {
-  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+  auto Verifier = flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStopBuffer(Verifier) and flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           RunStopIdentifier());
-
-  // Ideally we would run Verify on the buffer, but there is currently a problem
-  // making verifiable flatbuffer messages from python (Nicos).
-  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
 } // namespace Parser

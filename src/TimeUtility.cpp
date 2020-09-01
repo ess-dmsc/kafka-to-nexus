@@ -10,6 +10,7 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
+#include "logger.h"
 
 using time_point = std::chrono::system_clock::time_point;
 
@@ -36,6 +37,7 @@ std::string toLocalDateTime(time_point TimeStamp) {
   try {
     CurrentTimeZone = date::current_zone();
   } catch (const std::runtime_error &e) {
+    LOG_WARN("Unable to find local time zone, using UTC.");
     return toUTCDateTime(TimeStamp);
   }
   auto ZonedTime = date::make_zoned(

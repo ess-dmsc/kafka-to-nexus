@@ -93,7 +93,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
     writeStringAttribute(
         RootGroup, "creator",
         fmt::format("kafka-to-nexus commit {:.7}", GetVersion()));
-    writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time", Logger);
+    writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
     writeAttributesIfPresent(RootGroup, NexusStructure, Logger);
   } catch (std::exception const &E) {
     Logger->critical("Failed to initialize  file={}  trace:\n{}",

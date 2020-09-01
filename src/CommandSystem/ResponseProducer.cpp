@@ -13,15 +13,16 @@
 
 namespace Command {
 
+Kafka::BrokerSettings setBrokerAddress(Kafka::BrokerSettings Settings, std::string NewAddress) {
+  Settings.Address = NewAddress;
+  return Settings;
+}
+
 ResponseProducer::ResponseProducer(const std::string &ServiceIdentifier, std::unique_ptr<Kafka::ProducerTopic> KafkaProducer) : ServiceId(ServiceIdentifier), Producer(std::move(KafkaProducer)) {
 }
 
-ResponseProducer::ResponseProducer(const std::string &ServiceIdentifier, uri::URI ResponseUri, Kafka::BrokerSettings Settings) {
-  Settings.Address = ResponseUri.HostPort;
-  auto KafkaProducer = std::make_shared<Kafka::Producer>(Settings);
-  auto KafkaProducerTopic = std::make_unique<Kafka::ProducerTopic>(
-      KafkaProducer, ResponseUri.Topic);
-  ResponseProducer(ServiceIdentifier, std::move(KafkaProducerTopic));
+ResponseProducer::ResponseProducer(const std::string &ServiceIdentifier, uri::URI ResponseUri, Kafka::BrokerSettings Settings) : ResponseProducer(ServiceIdentifier, std::make_unique<Kafka::ProducerTopic>(
+      std::make_shared<Kafka::Producer>(setBrokerAddress(Settings, ResponseUri.HostPort)), ResponseUri.Topic)) {
 }
 
 void ResponseProducer::publishResponse(ActionResponse Command,

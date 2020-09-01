@@ -35,8 +35,7 @@ void createHDFStructures(
     SharedLogger const &Logger);
 
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
-                                         const std::string &Name,
-                                         SharedLogger const &Logger);
+                                         const std::string &Name);
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values,

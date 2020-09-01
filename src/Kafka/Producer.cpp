@@ -48,7 +48,7 @@ void Producer::setConf(std::string &ErrorString) {
             ErrorString);
 }
 
-Producer::Producer(BrokerSettings &Settings)
+Producer::Producer(BrokerSettings Settings)
     : ProducerBrokerSettings(Settings) {
   ProducerID = ProducerInstanceCount++;
 

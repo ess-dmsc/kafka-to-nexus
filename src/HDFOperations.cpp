@@ -186,8 +186,7 @@ void writeStringAttribute(hdf5::node::Node const &Node, const std::string &Name,
 }
 
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
-                                         const std::string &Name,
-                                         SharedLogger const &) {
+                                         const std::string &Name) {
   writeStringAttribute(Node, Name, toLocalDateTime(system_clock::now()));
 }
 

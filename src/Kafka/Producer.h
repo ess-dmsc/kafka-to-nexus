@@ -23,7 +23,7 @@ public:
   /// The constructor.
   ///
   /// \param Settings_ The BrokerSettings.
-  explicit Producer(BrokerSettings &Settings);
+  explicit Producer(BrokerSettings Settings);
   virtual ~Producer();
 
   /// Polls Kafka for events.
@@ -51,7 +51,7 @@ public:
                              int MessageFlags, void *Payload,
                              size_t PayloadSize, const void *Key,
                              size_t KeySize, void *OpaqueMessage);
-  BrokerSettings &ProducerBrokerSettings;
+  BrokerSettings const ProducerBrokerSettings;
   std::atomic<uint64_t> TotalMessagesProduced{0};
   ProducerStats Stats;
 

@@ -34,7 +34,6 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
   CommandAndControl->registerStopNowFunction([this](){
     this->stopNow();
   });
-//  CmdListener->start();
   Logger->info("file-writer service id: {}", Config.getServiceId());
 }
 
