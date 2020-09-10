@@ -12,17 +12,12 @@
 #include "Kafka/BrokerSettings.h"
 #include "Kafka/Producer.h"
 #include "Kafka/ProducerTopic.h"
-#include <string>
 #include "URI.h"
+#include <string>
 
 namespace Command {
 
-enum class ActionResponse {
-  StartJob,
-  SetStopTime,
-  StopNow,
-  HasStopped
-};
+enum class ActionResponse { StartJob, SetStopTime, StopNow, HasStopped };
 
 enum class ActionResult {
   Success,
@@ -31,9 +26,13 @@ enum class ActionResult {
 
 class ResponseProducer {
 public:
-  ResponseProducer(std::string const &ServiceIdentifier, uri::URI ResponseUri, Kafka::BrokerSettings Settings);
-  ResponseProducer(std::string const &ServiceIdentifier, std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
-  void publishResponse(ActionResponse Command, ActionResult Result, std::string JobId, std::string Description);
+  ResponseProducer(std::string const &ServiceIdentifier, uri::URI ResponseUri,
+                   Kafka::BrokerSettings Settings);
+  ResponseProducer(std::string const &ServiceIdentifier,
+                   std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
+  void publishResponse(ActionResponse Command, ActionResult Result,
+                       std::string JobId, std::string Description);
+
 private:
   std::string ServiceId;
   std::unique_ptr<Kafka::ProducerTopic> Producer;

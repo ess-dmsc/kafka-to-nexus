@@ -22,18 +22,14 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
                std::unique_ptr<IJobCreator> Creator,
                std::unique_ptr<Status::StatusReporter> Reporter,
                Metrics::Registrar const &Registrar)
-    : Logger(getLogger()), MainConfig(Config), CommandAndControl(std::move(Listener)),
-      Creator_(std::move(Creator)), Reporter(std::move(Reporter)),
-      MasterMetricsRegistrar(Registrar) {
-  CommandAndControl->registerStartFunction([this](auto StartInfo) {
-    this->startWriting(StartInfo);
-  });
-  CommandAndControl->registerSetStopTimeFunction([this](auto StopTime) {
-    this->setStopTime(StopTime);
-  });
-  CommandAndControl->registerStopNowFunction([this](){
-    this->stopNow();
-  });
+    : Logger(getLogger()), MainConfig(Config),
+      CommandAndControl(std::move(Listener)), Creator_(std::move(Creator)),
+      Reporter(std::move(Reporter)), MasterMetricsRegistrar(Registrar) {
+  CommandAndControl->registerStartFunction(
+      [this](auto StartInfo) { this->startWriting(StartInfo); });
+  CommandAndControl->registerSetStopTimeFunction(
+      [this](auto StopTime) { this->setStopTime(StopTime); });
+  CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
   Logger->info("file-writer service id: {}", Config.getServiceId());
 }
 
@@ -42,7 +38,8 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     CurrentStreamController = Creator_->createFileWritingJob(
         StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
     CurrentState = WriterState::Writing;
-    Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
+    Reporter->updateStatusInfo({Status::JobStatusInfo::WorkerState::Writing,
+                                StartInfo.JobID, StartInfo.Filename,
                                 StartInfo.StartTime, StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
@@ -50,13 +47,12 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
   }
 }
 
-void Master::stopNow() {
-  throw std::runtime_error("Not implemented.");
-}
+void Master::stopNow() { throw std::runtime_error("Not implemented."); }
 
 void Master::setStopTime(std::chrono::milliseconds StopTime) {
   if (CurrentState != WriterState::Writing) {
-    throw std::runtime_error("Unable to set stop time when not in \"Writing\" state.");
+    throw std::runtime_error(
+        "Unable to set stop time when not in \"Writing\" state.");
   }
   CurrentStreamController->setStopTime(StopTime);
   Reporter->updateStopTime(StopTime);
@@ -75,9 +71,7 @@ void Master::run() {
   }
 }
 
-bool Master::isWriting() const {
-  return CurrentState == WriterState::Writing;
-}
+bool Master::isWriting() const { return CurrentState == WriterState::Writing; }
 
 void Master::setToIdle() {
   CommandAndControl->sendHasStoppedMessage();

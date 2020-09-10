@@ -11,8 +11,8 @@
 
 #include "Kafka/Consumer.h"
 #include "MainOpt.h"
-#include "logger.h"
 #include "Msg.h"
+#include "logger.h"
 
 namespace Command {
 

@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "Kafka/Consumer.h"
 #include "CommandSystem/CommandListener.h"
+#include "Kafka/Consumer.h"
 #include "MainOpt.h"
-#include "logger.h"
 #include "Msg.h"
+#include "logger.h"
 
 namespace Command {
 
@@ -29,7 +29,8 @@ public:
   void disconnectFromPool();
 
 private:
-  // Do not change the ConsumerGroupId variable, it is vital to the workings of the worker pool
+  // Do not change the ConsumerGroupId variable, it is vital to the workings of
+  // the worker pool
   std::string const ConsumerGroupId{"kafka-to-nexus-worker-pool"};
 };
 } // namespace Command

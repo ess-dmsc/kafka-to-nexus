@@ -10,6 +10,7 @@
 /// \file  CommandHandler.cpp
 
 #include "JobCreator.h"
+#include "CommandSystem/Parser.h"
 #include "FileWriterTask.h"
 #include "Msg.h"
 #include "StreamController.h"
@@ -17,7 +18,6 @@
 #include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
-#include "CommandSystem/Parser.h"
 
 using std::vector;
 
@@ -49,10 +49,10 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   auto ConfigStreamInner =
       Command::Parser::getRequiredValue<json>("stream", ConfigStream);
   StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
-  StreamSettings.Topic =
-      Command::Parser::getRequiredValue<std::string>("topic", ConfigStreamInner);
-  StreamSettings.Source =
-      Command::Parser::getRequiredValue<std::string>("source", ConfigStreamInner);
+  StreamSettings.Topic = Command::Parser::getRequiredValue<std::string>(
+      "topic", ConfigStreamInner);
+  StreamSettings.Source = Command::Parser::getRequiredValue<std::string>(
+      "source", ConfigStreamInner);
   StreamSettings.Module = Command::Parser::getRequiredValue<std::string>(
       "writer_module", ConfigStreamInner);
   StreamSettings.Attributes =
@@ -161,9 +161,8 @@ JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
       StartInfo.BrokerInfo.HostPort;
 
   Logger->info("Write file with job_id: {}", Task->jobID());
-  return std::make_unique<StreamController>(std::move(Task),
-                                            Settings.StreamerConfiguration,
-                                            Registrar);
+  return std::make_unique<StreamController>(
+      std::move(Task), Settings.StreamerConfiguration, Registrar);
 }
 
 void JobCreator::addStreamSourceToWriterModule(

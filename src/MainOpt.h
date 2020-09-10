@@ -11,9 +11,9 @@
 
 #include "StreamerOptions.h"
 #include "URI.h"
+#include "helper.h"
 #include "json.h"
 #include "logger.h"
-#include "helper.h"
 
 #include <chrono>
 #include <string>
@@ -70,6 +70,7 @@ struct MainOpt {
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
   std::chrono::milliseconds StatusMasterIntervalMS{2000};
+
 private:
   std::string getDefaultServiceId() const;
   std::string ServiceId{getDefaultServiceId()};

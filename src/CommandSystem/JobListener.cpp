@@ -17,7 +17,8 @@ namespace Command {
 
 using std::string;
 
-JobListener::JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings) : CommandListener(JobPoolUri, Settings) {
+JobListener::JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings)
+    : CommandListener(JobPoolUri, Settings) {
   KafkaSettings.KafkaConfiguration["group.id"] = ConsumerGroupId;
   KafkaSettings.KafkaConfiguration["queued.min.messages"] = "1";
 }

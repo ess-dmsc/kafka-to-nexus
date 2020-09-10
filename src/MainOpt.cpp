@@ -20,21 +20,21 @@ using uri::URI;
 // following init function.
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  setUpLogging(opt.LoggingLevel, opt.LogFilename,
-               opt.GraylogLoggerAddress);
+  setUpLogging(opt.LoggingLevel, opt.LogFilename, opt.GraylogLoggerAddress);
 }
 
 std::string MainOpt::getDefaultServiceId() const {
-  return fmt::format("kafka-to-nexus:{}--pid:{}--{}", getHostName(),
-                     getPID(), randomHexString(RandomStringLength));
+  return fmt::format("kafka-to-nexus:{}--pid:{}--{}", getHostName(), getPID(),
+                     randomHexString(RandomStringLength));
 }
 
 void MainOpt::setServiceName(std::string NewServiceName) {
   ServiceName = NewServiceName;
   if (ServiceName.empty()) {
-      ServiceId = getDefaultServiceId();
+    ServiceId = getDefaultServiceId();
   } else {
-      ServiceId = fmt::format("{}--pid:{}--{}", ServiceName, getPID(), randomHexString(RandomStringLength));
+    ServiceId = fmt::format("{}--pid:{}--{}", ServiceName, getPID(),
+                            randomHexString(RandomStringLength));
   }
 }
 

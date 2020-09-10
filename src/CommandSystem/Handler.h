@@ -9,16 +9,15 @@
 
 #pragma once
 
-#include <string>
-#include <exception>
-#include <functional>
+#include "CommandListener.h"
 #include "Commands.h"
 #include "JobListener.h"
-#include "CommandListener.h"
-#include "ResponseProducer.h"
-#include "Msg.h"
-#include "JobListener.h"
 #include "Kafka/BrokerSettings.h"
+#include "Msg.h"
+#include "ResponseProducer.h"
+#include <exception>
+#include <functional>
+#include <string>
 
 namespace Command {
 
@@ -28,8 +27,12 @@ using StopNowFuncType = std::function<void()>;
 
 class Handler {
 public:
-  Handler(std::string ServiceIdentifier, Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri, uri::URI CommandTopicUri);
-  Handler(std::string ServiceIdentifier, std::unique_ptr<JobListener> JobConsumer, std::unique_ptr<CommandListener> CommandConsumer, std::unique_ptr<ResponseProducer> Response);
+  Handler(std::string ServiceIdentifier, Kafka::BrokerSettings const &Settings,
+          uri::URI JobPoolUri, uri::URI CommandTopicUri);
+  Handler(std::string ServiceIdentifier,
+          std::unique_ptr<JobListener> JobConsumer,
+          std::unique_ptr<CommandListener> CommandConsumer,
+          std::unique_ptr<ResponseProducer> Response);
 
   void registerStartFunction(StartFuncType StartFunction);
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction);
@@ -59,4 +62,4 @@ private:
   std::unique_ptr<ResponseProducer> CommandResponse;
 };
 
-} //namespace Command
+} // namespace Command

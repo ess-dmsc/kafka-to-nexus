@@ -67,9 +67,9 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
-  Status::JobStatusInfo const Info{"1234", "file1.nxs",
-                                   std::chrono::milliseconds(1234567890),
-                                   time_point(19876543210ms)};
+  Status::JobStatusInfo const Info{
+      Status::JobStatusInfo::WorkerState::Writing, "1234", "file1.nxs",
+      std::chrono::milliseconds(1234567890), time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   auto JSONReport = ReporterPtr->createJSONReport();
@@ -106,9 +106,9 @@ TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
 }
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
-  Status::JobStatusInfo const Info{"1234", "file1.nxs",
-                                   std::chrono::milliseconds(1234567890),
-                                   time_point(19876543210ms)};
+  Status::JobStatusInfo const Info{
+      Status::JobStatusInfo::WorkerState::Writing, "1234", "file1.nxs",
+      std::chrono::milliseconds(1234567890), time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();

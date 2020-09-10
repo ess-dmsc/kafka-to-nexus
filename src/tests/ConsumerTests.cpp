@@ -100,7 +100,7 @@ TEST_F(ConsumerTests,
   }
 }
 
-//TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicsEmpty) {
+// TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicsEmpty) {
 //  auto Metadata = new MockMetadata;
 //  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
 //      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
@@ -120,7 +120,8 @@ TEST_F(ConsumerTests,
 //  }
 //}
 
-//TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicDoesntExist) {
+// TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicDoesntExist)
+// {
 //  auto Metadata = new MockMetadata;
 //  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
 //      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
@@ -129,7 +130,8 @@ TEST_F(ConsumerTests,
 //  auto TopicVector =
 //      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
 //  REQUIRE_CALL(*Metadata, topics()).TIMES((1)).RETURN(&TopicVector);
-//  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+//  REQUIRE_CALL(*MockConsumer,
+//  close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
 //  {
 //    auto Consumer = std::make_unique<Kafka::Consumer>(
 //        std::move(MockConsumer),
@@ -140,7 +142,7 @@ TEST_F(ConsumerTests,
 //  }
 //}
 
-//TEST_F(ConsumerTests,
+// TEST_F(ConsumerTests,
 //       getTopicPartitionNumbersReturnsPartitionNumbersIfTopicDoesExist) {
 //  auto Metadata = new MockMetadata;
 //  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
@@ -161,7 +163,8 @@ TEST_F(ConsumerTests,
 //      .TIMES((1))
 //      .RETURN(&PartitionMetadataVector);
 //  REQUIRE_CALL(*PartitionMetadata, id()).TIMES((1)).RETURN(1);
-//  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+//  REQUIRE_CALL(*MockConsumer,
+//  close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
 //  REQUIRE_CALL(*MockConsumer, assign(_))
 //      .TIMES((1))
 //      .RETURN(RdKafka::ERR_NO_ERROR);
@@ -175,7 +178,7 @@ TEST_F(ConsumerTests,
 //  }
 //}
 
-//TEST_F(ConsumerTests, testUpdatingMetadataMultipleTimes) {
+// TEST_F(ConsumerTests, testUpdatingMetadataMultipleTimes) {
 //  auto Metadata = new MockMetadata;
 //  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
 //      RdKafka::ErrorCode::ERR__TRANSPORT, Metadata);
@@ -209,11 +212,12 @@ TEST_F(ConsumerTests,
 //  }
 //}
 
-//TEST_F(ConsumerTests, testMetadataCallThrowsAnError) {
+// TEST_F(ConsumerTests, testMetadataCallThrowsAnError) {
 //  auto Metadata = new MockMetadata;
 //  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
 //      RdKafka::ErrorCode::ERR__ALL_BROKERS_DOWN, Metadata);
-//  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+//  REQUIRE_CALL(*MockConsumer,
+//  close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
 //  {
 //    auto Consumer = std::make_unique<Kafka::Consumer>(
 //        std::move(MockConsumer),

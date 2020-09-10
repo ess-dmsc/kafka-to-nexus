@@ -8,24 +8,30 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Handler.h"
-#include "Parser.h"
 #include "Msg.h"
+#include "Parser.h"
 #include "TimeUtility.h"
-
 
 namespace Command {
 
-bool isJobIdValid(std::string JobId) {
-  return not JobId.empty();
-}
+bool isJobIdValid(std::string JobId) { return not JobId.empty(); }
 
-Handler::Handler(std::string ServiceIdentifier, Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri, uri::URI CommandTopicUri) :
-  Handler(ServiceIdentifier, std::make_unique<JobListener>(JobPoolUri, Settings), std::make_unique<CommandListener>(CommandTopicUri, Settings), std::make_unique<ResponseProducer>(ServiceIdentifier, CommandTopicUri, Settings)) {
-}
+Handler::Handler(std::string ServiceIdentifier,
+                 Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
+                 uri::URI CommandTopicUri)
+    : Handler(ServiceIdentifier,
+              std::make_unique<JobListener>(JobPoolUri, Settings),
+              std::make_unique<CommandListener>(CommandTopicUri, Settings),
+              std::make_unique<ResponseProducer>(ServiceIdentifier,
+                                                 CommandTopicUri, Settings)) {}
 
-Handler::Handler(std::string ServiceIdentifier, std::unique_ptr<JobListener> JobConsumer, std::unique_ptr<CommandListener> CommandConsumer, std::unique_ptr<ResponseProducer> Response) : ServiceId(ServiceIdentifier), JobPool(std::move(JobConsumer)), CommandSource(std::move(CommandConsumer)), CommandResponse(std::move(Response)) {
-
-}
+Handler::Handler(std::string ServiceIdentifier,
+                 std::unique_ptr<JobListener> JobConsumer,
+                 std::unique_ptr<CommandListener> CommandConsumer,
+                 std::unique_ptr<ResponseProducer> Response)
+    : ServiceId(ServiceIdentifier), JobPool(std::move(JobConsumer)),
+      CommandSource(std::move(CommandConsumer)),
+      CommandResponse(std::move(Response)) {}
 
 void Handler::loopFunction() {
   if (PollForJob) {
@@ -53,12 +59,14 @@ void Handler::registerStopNowFunction(StopNowFuncType StopNowFunction) {
 }
 
 void Handler::sendHasStoppedMessage() {
-  CommandResponse->publishResponse(ActionResponse::HasStopped, ActionResult::Success, JobId, "");
+  CommandResponse->publishResponse(ActionResponse::HasStopped,
+                                   ActionResult::Success, JobId, "");
   PollForJob = true;
 }
 
 void Handler::sendErrorEncounteredMessage(std::string ErrorMessage) {
-  CommandResponse->publishResponse(ActionResponse::HasStopped, ActionResult::Failure, JobId, ErrorMessage);
+  CommandResponse->publishResponse(ActionResponse::HasStopped,
+                                   ActionResult::Failure, JobId, ErrorMessage);
 }
 
 void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
@@ -69,14 +77,16 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
   }
 }
 
-void Handler::handleStartCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
+void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
+                                 bool IgnoreServiceId) {
   try {
     auto StartJob = Parser::extractStartInformation(CommandMsg);
     if (not IgnoreServiceId and StartJob.ServiceID != ServiceId) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, ActionResult::Failure, StartJob.JobID,
           "Unable to start filewriting job: service id is incorrect.");
-      LOG_DEBUG("Rejected start command as the service id was wrong. It should be {}, it was {}.",
+      LOG_DEBUG("Rejected start command as the service id was wrong. It should "
+                "be {}, it was {}.",
                 ServiceId, JobId);
       return;
     }
@@ -117,7 +127,8 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
   try {
     auto StopJob = Parser::extractStopInformation(CommandMsg);
     if (ServiceId != StopJob.ServiceID or JobId != StopJob.JobID) {
-      LOG_DEBUG("Rejected stop command as job and/or service id was incorrect (was {}/{}, should be {}/{}).",
+      LOG_DEBUG("Rejected stop command as job and/or service id was incorrect "
+                "(was {}/{}, should be {}/{}).",
                 StopJob.JobID, StopJob.ServiceID, JobId, ServiceId);
       return;
     }
@@ -139,7 +150,8 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       try {
         DoSetStopTime(StopJob.StopTime);
       } catch (std::exception const &E) {
-        auto ErrorStr = fmt::format("Unable to set stop time for filewriting job. Error message was: {}",
+        auto ErrorStr = fmt::format("Unable to set stop time for filewriting "
+                                    "job. Error message was: {}",
                                     E.what());
         CommandResponse->publishResponse(ActionResponse::SetStopTime,
                                          ActionResult::Failure, JobId,

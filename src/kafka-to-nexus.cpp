@@ -58,8 +58,8 @@ createStatusReporter(MainOpt const &MainConfig,
                                                   StatusInformation);
 }
 
-bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic, std::string Broker,
-                     duration TimeOut) {
+bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
+                     std::string Broker, duration TimeOut) {
   try {
     auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut);
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
@@ -146,7 +146,11 @@ int main(int argc, char **argv) {
 
   auto GenerateMaster = [&]() {
     return std::make_unique<FileWriter::Master>(
-        *Options, std::make_unique<Command::Handler>(Options->getServiceId(), Options->StreamerConfiguration.BrokerSettings, Options->JobPoolURI, Options->CommandBrokerURI),
+        *Options,
+        std::make_unique<Command::Handler>(
+            Options->getServiceId(),
+            Options->StreamerConfiguration.BrokerSettings, Options->JobPoolURI,
+            Options->CommandBrokerURI),
         std::make_unique<FileWriter::JobCreator>(),
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
         UsedRegistrar);

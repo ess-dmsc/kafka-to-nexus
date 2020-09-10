@@ -17,6 +17,8 @@ namespace Status {
 
 // This info changes each write job
 struct JobStatusInfo {
+  enum class WorkerState { Idle, Writing };
+  WorkerState State{WorkerState::Idle};
   std::string JobId{""};
   std::string Filename{""};
   std::chrono::milliseconds StartTime{0};

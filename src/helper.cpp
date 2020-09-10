@@ -12,18 +12,19 @@
 #include <unistd.h>
 
 // getpid()
-#include <sys/types.h>
 #include <random>
+#include <sys/types.h>
 
 std::string randomHexString(size_t Length) {
   std::string const hexChars = "0123456789abcdef";
-  std::mt19937_64 gen { std::random_device()() };
+  std::mt19937_64 gen{std::random_device()()};
 
-  std::uniform_int_distribution<size_t> dist { 0, hexChars.size() - 1 };
+  std::uniform_int_distribution<size_t> dist{0, hexChars.size() - 1};
 
   std::string ReturnString;
 
-  std::generate_n(std::back_inserter(ReturnString), Length, [&] { return hexChars[dist(gen)]; });
+  std::generate_n(std::back_inserter(ReturnString), Length,
+                  [&] { return hexChars[dist(gen)]; });
   return ReturnString;
 }
 

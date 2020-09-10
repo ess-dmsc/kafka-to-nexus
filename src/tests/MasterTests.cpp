@@ -30,7 +30,7 @@ auto const StartCommand = RunStartStopHelpers::buildRunStartMessage(
 auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
     123456790000, "42", "qw3rty", "filewriter1");
 
-//TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
+// TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
 //
 //  FileWriterState CurrentState = States::Idle();
 //  auto const NewState =
@@ -39,7 +39,7 @@ auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
 //  ASSERT_TRUE(std::get_if<States::StartRequested>(&NewState));
 //}
 //
-//TEST(GetNewStateTests, IfWritingThenOnStartCommandNoStateChange) {
+// TEST(GetNewStateTests, IfWritingThenOnStartCommandNoStateChange) {
 //  FileWriterState CurrentState = States::Writing();
 //  auto const NewState =
 //      getNextState(StartCommand, std::chrono::milliseconds{0}, CurrentState);
@@ -47,7 +47,7 @@ auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
 //  ASSERT_TRUE(std::get_if<States::Writing>(&NewState));
 //}
 //
-//TEST(GetNewStateTests, IfWritingThenOnStopCommandStopIsRequested) {
+// TEST(GetNewStateTests, IfWritingThenOnStopCommandStopIsRequested) {
 //  FileWriterState CurrentState = States::Writing();
 //  auto const NewState =
 //      getNextState(StopCommand, std::chrono::milliseconds{0}, CurrentState);
@@ -55,7 +55,7 @@ auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
 //  ASSERT_TRUE(std::get_if<States::StopRequested>(&NewState));
 //}
 //
-//TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
+// TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
 //  FileWriterState CurrentState = States::Idle();
 //  auto const NewState =
 //      getNextState(StopCommand, std::chrono::milliseconds{0}, CurrentState);
@@ -63,22 +63,22 @@ auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
 //  ASSERT_TRUE(std::get_if<States::Idle>(&NewState));
 //}
 
-//class FakeJobCreator : public IJobCreator {
-//public:
+// class FakeJobCreator : public IJobCreator {
+// public:
 //  std::unique_ptr<IStreamController>
 //  createFileWritingJob(StartCommandInfo const &StartInfo,
-//                       MainOpt & /*Settings*/, SharedLogger const & /*Logger*/,
-//                       Metrics::Registrar) override {
+//                       MainOpt & /*Settings*/, SharedLogger const &
+//                       /*Logger*/, Metrics::Registrar) override {
 //    return std::make_unique<FakeStreamController>(StartInfo.JobID);
 //  };
 //};
 //
-//class FakeJobCreatorThatThrows : public IJobCreator {
-//public:
+// class FakeJobCreatorThatThrows : public IJobCreator {
+// public:
 //  std::unique_ptr<IStreamController>
 //  createFileWritingJob(StartCommandInfo const & /*StartInfo*/,
-//                       MainOpt & /*Settings*/, SharedLogger const & /*Logger*/,
-//                       Metrics::Registrar) override {
+//                       MainOpt & /*Settings*/, SharedLogger const &
+//                       /*Logger*/, Metrics::Registrar) override {
 //    throw std::runtime_error("Something went wrong");
 //  };
 //};
@@ -101,8 +101,8 @@ public:
   }
 };
 
-//class FakeCommandListener : public CommandListener {
-//public:
+// class FakeCommandListener : public CommandListener {
+// public:
 //  explicit FakeCommandListener(MainOpt &Config) : CommandListener(Config){};
 //  void start() override{};
 //  std::pair<Kafka::PollStatus, Msg> poll() override {
@@ -124,8 +124,8 @@ public:
 //  std::deque<std::pair<Kafka::PollStatus, Msg>> StoredMessages;
 //};
 //
-//class MasterTests : public ::testing::Test {
-//public:
+// class MasterTests : public ::testing::Test {
+// public:
 //  void SetUp() override {
 //    Creator = std::make_unique<FakeJobCreator>();
 //    ThrowingCreator = std::make_unique<FakeJobCreatorThatThrows>();
@@ -155,32 +155,33 @@ public:
 //  std::unique_ptr<Status::StatusReporter> Reporter;
 //};
 //
-//void queueCommandMessage(CommandListener *Listener, Kafka::PollStatus Status,
+// void queueCommandMessage(CommandListener *Listener, Kafka::PollStatus Status,
 //                         Msg Message) {
-//  dynamic_cast<FakeCommandListener *>(Listener)->injectMessage(Status, Message);
+//  dynamic_cast<FakeCommandListener *>(Listener)->injectMessage(Status,
+//  Message);
 //}
 //
-//TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
+// TEST_F(MasterTests, IfStartCommandMessageReceivedThenEntersWritingState) {
 //  queueCommandMessage(CmdListener.get(), Kafka::PollStatus::Message,
 //                      Msg(StartCommand.data(), StartCommand.size()));
 //
 //  auto Master = std::make_unique<FileWriter::Master>(
-//      MainOpts, std::move(CmdListener), std::move(Creator), std::move(Reporter),
-//      Metrics::Registrar("some_reg", {}));
+//      MainOpts, std::move(CmdListener), std::move(Creator),
+//      std::move(Reporter), Metrics::Registrar("some_reg", {}));
 //
 //  Master->run();
 //  ASSERT_TRUE(Master->isWriting());
 //}
 //
-//TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
+// TEST_F(MasterTests, IfStoppedAfterStartingThenEntersNotWritingState) {
 //  queueCommandMessage(CmdListener.get(), Kafka::PollStatus::Message,
 //                      Msg(StartCommand.data(), StartCommand.size()));
 //  queueCommandMessage(CmdListener.get(), Kafka::PollStatus::Message,
 //                      Msg(StopCommand.data(), StopCommand.size()));
 //
 //  auto Master = std::make_unique<FileWriter::Master>(
-//      MainOpts, std::move(CmdListener), std::move(Creator), std::move(Reporter),
-//      Metrics::Registrar("some_reg", {}));
+//      MainOpts, std::move(CmdListener), std::move(Creator),
+//      std::move(Reporter), Metrics::Registrar("some_reg", {}));
 //  // Process start message
 //  Master->run();
 //
@@ -189,7 +190,7 @@ public:
 //  ASSERT_FALSE(Master->isWriting());
 //}
 //
-//TEST_F(MasterTests, IfStartingThrowsThenEntersNotWritingState) {
+// TEST_F(MasterTests, IfStartingThrowsThenEntersNotWritingState) {
 //  queueCommandMessage(CmdListener.get(), Kafka::PollStatus::Message,
 //                      Msg(StartCommand.data(), StartCommand.size()));
 //
@@ -202,7 +203,7 @@ public:
 //  ASSERT_FALSE(Master->isWriting());
 //}
 //
-//TEST_F(MasterTests, IfStoppedMessageContainsWrongJobIdThenIgnored) {
+// TEST_F(MasterTests, IfStoppedMessageContainsWrongJobIdThenIgnored) {
 //  auto WrongIdCommand = RunStartStopHelpers::buildRunStopMessage(
 //      123456790000, "42", "wrong_id", "filewriter1");
 //
@@ -212,8 +213,8 @@ public:
 //                      Msg(WrongIdCommand.data(), WrongIdCommand.size()));
 //
 //  auto Master = std::make_unique<FileWriter::Master>(
-//      MainOpts, std::move(CmdListener), std::move(Creator), std::move(Reporter),
-//      Metrics::Registrar("some_reg", {}));
+//      MainOpts, std::move(CmdListener), std::move(Creator),
+//      std::move(Reporter), Metrics::Registrar("some_reg", {}));
 //  // Process start message
 //  Master->run();
 //

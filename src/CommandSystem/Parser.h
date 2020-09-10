@@ -11,11 +11,11 @@
 
 #include "TimeUtility.h"
 
+#include "Commands.h"
 #include "URI.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
-#include "Commands.h"
 
 using FileWriter::Msg;
 

@@ -109,14 +109,18 @@ Command::StopMessage extractStopInformation(Msg const &CommandMessage) {
 }
 
 bool isStartCommand(Msg const &CommandMessage) {
-  auto Verifier = flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  return VerifyRunStartBuffer(Verifier) and flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStartBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           RunStartIdentifier());
 }
 
 bool isStopCommand(Msg const &CommandMessage) {
-  auto Verifier = flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
-  return VerifyRunStopBuffer(Verifier) and flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStopBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           RunStopIdentifier());
 }
 

@@ -51,10 +51,7 @@ public:
   virtual void startWriting(Command::StartInfo const &StartInfo);
 
 private:
-  enum class WriterState {
-    Idle,
-    Writing
-  };
+  enum class WriterState { Idle, Writing };
   SharedLogger Logger;
   MainOpt &MainConfig;
   std::unique_ptr<Command::Handler> CommandAndControl;
@@ -64,7 +61,7 @@ private:
   Metrics::Registrar MasterMetricsRegistrar;
   WriterState CurrentState{WriterState::Idle};
   virtual bool hasWritingStopped();
-//  virtual FileWriterState handleCommand(Msg const &CommandMessage);
+  //  virtual FileWriterState handleCommand(Msg const &CommandMessage);
   void setToIdle();
 };
 } // namespace FileWriter

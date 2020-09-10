@@ -7,19 +7,19 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "logger.h"
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
-#include "logger.h"
 
 using time_point = std::chrono::system_clock::time_point;
 
-template<class TimeType>
+template <class TimeType>
 std::string zonedToZuluString(TimeType ZonedTimeStamp) {
   return format("%Y-%m-%dT%H:%M:%SZ", ZonedTimeStamp);
 }
 
-template<class TimeType>
+template <class TimeType>
 std::string zonedToLocalString(TimeType ZonedTimeStamp) {
   return format("%Y-%m-%dT%H:%M:%S%z", ZonedTimeStamp);
 }
@@ -27,8 +27,7 @@ std::string zonedToLocalString(TimeType ZonedTimeStamp) {
 std::string toUTCDateTime(time_point TimeStamp) {
   const date::time_zone *CurrentTimeZone{date::locate_zone("UTC")};
   auto ZonedTime = date::make_zoned(
-      CurrentTimeZone,
-      date::floor<std::chrono::milliseconds>(TimeStamp));
+      CurrentTimeZone, date::floor<std::chrono::milliseconds>(TimeStamp));
   return zonedToZuluString(ZonedTime);
 }
 
@@ -41,7 +40,6 @@ std::string toLocalDateTime(time_point TimeStamp) {
     return toUTCDateTime(TimeStamp);
   }
   auto ZonedTime = date::make_zoned(
-      CurrentTimeZone,
-      date::floor<std::chrono::milliseconds>(TimeStamp));
+      CurrentTimeZone, date::floor<std::chrono::milliseconds>(TimeStamp));
   return zonedToLocalString(ZonedTime);
 }

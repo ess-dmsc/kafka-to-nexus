@@ -20,10 +20,10 @@
 #include "json.h"
 #include <WriterModuleBase.h>
 #include <flatbuffers/flatbuffers.h>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
-#include <fstream>
 
 std::vector<char> readFileIntoVector(std::string const &FileName) {
   std::vector<char> ret;

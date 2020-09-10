@@ -7,8 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <gtest/gtest.h>
 #include "TimeUtility.h"
+#include <gtest/gtest.h>
 #include <regex>
 
 TEST(TimeUtility, TimePointToUTCString) {
@@ -19,7 +19,8 @@ TEST(TimeUtility, TimePointToUTCString) {
 
 TEST(TimeUtility, TimePointToLocalString) {
   time_point TestTime(2ms);
-  std::regex TestRegex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.002\\+\\d{4}");
+  std::regex TestRegex(
+      "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.002\\+\\d{4}");
   auto TimeString = toLocalDateTime(TestTime);
   EXPECT_TRUE(std::regex_match(TimeString, TestRegex));
 }

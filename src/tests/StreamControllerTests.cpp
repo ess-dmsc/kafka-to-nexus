@@ -23,8 +23,7 @@ public:
 class StreamControllerTests : public ::testing::Test {
 public:
   void SetUp() override {
-    FileWriterTask =
-        std::make_unique<FileWriter::FileWriterTask>();
+    FileWriterTask = std::make_unique<FileWriter::FileWriterTask>();
     FileWriterTask->setJobId(JobId);
     StreamController = std::make_unique<FileWriter::StreamController>(
         std::move(FileWriterTask), FileWriter::StreamerOptions(),
