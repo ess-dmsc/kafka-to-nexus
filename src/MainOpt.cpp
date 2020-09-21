@@ -23,7 +23,7 @@ void setupLoggerFromOptions(MainOpt const &opt) {
   setUpLogging(opt.LoggingLevel, opt.LogFilename, opt.GraylogLoggerAddress);
 }
 
-std::string MainOpt::getDefaultServiceId() const {
+std::string MainOpt::getDefaultServiceId() {
   return fmt::format("kafka-to-nexus:{}--pid:{}--{}", getHostName(), getPID(),
                      randomHexString(RandomStringLength));
 }

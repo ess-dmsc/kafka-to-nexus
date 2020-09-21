@@ -21,6 +21,7 @@
 
 // POD
 struct MainOpt {
+  static std::string getDefaultServiceId();
   /// If true the filewriter aborts the whole job if one or more streams are
   /// misconfigured and fail to start
   bool AbortOnUninitialisedStream = false;
@@ -72,7 +73,6 @@ struct MainOpt {
   std::chrono::milliseconds StatusMasterIntervalMS{2000};
 
 private:
-  std::string getDefaultServiceId() const;
   std::string ServiceId{getDefaultServiceId()};
 };
 

@@ -137,7 +137,11 @@ int main(int argc, char **argv) {
   }
 
   Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
-  auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceName);
+  auto UsedServiceName = Options->ServiceName;
+  auto UsedRegistrar = MainRegistrar;
+  if (not Options->ServiceName.empty()) {
+    UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceName);
+  }
 
   std::signal(SIGINT, signal_handler);
   std::signal(SIGTERM, signal_handler);
