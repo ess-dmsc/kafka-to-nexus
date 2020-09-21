@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <random>
 
+// cppcheck-suppress unusedFunction
 std::string randomHexString(size_t Length) {
   std::string const hexChars = "0123456789abcdef";
   std::mt19937_64 gen{std::random_device()()};
