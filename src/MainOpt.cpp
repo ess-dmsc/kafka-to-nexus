@@ -17,8 +17,8 @@ using uri::URI;
 // While the cause of this problem is not discovered and fixed, use the
 // following init function.
 void MainOpt::init() {
-  ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
-                          getHostName(), getPID());
+  ServiceID =
+      fmt::format("kafka-to-nexus--host:{}--pid:{}", getHostName(), getPID());
 }
 
 void setupLoggerFromOptions(MainOpt const &opt) {

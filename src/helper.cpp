@@ -11,8 +11,8 @@
 #include <fstream>
 #include <unistd.h>
 
-#include <random>
 #include <algorithm>
+#include <random>
 
 std::string randomHexString(size_t Length) {
   std::string const hexChars = "0123456789abcdef";
