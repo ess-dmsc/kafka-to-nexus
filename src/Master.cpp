@@ -43,7 +43,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
                                 StartInfo.StartTime, StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
-    setToIdle();
+    throw;
   }
 }
 

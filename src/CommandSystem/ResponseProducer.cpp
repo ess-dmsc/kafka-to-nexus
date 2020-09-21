@@ -34,7 +34,7 @@ ResponseProducer::ResponseProducer(const std::string &ServiceIdentifier,
                            ResponseUri.Topic)) {}
 
 void ResponseProducer::publishResponse(ActionResponse Command,
-                                       ActionResult Result, std::string JobId,
+                                       ActionResult Result, std::string JobId, std::string CommandId,
                                        std::string Description) {
   std::map<ActionResponse, ActionType> ActionMap{
       {ActionResponse::StartJob, ActionType::StartJob},
@@ -48,9 +48,10 @@ void ResponseProducer::publishResponse(ActionResponse Command,
   auto ServiceIdStr = Builder.CreateString(ServiceId);
   auto JobIdStr = Builder.CreateString(JobId);
   auto ErrorMsgString = Builder.CreateString(Description);
+  auto CommandIdString = Builder.CreateString(CommandId);
   auto ResponseFlatbuffer =
       CreateActionResponse(Builder, ServiceIdStr, JobIdStr, ActionMap[Command],
-                           OutcomeMap[Result], ErrorMsgString);
+                           OutcomeMap[Result], ErrorMsgString, CommandIdString);
   FinishActionResponseBuffer(Builder, ResponseFlatbuffer);
   Producer->produce(Builder.Release());
 }

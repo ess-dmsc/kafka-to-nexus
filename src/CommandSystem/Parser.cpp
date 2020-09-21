@@ -101,6 +101,7 @@ Command::StopMessage extractStopInformation(Msg const &CommandMessage) {
   StopMessage Result;
   Result.JobID = RunStopData->job_id()->str();
   Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
+  Result.CommandID = RunStopData->command_id()->str();
   if (RunStopData->service_id() != nullptr) {
     Result.ServiceID = RunStopData->service_id()->str();
   }

@@ -30,6 +30,7 @@ struct StartMessage : public StartInfo {
 
 struct StopMessage {
   std::string JobID;
+  std::string CommandID;
   std::chrono::milliseconds StopTime{0};
   std::string ServiceID;
 };
