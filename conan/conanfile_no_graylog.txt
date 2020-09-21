@@ -7,6 +7,7 @@ jsonformoderncpp/3.7.3@vthiery/stable
 streaming-data-types/f7525bf@ess-dmsc/stable
 CLI11/1.9.1@cliutils/stable
 trompeloeil/v38@rollbear/stable
+date/2.4.1
 spdlog/1.4.2
 asio/1.13.0
 readerwriterqueue/07e22ec@ess-dmsc/stable
@@ -23,7 +24,7 @@ flatbuffers:shared=True
 gtest:shared=True
 hdf5:shared=True
 librdkafka:shared=True
-date:disable_string_view=False
+date:use_system_tz_db=True
 h5cpp:with_boost=False
 
 [imports]
