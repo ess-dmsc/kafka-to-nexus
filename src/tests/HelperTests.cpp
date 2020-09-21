@@ -7,9 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <gtest/gtest.h>
 #include "helper.h"
 #include <algorithm>
+#include <gtest/gtest.h>
 
 TEST(HelperTests, RandomHexStringGeneration) {
   size_t StringLength{200};
@@ -30,10 +30,6 @@ TEST(HelperTests, RandomHexStringNotEqual) {
   EXPECT_NE(TestString1, TestString2);
 }
 
-TEST(HelperTests, PidIsNotZero) {
-  EXPECT_NE(getPID(), 0);
-}
+TEST(HelperTests, PidIsNotZero) { EXPECT_NE(getPID(), 0); }
 
-TEST(HelperTests, HostNameIsNotEmpty) {
-  EXPECT_FALSE(getHostName().empty());
-}
+TEST(HelperTests, HostNameIsNotEmpty) { EXPECT_FALSE(getHostName().empty()); }
