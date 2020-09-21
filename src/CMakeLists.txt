@@ -158,7 +158,6 @@ set(kafka_to_nexus_INC
         Stream/Topic.h
         ThreadedExecutor.h
         TimeUtility.h
-        GetHostNameAndPID.h
         HDFOperations.h
         HDFVersionCheck.h
         StreamHDFInfo.h)

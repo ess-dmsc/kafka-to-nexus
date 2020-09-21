@@ -10,7 +10,6 @@
 #include "CLIOptions.h"
 #include "CommandListener.h"
 #include "FlatbufferReader.h"
-#include "GetHostNameAndPID.h"
 #include "HDFVersionCheck.h"
 #include "JobCreator.h"
 #include "Kafka/MetaDataQuery.h"

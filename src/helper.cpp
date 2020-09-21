@@ -12,12 +12,26 @@
 #include <unistd.h>
 
 // getpid()
+#include <random>
 #include <sys/types.h>
 
-int getpid_wrapper() { return getpid(); }
+std::string randomHexString(size_t Length) {
+  std::string const hexChars = "0123456789abcdef";
+  std::mt19937_64 gen{std::random_device()()};
+
+  std::uniform_int_distribution<size_t> dist{0, hexChars.size() - 1};
+
+  std::string ReturnString;
+
+  std::generate_n(std::back_inserter(ReturnString), Length,
+                  [&] { return hexChars[dist(gen)]; });
+  return ReturnString;
+}
+
+int getPID() { return getpid(); }
 
 // Wrapper, because it may need some Windows implementation in the future.
-std::string gethostname_wrapper() {
+std::string getHostName() {
   std::vector<char> Buffer;
   Buffer.resize(1024);
   int Result = gethostname(Buffer.data(), Buffer.size());
@@ -26,22 +40,6 @@ std::string gethostname_wrapper() {
     return "";
   }
   return Buffer.data();
-}
-
-std::vector<char> readFileIntoVector(std::string const &FileName) {
-  std::vector<char> ret;
-  std::ifstream ifs(FileName, std::ios::binary | std::ios::ate);
-  if (!ifs.good()) {
-    return ret;
-  }
-  auto n1 = ifs.tellg();
-  if (n1 <= 0) {
-    return ret;
-  }
-  ret.resize(n1);
-  ifs.seekg(0);
-  ifs.read(ret.data(), n1);
-  return ret;
 }
 
 std::chrono::duration<long long int, std::milli> getCurrentTimeStampMS() {

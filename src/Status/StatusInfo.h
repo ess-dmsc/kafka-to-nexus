@@ -31,7 +31,7 @@ struct ApplicationStatusInfo {
   std::string const ApplicationVersion;
   std::string const HostName;
   std::string const ServiceID;
-  uint32_t const ProcessID;
+  int32_t const ProcessID;
 };
 
 } // namespace Status

@@ -18,7 +18,7 @@ using uri::URI;
 // following init function.
 void MainOpt::init() {
   ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
-                          gethostname_wrapper(), getpid_wrapper());
+                          getHostName(), getPID());
 }
 
 void setupLoggerFromOptions(MainOpt const &opt) {
