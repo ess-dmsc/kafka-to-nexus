@@ -28,7 +28,7 @@ auto const StartCommand = RunStartStopHelpers::buildRunStartMessage(
     "a-dummy-name-01.h5", 123456789000, 123456790000);
 
 auto const StopCommand = RunStartStopHelpers::buildRunStopMessage(
-    123456790000, "42", "qw3rty", "filewriter1");
+    123456790000, "42", "qw3rty", "some_command_id", "filewriter1");
 
 // TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
 //

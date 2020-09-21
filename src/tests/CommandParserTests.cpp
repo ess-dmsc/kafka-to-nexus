@@ -23,6 +23,7 @@ std::string const InstrumentNameInput = "TEST";
 std::string const RunNameInput = "42";
 std::string const NexusStructureInput = "{}";
 std::string const JobIDInput = "qw3rty";
+std::string const CommandIDInput = "some command id";
 std::optional<std::string> const ServiceIDInput = "filewriter1";
 std::string const BrokerInput = "somehost:1234";
 std::string const FilenameInput = "a-dummy-name-01.h5";
@@ -171,7 +172,7 @@ TEST(CommandParserStartTests, IfMissingServiceIdThenIsBlank) {
 TEST(CommandParserSadStopTests, IfNoJobIdThenThrows) {
   std::string const EmptyJobID;
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                           EmptyJobID, ServiceIDInput);
+                                           EmptyJobID, CommandIDInput, ServiceIDInput);
 
   ASSERT_THROW(Command::Parser::extractStopInformation(MessageBuffer),
                std::runtime_error);
@@ -179,7 +180,7 @@ TEST(CommandParserSadStopTests, IfNoJobIdThenThrows) {
 
 TEST(CommandParserHappyStopTests, IfJobIdPresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                           JobIDInput, ServiceIDInput);
+                                           JobIDInput, CommandIDInput, ServiceIDInput);
 
   auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
 
@@ -188,7 +189,7 @@ TEST(CommandParserHappyStopTests, IfJobIdPresentThenExtractedCorrectly) {
 
 TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                           JobIDInput, ServiceIDInput);
+                                           JobIDInput, CommandIDInput, ServiceIDInput);
 
   auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
 
@@ -198,7 +199,7 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
 TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
   std::optional<std::string> const EmptyServiceID = "";
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                           JobIDInput, EmptyServiceID);
+                                           JobIDInput, CommandIDInput, EmptyServiceID);
 
   auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
 
@@ -208,7 +209,7 @@ TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
 TEST(CommandParserStopTests, IfMissingServiceIdThenIsBlank) {
   std::optional<std::string> const NoServiceID = std::nullopt;
   auto MessageBuffer =
-      buildRunStopMessage(StopTimeInput, RunNameInput, JobIDInput, NoServiceID);
+      buildRunStopMessage(StopTimeInput, RunNameInput, JobIDInput, CommandIDInput, NoServiceID);
 
   auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
 
@@ -217,7 +218,7 @@ TEST(CommandParserStopTests, IfMissingServiceIdThenIsBlank) {
 
 TEST(CommandParserStopTests, IfServiceIdPresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                           JobIDInput, ServiceIDInput);
+                                           JobIDInput, CommandIDInput, ServiceIDInput);
 
   auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
 
@@ -273,7 +274,7 @@ TEST(CommandParserStopTests,
 TEST(CommandParserStopTests,
      DISABLED_MessageIsStartCommandIfValidRunStopFlatbuffer) {
   auto MessageBuffer = buildRunStopMessage(StopTimeInput, RunNameInput,
-                                           JobIDInput, ServiceIDInput);
+                                           JobIDInput, CommandIDInput, ServiceIDInput);
   FileWriter::Msg const TestMessage{MessageBuffer.data(), MessageBuffer.size()};
   ASSERT_TRUE(Command::Parser::isStopCommand(TestMessage));
 }
