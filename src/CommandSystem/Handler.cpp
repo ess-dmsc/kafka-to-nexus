@@ -66,7 +66,8 @@ void Handler::sendHasStoppedMessage() {
 
 void Handler::sendErrorEncounteredMessage(std::string ErrorMessage) {
   CommandResponse->publishResponse(ActionResponse::HasStopped,
-                                   ActionResult::Failure, JobId, JobId, ErrorMessage);
+                                   ActionResult::Failure, JobId, JobId,
+                                   ErrorMessage);
 }
 
 void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
@@ -83,7 +84,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     auto StartJob = Parser::extractStartInformation(CommandMsg);
     if (not IgnoreServiceId and StartJob.ServiceID != ServiceId) {
       CommandResponse->publishResponse(
-          ActionResponse::StartJob, ActionResult::Failure, StartJob.JobID, StartJob.JobID,
+          ActionResponse::StartJob, ActionResult::Failure, StartJob.JobID,
+          StartJob.JobID,
           "Unable to start filewriting job: service id is incorrect.");
       LOG_DEBUG("Rejected start command as the service id was wrong. It should "
                 "be {}, it was {}.",
@@ -92,7 +94,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     }
     if (not isJobIdValid(StartJob.JobID)) {
       CommandResponse->publishResponse(
-          ActionResponse::StartJob, ActionResult::Failure, StartJob.JobID, StartJob.JobID,
+          ActionResponse::StartJob, ActionResult::Failure, StartJob.JobID,
+          StartJob.JobID,
           "Unable to start filewriting job: job id was invalid.");
       LOG_DEBUG(
           "Rejected start command as the job id was invalid (it was: {}).",
@@ -108,7 +111,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
       LOG_ERROR("Failed to start filewriting job. The failure message was: {}",
                 E.what());
       CommandResponse->publishResponse(
-          ActionResponse::StartJob, ActionResult::Failure, StartJob.JobID, StartJob.JobID,
+          ActionResponse::StartJob, ActionResult::Failure, StartJob.JobID,
+          StartJob.JobID,
           "Unable to start filewriting job. Error message was: " +
               std::string(E.what()));
       PollForJob = true;
@@ -117,7 +121,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     }
     LOG_INFO("Starting write job.");
     CommandResponse->publishResponse(ActionResponse::StartJob,
-                                     ActionResult::Success, StartJob.JobID, StartJob.JobID, "");
+                                     ActionResult::Success, StartJob.JobID,
+                                     StartJob.JobID, "");
   } catch (std::runtime_error &E) {
     LOG_ERROR("Unable to process start command, error was: {}", E.what());
   }
@@ -139,12 +144,14 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
         auto ErrorStr = fmt::format(
             "Unable to stop filewriting job immediately. Error message was: {}",
             E.what());
-        CommandResponse->publishResponse(
-            ActionResponse::StopNow, ActionResult::Failure, JobId, StopJob.CommandID, ErrorStr);
+        CommandResponse->publishResponse(ActionResponse::StopNow,
+                                         ActionResult::Failure, JobId,
+                                         StopJob.CommandID, ErrorStr);
         LOG_ERROR(ErrorStr);
       }
       CommandResponse->publishResponse(ActionResponse::StopNow,
-                                       ActionResult::Success, JobId, StopJob.CommandID, "");
+                                       ActionResult::Success, JobId,
+                                       StopJob.CommandID, "");
       LOG_INFO("Attempting to stop writing job now.");
     } else {
       try {
@@ -154,12 +161,13 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
                                     "job. Error message was: {}",
                                     E.what());
         CommandResponse->publishResponse(ActionResponse::SetStopTime,
-                                         ActionResult::Failure, JobId, StopJob.CommandID,
-                                         ErrorStr);
+                                         ActionResult::Failure, JobId,
+                                         StopJob.CommandID, ErrorStr);
         LOG_ERROR(ErrorStr);
       }
       CommandResponse->publishResponse(ActionResponse::SetStopTime,
-                                       ActionResult::Success, JobId, StopJob.CommandID, "");
+                                       ActionResult::Success, JobId,
+                                       StopJob.CommandID, "");
       LOG_INFO("File writing job stop time set to: {}",
                toUTCDateTime(time_point(StopJob.StopTime)));
     }

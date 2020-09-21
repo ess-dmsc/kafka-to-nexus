@@ -34,7 +34,8 @@ ResponseProducer::ResponseProducer(const std::string &ServiceIdentifier,
                            ResponseUri.Topic)) {}
 
 void ResponseProducer::publishResponse(ActionResponse Command,
-                                       ActionResult Result, std::string JobId, std::string CommandId,
+                                       ActionResult Result, std::string JobId,
+                                       std::string CommandId,
                                        std::string Description) {
   std::map<ActionResponse, ActionType> ActionMap{
       {ActionResponse::StartJob, ActionType::StartJob},

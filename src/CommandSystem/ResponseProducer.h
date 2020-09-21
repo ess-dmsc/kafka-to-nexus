@@ -31,7 +31,8 @@ public:
   ResponseProducer(std::string const &ServiceIdentifier,
                    std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
   void publishResponse(ActionResponse Command, ActionResult Result,
-                       std::string JobId, std::string CommandId, std::string Description);
+                       std::string JobId, std::string CommandId,
+                       std::string Description);
 
 private:
   std::string ServiceId;
