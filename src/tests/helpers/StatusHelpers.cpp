@@ -21,7 +21,7 @@ deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message) {
   std::string const ServiceId =
       flatbuffers::GetString(statusData->service_id());
   std::string const HostName = flatbuffers::GetString(statusData->host_name());
-  uint32_t const ProcessId = statusData->process_id();
+  int32_t const ProcessId = statusData->process_id();
   auto const UpdateInterval =
       std::chrono::milliseconds{statusData->update_interval()};
   std::string const StatusJSONString =

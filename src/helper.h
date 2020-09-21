@@ -13,10 +13,10 @@
 #include <string>
 #include <vector>
 
-int getpid_wrapper();
+int getPID();
 
-std::string gethostname_wrapper();
+std::string getHostName();
 
-std::vector<char> readFileIntoVector(std::string const &FileName);
+std::string randomHexString(size_t Length);
 
 std::chrono::duration<long long int, std::milli> getCurrentTimeStampMS();
