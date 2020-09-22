@@ -28,7 +28,7 @@ std::string MainOpt::getDefaultServiceId() {
                      randomHexString(RandomStringLength));
 }
 
-void MainOpt::setServiceName(std::string NewServiceName) {
+void MainOpt::setServiceName(std::string const &NewServiceName) {
   ServiceName = NewServiceName;
   if (ServiceName.empty()) {
     ServiceId = getDefaultServiceId();

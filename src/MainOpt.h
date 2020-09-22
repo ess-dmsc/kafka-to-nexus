@@ -32,7 +32,7 @@ struct MainOpt {
   /// It is by default a combination of hostname and process id.
   /// Can be set via command line or configuration file.
   std::string ServiceName;
-  void setServiceName(std::string NewServiceName);
+  void setServiceName(std::string const &NewServiceName);
 
   std::string getServiceId() const;
 
