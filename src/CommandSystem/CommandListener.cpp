@@ -43,7 +43,7 @@ void CommandListener::setUpConsumer() {
       Consumer->addPartitionAtOffset(CommandTopic, PartitionId,
                                      RdKafka::Topic::OFFSET_END);
     }
-  } catch (MetadataException &E) {
+  } catch (MetadataException const &E) {
     CurrentTimeOut *= 2;
     if (CurrentTimeOut > KafkaSettings.MaxMetadataTimeout) {
       CurrentTimeOut = KafkaSettings.MaxMetadataTimeout;
