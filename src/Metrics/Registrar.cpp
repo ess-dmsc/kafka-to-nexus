@@ -42,6 +42,10 @@ std::string Registrar::prependPrefix(std::string const &Name) const {
   return {Prefix + "." + Name};
 }
 
+Registrar::Registrar(const Registrar &Other) : Prefix(Other.Prefix), ReporterList(Other.ReporterList) {
+
+}
+
 Registrar &Registrar::operator=(Registrar const &Other) {
   Prefix = Other.Prefix;
   ReporterList = Other.ReporterList;
