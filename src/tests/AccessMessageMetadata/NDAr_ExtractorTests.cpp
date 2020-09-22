@@ -18,7 +18,6 @@
 
 class AreaDetectorReader : public ::testing::Test {
 public:
-  // cppcheck-suppress unusedFunction; used by google-test
   static void SetUpTestCase() {
     std::ifstream InFile(std::string(TEST_DATA_PATH) + "/someNDArray.data",
                          std::ifstream::in | std::ifstream::binary);
@@ -29,7 +28,6 @@ public:
     InFile.read(reinterpret_cast<char *>(RawData.get()), FileSize);
   };
 
-  // cppcheck-suppress unusedFunction; used by google-test
   void SetUp() override {
     ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<AccessMessageMetadata::NDAr_Extractor>();
