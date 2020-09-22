@@ -17,8 +17,6 @@
 
 namespace Command {
 
-using std::string;
-
 CommandListener::CommandListener(uri::URI CommandTopicUri,
                                  Kafka::BrokerSettings Settings)
     : KafkaAddress(CommandTopicUri.HostPort),
