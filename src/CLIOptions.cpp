@@ -176,15 +176,16 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option(
-      "--service-name",
-      [&MainOptions](std::vector<std::string> ServiceNames) -> bool {
-        MainOptions.setServiceName(ServiceNames.back());
-        return true;
-      },
-      "Used to generate the service identifier and as an extra metrics ID "
-      "string."
-      "Will make the metrics names take the form: "
-      "\"kafka-to-nexus.[service-name].*\"")->default_str(MainOpt::getDefaultServiceId());
+         "--service-name",
+         [&MainOptions](std::vector<std::string> ServiceNames) -> bool {
+           MainOptions.setServiceName(ServiceNames.back());
+           return true;
+         },
+         "Used to generate the service identifier and as an extra metrics ID "
+         "string."
+         "Will make the metrics names take the form: "
+         "\"kafka-to-nexus.[service-name].*\"")
+      ->default_str(MainOpt::getDefaultServiceId());
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
