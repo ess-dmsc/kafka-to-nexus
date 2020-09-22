@@ -140,7 +140,8 @@ public:
                                       "test_application",
                                       "test_version",
                                       "test_host_name",
-                                      "test_service_id",
+                                      "test_service_name",
+                                      "some_service_id",
                                       0};
     Reporter = std::make_unique<Status::StatusReporter>(ProducerTopic,
                                                         TestStatusInformation);

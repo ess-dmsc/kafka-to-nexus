@@ -11,6 +11,7 @@
 
 #include "StreamerOptions.h"
 #include "URI.h"
+#include "helper.h"
 #include "json.h"
 #include "logger.h"
 
@@ -20,6 +21,7 @@
 
 // POD
 struct MainOpt {
+  static std::string getDefaultServiceId();
   /// If true the filewriter aborts the whole job if one or more streams are
   /// misconfigured and fail to start
   bool AbortOnUninitialisedStream = false;
@@ -29,7 +31,10 @@ struct MainOpt {
   /// This `service_id` is announced in the status updates.
   /// It is by default a combination of hostname and process id.
   /// Can be set via command line or configuration file.
-  std::string ServiceID;
+  std::string ServiceName;
+  void setServiceName(std::string NewServiceName);
+
+  std::string getServiceId() const;
 
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamController.
@@ -51,6 +56,9 @@ struct MainOpt {
   /// Kafka broker and topic where file writer commands are published.
   uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
 
+  /// Kafka broker and topic where file writer jobs are published.
+  uri::URI JobPoolURI{"localhost:9092/kafka-to-nexus.job_pool"};
+
   /// \brief Path for HDF output.
   ///
   /// This gets prepended to the HDF output filename given in the write
@@ -60,16 +68,12 @@ struct MainOpt {
   /// Used for command line argument.
   bool ListWriterModules = false;
 
-  /// Kafka topic where status updates are to be published.
-  uri::URI KafkaStatusURI{"localhost:9092/kafka-to-nexus.status"};
-
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
   std::chrono::milliseconds StatusMasterIntervalMS{2000};
 
-  // The constructor was removed because of the issue with the integration test
-  // (see cpp file for more details).
-  void init();
+private:
+  std::string ServiceId{getDefaultServiceId()};
 };
 
 void setupLoggerFromOptions(MainOpt const &opt);

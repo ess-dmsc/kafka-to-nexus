@@ -30,6 +30,7 @@ struct ApplicationStatusInfo {
   std::string const ApplicationName;
   std::string const ApplicationVersion;
   std::string const HostName;
+  std::string const ServiceName;
   std::string const ServiceID;
   int32_t const ProcessID;
 };

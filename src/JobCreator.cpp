@@ -132,7 +132,7 @@ std::unique_ptr<IStreamController>
 JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
                                  MainOpt &Settings, SharedLogger const &Logger,
                                  Metrics::Registrar Registrar) {
-  auto Task = std::make_unique<FileWriterTask>(Settings.ServiceID);
+  auto Task = std::make_unique<FileWriterTask>(Settings.getServiceId());
   Task->setJobId(StartInfo.JobID);
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
@@ -161,7 +161,7 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
       StartInfo.BrokerInfo.HostPort;
 
   Logger->info("Write file with job_id: {}", Task->jobID());
-  return std::make_unique<StreamController>(std::move(Task), Settings.ServiceID,
+  return std::make_unique<StreamController>(std::move(Task), Settings.getServiceId(),
                                             Settings.StreamerConfiguration,
                                             Registrar);
 }

@@ -42,35 +42,36 @@ createStatusReporter(MainOpt const &MainConfig,
                      std::string const &ApplicationName,
                      std::string const &ApplicationVersion) {
   Kafka::BrokerSettings BrokerSettings;
-  BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
+  BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
   auto StatusProducer = std::make_shared<Kafka::Producer>(BrokerSettings);
   auto StatusProducerTopic = std::make_unique<Kafka::ProducerTopic>(
-      StatusProducer, MainConfig.KafkaStatusURI.Topic);
+      StatusProducer, MainConfig.CommandBrokerURI.Topic);
   auto const StatusInformation =
       Status::ApplicationStatusInfo{MainConfig.StatusMasterIntervalMS,
                                     ApplicationName,
                                     ApplicationVersion,
                                     getHostName(),
-                                    MainConfig.ServiceID,
+                                    MainConfig.ServiceName,
+                                    MainConfig.getServiceId(),
                                     getPID()};
   return std::make_unique<Status::StatusReporter>(StatusProducerTopic,
                                                   StatusInformation);
 }
 
-bool tryToFindTopics(std::string CommandTopic, std::string StatusTopic,
+bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
                      std::string Broker, duration TimeOut) {
   try {
     auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut);
+    if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
+      auto MsgString = fmt::format(
+          "Unable to find job pool topic with name \"{}\".", PoolTopic);
+      LOG_WARN(MsgString);
+    }
     if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           "Unable to find command topic with name \"{}\".", CommandTopic);
       LOG_ERROR(MsgString);
       throw std::runtime_error(MsgString);
-    }
-    if (ListOfTopics.find(StatusTopic) == ListOfTopics.end()) {
-      auto MsgString = fmt::format(
-          "Status topic with name \"{}\" was not found.", StatusTopic);
-      LOG_WARN(MsgString);
     }
   } catch (MetadataException const &E) {
     LOG_WARN("Meta data query failed with message: {}", E.what());
@@ -89,7 +90,6 @@ int main(int argc, char **argv) {
       "Writer modules can be used to populate the file from Kafka topics.\n",
       ApplicationName, ApplicationVersion)};
   auto Options = std::make_unique<MainOpt>();
-  Options->init();
   setCLIOptions(App, *Options);
 
   try {
@@ -137,7 +137,10 @@ int main(int argc, char **argv) {
   }
 
   Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
-  auto UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceID);
+  auto UsedRegistrar = MainRegistrar;
+  if (not Options->ServiceName.empty()) {
+    UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceName);
+  }
 
   std::signal(SIGINT, signal_handler);
   std::signal(SIGTERM, signal_handler);
@@ -155,14 +158,14 @@ int main(int argc, char **argv) {
   bool FindTopicMode{true};
   duration CMetaDataTimeout{
       Options->StreamerConfiguration.BrokerSettings.MinMetadataTimeout};
+  auto PoolTopic = Options->JobPoolURI.Topic;
   auto CommandTopic = Options->CommandBrokerURI.Topic;
-  auto StatusTopic = Options->KafkaStatusURI.Topic;
   LOG_DEBUG("Starting run loop.");
   LOG_DEBUG("Retrieving topic names from broker.");
   while (Running) {
     try {
       if (FindTopicMode) {
-        if (tryToFindTopics(CommandTopic, StatusTopic,
+        if (tryToFindTopics(PoolTopic, CommandTopic,
                             Options->CommandBrokerURI.HostPort,
                             CMetaDataTimeout)) {
           LOG_DEBUG("Command and status topics found, starting master.");
@@ -175,11 +178,10 @@ int main(int argc, char **argv) {
             CMetaDataTimeout = Options->StreamerConfiguration.BrokerSettings
                                    .MaxMetadataTimeout;
           }
-          LOG_WARN("Meta data call for retrieving command (\"{}\") and status "
-                   "(\"{}\") topics "
+          LOG_WARN("Meta data call for retrieving the command topic (\"{}\") "
                    "from the broker failed. Re-trying with a "
                    "timeout of {} ms.",
-                   CommandTopic, StatusTopic,
+                   CommandTopic,
                    std::chrono::duration_cast<std::chrono::milliseconds>(
                        CMetaDataTimeout)
                        .count());

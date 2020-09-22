@@ -8,7 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #include "MainOpt.h"
-#include "helper.h"
+#include <exception>
+
+constexpr size_t RandomStringLength{4};
 
 using uri::URI;
 
@@ -16,12 +18,29 @@ using uri::URI;
 // test to fail, with the NeXus file being created, but no data written to it.
 // While the cause of this problem is not discovered and fixed, use the
 // following init function.
-void MainOpt::init() {
-  ServiceID =
-      fmt::format("kafka-to-nexus--host:{}--pid:{}", getHostName(), getPID());
-}
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename,
-               opt.GraylogLoggerAddress);
+  setUpLogging(opt.LoggingLevel, opt.LogFilename, opt.GraylogLoggerAddress);
+}
+
+std::string MainOpt::getDefaultServiceId() {
+  return fmt::format("kafka-to-nexus:{}--pid:{}--{}", getHostName(), getPID(),
+                     randomHexString(RandomStringLength));
+}
+
+void MainOpt::setServiceName(std::string NewServiceName) {
+  ServiceName = NewServiceName;
+  if (ServiceName.empty()) {
+    ServiceId = getDefaultServiceId();
+  } else {
+    ServiceId = fmt::format("{}--pid:{}--{}", ServiceName, getPID(),
+                            randomHexString(RandomStringLength));
+  }
+}
+
+std::string MainOpt::getServiceId() const {
+  if (ServiceId.empty()) {
+    throw std::runtime_error("Service id is empty.");
+  }
+  return ServiceId;
 }

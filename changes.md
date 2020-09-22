@@ -17,3 +17,6 @@ from shortly before the start of each file being written. ([#551](https://github
 used from the `std::experimental` namespace when necessary to support gcc 8 and AppleClang 10. Compile times reduced by
 approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-to-nexus/pull/558)).
 - The application will no longer fail silently when encountering unit types that it does not recognise when parsing the JSON code for the HDF structure.
+- Removed the _service-id_ command line argument. It has been replaced with "service-name". The service id will be generated from the service name if available.
+- Removed the _command-uri_ and _status-uri_ command line arguments. They have been replaced with a single _command-status-uri_ command line argument.
+- Added _job-pool-uri_ command line argument, for configuring a topic to listen to for write jobs.

@@ -23,8 +23,7 @@ using SharedLogger = std::shared_ptr<spdlog::logger>;
 SharedLogger getLogger();
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
-                  const std::string &ServiceID, const std::string &LogFile,
-                  const uri::URI &GraylogURI);
+                  const std::string &LogFile, const uri::URI &GraylogURI);
 
 template <typename... Args>
 void LOG_ERROR(spdlog::string_view_t fmt, const Args &... args) {
