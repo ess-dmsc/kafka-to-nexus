@@ -27,6 +27,8 @@ public:
 
   Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
 
+  Registrar(Registrar const &Other);
+
   Registrar &operator=(Registrar const &Other);
 
 private:

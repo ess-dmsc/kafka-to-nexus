@@ -41,6 +41,7 @@ set(UnitTests_SRC
         $<TARGET_OBJECTS:NeXusDatasetTests>
         StatusReporterTests.cpp
         helpers/StatusHelpers.cpp
+        HelperTests.cpp
         TimeUtilityTest.cpp)
 
 set(UnitTests_INC

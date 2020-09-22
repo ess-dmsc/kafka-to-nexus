@@ -11,7 +11,6 @@
 #include <fstream>
 #include <unistd.h>
 
-// getpid()
 #include <algorithm>
 #include <random>
 
