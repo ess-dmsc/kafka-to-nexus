@@ -16,7 +16,7 @@ public:
     UsedPort += 1;
     CarbonServer = std::make_unique<CarbonTestServer>(UsedPort);
   }
-  
+
   void TearDown() override { CarbonServer.reset(); }
   std::uint16_t UsedPort{6587};
   std::unique_ptr<CarbonTestServer> CarbonServer;
