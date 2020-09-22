@@ -14,11 +14,6 @@ constexpr size_t RandomStringLength{4};
 
 using uri::URI;
 
-// For reasons unknown, the presence of the constructor caused the integration
-// test to fail, with the NeXus file being created, but no data written to it.
-// While the cause of this problem is not discovered and fixed, use the
-// following init function.
-
 void setupLoggerFromOptions(MainOpt const &opt) {
   setUpLogging(opt.LoggingLevel, opt.LogFilename, opt.GraylogLoggerAddress);
 }
