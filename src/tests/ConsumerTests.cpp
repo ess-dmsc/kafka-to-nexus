@@ -122,15 +122,15 @@ TEST(ConsumerAssignmentTest, Test1) {
         ->error("can not create kafka consumer: {}", ErrorString);
     throw std::runtime_error("can not create Kafka consumer");
   }
-  auto TestConsumer =  std::make_unique<Consumer>(std::move(KafkaConsumer), std::move(Conf),
-                                    std::move(EventCallback));
-  std::vector< RdKafka::TopicPartition * > Assignments;
+  auto TestConsumer = std::make_unique<Consumer>(
+      std::move(KafkaConsumer), std::move(Conf), std::move(EventCallback));
+  std::vector<RdKafka::TopicPartition *> Assignments;
   TestConsumer->addPartitionAtOffset("some_topic1", 0, 0);
   TestConsumer->addPartitionAtOffset("some_topic2", 1, 0);
   ConsumerPtr->assignment(Assignments);
 
   std::cout << "Size of assignemnts: " << Assignments.size() << std::endl;
-  for (auto const &Ass: Assignments) {
+  for (auto const &Ass : Assignments) {
     std::cout << "Name of assignemnt: " << Ass->topic() << std::endl;
   }
 }
