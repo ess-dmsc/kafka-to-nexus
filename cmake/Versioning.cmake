@@ -175,7 +175,7 @@ endmacro()
 # Set version string variable to release version, Git branch and commit or
 # constant string.
 function(set_version)
-  if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/VERSION")
+  if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/VERSION AND NOT IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/VERSION)
     file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/VERSION" RELEASE_VERSION)
     match_and_set_version_variables("${RELEASE_VERSION}")
   else()
