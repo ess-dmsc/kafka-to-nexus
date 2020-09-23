@@ -99,7 +99,9 @@ set(kafka_to_nexus_SRC
         Stream/Topic.cpp
         HDFOperations.cpp
         HDFVersionCheck.cpp
-        CommandSystem/CommandListener.cpp)
+        CommandSystem/CommandListener.cpp
+        CommandSystem/JobListener.cpp
+        )
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -162,7 +164,9 @@ set(kafka_to_nexus_INC
         HDFOperations.h
         HDFVersionCheck.h
         StreamHDFInfo.h
-        CommandSystem/CommandListener.h)
+        CommandSystem/CommandListener.h
+        CommandSystem/JobListener.h
+        )
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}
