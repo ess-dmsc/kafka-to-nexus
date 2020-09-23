@@ -18,11 +18,12 @@ namespace Command {
 
 using FileWriter::Msg;
 
-/// Check for new commands on the topic, return them to the Master.
+/// \brief Check for new commands on the topic.
 class CommandListener {
 public:
   CommandListener(uri::URI CommandTopicUri, Kafka::BrokerSettings Settings);
 
+  /// \brief Poll the Kafka topic for a new command.
   std::pair<Kafka::PollStatus, Msg> pollForCommand();
 
 protected:

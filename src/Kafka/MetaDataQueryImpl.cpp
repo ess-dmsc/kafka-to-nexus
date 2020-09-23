@@ -12,7 +12,6 @@
 
 namespace Kafka {
 const RdKafka::TopicMetadata *
-// cppcheck-suppress unusedFunction
 findKafkaTopic(const std::string &Topic,
                const RdKafka::Metadata *KafkaMetadata) {
   auto Topics = KafkaMetadata->topics();

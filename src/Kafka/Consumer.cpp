@@ -40,15 +40,7 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
   Logger->info("Consumer::addPartitionAtOffset()  topic: {},  partitionId: {}, "
                "offset: {}",
                Topic, PartitionId, Offset);
-  std::vector<RdKafka::TopicPartition*> Assignments;
-  auto ErrorCode = KafkaConsumer->assignment(Assignments);
-  if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    Logger->error("Could not assign to {}. Could not get current assignments.", Topic);
-    throw std::runtime_error(fmt::format(
-        "Could not assign topic-partition of topic {}. Could not get current assignments. RdKafka error: \"{}\"",
-        Topic, err2str(ErrorCode)));
-  }
-  Assignments.emplace_back(RdKafka::TopicPartition::create(Topic, PartitionId, Offset));
+  std::vector<RdKafka::TopicPartition *> Assignments;
   auto ReturnCode = KafkaConsumer->assign(Assignments);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     Logger->error("Could not assign to {}", Topic);

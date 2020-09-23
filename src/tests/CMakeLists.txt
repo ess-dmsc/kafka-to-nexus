@@ -42,7 +42,8 @@ set(UnitTests_SRC
         StatusReporterTests.cpp
         helpers/StatusHelpers.cpp
         HelperTests.cpp
-        TimeUtilityTest.cpp)
+        CommandSystem/CommandListenerTests.cpp
+		)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
