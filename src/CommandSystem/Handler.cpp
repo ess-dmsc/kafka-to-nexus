@@ -77,6 +77,8 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
     handleStartCommand(std::move(CommandMsg), IgnoreServiceId);
   } else if (Parser::isStopCommand(CommandMsg)) {
     handleStopCommand(std::move(CommandMsg));
+  } else {
+    LOG_DEBUG()
   }
 }
 
@@ -140,7 +142,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {{CmdOutcome::FailedAtServiceId}, {LogLevel::debug, false, fmt::format("Rejected start command as the service id was wrong. It should be {}, it was {}.", ServiceId, StartJob.JobID)}},
         {{CmdOutcome::FailedAtJobId}, {LogLevel::warn, true, fmt::format("Rejected start command as the job id was invalid (it was: {}).", StartJob.JobID)}},
         {{CmdOutcome::FailedAtCmd}, {LogLevel::err, true, fmt::format("Failed to start filewriting job. The failure message was: {}", ExceptionMessage)}},
-        {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, fmt::format()}},
+        {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, fmt::format("Started write job with start time {} and stop time {}.", toUTCDateTime(time_point(std::chrono::milliseconds{StartJob.StartTime})), toUTCDateTime(StartJob.StopTime))}},
     };
     ActionResult SendResult{ActionResult::Failure};
     if (Outcome == CmdOutcome::CmdIsDone) {
@@ -213,7 +215,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
         {{CmdOutcome::FailedAtCmdId}, {LogLevel::err, true, fmt::format("Rejected start command as the command id was invalid (it was: {}).", StopCmd.CommandID)}},
         {{CmdOutcome::FailedAtCmd}, {LogLevel::err, true, fmt::format("Failed to exeute stop command. The failure message was: {}",
               ResponseMessage)}},
-        {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, ""}},
+        {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, ResponseMessage}},
     };
     ActionResult SendResult{ActionResult::Failure};
     if (Outcome == CmdOutcome::CmdIsDone) {
@@ -225,54 +227,6 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       CommandResponse->publishResponse(
           TypeOfAction, SendResult, StopCmd.JobID, StopCmd.CommandID, OutcomeValue.MessageString);
     }
-
-
-
-
-//    if (ServiceId != StopJob.ServiceID or JobId != StopJob.JobID) {
-//      auto ErrorMsg = fmt::format("Rejected stop command as job and/or service id was incorrect "
-//                                  "(was {}/{}, should be {}/{}).",
-//                                  StopJob.JobID, StopJob.ServiceID, JobId, ServiceId);
-//      LOG_DEBUG(ErrorMsg);
-//      CommandResponse->publishResponse(ActionResponse::SetStopTime,
-//                                       ActionResult::Failure, StopJob.JobID,
-//                                       StopJob.CommandID, ErrorMsg);
-//      return;
-//    }
-//    if (StopJob.StopTime == 0ms) {
-//      try {
-//        DoStopNow();
-//      } catch (std::exception const &E) {
-//        auto ErrorStr = fmt::format(
-//            "Unable to stop filewriting job immediately. Error message was: {}",
-//            E.what());
-//        CommandResponse->publishResponse(ActionResponse::StopNow,
-//                                         ActionResult::Failure, JobId,
-//                                         StopJob.CommandID, ErrorStr);
-//        LOG_ERROR(ErrorStr);
-//      }
-//      CommandResponse->publishResponse(ActionResponse::StopNow,
-//                                       ActionResult::Success, JobId,
-//                                       StopJob.CommandID, "");
-//      LOG_INFO("Attempting to stop writing job now.");
-//    } else {
-//      try {
-//        DoSetStopTime(StopJob.StopTime);
-//      } catch (std::exception const &E) {
-//        auto ErrorStr = fmt::format("Unable to set stop time for filewriting "
-//                                    "job. Error message was: {}",
-//                                    E.what());
-//        CommandResponse->publishResponse(ActionResponse::SetStopTime,
-//                                         ActionResult::Failure, JobId,
-//                                         StopJob.CommandID, ErrorStr);
-//        LOG_ERROR(ErrorStr);
-//      }
-//      CommandResponse->publishResponse(ActionResponse::SetStopTime,
-//                                       ActionResult::Success, JobId,
-//                                       StopJob.CommandID, "");
-//      LOG_INFO("File writing job stop time set to: {}",
-//               toUTCDateTime(time_point(StopJob.StopTime)));
-//    }
   } catch (std::out_of_range const &E) {
     LOG_ERROR("Unknown outcome of set stop time command");
   } catch (std::exception &E) {
