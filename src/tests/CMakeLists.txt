@@ -43,6 +43,7 @@ set(UnitTests_SRC
         helpers/StatusHelpers.cpp
         HelperTests.cpp
         CommandSystem/CommandListenerTests.cpp
+        TimeUtilityTest.cpp
         )
 
 set(UnitTests_INC
