@@ -43,7 +43,7 @@ set(UnitTests_SRC
         helpers/StatusHelpers.cpp
         HelperTests.cpp
         CommandSystem/CommandListenerTests.cpp
-		)
+		CommandSystem/CommandHandlerTests.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h

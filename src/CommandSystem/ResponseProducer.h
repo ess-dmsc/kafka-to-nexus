@@ -13,18 +13,12 @@
 #include "Kafka/Producer.h"
 #include "Kafka/ProducerTopic.h"
 #include "URI.h"
+#include "ResponseProducerBase.h"
 #include <string>
 
 namespace Command {
 
-enum class ActionResponse { StartJob, SetStopTime, StopNow, HasStopped };
-
-enum class ActionResult {
-  Success,
-  Failure,
-};
-
-class ResponseProducer {
+class ResponseProducer : public ResponseProducerBase {
 public:
   ResponseProducer(std::string const &ServiceIdentifier, uri::URI ResponseUri,
                    Kafka::BrokerSettings Settings);

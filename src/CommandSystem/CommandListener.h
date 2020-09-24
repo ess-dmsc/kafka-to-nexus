@@ -23,10 +23,12 @@ class CommandListener {
 public:
   CommandListener(uri::URI CommandTopicUri, Kafka::BrokerSettings Settings);
 
+  virtual ~CommandListener() = default;
+
   /// \brief Poll the Kafka topic for a new command.
   /// \note Will timeout on its first call. Will continue to timeout as long as
   /// it fails to retrieve metadata from the Kafka broker
-  std::pair<Kafka::PollStatus, Msg> pollForCommand();
+  virtual std::pair<Kafka::PollStatus, Msg> pollForCommand();
 
 protected:
   std::string const KafkaAddress;

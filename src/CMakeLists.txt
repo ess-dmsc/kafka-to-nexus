@@ -171,7 +171,9 @@ set(kafka_to_nexus_INC
         HDFOperations.h
         HDFVersionCheck.h
         StreamHDFInfo.h
-        CommandSystem/CommandListener.h)
+        CommandSystem/CommandListener.h
+        CommandSystem/ResponseProducerBase.h
+        )
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

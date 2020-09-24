@@ -14,7 +14,7 @@
 #include "JobListener.h"
 #include "Kafka/BrokerSettings.h"
 #include "Msg.h"
-#include "ResponseProducer.h"
+#include "ResponseProducerBase.h"
 #include <exception>
 #include <functional>
 #include <string>
@@ -32,7 +32,7 @@ public:
   Handler(std::string ServiceIdentifier,
           std::unique_ptr<JobListener> JobConsumer,
           std::unique_ptr<CommandListener> CommandConsumer,
-          std::unique_ptr<ResponseProducer> Response);
+          std::unique_ptr<ResponseProducerBase> Response);
 
   void registerStartFunction(StartFuncType StartFunction);
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction);
@@ -59,7 +59,7 @@ private:
   bool PollForJob{true};
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
-  std::unique_ptr<ResponseProducer> CommandResponse;
+  std::unique_ptr<ResponseProducerBase> CommandResponse;
 };
 
 } // namespace Command
