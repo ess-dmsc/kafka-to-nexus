@@ -19,7 +19,7 @@ using trompeloeil::_;
 
 class ResponseProducerStandIn : public Command::ResponseProducerBase {
 public:
-  ResponseProducerStandIn();
+  ResponseProducerStandIn() : Command::ResponseProducerBase() {}
   MAKE_MOCK5(publishResponse, void(Command::ActionResponse, Command::ActionResult, std::string, std::string, std::string), override);
 };
 
