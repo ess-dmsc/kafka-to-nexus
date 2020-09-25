@@ -20,7 +20,7 @@ namespace Command {
 using FileWriter::Msg;
 
 /// \brief Check for new jobs on a topic.
-class JobListener : private CommandListener {
+class JobListener : public CommandListener {
 public:
   /// \brief The constructor will not automatically connect to the Kafka broker.
   JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings);

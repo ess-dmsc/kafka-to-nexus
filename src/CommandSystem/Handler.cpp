@@ -78,7 +78,8 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
   } else if (Parser::isStopCommand(CommandMsg)) {
     handleStopCommand(std::move(CommandMsg));
   } else {
-    LOG_DEBUG()
+    std::string SchemaId(reinterpret_cast<char const *>(CommandMsg.data()) + 4, 4);
+    LOG_DEBUG("Unable to handle (command) message of type: {}", SchemaId);
   }
 }
 
@@ -202,7 +203,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       try {
         DoSetStopTime(StopCmd.StopTime);
         Outcome = CmdOutcome::CmdIsDone;
-        ResponseMessage = fmt::format("File writing job stop time set to: {}", toUTCDateTime(time_point(StopJob.StopTime)));
+        ResponseMessage = fmt::format("File writing job stop time set to: {}", toUTCDateTime(time_point(StopCmd.StopTime)));
       } catch (std::exception const &E) {
         ResponseMessage = E.what();
       }
