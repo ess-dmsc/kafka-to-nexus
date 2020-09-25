@@ -101,6 +101,7 @@ set(kafka_to_nexus_SRC
         HDFVersionCheck.cpp
         CommandSystem/CommandListener.cpp
         CommandSystem/JobListener.cpp
+        TimeUtility.cpp
         )
 
 set(kafka_to_nexus_INC
