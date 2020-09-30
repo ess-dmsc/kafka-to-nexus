@@ -19,7 +19,7 @@ void setupLoggerFromOptions(MainOpt const &opt) {
 }
 
 std::string MainOpt::getDefaultServiceId() {
-  return fmt::format("kafka-to-nexus:{}--pid:{}--{}", getHostName(), getPID(),
+  return fmt::format("kafka-to-nexus:{}-pid:{}-{}", getHostName(), getPID(),
                      randomHexString(RandomStringLength));
 }
 
@@ -28,7 +28,7 @@ void MainOpt::setServiceName(std::string NewServiceName) {
   if (ServiceName.empty()) {
     ServiceId = getDefaultServiceId();
   } else {
-    ServiceId = fmt::format("{}--pid:{}--{}", ServiceName, getPID(),
+    ServiceId = fmt::format("{}-pid:{}-{}", ServiceName, getPID(),
                             randomHexString(RandomStringLength));
   }
 }
