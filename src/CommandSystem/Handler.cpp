@@ -119,7 +119,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     if (extractStartInfo(CommandMsg, StartJob, ExceptionMessage)) {
       Outcome = CmdOutcome::FailedAtServiceId;
     }
-    if (Outcome == CmdOutcome::FailedAtServiceId and not IgnoreServiceId and StartJob.ServiceID != ServiceId) {
+    if (Outcome == CmdOutcome::FailedAtServiceId and not IgnoreServiceId xor StartJob.ServiceID != ServiceId) {
       Outcome = CmdOutcome::FailedAtJobId;
     }
     if (Outcome == CmdOutcome::FailedAtJobId and isJobIdValid(StartJob.JobID)) {
@@ -140,7 +140,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     }
     std::map<CmdOutcome, CmdResponse> OutcomeMap {
         {{CmdOutcome::FailedAtExtraction}, {LogLevel::warn, false, fmt::format("Failed to extract start command from flatbuffer. The error was: {}", ExceptionMessage)}},
-        {{CmdOutcome::FailedAtServiceId}, {LogLevel::debug, false, fmt::format("Rejected start command as the service id was wrong. It should be {}, it was {}.", ServiceId, StartJob.JobID)}},
+        {{CmdOutcome::FailedAtServiceId}, {LogLevel::debug, false, fmt::format("Rejected start command as the service id was wrong. It should be {}, it was {}.", ServiceId, StartJob.ServiceID)}},
         {{CmdOutcome::FailedAtJobId}, {LogLevel::warn, true, fmt::format("Rejected start command as the job id was invalid (it was: {}).", StartJob.JobID)}},
         {{CmdOutcome::FailedAtCmd}, {LogLevel::err, true, fmt::format("Failed to start filewriting job. The failure message was: {}", ExceptionMessage)}},
         {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, fmt::format("Started write job with start time {} and stop time {}.", toUTCDateTime(time_point(std::chrono::milliseconds{StartJob.StartTime})), toUTCDateTime(StartJob.StopTime))}},
