@@ -8,10 +8,10 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Handler.h"
+#include "FeedbackProducer.h"
 #include "Msg.h"
 #include "Parser.h"
 #include "TimeUtility.h"
-#include "ResponseProducer.h"
 
 namespace Command {
 
@@ -24,13 +24,13 @@ Handler::Handler(std::string ServiceIdentifier,
     : Handler(ServiceIdentifier,
               std::make_unique<JobListener>(JobPoolUri, Settings),
               std::make_unique<CommandListener>(CommandTopicUri, Settings),
-              std::make_unique<ResponseProducer>(ServiceIdentifier,
+              std::make_unique<FeedbackProducer>(ServiceIdentifier,
                                                  CommandTopicUri, Settings)) {}
 
 Handler::Handler(std::string ServiceIdentifier,
                  std::unique_ptr<JobListener> JobConsumer,
                  std::unique_ptr<CommandListener> CommandConsumer,
-                 std::unique_ptr<ResponseProducerBase> Response)
+                 std::unique_ptr<FeedbackProducerBase> Response)
     : ServiceId(ServiceIdentifier), JobPool(std::move(JobConsumer)),
       CommandSource(std::move(CommandConsumer)),
       CommandResponse(std::move(Response)) {}
@@ -61,15 +61,13 @@ void Handler::registerStopNowFunction(StopNowFuncType StopNowFunction) {
 }
 
 void Handler::sendHasStoppedMessage() {
-  CommandResponse->publishResponse(ActionResponse::HasStopped,
-                                   ActionResult::Success, JobId, JobId, "");
+  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", "", "");
   PollForJob = true;
 }
 
 void Handler::sendErrorEncounteredMessage(std::string ErrorMessage) {
-  CommandResponse->publishResponse(ActionResponse::HasStopped,
-                                   ActionResult::Failure, JobId, JobId,
-                                   ErrorMessage);
+  CommandResponse->publishStoppedMsg(ActionResult::Failure, JobId, ErrorMessage, "", "");
+  PollForJob = true;
 }
 
 void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
@@ -194,7 +192,6 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       try {
         DoStopNow();
         Outcome = CmdOutcome::CmdIsDone;
-        TypeOfAction = ActionResponse::StopNow;
         ResponseMessage = "Attempting to stop writing job now.";
       } catch (std::exception const &E) {
         ResponseMessage = E.what();

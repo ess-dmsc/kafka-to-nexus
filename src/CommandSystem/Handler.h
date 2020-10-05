@@ -11,10 +11,10 @@
 
 #include "CommandListener.h"
 #include "Commands.h"
+#include "FeedbackProducerBase.h"
 #include "JobListener.h"
 #include "Kafka/BrokerSettings.h"
 #include "Msg.h"
-#include "ResponseProducerBase.h"
 #include <exception>
 #include <functional>
 #include <string>
@@ -32,7 +32,7 @@ public:
   Handler(std::string ServiceIdentifier,
           std::unique_ptr<JobListener> JobConsumer,
           std::unique_ptr<CommandListener> CommandConsumer,
-          std::unique_ptr<ResponseProducerBase> Response);
+          std::unique_ptr<FeedbackProducerBase> Response);
 
   void registerStartFunction(StartFuncType StartFunction);
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction);
@@ -59,7 +59,7 @@ private:
   bool PollForJob{true};
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
-  std::unique_ptr<ResponseProducerBase> CommandResponse;
+  std::unique_ptr<FeedbackProducerBase> CommandResponse;
 };
 
 } // namespace Command

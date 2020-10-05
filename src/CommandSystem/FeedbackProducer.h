@@ -9,25 +9,25 @@
 
 #pragma once
 
+#include "FeedbackProducerBase.h"
 #include "Kafka/BrokerSettings.h"
 #include "Kafka/Producer.h"
 #include "Kafka/ProducerTopic.h"
 #include "URI.h"
-#include "ResponseProducerBase.h"
 #include <string>
 
 namespace Command {
 
-class ResponseProducer : public ResponseProducerBase {
+class FeedbackProducer : public FeedbackProducerBase {
 public:
-  ResponseProducer(std::string const &ServiceIdentifier, uri::URI ResponseUri,
+  FeedbackProducer(std::string const &ServiceIdentifier, uri::URI ResponseUri,
                    Kafka::BrokerSettings Settings);
-  ResponseProducer(std::string const &ServiceIdentifier,
+  FeedbackProducer(std::string const &ServiceIdentifier,
                    std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
   void publishResponse(ActionResponse Command, ActionResult Result,
                        std::string JobId, std::string CommandId,
-                       std::string Description);
-
+                       std::string Description) override;
+  void publishStoppedMsg(ActionResult Result, std::string JobId, std::string Description, std::string FileName, std::string Metadata) override;
 private:
   std::string ServiceId;
   std::unique_ptr<Kafka::ProducerTopic> Producer;

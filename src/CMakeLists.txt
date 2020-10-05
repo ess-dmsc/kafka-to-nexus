@@ -65,7 +65,7 @@ set(kafka_to_nexus_SRC
         logger.cpp
         CommandSystem/JobListener.cpp
         CommandSystem/CommandListener.cpp
-        CommandSystem/ResponseProducer.cpp
+        CommandSystem/FeedbackProducer.cpp
         CommandSystem/Handler.cpp
         CommandSystem/Parser.cpp
         JobCreator.cpp
@@ -111,7 +111,7 @@ set(kafka_to_nexus_INC
         CommandSystem/Commands.h
         CommandSystem/JobListener.h
         CommandSystem/CommandListener.h
-        CommandSystem/ResponseProducer.h
+        CommandSystem/FeedbackProducer.h
         CommandSystem/Handler.h
         CommandSystem/Parser.h
         FileWriterTask.h
@@ -172,7 +172,7 @@ set(kafka_to_nexus_INC
         HDFVersionCheck.h
         StreamHDFInfo.h
         CommandSystem/CommandListener.h
-        CommandSystem/ResponseProducerBase.h
+        CommandSystem/FeedbackProducerBase.h
         )
 
 add_library(kafka_to_nexus__objects OBJECT

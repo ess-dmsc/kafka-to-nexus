@@ -7,19 +7,19 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "CommandSystem/CommandListener.h"
+#include "CommandSystem/FeedbackProducerBase.h"
 #include "CommandSystem/Handler.h"
 #include "CommandSystem/JobListener.h"
-#include "CommandSystem/ResponseProducerBase.h"
-#include "CommandSystem/CommandListener.h"
 #include <gtest/gtest.h>
-#include <trompeloeil.hpp>
 #include <memory>
+#include <trompeloeil.hpp>
 
 using trompeloeil::_;
 
-class ResponseProducerStandIn : public Command::ResponseProducerBase {
+class ResponseProducerStandIn : public Command::FeedbackProducerBase {
 public:
-  ResponseProducerStandIn() : Command::ResponseProducerBase() {}
+  ResponseProducerStandIn() : Command::FeedbackProducerBase() {}
   MAKE_MOCK5(publishResponse, void(Command::ActionResponse, Command::ActionResult, std::string, std::string, std::string), override);
 };
 
@@ -40,7 +40,7 @@ protected:
     MockResponseProducer = new ResponseProducerStandIn;
     MockJobListener = new ListenerStandIn;
     MockCmdListener = new ListenerStandIn;
-    UnderTest = std::make_unique<Command::Handler>(ServiceIdentifier, std::unique_ptr<Command::JobListener>(MockJobListener), std::unique_ptr<Command::CommandListener>(MockCmdListener), std::unique_ptr<Command::ResponseProducerBase>(MockResponseProducer));
+    UnderTest = std::make_unique<Command::Handler>(ServiceIdentifier, std::unique_ptr<Command::JobListener>(MockJobListener), std::unique_ptr<Command::CommandListener>(MockCmdListener), std::unique_ptr<Command::FeedbackProducerBase>(MockResponseProducer));
   }
   void TearDown() override {
     UnderTest.reset();
