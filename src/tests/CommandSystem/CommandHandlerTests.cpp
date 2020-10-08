@@ -21,6 +21,7 @@ class ResponseProducerStandIn : public Command::FeedbackProducerBase {
 public:
   ResponseProducerStandIn() : Command::FeedbackProducerBase() {}
   MAKE_MOCK5(publishResponse, void(Command::ActionResponse, Command::ActionResult, std::string, std::string, std::string), override);
+  MAKE_MOCK5(publishStoppedMsg, void(Command::ActionResult, std::string, std::string, std::string, std::string), override);
 };
 
 using PollResult = std::pair<Kafka::PollStatus, FileWriter::Msg>;

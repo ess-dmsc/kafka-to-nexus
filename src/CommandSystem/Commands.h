@@ -19,6 +19,7 @@ struct StartInfo {
   std::string JobID;
   std::string Filename;
   std::string NexusStructure;
+  std::string Metadata;
   uri::URI BrokerInfo{"localhost:9092"};
   std::chrono::milliseconds StartTime{0};
   time_point StopTime{time_point::max()};

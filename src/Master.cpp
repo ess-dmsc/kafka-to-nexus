@@ -37,6 +37,8 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
   try {
     CurrentStreamController = Creator_->createFileWritingJob(
         StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
+    CurrentFileName = StartInfo.Filename;
+    CurrentMetadata = StartInfo.Metadata;
     CurrentState = WriterState::Writing;
     Reporter->updateStatusInfo({Status::JobStatusInfo::WorkerState::Writing,
                                 StartInfo.JobID, StartInfo.Filename,
@@ -74,7 +76,7 @@ void Master::run() {
 bool Master::isWriting() const { return CurrentState == WriterState::Writing; }
 
 void Master::setToIdle() {
-  CommandAndControl->sendHasStoppedMessage();
+  CommandAndControl->sendHasStoppedMessage(CurrentFileName, CurrentMetadata);
   CurrentStreamController.reset(nullptr);
   CurrentState = WriterState::Idle;
   Reporter->resetStatusInfo();

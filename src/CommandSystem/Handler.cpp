@@ -60,13 +60,13 @@ void Handler::registerStopNowFunction(StopNowFuncType StopNowFunction) {
   DoStopNow = StopNowFunction;
 }
 
-void Handler::sendHasStoppedMessage() {
-  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", "", "");
+void Handler::sendHasStoppedMessage(std::string FileName, std::string Metadata) {
+  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName, Metadata);
   PollForJob = true;
 }
 
-void Handler::sendErrorEncounteredMessage(std::string ErrorMessage) {
-  CommandResponse->publishStoppedMsg(ActionResult::Failure, JobId, ErrorMessage, "", "");
+void Handler::sendErrorEncounteredMessage(std::string FileName, std::string Metadata, std::string ErrorMessage) {
+  CommandResponse->publishStoppedMsg(ActionResult::Failure, JobId, ErrorMessage, FileName, Metadata);
   PollForJob = true;
 }
 

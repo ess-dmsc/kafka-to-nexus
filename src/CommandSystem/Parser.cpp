@@ -86,6 +86,9 @@ extractStartInformation(Msg const &CommandMessage,
   }
   Result.BrokerInfo = uri::URI(RunStartData->broker()->str());
   Result.Filename = RunStartData->filename()->str();
+  if (RunStartData->metadata() != nullptr) {
+    Result.Metadata = RunStartData->metadata()->str();
+  }
 
   return Result;
 }

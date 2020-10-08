@@ -60,6 +60,8 @@ private:
   std::unique_ptr<Status::StatusReporter> Reporter;
   Metrics::Registrar MasterMetricsRegistrar;
   WriterState CurrentState{WriterState::Idle};
+  std::string CurrentFileName;
+  std::string CurrentMetadata;
   virtual bool hasWritingStopped();
   //  virtual FileWriterState handleCommand(Msg const &CommandMessage);
   void setToIdle();

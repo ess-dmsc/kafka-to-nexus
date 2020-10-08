@@ -38,8 +38,8 @@ public:
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction);
   void registerStopNowFunction(StopNowFuncType StopNowFunction);
 
-  void sendHasStoppedMessage();
-  void sendErrorEncounteredMessage(std::string ErrorMessage);
+  void sendHasStoppedMessage(std::string FileName, std::string Metadata);
+  void sendErrorEncounteredMessage(std::string FileName, std::string Metadata, std::string ErrorMessage);
 
   void loopFunction();
 
