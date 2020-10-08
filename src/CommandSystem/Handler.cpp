@@ -31,7 +31,7 @@ Handler::Handler(std::string ServiceIdentifier,
                  std::unique_ptr<JobListener> JobConsumer,
                  std::unique_ptr<CommandListener> CommandConsumer,
                  std::unique_ptr<FeedbackProducerBase> Response)
-    : ServiceId(std::move(SeProducrviceIdentifier)), JobPool(std::move(JobConsumer)),
+    : ServiceId(std::move(ServiceIdentifier)), JobPool(std::move(JobConsumer)),
       CommandSource(std::move(CommandConsumer)),
       CommandResponse(std::move(Response)) {}
 
