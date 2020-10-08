@@ -6,7 +6,7 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 find_package(librdkafka REQUIRED)
 find_package(hdf5 REQUIRED)
-find_package(flatbuffers REQUIRED)
+find_package(Flatbuffers REQUIRED)
 find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(streaming-data-types)
