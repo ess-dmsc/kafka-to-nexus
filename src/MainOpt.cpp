@@ -24,7 +24,7 @@ std::string MainOpt::getDefaultServiceId() {
 }
 
 void MainOpt::setServiceName(std::string NewServiceName) {
-  ServiceName = NewServiceName;
+  ServiceName = std::move(NewServiceName);
   if (ServiceName.empty()) {
     ServiceId = getDefaultServiceId();
   } else {

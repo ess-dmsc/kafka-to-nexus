@@ -16,7 +16,7 @@ namespace Command {
 
 Kafka::BrokerSettings setBrokerAddress(Kafka::BrokerSettings Settings,
                                        std::string NewAddress) {
-  Settings.Address = NewAddress;
+  Settings.Address = std::move(NewAddress);
   return Settings;
 }
 

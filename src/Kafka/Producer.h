@@ -23,7 +23,7 @@ public:
   /// The constructor.
   ///
   /// \param Settings_ The BrokerSettings.
-  explicit Producer(BrokerSettings Settings);
+  explicit Producer(BrokerSettings const &Settings);
   virtual ~Producer();
 
   /// Polls Kafka for events.

@@ -27,7 +27,7 @@ using StopNowFuncType = std::function<void()>;
 
 class Handler {
 public:
-  Handler(std::string ServiceIdentifier, Kafka::BrokerSettings const &Settings,
+  Handler(std::string const &ServiceIdentifier, Kafka::BrokerSettings const &Settings,
           uri::URI JobPoolUri, uri::URI CommandTopicUri);
   Handler(std::string ServiceIdentifier,
           std::unique_ptr<JobListener> JobConsumer,

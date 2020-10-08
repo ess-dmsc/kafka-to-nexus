@@ -18,7 +18,7 @@ namespace Command {
 bool isJobIdValid(std::string const &JobId) { return not JobId.empty(); }
 bool isCmdIdValid(std::string const &CmdId) { return not CmdId.empty(); }
 
-Handler::Handler(std::string ServiceIdentifier,
+Handler::Handler(std::string const &ServiceIdentifier,
                  Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
                  uri::URI CommandTopicUri)
     : Handler(ServiceIdentifier,
@@ -31,7 +31,7 @@ Handler::Handler(std::string ServiceIdentifier,
                  std::unique_ptr<JobListener> JobConsumer,
                  std::unique_ptr<CommandListener> CommandConsumer,
                  std::unique_ptr<FeedbackProducerBase> Response)
-    : ServiceId(ServiceIdentifier), JobPool(std::move(JobConsumer)),
+    : ServiceId(std::move(SeProducrviceIdentifier)), JobPool(std::move(JobConsumer)),
       CommandSource(std::move(CommandConsumer)),
       CommandResponse(std::move(Response)) {}
 
