@@ -89,7 +89,7 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
                 "topic {} due to error.",
                 PartitionID, Topic);
     } else {
-      LOG_INFO("Done consuming data from partition {} of topic {}.",
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\".",
                PartitionID, Topic);
     }
     return true;
@@ -122,7 +122,7 @@ void Partition::pollForMessage() {
     processMessage(Msg.second);
     if (MsgFilters.empty() or
         Msg.second.getMetaData().timestamp() > StopTime + StopTimeLeeway) {
-      LOG_INFO("Done consuming data from partition {} of topic {}.",
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\".",
                PartitionID, Topic);
       HasFinished = true;
       return;
