@@ -117,7 +117,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     if (extractStartInfo(CommandMsg, StartJob, ExceptionMessage)) {
       Outcome = CmdOutcome::FailedAtServiceId;
     }
-    if (Outcome == CmdOutcome::FailedAtServiceId and not (IgnoreServiceId xor StartJob.ServiceID != ServiceId)) {
+    if (Outcome == CmdOutcome::FailedAtServiceId and not (IgnoreServiceId xor (StartJob.ServiceID != ServiceId))) {
       Outcome = CmdOutcome::FailedAtJobId;
     }
     if (Outcome == CmdOutcome::FailedAtJobId and isJobIdValid(StartJob.JobID)) {
