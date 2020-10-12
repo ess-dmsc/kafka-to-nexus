@@ -61,11 +61,14 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   RegisterMetric.registerMetric(
       FlatbufferErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(
-      BadFlatbufferTimestampErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+      BadFlatbufferTimestampErrors,
+      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(
-      UnknownFlatbufferIdErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+      UnknownFlatbufferIdErrors,
+      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(
-      NotValidFlatbufferErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+      NotValidFlatbufferErrors,
+      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(
       BufferTooSmallErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
