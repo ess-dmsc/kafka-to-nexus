@@ -12,11 +12,9 @@
 #include "Msg.h"
 #include "Parser.h"
 #include "TimeUtility.h"
+#include "IdChecker.h"
 
 namespace Command {
-
-bool isJobIdValid(std::string const &JobId) { return not JobId.empty(); }
-bool isCmdIdValid(std::string const &CmdId) { return not CmdId.empty(); }
 
 Handler::Handler(std::string const &ServiceIdentifier,
                  Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,

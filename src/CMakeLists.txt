@@ -104,6 +104,7 @@ set(kafka_to_nexus_SRC
         HDFVersionCheck.cpp
         CommandSystem/CommandListener.cpp
         TimeUtility.cpp
+        CommandSystem/IdChecker.cpp
         )
 
 set(kafka_to_nexus_INC
@@ -173,6 +174,7 @@ set(kafka_to_nexus_INC
         StreamHDFInfo.h
         CommandSystem/CommandListener.h
         CommandSystem/FeedbackProducerBase.h
+        CommandSystem/IdChecker.h
         )
 
 add_library(kafka_to_nexus__objects OBJECT
