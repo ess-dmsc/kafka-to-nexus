@@ -24,7 +24,7 @@ struct BrokerSettings {
   std::string Address;
   int PollTimeoutMS = 500;
   duration MinMetadataTimeout{
-      100ms}; // When doing Kafka metadata calls, start with this timeout
+      400ms}; // When doing Kafka metadata calls, start with this timeout
   duration MaxMetadataTimeout{
       10s}; // When doing Kafka metadata calls, use this as the max timeout
   duration KafkaErrorTimeout{
@@ -32,7 +32,7 @@ struct BrokerSettings {
             // (for writing files), wait this long before stopping
   std::map<std::string, std::string> KafkaConfiguration = {
       {"metadata.request.timeout.ms", "5000"}, // 5 Secs
-      {"socket.timeout.ms", "2000"},
+      {"socket.timeout.ms", "5000"},
       {"message.max.bytes", "24000000"},
       {"fetch.message.max.bytes", "24000000"},
       {"fetch.max.bytes",
@@ -43,7 +43,7 @@ struct BrokerSettings {
       {"queue.buffering.max.ms", "50"},
       {"queue.buffering.max.kbytes", "819200"}, // 819.2 Mib
       {"batch.num.messages", "100000"},
-      {"coordinator.query.interval.ms", "2000"},
+      {"coordinator.query.interval.ms", "5000"},
       {"heartbeat.interval.ms", "500"},     // 0.5 Secs
       {"statistics.interval.ms", "600000"}, // 1 Min
       {"api.version.request", "true"},
