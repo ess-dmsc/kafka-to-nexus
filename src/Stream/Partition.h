@@ -75,8 +75,21 @@ protected:
       "Errors when creating flatbuffer message from Kafka message.",
       Metrics::Severity::ERROR};
 
-  Metrics::Metric BadTimestamps{
-      "bad_timestamps", "Number of messages received with bad timestamps.",
+  Metrics::Metric BufferTooSmallErrors{"flatbuffer_errors.small_buffer",
+                                       "Message smaller than 8 bytes errors.",
+                                       Metrics::Severity::ERROR};
+
+  Metrics::Metric NotValidFlatbufferErrors{
+      "flatbuffer_errors.invalid_flatbuffer",
+      "Failed flatbuffer validation errors.", Metrics::Severity::ERROR};
+
+  Metrics::Metric UnknownFlatbufferIdErrors{
+      "flatbuffer_errors.unknown_flatbuffer", "Flatbuffer id unknown errors.",
+      Metrics::Severity::ERROR};
+
+  Metrics::Metric BadFlatbufferTimestampErrors{
+      "flatbuffer_errors.bad_timestamps",
+      "Number of messages received with bad timestamps.",
       Metrics::Severity::ERROR};
 
   virtual void pollForMessage();
