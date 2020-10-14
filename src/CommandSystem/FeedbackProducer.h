@@ -27,7 +27,10 @@ public:
   void publishResponse(ActionResponse Command, ActionResult Result,
                        std::string JobId, std::string CommandId,
                        std::string Description) override;
-  void publishStoppedMsg(ActionResult Result, std::string JobId, std::string Description, std::string FileName, std::string Metadata) override;
+  void publishStoppedMsg(ActionResult Result, std::string JobId,
+                         std::string Description, std::string FileName,
+                         std::string Metadata) override;
+
 private:
   std::string ServiceId;
   std::unique_ptr<Kafka::ProducerTopic> Producer;

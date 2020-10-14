@@ -51,9 +51,8 @@ public:
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
-  void setDeregistrationDetails(
-      std::string const &NameWithPrefix,
-      std::shared_ptr<Reporter> const &Reporter);
+  void setDeregistrationDetails(std::string const &NameWithPrefix,
+                                std::shared_ptr<Reporter> const &Reporter);
 
 private:
   // Details used for deregistration, keeping these rather than the Registrar

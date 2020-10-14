@@ -20,8 +20,14 @@ using trompeloeil::_;
 class ResponseProducerStandIn : public Command::FeedbackProducerBase {
 public:
   ResponseProducerStandIn() : Command::FeedbackProducerBase() {}
-  MAKE_MOCK5(publishResponse, void(Command::ActionResponse, Command::ActionResult, std::string, std::string, std::string), override);
-  MAKE_MOCK5(publishStoppedMsg, void(Command::ActionResult, std::string, std::string, std::string, std::string), override);
+  MAKE_MOCK5(publishResponse,
+             void(Command::ActionResponse, Command::ActionResult, std::string,
+                  std::string, std::string),
+             override);
+  MAKE_MOCK5(publishStoppedMsg,
+             void(Command::ActionResult, std::string, std::string, std::string,
+                  std::string),
+             override);
 };
 
 using PollResult = std::pair<Kafka::PollStatus, FileWriter::Msg>;
@@ -34,18 +40,19 @@ public:
   MAKE_MOCK0(disconnectFromPool, void(), override);
 };
 
-
 class CommandHandlerTests : public ::testing::Test {
 protected:
   void SetUp() override {
     MockResponseProducer = new ResponseProducerStandIn;
     MockJobListener = new ListenerStandIn;
     MockCmdListener = new ListenerStandIn;
-    UnderTest = std::make_unique<Command::Handler>(ServiceIdentifier, std::unique_ptr<Command::JobListener>(MockJobListener), std::unique_ptr<Command::CommandListener>(MockCmdListener), std::unique_ptr<Command::FeedbackProducerBase>(MockResponseProducer));
+    UnderTest = std::make_unique<Command::Handler>(
+        ServiceIdentifier,
+        std::unique_ptr<Command::JobListener>(MockJobListener),
+        std::unique_ptr<Command::CommandListener>(MockCmdListener),
+        std::unique_ptr<Command::FeedbackProducerBase>(MockResponseProducer));
   }
-  void TearDown() override {
-    UnderTest.reset();
-  }
+  void TearDown() override { UnderTest.reset(); }
   std::string const ServiceIdentifier{"test_identifier"};
   std::unique_ptr<Command::Handler> UnderTest;
   ResponseProducerStandIn *MockResponseProducer;
@@ -53,6 +60,4 @@ protected:
   ListenerStandIn *MockCmdListener;
 };
 
-TEST_F(CommandHandlerTests, SomeTest) {
-
-}
+TEST_F(CommandHandlerTests, SomeTest) {}

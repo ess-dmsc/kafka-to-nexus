@@ -13,7 +13,7 @@
 
 namespace Command {
 
-enum class ActionResponse { StartJob, SetStopTime};
+enum class ActionResponse { StartJob, SetStopTime };
 
 enum class ActionResult {
   Success,
@@ -26,9 +26,11 @@ public:
   virtual ~FeedbackProducerBase() = default;
 
   virtual void publishResponse(ActionResponse Command, ActionResult Result,
-                       std::string JobId, std::string CommandId,
-                       std::string Description) = 0;
-  virtual void publishStoppedMsg(ActionResult Result, std::string JobId, std::string Description, std::string FileName, std::string Metadata) = 0;
+                               std::string JobId, std::string CommandId,
+                               std::string Description) = 0;
+  virtual void publishStoppedMsg(ActionResult Result, std::string JobId,
+                                 std::string Description, std::string FileName,
+                                 std::string Metadata) = 0;
 };
 
 } // namespace Command

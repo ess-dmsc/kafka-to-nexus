@@ -10,6 +10,4 @@
 #include "CommandSystem/IdChecker.h"
 #include <gtest/gtest.h>
 
-TEST(JobId, FailWithEmptyString) {
-  EXPECT_FALSE(Command::isCmdIdValid(""));
-}
+TEST(JobId, FailWithEmptyString) { EXPECT_FALSE(Command::isCmdIdValid("")); }

@@ -49,24 +49,28 @@ void FeedbackProducer::publishResponse(ActionResponse Command,
   auto JobIdStr = Builder.CreateString(JobId);
   auto ErrorMsgString = Builder.CreateString(Description);
   auto CommandIdString = Builder.CreateString(CommandId);
-  auto ResponseFlatbuffer =
-      CreateActionResponse(Builder, ServiceIdStr, JobIdStr, ActionMap[Command],
-                           OutcomeMap[Result], 0, 0, ErrorMsgString, CommandIdString);
+  auto ResponseFlatbuffer = CreateActionResponse(
+      Builder, ServiceIdStr, JobIdStr, ActionMap[Command], OutcomeMap[Result],
+      0, 0, ErrorMsgString, CommandIdString);
   FinishActionResponseBuffer(Builder, ResponseFlatbuffer);
   Producer->produce(Builder.Release());
 }
 
-void FeedbackProducer::publishStoppedMsg(ActionResult Result, std::string JobId, std::string Description, std::string FileName, std::string Metadata) {
+void FeedbackProducer::publishStoppedMsg(ActionResult Result, std::string JobId,
+                                         std::string Description,
+                                         std::string FileName,
+                                         std::string Metadata) {
   flatbuffers::FlatBufferBuilder Builder;
-  std::map<ActionResult, bool> OutcomeMap{
-      {ActionResult::Success, false},
-      {ActionResult::Failure, true}};
+  std::map<ActionResult, bool> OutcomeMap{{ActionResult::Success, false},
+                                          {ActionResult::Failure, true}};
   auto ServiceIdStr = Builder.CreateString(ServiceId);
   auto JobIdStr = Builder.CreateString(JobId);
   auto FileNameStr = Builder.CreateString(FileName);
   auto MetadataStr = Builder.CreateString(Metadata);
   auto ErrorMsgString = Builder.CreateString(Description);
-  auto StoppedFlatbuffer = CreateFinishedWriting(Builder, ServiceIdStr, JobIdStr, OutcomeMap[Result], FileNameStr, MetadataStr, ErrorMsgString);
+  auto StoppedFlatbuffer =
+      CreateFinishedWriting(Builder, ServiceIdStr, JobIdStr, OutcomeMap[Result],
+                            FileNameStr, MetadataStr, ErrorMsgString);
   FinishFinishedWritingBuffer(Builder, StoppedFlatbuffer);
   Producer->produce(Builder.Release());
 }

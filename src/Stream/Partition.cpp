@@ -130,12 +130,15 @@ void Partition::pollForMessage() {
   if (Msg.first == Kafka::PollStatus::Message) {
     processMessage(Msg.second);
     if (MsgFilters.empty()) {
-      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as there are no remaining filters.",
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as there "
+               "are no remaining filters.",
                PartitionID, Topic);
       HasFinished = true;
       return;
-    } else if (Msg.second.getMetaData().timestamp() > StopTime + StopTimeLeeway) {
-      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as we have reached the stop time.",
+    } else if (Msg.second.getMetaData().timestamp() >
+               StopTime + StopTimeLeeway) {
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as we "
+               "have reached the stop time.",
                PartitionID, Topic);
       HasFinished = true;
       return;

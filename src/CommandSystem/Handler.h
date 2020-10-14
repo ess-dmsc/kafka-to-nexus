@@ -27,8 +27,9 @@ using StopNowFuncType = std::function<void()>;
 
 class Handler {
 public:
-  Handler(std::string const &ServiceIdentifier, Kafka::BrokerSettings const &Settings,
-          uri::URI JobPoolUri, uri::URI CommandTopicUri);
+  Handler(std::string const &ServiceIdentifier,
+          Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
+          uri::URI CommandTopicUri);
   Handler(std::string ServiceIdentifier,
           std::unique_ptr<JobListener> JobConsumer,
           std::unique_ptr<CommandListener> CommandConsumer,
@@ -39,7 +40,8 @@ public:
   void registerStopNowFunction(StopNowFuncType StopNowFunction);
 
   void sendHasStoppedMessage(std::string FileName, std::string Metadata);
-  void sendErrorEncounteredMessage(std::string FileName, std::string Metadata, std::string ErrorMessage);
+  void sendErrorEncounteredMessage(std::string FileName, std::string Metadata,
+                                   std::string ErrorMessage);
 
   void loopFunction();
 
