@@ -27,9 +27,13 @@ public:
 
   Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
 
+  Registrar(Registrar const &Other);
+
+  Registrar &operator=(Registrar const &Other);
+
 private:
   std::string prependPrefix(std::string const &Name) const;
-  std::string const Prefix;
+  std::string Prefix;
   /// List of reporters we might want to add a metric to
   std::map<LogTo, std::shared_ptr<Reporter>> ReporterList;
 };

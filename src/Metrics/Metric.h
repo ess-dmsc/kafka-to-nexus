@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace Metrics {
 
@@ -50,19 +51,15 @@ public:
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
-  void setDeregistrationDetails(
-      std::string const &NameWithPrefix,
-      std::shared_ptr<Reporter> const &ReporterResponsibleForMetric) {
-    FullName = NameWithPrefix;
-    ReporterForMetric = ReporterResponsibleForMetric;
-  }
+  void setDeregistrationDetails(std::string const &NameWithPrefix,
+                                std::shared_ptr<Reporter> const &Reporter);
 
 private:
   // Details used for deregistration, keeping these rather than the Registrar
   // means that the Registrar does not need to be kept alive until the metric is
   // deregistered
   std::string FullName;
-  std::shared_ptr<Reporter> ReporterForMetric;
+  std::vector<std::shared_ptr<Reporter>> Reporters;
 
   std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};
   std::string const MName;
