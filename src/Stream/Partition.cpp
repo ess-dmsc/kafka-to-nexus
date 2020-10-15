@@ -61,7 +61,16 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   RegisterMetric.registerMetric(
       FlatbufferErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(
-      BadTimestamps, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+      BadFlatbufferTimestampErrors,
+      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(
+      UnknownFlatbufferIdErrors,
+      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(
+      NotValidFlatbufferErrors,
+      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(
+      BufferTooSmallErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
 
 void Partition::start() { addPollTask(); }
@@ -86,7 +95,7 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
   if (StopTester.shouldStopPartition(CStatus)) {
     if (StopTester.hasErrorState()) {
       LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
-                "topic {} due to error.",
+                "topic {} due to error.",
                 PartitionID, Topic);
     } else {
       LOG_INFO("Done consuming data from partition {} of topic {}.",
@@ -140,7 +149,23 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   FileWriter::FlatbufferMessage FbMsg;
   try {
     FbMsg = FileWriter::FlatbufferMessage(Message);
-  } catch (FileWriter::FlatbufferError &E) {
+  } catch (FileWriter::BufferTooSmallError &) {
+    BufferTooSmallErrors++;
+    FlatbufferErrors++;
+    return;
+  } catch (FileWriter::InvalidFlatbufferTimestamp &) {
+    BadFlatbufferTimestampErrors++;
+    FlatbufferErrors++;
+    return;
+  } catch (FileWriter::UnknownFlatbufferID &) {
+    UnknownFlatbufferIdErrors++;
+    FlatbufferErrors++;
+    return;
+  } catch (FileWriter::NotValidFlatbuffer &) {
+    NotValidFlatbufferErrors++;
+    FlatbufferErrors++;
+    return;
+  } catch (std::exception &) {
     FlatbufferErrors++;
     return;
   }
