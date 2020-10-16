@@ -129,7 +129,6 @@ void Connection::Impl::trySendMessage() {
   if (PopResult) {
     std::copy(NewMessage.begin(), NewMessage.end(),
               std::back_inserter(MessageBuffer));
-    MessageBuffer.push_back('\0');
     asio::async_write(Socket, asio::buffer(MessageBuffer), HandlerGlue);
   } else if (!MessageBuffer.empty()) {
     asio::async_write(Socket, asio::buffer(MessageBuffer), HandlerGlue);
