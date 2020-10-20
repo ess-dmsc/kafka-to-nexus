@@ -24,7 +24,7 @@ StreamController::StreamController(
 }
 
 StreamController::~StreamController() {
-  // Hint streamers of exit
+  stop();
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
 }
@@ -101,18 +101,36 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
   }
   Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
 }
+
+bool StreamController::hasErrorState() const {
+  return HasError;
+}
+
+std::string StreamController::errorMessage() {
+  std::lock_guard Guard(ErrorMsgMutex);
+  return ErrorMessage;
+}
+
 using std::chrono_literals::operator""ms;
 void StreamController::checkIfStreamsAreDone() {
-  Streamers.erase(
-      std::remove_if(Streamers.begin(), Streamers.end(),
-                     [](auto const &Elem) { return Elem->isDone(); }),
-      Streamers.end());
+  try {
+    Streamers.erase(
+        std::remove_if(Streamers.begin(), Streamers.end(),
+                       [](auto const &Elem) { return Elem->isDone(); }),
+        Streamers.end());
 
-  if (Streamers.empty()) {
+    if (Streamers.empty()) {
+      StreamersRemaining.store(false);
+    }
+    std::this_thread::sleep_for(50ms);
+    Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
+  } catch (std::exception &E) {
+    HasError = true;
+    std::lock_guard Guard(ErrorMsgMutex);
+    ErrorMessage = fmt::format("Got stream error. The error message was: {}", E.what());
+    stop();
     StreamersRemaining.store(false);
   }
-  std::this_thread::sleep_for(50ms);
-  Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
 }
 
 } // namespace FileWriter

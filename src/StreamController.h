@@ -30,6 +30,8 @@ public:
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
   virtual void stop() = 0;
+  virtual bool hasErrorState() const = 0;
+  virtual std::string errorMessage() = 0;
 };
 
 /// \brief The StreamController's task is to coordinate the different Streamers.
@@ -69,6 +71,10 @@ public:
   /// possible time.
   bool isDoneWriting() override;
 
+  bool hasErrorState() const override;
+
+  std::string errorMessage() override;
+
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
   ///
@@ -81,6 +87,9 @@ private:
   void checkIfStreamsAreDone();
   std::chrono::system_clock::duration CurrentMetadataTimeOut;
   std::atomic<bool> StreamersRemaining{true};
+  std::atomic<bool> HasError{false};
+  std::mutex ErrorMsgMutex;
+  std::string ErrorMessage;
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   Metrics::Registrar StreamMetricRegistrar;
