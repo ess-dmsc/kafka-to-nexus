@@ -31,8 +31,7 @@ struct BrokerSettings {
       30s}; // If there is an error with the Kafka broker when consuming data
             // (for writing files), wait this long before stopping
   std::map<std::string, std::string> KafkaConfiguration = {
-      {"metadata.request.timeout.ms", "5000"}, // 5 Secs
-      {"socket.timeout.ms", "5000"},
+      {"socket.timeout.ms", "10000"},
       {"message.max.bytes", "24000000"},
       {"fetch.message.max.bytes", "24000000"},
       {"fetch.max.bytes",
