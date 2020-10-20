@@ -65,6 +65,7 @@ public:
   using Partition::ConsumerPtr;
   using Partition::Executor;
   using Partition::FlatbufferErrors;
+  using Partition::forceStop;
   using Partition::KafkaErrors;
   using Partition::KafkaTimeouts;
   using Partition::MessagesProcessed;
@@ -74,7 +75,6 @@ public:
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
-  using Partition::forceStop;
 };
 
 void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {

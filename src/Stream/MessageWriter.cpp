@@ -52,9 +52,7 @@ void MessageWriter::addMessage(Message const &Msg) {
   WriteJobs.enqueue([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
 }
 
-void MessageWriter::stop() {
-  RunThread = false;
-}
+void MessageWriter::stop() { RunThread = false; }
 
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
                                  FileWriter::FlatbufferMessage const &Msg) {
