@@ -75,9 +75,13 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
 
 void Partition::start() { addPollTask(); }
 
+void Partition::forceStop() {
+  StopTester.forceStop();
+}
+
 void Partition::stop() {
-  Executor.sendLowPriorityWork([=] () {StopTester.forceStop();});
-  Executor.sendWork([=] () {StopTester.forceStop();});
+  Executor.sendLowPriorityWork([=] () {forceStop();});
+  Executor.sendWork([=] () {forceStop();});
 }
 
 void Partition::setStopTime(time_point Stop) {

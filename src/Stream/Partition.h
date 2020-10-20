@@ -101,6 +101,7 @@ protected:
   virtual void pollForMessage();
   virtual void addPollTask();
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
+  void forceStop();
 
   virtual void processMessage(FileWriter::Msg const &Message);
   std::unique_ptr<Kafka::ConsumerInterface> ConsumerPtr;
