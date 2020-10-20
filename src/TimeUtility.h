@@ -43,7 +43,7 @@ static auto toMilliSeconds(time_point Timestamp) {
 
 static auto toSeconds(time_point Timestamp) {
   return std::chrono::duration_cast<std::chrono::seconds>(
-      Timestamp.time_since_epoch())
+             Timestamp.time_since_epoch())
       .count();
 }
 

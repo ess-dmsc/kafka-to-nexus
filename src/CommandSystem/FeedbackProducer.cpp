@@ -37,6 +37,7 @@ FeedbackProducer::FeedbackProducer(const std::string &ServiceIdentifier,
 void FeedbackProducer::publishResponse(ActionResponse Command,
                                        ActionResult Result, std::string JobId,
                                        std::string CommandId,
+                                       time_point StopTime, int StatusCode,
                                        std::string Description) {
   std::map<ActionResponse, ActionType> ActionMap{
       {ActionResponse::StartJob, ActionType::StartJob},
@@ -51,7 +52,7 @@ void FeedbackProducer::publishResponse(ActionResponse Command,
   auto CommandIdString = Builder.CreateString(CommandId);
   auto ResponseFlatbuffer = CreateActionResponse(
       Builder, ServiceIdStr, JobIdStr, ActionMap[Command], OutcomeMap[Result],
-      0, 0, ErrorMsgString, CommandIdString);
+      StatusCode, toMilliSeconds(StopTime), ErrorMsgString, CommandIdString);
   FinishActionResponseBuffer(Builder, ResponseFlatbuffer);
   Producer->produce(Builder.Release());
 }

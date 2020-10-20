@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <string>
 #include "TimeUtility.h"
-#include <set>
 #include <mutex>
+#include <set>
+#include <string>
 
 namespace Command {
 
@@ -22,14 +22,16 @@ class IdTracker {
 public:
   IdTracker() = default;
   bool checkAndRegisterNewId(std::string const &NewId);
+
 private:
   std::mutex SetMutex;
   std::set<size_t> PastIDs;
 };
 
-std::pair<bool, std::string> isJobIdValid(std::string const &JobId, time_point Now = system_clock::now());
+std::pair<bool, std::string> isJobIdValid(std::string const &JobId,
+                                          time_point Now = system_clock::now());
 
-
-std::pair<bool, std::string> isCmdIdValid(std::string const &CmdId, time_point Now = system_clock::now());
+std::pair<bool, std::string> isCmdIdValid(std::string const &CmdId,
+                                          time_point Now = system_clock::now());
 
 } // namespace Command

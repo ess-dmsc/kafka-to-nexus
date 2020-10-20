@@ -100,6 +100,7 @@ struct CmdResponse {
   spdlog::level::level_enum LogLevel;
   bool SendResponse;
   std::string MessageString;
+  int StatusCode{0};
 };
 
 bool extractStartInfo(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
@@ -116,6 +117,7 @@ bool extractStartInfo(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IgnoreServiceId) {
   try {
+    time_point StopTime = time_point::min();
     CmdOutcome Outcome{CmdOutcome::FailedAtExtraction};
     std::string ExceptionMessage;
     StartMessage StartJob;
@@ -130,11 +132,13 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     if (Outcome == CmdOutcome::FailedAtJobId and IdValidity.first) {
       Outcome = CmdOutcome::FailedAtCmd;
     } else if (not IdValidity.first) {
-      LOG_ERROR("Job-id verification failure. Failure message was: {}", IdValidity.second);
+      LOG_ERROR("Job-id verification failure. Failure message was: {}",
+                IdValidity.second);
     }
     if (Outcome == CmdOutcome::FailedAtCmd) {
       try {
         DoStart(StartJob);
+        StopTime = StartJob.StopTime;
         JobId = StartJob.JobID;
         PollForJob = false;
         JobPool->disconnectFromPool();
@@ -150,28 +154,33 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
          {LogLevel::warn, false,
           fmt::format("Failed to extract start command from flatbuffer. The "
                       "error was: {}",
-                      ExceptionMessage)}},
+                      ExceptionMessage),
+          0}},
         {{CmdOutcome::FailedAtServiceId},
          {LogLevel::debug, false,
           fmt::format("Rejected start command as the service id was wrong. It "
                       "should be {}, it was {}.",
-                      ServiceId, StartJob.ServiceID)}},
+                      ServiceId, StartJob.ServiceID),
+          0}},
         {{CmdOutcome::FailedAtJobId},
          {LogLevel::warn, true,
           fmt::format(
               "Rejected start command as the job id was invalid (it was: {}).",
-              StartJob.JobID)}},
+              StartJob.JobID),
+          400}},
         {{CmdOutcome::FailedAtCmd},
          {LogLevel::err, true,
           fmt::format(
               "Failed to start filewriting job. The failure message was: {}",
-              ExceptionMessage)}},
+              ExceptionMessage),
+          500}},
         {{CmdOutcome::CmdIsDone},
          {LogLevel::info, true,
           fmt::format("Started write job with start time {} and stop time {}.",
                       toUTCDateTime(time_point(
                           std::chrono::milliseconds{StartJob.StartTime})),
-                      toUTCDateTime(StartJob.StopTime))}},
+                      toUTCDateTime(StartJob.StopTime)),
+          201}},
     };
     ActionResult SendResult{ActionResult::Failure};
     if (Outcome == CmdOutcome::CmdIsDone) {
@@ -180,9 +189,9 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     auto OutcomeValue = OutcomeMap[Outcome];
     getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString);
     if (OutcomeValue.SendResponse) {
-      CommandResponse->publishResponse(ActionResponse::StartJob, SendResult,
-                                       StartJob.JobID, StartJob.JobID,
-                                       OutcomeValue.MessageString);
+      CommandResponse->publishResponse(
+          ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
+          StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString);
     }
   } catch (std::out_of_range const &E) {
     LOG_ERROR("Unknown outcome of start job command");
@@ -219,11 +228,11 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       Outcome = CmdOutcome::FailedAtCmdId;
     }
     auto IdValidity = isCmdIdValid(StopCmd.JobID);
-    if (Outcome == CmdOutcome::FailedAtCmdId and
-        IdValidity.first) {
+    if (Outcome == CmdOutcome::FailedAtCmdId and IdValidity.first) {
       Outcome = CmdOutcome::FailedAtCmd;
     } else if (not IdValidity.first) {
-      LOG_ERROR("Cmd-id verification failure. Failure message was: {}", IdValidity.second);
+      LOG_ERROR("Cmd-id verification failure. Failure message was: {}",
+                IdValidity.second);
     }
     if (Outcome == CmdOutcome::FailedAtCmd and StopCmd.StopTime == 0ms) {
       try {
@@ -249,28 +258,33 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
          {LogLevel::warn, false,
           fmt::format("Failed to extract stop command from flatbuffer. The "
                       "error was: {}",
-                      ResponseMessage)}},
+                      ResponseMessage),
+          0}},
         {{CmdOutcome::FailedAtServiceId},
          {LogLevel::debug, false,
           fmt::format("Rejected start command as the service id was wrong. It "
                       "should be {}, it was {}.",
-                      ServiceId, StopCmd.ServiceID)}},
+                      ServiceId, StopCmd.ServiceID),
+          0}},
         {{CmdOutcome::FailedAtJobId},
          {LogLevel::warn, true,
           fmt::format("Rejected start command as the job id was invalid (It "
                       "should be {}, it was: {}).",
-                      JobId, StopCmd.JobID)}},
+                      JobId, StopCmd.JobID),
+          400}},
         {{CmdOutcome::FailedAtCmdId},
          {LogLevel::err, true,
           fmt::format("Rejected start command as the command id was invalid "
                       "(it was: {}).",
-                      StopCmd.CommandID)}},
+                      StopCmd.CommandID),
+          400}},
         {{CmdOutcome::FailedAtCmd},
          {LogLevel::err, true,
           fmt::format(
               "Failed to exeute stop command. The failure message was: {}",
-              ResponseMessage)}},
-        {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, ResponseMessage}},
+              ResponseMessage),
+          500}},
+        {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, ResponseMessage, 202}},
     };
     ActionResult SendResult{ActionResult::Failure};
     if (Outcome == CmdOutcome::CmdIsDone) {
@@ -279,9 +293,10 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     auto OutcomeValue = OutcomeMap[Outcome];
     getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString);
     if (OutcomeValue.SendResponse) {
-      CommandResponse->publishResponse(TypeOfAction, SendResult, StopCmd.JobID,
-                                       StopCmd.CommandID,
-                                       OutcomeValue.MessageString);
+      CommandResponse->publishResponse(
+          TypeOfAction, SendResult, StopCmd.JobID, StopCmd.CommandID,
+          time_point(std::chrono::milliseconds{StopCmd.StopTime}),
+          OutcomeValue.StatusCode, OutcomeValue.MessageString);
     }
   } catch (std::out_of_range const &E) {
     LOG_ERROR("Unknown outcome of set stop time command");

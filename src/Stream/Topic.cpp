@@ -42,7 +42,7 @@ void Topic::initMetadataCalls(Kafka::BrokerSettings const &Settings,
 }
 
 void Topic::stop() {
-  for (auto &Stream: ConsumerThreads) {
+  for (auto &Stream : ConsumerThreads) {
     Stream->stop();
   }
 }

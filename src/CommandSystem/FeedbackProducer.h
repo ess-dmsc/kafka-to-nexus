@@ -26,6 +26,7 @@ public:
                    std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
   void publishResponse(ActionResponse Command, ActionResult Result,
                        std::string JobId, std::string CommandId,
+                       time_point StopTime, int StatusCode,
                        std::string Description) override;
   void publishStoppedMsg(ActionResult Result, std::string JobId,
                          std::string Description, std::string FileName,

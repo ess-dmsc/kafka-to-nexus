@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "TimeUtility.h"
 #include <string>
 
 namespace Command {
@@ -27,6 +28,7 @@ public:
 
   virtual void publishResponse(ActionResponse Command, ActionResult Result,
                                std::string JobId, std::string CommandId,
+                               time_point StopTime, int StatusCode,
                                std::string Description) = 0;
   virtual void publishStoppedMsg(ActionResult Result, std::string JobId,
                                  std::string Description, std::string FileName,
