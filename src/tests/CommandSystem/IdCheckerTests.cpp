@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include <ctime>
 #include <fmt/format.h>
-#include <random>
+#include <cstdlib>
 
 namespace {
 std::string const TestHostName{"some_host_name"};
