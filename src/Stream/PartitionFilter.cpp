@@ -22,7 +22,14 @@ PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
   }
 }
 
+void PartitionFilter::forceStop() {
+  ForceStop = true;
+}
+
 bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
+  if (ForceStop) {
+    return true;
+  }
   switch (CurrentPollStatus) {
   case Kafka::PollStatus::Message:
     HasError = false;
