@@ -16,7 +16,7 @@ static const int CommandTimeLimit{10};
 
 constexpr uint32_t MOD_ADLER = 65521;
 
-uint32_t adler32(std::string const Input) {
+uint32_t adler32(std::string const &Input) {
   uint32_t a = 1, b = 0;
   for (size_t i = 0; i < Input.size(); ++i) {
     a = (a + Input[i]) % MOD_ADLER;

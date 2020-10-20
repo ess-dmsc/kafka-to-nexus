@@ -16,7 +16,7 @@
 
 namespace Command {
 
-uint32_t adler32(std::string const Input);
+uint32_t adler32(std::string const &Input);
 
 class IdTracker {
 public:
