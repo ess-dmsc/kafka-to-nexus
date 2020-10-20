@@ -41,6 +41,12 @@ static auto toMilliSeconds(time_point Timestamp) {
       .count();
 }
 
+static auto toSeconds(time_point Timestamp) {
+  return std::chrono::duration_cast<std::chrono::seconds>(
+      Timestamp.time_since_epoch())
+      .count();
+}
+
 std::string toUTCDateTime(time_point TimeStamp);
 std::string toLocalDateTime(time_point TimeStamp);
 

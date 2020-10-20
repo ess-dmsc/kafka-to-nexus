@@ -126,8 +126,11 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         not(IgnoreServiceId xor (StartJob.ServiceID != ServiceId))) {
       Outcome = CmdOutcome::FailedAtJobId;
     }
-    if (Outcome == CmdOutcome::FailedAtJobId and isJobIdValid(StartJob.JobID)) {
+    auto IdValidity = isJobIdValid(StartJob.JobID);
+    if (Outcome == CmdOutcome::FailedAtJobId and IdValidity.first) {
       Outcome = CmdOutcome::FailedAtCmd;
+    } else if (not IdValidity.first) {
+      LOG_ERROR("Job-id verification failure. Failure message was: {}", IdValidity.second);
     }
     if (Outcome == CmdOutcome::FailedAtCmd) {
       try {
@@ -215,9 +218,12 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     if (Outcome == CmdOutcome::FailedAtJobId and JobId == StopCmd.JobID) {
       Outcome = CmdOutcome::FailedAtCmdId;
     }
+    auto IdValidity = isCmdIdValid(StopCmd.JobID);
     if (Outcome == CmdOutcome::FailedAtCmdId and
-        isCmdIdValid(StopCmd.CommandID)) {
+        IdValidity.first) {
       Outcome = CmdOutcome::FailedAtCmd;
+    } else if (not IdValidity.first) {
+      LOG_ERROR("Cmd-id verification failure. Failure message was: {}", IdValidity.second);
     }
     if (Outcome == CmdOutcome::FailedAtCmd and StopCmd.StopTime == 0ms) {
       try {
