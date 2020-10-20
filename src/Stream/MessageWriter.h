@@ -37,6 +37,11 @@ public:
 
   virtual void addMessage(Message const &Msg);
 
+  /// \brief Tell the writer thread to stop.
+  ///
+  /// Non blocking. The thread might take a while to stop.
+  void stop();
+
   using ModuleHash = size_t;
 
   auto nrOfWritesDone() const { return int64_t(WritesDone); };

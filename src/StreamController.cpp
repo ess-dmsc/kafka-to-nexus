@@ -36,6 +36,14 @@ void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
     s->setStopTime(CStopTime);
   }
 }
+
+void StreamController::stop() {
+  for (auto &Stream : Streamers) {
+    Stream->stop();
+  }
+  WriterThread.stop();
+}
+
 using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
   return !StreamersRemaining.load() and

@@ -49,7 +49,15 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
   }
 }
 
-void Master::stopNow() { throw std::runtime_error("Not implemented."); }
+void Master::stopNow() {
+  if (CurrentState != WriterState::Writing) {
+    throw std::runtime_error(
+        "Unable to stop writing when not in \"Writing\" state.");
+  }
+  LOG_INFO("Attempting to stop file-writing (quickly).");
+  CurrentStreamController->stop();
+  Reporter->updateStopTime(0ms);
+}
 
 void Master::setStopTime(std::chrono::milliseconds StopTime) {
   if (CurrentState != WriterState::Writing) {

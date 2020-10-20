@@ -50,6 +50,12 @@ public:
   /// \note This function exist in order to make unit testing possible.
   void start();
 
+  /// \brief Stop the consumer thread.
+  ///
+  /// Non blocking. Will tell the consumer thread to stop as soon as possible.
+  /// There are no guarantees for when the consumer is actually stopped.
+  void stop();
+
   void setStopTime(time_point Stop);
 
   virtual bool hasFinished() const;

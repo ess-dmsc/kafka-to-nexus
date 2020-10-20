@@ -29,6 +29,7 @@ public:
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
+  virtual void stop() = 0;
 };
 
 /// \brief The StreamController's task is to coordinate the different Streamers.
@@ -54,6 +55,12 @@ public:
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
   void setStopTime(const std::chrono::milliseconds &StopTime) override;
+
+  /// \brief Stop the streams as soon as possible.
+  ///
+  /// This call is not blocking but will trigger open streams to stop as soon as
+  /// possible.
+  void stop() override;
 
   /// \brief Returns true if all topics are done AND current system time
   /// is greater than stop time.
