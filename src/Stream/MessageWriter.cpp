@@ -52,6 +52,8 @@ void MessageWriter::addMessage(Message const &Msg) {
   WriteJobs.enqueue([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
 }
 
+void MessageWriter::stop() { RunThread = false; }
+
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
                                  FileWriter::FlatbufferMessage const &Msg) {
   try {
@@ -107,6 +109,9 @@ void MessageWriter::threadFunction() {
   while (RunThread) {
     WriteOperation();
     FlushOperation();
+    if (not RunThread) { // cppcheck-suppress oppositeInnerCondition
+      break;
+    }
     std::this_thread::sleep_for(SleepTime);
   }
   WriteOperation();

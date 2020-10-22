@@ -65,6 +65,7 @@ public:
   using Partition::ConsumerPtr;
   using Partition::Executor;
   using Partition::FlatbufferErrors;
+  using Partition::forceStop;
   using Partition::KafkaErrors;
   using Partition::KafkaTimeouts;
   using Partition::MessagesProcessed;
@@ -95,18 +96,6 @@ public:
 protected:
   void writeMsgImpl(WriterModule::Base *,
                     FileWriter::FlatbufferMessage const &) override {}
-};
-
-class WriterStandIn : public WriterModule::Base {
-public:
-  WriterStandIn() : WriterModule::Base(true) {}
-  void parse_config(std::string const &) override {}
-  WriterModule::InitResult init_hdf(hdf5::node::Group &,
-                                    std::string const &) override {
-    return {};
-  }
-  WriterModule::InitResult reopen(hdf5::node::Group &) override { return {}; }
-  void write(FileWriter::FlatbufferMessage const &) override {}
 };
 
 class PartitionTest : public ::testing::Test {
@@ -242,6 +231,23 @@ TEST_F(PartitionTest, MessageAfterStopLeewayTriggersFinished) {
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance(Stop);
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+  UnderTest->pollForMessage();
+  EXPECT_TRUE(UnderTest->hasFinished());
+}
+
+TEST_F(PartitionTest, ForceStopStops) {
+  FileWriter::MessageMetaData MetaData{
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          Start.time_since_epoch()),
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+  uint8_t *TempPointer{nullptr};
+  Kafka::MockConsumer::PollReturnType PollReturn{
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+  auto UnderTest = createTestedInstance(Stop);
+  REQUIRE_CALL(*Consumer, poll()).TIMES(2).LR_RETURN(std::move(PollReturn));
+  UnderTest->pollForMessage();
+  EXPECT_FALSE(UnderTest->hasFinished());
+  UnderTest->forceStop();
   UnderTest->pollForMessage();
   EXPECT_TRUE(UnderTest->hasFinished());
 }

@@ -34,6 +34,12 @@ public:
   /// \note This function exist in order to make unit testing possible.
   void start();
 
+  /// \brief Stop the consumer threads.
+  ///
+  /// Non blocking. Will tell the consumer threads to stop as soon as possible.
+  /// There are no guarantees for when the consumers are actually stopped.
+  void stop();
+
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
   bool isDone() { return IsDone.load(); };

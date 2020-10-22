@@ -75,6 +75,13 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
 
 void Partition::start() { addPollTask(); }
 
+void Partition::forceStop() { StopTester.forceStop(); }
+
+void Partition::stop() {
+  Executor.sendLowPriorityWork([=]() { forceStop(); });
+  Executor.sendWork([=]() { forceStop(); });
+}
+
 void Partition::setStopTime(time_point Stop) {
   Executor.sendWork([=]() {
     StopTime = Stop;
@@ -98,7 +105,7 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
                 "topic {} due to error.",
                 PartitionID, Topic);
     } else {
-      LOG_INFO("Done consuming data from partition {} of topic {}.",
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\".",
                PartitionID, Topic);
     }
     return true;
@@ -129,9 +136,16 @@ void Partition::pollForMessage() {
 
   if (Msg.first == Kafka::PollStatus::Message) {
     processMessage(Msg.second);
-    if (MsgFilters.empty() or
-        Msg.second.getMetaData().timestamp() > StopTime + StopTimeLeeway) {
-      LOG_INFO("Done consuming data from partition {} of topic {}.",
+    if (MsgFilters.empty()) {
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as there "
+               "are no remaining filters.",
+               PartitionID, Topic);
+      HasFinished = true;
+      return;
+    } else if (Msg.second.getMetaData().timestamp() >
+               StopTime + StopTimeLeeway) {
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as we "
+               "have reached the stop time.",
                PartitionID, Topic);
       HasFinished = true;
       return;

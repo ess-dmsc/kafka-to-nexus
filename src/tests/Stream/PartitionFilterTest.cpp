@@ -26,6 +26,12 @@ TEST_F(PartitionFilterTest, NoErrorOnInitState) {
   EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
+TEST_F(PartitionFilterTest, StopWhenForced) {
+  UnderTest.forceStop();
+  EXPECT_TRUE(UnderTest.shouldStopPartition(Kafka::PollStatus::Message));
+  EXPECT_FALSE(UnderTest.hasErrorState());
+}
+
 TEST_F(PartitionFilterTest, OnMessageNoStopFlagged) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Message));
   EXPECT_FALSE(UnderTest.hasErrorState());

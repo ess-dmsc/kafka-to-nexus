@@ -41,6 +41,12 @@ void Topic::initMetadataCalls(Kafka::BrokerSettings const &Settings,
   });
 }
 
+void Topic::stop() {
+  for (auto &Stream : ConsumerThreads) {
+    Stream->stop();
+  }
+}
+
 void Topic::setStopTime(std::chrono::system_clock::time_point StopTime) {
   for (auto &Stream : ConsumerThreads) {
     Stream->setStopTime(StopTime);
