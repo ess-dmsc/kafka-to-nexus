@@ -42,13 +42,14 @@ void StreamController::stop() {
     Stream->stop();
   }
   WriterThread.stop();
+  StopNow = true;
 }
 
 using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
-  return !StreamersRemaining.load() and
+  return StopNow or (!StreamersRemaining.load() and
          KafkaSettings.StopTimestamp != time_point(duration(0)) and
-         std::chrono::system_clock::now() > KafkaSettings.StopTimestamp;
+         std::chrono::system_clock::now() > KafkaSettings.StopTimestamp);
 }
 
 std::string StreamController::getJobId() const { return WriterTask->jobID(); }

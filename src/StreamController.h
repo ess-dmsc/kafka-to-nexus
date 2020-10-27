@@ -82,6 +82,7 @@ public:
   std::string getJobId() const override;
 
 private:
+  bool StopNow{false};
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
   void checkIfStreamsAreDone();

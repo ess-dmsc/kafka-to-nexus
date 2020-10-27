@@ -227,7 +227,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     if (Outcome == CmdOutcome::FailedAtJobId and JobId == StopCmd.JobID) {
       Outcome = CmdOutcome::FailedAtCmdId;
     }
-    auto IdValidity = isCmdIdValid(StopCmd.JobID);
+    auto IdValidity = isCmdIdValid(StopCmd.CommandID);
     if (Outcome == CmdOutcome::FailedAtCmdId and IdValidity.first) {
       Outcome = CmdOutcome::FailedAtCmd;
     } else if (not IdValidity.first) {
@@ -262,19 +262,19 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           0}},
         {{CmdOutcome::FailedAtServiceId},
          {LogLevel::debug, false,
-          fmt::format("Rejected start command as the service id was wrong. It "
+          fmt::format("Rejected stop command as the service id was wrong. It "
                       "should be {}, it was {}.",
                       ServiceId, StopCmd.ServiceID),
           0}},
         {{CmdOutcome::FailedAtJobId},
          {LogLevel::warn, true,
-          fmt::format("Rejected start command as the job id was invalid (It "
+          fmt::format("Rejected stop command as the job id was invalid (It "
                       "should be {}, it was: {}).",
                       JobId, StopCmd.JobID),
           400}},
         {{CmdOutcome::FailedAtCmdId},
          {LogLevel::err, true,
-          fmt::format("Rejected start command as the command id was invalid "
+          fmt::format("Rejected stop command as the command id was invalid "
                       "(it was: {}).",
                       StopCmd.CommandID),
           400}},
