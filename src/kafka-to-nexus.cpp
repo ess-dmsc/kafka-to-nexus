@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
   auto UsedServiceName = Options->ServiceName;
   auto UsedRegistrar = MainRegistrar;
   if (not Options->ServiceName.empty()) {
-    UsedRegistrar = MainRegistrar.getNewRegistrar(Options->ServiceName);
+    UsedRegistrar = MainRegistrar.getNewRegistrar(Options->getServiceId());
   }
 
   std::signal(SIGINT, signal_handler);
