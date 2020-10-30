@@ -26,9 +26,8 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     start_time = unix_time_milliseconds(datetime.utcnow()) - 1000
     stop_time = start_time + 1000
     # Ensure TEST_sampleEnv topic exists
-    publish_f142_message(
-        producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
-    )
+    publish_f142_message(producer, "TEST_sampleEnv",
+                         int(unix_time_milliseconds(datetime.utcnow())))
     check(producer.flush(5) == 0, "Unable to flush kafka messages.")
 
     topic = "TEST_writerCommand"
@@ -74,8 +73,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
 
 
 def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
-    docker_compose_stop_command,
-):
+    docker_compose_stop_command, ):
     producer = create_producer()
 
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]
@@ -85,7 +83,8 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
 
     # Publish some data with timestamps in the past(these are from 2019 - 06 - 12)
     for data_topic in data_topics:
-        for time_in_ms_after_epoch in range(1_560_330_000_000, 1_560_330_000_200):
+        for time_in_ms_after_epoch in range(1_560_330_000_000,
+                                            1_560_330_000_200):
             if time_in_ms_after_epoch == first_alarm_change_time_ms:
                 # EPICS alarm goes into HIGH state
                 publish_f142_message(
@@ -105,7 +104,8 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
                     alarm_severity=AlarmSeverity.NO_ALARM,
                 )
             else:
-                publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
+                publish_f142_message(producer, data_topic,
+                                     time_in_ms_after_epoch)
     check(producer.flush(5) == 0, "Unable to flush kafka messages.")
     sleep(5)
 
@@ -146,18 +146,51 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
         # First alarm change
         assert file["entry/historical_data_1/alarm_status"][0] == b"HIGH"
         assert file["entry/historical_data_1/alarm_severity"][0] == b"MAJOR"
-        assert (
-            file["entry/historical_data_1/alarm_time"][0]
-            == first_alarm_change_time_ms * 1000000
-        )  # ns
+        assert (file["entry/historical_data_1/alarm_time"][0] ==
+                first_alarm_change_time_ms * 1000000)  # ns
         # Second alarm change
         assert file["entry/historical_data_1/alarm_status"][1] == b"NO_ALARM"
         assert file["entry/historical_data_1/alarm_severity"][1] == b"NO_ALARM"
-        assert (
-            file["entry/historical_data_1/alarm_time"][1]
-            == second_alarm_change_time_ms * 1000000
-        )  # ns
+        assert (file["entry/historical_data_1/alarm_time"][1] ==
+                second_alarm_change_time_ms * 1000000)  # ns
 
-        assert (
-            file["entry/no_data/time"].len() == 0
-        ), "Expect there to be no data as the source topic is empty"
+        assert (file["entry/no_data/time"].len() == 0
+                ), "Expect there to be no data as the source topic is empty"
+
+
+def test_filewriter_stops_when_only_receives_periodic_updates_from_forwarder(
+    docker_compose_stop_command, ):
+    producer = create_producer()
+
+    data_topic = "TEST_sampleEnv"
+
+    command_topic = "TEST_writerCommand"
+
+    start_time = unix_time_milliseconds(datetime.utcnow())
+    stop_time = start_time + 10000
+
+    # Publish some data with repeat timestamps from just before start of run
+    timestamp_of_last_pv_value_change = int(start_time) - 100
+    for time_in_ms_after_epoch in (timestamp_of_last_pv_value_change,
+                                   timestamp_of_last_pv_value_change,
+                                   timestamp_of_last_pv_value_change):
+        publish_f142_message(producer,
+                             data_topic,
+                             time_in_ms_after_epoch,
+                             source_name="epics_thing")
+
+    output_file = "output_file_periodic_data.nxs"
+    publish_run_start_message(
+        producer,
+        "commands/periodic_update.json",
+        output_file,
+        start_time=int(start_time),
+        stop_time=int(stop_time),
+        topic=command_topic,
+    )
+
+    sleep(20)
+
+    filepath = f"output-files/{output_file}"
+    with OpenNexusFileWhenAvailable(filepath) as file:
+        assert (file["entry/EPICS_device/time"].len() == 1)

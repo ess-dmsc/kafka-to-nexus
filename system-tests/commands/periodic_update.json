@@ -1,0 +1,31 @@
+{
+  "children": [
+    {
+      "type": "group",
+      "name": "entry",
+      "children": [
+        {
+          "type": "group",
+          "name": "EPICS_device",
+          "children": [
+            {
+              "type": "stream",
+              "stream": {
+                "type": "double",
+                "writer_module": "f142",
+                "source": "epics_thing",
+                "topic": "TEST_sampleEnv"
+              }
+            }
+          ]
+        }
+      ],
+      "attributes": [
+        {
+          "name": "NX_class",
+          "values": "NXentry"
+        }
+      ]
+    }
+  ]
+}
