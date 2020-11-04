@@ -15,7 +15,7 @@ services:
       KAFKA_MESSAGE_MAX_BYTES: 20000000
       KAFKA_BROKER_ID: 0
       KAFKA_LOG_RETENTION_MS: -1  # keep data forever, required for tests involving fake "historical" data
-      KAFKA_CREATE_TOPICS: "TEST_writer_jobs:1:1,TEST_writer_commands:1:1"
+      KAFKA_CREATE_TOPICS: "TEST_writer_jobs:1:1,TEST_writer_commands:1:1,TEST_forwarderConfig:1:1,TEST_forwarderStatusLR:1:1,TEST_forwarderDataLR:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 

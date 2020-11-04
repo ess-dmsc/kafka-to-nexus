@@ -42,6 +42,15 @@ def wait_start_job(worker_command: WorkerCommandChannel, write_job: WriteJob, ti
     while not start_handler.is_done():
         if start_time + timedelta(seconds=timeout) < datetime.now():
             raise RuntimeError("Timed out when waiting for write job to start")
+    return job_handler
+
+
+def wait_set_stop_now(job: JobHandler, timeout: float):
+    stop_handler = job.set_stop_time(datetime.now())
+    start_time = datetime.now()
+    while not stop_handler.is_done():
+        if start_time + timedelta(seconds=timeout) < datetime.now():
+            raise RuntimeError("Timed out when setting new stop time for job.")
 
 
 def wait_fail_start_job(worker_command: WorkerCommandChannel, write_job: WriteJob, timeout: float):

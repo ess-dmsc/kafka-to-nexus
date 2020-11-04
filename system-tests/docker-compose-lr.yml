@@ -19,14 +19,3 @@ services:
       - ./config-files/forwarder_config_lr.ini:/forwarder_config_lr.ini
       - ./config-files/forwarder_command_lr.json:/forwarder_command_lr.json
 
-  filewriter:
-    depends_on:
-      - forwarder
-    image: filewriter-image:latest
-    network_mode: "host"
-    environment:
-      CONFIG_FILE: "/longrunning.ini"
-    volumes:
-      - ./config-files/longrunning.ini:/longrunning.ini
-      - ./output-files/:/output-files/
-      - ./logs/:/filewriter_logs/

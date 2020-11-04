@@ -1,6 +1,5 @@
 import pytest
 import docker
-from time import sleep
 from helpers.kafkahelpers import (
     create_producer,
     consume_everything,
@@ -8,6 +7,10 @@ from helpers.kafkahelpers import (
 from helpers.nexushelpers import OpenNexusFile
 from math import isclose
 from streaming_data_types.status_x5f2 import deserialise_x5f2
+from file_writer_control.WriteJob import WriteJob
+from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers, wait_set_stop_now
+from datetime import datetime, timedelta
+from time import sleep
 
 
 def change_pv_value(pvname, value):
@@ -33,41 +36,32 @@ def change_pv_value(pvname, value):
     print(output.decode("utf-8"), flush=True)
 
 
-# @pytest.mark.skip(reason="Long running test disabled by default")
-# def test_long_run(docker_compose_long_running):
-#     producer = create_producer()
-#     sleep(20)
-#     # Start file writing
-#     job_id = publish_run_start_message(
-#         producer,
-#         "commands/nexus_structure_long_running.json",
-#         nexus_filename="output_file_lr.nxs",
-#         topic="TEST_writerCommandLR",
-#         start_time=int(docker_compose_long_running),
-#     )
-#     sleep(10)
-#     # Minimum length of the test is determined by (pv_updates * 3) + 10 seconds
-#     pv_updates = 6000
-#     # range is exclusive of the last number, so in order to get 1 to pv_updates we need to use pv_updates+1
-#     for i in range(1, pv_updates + 1):
-#         change_pv_value("SIMPLE:DOUBLE", i)
-#         sleep(3)
-#
-#     publish_run_stop_message(producer, job_id=job_id, topic="TEST_writerCommandLR")
-#     sleep(30)
-#
-#     filepath = "output-files/output_file_lr.nxs"
-#     with OpenNexusFileWhenAvailable(filepath) as file:
-#         counter = 1
-#         # check values are contiguous
-#         for value in file["entry/cont_data/value"]:
-#             assert isclose(value, counter)
-#             counter += 1
-#
-#     # check that the last value is the same as the number of updates
-#     assert counter == pv_updates + 1
-#
-#     with open("logs/lr_status_messages.log", "w+") as file:
-#         status_messages = consume_everything("TEST_writerStatus")
-#         for msg in status_messages:
-#             file.write(str(deserialise_x5f2(msg.value())) + "\n")
+@pytest.mark.skip(reason="Long running test disabled by default")
+def test_long_run(writer_channel, start_lr_images):
+    file_name = "output_file_lr.nxs"
+    with open("commands/nexus_structure_long_running.json", 'r') as f:
+        structure = f.read()
+    start_time = datetime.now()
+    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
+                         start_time=start_time, stop_time=start_time + timedelta(days=365))
+    job_handler = wait_start_job(writer_channel, write_job, timeout=20)
+
+    pv_updates = 6000
+    # range is exclusive of the last number, so in order to get 1 to pv_updates we need to use pv_updates+1
+    for i in range(1, pv_updates + 1):
+        change_pv_value("SIMPLE:DOUBLE", i)
+        sleep(3)
+
+    wait_set_stop_now(job_handler, timeout=20)
+    wait_no_working_writers(writer_channel, timeout=30)
+
+    file_path = f"output-files/{file_name}"
+    with OpenNexusFile(file_path) as file:
+        counter = 1
+        # check values are contiguous
+        for value in file["entry/cont_data/value"]:
+            assert isclose(value, counter)
+            counter += 1
+
+    # check that the last value is the same as the number of updates
+    assert counter == pv_updates + 1
