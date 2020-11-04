@@ -19,15 +19,15 @@ then
 fi
 export LD_LIBRARY_PATH=/home/jenkins/build/lib/
 
-COMMAND_URI="${COMMAND_URI:=//localhost:9092/TEST_writerCommand}"
-STATUS_URI="${STATUS_URI:=//localhost:9092/TEST_writerStatus}"
+COMMAND_STATUS_URI="${COMMAND_URI:=//localhost:9092/TEST_writer_commands}"
+JOB_POOL_URI="${STATUS_URI:=//localhost:9092/TEST_writer_jobs}"
 GRAYLOG_ADDRESS="${GRAYLOG_ADDRESS:=localhost:12201}"
 HDF_OUTPUT_PREFIX="${HDF_OUTPUT_PREFIX:=/output-files/}"
 
 if [ -z "$CONFIG_FILE" ]
 then
-    COMMAND=/home/jenkins/build/bin/kafka-to-nexus\ --command-uri\ "${COMMAND_URI}"\ \
-      --status-uri\ "${STATUS_URI}"\ \
+    COMMAND=/home/jenkins/build/bin/kafka-to-nexus\ --command-status-uri\ "${COMMAND_STATUS_URI}"\ \
+      --job-pool-uri\ "${JOB_POOL_URI}"\ \
       --graylog-logger-address\ "${GRAYLOG_ADDRESS}"\ \
       --hdf-output-prefix\ "${HDF_OUTPUT_PREFIX}"\ \
       -v\ "${LOG_LEVEL:=3}"
@@ -36,7 +36,7 @@ then
     $COMMAND
 
 else
-    COMMAND=/home/jenkins/build/bin/kafka-to-nexus\ --config-file\ "${CONFIG_FILE}"
+    COMMAND=/home/jenkins/build/bin/kafka-to-nexus\ --config-file\ "${CONFIG_FILE}"\ --log-file\ "${LOG_FILE}"
 
     echo $COMMAND
     $COMMAND

@@ -1,112 +1,54 @@
-from helpers.kafkahelpers import (
-    consume_everything,
-    create_producer,
-    create_consumer,
-    publish_f142_message,
-    publish_run_start_message,
-    publish_run_stop_message,
-)
-from helpers.timehelpers import unix_time_milliseconds
-from datetime import datetime
-import json
-from time import sleep
-import pytest
-from streaming_data_types.status_x5f2 import deserialise_x5f2
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from file_writer_control.CommandStatus import CommandState
+from file_writer_control.WriteJob import WriteJob
+from file_writer_control.InThreadStatusTracker import COMMAND_STATUS_TIMEOUT
+from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers, wait_fail_start_job, stop_all_jobs
 
 
-@pytest.mark.skip("This behaviour is not implemented currently")
-def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
-    producer = create_producer()
-    sleep(20)
-    service_id_1 = "filewriter1"
-    service_id_2 = "filewriter2"
-    command_topic = "TEST_writerCommandMultiple"
-    job_id = publish_run_start_message(
-        producer,
-        "commands/nexus_structure.json",
-        nexus_filename="output_file_ignores_stop_1.nxs",
-        topic=command_topic,
-        service_id=service_id_1,
-    )
-    publish_run_start_message(
-        producer,
-        "commands/nexus_structure.json",
-        nexus_filename="output_file_ignores_stop_2.nxs",
-        topic=command_topic,
-        service_id=service_id_2,
-    )
+def test_ignores_commands_with_incorrect_id(writer_channel):
+    wait_writers_available(writer_channel, nr_of=2, timeout=10)
+    now = datetime.now()
+    file_name = "output_file_stop_id.nxs"
+    with open("commands/nexus_structure.json", 'r') as f:
+        structure = f.read()
+    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
+                         start_time=now, stop_time=now+timedelta(days=30))
+    wait_start_job(writer_channel, write_job, timeout=20)
 
-    sleep(10)
+    cmd_handler = writer_channel.try_send_stop_now("incorrect service id", write_job.job_id)
 
-    publish_run_stop_message(
-        producer, job_id, topic=command_topic, service_id=service_id_2
-    )
+    time.sleep(COMMAND_STATUS_TIMEOUT.total_seconds() + 2)
+    assert cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
 
-    consumer = create_consumer()
-    consumer.subscribe(["TEST_writerStatus2"])
-
-    # Poll a few times on the status topic to see if the filewriter2 has stopped writing.
-    stopped = False
-    maximum_tries = 30
-    for i in range(maximum_tries):
-        msg = consumer.poll()
-        if msg is None or msg.error():
-            continue
-        status_info = deserialise_x5f2(msg.value())
-        if json.loads(status_info.status_json)["file_being_written"] == "":
-            # Filewriter2 is not currently writing a file => stop command has been processed.
-            stopped = True
+    cmd_handler = writer_channel.try_send_stop_now(write_job.service_id, "wrong job id")
+    start_time = datetime.now()
+    timeout = timedelta(seconds=10)
+    while True:
+        if cmd_handler.get_state() == CommandState.ERROR:
             break
-        if i == maximum_tries - 1:
-            pytest.fail("filewriter2 failed to stop after being sent stop message")
-        sleep(1)
+        if start_time + timeout < datetime.now():
+            assert False
+        time.sleep(1)
 
-    assert stopped
-
-    sleep(5)
-    consumer.unsubscribe()
-    consumer.subscribe(["TEST_writerStatus1"])
-    writer1msg = consumer.poll()
-
-    # Check filewriter1's job queue is not empty
-    status_info = deserialise_x5f2(writer1msg.value())
-    assert json.loads(json.loads(status_info.status_json))["file_being_written"] != ""
+    stop_all_jobs(writer_channel)
+    wait_no_working_writers(writer_channel, timeout=0)
+    file_path = f"output-files/{file_name}"
+    assert Path(file_path).is_file()
 
 
-def test_ignores_commands_with_incorrect_job_id(docker_compose):
-    producer = create_producer()
-    sleep(10)
+def test_ignores_commands_with_incorrect_job_id(writer_channel):
+    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+    now = datetime.now()
+    file_name = "output_file_job_id.nxs"
+    with open("commands/nexus_structure.json", 'r') as f:
+        structure = f.read()
+    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
+                         start_time=now)
+    write_job.job_id = "invalid id"
+    wait_fail_start_job(writer_channel, write_job, timeout=20)
 
-    # Ensure TEST_sampleEnv topic exists
-    publish_f142_message(
-        producer, "TEST_sampleEnv", int(unix_time_milliseconds(datetime.utcnow()))
-    )
-
-    sleep(10)
-
-    # Start file writing
-    job_id = publish_run_start_message(
-        producer,
-        "commands/nexus_structure.json",
-        "output_file_jobid.nxs",
-        start_time=int(docker_compose),
-    )
-
-    sleep(10)
-
-    # Request stop but with slightly wrong job_id
-    publish_run_stop_message(producer, job_id[:-1])
-
-    msgs = consume_everything("TEST_writerStatus")
-
-    # Poll a few times on the status topic and check the final message read
-    # indicates that is still running
-    message = msgs[-1]
-    status_info = deserialise_x5f2(message.value())
-    message = json.loads(status_info.status_json)
-    if message["file_being_written"] == "":
-        running = False
-    else:
-        running = True
-
-    assert running
+    wait_no_working_writers(writer_channel, timeout=0)
+    file_path = f"output-files/{file_name}"
+    assert not Path(file_path).is_file()

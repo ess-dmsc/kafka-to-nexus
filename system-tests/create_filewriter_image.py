@@ -6,7 +6,7 @@ import hashlib
 import io
 import argparse
 
-IMAGE_NAME = "screamingudder/ubuntu18.04-build-node:3.2.3"
+IMAGE_NAME = "screamingudder/ubuntu18.04-build-node:3.3.0"
 TEST_IMAGE_NAME = "filewriter-image"
 CONTAINER_NAME = "filewriter-system-test"
 DEBUG_MODE = False

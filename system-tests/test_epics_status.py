@@ -1,50 +1,42 @@
 from helpers.kafkahelpers import (
     create_producer,
-    publish_run_start_message,
-    publish_run_stop_message,
     publish_ep00_message,
 )
-from helpers.nexushelpers import OpenNexusFileWhenAvailable
-from helpers.timehelpers import milliseconds_to_nanoseconds, current_unix_time_ms
-from time import sleep
+from helpers.nexushelpers import OpenNexusFile
+from datetime import datetime, timedelta
 from streaming_data_types.fbschemas.epics_connection_info_ep00.EventType import (
     EventType,
 )
+from file_writer_control.WriteJob import WriteJob
+from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers
 
 
-def test_ep00(docker_compose):
+def test_ep00(writer_channel):
     producer = create_producer()
     topic = "TEST_epicsConnectionStatus"
-    sleep(10)
 
-    # Start file writing
-    job_id = publish_run_start_message(
-        producer,
-        "commands/nexus_structure_epics_status.json",
-        "output_file_ep00.nxs",
-        start_time=current_unix_time_ms(),
-    )
-    sleep(5)
-    first_timestamp = current_unix_time_ms()
-    publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, first_timestamp)
-    second_timestamp = current_unix_time_ms()
+    file_name = "output_file_ep00.nxs"
+    with open("commands/nexus_structure_epics_status.json", 'r') as f:
+        structure = f.read()
+    start_time = datetime.now() - timedelta(seconds=60)
+    publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, start_time)
     publish_ep00_message(
-        producer, topic, EventType.CONNECTED, kafka_timestamp=second_timestamp
+        producer, topic, EventType.CONNECTED, timestamp=start_time + timedelta(seconds=0.01)
     )
 
-    # Give it some time to accumulate data
-    sleep(10)
+    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
+                         start_time=start_time, stop_time=datetime.now())
+    wait_start_job(writer_channel, write_job, timeout=20)
 
-    # Stop file writing
-    publish_run_stop_message(producer, job_id, stop_time=current_unix_time_ms())
+    wait_no_working_writers(writer_channel, timeout=30)
 
-    filepath = "output-files/output_file_ep00.nxs"
-    with OpenNexusFileWhenAvailable(filepath) as file:
+    file_path = f"output-files/{file_name}"
+    with OpenNexusFile(file_path) as file:
         assert file["EpicsConnectionStatus/connection_status_time"][
             0
-        ] == milliseconds_to_nanoseconds(first_timestamp)
+        ] == int(start_time.timestamp() * 1e9)
         assert file["EpicsConnectionStatus/connection_status"][0] == b"NEVER_CONNECTED"
         assert file["EpicsConnectionStatus/connection_status_time"][
             1
-        ] == milliseconds_to_nanoseconds(second_timestamp)
+        ] == int((start_time + timedelta(seconds=0.01)).timestamp() * 1e9)
         assert file["EpicsConnectionStatus/connection_status"][1] == b"CONNECTED"

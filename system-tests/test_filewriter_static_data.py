@@ -1,31 +1,26 @@
 from helpers.kafkahelpers import (
     create_producer,
-    publish_run_start_message,
-    publish_run_stop_message,
 )
-from helpers.nexushelpers import OpenNexusFileWhenAvailable
-from time import sleep
+from helpers.nexushelpers import OpenNexusFile
+from datetime import datetime, timedelta
 import numpy as np
+from file_writer_control.WriteJob import WriteJob
+from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers
 
 
-def test_static_data_reaches_file(docker_compose):
-    producer = create_producer()
-    sleep(10)
-    # Start file writing
-    job_id = publish_run_start_message(
-        producer,
-        "commands/nexus_structure_static.json",
-        "output_file_static.nxs",
-        start_time=int(docker_compose),
-    )
+def test_static_data_reaches_file(writer_channel):
+    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+    now = datetime.now()
+    file_name = "output_file_static.nxs"
+    with open("commands/nexus_structure_static.json", 'r') as f:
+        structure = f.read()
+    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092", start_time=now-timedelta(seconds=10), stop_time = now)
+    wait_start_job(writer_channel, write_job, timeout=20)
 
-    # Give it some time to accumulate data
-    sleep(10)
-    # Stop file writing
-    publish_run_stop_message(producer, job_id=job_id)
+    wait_no_working_writers(writer_channel, timeout=30)
 
-    filepath = "output-files/output_file_static.nxs"
-    with OpenNexusFileWhenAvailable(filepath) as file:
+    file_path = f"output-files/{file_name}"
+    with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
         assert file["entry/start_time"][()] == "2016-04-12T02:58:52"
         assert file["entry/end_time"][()] == "2016-04-12T03:29:11"

@@ -1,50 +1,42 @@
 from helpers.kafkahelpers import (
     create_producer,
-    publish_run_start_message,
     publish_f142_message,
 )
-from helpers.nexushelpers import OpenNexusFileWhenAvailable
-from helpers.timehelpers import unix_time_milliseconds
-from time import sleep
-from datetime import datetime
+from helpers.nexushelpers import OpenNexusFile
+from datetime import datetime, timedelta
 import pytest
 
-
-def check(condition, fail_string):
-    if not condition:
-        pytest.fail(fail_string)
+from file_writer_control.WriteJob import WriteJob
+from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers
 
 
-def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
+def test_two_different_writer_modules_with_same_flatbuffer_id(writer_channel):
     producer = create_producer()
-    start_time = unix_time_milliseconds(datetime.utcnow()) - 10000
+    start_time = datetime.now() - timedelta(seconds=10)
     for i in range(10):
+        current_time = start_time + timedelta(seconds=1) * i
         publish_f142_message(
             producer,
             "TEST_sampleEnv",
-            int(start_time + i * 1000),
+            current_time,
             source_name="test_source_1",
         )
         publish_f142_message(
             producer,
             "TEST_sampleEnv",
-            int(start_time + i * 1000),
+            current_time,
             source_name="test_source_2",
         )
-    check(producer.flush(5) == 0, "Unable to flush kafka messages.")
-    # Start file writing
-    publish_run_start_message(
-        producer,
-        "commands/nexus_structure_multiple_modules.json",
-        "output_file_multiple_modules.nxs",
-        start_time=int(start_time),
-        stop_time=int(start_time + 5 * 1000),
-    )
-    # Give it some time to accumulate data
-    sleep(10)
+    file_name = "output_file_multiple_modules.nxs"
+    with open("commands/nexus_structure_multiple_modules.json", 'r') as f:
+        structure = f.read()
+    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
+                         start_time=start_time, stop_time=datetime.now())
+    wait_start_job(writer_channel, write_job, timeout=20)
+    wait_no_working_writers(writer_channel, timeout=30)
 
-    filepath = "output-files/output_file_multiple_modules.nxs"
-    with OpenNexusFileWhenAvailable(filepath) as file:
+    file_path = f"output-files/{file_name}"
+    with OpenNexusFile(file_path) as file:
         assert (
             len(file["entry/sample/dataset1/time"][:]) > 0
             and len(file["entry/sample/dataset1/value"][:]) > 0
