@@ -47,7 +47,9 @@ def wait_start_job(
         if start_time + timedelta(seconds=timeout) < datetime.now():
             raise RuntimeError("Timed out when waiting for write job to start")
         elif start_handler.get_state() == CommandState.ERROR:
-            raise RuntimeError(f"Got error when trying to start job. Message was: {start_handler.get_message()}")
+            raise RuntimeError(
+                f"Got error when trying to start job. Message was: {start_handler.get_message()}"
+            )
         time.sleep(0.5)
     return job_handler
 
@@ -59,7 +61,9 @@ def wait_set_stop_now(job: JobHandler, timeout: float):
         if start_time + timedelta(seconds=timeout) < datetime.now():
             raise RuntimeError("Timed out when setting new stop time for job.")
         elif stop_handler.get_state() == CommandState.ERROR:
-            raise RuntimeError(f"Got error when trying to stop job. Message was: {start_handler.get_message()}")
+            raise RuntimeError(
+                f"Got error when trying to stop job. Message was: {start_handler.get_message()}"
+            )
         time.sleep(0.5)
 
 
