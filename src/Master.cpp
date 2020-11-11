@@ -85,7 +85,9 @@ bool Master::isWriting() const { return CurrentState == WriterState::Writing; }
 
 void Master::setToIdle() {
   if (CurrentStreamController->hasErrorState()) {
-    CommandAndControl->sendErrorEncounteredMessage(CurrentFileName, CurrentMetadata, CurrentStreamController->errorMessage());
+    CommandAndControl->sendErrorEncounteredMessage(
+        CurrentFileName, CurrentMetadata,
+        CurrentStreamController->errorMessage());
   } else {
     CommandAndControl->sendHasStoppedMessage(CurrentFileName, CurrentMetadata);
   }

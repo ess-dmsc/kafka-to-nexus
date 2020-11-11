@@ -71,7 +71,7 @@ TEST_F(CommandParserHappyStartTests, IfStopPresentThenExtractedCorrectly) {
             StartInfo.StopTime);
 }
 
- TEST_F(CommandParserHappyStartTests, JobIdExtraction) {
+TEST_F(CommandParserHappyStartTests, JobIdExtraction) {
   ASSERT_EQ(JobIDInput, StartInfo.JobID);
 }
 

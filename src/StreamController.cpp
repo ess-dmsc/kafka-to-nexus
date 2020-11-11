@@ -47,9 +47,10 @@ void StreamController::stop() {
 
 using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
-  return StopNow or (!StreamersRemaining.load() and
-         KafkaSettings.StopTimestamp != time_point(duration(0)) and
-         std::chrono::system_clock::now() > KafkaSettings.StopTimestamp);
+  return StopNow or
+         (!StreamersRemaining.load() and
+          KafkaSettings.StopTimestamp != time_point(duration(0)) and
+          std::chrono::system_clock::now() > KafkaSettings.StopTimestamp);
 }
 
 std::string StreamController::getJobId() const { return WriterTask->jobID(); }
@@ -103,9 +104,7 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
   Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
 }
 
-bool StreamController::hasErrorState() const {
-  return HasError;
-}
+bool StreamController::hasErrorState() const { return HasError; }
 
 std::string StreamController::errorMessage() {
   std::lock_guard Guard(ErrorMsgMutex);
@@ -128,7 +127,8 @@ void StreamController::checkIfStreamsAreDone() {
   } catch (std::exception &E) {
     HasError = true;
     std::lock_guard Guard(ErrorMsgMutex);
-    ErrorMessage = fmt::format("Got stream error. The error message was: {}", E.what());
+    ErrorMessage =
+        fmt::format("Got stream error. The error message was: {}", E.what());
     stop();
     StreamersRemaining.store(false);
   }
