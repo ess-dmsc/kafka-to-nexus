@@ -28,7 +28,6 @@ set(UnitTests_SRC
         Metrics/CarbonTestServer.cpp
         Metrics/MetricsReporterTest.cpp
         Metrics/LogSinkTest.cpp
-        MasterTests.cpp
         MetaDataQueryTests.cpp
         Stream/PartitionFilterTest.cpp
         Stream/MessageWriterTests.cpp
@@ -43,7 +42,9 @@ set(UnitTests_SRC
         helpers/StatusHelpers.cpp
         HelperTests.cpp
         CommandSystem/CommandListenerTests.cpp
-		CommandSystem/CommandHandlerTests.cpp CommandSystem/IdCheckerTests.cpp)
+		CommandSystem/CommandHandlerTests.cpp
+		CommandSystem/IdCheckerTests.cpp
+		)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h

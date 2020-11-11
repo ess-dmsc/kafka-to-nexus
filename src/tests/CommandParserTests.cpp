@@ -71,10 +71,9 @@ TEST_F(CommandParserHappyStartTests, IfStopPresentThenExtractedCorrectly) {
             StartInfo.StopTime);
 }
 
-// TEST_F(CommandParserHappyStartTests,
-// IfServiceIdPresentThenExtractedCorrectly) {
-//  ASSERT_EQ(ServiceIDInput, StartInfo.ServiceID);
-//}
+ TEST_F(CommandParserHappyStartTests, JobIdExtraction) {
+  ASSERT_EQ(JobIDInput, StartInfo.JobID);
+}
 
 TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
   std::string const EmptyJobID;
