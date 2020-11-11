@@ -18,6 +18,7 @@ from helpers.writer import (
 
 
 def test_start_and_stop_time_are_in_the_past(writer_channel):
+    wait_writers_available(writer_channel, nr_of=1, timeout=10)
     producer = create_producer()
 
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]

@@ -16,6 +16,7 @@ from helpers.writer import (
 
 
 def test_ep00(writer_channel):
+    wait_writers_available(writer_channel, nr_of=1, timeout=10)
     producer = create_producer()
     topic = "TEST_epicsConnectionStatus"
 
