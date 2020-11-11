@@ -25,8 +25,10 @@ uint32_t adler32(std::string const &Input) {
   return (b << 16) | a;
 }
 
-std::string const JobIdNoMatchString{"Job-Id did not match the reg.-ex. (id was: \"{:s}\""};
-std::string const JobIdCheckSumWrong{"Job-Id checksum was wrong. It was: 0x{:s}, it should be 0x{:08X}"};
+std::string const JobIdNoMatchString{
+    "Job-Id did not match the reg.-ex. (id was: \"{:s}\""};
+std::string const JobIdCheckSumWrong{
+    "Job-Id checksum was wrong. It was: 0x{:s}, it should be 0x{:08X}"};
 std::string const JobIdTimestampBad{"Job-Id creation time is bad."};
 std::string const JobIdIdentifierKnown{
     "Job-Id (\"{}\")has already been used and is therefore rejected."};
@@ -46,7 +48,8 @@ std::pair<bool, std::string> isJobIdValid(std::string const &JobId,
   }
   auto CalculatedCheckSum = adler32(Match[1]);
   if (Match[6] != fmt::format("{:08X}", CalculatedCheckSum)) {
-    return {false, fmt::format(JobIdCheckSumWrong, std::string(Match[6]), CalculatedCheckSum)};
+    return {false, fmt::format(JobIdCheckSumWrong, std::string(Match[6]),
+                               CalculatedCheckSum)};
   }
   static IdTracker KnownIDs;
   if (not KnownIDs.checkAndRegisterNewId(JobId)) {
