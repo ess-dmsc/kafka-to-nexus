@@ -25,11 +25,11 @@ uint32_t adler32(std::string const &Input) {
   return (b << 16) | a;
 }
 
-std::string const JobIdNoMatchString{"Job-Id did not match the reg.-ex."};
-std::string const JobIdCheckSumWrong{"Job-Id checksum was wrong."};
+std::string const JobIdNoMatchString{"Job-Id did not match the reg.-ex. (id was: \"{:s}\""};
+std::string const JobIdCheckSumWrong{"Job-Id checksum was wrong. It was: 0x{:s}, it should be 0x{:08X}"};
 std::string const JobIdTimestampBad{"Job-Id creation time is bad."};
 std::string const JobIdIdentifierKnown{
-    "Job-Id has already been used and is therefore rejected."};
+    "Job-Id (\"{}\")has already been used and is therefore rejected."};
 
 std::pair<bool, std::string> isJobIdValid(std::string const &JobId,
                                           time_point Now) {
@@ -38,18 +38,19 @@ std::pair<bool, std::string> isJobIdValid(std::string const &JobId,
   std::smatch Match;
   std::regex_match(JobId, Match, JobIdRegex);
   if (Match.empty()) {
-    return {false, JobIdNoMatchString};
+    return {false, fmt::format(JobIdNoMatchString, JobId)};
   }
   int64_t Timestamp = std::stoll(Match[4], nullptr, 16) ^ 0xFFFFFFFF;
   if (abs(toSeconds(Now) - Timestamp) > CommandTimeLimit) {
     return {false, JobIdTimestampBad};
   }
-  if (Match[6] != fmt::format("{:08X}", adler32(Match[1]))) {
-    return {false, JobIdCheckSumWrong};
+  auto CalculatedCheckSum = adler32(Match[1]);
+  if (Match[6] != fmt::format("{:08X}", CalculatedCheckSum)) {
+    return {false, fmt::format(JobIdCheckSumWrong, std::string(Match[6]), CalculatedCheckSum)};
   }
   static IdTracker KnownIDs;
   if (not KnownIDs.checkAndRegisterNewId(JobId)) {
-    return {false, JobIdIdentifierKnown};
+    return {false, fmt::format(JobIdIdentifierKnown, JobId)};
   }
   return {true, {}};
 }
