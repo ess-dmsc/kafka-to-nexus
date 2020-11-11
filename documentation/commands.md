@@ -1,58 +1,18 @@
 # Commands
 
-Commands in the form of JSON messages are used to start and stop file writing.
+Commands are in the form of flatbuffers as defined in [this repository](https://github.com/ess-dmsc/streaming-data-types).
+We strongly recommend that you do not use this repo directly but instead make use of the [*file-writer-control*](https://github.com/ess-dmsc/file-writer-control) Python library.
 
 Commands are sent through Kafka via the broker and topic specified by the
-`--command-uri` option.
-
-Note: some example commands can be found in the system tests.
-
-## Command to start writing
-
-The start command consists of a number of parameters which are defined as key-value pairs in the JSON.
-
-Required:
-
-- cmd: The command name, must be `filewriter_new`
-- job_id: A unique identifier for the request, a UUID for example
-- broker: The Kafka broker to use for data.
-- file_attributes: Dictionary specifying the details of the file to be written:
-    * file_name: The file name
-- nexus_structure: Defines the structure of the NeXus file to be written
-
-Optional:
-
-- start_time: The start time in milliseconds (UNIX epoch) for data to be written from. If not supplied then the timestamp of the Kafka message containing the start command is used.
-- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. If not supplied then file writing continues until a stop command is received
-- service_id: The identifier for the instance of the file-writer that should handle this command. Only needed if multiple file-writers present.
-
-
-An example command with the `nexus_structure` skipped for brevity:
-
-```json
-{
-  "cmd": "FileWriter_new",
-  "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
-  "broker": "localhost:9092",
-  "start_time": 1547198055000,
-  "stop_time": 1547200800000,
-  "service_id": "filewriter1",
-  "file_attributes": {
-    "file_name": "my_nexus_file.h5"
-  } ,
-  "nexus_structure": {
-    # Skipped for brevity
-  }
-}
-```
+`--command-status-uri` command line argument. Additionally, it is also possible to send a start-job-command to a "job-pool" topic. This topic is set with the `--job-pool-topic` argument.
 
 ### Defining a NeXus structure
 
-The `nexus_structure` represents the HDF root object of the file to be written.
+One of the flatbuffer fields in the start command is the `nexus_structure`, which represents the layout/directory tree of the HDF file created by the file-writer.
 For more detailed information on all aspects of HDF5 see the [official HDF5 documentation](https://portal.hdfgroup.org/display/HDF5/HDF5).
 For more information about NeXus see the [NeXus website](https://www.nexusformat.org/).
 
-Groups are the container mechanism by which HDF5 files are organised; they can be thought of as analogous to directories in a file system. In the file-writer, they can contain datasets, streams, links or, even, other groups in their array of `children`. They can also have attributes defined which are used to provide metadata about the group; see [below](Attributes) for more information on attributes.
+Groups are the container mechanism by which HDF5 files are organised; they can be thought of as analogous to directories in a file system. In the file-writer, they can contain datasets, streams, links or, even, other groups in their array of `children`. They can also have attributes defined which are used to provide metadata about the group; see [below](#Attributes) for more information on attributes.
 
 NeXus classes are defined using a group with an attribute named `NX_class` which contains the relevant class name.
 Other NeXus-related information can also defined using attributes. See the [NeXus website](https://www.nexusformat.org/) for more information.
@@ -60,7 +20,7 @@ Other NeXus-related information can also defined using attributes. See the [NeXu
 The following shows an example of adding a group to a structure:
 
 ```JSON
-"nexus_structure": {
+{
     "children": [
       {
         "type": "group",
@@ -102,7 +62,7 @@ Note: some streams are automatically assigned a NeXus class based on the `writer
 In the following example a dataset is defined:
 
 ```JSON
-"nexus_structure": {
+{
     "children": [
       {
         "name": "some_static_data",
@@ -125,7 +85,7 @@ In the following example a dataset is defined:
             2,
             1
           ]
-        ]
+        ],
         "attributes": {
           "NX_class": "NXlog"
         }
@@ -149,7 +109,7 @@ The links are created as hard links when the file is closed. A link is defined i
 For example:
 
 ```JSON
-"nexus_structure": {
+{
   "children": [
     {
       "type": "group",
@@ -159,7 +119,7 @@ For example:
           "type": "link",
           "name": "some_link_to_value",
           "target": "../group_with_dataset/some_static_data/values"
-        },
+        }
       ]
     },
     {
@@ -192,34 +152,10 @@ For example:
 }
 ```
 
-## Command to stop writing
-
-The stop command consists of a number of parameters which are defined as key-value pairs in the JSON.
-
-Required:
-
-- cmd: The command name, must be `filewriter_stop`
-- job_id: A unique identifier for the request, a UUID for example. Should be the same as used in the start command
-
-Optional:
-
-- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. If not supplied then the Kafka message time is used
-- service_id: The identifier for the instance of the file-writer that should handle this command. Only needed if multiple file-writers present
-
-For example:
-
-```json
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
-  "stop_time": 1547200800000,
-  "service_id": "filewriter1"
-}
-```
-
 ## Single Writer Multiple Reader
 
-The file-writer can use HDF5's Single Writer Multiple Reader feature (SWMR) which is enable by default.
+The file-writer uses HDF5's Single Writer Multiple Reader feature (SWMR). This feature can not be turned off.
+To set the (maximum) flush interval, use the `--data-flush-interval` command line argument. 
 
 To read and write HDF files which use the SWMR feature requires HDF5 version 1.10 or higher.
 One can also use the HDF5 tool `h5repack` with the `--high` option to convert the file into a HDF5 1.8 compatible version.  Please refer to see the `h5repack` documentation for more information.
