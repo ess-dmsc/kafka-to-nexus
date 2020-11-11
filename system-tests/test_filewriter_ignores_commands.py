@@ -11,7 +11,7 @@ from helpers.writer import (
     wait_fail_start_job,
     stop_all_jobs,
 )
-
+import pytest
 
 def test_ignores_commands_with_incorrect_id(writer_channel):
     wait_writers_available(writer_channel, nr_of=2, timeout=10)
