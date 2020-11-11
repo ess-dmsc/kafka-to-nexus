@@ -121,11 +121,12 @@ common_options = {
     "--build": False,
 }
 
+
 @pytest.fixture(scope="session", autouse=True)
 def init_images(request):
-    fw_image_thread = Thread(target=build_filewriter_image, args=(request, ))
+    fw_image_thread = Thread(target=build_filewriter_image, args=(request,))
     fw_image_thread.start()
-    kafka_start_thread = Thread(target=start_kafka, args=(request, ))
+    kafka_start_thread = Thread(target=start_kafka, args=(request,))
     kafka_start_thread.start()
     fw_image_thread.join()
     kafka_start_thread.join()
@@ -288,6 +289,7 @@ def start_file_writer(request):
         request.config.getoption(LOCAL_BUILD),
         request.config.getoption(WAIT_FOR_DEBUGGER_ATTACH),
     )
+
 
 @pytest.fixture(scope="session", autouse=True)
 def writer_channel(request):

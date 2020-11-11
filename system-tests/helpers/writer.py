@@ -8,7 +8,9 @@ from datetime import datetime, timedelta
 import time
 
 
-def wait_writers_available(worker_command: WorkerCommandChannel, timeout: float, nr_of: int):
+def wait_writers_available(
+    worker_command: WorkerCommandChannel, timeout: float, nr_of: int
+):
     start_time = datetime.now()
     while True:
         workers = worker_command.get_idle_workers()
@@ -35,7 +37,9 @@ def wait_no_working_writers(worker_command: WorkerCommandChannel, timeout: float
             raise RuntimeError("Timed out when waiting for workers to finish")
 
 
-def wait_start_job(worker_command: WorkerCommandChannel, write_job: WriteJob, timeout: float):
+def wait_start_job(
+    worker_command: WorkerCommandChannel, write_job: WriteJob, timeout: float
+):
     job_handler = JobHandler(worker_finder=worker_command)
     start_handler = job_handler.start_job(write_job)
     start_time = datetime.now()
@@ -53,7 +57,9 @@ def wait_set_stop_now(job: JobHandler, timeout: float):
             raise RuntimeError("Timed out when setting new stop time for job.")
 
 
-def wait_fail_start_job(worker_command: WorkerCommandChannel, write_job: WriteJob, timeout: float):
+def wait_fail_start_job(
+    worker_command: WorkerCommandChannel, write_job: WriteJob, timeout: float
+):
     job_handler = JobHandler(worker_finder=worker_command)
     start_handler = job_handler.start_job(write_job)
     start_time = datetime.now()
@@ -71,6 +77,6 @@ def stop_all_jobs(worker_command: WorkerCommandChannel):
         else:
             continue
         while not job_handler.is_done():
-            print(f"Waiting for job id \"{job.job_id}\" to finish.")
+            print(f'Waiting for job id "{job.job_id}" to finish.')
             time.sleep(1)
-        print(f"Job with id \"{job.job_id}\" stopped")
+        print(f'Job with id "{job.job_id}" stopped')

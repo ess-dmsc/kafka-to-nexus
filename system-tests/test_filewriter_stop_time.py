@@ -10,7 +10,11 @@ from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 import pytest
 from file_writer_control.WriteJob import WriteJob
-from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers
+from helpers.writer import (
+    wait_start_job,
+    wait_writers_available,
+    wait_no_working_writers,
+)
 
 
 def test_start_and_stop_time_are_in_the_past(writer_channel):
@@ -53,10 +57,15 @@ def test_start_and_stop_time_are_in_the_past(writer_channel):
     file_name = "output_file_of_historical_data.nxs"
     file_start_time = start_time + timedelta(seconds=2)
     file_stop_time = start_time + timedelta(seconds=148)
-    with open("commands/nexus_structure_historical.json", 'r') as f:
+    with open("commands/nexus_structure_historical.json", "r") as f:
         structure = f.read()
-    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
-                         start_time=file_start_time, stop_time=file_stop_time)
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_name,
+        broker="localhost:9092",
+        start_time=file_start_time,
+        stop_time=file_stop_time,
+    )
     wait_start_job(writer_channel, write_job, timeout=20)
 
     wait_no_working_writers(writer_channel, timeout=30)
@@ -85,16 +94,14 @@ def test_start_and_stop_time_are_in_the_past(writer_channel):
         # First alarm change
         assert file["entry/historical_data_1/alarm_status"][0] == b"HIGH"
         assert file["entry/historical_data_1/alarm_severity"][0] == b"MAJOR"
-        assert (
-            file["entry/historical_data_1/alarm_time"][0]
-            == int(alarm_change_time_1.timestamp() * 1e9)
+        assert file["entry/historical_data_1/alarm_time"][0] == int(
+            alarm_change_time_1.timestamp() * 1e9
         )  # ns
         # Second alarm change
         assert file["entry/historical_data_1/alarm_status"][1] == b"NO_ALARM"
         assert file["entry/historical_data_1/alarm_severity"][1] == b"NO_ALARM"
-        assert (
-            file["entry/historical_data_1/alarm_time"][1]
-            == int(alarm_change_time_2.timestamp() * 1e9)
+        assert file["entry/historical_data_1/alarm_time"][1] == int(
+            alarm_change_time_2.timestamp() * 1e9
         )  # ns
 
         assert (

@@ -7,7 +7,11 @@ from datetime import datetime, timedelta
 import pytest
 
 from file_writer_control.WriteJob import WriteJob
-from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers
+from helpers.writer import (
+    wait_start_job,
+    wait_writers_available,
+    wait_no_working_writers,
+)
 
 
 def test_two_different_writer_modules_with_same_flatbuffer_id(writer_channel):
@@ -28,10 +32,15 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(writer_channel):
             source_name="test_source_2",
         )
     file_name = "output_file_multiple_modules.nxs"
-    with open("commands/nexus_structure_multiple_modules.json", 'r') as f:
+    with open("commands/nexus_structure_multiple_modules.json", "r") as f:
         structure = f.read()
-    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
-                         start_time=start_time, stop_time=datetime.now())
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_name,
+        broker="localhost:9092",
+        start_time=start_time,
+        stop_time=datetime.now(),
+    )
     wait_start_job(writer_channel, write_job, timeout=20)
     wait_no_working_writers(writer_channel, timeout=30)
 

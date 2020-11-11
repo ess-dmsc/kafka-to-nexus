@@ -52,7 +52,13 @@ def create_hash_file(file_name, hash):
 
 def copy_to_container(container):
     conanfile = "conan/conanfile.txt"
-    conan_hash = copy_files_to_container([conanfile,], "../", container)
+    conan_hash = copy_files_to_container(
+        [
+            conanfile,
+        ],
+        "../",
+        container,
+    )
     source_files = ["cmake/", "src/", "CMakeLists.txt", "docker_launch.sh"]
     src_hash = copy_files_to_container(source_files, "../", container)
 

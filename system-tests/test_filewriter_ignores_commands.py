@@ -4,20 +4,33 @@ from pathlib import Path
 from file_writer_control.CommandStatus import CommandState
 from file_writer_control.WriteJob import WriteJob
 from file_writer_control.InThreadStatusTracker import COMMAND_STATUS_TIMEOUT
-from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers, wait_fail_start_job, stop_all_jobs
+from helpers.writer import (
+    wait_start_job,
+    wait_writers_available,
+    wait_no_working_writers,
+    wait_fail_start_job,
+    stop_all_jobs,
+)
 
 
 def test_ignores_commands_with_incorrect_id(writer_channel):
     wait_writers_available(writer_channel, nr_of=2, timeout=10)
     now = datetime.now()
     file_name = "output_file_stop_id.nxs"
-    with open("commands/nexus_structure.json", 'r') as f:
+    with open("commands/nexus_structure.json", "r") as f:
         structure = f.read()
-    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
-                         start_time=now, stop_time=now+timedelta(days=30))
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_name,
+        broker="localhost:9092",
+        start_time=now,
+        stop_time=now + timedelta(days=30),
+    )
     wait_start_job(writer_channel, write_job, timeout=20)
 
-    cmd_handler = writer_channel.try_send_stop_now("incorrect service id", write_job.job_id)
+    cmd_handler = writer_channel.try_send_stop_now(
+        "incorrect service id", write_job.job_id
+    )
 
     time.sleep(COMMAND_STATUS_TIMEOUT.total_seconds() + 2)
     assert cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
@@ -42,10 +55,14 @@ def test_ignores_commands_with_incorrect_job_id(writer_channel):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     now = datetime.now()
     file_name = "output_file_job_id.nxs"
-    with open("commands/nexus_structure.json", 'r') as f:
+    with open("commands/nexus_structure.json", "r") as f:
         structure = f.read()
-    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
-                         start_time=now)
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_name,
+        broker="localhost:9092",
+        start_time=now,
+    )
     write_job.job_id = "invalid id"
     wait_fail_start_job(writer_channel, write_job, timeout=20)
 

@@ -8,7 +8,12 @@ from helpers.nexushelpers import OpenNexusFile
 from math import isclose
 from streaming_data_types.status_x5f2 import deserialise_x5f2
 from file_writer_control.WriteJob import WriteJob
-from helpers.writer import wait_start_job, wait_writers_available, wait_no_working_writers, wait_set_stop_now
+from helpers.writer import (
+    wait_start_job,
+    wait_writers_available,
+    wait_no_working_writers,
+    wait_set_stop_now,
+)
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -39,11 +44,16 @@ def change_pv_value(pvname, value):
 @pytest.mark.skip(reason="Long running test disabled by default")
 def test_long_run(writer_channel, start_lr_images):
     file_name = "output_file_lr.nxs"
-    with open("commands/nexus_structure_long_running.json", 'r') as f:
+    with open("commands/nexus_structure_long_running.json", "r") as f:
         structure = f.read()
     start_time = datetime.now()
-    write_job = WriteJob(nexus_structure=structure, file_name=file_name, broker="localhost:9092",
-                         start_time=start_time, stop_time=start_time + timedelta(days=365))
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_name,
+        broker="localhost:9092",
+        start_time=start_time,
+        stop_time=start_time + timedelta(days=365),
+    )
     job_handler = wait_start_job(writer_channel, write_job, timeout=20)
 
     pv_updates = 6000

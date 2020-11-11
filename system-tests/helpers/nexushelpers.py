@@ -11,7 +11,7 @@ class OpenNexusFile:
         try:
             self.file = h5py.File(filepath, mode="r")
         except OSError as e:
-            print(f"Failed to open file \"{filepath}\"")
+            print(f'Failed to open file "{filepath}"')
             raise e
 
     def __enter__(self):

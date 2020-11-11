@@ -82,9 +82,7 @@ def publish_ep00_message(
 ):
     if source_name is None:
         source_name = "SIMPLE:DOUBLE"
-    ep00_message = serialise_ep00(
-        datetime_to_ns(timestamp), status, source_name
-    )
+    ep00_message = serialise_ep00(datetime_to_ns(timestamp), status, source_name)
     producer.produce(topic, ep00_message, timestamp=datetime_to_ms(timestamp))
     producer.poll(0)
     producer.flush()
