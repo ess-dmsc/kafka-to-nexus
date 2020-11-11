@@ -62,6 +62,7 @@ def test_ignores_commands_with_incorrect_job_id(writer_channel):
         file_name=file_name,
         broker="localhost:9092",
         start_time=now,
+        stop_time=now + timedelta(days=30),
     )
     write_job.job_id = "invalid id"
     wait_fail_start_job(writer_channel, write_job, timeout=20)
