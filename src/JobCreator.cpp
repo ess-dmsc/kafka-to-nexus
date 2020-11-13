@@ -18,6 +18,7 @@
 #include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
+#include "HDFOperations.h"
 
 using std::vector;
 
@@ -91,7 +92,15 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
 
   auto StreamGroup = hdf5::node::get_group(
       RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
-  HDFWriterModule->init_hdf({StreamGroup}, StreamSettings.Attributes);
+  auto AttributesJson = nlohmann::json::parse(StreamSettings.Attributes);
+  HDFOperations::writeAttributes(StreamGroup, &AttributesJson, SharedLogger());
+  if (StreamGroup.attributes.exists("NX_class")) {
+    LOG_INFO("NX_class already specified!");
+  } else {
+    auto ClassAttribute = StreamGroup.attributes.create<std::string>("NX_class");
+    ClassAttribute.write(std::string(HDFWriterModule->defaultNeXusClass()));
+  }
+  HDFWriterModule->init_hdf({StreamGroup});
 }
 
 /// Helper to extract information about the provided streams.

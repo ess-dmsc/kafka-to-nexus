@@ -8,13 +8,12 @@ namespace ep00 {
 
 class ep00_Writer final : public WriterModule::Base {
 public:
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   void parse_config(std::string const &ConfigurationStream) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
-  ep00_Writer() : WriterModule::Base(false) {}
+  ep00_Writer() : WriterModule::Base(false, "NXlog") {}
   ~ep00_Writer() override = default;
 
 private:

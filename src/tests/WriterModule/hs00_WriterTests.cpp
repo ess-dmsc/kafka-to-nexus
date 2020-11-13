@@ -387,7 +387,7 @@ TEST_F(EventHistogramWriter, WriterInitHDF) {
   auto Group = File.root();
   auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
-  ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
+  ASSERT_TRUE(Writer->init_hdf(Group) == InitResult::OK);
 }
 
 TEST_F(EventHistogramWriter, WriterReopen) {
@@ -396,7 +396,7 @@ TEST_F(EventHistogramWriter, WriterReopen) {
   auto Group = File.root();
   auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
-  ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
+  ASSERT_TRUE(Writer->init_hdf(Group) == InitResult::OK);
   Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
@@ -409,7 +409,7 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   auto Group = File.root();
   auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
-  ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
+  ASSERT_TRUE(Writer->init_hdf(Group) == InitResult::OK);
   Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
@@ -432,7 +432,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   auto Group = File.root();
   auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
-  ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
+  ASSERT_TRUE(Writer->init_hdf(Group) == InitResult::OK);
   Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
@@ -466,7 +466,7 @@ TEST_F(EventHistogramWriter, WriteManyHistograms) {
   auto Group = File.root();
   auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
-  ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
+  ASSERT_TRUE(Writer->init_hdf(Group) == InitResult::OK);
   Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
@@ -507,7 +507,7 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   }
   std::string JsonBulk(V1.data(), V1.data() + V1.size());
   Writer->parse_config(JsonBulk);
-  ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
+  ASSERT_TRUE(Writer->init_hdf(Group) == InitResult::OK);
   Writer = hs00_Writer::create();
   Writer->parse_config(JsonBulk);
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
