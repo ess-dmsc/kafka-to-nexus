@@ -46,8 +46,7 @@ void ns10_Writer::parse_config(std::string const &ConfigurationStream) {
 
 using FileWriterBase = WriterModule::Base;
 
-WriterModule::InitResult
-ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
     auto &CurrentGroup = HDFGroup;

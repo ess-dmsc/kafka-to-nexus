@@ -84,8 +84,7 @@ void NDAr_Writer::parse_config(std::string const &ConfigurationStream) {
   Logger->info("Using a cue interval of {}.", CueInterval);
 }
 
-WriterModule::InitResult
-NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
     initValueDataset(HDFGroup);

@@ -12,13 +12,13 @@
 #include "JobCreator.h"
 #include "CommandParser.h"
 #include "FileWriterTask.h"
+#include "HDFOperations.h"
 #include "Msg.h"
 #include "StreamController.h"
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
-#include "HDFOperations.h"
 
 using std::vector;
 
@@ -70,14 +70,16 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
     ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
   } catch (std::exception const &E) {
     throw std::runtime_error(
-        fmt::format("Error while getting module with name \"{}\" for source \"{}\". Message was: {}",
+        fmt::format("Error while getting module with name \"{}\" for source "
+                    "\"{}\". Message was: {}",
                     StreamSettings.Module, StreamSettings.Source, E.what()));
   }
 
   auto HDFWriterModule = ModuleFactory.first();
   if (!HDFWriterModule) {
-    throw std::runtime_error(fmt::format(
-        "Can not instantiate a writer module for module name '{}'", StreamSettings.Module));
+    throw std::runtime_error(
+        fmt::format("Can not instantiate a writer module for module name '{}'",
+                    StreamSettings.Module));
   }
 
   auto RootGroup = Task->hdfGroup();
@@ -93,17 +95,25 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
   auto StreamGroup = hdf5::node::get_group(
       RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
 
-  auto writeAttributesList = [&StreamGroup, &StreamSettings](std::vector<std::pair<std::string,std::string>> Attributes) {
-    for (auto Attribute : Attributes) {
-      if (StreamGroup.attributes.exists(Attribute.first)) {
-        StreamGroup.attributes.remove(Attribute.first);
-        LOG_DEBUG("Replacing (existing) attribute with key \"{}\" at \"{}\".", Attribute.first, StreamSettings.StreamHDFInfoObj.HDFParentName);
-      }
-      auto HdfAttribute = StreamGroup.attributes.create<std::string>(Attribute.first);
-      HdfAttribute.write(Attribute.second);
-    }
-  };
-  writeAttributesList({{"NX_class", std::string(HDFWriterModule->defaultNeXusClass())}, {"topic", StreamSettings.Topic}, {"source", StreamSettings.Source}});
+  auto writeAttributesList =
+      [&StreamGroup, &StreamSettings](
+          std::vector<std::pair<std::string, std::string>> Attributes) {
+        for (auto Attribute : Attributes) {
+          if (StreamGroup.attributes.exists(Attribute.first)) {
+            StreamGroup.attributes.remove(Attribute.first);
+            LOG_DEBUG(
+                "Replacing (existing) attribute with key \"{}\" at \"{}\".",
+                Attribute.first, StreamSettings.StreamHDFInfoObj.HDFParentName);
+          }
+          auto HdfAttribute =
+              StreamGroup.attributes.create<std::string>(Attribute.first);
+          HdfAttribute.write(Attribute.second);
+        }
+      };
+  writeAttributesList(
+      {{"NX_class", std::string(HDFWriterModule->defaultNeXusClass())},
+       {"topic", StreamSettings.Topic},
+       {"source", StreamSettings.Source}});
 
   auto AttributesJson = nlohmann::json::parse(StreamSettings.Attributes);
   HDFOperations::writeAttributes(StreamGroup, &AttributesJson, SharedLogger());

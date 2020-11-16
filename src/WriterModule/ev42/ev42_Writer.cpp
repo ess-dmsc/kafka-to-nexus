@@ -108,8 +108,7 @@ void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
       ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
 }
 
-WriterModule::InitResult
-ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   size_t Chunk32Bit = ChunkSizeBytes / 4;
   size_t Chunk64Bit = ChunkSizeBytes / 8;

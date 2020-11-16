@@ -104,8 +104,7 @@ public:
 
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   ns10_Writer SomeWriter;
-  EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup) ==
-              WriterModule::InitResult::OK);
+  EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup) == WriterModule::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) == WriterModule::InitResult::OK);
 }
 

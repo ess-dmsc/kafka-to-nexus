@@ -31,8 +31,7 @@ void tdct_Writer::parse_config(std::string const &) {
                 "ChopperTimeStampWriter class.");
 }
 
-WriterModule::InitResult
-tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;

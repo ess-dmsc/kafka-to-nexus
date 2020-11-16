@@ -32,8 +32,7 @@ void senv_Writer::parse_config(std::string const &) {
                 "FastSampleEnvironmentWriter class.");
 }
 
-WriterModule::InitResult
-senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
