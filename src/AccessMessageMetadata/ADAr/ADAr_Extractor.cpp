@@ -32,8 +32,8 @@ uint64_t ADAr_Extractor::timestamp(FlatbufferMessage const &Message) const {
   return FbPointer->timestamp();
 }
 
-std::string
-ADAr_Extractor::source_name(const FileWriter::FlatbufferMessage &Message) const {
+std::string ADAr_Extractor::source_name(
+    const FileWriter::FlatbufferMessage &Message) const {
   auto FbPointer = GetADArray(Message.data());
   // The source name was left out of the relevant EPICS areaDetector plugin.
   // There is currently a pull request for adding this variable to the FB

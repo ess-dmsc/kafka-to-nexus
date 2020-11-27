@@ -135,7 +135,8 @@ void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
 
 void ADAr_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto ADAr = GetADArray(Message.data());
-  auto DataShape = hdf5::Dimensions(ADAr->dimensions()->begin(), ADAr->dimensions()->end());
+  auto DataShape =
+      hdf5::Dimensions(ADAr->dimensions()->begin(), ADAr->dimensions()->end());
   auto CurrentTimestamp = ADAr->timestamp();
   DType Type = ADAr->data_type();
   auto DataPtr = ADAr->data()->Data();
@@ -201,55 +202,29 @@ void ADAr_Writer::initValueDataset(hdf5::node::Group &Parent) {
       std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::c_string,
-       [&]() {
-         return makeIt<char>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<char>(Parent, ArrayShape, ChunkSize); }},
       {Type::int8,
-       [&]() {
-         return makeIt<std::int8_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int8_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint8,
-       [&]() {
-         return makeIt<std::uint8_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint8_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int16,
-       [&]() {
-         return makeIt<std::int16_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int16_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint16,
-       [&]() {
-         return makeIt<std::uint16_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint16_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int32,
-       [&]() {
-         return makeIt<std::int32_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int32_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint32,
-       [&]() {
-         return makeIt<std::uint32_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint32_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int64,
-       [&]() {
-         return makeIt<std::int64_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int64_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint64,
-       [&]() {
-         return makeIt<std::uint64_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint64_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::float32,
-       [&]() {
-         return makeIt<std::float_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::float_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::float64,
-       [&]() {
-         return makeIt<std::double_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::double_t>(Parent, ArrayShape, ChunkSize); }},
   };
   Values = CreateValuesMap.at(ElementType)();
 }
-} // namespace NDAr
+} // namespace ADAr
 } // namespace WriterModule
