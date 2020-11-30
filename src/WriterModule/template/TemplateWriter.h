@@ -55,7 +55,7 @@ public:
   /// relatively high up in call hierarchy. You should for this reason probably
   /// try to avoid throwing exceptions here unless you encounter an
   /// unrecoverable state as any exceptions will cause the thread to exit.
-  WriterClass() : WriterModule::Base(false) { std::cout << "WriterClass::WriterClass()\n"; }
+  WriterClass() : WriterModule::Base(false, "NXlog") { std::cout << "WriterClass::WriterClass()\n"; }
 
   /// \brief Use to close datasets and return any other claimed resources.
   ///
@@ -131,8 +131,7 @@ public:
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
   // cppcheck-suppress functionStatic
-  WriterModule::InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/,
-                                    std::string const &/*HDFAttributes*/) override {
+  WriterModule::InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/) override {
     std::cout << "WriterClass::init_hdf()\n";
     return WriterModule::InitResult::OK;
   }

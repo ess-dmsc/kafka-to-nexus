@@ -32,13 +32,12 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
 /// See parent class for documentation.
 class senv_Writer : public FileWriterBase {
 public:
-  senv_Writer() : FileWriterBase(false) {}
+  senv_Writer() : FileWriterBase(false, "NXlog") {}
   ~senv_Writer() override = default;
 
   void parse_config(std::string const &) override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
