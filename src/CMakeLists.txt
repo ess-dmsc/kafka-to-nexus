@@ -102,7 +102,7 @@ set(kafka_to_nexus_SRC
         CommandSystem/CommandListener.cpp
         CommandSystem/JobListener.cpp
         TimeUtility.cpp
-        )
+        WriterModuleConfig/Field.cpp WriterModuleConfig/Field.h)
 
 set(kafka_to_nexus_INC
         JobCreator.h
