@@ -81,12 +81,14 @@ protected:
   /// Severity corresponding to EPICS alarm status
   NeXusDataset::AlarmSeverity AlarmSeverity;
 
-
-  WriterModuleConfig::Field<uint64_t> ValueIndexInterval{this, "cue_interval", std::numeric_limits<uint64_t>::max()};
+  WriterModuleConfig::Field<uint64_t> ValueIndexInterval{
+      this, "cue_interval", std::numeric_limits<uint64_t>::max()};
   WriterModuleConfig::Field<size_t> ArraySize{this, "array_size", 1};
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 64*1024};
-  WriterModuleConfig::Field<std::string> DataType{this, {"type"s, "dtype"s}, "double"};
-  WriterModuleConfig::Field<std::string> Unit{this, {"value_units"s, "unit"s}, ""};
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 64 * 1024};
+  WriterModuleConfig::Field<std::string> DataType{
+      this, {"type"s, "dtype"s}, "double"};
+  WriterModuleConfig::Field<std::string> Unit{
+      this, {"value_units"s, "unit"s}, ""};
 };
 
 } // namespace f142

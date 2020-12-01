@@ -7,10 +7,10 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #include "WriterModuleBase.h"
 #include "WriterModuleConfig/Field.h"
 
-void WriterModule::Base::addConfigField(WriterModuleConfig::FieldBase *NewField) {
+void WriterModule::Base::addConfigField(
+    WriterModuleConfig::FieldBase *NewField) {
   ConfigFieldProcessor.registerField(NewField);
 }

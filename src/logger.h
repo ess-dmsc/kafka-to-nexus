@@ -9,21 +9,20 @@
 
 #pragma once
 
+#include <numeric>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
-#include <numeric>
 
-template <typename InnerType>
-struct fmt::formatter<std::vector<InnerType>> {
-  constexpr auto parse(format_parse_context& ctx) {
+template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
+  constexpr auto parse(format_parse_context &ctx) {
     const auto begin = ctx.begin();
     const auto end = std::find(begin, ctx.end(), '}');
     return end;
   }
 
   template <typename FormatContext>
-  auto format(const std::vector<InnerType>& Data, FormatContext& ctx) {
+  auto format(const std::vector<InnerType> &Data, FormatContext &ctx) {
     if (Data.empty()) {
       return fmt::format_to(ctx.out(), "[]");
     }
@@ -34,7 +33,9 @@ struct fmt::formatter<std::vector<InnerType>> {
       EndIterator = Data.begin() + 10;
       Suffix = "...";
     }
-    auto ReturnString = std::accumulate(std::next(Data.begin()), EndIterator, fmt::format("{}", Data[0]), [](std::string a, InnerType b){return a + fmt::format(", {}", b);});
+    auto ReturnString = std::accumulate(
+        std::next(Data.begin()), EndIterator, fmt::format("{}", Data[0]),
+        [](std::string a, InnerType b) { return a + fmt::format(", {}", b); });
     return fmt::format_to(ctx.out(), "[{}{}]", ReturnString, Suffix);
   }
 };

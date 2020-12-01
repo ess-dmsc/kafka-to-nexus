@@ -29,26 +29,25 @@ static WriterModule::Registry::Registrar<senv_Writer>
 
 void senv_Writer::process_config() {}
 
-
 WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::UInt16Value(      // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);                 // NOLINT(bugprone-unused-raii)
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);                 // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);                 // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     Logger->error("Unable to initialise fast sample environment data tree in "
                   "HDF file with error message: \"{}\"",

@@ -327,7 +327,7 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.reopen(RootGroup);
 
   EXPECT_FALSE(TestWriter.Values.attributes.exists("units"))
-          << "units attribute should not be created if the config string is empty";
+      << "units attribute should not be created if the config string is empty";
 }
 
 TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {

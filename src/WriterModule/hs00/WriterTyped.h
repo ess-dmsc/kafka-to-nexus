@@ -184,13 +184,11 @@ WriterTyped<DataType, EdgeType, ErrorType>::create(json const &Json) {
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 typename WriterTyped<DataType, EdgeType, ErrorType>::ptr
-WriterTyped<DataType, EdgeType, ErrorType>::reOpen(
-    hdf5::node::Group &Group) {
+WriterTyped<DataType, EdgeType, ErrorType>::reOpen(hdf5::node::Group &Group) {
   std::string JsonString;
   Group.attributes["created_from_json"].read(JsonString);
-  auto TheWriterTypedPtr =
-      WriterTyped<DataType, EdgeType, ErrorType>::create(
-          json::parse(JsonString));
+  auto TheWriterTypedPtr = WriterTyped<DataType, EdgeType, ErrorType>::create(
+      json::parse(JsonString));
   auto &TheWriterTyped = *TheWriterTypedPtr;
   TheWriterTyped.Dataset = Group.get_dataset("histograms");
   TheWriterTyped.DatasetErrors = Group.get_dataset("errors");

@@ -32,9 +32,12 @@ public:
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
   WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 21};
-  WriterModuleConfig::RequiredField<std::string> DataTypeField{this, "data_type"};
-  WriterModuleConfig::RequiredField<std::string> EdgeTypeField{this, "edge_type"};
-  WriterModuleConfig::RequiredField<std::string> ErrorTypeField{this, "error_type"};
+  WriterModuleConfig::RequiredField<std::string> DataTypeField{this,
+                                                               "data_type"};
+  WriterModuleConfig::RequiredField<std::string> EdgeTypeField{this,
+                                                               "edge_type"};
+  WriterModuleConfig::RequiredField<std::string> ErrorTypeField{this,
+                                                                "error_type"};
   WriterModuleConfig::RequiredField<std::string> ShapeField{this, "shape"};
   nlohmann::json Json;
 
@@ -43,8 +46,7 @@ private:
 
   WriterUntyped::ptr createFromDataType();
 
-  template <typename DataType>
-  WriterUntyped::ptr createFromEdgeType();
+  template <typename DataType> WriterUntyped::ptr createFromEdgeType();
 
   template <typename DataType, typename EdgeType>
   WriterUntyped::ptr createFromErrorType();
@@ -53,8 +55,7 @@ private:
   WriterUntyped::ptr reOpenFromEdgeType(hdf5::node::Group &Group);
 
   template <typename DataType, typename EdgeType>
-  WriterUntyped::ptr
-  reOpenFromErrorType(hdf5::node::Group &Group);
+  WriterUntyped::ptr reOpenFromErrorType(hdf5::node::Group &Group);
 };
 } // namespace hs00
 } // namespace WriterModule

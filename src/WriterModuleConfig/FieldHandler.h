@@ -19,10 +19,11 @@ class FieldBase;
 class FieldHandler {
 public:
   FieldHandler() = default;
-  void registerField(FieldBase* NewConfigField);
+  void registerField(FieldBase *NewConfigField);
   void processConfigData(std::string ConfigJsonStr);
+
 private:
-  std::map<std::string,FieldBase*> FieldMap;
+  std::map<std::string, FieldBase *> FieldMap;
 };
 
-}
+} // namespace WriterModuleConfig

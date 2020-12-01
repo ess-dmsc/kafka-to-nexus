@@ -7,10 +7,10 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <gtest/gtest.h>
 #include "WriterModuleConfig/Field.h"
 #include "WriterModuleConfig/FieldHandler.h"
 #include "helpers/StubWriterModule.h"
+#include <gtest/gtest.h>
 
 using namespace WriterModuleConfig;
 
@@ -20,9 +20,7 @@ class FieldStandIn : public FieldBase {
 
 class FieldHandlerFixture : public ::testing::Test {
 public:
-  void SetUp() override {
-    Writer = std::make_unique<StubWriterModule>();
-  }
+  void SetUp() override { Writer = std::make_unique<StubWriterModule>(); }
   std::unique_ptr<StubWriterModule> Writer;
 };
 

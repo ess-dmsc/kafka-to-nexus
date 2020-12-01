@@ -58,101 +58,118 @@ WriterModule::ptr hs00_Writer::create() {
 
 WriterModule::Registry::Registrar<hs00_Writer> Register("hs00", "hs00");
 
-
 WriterUntyped::ptr hs00_Writer::createFromDataType() {
   std::map<std::string, std::function<WriterUntyped::ptr()>> DataTypeMap{
-      {"uint32", [&](){return createFromEdgeType<uint32_t>();}},
-      {"uint64", [&](){return createFromEdgeType<uint64_t>();}},
-      {"float", [&](){return createFromEdgeType<float>();}},
-      {"double", [&](){return createFromEdgeType<double>();}}
-  };
+      {"uint32", [&]() { return createFromEdgeType<uint32_t>(); }},
+      {"uint64", [&]() { return createFromEdgeType<uint64_t>(); }},
+      {"float", [&]() { return createFromEdgeType<float>(); }},
+      {"double", [&]() { return createFromEdgeType<double>(); }}};
   try {
     return DataTypeMap.at(DataTypeField)();
-  } catch (std::out_of_range const&) {
-    throw std::runtime_error(fmt::format(
-        "unimplemented data_type: {:s}", DataTypeField.getValue()));
+  } catch (std::out_of_range const &) {
+    throw std::runtime_error(
+        fmt::format("unimplemented data_type: {:s}", DataTypeField.getValue()));
   }
 }
 
 template <typename DataType>
 WriterUntyped::ptr hs00_Writer::createFromEdgeType() {
-  std::map<std::string, std::function<WriterUntyped::ptr()>> EdgeTypeMap {
-      {"uint32", [&](){return createFromErrorType<DataType, uint32_t>();}},
-      {"uint64", [&](){return createFromErrorType<DataType, uint64_t>();}},
-      {"float", [&](){return createFromErrorType<DataType, float>();}},
-      {"double", [&](){return createFromErrorType<DataType, double>();}},
+  std::map<std::string, std::function<WriterUntyped::ptr()>> EdgeTypeMap{
+      {"uint32", [&]() { return createFromErrorType<DataType, uint32_t>(); }},
+      {"uint64", [&]() { return createFromErrorType<DataType, uint64_t>(); }},
+      {"float", [&]() { return createFromErrorType<DataType, float>(); }},
+      {"double", [&]() { return createFromErrorType<DataType, double>(); }},
   };
   try {
     return EdgeTypeMap.at(EdgeTypeField)();
-  } catch (std::out_of_range const&) {
-    throw std::runtime_error(fmt::format(
-        "unimplemented edge_type: {:s}", EdgeTypeField.getValue()));
+  } catch (std::out_of_range const &) {
+    throw std::runtime_error(
+        fmt::format("unimplemented edge_type: {:s}", EdgeTypeField.getValue()));
   }
 }
 
 template <typename DataType, typename EdgeType>
 WriterUntyped::ptr hs00_Writer::createFromErrorType() {
-  std::map<std::string, std::function<WriterUntyped::ptr()>> ErrorTypeMap {
-      {"uint32_t", [&](){return WriterTyped<DataType, EdgeType, uint32_t>::create(Json);}},
-      {"uint64_t", [&](){return WriterTyped<DataType, EdgeType, uint64_t>::create(Json);}},
-      {"float", [&](){return WriterTyped<DataType, EdgeType, float>::create(Json);}},
-      {"double", [&](){return WriterTyped<DataType, EdgeType, double>::create(Json);}},
+  std::map<std::string, std::function<WriterUntyped::ptr()>> ErrorTypeMap{
+      {"uint32_t",
+       [&]() {
+         return WriterTyped<DataType, EdgeType, uint32_t>::create(Json);
+       }},
+      {"uint64_t",
+       [&]() {
+         return WriterTyped<DataType, EdgeType, uint64_t>::create(Json);
+       }},
+      {"float",
+       [&]() { return WriterTyped<DataType, EdgeType, float>::create(Json); }},
+      {"double",
+       [&]() { return WriterTyped<DataType, EdgeType, double>::create(Json); }},
   };
   try {
     return ErrorTypeMap.at(ErrorTypeField)();
-  } catch (std::out_of_range const&) {
-    throw std::runtime_error(fmt::format(
-        "unimplemented error_type: {:s}", ErrorTypeField.getValue()));
+  } catch (std::out_of_range const &) {
+    throw std::runtime_error(fmt::format("unimplemented error_type: {:s}",
+                                         ErrorTypeField.getValue()));
   }
 }
 
 /// Create the Writer during HDF reopen
 WriterUntyped::ptr hs00_Writer::reOpenFromDataType(hdf5::node::Group &Group) {
   std::map<std::string, std::function<WriterUntyped::ptr()>> DataTypeMap{
-      {"uint32", [&](){return reOpenFromEdgeType<uint32_t>(Group);}},
-      {"uint64", [&](){return reOpenFromEdgeType<uint64_t>(Group);}},
-      {"float", [&](){return reOpenFromEdgeType<float>(Group);}},
-      {"double", [&](){return reOpenFromEdgeType<double>(Group);}},
+      {"uint32", [&]() { return reOpenFromEdgeType<uint32_t>(Group); }},
+      {"uint64", [&]() { return reOpenFromEdgeType<uint64_t>(Group); }},
+      {"float", [&]() { return reOpenFromEdgeType<float>(Group); }},
+      {"double", [&]() { return reOpenFromEdgeType<double>(Group); }},
   };
   try {
     return DataTypeMap.at(DataTypeField)();
-  } catch (std::out_of_range const&) {
-    throw std::runtime_error(fmt::format(
-        "unimplemented data_type: {:s}", DataTypeField.getValue()));
+  } catch (std::out_of_range const &) {
+    throw std::runtime_error(
+        fmt::format("unimplemented data_type: {:s}", DataTypeField.getValue()));
   }
 }
 
 template <typename DataType>
-WriterUntyped::ptr
-hs00_Writer::reOpenFromEdgeType(hdf5::node::Group &Group) {
+WriterUntyped::ptr hs00_Writer::reOpenFromEdgeType(hdf5::node::Group &Group) {
   std::map<std::string, std::function<WriterUntyped::ptr()>> DataTypeMap{
-      {"uint32", [&](){return reOpenFromErrorType<DataType, uint32_t>(Group);}},
-      {"uint64", [&](){return reOpenFromErrorType<DataType, uint64_t>(Group);}},
-      {"float", [&](){return reOpenFromErrorType<DataType, float>(Group);}},
-      {"double", [&](){return reOpenFromErrorType<DataType, double>(Group);}},
+      {"uint32",
+       [&]() { return reOpenFromErrorType<DataType, uint32_t>(Group); }},
+      {"uint64",
+       [&]() { return reOpenFromErrorType<DataType, uint64_t>(Group); }},
+      {"float", [&]() { return reOpenFromErrorType<DataType, float>(Group); }},
+      {"double",
+       [&]() { return reOpenFromErrorType<DataType, double>(Group); }},
   };
   try {
     return DataTypeMap.at(EdgeTypeField)();
-  } catch (std::out_of_range const&) {
-    throw std::runtime_error(fmt::format(
-        "unimplemented edge_type: {:s}", EdgeTypeField.getValue()));
+  } catch (std::out_of_range const &) {
+    throw std::runtime_error(
+        fmt::format("unimplemented edge_type: {:s}", EdgeTypeField.getValue()));
   }
 }
 
 template <typename DataType, typename EdgeType>
-WriterUntyped::ptr
-hs00_Writer::reOpenFromErrorType(hdf5::node::Group &Group) {
+WriterUntyped::ptr hs00_Writer::reOpenFromErrorType(hdf5::node::Group &Group) {
   std::map<std::string, std::function<WriterUntyped::ptr()>> DataTypeMap{
-      {"uint32", [&](){return WriterTyped<DataType, EdgeType, uint32_t>::reOpen(Group);}},
-      {"uint64", [&](){return WriterTyped<DataType, EdgeType, uint64_t>::reOpen(Group);}},
-      {"float", [&](){return WriterTyped<DataType, EdgeType, float>::reOpen(Group);}},
-      {"double", [&](){return WriterTyped<DataType, EdgeType, double>::reOpen(Group);}},
+      {"uint32",
+       [&]() {
+         return WriterTyped<DataType, EdgeType, uint32_t>::reOpen(Group);
+       }},
+      {"uint64",
+       [&]() {
+         return WriterTyped<DataType, EdgeType, uint64_t>::reOpen(Group);
+       }},
+      {"float",
+       [&]() { return WriterTyped<DataType, EdgeType, float>::reOpen(Group); }},
+      {"double",
+       [&]() {
+         return WriterTyped<DataType, EdgeType, double>::reOpen(Group);
+       }},
   };
   try {
     return DataTypeMap.at(ErrorTypeField)();
-  } catch (std::out_of_range const&) {
-    throw std::runtime_error(fmt::format(
-        "unimplemented error_type: {:s}", ErrorTypeField.getValue()));
+  } catch (std::out_of_range const &) {
+    throw std::runtime_error(fmt::format("unimplemented error_type: {:s}",
+                                         ErrorTypeField.getValue()));
   }
 }
 

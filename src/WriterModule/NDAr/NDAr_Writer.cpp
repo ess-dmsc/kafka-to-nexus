@@ -38,24 +38,24 @@ std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec,
 ///
 /// The default is to use double as the element type.
 void NDAr_Writer::process_config() {
-    std::map<std::string, NDAr_Writer::Type> TypeMap{
-        {"int8", Type::int8},         {"uint8", Type::uint8},
-        {"int16", Type::int16},       {"uint16", Type::uint16},
-        {"int32", Type::int32},       {"uint32", Type::uint32},
-        {"int64", Type::int64},       {"uint64", Type::uint64},
-        {"float32", Type::float32},   {"float64", Type::float64},
-        {"c_string", Type::c_string},
-    };
-    try {
-      ElementType = TypeMap.at(DataType);
-    } catch (std::out_of_range &E) {
-      Logger->error("Unknown type ({}), using the default (double).", DataType.getValue());
-    }
+  std::map<std::string, NDAr_Writer::Type> TypeMap{
+      {"int8", Type::int8},         {"uint8", Type::uint8},
+      {"int16", Type::int16},       {"uint16", Type::uint16},
+      {"int32", Type::int32},       {"uint32", Type::uint32},
+      {"int64", Type::int64},       {"uint64", Type::uint64},
+      {"float32", Type::float32},   {"float64", Type::float64},
+      {"c_string", Type::c_string},
+  };
+  try {
+    ElementType = TypeMap.at(DataType);
+  } catch (std::out_of_range &E) {
+    Logger->error("Unknown type ({}), using the default (double).",
+                  DataType.getValue());
+  }
 }
 
-
 WriterModule::InitResult NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
-  auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions ().at(0);
+  auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions().at(0);
   try {
     initValueDataset(HDFGroup);
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
@@ -167,53 +167,27 @@ void NDAr_Writer::initValueDataset(hdf5::node::Group &Parent) {
       std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::c_string,
-       [&]() {
-         return makeIt<char>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<char>(Parent, ArrayShape, ChunkSize); }},
       {Type::int8,
-       [&]() {
-         return makeIt<std::int8_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int8_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint8,
-       [&]() {
-         return makeIt<std::uint8_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint8_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int16,
-       [&]() {
-         return makeIt<std::int16_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int16_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint16,
-       [&]() {
-         return makeIt<std::uint16_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint16_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int32,
-       [&]() {
-         return makeIt<std::int32_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int32_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint32,
-       [&]() {
-         return makeIt<std::uint32_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint32_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int64,
-       [&]() {
-         return makeIt<std::int64_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::int64_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint64,
-       [&]() {
-         return makeIt<std::uint64_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint64_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::float32,
-       [&]() {
-         return makeIt<std::float_t>(Parent, ArrayShape, ChunkSize);
-       }},
+       [&]() { return makeIt<std::float_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::float64,
-       [&]() {
-         return makeIt<std::double_t>(Parent, ArrayShape,
-                                      ChunkSize);
-       }},
+       [&]() { return makeIt<std::double_t>(Parent, ArrayShape, ChunkSize); }},
   };
   Values = CreateValuesMap.at(ElementType)();
 }

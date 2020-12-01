@@ -10,11 +10,11 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
+#include "WriterModuleConfig/Field.h"
+#include "WriterModuleConfig/FieldHandler.h"
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <string>
-#include "WriterModuleConfig/FieldHandler.h"
-#include "WriterModuleConfig/Field.h"
 #include <string_view>
 
 namespace WriterModule {
@@ -39,7 +39,6 @@ public:
 
   bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
 
-
   auto defaultNeXusClass() const { return NX_class; }
 
   /// \brief Parses the configuration JSON structure for a stream.
@@ -49,7 +48,7 @@ public:
   /// \param config_stream Configuration from the write file command for this
   /// stream.
   void parse_config(std::string const &ConfigurationStream) {
-      ConfigFieldProcessor.processConfigData(ConfigurationStream);
+    ConfigFieldProcessor.processConfigData(ConfigurationStream);
   }
 
   /// \brief For doing extra processing related to the configuration of the
@@ -94,12 +93,16 @@ public:
   virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
 
   void addConfigField(WriterModuleConfig::FieldBase *NewField);
+
 private:
   WriterModuleConfig::FieldHandler ConfigFieldProcessor;
+
 protected:
   WriterModuleConfig::Field<std::string> SourceName{this, "source", ""};
   WriterModuleConfig::Field<std::string> Topic{this, "topic", ""};
-  WriterModuleConfig::Field<std::string> WriterModule{this, "writer_module", ""};
+  WriterModuleConfig::Field<std::string> WriterModule{this, "writer_module",
+                                                      ""};
+
 private:
   bool WriteRepeatedTimestamps;
   std::string_view NX_class;

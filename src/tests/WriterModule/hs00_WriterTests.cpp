@@ -209,8 +209,7 @@ TEST_F(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
 }
 
 TEST_F(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
-  WriterTyped<uint64_t, double, uint64_t>::create(
-      createTestWriterTypedJson());
+  WriterTyped<uint64_t, double, uint64_t>::create(createTestWriterTypedJson());
 }
 
 enum class FileCreationLocation { Default, Memory, Disk };
@@ -229,8 +228,7 @@ hdf5::file::File createFile(std::string Name, FileCreationLocation Location) {
 
 TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   auto Json = createTestWriterTypedJson();
-  auto TheWriterTyped =
-      WriterTyped<uint64_t, double, uint64_t>::create(Json);
+  auto TheWriterTyped = WriterTyped<uint64_t, double, uint64_t>::create(Json);
   auto File =
       createFile("Test.EventHistogramWriter.WriterTypedCreateHDFStructure",
                  FileCreationLocation::Default);
@@ -247,8 +245,7 @@ TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
 
 TEST_F(EventHistogramWriter, WriterTypedReopen) {
   auto Json = createTestWriterTypedJson();
-  auto TheWriterTyped =
-      WriterTyped<uint64_t, double, uint64_t>::create(Json);
+  auto TheWriterTyped = WriterTyped<uint64_t, double, uint64_t>::create(Json);
   auto File = createFile("Test.EventHistogramWriter.WriterTypedReopen",
                          FileCreationLocation::Default);
   auto Group = File.root();
