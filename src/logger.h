@@ -35,7 +35,9 @@ template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
     }
     auto ReturnString = std::accumulate(
         std::next(Data.begin()), EndIterator, fmt::format("{}", Data[0]),
-        [](std::string const &a, InnerType const &b) { return a + fmt::format(", {}", b); });
+        [](std::string const &a, InnerType const &b) {
+          return a + fmt::format(", {}", b);
+        });
     return fmt::format_to(ctx.out(), "[{}{}]", ReturnString, Suffix);
   }
 };

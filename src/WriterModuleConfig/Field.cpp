@@ -11,7 +11,8 @@
 #include "WriterModuleBase.h"
 
 namespace WriterModuleConfig {
-FieldBase::FieldBase(WriterModule::Base *Ptr, std::vector<std::string> const &Keys)
+FieldBase::FieldBase(WriterModule::Base *Ptr,
+                     std::vector<std::string> const &Keys)
     : FieldKeys(Keys) {
   Ptr->addConfigField(this);
 }

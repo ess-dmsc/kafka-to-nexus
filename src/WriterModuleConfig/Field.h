@@ -43,7 +43,8 @@ private:
 
 template <class FieldType> class Field : public FieldBase {
 public:
-  Field(WriterModule::Base *WriterPtr, std::string const &Key, FieldType DefaultValue)
+  Field(WriterModule::Base *WriterPtr, std::string const &Key,
+        FieldType DefaultValue)
       : FieldBase(WriterPtr, Key), FieldValue(DefaultValue) {}
   Field(WriterModule::Base *WriterPtr, std::vector<std::string> Keys,
         FieldType DefaultValue)
