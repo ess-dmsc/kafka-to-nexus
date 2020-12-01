@@ -35,7 +35,8 @@ private:
   WriterModuleConfig::RequiredField<std::string> DataTypeField{this, "data_type"};
   WriterModuleConfig::RequiredField<std::string> EdgeTypeField{this, "edge_type"};
   WriterModuleConfig::RequiredField<std::string> ErrorTypeField{this, "error_type"};
-  WriterModuleConfig::RequiredField<std::vector<std::string>> ShapeField{this, "shape"};
+  WriterModuleConfig::RequiredField<std::string> ShapeField{this, "shape"};
+  nlohmann::json Json;
 
   /// Create the Writer during HDF reopen
   WriterUntyped::ptr reOpenFromDataType(hdf5::node::Group &Group);

@@ -36,7 +36,6 @@ public:
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
 protected:
-  std::string Sourcename;
   NeXusDataset::DoubleValue Values;
   NeXusDataset::Time Timestamp;
   int CueCounter{0};

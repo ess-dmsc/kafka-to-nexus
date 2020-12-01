@@ -55,6 +55,11 @@ void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
 
 /// Parse the configuration for this stream.
 void f142_Writer::process_config() {
+  auto toLower = [](auto InString) {
+    std::transform(InString.begin(), InString.end(), InString.begin(),
+                   [](auto C) { return std::tolower(C); });
+    return InString;
+  };
   std::map<std::string, Type> TypeMap{
       {"int8", Type::int8},       {"uint8", Type::uint8},
       {"int16", Type::int16},     {"uint16", Type::uint16},
@@ -66,7 +71,7 @@ void f142_Writer::process_config() {
       {"long", Type::int64}};
 
   try {
-    ElementType = TypeMap.at(DataType);
+    ElementType = TypeMap.at(toLower(DataType.getValue()));
   } catch (std::out_of_range &E) {
     Logger->warn("Unknown data type with name \"{}\". Using double.",
                  DataType.getValue());
@@ -94,6 +99,9 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
     NeXusDataset::AlarmTime(HDFGroup, Create);
     NeXusDataset::AlarmStatus(HDFGroup, Create);
     NeXusDataset::AlarmSeverity(HDFGroup, Create);
+    if (not Unit.getValue().empty()) {
+      HDFGroup["value"].attributes.create_from<std::string>("units", Unit);
+    }
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);

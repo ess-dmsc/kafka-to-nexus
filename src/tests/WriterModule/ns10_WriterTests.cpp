@@ -97,7 +97,7 @@ public:
   using ns10_Writer::CueInterval;
   using ns10_Writer::CueTimestamp;
   using ns10_Writer::CueTimestampIndex;
-  using ns10_Writer::Sourcename;
+  using ns10_Writer::SourceName;
   using ns10_Writer::Timestamp;
   using ns10_Writer::Values;
 };
@@ -127,7 +127,7 @@ TEST_F(NicosCacheWriterTest, WriterConfiguration) {
 
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.Sourcename, JsonConfig["source"]);
+  EXPECT_EQ(Writer.SourceName, JsonConfig["source"]);
   EXPECT_EQ(Writer.ChunkSize, JsonConfig["chunk_size"].get<uint64_t>());
   EXPECT_EQ(Writer.CueInterval, JsonConfig["cue_interval"].get<int>());
 }
@@ -188,36 +188,6 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
   double storedValue;
   Writer.Values.read(storedValue);
   EXPECT_EQ(10.01, storedValue);
-}
-
-TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
-  nlohmann::json JsonConfig = R"({
-    "source" : "nicos/device/parameter"
-  })"_json;
-
-  CacheWriterF Writer;
-  Writer.parse_config(JsonConfig.dump());
-
-  Writer.init_hdf(UsedGroup);
-  Writer.reopen(UsedGroup);
-
-  nlohmann::json BufferJson = R"({
-    "key": "nicos/device2/parameter",
-    "WriterModule": "ns10",
-    "time": 123.456,
-    "value": "10.01"
-  })"_json;
-
-  auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-                                               Builder->GetSize());
-
-  Writer.write(Message);
-
-  std::uint64_t storedTs;
-  std::string storedValues;
-  EXPECT_ANY_THROW(Writer.Timestamp.read(storedTs));
-  EXPECT_ANY_THROW(Writer.Values.read(storedValues));
 }
 
 TEST_F(NicosCacheWriterTest, UpdateCueIndex) {

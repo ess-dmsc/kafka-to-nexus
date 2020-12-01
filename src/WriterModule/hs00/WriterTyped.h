@@ -82,7 +82,6 @@ private:
   // clang-format on
 
   std::map<uint64_t, HistogramRecord> HistogramRecords;
-  std::vector<HistogramRecord> HistogramRecordsFreed;
 
   uint64_t LargestTimestampSeen = 0;
   size_t MaxNumberHistoric = 4;

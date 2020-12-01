@@ -7,15 +7,10 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "Field.h"
+
 #include "WriterModuleBase.h"
+#include "WriterModuleConfig/Field.h"
 
-namespace WriterModuleConfig {
-FieldBase::FieldBase(WriterModule::Base *Ptr, std::vector<std::string> Keys)  : FieldKeys(Keys) {
-  Ptr->addConfigField(this);}
-
-void FieldBase::makeRequired() {
-  FieldRequired = true;
-}
-
+void WriterModule::Base::addConfigField(WriterModuleConfig::FieldBase *NewField) {
+  ConfigFieldProcessor.registerField(NewField);
 }

@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <string>
-#include "WriterModuleBase.h"
 #include <nlohmann/json.hpp>
+#include <string>
+#include "logger.h"
 
 namespace WriterModule {
 class Base;
@@ -23,8 +23,8 @@ using namespace nlohmann;
 
 class FieldBase {
 public:
-  FieldBase(WriterModule::Base *, std::string Key, bool Required) : FieldKeys{Key}, FieldRequired(Required) {}
-  FieldBase(WriterModule::Base *, std::vector<std::string> Keys, bool Required) : FieldKeys{Keys}, FieldRequired(Required) {}
+  FieldBase(WriterModule::Base *Ptr, std::vector<std::string> Keys);
+  FieldBase(WriterModule::Base *Ptr, std::string Key) : FieldBase(Ptr, std::vector<std::string>{Key}) {}
   virtual ~FieldBase() {}
   virtual void setValue(std::string const &NewValue) = 0;
   bool hasDefaultValue() {return GotDefault;}
@@ -35,13 +35,14 @@ protected:
   void makeRequired();
 private:
   std::vector<std::string> FieldKeys;
-  bool FieldRequired;
+  bool FieldRequired{false};
 };
 
 template <class FieldType>
 class Field : public FieldBase {
 public:
-  Field(WriterModule::Base *WriterPtr, std::string Key, FieldType DefaultValue) : FieldBase(WriterPtr, Key, false), FieldValue(DefaultValue) {}
+  Field(WriterModule::Base *WriterPtr, std::string Key, FieldType DefaultValue) : FieldBase(WriterPtr, Key), FieldValue(DefaultValue) {}
+  Field(WriterModule::Base *WriterPtr, std::vector<std::string> Keys, FieldType DefaultValue) : FieldBase(WriterPtr, Keys), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
     setValueImpl<FieldType>(ValueString);
@@ -71,7 +72,14 @@ private:
       setValueInternal(ValueString);
     }
   }
-  void setValueInternal(FieldType NewValue) {GotDefault = false; FieldValue = NewValue;}
+  void setValueInternal(FieldType NewValue) {
+    if (not GotDefault) {
+      auto Keys = getKeys();
+      auto AllKeys = std::accumulate(std::next(Keys.begin()), Keys.end(), Keys[0], [](auto a, auto b) {return a + ", " + b;});
+      LOG_WARN("Replacing the previously given value of \"{}\" with \"{}\" in writer module config field with key(s): ", FieldValue, NewValue, AllKeys);
+    }
+    GotDefault = false; FieldValue = NewValue;
+  }
 };
 
 template <class FieldType>

@@ -19,6 +19,7 @@ namespace hs00 {
 using nlohmann::json;
 
 void hs00_Writer::process_config() {
+  Json = json::parse("{\"shape\":" + ShapeField.getValue() + "}");
   TheWriterUntyped = createFromDataType();
 }
 
@@ -91,7 +92,6 @@ WriterUntyped::ptr hs00_Writer::createFromEdgeType() {
 
 template <typename DataType, typename EdgeType>
 WriterUntyped::ptr hs00_Writer::createFromErrorType() {
-  auto Json = json::parse("");
   std::map<std::string, std::function<WriterUntyped::ptr()>> ErrorTypeMap {
       {"uint32_t", [&](){return WriterTyped<DataType, EdgeType, uint32_t>::create(Json);}},
       {"uint64_t", [&](){return WriterTyped<DataType, EdgeType, uint64_t>::create(Json);}},
