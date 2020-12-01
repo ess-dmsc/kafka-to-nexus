@@ -86,9 +86,9 @@ protected:
   WriterModuleConfig::Field<size_t> ArraySize{this, "array_size", 1};
   WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 64 * 1024};
   WriterModuleConfig::Field<std::string> DataType{
-      this, {"type"s, "dtype"s}, "double"};
+      this, {"type"s, "dtype"s}, "double"s};
   WriterModuleConfig::Field<std::string> Unit{
-      this, {"value_units"s, "unit"s}, ""};
+      this, {"value_units"s, "unit"s}, ""s};
 };
 
 } // namespace f142
