@@ -20,8 +20,7 @@ void f142_TestWriter::process_config() {}
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
-InitResult f142_TestWriter::init_hdf(hdf5::node::Group &HDFGroup,
-                                     std::string const &) {
+InitResult f142_TestWriter::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::CueIndex(HDFGroup, Create,

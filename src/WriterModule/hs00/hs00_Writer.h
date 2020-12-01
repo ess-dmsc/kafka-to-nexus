@@ -20,11 +20,10 @@ template <typename T> using uptr = std::unique_ptr<T>;
 
 class hs00_Writer : public WriterModule::Base {
 public:
-  hs00_Writer() : WriterModule::Base(false) {}
+  hs00_Writer() : WriterModule::Base(false, "NXdata") {}
   static WriterModule::ptr create();
   void process_config() override;
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;
 

@@ -58,7 +58,7 @@ public:
 // cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, FileInitOk) {
   WriterModule::ep00::ep00_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
   EXPECT_TRUE(TestGroup.has_dataset(StatusName));
@@ -72,13 +72,13 @@ TEST_F(Schema_ep00, ReopenFile) {
 
 TEST_F(Schema_ep00, FileInitFailIfInitialisedTwice) {
   WriterModule::ep00::ep00_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
-  EXPECT_FALSE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
+  EXPECT_FALSE(Writer.init_hdf(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(Schema_ep00, ReopenFileSuccess) {
   WriterModule::ep00::ep00_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
@@ -92,7 +92,7 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
       GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
   WriterModule::ep00::ep00_Writer Writer;
   {
-    Writer.init_hdf(UsedGroup, "{}");
+    Writer.init_hdf(UsedGroup);
     Writer.reopen(UsedGroup);
   }
   FileWriter::FlatbufferMessage TestMsg(

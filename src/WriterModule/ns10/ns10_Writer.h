@@ -24,13 +24,12 @@ namespace ns10 {
 
 class ns10_Writer : public WriterModule::Base {
 public:
-  ns10_Writer() : WriterModule::Base(false) {}
+  ns10_Writer() : WriterModule::Base(false, "NXlog") {}
   ~ns10_Writer() override = default;
 
   void process_config() override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

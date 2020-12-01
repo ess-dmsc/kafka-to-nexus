@@ -15,6 +15,7 @@
 #include <string>
 #include "WriterModuleConfig/FieldHandler.h"
 #include "WriterModuleConfig/Field.h"
+#include <string_view>
 
 namespace WriterModule {
 using WriterModuleConfig::FieldBase;
@@ -33,11 +34,14 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class Base {
 public:
-  Base(bool AcceptRepeatedTimestamps)
-      : WriteRepeatedTimestamps(AcceptRepeatedTimestamps) {}
+  Base(bool AcceptRepeatedTimestamps, std::string_view NX_class)
+      : WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {}
   virtual ~Base() = default;
 
   bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
+
+
+  auto defaultNeXusClass() const { return NX_class; }
 
   /// \brief Parses the configuration JSON structure for a stream.
   ///
@@ -66,8 +70,7 @@ public:
   /// stream, as defined by the "attributes" key in the Nexus structure.
   ///
   /// \return The result.
-  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                              std::string const &HDFAttributes) = 0;
+  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup) = 0;
 
   /// \brief Reopen the HDF objects which are used by this writer module.
   ///
@@ -88,6 +91,7 @@ protected:
 private:
   bool WriteRepeatedTimestamps;
   WriterModuleConfig::FieldHandler ConfigFieldProcessor;
+  std::string_view NX_class;
 };
 
 class WriterException : public std::runtime_error {

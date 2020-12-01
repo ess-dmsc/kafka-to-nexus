@@ -76,8 +76,7 @@ void f142_Writer::process_config() {
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
-InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                 std::string const &) {
+InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -96,12 +95,6 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     NeXusDataset::AlarmStatus(HDFGroup, Create);
     NeXusDataset::AlarmSeverity(HDFGroup, Create);
 
-    if (HDFGroup.attributes.exists("NX_class")) {
-      Logger->info("NX_class already specified!");
-    } else {
-      auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
-      ClassAttribute.write("NXlog");
-    }
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     Logger->error("f142 could not init hdf_parent: {}  trace: {}",

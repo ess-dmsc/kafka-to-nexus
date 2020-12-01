@@ -28,13 +28,12 @@ using FileWriterBase = WriterModule::Base;
 /// See parent class for documentation.
 class NDAr_Writer : public FileWriterBase {
 public:
-  NDAr_Writer() : WriterModule::Base(false) {}
+  NDAr_Writer() : WriterModule::Base(false, "NXlog") {}
   ~NDAr_Writer() override = default;
 
   void process_config() override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

@@ -28,9 +28,7 @@ static WriterModule::Registry::Registrar<tdct_Writer>
 
 void tdct_Writer::process_config() {}
 
-WriterModule::InitResult
-tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) {
+WriterModule::InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
@@ -45,11 +43,6 @@ tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto ClassAttribute =
-        CurrentGroup.attributes.create<std::string>("NX_class");
-    ClassAttribute.write("NXlog");
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, SharedLogger());
   } catch (std::exception &E) {
     Logger->error("Unable to initialise chopper time stamp tree in "
                   "HDF file with error message: \"{}\"",

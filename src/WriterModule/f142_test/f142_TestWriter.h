@@ -20,8 +20,7 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class f142_TestWriter : public WriterModule::Base {
 public:
   /// Implements writer module interface.
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   /// Implements writer module interface.
   void process_config() override;
   /// Implements writer module interface.
@@ -30,7 +29,7 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  f142_TestWriter() : WriterModule::Base(false) {}
+  f142_TestWriter() : WriterModule::Base(false, "NXlog") {}
   ~f142_TestWriter() override = default;
 
 protected:

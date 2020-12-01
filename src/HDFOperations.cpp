@@ -257,7 +257,10 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
             Encoding = EncodingType::ASCII;
           }
         }
-
+        if (Node.attributes.exists(Name)) {
+          Node.attributes.remove(Name);
+          LOG_DEBUG("Replacing (existing) attribute with key \"{}\".", Name);
+        }
         if (Values.is_array() or StringSize > 0 or
             Encoding != EncodingType::UTF8) {
           if (findType(Attribute, DType)) {
@@ -416,8 +419,11 @@ void writeAttrOfSpecifiedType(std::string const &DType,
 void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              nlohmann::json const &Values) {
   for (auto It = Values.cbegin(); It != Values.cend(); ++It) {
-
     auto const Name = It.key();
+    if (Node.attributes.exists(Name)) {
+      Node.attributes.remove(Name);
+      LOG_DEBUG("Replacing (existing) attribute with key \"{}\".", Name);
+    }
     writeScalarAttribute(Node, Name, It.value());
   }
 }

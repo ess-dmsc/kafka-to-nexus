@@ -56,7 +56,7 @@ using WriterModule::InitResult;
 TEST_F(ChopperTimeStampWriter, InitFile) {
   {
     tdct::tdct_Writer Writer;
-    EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
@@ -72,13 +72,13 @@ TEST_F(ChopperTimeStampWriter, ReopenFileFailure) {
 
 TEST_F(ChopperTimeStampWriter, InitFileFail) {
   tdct::tdct_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
-  EXPECT_FALSE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
+  EXPECT_FALSE(Writer.init_hdf(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(ChopperTimeStampWriter, ReopenFileSuccess) {
   tdct::tdct_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
@@ -86,7 +86,7 @@ TEST_F(ChopperTimeStampWriter, WriteDataOnce) {
   size_t BufferSize;
   auto Buffer = GenerateFlatbufferData(BufferSize);
   tdct::tdct_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
@@ -116,7 +116,7 @@ TEST_F(ChopperTimeStampWriter, WriteDataTwice) {
   size_t BufferSize;
   auto Buffer = GenerateFlatbufferData(BufferSize);
   tdct::tdct_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
@@ -156,7 +156,7 @@ TEST_F(ChopperTimeStampWriter, WriteNoElements) {
       1;
   *ValueLengthPtr = 0;
   tdct::tdct_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   EXPECT_THROW(FileWriter::FlatbufferMessage(Buffer.get(), BufferSize),
                std::runtime_error);

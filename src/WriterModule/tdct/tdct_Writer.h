@@ -26,13 +26,12 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 /// See parent class for documentation.
 class tdct_Writer : public WriterModule::Base {
 public:
-  tdct_Writer() : WriterModule::Base(false) {}
+  tdct_Writer() : WriterModule::Base(false, "NXlog") {}
   ~tdct_Writer() override = default;
 
   void process_config() override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

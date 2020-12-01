@@ -67,9 +67,7 @@ void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
       ChunkSize);    // NOLINT(bugprone-unused-raii)
 }
 
-WriterModule::InitResult
-ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) {
+WriterModule::InitResult ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
 
@@ -106,15 +104,6 @@ ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     if (RecordAdcPulseDebugData) {
       createAdcDatasets(HDFGroup);
     }
-
-    if (HDFGroup.attributes.exists("NX_class")) {
-      Logger->info("NX_class already specified!");
-    } else {
-      auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
-      ClassAttribute.write("NXevent_data");
-    }
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     Logger->error("ev42 could not init hdf_parent: {}  trace: {}",
