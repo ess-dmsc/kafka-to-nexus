@@ -140,7 +140,7 @@ TEST_F(NicosCacheWriterTest, WriterConfiguration) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.Sourcename, JsonConfig["source"]);
-  EXPECT_EQ(Writer.ChunkSize.at(0), JsonConfig["chunk_size"].get<uint64_t>());
+  EXPECT_EQ(Writer.ChunkSize, JsonConfig["chunk_size"].get<uint64_t>());
   EXPECT_EQ(Writer.CueInterval, JsonConfig["cue_interval"].get<int>());
 }
 

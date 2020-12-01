@@ -16,7 +16,7 @@ using WriterModule::InitResult;
 class StubWriterModule : public WriterModule::Base {
 public:
   StubWriterModule() : WriterModule::Base(false) {}
-  void parse_config(std::string const & /*ConfigurationStream*/) override {}
+  void process_config() override {}
   InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/,
                       std::string const & /*HDFAttributes*/) override {
     return InitResult::OK;

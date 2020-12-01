@@ -11,6 +11,7 @@
 
 #include "FlatbufferMessage.h"
 #include "WriterModuleBase.h"
+#include "WriterModuleConfig/Field.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
 #include <array>
@@ -30,7 +31,7 @@ public:
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   /// Implements writer module interface.
-  void parse_config(std::string const &ConfigurationStream) override;
+  void process_config() override;
   /// Implements writer module interface.
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
@@ -79,11 +80,11 @@ protected:
   /// Severity corresponding to EPICS alarm status
   NeXusDataset::AlarmSeverity AlarmSeverity;
 
-  // set by default to a large value:
-  uint64_t ValueIndexInterval = std::numeric_limits<uint64_t>::max();
-  size_t ArraySize{1};
-  size_t ChunkSize{64 * 1024};
-  std::optional<std::string> ValueUnits;
+
+  WriterModuleConfig::Field<uint64_t> ValueIndexInterval{this, "cue_interval", std::numeric_limits<uint64_t>::max()};
+  WriterModuleConfig::Field<size_t> ArraySize{this, "array_size", 1};
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 64*1024};
+  WriterModuleConfig::Field<std::string> DataType{this, {"type", "dtype"}, "double"};
 };
 
 } // namespace f142

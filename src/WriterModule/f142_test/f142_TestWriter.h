@@ -23,7 +23,7 @@ public:
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   /// Implements writer module interface.
-  void parse_config(std::string const &ConfigurationStream) override;
+  void process_config() override;
   /// Implements writer module interface.
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

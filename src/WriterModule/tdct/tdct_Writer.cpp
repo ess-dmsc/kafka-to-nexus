@@ -26,29 +26,25 @@ namespace tdct {
 static WriterModule::Registry::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct", "tdct");
 
-void tdct_Writer::parse_config(std::string const &) {
-  Logger->trace("There are currently no runtime configurable options in the "
-                "ChopperTimeStampWriter class.");
-}
+void tdct_Writer::process_config() {}
 
 WriterModule::InitResult
 tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
-  const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
     auto ClassAttribute =
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");

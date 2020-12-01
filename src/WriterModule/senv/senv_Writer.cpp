@@ -27,33 +27,29 @@ namespace senv {
 static WriterModule::Registry::Registrar<senv_Writer>
     RegisterSenvWriter("senv", "senv");
 
-void senv_Writer::parse_config(std::string const &) {
-  Logger->trace("There are currently no runtime configurable options in the "
-                "FastSampleEnvironmentWriter class.");
-}
+void senv_Writer::process_config() {}
 
 WriterModule::InitResult
 senv_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
-  const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::UInt16Value(      // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
     auto ClassAttribute =
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");

@@ -31,7 +31,7 @@ public:
   NDAr_Writer() : WriterModule::Base(false) {}
   ~NDAr_Writer() override = default;
 
-  void parse_config(std::string const &ConfigurationStream) override;
+  void process_config() override;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
@@ -57,11 +57,14 @@ protected:
     float64,
     c_string,
   } ElementType{Type::float64};
-  hdf5::Dimensions ArrayShape{1, 1};
-  hdf5::Dimensions ChunkSize{64};
+
+  WriterModuleConfig::Field<std::string> DataType{this, {"type", "dtype"}, "float64"};
+  WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
+  WriterModuleConfig::Field<hdf5::Dimensions> ChunkSize{this, "chunk_size", {1024}};
+  WriterModuleConfig::Field<hdf5::Dimensions> ArrayShape{this, "array_size", {1, 1}};
+
   std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
-  int CueInterval{1000};
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;

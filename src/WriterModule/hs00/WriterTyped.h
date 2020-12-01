@@ -37,9 +37,9 @@ public:
 
   /// \brief Create a WriterTyped from Json, used when a new write command
   /// arrives at the file writer.
-  static ptr createFromJson(json const &Json);
+  static ptr create(json const &Json);
 
-  static ptr createFromHDF(hdf5::node::Group &Group);
+  static ptr reOpen(hdf5::node::Group &Group);
 
   /// \brief Create the HDF structures.
   ///
@@ -48,10 +48,10 @@ public:
   /// writer module.
   ///
   /// \param Group
-  /// \param ChunkBytes
-  void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes) override;
+  /// \param ChunkSize
+  void createHDFStructure(hdf5::node::Group &Group, size_t ChunkSize) override;
 
-  void write(FlatbufferMessage const &Message, bool DoFlushEachWrite) override;
+  void write(FlatbufferMessage const &Message) override;
 
   ~WriterTyped() override;
   int copyLatestToData(size_t HDFIndex);
@@ -83,8 +83,6 @@ private:
 
   std::map<uint64_t, HistogramRecord> HistogramRecords;
   std::vector<HistogramRecord> HistogramRecordsFreed;
-
-  size_t ChunkBytes = 1 * 1024 * 1024;
 
   uint64_t LargestTimestampSeen = 0;
   size_t MaxNumberHistoric = 4;
@@ -169,7 +167,7 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 typename WriterTyped<DataType, EdgeType, ErrorType>::ptr
-WriterTyped<DataType, EdgeType, ErrorType>::createFromJson(json const &Json) {
+WriterTyped<DataType, EdgeType, ErrorType>::create(json const &Json) {
   if (!Json.is_object()) {
     throw UnexpectedJsonInput();
   }
@@ -187,12 +185,12 @@ WriterTyped<DataType, EdgeType, ErrorType>::createFromJson(json const &Json) {
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 typename WriterTyped<DataType, EdgeType, ErrorType>::ptr
-WriterTyped<DataType, EdgeType, ErrorType>::createFromHDF(
+WriterTyped<DataType, EdgeType, ErrorType>::reOpen(
     hdf5::node::Group &Group) {
   std::string JsonString;
   Group.attributes["created_from_json"].read(JsonString);
   auto TheWriterTypedPtr =
-      WriterTyped<DataType, EdgeType, ErrorType>::createFromJson(
+      WriterTyped<DataType, EdgeType, ErrorType>::create(
           json::parse(JsonString));
   auto &TheWriterTyped = *TheWriterTypedPtr;
   TheWriterTyped.Dataset = Group.get_dataset("histograms");
@@ -205,9 +203,8 @@ WriterTyped<DataType, EdgeType, ErrorType>::createFromHDF(
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
-    hdf5::node::Group &Group, size_t ChunkBytes) {
+    hdf5::node::Group &Group, size_t ChunkSize) {
   Group.attributes.create_from("created_from_json", CreatedFromJson);
-  this->ChunkBytes = ChunkBytes;
   {
     auto Type = hdf5::datatype::create<DataType>().native_type();
     auto const &Dims = TheShape.getDimensions();
@@ -222,7 +219,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     hdf5::property::DatasetCreationList DCPL;
     auto MaxDims = Space.maximum_dimensions();
     std::vector<hsize_t> ChunkElements(MaxDims.size());
-    ChunkElements.at(0) = ChunkBytes / Type.size();
+    ChunkElements.at(0) = ChunkSize;
     for (size_t i = 1; i < MaxDims.size(); ++i) {
       ChunkElements.at(i) = MaxDims.at(i);
       ChunkElements.at(0) /= MaxDims.at(i);
@@ -301,7 +298,7 @@ template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 void WriterTyped<DataType, EdgeType, ErrorType>::write(
-    FlatbufferMessage const &Message, bool DoFlushEachWrite) {
+    FlatbufferMessage const &Message) {
   using WriterModule::WriterException;
 
   if (!Dataset.is_valid()) {
@@ -489,9 +486,6 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
     copyLatestToData(Record.getHDFIndex());
   }
 
-  if (DoFlushEachWrite) {
-    Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
-  }
   Logger->trace("hs00 -------------------------------   DONE");
 }
 } // namespace hs00

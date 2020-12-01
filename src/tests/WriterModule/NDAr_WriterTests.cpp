@@ -385,9 +385,9 @@ TEST_F(AreaDetectorWriter, ConfigArraySizeTest) {
     "array_size": [5,5,5]
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{1, 1}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{5, 5, 5}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{5, 5, 5}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigArraySizeFailureTest) {
@@ -395,9 +395,9 @@ TEST_F(AreaDetectorWriter, ConfigArraySizeFailureTest) {
     "array_size": "hello"
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{1, 1}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{1, 1}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigChunkSizeTestAlt) {
@@ -405,9 +405,9 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeTestAlt) {
     "chunk_size": 1024
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{64}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{1024}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{1024}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigChunkSizeTest) {
@@ -415,9 +415,9 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeTest) {
     "chunk_size": [5,5,5,5]
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{64}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{5, 5, 5, 5}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{5, 5, 5, 5}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigChunkSizeFailureTest) {
@@ -425,9 +425,9 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeFailureTest) {
     "chunk_size": "hello"
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{64}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{64}));
 }
 
 // Note, you must feed it 1000 elements in total

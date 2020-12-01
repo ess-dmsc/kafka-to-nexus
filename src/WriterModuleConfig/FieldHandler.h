@@ -7,4 +7,21 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "Field.h"
+#pragma once
+
+#include <map>
+
+namespace WriterModuleConfig {
+
+class FieldBase;
+
+class FieldHandler {
+public:
+  FieldHandler() = default;
+  void registerField(FieldBase* NewConfigField);
+  void processConfigData(std::string ConfigJsonStr);
+private:
+  std::map<std::string,FieldBase*> FieldMap;
+};
+
+}

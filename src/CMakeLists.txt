@@ -167,7 +167,7 @@ set(kafka_to_nexus_INC
         StreamHDFInfo.h
         CommandSystem/CommandListener.h
         CommandSystem/JobListener.h
-        )
+        WriterModuleConfig/FieldHandler.cpp WriterModuleConfig/FieldHandler.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

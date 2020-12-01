@@ -6,10 +6,7 @@
 namespace WriterModule {
 namespace ep00 {
 
-void ep00_Writer::parse_config(std::string const &ConfigurationStream) {
-  // This writer module has no additional options to parse
-  UNUSED_ARG(ConfigurationStream);
-}
+void ep00_Writer::process_config() {}
 
 InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;

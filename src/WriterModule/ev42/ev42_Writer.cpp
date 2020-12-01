@@ -37,114 +37,71 @@ struct append_ret {
   explicit operator bool() const { return status == 0; }
 };
 
-void ev42_Writer::parse_config(std::string const &ConfigurationStream) {
-  auto ConfigurationStreamJson = json::parse(ConfigurationStream);
-  try {
-    EventIndexInterval =
-        ConfigurationStreamJson["nexus"]["indices"]["index_every_kb"]
-            .get<uint64_t>() *
-        1024;
-    Logger->trace("Event index interval: {}", EventIndexInterval);
-  } catch (...) { /* it's ok if not found */
-  }
-  try {
-    EventIndexInterval =
-        ConfigurationStreamJson["nexus"]["indices"]["index_every_mb"]
-            .get<uint64_t>() *
-        1024 * 1024;
-    Logger->trace("Event index interval: {}", EventIndexInterval);
-  } catch (...) { /* it's ok if not found */
-  }
-  try {
-    ChunkSizeBytes =
-        ConfigurationStreamJson["nexus"]["chunk"]["chunk_kb"].get<uint64_t>() *
-        1024;
-    Logger->trace("chunk_bytes: {}", ChunkSizeBytes);
-  } catch (...) { /* it's ok if not found */
-  }
-  try {
-    ChunkSizeBytes =
-        ConfigurationStreamJson["nexus"]["chunk"]["chunk_mb"].get<uint64_t>() *
-        1024 * 1024;
-    Logger->trace("chunk_bytes: {}", ChunkSizeBytes);
-  } catch (...) { /* it's ok if not found */
-  }
-  try {
-    RecordAdcPulseDebugData =
-        ConfigurationStreamJson["adc_pulse_debug"].get<bool>();
-    Logger->trace("adc_pulse_debug: {}", RecordAdcPulseDebugData);
-  } catch (...) { /* it's ok if not found */
-  }
+void ev42_Writer::process_config() {
 }
 
 void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
-  // bytes to number of elements
-  size_t ChunkSizeFor32BitTypes = ChunkSizeBytes / 4;
-  size_t ChunkSizeFor64BitTypes = ChunkSizeBytes / 8;
-
   NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)
       HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
+      ChunkSize);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::PeakArea(         // NOLINT(bugprone-unused-raii)
       HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
+      ChunkSize);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::Background(       // NOLINT(bugprone-unused-raii)
       HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
+      ChunkSize);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::ThresholdTime(    // NOLINT(bugprone-unused-raii)
       HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
+      ChunkSize);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::PeakTime(         // NOLINT(bugprone-unused-raii)
       HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
+      ChunkSize);    // NOLINT(bugprone-unused-raii)
 }
 
 WriterModule::InitResult
 ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   auto Create = NeXusDataset::Mode::Create;
-  size_t Chunk32Bit = ChunkSizeBytes / 4;
-  size_t Chunk64Bit = ChunkSizeBytes / 8;
   try {
 
     NeXusDataset::EventTimeOffset( // NOLINT(bugprone-unused-raii)
         HDFGroup,                  // NOLINT(bugprone-unused-raii)
         Create,                    // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);               // NOLINT(bugprone-unused-raii)
+        ChunkSize);               // NOLINT(bugprone-unused-raii)
 
     NeXusDataset::EventId( // NOLINT(bugprone-unused-raii)
         HDFGroup,          // NOLINT(bugprone-unused-raii)
         Create,            // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);       // NOLINT(bugprone-unused-raii)
+        ChunkSize);       // NOLINT(bugprone-unused-raii)
 
     NeXusDataset::EventTimeZero( // NOLINT(bugprone-unused-raii)
         HDFGroup,                // NOLINT(bugprone-unused-raii)
         Create,                  // NOLINT(bugprone-unused-raii)
-        Chunk64Bit);             // NOLINT(bugprone-unused-raii)
+        ChunkSize);             // NOLINT(bugprone-unused-raii)
 
     NeXusDataset::EventIndex( // NOLINT(bugprone-unused-raii)
         HDFGroup,             // NOLINT(bugprone-unused-raii)
         Create,               // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);          // NOLINT(bugprone-unused-raii)
 
     NeXusDataset::CueIndex( // NOLINT(bugprone-unused-raii)
         HDFGroup,           // NOLINT(bugprone-unused-raii)
         Create,             // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);        // NOLINT(bugprone-unused-raii)
+        ChunkSize);        // NOLINT(bugprone-unused-raii)
 
     NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
         HDFGroup,                   // NOLINT(bugprone-unused-raii)
         Create,                     // NOLINT(bugprone-unused-raii)
-        Chunk64Bit);                // NOLINT(bugprone-unused-raii)
+        ChunkSize);                // NOLINT(bugprone-unused-raii)
 
     if (RecordAdcPulseDebugData) {
       createAdcDatasets(HDFGroup);

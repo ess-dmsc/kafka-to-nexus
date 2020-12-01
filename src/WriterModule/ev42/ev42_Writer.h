@@ -20,7 +20,7 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class ev42_Writer : public WriterModule::Base {
 public:
   ev42_Writer() : WriterModule::Base(true) {}
-  void parse_config(std::string const &ConfigurationStream) override;
+  void process_config() override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
@@ -32,14 +32,11 @@ public:
   NeXusDataset::EventIndex EventIndex;
   NeXusDataset::CueIndex CueIndex;
   NeXusDataset::CueTimestampZero CueTimestampZero;
-  hsize_t ChunkSizeBytes = 1 << 16;
   uint64_t EventsWritten = 0;
   uint64_t LastEventIndex = 0;
-  uint64_t EventIndexInterval = std::numeric_limits<uint64_t>::max();
 
 private:
   void createAdcDatasets(hdf5::node::Group &HDFGroup) const;
-  bool RecordAdcPulseDebugData = false;
   NeXusDataset::Amplitude AmplitudeDataset;
   NeXusDataset::PeakArea PeakAreaDataset;
   NeXusDataset::Background BackgroundDataset;
@@ -51,6 +48,10 @@ private:
   void
   padDatasetsWithZeroesEqualToNumberOfEvents(FlatbufferMessage const &Message);
   void writeAdcPulseDataFromMessageToFile(FlatbufferMessage const &Message);
+
+  WriterModuleConfig::Field<uint64_t> EventIndexInterval{this, "cue_interval", std::numeric_limits<uint64_t>::max()};
+  WriterModuleConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 16384};
+  WriterModuleConfig::Field<bool> RecordAdcPulseDebugData{this, "adc_pulse_debug", false};
 };
 } // namespace ev42
 } // namespace WriterModule

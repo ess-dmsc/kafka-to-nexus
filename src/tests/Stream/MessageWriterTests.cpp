@@ -18,7 +18,7 @@
 class WriterModuleStandIn : public WriterModule::Base {
 public:
   WriterModuleStandIn() : WriterModule::Base(true) {}
-  MAKE_MOCK1(parse_config, void(std::string const &), override);
+  MAKE_MOCK0(process_config, void(), override);
   MAKE_MOCK2(init_hdf,
              WriterModule::InitResult(hdf5::node::Group &, std::string const &),
              override);

@@ -13,8 +13,11 @@
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <string>
+#include "WriterModuleConfig/FieldHandler.h"
+#include "WriterModuleConfig/Field.h"
 
 namespace WriterModule {
+using WriterModuleConfig::FieldBase;
 
 enum class InitResult { ERROR = -1, OK = 0 };
 
@@ -36,11 +39,15 @@ public:
 
   bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
 
-  /// \brief Parses the configuration of a stream.
+  /// \brief Parses the configuration JSON structure for a stream.
   ///
   /// \param config_stream Configuration from the write file command for this
   /// stream.
-  virtual void parse_config(std::string const &ConfigurationStream) = 0;
+  void parse_config(std::string const &ConfigurationStream) {
+      ConfigFieldProcessor.processConfigData(ConfigurationStream);
+  }
+
+  virtual void process_config() = 0;
 
   /// \brief Initialise the HDF file.
   ///
@@ -74,9 +81,13 @@ public:
   ///
   /// \param msg The message to process
   virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
-
+protected:
+  void addConfigField(FieldBase *NewField) {
+    ConfigFieldProcessor.registerField(NewField);
+  }
 private:
   bool WriteRepeatedTimestamps;
+  WriterModuleConfig::FieldHandler ConfigFieldProcessor;
 };
 
 class WriterException : public std::runtime_error {

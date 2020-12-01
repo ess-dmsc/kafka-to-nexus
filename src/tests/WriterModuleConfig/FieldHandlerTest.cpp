@@ -7,4 +7,15 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "Field.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include "WriterModuleConfig/Field.h"
+#include "WriterModuleConfig/FieldHandler.h"
+
+using namespace WriterModuleConfig;
+
+class FieldStandIn : public FieldBase {
+  FieldStandIn(std::string Key);
+};
+
+//TEST(FieldHandler, )
