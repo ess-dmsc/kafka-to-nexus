@@ -1,5 +1,17 @@
 # *ev42* Detector event
 
+## Stream configuration fields
+
+|Name|Type|Required|Description|
+---|---|---|---|
+topic|string|Yes|The kafka topic to listen to for data.|
+source|string|Yes|The source (name) of the data to be written.|
+writer_module|string|Yes|The identifier of this writer module (i.e. "ev42").|
+cue_interval|int|No|The interval (in nr of events) at which indices for searching the data should be created. Defaults to _never_.|
+chunk_size|int|No|The HDF5 chunk size in nr of elements. Defaults to 16384.|
+adc_pulse_debug|bool|No|Should ADC debug data be written (if present)?. Defaults to `false`.|
+
+
 ## Example
 
 Example `nexus_structure` to write radiation detector events:
@@ -20,19 +32,3 @@ Example `nexus_structure` to write radiation detector events:
   }
 }
 ```
-
-## More configuration options
-
-* `adc_pulse_debug` (bool)
-  If present and set to `true`, indicates the writer should create a group called 
-  "adc_pulse_debug" in the event data group and record any ADC pulse debug data it 
-  receives in the event messages. ADC pulse debug data uses the `dtdb` schema and is 
-  included as an optional field in the `ev42` schema.
-* `nexus.indices.index_every_mb` (int)
-  Write an index entry (in Nexus terminology: cue entry) every given megabytes.
-* `nexus.indices.index_every_kb` (int)
-  Write an index entry (in Nexus terminology: cue entry) every given kilobytes.
-* `nexus.chunk.chunk_mb` (int)
-  Size of the HDF chunks given in megabytes.
-* `nexus.chunk.chunk_kb` (int)
-  Size of the HDF chunks given in kilobytes.
