@@ -162,7 +162,7 @@ makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
       Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);
 }
 
-void NDAr_Writer::initValueDataset(hdf5::node::Group &Parent) {
+void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) {
   using OpenFuncType =
       std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{

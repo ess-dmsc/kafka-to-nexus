@@ -19,7 +19,7 @@ class FieldBase;
 class FieldHandler {
 public:
   FieldHandler() = default;
-  void registerField(FieldBase *NewConfigField);
+  void registerField(FieldBase *Ptr);
   void processConfigData(std::string ConfigJsonStr);
 
 private:

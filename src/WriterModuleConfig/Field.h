@@ -23,14 +23,14 @@ using namespace nlohmann;
 
 class FieldBase {
 public:
-  FieldBase(WriterModule::Base *Ptr, std::vector<std::string> Keys);
-  FieldBase(WriterModule::Base *Ptr, std::string Key)
+  FieldBase(WriterModule::Base *Ptr, std::vector<std::string> const &Keys);
+  FieldBase(WriterModule::Base *Ptr, std::string const &Key)
       : FieldBase(Ptr, std::vector<std::string>{Key}) {}
   virtual ~FieldBase() {}
   virtual void setValue(std::string const &NewValue) = 0;
-  bool hasDefaultValue() { return GotDefault; }
-  auto getKeys() { return FieldKeys; }
-  bool isRequried() { return FieldRequired; }
+  bool hasDefaultValue() const { return GotDefault; }
+  auto getKeys() const { return FieldKeys; }
+  bool isRequried() const { return FieldRequired; }
 
 protected:
   bool GotDefault{true};
@@ -43,7 +43,7 @@ private:
 
 template <class FieldType> class Field : public FieldBase {
 public:
-  Field(WriterModule::Base *WriterPtr, std::string Key, FieldType DefaultValue)
+  Field(WriterModule::Base *WriterPtr, std::string const &Key, FieldType DefaultValue)
       : FieldBase(WriterPtr, Key), FieldValue(DefaultValue) {}
   Field(WriterModule::Base *WriterPtr, std::vector<std::string> Keys,
         FieldType DefaultValue)
@@ -96,7 +96,7 @@ private:
 
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
-  RequiredField(WriterModule::Base *WriterPtr, std::string Key)
+  RequiredField(WriterModule::Base *WriterPtr, std::string const &Key)
       : Field<FieldType>(WriterPtr, Key, FieldType()) {
     FieldBase::makeRequired();
   }

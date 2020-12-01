@@ -29,7 +29,7 @@ void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
       ChunkSize); // NOLINT(bugprone-unused-raii)
 }
 
-void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
+void initValueDataset(hdf5::node::Group const &Parent, Type ElementType,
                       hdf5::Dimensions const &Shape,
                       hdf5::Dimensions const &ChunkSize) {
   using OpenFuncType = std::function<void()>;

@@ -44,7 +44,7 @@ public:
   static std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
 
 protected:
-  void initValueDataset(hdf5::node::Group &Parent);
+  void initValueDataset(hdf5::node::Group const &Parent);
   enum class Type {
     int8,
     uint8,
@@ -60,7 +60,7 @@ protected:
   } ElementType{Type::float64};
 
   WriterModuleConfig::Field<std::string> DataType{
-      this, {"type"s, "dtype"s}, "float64"s};
+      this, std::initializer_list<std::string>({"type"s, "dtype"s}), "float64"s};
   WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
   WriterModuleConfig::Field<hdf5::Dimensions> ChunkSize{
       this, "chunk_size", {1024}};

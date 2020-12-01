@@ -15,7 +15,7 @@
 #include <vector>
 
 template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
-  constexpr auto parse(format_parse_context &ctx) {
+  static constexpr auto parse(format_parse_context &ctx) {
     const auto begin = ctx.begin();
     const auto end = std::find(begin, ctx.end(), '}');
     return end;
@@ -35,7 +35,7 @@ template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
     }
     auto ReturnString = std::accumulate(
         std::next(Data.begin()), EndIterator, fmt::format("{}", Data[0]),
-        [](std::string a, InnerType b) { return a + fmt::format(", {}", b); });
+        [](std::string const &a, InnerType const &b) { return a + fmt::format(", {}", b); });
     return fmt::format_to(ctx.out(), "[{}{}]", ReturnString, Suffix);
   }
 };
