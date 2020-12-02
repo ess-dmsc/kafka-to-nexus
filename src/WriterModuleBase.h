@@ -59,7 +59,7 @@ public:
   /// example: converting a string to an enum, it should
   /// be done in this function. This function is called by the application right
   /// after the constructor and parse_config().
-  virtual void config_post_processing() {};
+  virtual void config_post_processing(){};
 
   /// \brief Initialise the HDF file.
   ///
