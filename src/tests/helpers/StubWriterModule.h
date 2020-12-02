@@ -15,7 +15,6 @@ using WriterModule::InitResult;
 
 class StubWriterModule : public WriterModule::Base {
 public:
-  void process_config() override {}
   StubWriterModule() : WriterModule::Base(false, "NXlog") {}
   InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/) override {
     return InitResult::OK;

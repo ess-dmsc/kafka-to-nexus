@@ -27,8 +27,6 @@ namespace senv {
 static WriterModule::Registry::Registrar<senv_Writer>
     RegisterSenvWriter("senv", "senv");
 
-void senv_Writer::process_config() {}
-
 WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;

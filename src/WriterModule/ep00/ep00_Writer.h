@@ -8,7 +8,6 @@ namespace ep00 {
 
 class ep00_Writer final : public WriterModule::Base {
 public:
-  void process_config() override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FileWriter::FlatbufferMessage const &Message) override;

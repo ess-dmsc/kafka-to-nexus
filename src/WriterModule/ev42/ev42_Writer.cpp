@@ -37,7 +37,6 @@ struct append_ret {
   explicit operator bool() const { return status == 0; }
 };
 
-void ev42_Writer::process_config() {}
 
 void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
   NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)

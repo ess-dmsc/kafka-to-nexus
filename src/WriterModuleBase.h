@@ -49,6 +49,7 @@ public:
   /// stream.
   void parse_config(std::string const &ConfigurationStream) {
     ConfigFieldProcessor.processConfigData(ConfigurationStream);
+    process_config();
   }
 
   /// \brief For doing extra processing related to the configuration of the
@@ -58,7 +59,7 @@ public:
   /// example: converting a string to an enum, it should
   /// be done in this function. This function is called by the application right
   /// after the constructor and parse_config().
-  virtual void process_config() = 0;
+  virtual void process_config() {};
 
   /// \brief Initialise the HDF file.
   ///

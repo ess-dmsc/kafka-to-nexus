@@ -6,8 +6,6 @@
 namespace WriterModule {
 namespace ep00 {
 
-void ep00_Writer::process_config() {}
-
 InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {

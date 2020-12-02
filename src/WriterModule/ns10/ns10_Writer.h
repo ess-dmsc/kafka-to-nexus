@@ -27,7 +27,6 @@ public:
   ns10_Writer() : WriterModule::Base(false, "NXlog") {}
   ~ns10_Writer() override = default;
 
-  void process_config() override;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 

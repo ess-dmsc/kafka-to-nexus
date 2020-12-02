@@ -131,7 +131,6 @@ public:
 TEST_F(f142ConfigParse, EmptyConfig) {
   f142_WriterStandIn TestWriter;
   TestWriter.parse_config("{}");
-  TestWriter.process_config();
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
   EXPECT_EQ(TestWriter.ValueIndexInterval, TestWriter2.ValueIndexInterval);
@@ -144,7 +143,6 @@ TEST_F(f142ConfigParse, SetArraySize) {
   TestWriter.parse_config(R"({
               "array_size": 3
             })");
-  TestWriter.process_config();
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, 3u);
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
@@ -157,7 +155,6 @@ TEST_F(f142ConfigParse, SetChunkSize) {
   TestWriter.parse_config(R"({
               "chunk_size": 511
             })");
-  TestWriter.process_config();
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
@@ -170,7 +167,6 @@ TEST_F(f142ConfigParse, CuInterval) {
   TestWriter.parse_config(R"({
               "cue_interval": 24
             })");
-  TestWriter.process_config();
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
@@ -183,7 +179,6 @@ TEST_F(f142ConfigParse, DataType1) {
   TestWriter.parse_config(R"({
               "type": "int8"
             })");
-  TestWriter.process_config();
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
   EXPECT_EQ(TestWriter.ElementType, f142_Writer::Type::int8);
@@ -196,7 +191,6 @@ TEST_F(f142ConfigParse, DataType2) {
   TestWriter.parse_config(R"({
               "dtype": "uint64"
             })");
-  TestWriter.process_config();
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
   EXPECT_EQ(TestWriter.ElementType, f142_Writer::Type::uint64);
@@ -209,7 +203,6 @@ TEST_F(f142ConfigParse, DataTypeFailure) {
   TestWriter.parse_config(R"({
               "Dtype": "uint64"
             })");
-  TestWriter.process_config();
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
   EXPECT_EQ(TestWriter.ElementType, f142_Writer::Type::float64);
@@ -233,7 +226,6 @@ TEST_F(f142ConfigParse, DataTypes) {
     f142_WriterStandIn TestWriter;
     EXPECT_EQ(TestWriter.ElementType, Type::float64);
     TestWriter.parse_config("{\"type\":\"" + CType.first + "\"}");
-    TestWriter.process_config();
     EXPECT_EQ(TestWriter.ElementType, CType.second)
         << "Failed on type string: " << CType.first;
   }
@@ -300,7 +292,6 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
   // GIVEN value_units is specified in the JSON config
   TestWriter.parse_config(
       fmt::format(R"({{"value_units": "{}"}})", units_string));
-  TestWriter.process_config();
 
   // WHEN the writer module creates the datasets
   TestWriter.init_hdf(RootGroup);
@@ -320,7 +311,6 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   f142_WriterStandIn TestWriter;
   // GIVEN value_units is specified as an empty string in the JSON config
   TestWriter.parse_config(R"({"value_units": ""})");
-  TestWriter.process_config();
 
   // WHEN the writer module creates the datasets
   TestWriter.init_hdf(RootGroup);
@@ -334,7 +324,6 @@ TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
   f142_WriterStandIn TestWriter;
   // GIVEN value_units is not specified in the JSON config
   TestWriter.parse_config("{}");
-  TestWriter.process_config();
 
   // WHEN the writer module creates the datasets
   TestWriter.init_hdf(RootGroup);

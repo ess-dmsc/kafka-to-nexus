@@ -19,7 +19,6 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 class ev42_Writer : public WriterModule::Base {
 public:
-  void process_config() override;
   ev42_Writer() : WriterModule::Base(true, "NXevent_data") {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;

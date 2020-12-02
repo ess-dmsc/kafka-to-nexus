@@ -29,8 +29,6 @@ public:
   tdct_Writer() : WriterModule::Base(false, "NXlog") {}
   ~tdct_Writer() override = default;
 
-  void process_config() override;
-
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;

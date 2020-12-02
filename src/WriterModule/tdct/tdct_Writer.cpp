@@ -26,8 +26,6 @@ namespace tdct {
 static WriterModule::Registry::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct", "tdct");
 
-void tdct_Writer::process_config() {}
-
 WriterModule::InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;

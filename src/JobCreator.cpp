@@ -91,7 +91,6 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
         " source: {}  error message: {}",
         StreamSettings.Module, StreamSettings.Source, E.what())));
   }
-  HDFWriterModule->process_config();
 
   auto StreamGroup = hdf5::node::get_group(
       RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
@@ -222,7 +221,6 @@ void JobCreator::addStreamSourceToWriterModule(
     try {
       // Reopen the previously created HDF dataset.
       HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson);
-      HDFWriterModule->process_config();
       try {
         auto RootGroup = Task->hdfGroup();
         auto StreamGroup = hdf5::node::get_group(
