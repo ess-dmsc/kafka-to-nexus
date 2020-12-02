@@ -18,7 +18,7 @@ namespace hs00 {
 
 using nlohmann::json;
 
-void hs00_Writer::process_config() {
+void hs00_Writer::config_post_processing() {
   Json = json::parse("{\"shape\":" + ShapeField.getValue() + "}");
   TheWriterUntyped = createFromDataType();
 }

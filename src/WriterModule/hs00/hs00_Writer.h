@@ -22,7 +22,7 @@ class hs00_Writer : public WriterModule::Base {
 public:
   hs00_Writer() : WriterModule::Base(false, "NXdata") {}
   static WriterModule::ptr create();
-  void process_config() override;
+  void config_post_processing() override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;

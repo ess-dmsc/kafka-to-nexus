@@ -54,7 +54,7 @@ void initValueDataset(hdf5::node::Group const &Parent, Type ElementType,
 }
 
 /// Parse the configuration for this stream.
-void f142_Writer::process_config() {
+void f142_Writer::config_post_processing() {
   auto toLower = [](auto InString) {
     std::transform(InString.begin(), InString.end(), InString.begin(),
                    [](auto C) { return std::tolower(C); });

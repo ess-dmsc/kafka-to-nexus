@@ -33,7 +33,7 @@ public:
   NDAr_Writer() : WriterModule::Base(false, "NXlog") {}
   ~NDAr_Writer() override = default;
 
-  void process_config() override;
+  void config_post_processing() override;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 

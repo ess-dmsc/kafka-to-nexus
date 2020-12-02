@@ -17,7 +17,7 @@
 
 class WriterModuleStandIn : public WriterModule::Base {
 public:
-  MAKE_MOCK0(process_config, void(), override);
+  MAKE_MOCK0(config_post_processing, void(), override);
   WriterModuleStandIn() : WriterModule::Base(true, "test") {}
   MAKE_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);

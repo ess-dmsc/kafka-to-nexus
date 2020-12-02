@@ -37,7 +37,7 @@ std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec,
 /// \brief Parse config JSON structure.
 ///
 /// The default is to use double as the element type.
-void NDAr_Writer::process_config() {
+void NDAr_Writer::config_post_processing() {
   std::map<std::string, NDAr_Writer::Type> TypeMap{
       {"int8", Type::int8},         {"uint8", Type::uint8},
       {"int16", Type::int16},       {"uint16", Type::uint16},

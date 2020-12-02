@@ -88,8 +88,8 @@ public:
   ///
   /// \param config_stream Contains information about configurations
   /// relevant only to the current instance of this file writing module.
-  void process_config() override {
-    std::cout << "WriterClass::process_config()\n";
+  void config_post_processing() override {
+    std::cout << "WriterClass::config_post_processing()\n";
   }
 
   /// \brief Initialise datasets and attributes in the HDF5 file.
