@@ -51,6 +51,7 @@ def test_ignores_commands_with_incorrect_id(writer_channel):
     file_path = f"output-files/{file_name}"
     assert Path(file_path).is_file()
 
+
 def test_ignores_commands_with_incorrect_job_id(writer_channel):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     now = datetime.now()
