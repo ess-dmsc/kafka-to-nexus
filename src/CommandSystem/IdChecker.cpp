@@ -12,7 +12,7 @@
 #include <regex>
 
 namespace Command {
-static const int CommandTimeLimit{10};
+constexpr int CommandTimeLimit{15};
 
 constexpr uint32_t MOD_ADLER = 65521;
 
