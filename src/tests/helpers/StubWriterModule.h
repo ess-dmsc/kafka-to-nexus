@@ -15,10 +15,9 @@ using WriterModule::InitResult;
 
 class StubWriterModule : public WriterModule::Base {
 public:
-  StubWriterModule() : WriterModule::Base(false) {}
+  StubWriterModule() : WriterModule::Base(false, "NXlog") {}
   void parse_config(std::string const & /*ConfigurationStream*/) override {}
-  InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/,
-                      std::string const & /*HDFAttributes*/) override {
+  InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/) override {
     return InitResult::OK;
   }
   InitResult reopen(hdf5::node::Group & /*HDFGroup*/) override {

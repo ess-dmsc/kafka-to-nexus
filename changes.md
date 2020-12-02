@@ -28,3 +28,7 @@ approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-
 - Removed a bunch of old (and now unused) Kafka metadata code.
 - Improved log messages slightly.
 - Modified/fixed/cleaned the system test.
+- All writer modules now set a *NX_class* value.
+- The *NX_class* value configured for a writer module will always override that of the HDF group *NX_class* value. If configured, a writer module attribute (e.g. *NX_class*) will override both.
+- The Kafka topic and flatbuffer source names will now automatically be written as (HDF) attributes when instantiating a new writer module.
+- Minor fix to CMake code for working around differences in how file-name leading lower and upper case letters are handled on different systems.

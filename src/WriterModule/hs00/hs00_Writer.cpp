@@ -19,8 +19,7 @@ void hs00_Writer::parse_config(std::string const &ConfigurationStream) {
       WriterUntyped::json::parse(ConfigurationStream));
 }
 
-WriterModule::InitResult hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                               std::string const &) {
+WriterModule::InitResult hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");

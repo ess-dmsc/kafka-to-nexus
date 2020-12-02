@@ -25,8 +25,7 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                 std::string const &) {
+InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::ConnectionStatusTime(HDFGroup,

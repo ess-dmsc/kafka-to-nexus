@@ -32,9 +32,7 @@ void senv_Writer::parse_config(std::string const &) {
                 "FastSampleEnvironmentWriter class.");
 }
 
-WriterModule::InitResult
-senv_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) {
+WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
@@ -54,11 +52,6 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto ClassAttribute =
-        CurrentGroup.attributes.create<std::string>("NX_class");
-    ClassAttribute.write("NXlog");
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, SharedLogger());
   } catch (std::exception &E) {
     Logger->error("Unable to initialise fast sample environment data tree in "
                   "HDF file with error message: \"{}\"",

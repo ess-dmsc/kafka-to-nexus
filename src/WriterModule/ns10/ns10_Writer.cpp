@@ -46,9 +46,7 @@ void ns10_Writer::parse_config(std::string const &ConfigurationStream) {
 
 using FileWriterBase = WriterModule::Base;
 
-WriterModule::InitResult
-ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) {
+WriterModule::InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
     auto &CurrentGroup = HDFGroup;
@@ -68,15 +66,6 @@ ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, Logger);
-    if (HDFGroup.attributes.exists("NX_class")) {
-      Logger->info("NX_class already specified!");
-    } else {
-      auto ClassAttribute =
-          CurrentGroup.attributes.create<std::string>("NX_class");
-      ClassAttribute.write("NXlog");
-    }
   } catch (std::exception &E) {
     Logger->error("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",

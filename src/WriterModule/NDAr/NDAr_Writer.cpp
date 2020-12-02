@@ -84,9 +84,7 @@ void NDAr_Writer::parse_config(std::string const &ConfigurationStream) {
   Logger->info("Using a cue interval of {}.", CueInterval);
 }
 
-WriterModule::InitResult
-NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) {
+WriterModule::InitResult NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
     initValueDataset(HDFGroup);
@@ -102,10 +100,6 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
         HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
-    ClassAttribute.write("NXlog");
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception &E) {
     Logger->error("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",
