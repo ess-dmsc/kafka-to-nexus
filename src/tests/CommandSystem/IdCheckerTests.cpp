@@ -54,7 +54,7 @@ TEST(JobId, OkTimestamp) {
 
 TEST(JobId, BadTimestamp) {
   auto UsedJobId = generateJobId();
-  auto Time = system_clock::now() + 15s;
+  auto Time = system_clock::now() + 20s;
   auto Result = Command::isJobIdValid(UsedJobId, Time);
   EXPECT_FALSE(Result.first) << Result.second;
 }
@@ -86,7 +86,7 @@ TEST(CmdId, OkTimestamp) {
 
 TEST(CmdId, BadTimestamp) {
   auto UsedCmdId = generateCmdId();
-  auto Time = system_clock::now() + 15s;
+  auto Time = system_clock::now() + 20s;
   auto Result = Command::isCmdIdValid(UsedCmdId, Time);
   EXPECT_FALSE(Result.first) << Result.second;
 }
