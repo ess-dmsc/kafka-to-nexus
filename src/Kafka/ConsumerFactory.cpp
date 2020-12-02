@@ -22,7 +22,7 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
           .count());
-  SettingsCopy.KafkaConfiguration.insert({"group.id", GroupIdStr});
+  SettingsCopy.KafkaConfiguration.emplace("group.id", GroupIdStr);
 
   SettingsCopy.Address = Broker;
 

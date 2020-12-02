@@ -281,7 +281,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
         {{CmdOutcome::FailedAtCmd},
          {LogLevel::err, true,
           fmt::format(
-              "Failed to exeute stop command. The failure message was: {}",
+              "Failed to execute stop command. The failure message was: {}",
               ResponseMessage),
           500}},
         {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, ResponseMessage, 202}},

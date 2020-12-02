@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "CLIOptions.h"
-#include "CommandSystem/JobListener.h"
 #include "FlatbufferReader.h"
 #include "HDFVersionCheck.h"
 #include "JobCreator.h"

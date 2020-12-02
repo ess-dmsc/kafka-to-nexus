@@ -42,9 +42,9 @@ set(UnitTests_SRC
         helpers/StatusHelpers.cpp
         HelperTests.cpp
         CommandSystem/CommandListenerTests.cpp
-		CommandSystem/CommandHandlerTests.cpp
-		CommandSystem/IdCheckerTests.cpp
-		)
+       CommandSystem/CommandHandlerTests.cpp
+       CommandSystem/IdCheckerTests.cpp
+       )
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
