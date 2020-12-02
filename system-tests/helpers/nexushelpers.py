@@ -3,8 +3,7 @@ import h5py
 
 class OpenNexusFile:
     """
-    Context manager for opening NeXus files
-    Retries opening until successful
+    Context manager for opening NeXus files.
     """
 
     def __init__(self, filepath):

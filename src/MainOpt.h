@@ -57,7 +57,7 @@ struct MainOpt {
   uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
 
   /// Kafka broker and topic where file writer jobs are published.
-  uri::URI JobPoolURI{"localhost:9092/kafka-to-nexus.job_pool"};
+  uri::URI JobPoolURI{""};
 
   /// \brief Path for HDF output.
   ///

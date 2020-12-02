@@ -81,8 +81,6 @@ void Master::run() {
   }
 }
 
-bool Master::isWriting() const { return CurrentState == WriterState::Writing; }
-
 void Master::setToIdle() {
   if (CurrentStreamController->hasErrorState()) {
     CommandAndControl->sendErrorEncounteredMessage(

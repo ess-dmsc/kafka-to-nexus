@@ -62,7 +62,7 @@ public:
   ///
   /// This call is not blocking but will trigger open streams to stop as soon as
   /// possible.
-  void stop() override;
+  void stop() override final;
 
   /// \brief Returns true if all topics are done AND current system time
   /// is greater than stop time.

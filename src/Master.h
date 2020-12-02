@@ -44,11 +44,9 @@ public:
   /// Continues running until stop requested.
   void run();
 
-  bool isWriting() const;
-
-  virtual void setStopTime(std::chrono::milliseconds StopTime);
-  virtual void stopNow();
-  virtual void startWriting(Command::StartInfo const &StartInfo);
+  void setStopTime(std::chrono::milliseconds StopTime);
+  void stopNow();
+  void startWriting(Command::StartInfo const &StartInfo);
 
 private:
   enum class WriterState { Idle, Writing };

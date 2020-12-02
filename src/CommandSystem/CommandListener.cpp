@@ -26,10 +26,12 @@ CommandListener::CommandListener(uri::URI CommandTopicUri,
 }
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
-  if (Consumer == nullptr) {
-    setUpConsumer();
-  } else {
-    return Consumer->poll();
+  if (not KafkaAddress.empty() and not CommandTopic.empty()) {
+    if (Consumer == nullptr) {
+      setUpConsumer();
+    } else {
+      return Consumer->poll();
+    }
   }
   return {Kafka::PollStatus::TimedOut, Msg()};
 }
