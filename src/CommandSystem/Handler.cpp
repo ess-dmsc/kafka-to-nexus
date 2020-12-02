@@ -164,9 +164,9 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
           0}},
         {{CmdOutcome::FailedAtJobId},
          {LogLevel::warn, true,
-          fmt::format(
-              "Rejected start command as the job id was invalid (it was: {}). Reason: {}",
-              StartJob.JobID, IdValidity.second),
+          fmt::format("Rejected start command as the job id was invalid (it "
+                      "was: {}). Reason: {}",
+                      StartJob.JobID, IdValidity.second),
           400}},
         {{CmdOutcome::FailedAtCmd},
          {LogLevel::err, true,
