@@ -19,7 +19,7 @@ using nlohmann::json;
 
 void FieldHandler::registerField(FieldBase *Ptr) {
   auto Keys = Ptr->getKeys();
-  for (auto Key : Keys) {
+  for (auto const &Key : Keys) {
     if (FieldMap.find(Key) != FieldMap.end()) {
       LOG_WARN(
           "Replacing the config field (key) \"{}\". Note: this is programming "
@@ -30,7 +30,7 @@ void FieldHandler::registerField(FieldBase *Ptr) {
   }
 }
 
-void FieldHandler::processConfigData(std::string ConfigJsonStr) {
+void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
   auto JsonObj = json::parse(ConfigJsonStr);
   for (auto Iter = JsonObj.begin(); Iter != JsonObj.end(); ++Iter) {
     if (FieldMap.find(Iter.key()) == FieldMap.end()) {
