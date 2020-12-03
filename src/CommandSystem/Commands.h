@@ -15,6 +15,7 @@
 
 namespace Command {
 
+/// \brief Structure for holding all the data required to start a file-writing job.
 struct StartInfo {
   std::string JobID;
   std::string Filename;
@@ -25,10 +26,12 @@ struct StartInfo {
   time_point StopTime{time_point::max()};
 };
 
-struct StartMessage : public StartInfo {
+/// \brief A de-serialised "start writing" message.
+struct StartMessage : StartInfo {
   std::string ServiceID;
 };
 
+/// \brief A de-serialised "set stop time" message.
 struct StopMessage {
   std::string JobID;
   std::string CommandID;

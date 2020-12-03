@@ -4,7 +4,7 @@ Commands are in the form of flatbuffers as defined in [this repository](https://
 We strongly recommend that you do not use this repo directly but instead make use of the [*file-writer-control*](https://github.com/ess-dmsc/file-writer-control) Python library.
 
 Commands are sent through Kafka via the broker and topic specified by the
-`--command-status-uri` command line argument. Additionally, it is also possible to send a start-job-command to a "job-pool" topic. This topic is set with the `--job-pool-topic` argument.
+`--command-status-uri` command line argument. Additionally, it is also possible to send a start-job-command to a "job-pool" topic. This topic is set with the `--job-pool-uri` argument.
 
 ### Defining a NeXus structure
 
@@ -151,24 +151,6 @@ For example:
   ]
 }
 ```
-
-## Single Writer Multiple Reader
-
-The file-writer uses HDF5's Single Writer Multiple Reader feature (SWMR). This feature can not be turned off.
-To set the (maximum) flush interval, use the `--data-flush-interval` command line argument. 
-
-To read and write HDF files which use the SWMR feature requires HDF5 version 1.10 or higher.
-One can also use the HDF5 tool `h5repack` with the `--high` option to convert the file into a HDF5 1.8 compatible version.  Please refer to see the `h5repack` documentation for more information.
-
-Please note, the HDF documentation warns that:
-
-"The HDF5 file that is accessed by SWMR HDF5 applications must be located on a
-file system that complies with the POSIX `write()` semantics."
-
-Also:
-
-"The writer is not allowed to modify or append to any data items containing
-variable-size datatypes (including string and region references datatypes)."
 
 ## Attributes
 

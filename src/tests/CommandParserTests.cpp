@@ -40,7 +40,7 @@ public:
         ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
         StopTimeInput);
 
-    StartInfo = Command::Parser::extractStartInformation(MessageBuffer);
+    StartInfo = Command::Parser::extractStartMessage(MessageBuffer);
   }
 };
 
@@ -82,7 +82,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
       ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(Command::Parser::extractStartInformation(MessageBuffer),
+  ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
 }
 
@@ -93,7 +93,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
       ServiceIDInput, BrokerInput, EmptyFilename, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(Command::Parser::extractStartInformation(MessageBuffer),
+  ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
 }
 
@@ -104,7 +104,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
       ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(Command::Parser::extractStartInformation(MessageBuffer),
+  ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
 }
 
@@ -115,7 +115,7 @@ TEST(CommandParserSadStartTests, IfNoBrokerThenThrows) {
       ServiceIDInput, EmptyBroker, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(Command::Parser::extractStartInformation(MessageBuffer),
+  ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
 }
 
@@ -126,7 +126,7 @@ TEST(CommandParserSadStartTests, IfBrokerIsWrongFormThenThrows) {
       ServiceIDInput, BrokerInvalidFormat, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  ASSERT_THROW(Command::Parser::extractStartInformation(MessageBuffer),
+  ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
 }
 
@@ -140,7 +140,7 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
   auto FakeCurrentTime = std::chrono::milliseconds{987654321};
 
   auto StartInfo =
-      Command::Parser::extractStartInformation(MessageBuffer, FakeCurrentTime);
+      Command::Parser::extractStartMessage(MessageBuffer, FakeCurrentTime);
 
   ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
 }
@@ -152,7 +152,7 @@ TEST(CommandParserStartTests, IfBlankServiceIdThenIsBlank) {
       EmptyServiceID, BrokerInput, FilenameInput, StartTimeInput,
       StopTimeInput);
 
-  auto StartInfo = Command::Parser::extractStartInformation(MessageBuffer);
+  auto StartInfo = Command::Parser::extractStartMessage(MessageBuffer);
 
   ASSERT_EQ("", StartInfo.ServiceID);
 }
@@ -163,7 +163,7 @@ TEST(CommandParserStartTests, IfMissingServiceIdThenIsBlank) {
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
       NoServiceID, BrokerInput, FilenameInput, StartTimeInput, StopTimeInput);
 
-  auto StartInfo = Command::Parser::extractStartInformation(MessageBuffer);
+  auto StartInfo = Command::Parser::extractStartMessage(MessageBuffer);
 
   ASSERT_EQ("", StartInfo.ServiceID);
 }
@@ -173,7 +173,7 @@ TEST(CommandParserSadStopTests, IfNoJobIdThenThrows) {
   auto MessageBuffer = buildRunStopMessage(
       StopTimeInput, RunNameInput, EmptyJobID, CommandIDInput, ServiceIDInput);
 
-  ASSERT_THROW(Command::Parser::extractStopInformation(MessageBuffer),
+  ASSERT_THROW(Command::Parser::extractStopMessage(MessageBuffer),
                std::runtime_error);
 }
 
@@ -181,7 +181,7 @@ TEST(CommandParserHappyStopTests, IfJobIdPresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(
       StopTimeInput, RunNameInput, JobIDInput, CommandIDInput, ServiceIDInput);
 
-  auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
+  auto StopInfo = Command::Parser::extractStopMessage(MessageBuffer);
 
   ASSERT_EQ(JobIDInput, StopInfo.JobID);
 }
@@ -190,7 +190,7 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(
       StopTimeInput, RunNameInput, JobIDInput, CommandIDInput, ServiceIDInput);
 
-  auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
+  auto StopInfo = Command::Parser::extractStopMessage(MessageBuffer);
 
   ASSERT_EQ(std::chrono::milliseconds{StopTimeInput}, StopInfo.StopTime);
 }
@@ -200,7 +200,7 @@ TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
   auto MessageBuffer = buildRunStopMessage(
       StopTimeInput, RunNameInput, JobIDInput, CommandIDInput, EmptyServiceID);
 
-  auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
+  auto StopInfo = Command::Parser::extractStopMessage(MessageBuffer);
 
   ASSERT_EQ("", StopInfo.ServiceID);
 }
@@ -210,7 +210,7 @@ TEST(CommandParserStopTests, IfMissingServiceIdThenIsBlank) {
   auto MessageBuffer = buildRunStopMessage(
       StopTimeInput, RunNameInput, JobIDInput, CommandIDInput, NoServiceID);
 
-  auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
+  auto StopInfo = Command::Parser::extractStopMessage(MessageBuffer);
 
   ASSERT_EQ("", StopInfo.ServiceID);
 }
@@ -219,7 +219,7 @@ TEST(CommandParserStopTests, IfServiceIdPresentThenExtractedCorrectly) {
   auto MessageBuffer = buildRunStopMessage(
       StopTimeInput, RunNameInput, JobIDInput, CommandIDInput, ServiceIDInput);
 
-  auto StopInfo = Command::Parser::extractStopInformation(MessageBuffer);
+  auto StopInfo = Command::Parser::extractStopMessage(MessageBuffer);
 
   ASSERT_EQ(ServiceIDInput, StopInfo.ServiceID);
 }

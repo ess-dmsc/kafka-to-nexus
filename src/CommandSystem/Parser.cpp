@@ -62,7 +62,7 @@ namespace Parser {
 using FileWriter::Msg;
 
 Command::StartMessage
-extractStartInformation(Msg const &CommandMessage,
+extractStartMessage(Msg const &CommandMessage,
                         std::chrono::milliseconds DefaultStartTime) {
   Command::StartMessage Result;
 
@@ -93,7 +93,7 @@ extractStartInformation(Msg const &CommandMessage,
   return Result;
 }
 
-Command::StopMessage extractStopInformation(Msg const &CommandMessage) {
+Command::StopMessage extractStopMessage(Msg const &CommandMessage) {
   auto const RunStopData = GetRunStop(CommandMessage.data());
 
   if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {

@@ -106,7 +106,7 @@ struct CmdResponse {
 bool extractStartInfo(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
                       std::string &ErrorStr) {
   try {
-    Msg = Parser::extractStartInformation(CommandMsg);
+    Msg = Parser::extractStartMessage(CommandMsg);
     return true;
   } catch (std::runtime_error &E) {
     ErrorStr = E.what();
@@ -203,7 +203,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 bool extractStopInfo(FileWriter::Msg const &CommandMsg, StopMessage &Msg,
                      std::string &ErrorStr) {
   try {
-    Msg = Parser::extractStopInformation(CommandMsg);
+    Msg = Parser::extractStopMessage(CommandMsg);
     return true;
   } catch (std::runtime_error &E) {
     ErrorStr = E.what();
