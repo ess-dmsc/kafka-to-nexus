@@ -10,7 +10,7 @@ writer_module|string|Yes|The identifier of this writer module (i.e. "hs00").|
 data_type|string|Yes|The data type of the histogram data to be written.|
 error_type|string|Yes|The data type of the errors in the histogram data.|
 edge_type|string|Yes|The data type of histogram boundary data.|
-chunk_size|int|No|The HDF5 chunk size in nr of elemnts. Defaults to 2^21.|
+chunk_size|int|No|The HDF5 chunk size in nr of elemnts. Defaults to 2^20.|
 shape|See below|No|This is a list of dictionaries where each dictionary represents a dimension in the histogram and must contain a number if keys. These are listed below.|
 –– size|int|Yes|The size of the histogram in this dimension.|
 –– label|string|Yes|The label of the dimension.|
