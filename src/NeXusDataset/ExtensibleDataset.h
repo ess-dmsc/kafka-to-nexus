@@ -357,9 +357,9 @@ public:
         VectorChunkSize = ChunkSize;
       } else if (ChunkSize.size() == 1 and Shape.size() > 1) {
         VectorChunkSize = Shape;
-        auto ElementsPerRow = std::accumulate(std::next(Shape.begin()), Shape.end(), 1, [](auto a, auto b) {
-          return a*b;
-        });
+        auto ElementsPerRow =
+            std::accumulate(std::next(Shape.begin()), Shape.end(), 1,
+                            [](auto a, auto b) { return a * b; });
         auto NrOfRows = ChunkSize[0] / ElementsPerRow;
         if (NrOfRows == 0) {
           NrOfRows = 1;

@@ -122,7 +122,7 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize1) {
                                               NeXusDataset::Mode::Open);
   auto CreationProperties = ReOpened.creation_list();
   auto ChunkDims = CreationProperties.chunk();
-  DatasetDimensions.insert(DatasetDimensions.begin(), ChunkSize / (10*10));
+  DatasetDimensions.insert(DatasetDimensions.begin(), ChunkSize / (10 * 10));
   EXPECT_EQ(ChunkDims, DatasetDimensions);
 }
 
