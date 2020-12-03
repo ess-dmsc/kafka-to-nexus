@@ -28,9 +28,9 @@ public:
       : FieldBase(Ptr, std::vector<std::string>{Key}) {}
   virtual ~FieldBase() {}
   virtual void setValue(std::string const &NewValue) = 0;
-  bool hasDefaultValue() const { return GotDefault; }
-  auto getKeys() const { return FieldKeys; }
-  bool isRequried() const { return FieldRequired; }
+  [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
+  [[nodiscard]] auto getKeys() const { return FieldKeys; }
+  [[nodiscard]] bool isRequried() const { return FieldRequired; }
 
 protected:
   bool GotDefault{true};
