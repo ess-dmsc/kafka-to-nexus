@@ -6,11 +6,6 @@
 namespace WriterModule {
 namespace ep00 {
 
-void ep00_Writer::parse_config(std::string const &ConfigurationStream) {
-  // This writer module has no additional options to parse
-  UNUSED_ARG(ConfigurationStream);
-}
-
 InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
@@ -28,10 +23,10 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
 InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
-    NeXusDataset::ConnectionStatusTime(HDFGroup,
-                                       Create); // NOLINT(bugprone-unused-raii)
-    NeXusDataset::ConnectionStatus(HDFGroup,
-                                   Create); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::ConnectionStatusTime(
+        HDFGroup, Create, ChunkSize); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::ConnectionStatus(HDFGroup, Create,
+                                   ChunkSize); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     Logger->error("ep00 could not init HDFGroup: {}  trace: {}",

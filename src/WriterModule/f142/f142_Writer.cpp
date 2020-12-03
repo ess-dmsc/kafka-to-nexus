@@ -21,24 +21,6 @@ using nlohmann::json;
 
 using Type = f142_Writer::Type;
 
-std::string f142_Writer::findDataType(nlohmann::basic_json<> const &Attribute) {
-  auto toLower = [](auto InString) {
-    std::transform(InString.begin(), InString.end(), InString.begin(),
-                   [](auto C) { return std::tolower(C); });
-    return InString;
-  };
-
-  if (Attribute.find("type") != Attribute.end()) {
-    return toLower(Attribute.find("type").value().get<std::string>());
-  }
-  if (Attribute.find("dtype") != Attribute.end()) {
-    return toLower(Attribute.find("dtype").value().get<std::string>());
-  }
-  Logger->warn("Unable to find data type in JSON structure, using the default "
-               "(double).");
-  return "double";
-}
-
 template <typename Type>
 void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
             hdf5::Dimensions const &ChunkSize) {
@@ -47,10 +29,9 @@ void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
       ChunkSize); // NOLINT(bugprone-unused-raii)
 }
 
-void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
+void initValueDataset(hdf5::node::Group const &Parent, Type ElementType,
                       hdf5::Dimensions const &Shape,
-                      hdf5::Dimensions const &ChunkSize,
-                      std::optional<std::string> const &ValueUnits) {
+                      hdf5::Dimensions const &ChunkSize) {
   using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::int8, [&]() { makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
@@ -70,16 +51,15 @@ void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
        [&]() { makeIt<std::double_t>(Parent, Shape, ChunkSize); }},
   };
   CreateValuesMap.at(ElementType)();
-
-  if (ValueUnits) {
-    Parent["value"].attributes.create_from<std::string>("units", *ValueUnits);
-  }
 }
 
 /// Parse the configuration for this stream.
-void f142_Writer::parse_config(std::string const &ConfigurationStream) {
-  auto ConfigurationStreamJson = json::parse(ConfigurationStream);
-
+void f142_Writer::config_post_processing() {
+  auto ToLower = [](auto InString) {
+    std::transform(InString.begin(), InString.end(), InString.begin(),
+                   [](auto C) { return std::tolower(C); });
+    return InString;
+  };
   std::map<std::string, Type> TypeMap{
       {"int8", Type::int8},       {"uint8", Type::uint8},
       {"int16", Type::int16},     {"uint16", Type::uint16},
@@ -91,29 +71,10 @@ void f142_Writer::parse_config(std::string const &ConfigurationStream) {
       {"long", Type::int64}};
 
   try {
-    ElementType = TypeMap.at(findDataType(ConfigurationStreamJson));
+    ElementType = TypeMap.at(ToLower(DataType.getValue()));
   } catch (std::out_of_range &E) {
     Logger->warn("Unknown data type with name \"{}\". Using double.",
-                 findDataType(ConfigurationStreamJson));
-  }
-
-  if (auto ArraySizeMaybe =
-          find<uint64_t>("array_size", ConfigurationStreamJson)) {
-    ArraySize = size_t(*ArraySizeMaybe);
-  }
-
-  ValueUnits = find<std::string>("value_units", ConfigurationStreamJson);
-
-  try {
-    ValueIndexInterval =
-        ConfigurationStreamJson["nexus.cue_interval"].get<uint64_t>();
-    Logger->trace("Value index interval: {}", ValueIndexInterval);
-  } catch (...) { /* it's ok if not found */
-  }
-  try {
-    ChunkSize = ConfigurationStreamJson["nexus.chunk_size"].get<uint64_t>();
-    Logger->trace("Chunk size: {}", ChunkSize);
-  } catch (...) { /* it's ok if not found */
+                 DataType.getValue());
   }
 }
 
@@ -133,11 +94,14 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
                      {
                          ArraySize,
                      },
-                     {ChunkSize, ArraySize}, ValueUnits);
+                     {ChunkSize, ArraySize});
 
     NeXusDataset::AlarmTime(HDFGroup, Create);
     NeXusDataset::AlarmStatus(HDFGroup, Create);
     NeXusDataset::AlarmSeverity(HDFGroup, Create);
+    if (not Unit.getValue().empty()) {
+      HDFGroup["value"].attributes.create_from<std::string>("units", Unit);
+    }
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);

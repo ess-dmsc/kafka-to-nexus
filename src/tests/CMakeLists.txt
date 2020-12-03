@@ -44,7 +44,7 @@ set(UnitTests_SRC
         HelperTests.cpp
         CommandSystem/CommandListenerTests.cpp
         TimeUtilityTest.cpp
-        )
+        WriterModuleConfig/FieldTest.cpp WriterModuleConfig/FieldHandlerTest.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h

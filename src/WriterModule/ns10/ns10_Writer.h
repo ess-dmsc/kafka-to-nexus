@@ -17,6 +17,7 @@
 #include "FlatbufferMessage.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
+#include "WriterModuleConfig/Field.h"
 
 namespace WriterModule {
 namespace ns10 {
@@ -26,8 +27,6 @@ public:
   ns10_Writer() : WriterModule::Base(false, "NXlog") {}
   ~ns10_Writer() override = default;
 
-  void parse_config(std::string const &ConfigurationStream) override;
-
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
@@ -35,14 +34,13 @@ public:
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
 protected:
-  std::string Sourcename;
   NeXusDataset::DoubleValue Values;
-  hdf5::Dimensions ChunkSize{1024};
   NeXusDataset::Time Timestamp;
-  int CueInterval{1000};
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
+  WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");

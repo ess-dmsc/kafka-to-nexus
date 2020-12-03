@@ -93,7 +93,7 @@ TEST_F(f142Init, CheckValueInitShape1) {
 
 TEST_F(f142Init, CheckValueInitShape2) {
   f142_WriterStandIn TestWriter;
-  TestWriter.ArraySize = 10;
+  TestWriter.ArraySize.setValue("10");
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
@@ -153,7 +153,7 @@ TEST_F(f142ConfigParse, SetArraySize) {
 TEST_F(f142ConfigParse, SetChunkSize) {
   f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
-              "nexus.chunk_size": 511
+              "chunk_size": 511
             })");
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
@@ -165,7 +165,7 @@ TEST_F(f142ConfigParse, SetChunkSize) {
 TEST_F(f142ConfigParse, CuInterval) {
   f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
-              "nexus.cue_interval": 24
+              "cue_interval": 24
             })");
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
@@ -316,14 +316,8 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  // THEN a units attributes is created on the value dataset with an empty
-  // string value
-  std::string attribute_value;
-  EXPECT_NO_THROW(TestWriter.Values.attributes["units"].read(attribute_value))
-      << "Expect units attribute to be present on the value dataset";
-  EXPECT_EQ(attribute_value, "") << "Expect units attribute to have empty "
-                                    "string as the value, as specified in the "
-                                    "JSON configuration";
+  EXPECT_FALSE(TestWriter.Values.attributes.exists("units"))
+      << "units attribute should not be created if the config string is empty";
 }
 
 TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
