@@ -357,7 +357,14 @@ public:
         VectorChunkSize = ChunkSize;
       } else if (ChunkSize.size() == 1 and Shape.size() > 1) {
         VectorChunkSize = Shape;
-        VectorChunkSize[0] = ChunkSize[0];
+        auto ElementsPerRow = std::accumulate(std::next(Shape.begin()), Shape.end(), 1, [](auto a, auto b) {
+          return a*b;
+        });
+        auto NrOfRows = ChunkSize[0] / ElementsPerRow;
+        if (NrOfRows == 0) {
+          NrOfRows = 1;
+        }
+        VectorChunkSize[0] = NrOfRows;
       } else {
         Logger->error("Unable to reconcile a data shape with {} dimensions "
                       "and chunk size with {} dimensions. Using default "
