@@ -48,7 +48,7 @@ protected:
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 8192};
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
 };
 } // namespace senv
 } // namespace WriterModule

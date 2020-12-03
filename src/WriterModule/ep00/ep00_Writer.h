@@ -20,6 +20,7 @@ private:
 
   NeXusDataset::ConnectionStatusTime TimestampDataset;
   NeXusDataset::ConnectionStatus StatusDataset;
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 };
 
 } // namespace ep00

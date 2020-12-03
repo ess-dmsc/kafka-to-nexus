@@ -31,7 +31,7 @@ public:
 
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 21};
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 20};
   WriterModuleConfig::RequiredField<std::string> DataTypeField{this,
                                                                "data_type"};
   WriterModuleConfig::RequiredField<std::string> EdgeTypeField{this,

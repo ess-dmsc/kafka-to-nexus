@@ -84,7 +84,7 @@ protected:
   WriterModuleConfig::Field<uint64_t> ValueIndexInterval{
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
   WriterModuleConfig::Field<size_t> ArraySize{this, "array_size", 1};
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 64 * 1024};
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
   WriterModuleConfig::Field<std::string> DataType{
       this, std::initializer_list<std::string>({"type"s, "dtype"s}), "double"s};
   WriterModuleConfig::Field<std::string> Unit{

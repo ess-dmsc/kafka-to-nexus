@@ -64,7 +64,7 @@ protected:
       "float64"s};
   WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
   WriterModuleConfig::Field<hdf5::Dimensions> ChunkSize{
-      this, "chunk_size", {1024}};
+      this, "chunk_size", {1 << 20}};
   WriterModuleConfig::Field<hdf5::Dimensions> ArrayShape{
       this, "array_size", {1, 1}};
 

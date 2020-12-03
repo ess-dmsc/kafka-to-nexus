@@ -23,10 +23,10 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
 InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
-    NeXusDataset::ConnectionStatusTime(HDFGroup,
-                                       Create); // NOLINT(bugprone-unused-raii)
-    NeXusDataset::ConnectionStatus(HDFGroup,
-                                   Create); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::ConnectionStatusTime(
+        HDFGroup, Create, ChunkSize); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::ConnectionStatus(HDFGroup, Create,
+                                   ChunkSize); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     Logger->error("ep00 could not init HDFGroup: {}  trace: {}",
