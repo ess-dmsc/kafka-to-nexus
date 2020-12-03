@@ -67,8 +67,7 @@ public:
   /// instead of in WriterModule::Base::close().
   ~WriterClass() override { std::cout << "WriterClass::~WriterClass()\n"; }
 
-  /// \brief Used to pass configuration/settings to the current instance of this
-  /// file writing module.
+  /// \brief Used to do additional configuration based on the results of .
   ///
   /// Settings/configurations are passed in JSON form, contained in a
   /// std::string (one is unused, see the parameter documentation).  To extract
@@ -89,8 +88,8 @@ public:
   ///
   /// \param config_stream Contains information about configurations
   /// relevant only to the current instance of this file writing module.
-  void parse_config(std::string const &/*ConfigurationStream*/) override {
-    std::cout << "WriterClass::parse_config()\n";
+  void config_post_processing() override {
+    std::cout << "WriterClass::config_post_processing()\n";
   }
 
   /// \brief Initialise datasets and attributes in the HDF5 file.

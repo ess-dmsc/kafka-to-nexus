@@ -22,8 +22,6 @@ public:
   /// Implements writer module interface.
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   /// Implements writer module interface.
-  void parse_config(std::string const &ConfigurationStream) override;
-  /// Implements writer module interface.
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.

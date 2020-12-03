@@ -1,6 +1,5 @@
 set(hs00_SRC
     hs00_Writer.cpp
-  WriterUntyped.cpp
   WriterTyped.cpp
   Shape.cpp
   Dimension.cpp

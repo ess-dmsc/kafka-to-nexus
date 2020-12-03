@@ -16,6 +16,9 @@ namespace uri {
 URI::URI(const std::string &URIString) { parse(URIString); }
 
 void URI::parse(const std::string &URIString) {
+  if (URIString.empty()) {
+    return;
+  }
   std::smatch Matches;
   // This is a modified version of the RFC-3986 Regex for capturing URIs. The
   // host is mandatory however scheme and port are optional. Uses capture groups

@@ -108,7 +108,9 @@ set(kafka_to_nexus_SRC
         CommandSystem/CommandListener.cpp
         TimeUtility.cpp
         CommandSystem/IdChecker.cpp
-        )
+        WriterModuleConfig/Field.cpp
+        WriterModuleConfig/FieldHandler.cpp
+        WriterModuleBase.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -178,7 +180,9 @@ set(kafka_to_nexus_INC
         CommandSystem/CommandListener.h
         CommandSystem/FeedbackProducerBase.h
         CommandSystem/IdChecker.h
-        )
+        WriterModuleConfig/Field.h
+        CommandSystem/JobListener.h
+        WriterModuleConfig/FieldHandler.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

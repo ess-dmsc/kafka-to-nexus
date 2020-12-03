@@ -14,9 +14,6 @@
 namespace WriterModule {
 namespace f142 {
 
-/// Parse the configuration for this stream.
-void f142_TestWriter::parse_config(std::string const &) {}
-
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.

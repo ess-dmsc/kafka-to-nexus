@@ -10,6 +10,8 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
+#include "WriterModuleConfig/Field.h"
+#include "WriterModuleConfig/FieldHandler.h"
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <string>
@@ -39,11 +41,25 @@ public:
 
   auto defaultNeXusClass() const { return NX_class; }
 
-  /// \brief Parses the configuration of a stream.
+  /// \brief Parses the configuration JSON structure for a stream.
   ///
+  /// \note Should  NOT be called by the writer class itself. Is called by the
+  /// application right after the constructor has been called.
   /// \param config_stream Configuration from the write file command for this
   /// stream.
-  virtual void parse_config(std::string const &ConfigurationStream) = 0;
+  void parse_config(std::string const &ConfigurationStream) {
+    ConfigFieldProcessor.processConfigData(ConfigurationStream);
+    config_post_processing();
+  }
+
+  /// \brief For doing extra processing related to the configuration of the
+  /// writer module.
+  ///
+  /// If extra processing of the configuration parameters is requried, for
+  /// example: converting a string to an enum, it should
+  /// be done in this function. This function is called by the application right
+  /// after the constructor and parse_config().
+  virtual void config_post_processing(){};
 
   /// \brief Initialise the HDF file.
   ///
@@ -76,6 +92,17 @@ public:
   ///
   /// \param msg The message to process
   virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
+
+  void addConfigField(WriterModuleConfig::FieldBase *NewField);
+
+private:
+  WriterModuleConfig::FieldHandler ConfigFieldProcessor;
+
+protected:
+  WriterModuleConfig::Field<std::string> SourceName{this, "source", ""};
+  WriterModuleConfig::Field<std::string> Topic{this, "topic", ""};
+  WriterModuleConfig::Field<std::string> WriterModule{this, "writer_module",
+                                                      ""};
 
 private:
   bool WriteRepeatedTimestamps;
