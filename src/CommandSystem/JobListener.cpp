@@ -21,6 +21,7 @@ JobListener::JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings)
     : CommandListener(JobPoolUri, Settings) {
   KafkaSettings.KafkaConfiguration["group.id"] = ConsumerGroupId;
   KafkaSettings.KafkaConfiguration["queued.min.messages"] = "1";
+  KafkaSettings.KafkaConfiguration["enable.auto.commit"] = "true";
 }
 
 std::pair<Kafka::PollStatus, Msg> JobListener::pollForJob() {
