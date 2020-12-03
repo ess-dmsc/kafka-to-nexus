@@ -55,7 +55,7 @@ void initValueDataset(hdf5::node::Group const &Parent, Type ElementType,
 
 /// Parse the configuration for this stream.
 void f142_Writer::config_post_processing() {
-  auto toLower = [](auto InString) {
+  auto ToLower = [](auto InString) {
     std::transform(InString.begin(), InString.end(), InString.begin(),
                    [](auto C) { return std::tolower(C); });
     return InString;
@@ -71,7 +71,7 @@ void f142_Writer::config_post_processing() {
       {"long", Type::int64}};
 
   try {
-    ElementType = TypeMap.at(toLower(DataType.getValue()));
+    ElementType = TypeMap.at(ToLower(DataType.getValue()));
   } catch (std::out_of_range &E) {
     Logger->warn("Unknown data type with name \"{}\". Using double.",
                  DataType.getValue());
