@@ -15,7 +15,8 @@
 
 namespace Command {
 
-/// \brief Structure for holding all the data required to start a file-writing job.
+/// \brief Structure for holding all the data required to start a file-writing
+/// job.
 struct StartInfo {
   std::string JobID;
   std::string Filename;

@@ -63,7 +63,7 @@ using FileWriter::Msg;
 
 Command::StartMessage
 extractStartMessage(Msg const &CommandMessage,
-                        std::chrono::milliseconds DefaultStartTime) {
+                    std::chrono::milliseconds DefaultStartTime) {
   Command::StartMessage Result;
 
   auto const RunStartData = GetRunStart(CommandMessage.data());
