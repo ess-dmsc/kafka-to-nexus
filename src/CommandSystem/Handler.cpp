@@ -103,7 +103,7 @@ struct CmdResponse {
   int StatusCode{0};
 };
 
-bool extractStartInfo(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
+bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
                       std::string &ErrorStr) {
   try {
     Msg = Parser::extractStartMessage(CommandMsg);
@@ -121,7 +121,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     CmdOutcome Outcome{CmdOutcome::FailedAtExtraction};
     std::string ExceptionMessage;
     StartMessage StartJob;
-    if (extractStartInfo(CommandMsg, StartJob, ExceptionMessage)) {
+    if (extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
       Outcome = CmdOutcome::FailedAtServiceId;
     }
     if (Outcome == CmdOutcome::FailedAtServiceId and
@@ -200,7 +200,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
   }
 }
 
-bool extractStopInfo(FileWriter::Msg const &CommandMsg, StopMessage &Msg,
+bool extractStopMessage(FileWriter::Msg const &CommandMsg, StopMessage &Msg,
                      std::string &ErrorStr) {
   try {
     Msg = Parser::extractStopMessage(CommandMsg);
@@ -217,7 +217,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     std::string ResponseMessage;
     StopMessage StopCmd;
     ActionResponse TypeOfAction{ActionResponse::SetStopTime};
-    if (extractStopInfo(CommandMsg, StopCmd, ResponseMessage)) {
+    if (extractStopMessage(CommandMsg, StopCmd, ResponseMessage)) {
       Outcome = CmdOutcome::FailedAtServiceId;
     }
     if (Outcome == CmdOutcome::FailedAtServiceId and

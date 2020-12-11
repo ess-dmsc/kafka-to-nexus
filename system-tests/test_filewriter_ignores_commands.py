@@ -1,9 +1,8 @@
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from file_writer_control.CommandStatus import CommandState
+from file_writer_control.CommandStatus import CommandState, COMMAND_STATUS_TIMEOUT
 from file_writer_control.WriteJob import WriteJob
-from file_writer_control.InThreadStatusTracker import COMMAND_STATUS_TIMEOUT
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,

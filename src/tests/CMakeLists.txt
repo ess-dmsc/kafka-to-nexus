@@ -21,7 +21,6 @@ set(UnitTests_SRC
         ProducerDeliveryTests.cpp
         ConsumerTests.cpp
         StreamControllerTests.cpp
-        CommandParserTests.cpp
         Metrics/MetricsRegistrarTest.cpp
         Metrics/MetricTest.cpp
         Metrics/CarbonConnectionTest.cpp
@@ -41,6 +40,7 @@ set(UnitTests_SRC
         StatusReporterTests.cpp
         helpers/StatusHelpers.cpp
         HelperTests.cpp
+        CommandSystem/CommandParserTests.cpp
         CommandSystem/CommandListenerTests.cpp
        CommandSystem/CommandHandlerTests.cpp
        CommandSystem/IdCheckerTests.cpp
