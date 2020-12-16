@@ -146,7 +146,7 @@ TEST(HDFFileAttributesTest,
 
 TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   auto TestFile =
-      HDFFileTestHelper::createInMemoryTestFile("test-array-attribute.nxs");
+      HDFFileTestHelper::createInMemoryTestFile("test-array-attribute.nxs", true);
 
   std::string CommandWithArrayAttr = R""({
     "children": [

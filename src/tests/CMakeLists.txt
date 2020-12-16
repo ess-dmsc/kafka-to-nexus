@@ -46,7 +46,7 @@ set(UnitTests_SRC
        CommandSystem/IdCheckerTests.cpp
         TimeUtilityTest.cpp
         WriterModuleConfig/FieldTest.cpp
-        WriterModuleConfig/FieldHandlerTest.cpp)
+        WriterModuleConfig/FieldHandlerTest.cpp HDFAttributesTest.cpp MultiVectorTest.cpp HDFOperationsTests.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
