@@ -1,6 +1,6 @@
 
-#include "WriterModuleConfig/Field.h"
-#include "helpers/StubWriterModule.h"
+#include "JsonConfig/Field.h"
+#include "JsonConfig/FieldHandler.h"
 #include <array>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -9,57 +9,58 @@
 
 using nlohmann::json;
 
-class WriterConfigField : public testing::Test {
+class JsonConfigField : public testing::Test {
 public:
-  void SetUp() override { Writer = std::make_unique<StubWriterModule>(); }
-  std::unique_ptr<StubWriterModule> Writer;
+  void SetUp() override {
+    FieldHandler = std::make_unique<JsonConfig::FieldHandler>(); }
+  std::unique_ptr<JsonConfig::FieldHandler> FieldHandler;
 };
 
-TEST_F(WriterConfigField, SetWithCorrectType) {
-  WriterModuleConfig::Field<int> UnderTest(Writer.get(), "some_key", 33);
+TEST_F(JsonConfigField, SetWithCorrectType) {
+  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
   EXPECT_EQ(UnderTest.getValue(), 33);
   UnderTest.setValue("124");
   EXPECT_EQ(UnderTest.getValue(), 124);
 }
 
-TEST_F(WriterConfigField, SetWithWrongType) {
-  WriterModuleConfig::Field<int> UnderTest(Writer.get(), "some_key", 33);
+TEST_F(JsonConfigField, SetWithWrongType) {
+  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
   EXPECT_EQ(UnderTest.getValue(), 33);
   EXPECT_THROW(UnderTest.setValue("\"hello\""), json::type_error);
 }
 
-TEST_F(WriterConfigField, SetWithBadJson) {
-  WriterModuleConfig::Field<int> UnderTest(Writer.get(), "some_key", 33);
+TEST_F(JsonConfigField, SetWithBadJson) {
+  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
   EXPECT_EQ(UnderTest.getValue(), 33);
   EXPECT_THROW(UnderTest.setValue("{3,5}"), json::parse_error);
 }
 
-TEST_F(WriterConfigField, SetWithRegularString) {
-  WriterModuleConfig::Field<std::string> UnderTest(Writer.get(), "some_key",
+TEST_F(JsonConfigField, SetWithRegularString) {
+  JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
                                                    "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
   UnderTest.setValue("\"some_string\"");
   EXPECT_EQ(UnderTest.getValue(), "some_string");
 }
 
-TEST_F(WriterConfigField, SetWithParseFailString) {
-  WriterModuleConfig::Field<std::string> UnderTest(Writer.get(), "some_key",
+TEST_F(JsonConfigField, SetWithParseFailString) {
+  JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
                                                    "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
   UnderTest.setValue("{3,3}");
   EXPECT_EQ(UnderTest.getValue(), "{3,3}");
 }
 
-TEST_F(WriterConfigField, SetWithTypeFailString) {
-  WriterModuleConfig::Field<std::string> UnderTest(Writer.get(), "some_key",
+TEST_F(JsonConfigField, SetWithTypeFailString) {
+  JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
                                                    "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
   UnderTest.setValue("3.1345");
   EXPECT_EQ(UnderTest.getValue(), "3.1345");
 }
 
-TEST_F(WriterConfigField, SetTwice) {
-  WriterModuleConfig::Field<int> UnderTest(Writer.get(), "some_key", 33);
+TEST_F(JsonConfigField, SetTwice) {
+  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
   EXPECT_EQ(UnderTest.getValue(), 33);
   UnderTest.setValue("124");
   EXPECT_EQ(UnderTest.getValue(), 124);

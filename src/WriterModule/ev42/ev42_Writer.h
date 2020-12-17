@@ -47,10 +47,10 @@ private:
   padDatasetsWithZeroesEqualToNumberOfEvents(FlatbufferMessage const &Message);
   void writeAdcPulseDataFromMessageToFile(FlatbufferMessage const &Message);
 
-  WriterModuleConfig::Field<uint64_t> EventIndexInterval{
+  JsonConfig::Field<uint64_t> EventIndexInterval{
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
-  WriterModuleConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
-  WriterModuleConfig::Field<bool> RecordAdcPulseDebugData{
+  JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
+  JsonConfig::Field<bool> RecordAdcPulseDebugData{
       this, "adc_pulse_debug", false};
 };
 } // namespace ev42

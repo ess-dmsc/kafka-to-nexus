@@ -7,16 +7,23 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "Field.h"
-#include "WriterModuleBase.h"
+#pragma once
 
-namespace WriterModuleConfig {
-FieldBase::FieldBase(WriterModule::Base *Ptr,
-                     std::vector<std::string> const &Keys)
-    : FieldKeys(Keys) {
-  Ptr->addConfigField(this);
-}
+#include <map>
+#include <string>
 
-void FieldBase::makeRequired() { FieldRequired = true; }
+namespace JsonConfig {
+
+class FieldBase;
+
+class FieldHandler {
+public:
+  FieldHandler() = default;
+  void registerField(FieldBase *Ptr);
+  void processConfigData(std::string const &ConfigJsonStr);
+
+private:
+  std::map<std::string, FieldBase *> FieldMap;
+};
 
 } // namespace WriterModuleConfig

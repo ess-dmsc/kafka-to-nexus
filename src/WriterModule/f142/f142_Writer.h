@@ -11,7 +11,7 @@
 
 #include "FlatbufferMessage.h"
 #include "WriterModuleBase.h"
-#include "WriterModuleConfig/Field.h"
+#include "JsonConfig/Field.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
 #include <array>
@@ -81,13 +81,13 @@ protected:
   /// Severity corresponding to EPICS alarm status
   NeXusDataset::AlarmSeverity AlarmSeverity;
 
-  WriterModuleConfig::Field<uint64_t> ValueIndexInterval{
+  JsonConfig::Field<uint64_t> ValueIndexInterval{
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
-  WriterModuleConfig::Field<size_t> ArraySize{this, "array_size", 1};
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
-  WriterModuleConfig::Field<std::string> DataType{
+  JsonConfig::Field<size_t> ArraySize{this, "array_size", 1};
+  JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
+  JsonConfig::Field<std::string> DataType{
       this, std::initializer_list<std::string>({"type"s, "dtype"s}), "double"s};
-  WriterModuleConfig::Field<std::string> Unit{
+  JsonConfig::Field<std::string> Unit{
       this, std::initializer_list<std::string>({"value_units"s, "unit"s}), ""s};
 };
 

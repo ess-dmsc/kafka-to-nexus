@@ -31,14 +31,14 @@ public:
 
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 20};
-  WriterModuleConfig::RequiredField<std::string> DataTypeField{this,
+  JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 20};
+  JsonConfig::RequiredField<std::string> DataTypeField{this,
                                                                "data_type"};
-  WriterModuleConfig::RequiredField<std::string> EdgeTypeField{this,
+  JsonConfig::RequiredField<std::string> EdgeTypeField{this,
                                                                "edge_type"};
-  WriterModuleConfig::RequiredField<std::string> ErrorTypeField{this,
+  JsonConfig::RequiredField<std::string> ErrorTypeField{this,
                                                                 "error_type"};
-  WriterModuleConfig::RequiredField<std::string> ShapeField{this, "shape"};
+  JsonConfig::RequiredField<std::string> ShapeField{this, "shape"};
   nlohmann::json Json;
 
   /// Create the Writer during HDF reopen

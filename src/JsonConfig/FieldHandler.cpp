@@ -13,7 +13,7 @@
 #include <nlohmann/json.hpp>
 #include <set>
 
-namespace WriterModuleConfig {
+namespace JsonConfig {
 
 using nlohmann::json;
 

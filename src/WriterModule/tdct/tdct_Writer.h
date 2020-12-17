@@ -17,7 +17,7 @@
 #include "FlatbufferMessage.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
-#include "WriterModuleConfig/Field.h"
+#include "JsonConfig/Field.h"
 
 namespace WriterModule {
 namespace tdct {
@@ -40,7 +40,7 @@ protected:
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
+  JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
 };
 } // namespace tdct
 } // namespace WriterModule
