@@ -50,8 +50,8 @@ private:
   JsonConfig::Field<uint64_t> EventIndexInterval{
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
-  JsonConfig::Field<bool> RecordAdcPulseDebugData{
-      this, "adc_pulse_debug", false};
+  JsonConfig::Field<bool> RecordAdcPulseDebugData{this, "adc_pulse_debug",
+                                                  false};
 };
 } // namespace ev42
 } // namespace WriterModule

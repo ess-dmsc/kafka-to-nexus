@@ -10,8 +10,8 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "WriterModuleBase.h"
 #include "JsonConfig/Field.h"
+#include "WriterModuleBase.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
 #include <array>

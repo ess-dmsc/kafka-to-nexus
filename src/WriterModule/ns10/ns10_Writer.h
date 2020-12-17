@@ -15,9 +15,9 @@
 
 #pragma once
 #include "FlatbufferMessage.h"
+#include "JsonConfig/Field.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
-#include "JsonConfig/Field.h"
 
 namespace WriterModule {
 namespace ns10 {

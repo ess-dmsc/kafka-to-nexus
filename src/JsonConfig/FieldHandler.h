@@ -26,4 +26,4 @@ private:
   std::map<std::string, FieldBase *> FieldMap;
 };
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig

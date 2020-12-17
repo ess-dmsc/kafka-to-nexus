@@ -69,4 +69,4 @@ void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
   }
 }
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig

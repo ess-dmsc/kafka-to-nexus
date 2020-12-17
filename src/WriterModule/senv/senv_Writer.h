@@ -16,10 +16,10 @@
 
 #include "FlatbufferMessage.h"
 #include "HDFFile.h"
+#include "JsonConfig/Field.h"
 #include "Msg.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
-#include "JsonConfig/Field.h"
 
 namespace WriterModule {
 namespace senv {

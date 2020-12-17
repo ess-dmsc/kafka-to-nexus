@@ -96,8 +96,7 @@ public:
 protected:
   JsonConfig::Field<std::string> SourceName{this, "source", ""};
   JsonConfig::Field<std::string> Topic{this, "topic", ""};
-  JsonConfig::Field<std::string> WriterModule{this, "writer_module",
-                                                      ""};
+  JsonConfig::Field<std::string> WriterModule{this, "writer_module", ""};
 
 private:
   bool WriteRepeatedTimestamps;

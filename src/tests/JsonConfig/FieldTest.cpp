@@ -12,7 +12,8 @@ using nlohmann::json;
 class JsonConfigField : public testing::Test {
 public:
   void SetUp() override {
-    FieldHandler = std::make_unique<JsonConfig::FieldHandler>(); }
+    FieldHandler = std::make_unique<JsonConfig::FieldHandler>();
+  }
   std::unique_ptr<JsonConfig::FieldHandler> FieldHandler;
 };
 
@@ -37,7 +38,7 @@ TEST_F(JsonConfigField, SetWithBadJson) {
 
 TEST_F(JsonConfigField, SetWithRegularString) {
   JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
-                                                   "hello");
+                                           "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
   UnderTest.setValue("\"some_string\"");
   EXPECT_EQ(UnderTest.getValue(), "some_string");
@@ -45,7 +46,7 @@ TEST_F(JsonConfigField, SetWithRegularString) {
 
 TEST_F(JsonConfigField, SetWithParseFailString) {
   JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
-                                                   "hello");
+                                           "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
   UnderTest.setValue("{3,3}");
   EXPECT_EQ(UnderTest.getValue(), "{3,3}");
@@ -53,7 +54,7 @@ TEST_F(JsonConfigField, SetWithParseFailString) {
 
 TEST_F(JsonConfigField, SetWithTypeFailString) {
   JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
-                                                   "hello");
+                                           "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
   UnderTest.setValue("3.1345");
   EXPECT_EQ(UnderTest.getValue(), "3.1345");

@@ -32,12 +32,9 @@ public:
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 20};
-  JsonConfig::RequiredField<std::string> DataTypeField{this,
-                                                               "data_type"};
-  JsonConfig::RequiredField<std::string> EdgeTypeField{this,
-                                                               "edge_type"};
-  JsonConfig::RequiredField<std::string> ErrorTypeField{this,
-                                                                "error_type"};
+  JsonConfig::RequiredField<std::string> DataTypeField{this, "data_type"};
+  JsonConfig::RequiredField<std::string> EdgeTypeField{this, "edge_type"};
+  JsonConfig::RequiredField<std::string> ErrorTypeField{this, "error_type"};
   JsonConfig::RequiredField<std::string> ShapeField{this, "shape"};
   nlohmann::json Json;
 

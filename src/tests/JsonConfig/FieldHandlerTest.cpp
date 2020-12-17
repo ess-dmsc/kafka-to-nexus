@@ -20,7 +20,8 @@ class FieldStandIn : public FieldBase {
 class FieldHandlerFixture : public ::testing::Test {
 public:
   void SetUp() override {
-    Handler = std::make_unique<JsonConfig::FieldHandler>(); }
+    Handler = std::make_unique<JsonConfig::FieldHandler>();
+  }
   std::unique_ptr<JsonConfig::FieldHandler> Handler;
 };
 

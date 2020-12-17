@@ -19,4 +19,4 @@ FieldBase::FieldBase(FieldHandler *HandlerPtr,
 
 void FieldBase::makeRequired() { FieldRequired = true; }
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig
