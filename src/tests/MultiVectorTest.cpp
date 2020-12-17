@@ -73,7 +73,7 @@ TEST(MultiVectorTest, SetValue3) {
   TestVector.at({0,0,0,0}) = 11;
   TestVector.at({2,2,2,2}) = 44;
   std::vector<int> Comparison(3*3*3*3);
-  Comparison.at(0) = 33;
+  Comparison.at(0) = 11;
   *std::prev(Comparison.end()) = 44;
   EXPECT_EQ(TestVector, Comparison);
 }

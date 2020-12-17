@@ -78,14 +78,28 @@ TEST_F(HDFAttributesTest, WriteVectorStrAttr) {
   EXPECT_EQ(TempValue, AttributeValue);
 }
 
-TEST_F(HDFAttributesTest, WriteVectorOfVectorsAttr) {
+TEST_F(HDFAttributesTest, WriteMultiVectorAttr) {
   std::string AttributeName{"some_attribute"};
-  std::vector<std::vector<int>> AttributeValue{{1,2,3}, {4,5,6}};
+  MultiVector<int> AttributeValue({2,3});
+  AttributeValue.at({0,1}) = 42;
+  AttributeValue.at({1,2}) = 33;
+  AttributeValue.at({0,0}) = 22;
   HDFAttributes::writeAttribute(UsedGroup, AttributeName, AttributeValue);
   ASSERT_TRUE(UsedGroup.attributes.exists(AttributeName));
-  std::vector<std::vector<int>> TempValue(2);
-  TempValue[0].resize(3);
-  TempValue[1].resize(3);
+  MultiVector<int> TempValue({2,3});
+  UsedGroup.attributes[AttributeName].read(TempValue);
+  EXPECT_EQ(TempValue, AttributeValue);
+}
+
+TEST_F(HDFAttributesTest, WriteMultiVectorStrAttr) {
+  std::string AttributeName{"some_attribute"};
+  MultiVector<std::string> AttributeValue({2,3});
+  AttributeValue.at({0,1}) = "hi";
+  AttributeValue.at({1,2}) = "hello";
+  AttributeValue.at({0,0}) = "22";
+  HDFAttributes::writeAttribute(UsedGroup, AttributeName, AttributeValue);
+  ASSERT_TRUE(UsedGroup.attributes.exists(AttributeName));
+  MultiVector<std::string> TempValue({2,3});
   UsedGroup.attributes[AttributeName].read(TempValue);
   EXPECT_EQ(TempValue, AttributeValue);
 }

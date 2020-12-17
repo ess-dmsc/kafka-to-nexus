@@ -16,11 +16,11 @@
 namespace HDFAttributes {
 
 inline void writeAttribute(hdf5::node::Node const &Node,
-                    const std::string &Name, std::string Value) {
+                    const std::string &Name, std::string const Value) {
   auto string_type = hdf5::datatype::String::variable();
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   string_type.padding(hdf5::datatype::StringPad::NULLTERM);
-  Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar()).write(Value);
+  Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar()).write(Value, string_type);
 }
 
 template <typename T>
@@ -32,9 +32,7 @@ void writeAttribute(hdf5::node::Node const &Node,
 template <typename T>
 void writeAttribute(hdf5::node::Node const &Node,
                            const std::string &Name, std::vector<T> Values) {
-  hdf5::property::AttributeCreationList acpl;
-  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  Node.attributes.create<T>(Name, {Values.size()}, acpl).write(Values);
+  Node.attributes.create<T>(Name, {Values.size()}).write(Values);
 }
 
 inline void writeAttribute(hdf5::node::Node const &Node,
@@ -49,10 +47,8 @@ inline void writeAttribute(hdf5::node::Node const &Node,
 template <typename T>
 void writeAttribute(hdf5::node::Node const &Node,
                     const std::string &Name, MultiVector<T> Values) {
-  hdf5::property::AttributeCreationList acpl;
-  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
   auto Dims = Values.getDimensions();
-  Node.attributes.create<T>(Name, hdf5::Dimensions(Dims.begin(), Dims.end()), acpl).write(Values);
+  Node.attributes.create<T>(Name, hdf5::Dimensions(Dims.begin(), Dims.end())).write(Values);
 }
 
 
