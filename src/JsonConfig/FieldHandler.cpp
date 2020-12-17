@@ -13,7 +13,7 @@
 #include <nlohmann/json.hpp>
 #include <set>
 
-namespace WriterModuleConfig {
+namespace JsonConfig {
 
 using nlohmann::json;
 
@@ -69,4 +69,4 @@ void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
   }
 }
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig

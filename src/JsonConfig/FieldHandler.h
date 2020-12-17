@@ -12,7 +12,7 @@
 #include <map>
 #include <string>
 
-namespace WriterModuleConfig {
+namespace JsonConfig {
 
 class FieldBase;
 
@@ -26,4 +26,4 @@ private:
   std::map<std::string, FieldBase *> FieldMap;
 };
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig

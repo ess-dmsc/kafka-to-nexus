@@ -13,19 +13,17 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-namespace WriterModule {
-class Base;
-}
+namespace JsonConfig {
 
-namespace WriterModuleConfig {
+class FieldHandler;
 
 using namespace nlohmann;
 
 class FieldBase {
 public:
-  FieldBase(WriterModule::Base *Ptr, std::vector<std::string> const &Keys);
-  FieldBase(WriterModule::Base *Ptr, std::string const &Key)
-      : FieldBase(Ptr, std::vector<std::string>{Key}) {}
+  FieldBase(FieldHandler *HandlerPtr, std::vector<std::string> const &Keys);
+  FieldBase(FieldHandler *HandlerPtr, std::string const &Key)
+      : FieldBase(HandlerPtr, std::vector<std::string>{Key}) {}
   virtual ~FieldBase() {}
   virtual void setValue(std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
@@ -43,12 +41,12 @@ private:
 
 template <class FieldType> class Field : public FieldBase {
 public:
-  Field(WriterModule::Base *WriterPtr, std::string const &Key,
+  Field(FieldHandler *HandlerPtr, std::string const &Key,
         FieldType DefaultValue)
-      : FieldBase(WriterPtr, Key), FieldValue(DefaultValue) {}
-  Field(WriterModule::Base *WriterPtr, std::vector<std::string> Keys,
+      : FieldBase(HandlerPtr, Key), FieldValue(DefaultValue) {}
+  Field(FieldHandler *HandlerPtr, std::vector<std::string> Keys,
         FieldType DefaultValue)
-      : FieldBase(WriterPtr, Keys), FieldValue(DefaultValue) {}
+      : FieldBase(HandlerPtr, Keys), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
     setValueImpl<FieldType>(ValueString);
@@ -97,10 +95,10 @@ private:
 
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
-  RequiredField(WriterModule::Base *WriterPtr, std::string const &Key)
-      : Field<FieldType>(WriterPtr, Key, FieldType()) {
+  RequiredField(FieldHandler *HandlerPtr, std::string const &Key)
+      : Field<FieldType>(HandlerPtr, Key, FieldType()) {
     FieldBase::makeRequired();
   }
 };
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig

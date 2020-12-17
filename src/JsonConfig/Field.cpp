@@ -8,15 +8,15 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Field.h"
-#include "WriterModuleBase.h"
+#include "FieldHandler.h"
 
-namespace WriterModuleConfig {
-FieldBase::FieldBase(WriterModule::Base *Ptr,
+namespace JsonConfig {
+FieldBase::FieldBase(FieldHandler *HandlerPtr,
                      std::vector<std::string> const &Keys)
     : FieldKeys(Keys) {
-  Ptr->addConfigField(this);
+  HandlerPtr->registerField(this);
 }
 
 void FieldBase::makeRequired() { FieldRequired = true; }
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig

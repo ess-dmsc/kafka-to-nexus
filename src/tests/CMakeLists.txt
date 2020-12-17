@@ -42,11 +42,13 @@ set(UnitTests_SRC
         HelperTests.cpp
         CommandSystem/CommandParserTests.cpp
         CommandSystem/CommandListenerTests.cpp
-       CommandSystem/CommandHandlerTests.cpp
-       CommandSystem/IdCheckerTests.cpp
+        CommandSystem/CommandHandlerTests.cpp
+        CommandSystem/IdCheckerTests.cpp
         TimeUtilityTest.cpp
-        WriterModuleConfig/FieldTest.cpp
-        WriterModuleConfig/FieldHandlerTest.cpp HDFAttributesTest.cpp MultiVectorTest.cpp HDFOperationsTests.cpp)
+        HDFAttributesTest.cpp
+        MultiVectorTest.cpp
+        HDFOperationsTests.cpp
+        JsonConfig/FieldTest.cpp JsonConfig/FieldHandlerTest.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
