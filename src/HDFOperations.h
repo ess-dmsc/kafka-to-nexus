@@ -44,19 +44,12 @@ void writeStringDataset(
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, nlohmann::json const &Values);
 
-void writeFixedSizeStringDataset(
-    hdf5::node::Group const &Parent, const std::string &Name,
-    hdf5::property::DatasetCreationList &DatasetCreationList,
-    hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
-    const nlohmann::json *Values, SharedLogger const &Logger);
-
 void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
                          const std::string &Name,
                          const std::vector<hsize_t> &Sizes,
-                         const std::vector<hsize_t> &Max, hsize_t ElementSize,
-                         const nlohmann::json *Values,
-                         SharedLogger const &Logger);
+                         const std::vector<hsize_t> &Max,
+                         const nlohmann::json *Values);
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                   SharedLogger const &Logger);

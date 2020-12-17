@@ -112,19 +112,11 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
         if (auto StringSizeMaybe = find<uint32_t>("string_size", Attribute)) {
           StringSize = *StringSizeMaybe;
         }
-        using EncodingType = hdf5::datatype::CharacterEncoding;
-        auto Encoding = EncodingType::UTF8;
-        if (auto EncodingString = find<std::string>("encoding", Attribute)) {
-          if (*EncodingString == "ascii") {
-            Encoding = EncodingType::ASCII;
-          }
-        }
         if (Node.attributes.exists(Name)) {
           Node.attributes.remove(Name);
           LOG_DEBUG("Replacing (existing) attribute with key \"{}\".", Name);
         }
-        if (Values.is_array() or StringSize > 0 or
-            Encoding != EncodingType::UTF8) {
+        if (Values.is_array() or StringSize > 0) {
           if (findType(Attribute, DType)) {
             Logger->warn("No type defined for attribute, using the default.");
           }
@@ -292,59 +284,12 @@ void writeStringDataset(
   }
 }
 
-void writeFixedSizeStringDataset(
-    hdf5::node::Group const &Parent, const std::string &Name,
-    hdf5::property::DatasetCreationList &DatasetCreationList,
-    hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
-    const nlohmann::json *Values, SharedLogger const &Logger) {
-  try {
-    auto DataType = hdf5::datatype::String::fixed(ElementSize);
-    DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-    DataType.padding(hdf5::datatype::StringPad::NULLTERM);
-
-    try {
-      auto Space = hdf5::dataspace::Simple(Dataspace);
-      auto Dimensions = Space.current_dimensions();
-      Logger->trace("Simple {}  {}", Dimensions.size(), Dimensions.at(0));
-    } catch (...) {
-      try {
-        auto Space = hdf5::dataspace::Scalar(Dataspace);
-        Logger->trace("Scalar");
-      } catch (...) {
-        Logger->error(
-            "Unknown dataspace requested for fixed length string dataset {}",
-            Name);
-      }
-    }
-
-    auto Dataset =
-        Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
-
-    auto Data = jsonArrayToMultiArray<std::string>(*Values);
-    H5Dwrite(static_cast<hid_t>(Dataset), static_cast<hid_t>(DataType),
-             static_cast<hid_t>(Dataspace), static_cast<hid_t>(Dataspace),
-             H5P_DEFAULT, Data.data());
-    /*
-    Fixed string support seems broken in h5cpp.
-    The analogue of the above should be:
-    Dataset.write(Data.data(), DataType, Dataspace, Dataspace,
-    hdf5::property::DatasetTransferList());
-    which does not produce the expected result.
-    */
-  } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Failed to write fixed-size string dataset {} in {}", Name,
-                    static_cast<std::string>(Parent.link().path()))));
-  }
-}
-
 void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
                          const std::string &Name,
                          const std::vector<hsize_t> &Sizes,
-                         const std::vector<hsize_t> &Max, hsize_t ElementSize,
-                         const nlohmann::json *Values,
-                         SharedLogger const &Logger) {
+                         const std::vector<hsize_t> &Max,
+                         const nlohmann::json *Values) {
   try {
 
     hdf5::property::DatasetCreationList DatasetCreationList;
@@ -407,15 +352,8 @@ void writeGenericDataset(const std::string &DataType,
                                        Dataspace, Values);
          }},
         {"string",
-         [&]() {
-           if (ElementSize == H5T_VARIABLE) {
-             writeStringDataset(Parent, Name, DatasetCreationList, Dataspace,
+         [&]() {writeStringDataset(Parent, Name, DatasetCreationList, Dataspace,
                                 *Values);
-           } else {
-             writeFixedSizeStringDataset(Parent, Name, DatasetCreationList,
-                                         Dataspace, ElementSize, Values,
-                                         Logger);
-           }
          }},
     };
     WriteDatasetMap.at(DataType)();
@@ -505,8 +443,8 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
     }
   }
 
-  writeGenericDataset(DataType, Parent, Name, Sizes, Max, ElementSize,
-                      &DatasetValuesInnerObject, Logger);
+  writeGenericDataset(DataType, Parent, Name, Sizes, Max,
+                      &DatasetValuesInnerObject);
   auto dset = hdf5::node::Dataset(Parent.nodes[Name]);
 
   writeAttributesIfPresent(dset, *Values, Logger);
