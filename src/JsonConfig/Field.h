@@ -22,8 +22,8 @@ namespace JsonConfig {
 // that takes a start and an end iterator.
 class KeyString : public std::string {
 public:
-  KeyString(std::string Str) : std::string(Str) {}
-  KeyString(const char* Ptr) : std::string(Ptr) {}
+  KeyString(std::string const &Str) : std::string(Str) {} // cppcheck-suppress noExplicitConstructor
+  KeyString(const char* Ptr) : std::string(Ptr) {} // cppcheck-suppress noExplicitConstructor
   KeyString(const char* Ptr, size_t Size) : std::string(Ptr, Size) {}
 };
 
@@ -107,7 +107,7 @@ private:
 
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
-  RequiredField(FieldHandler *HandlerPtr, std::vector<KeyString> Keys)
+  RequiredField(FieldHandler *HandlerPtr, std::vector<KeyString> const &Keys)
       : Field<FieldType>(HandlerPtr, Keys, FieldType()) {
     FieldBase::makeRequired();
   }
