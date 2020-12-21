@@ -50,9 +50,10 @@ template <> struct fmt::formatter<nlohmann::json> {
     return end;
   }
 
-//clang-format off
+  //clang-format off
   template <typename FormatContext>
-  auto format(const nlohmann::json &Data, FormatContext &ctx) { // cppcheck-suppress functionStatic
+  auto format(const nlohmann::json &Data,
+              FormatContext &ctx) { // cppcheck-suppress functionStatic
     auto DataString = Data.dump();
     if (DataString.empty()) {
       return fmt::format_to(ctx.out(), "\"\"");
@@ -62,7 +63,7 @@ template <> struct fmt::formatter<nlohmann::json> {
     }
     return fmt::format_to(ctx.out(), "\"{}\"", DataString);
   }
-//clang-format on
+  //clang-format on
 };
 
 #define UNUSED_ARG(x) (void)x;
