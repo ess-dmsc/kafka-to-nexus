@@ -22,10 +22,10 @@ namespace JsonConfig {
 // that takes a start and an end iterator.
 class KeyString : public std::string {
 public:
-  KeyString(std::string const &Str)
-      : std::string(Str) {} // cppcheck-suppress noExplicitConstructor
-  KeyString(const char *Ptr)
-      : std::string(Ptr) {} // cppcheck-suppress noExplicitConstructor
+  KeyString(std::string const &Str) // cppcheck-suppress noExplicitConstructor
+      : std::string(Str) {}
+  KeyString(const char *Ptr) // cppcheck-suppress noExplicitConstructor
+      : std::string(Ptr) {}
   KeyString(const char *Ptr, size_t Size) : std::string(Ptr, Size) {}
 };
 
