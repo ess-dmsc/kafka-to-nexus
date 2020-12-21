@@ -50,7 +50,7 @@ template <> struct fmt::formatter<nlohmann::json> {
     return end;
   }
 
-// clang-format off
+  // clang-format off
   template <typename FormatContext>
   auto format(const nlohmann::json &Data, FormatContext &ctx) { // cppcheck-suppress functionStatic
     auto DataString = Data.dump();
