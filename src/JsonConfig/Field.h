@@ -56,8 +56,7 @@ public:
   Field(FieldHandler *HandlerPtr, std::vector<KeyString> Keys,
         FieldType DefaultValue)
       : FieldBase(HandlerPtr, Keys), FieldValue(DefaultValue) {}
-  Field(FieldHandler *HandlerPtr, KeyString const &Key,
-        FieldType DefaultValue)
+  Field(FieldHandler *HandlerPtr, KeyString const &Key, FieldType DefaultValue)
       : FieldBase(HandlerPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
@@ -111,9 +110,8 @@ public:
       : Field<FieldType>(HandlerPtr, Keys, FieldType()) {
     FieldBase::makeRequired();
   }
-  RequiredField(FieldHandler *HandlerPtr, char const * const StrPtr) : RequiredField(HandlerPtr, std::string(StrPtr)) {
-
-  }
+  RequiredField(FieldHandler *HandlerPtr, char const *const StrPtr)
+      : RequiredField(HandlerPtr, std::string(StrPtr)) {}
   RequiredField(FieldHandler *HandlerPtr, KeyString const &Key)
       : Field<FieldType>(HandlerPtr, Key, FieldType()) {
     FieldBase::makeRequired();

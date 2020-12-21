@@ -46,7 +46,7 @@ TEST_F(JsonConfigField, SetWithRegularString) {
 
 TEST_F(JsonConfigField, SetWithJsonObject) {
   JsonConfig::Field<nlohmann::json> UnderTest(FieldHandler.get(), "some_key",
-                                           nlohmann::json::parse("[1,2]"));
+                                              nlohmann::json::parse("[1,2]"));
   EXPECT_EQ(UnderTest.getValue(), nlohmann::json::parse("[1,2]"));
   UnderTest.setValue("[2,3,4]");
   EXPECT_EQ(UnderTest.getValue(), nlohmann::json::parse("[2,3,4]"));
