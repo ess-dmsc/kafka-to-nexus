@@ -12,8 +12,8 @@
 
 namespace JsonConfig {
 FieldBase::FieldBase(FieldHandler *HandlerPtr,
-                     std::vector<std::string> const &Keys)
-    : FieldKeys(Keys) {
+                     std::vector<KeyString> const &Keys)
+    : FieldKeys(Keys.begin(), Keys.end()) {
   HandlerPtr->registerField(this);
 }
 

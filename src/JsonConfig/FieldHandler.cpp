@@ -31,10 +31,13 @@ void FieldHandler::registerField(FieldBase *Ptr) {
 }
 
 void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
-  auto JsonObj = json::parse(ConfigJsonStr);
+  processConfigData(json::parse(ConfigJsonStr));
+}
+
+void FieldHandler::processConfigData(nlohmann::json const &JsonObj) {
   for (auto Iter = JsonObj.begin(); Iter != JsonObj.end(); ++Iter) {
     if (FieldMap.find(Iter.key()) == FieldMap.end()) {
-      LOG_ERROR("Writer module config field with name (key) \"{}\" is unknown. "
+      LOG_ERROR("Json config field with name (key) \"{}\" is unknown. "
                 "Is it a typo?",
                 Iter.key());
     } else {
@@ -42,7 +45,7 @@ void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
       try {
         CurrentField->second->setValue(Iter.value().dump());
       } catch (json::type_error &E) {
-        LOG_ERROR("Got type error when trying to set writer module config "
+        LOG_ERROR("Got type error when trying to set json config "
                   "field value (with key \"{}\"). The error message was: {}",
                   Iter.key(), E.what());
       }
@@ -64,7 +67,7 @@ void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
           return a + fmt::format("{}. {}", Ctr, b->getKeys());
         });
     throw std::runtime_error(
-        "Missing (requried) writer module config field(s) with key(s): " +
+        "Missing (requried) json config field(s) with key(s): " +
         ListOfKeys);
   }
 }

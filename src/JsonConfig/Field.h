@@ -15,15 +15,27 @@
 
 namespace JsonConfig {
 
+// \brief String class that removes the iterator constructor from std::string.
+//
+// \note Due to (serious) bugs caused by the accidental misuse of std::string,
+// this class inherits from std::string but does not expose a constructor
+// that takes a start and an end iterator.
+class KeyString : public std::string {
+public:
+  KeyString(std::string Str) : std::string(Str) {}
+  KeyString(const char* Ptr) : std::string(Ptr) {}
+  KeyString(const char* Ptr, size_t Size) : std::string(Ptr, Size) {}
+};
+
 class FieldHandler;
 
 using namespace nlohmann;
 
 class FieldBase {
 public:
-  FieldBase(FieldHandler *HandlerPtr, std::vector<std::string> const &Keys);
-  FieldBase(FieldHandler *HandlerPtr, std::string const &Key)
-      : FieldBase(HandlerPtr, std::vector<std::string>{Key}) {}
+  FieldBase(FieldHandler *HandlerPtr, std::vector<KeyString> const &Keys);
+  FieldBase(FieldHandler *HandlerPtr, KeyString const &Key)
+      : FieldBase(HandlerPtr, std::vector<KeyString>{Key}) {}
   virtual ~FieldBase() {}
   virtual void setValue(std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
@@ -41,12 +53,12 @@ private:
 
 template <class FieldType> class Field : public FieldBase {
 public:
-  Field(FieldHandler *HandlerPtr, std::string const &Key,
-        FieldType DefaultValue)
-      : FieldBase(HandlerPtr, Key), FieldValue(DefaultValue) {}
-  Field(FieldHandler *HandlerPtr, std::vector<std::string> Keys,
+  Field(FieldHandler *HandlerPtr, std::vector<KeyString> Keys,
         FieldType DefaultValue)
       : FieldBase(HandlerPtr, Keys), FieldValue(DefaultValue) {}
+  Field(FieldHandler *HandlerPtr, KeyString const &Key,
+        FieldType DefaultValue)
+      : FieldBase(HandlerPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
     setValueImpl<FieldType>(ValueString);
@@ -85,7 +97,7 @@ private:
           std::accumulate(std::next(Keys.begin()), Keys.end(), Keys[0],
                           [](auto a, auto b) { return a + ", " + b; });
       LOG_WARN("Replacing the previously given value of \"{}\" with \"{}\" in "
-               "writer module config field with key(s): ",
+               "json config field with key(s): ",
                FieldValue, NewValue, AllKeys);
     }
     GotDefault = false;
@@ -95,7 +107,14 @@ private:
 
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
-  RequiredField(FieldHandler *HandlerPtr, std::string const &Key)
+  RequiredField(FieldHandler *HandlerPtr, std::vector<KeyString> Keys)
+      : Field<FieldType>(HandlerPtr, Keys, FieldType()) {
+    FieldBase::makeRequired();
+  }
+  RequiredField(FieldHandler *HandlerPtr, char const * const StrPtr) : RequiredField(HandlerPtr, std::string(StrPtr)) {
+
+  }
+  RequiredField(FieldHandler *HandlerPtr, KeyString const &Key)
       : Field<FieldType>(HandlerPtr, Key, FieldType()) {
     FieldBase::makeRequired();
   }

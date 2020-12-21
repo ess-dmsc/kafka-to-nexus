@@ -25,8 +25,6 @@ namespace WriterModule {
 namespace f142 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
-using std::string_literals::operator""s;
-
 class f142_Writer : public WriterModule::Base {
 public:
   /// Implements writer module interface.
@@ -85,10 +83,8 @@ protected:
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
   JsonConfig::Field<size_t> ArraySize{this, "array_size", 1};
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
-  JsonConfig::Field<std::string> DataType{
-      this, std::initializer_list<std::string>({"type"s, "dtype"s}), "double"s};
-  JsonConfig::Field<std::string> Unit{
-      this, std::initializer_list<std::string>({"value_units"s, "unit"s}), ""s};
+  JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "double"};
+  JsonConfig::Field<std::string> Unit{this, {"value_units", "unit"}, ""};
 };
 
 } // namespace f142
