@@ -13,6 +13,7 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
   static constexpr auto parse(format_parse_context &ctx) {
@@ -39,6 +40,27 @@ template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
           return a + fmt::format(", {}", b);
         });
     return fmt::format_to(ctx.out(), "[{}{}]", ReturnString, Suffix);
+  }
+};
+
+template <>
+struct fmt::formatter<nlohmann::json> {
+  static auto parse(format_parse_context &ctx) {
+    const auto begin = ctx.begin();
+    const auto end = std::find(begin, ctx.end(), '}');
+    return end;
+  }
+
+  template <typename FormatContext>
+  auto format(const nlohmann::json &Data, FormatContext &ctx) {
+    auto DataString = Data.dump();
+    if (DataString.empty()) {
+      return fmt::format_to(ctx.out(), "\"\"");
+    }
+    if (DataString.size() > 30) {
+      DataString = DataString.substr(0, 30) + "...";
+    }
+    return fmt::format_to(ctx.out(), "\"{}\"", Data.dump());
   }
 };
 

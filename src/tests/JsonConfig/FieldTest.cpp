@@ -44,6 +44,14 @@ TEST_F(JsonConfigField, SetWithRegularString) {
   EXPECT_EQ(UnderTest.getValue(), "some_string");
 }
 
+TEST_F(JsonConfigField, SetWithJsonObject) {
+  JsonConfig::Field<nlohmann::json> UnderTest(FieldHandler.get(), "some_key",
+                                           nlohmann::json::parse("[1,2]"));
+  EXPECT_EQ(UnderTest.getValue(), nlohmann::json::parse("[1,2]"));
+  UnderTest.setValue("[2,3,4]");
+  EXPECT_EQ(UnderTest.getValue(), nlohmann::json::parse("[2,3,4]"));
+}
+
 TEST_F(JsonConfigField, SetWithParseFailString) {
   JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
                                            "hello");
@@ -67,4 +75,28 @@ TEST_F(JsonConfigField, SetTwice) {
   EXPECT_EQ(UnderTest.getValue(), 124);
   UnderTest.setValue("11");
   EXPECT_EQ(UnderTest.getValue(), 11);
+}
+
+TEST_F(JsonConfigField, SetTwoKeys) {
+  JsonConfig::Field<int> UnderTest(FieldHandler.get(), {"h1", "h2"}, 33);
+  std::string H1{"h1"};
+  std::string H2{"h2"};
+  std::vector<std::string> Comparison{H1, H2};
+  EXPECT_EQ(UnderTest.getKeys(), Comparison);
+}
+
+TEST_F(JsonConfigField, SetTwoRequriedKeys) {
+  JsonConfig::RequiredField<int> UnderTest(FieldHandler.get(), {"h1", "h2"});
+  std::string H1{"h1"};
+  std::string H2{"h2"};
+  std::vector<std::string> Comparison{H1, H2};
+  EXPECT_EQ(UnderTest.getKeys(), Comparison);
+}
+
+TEST_F(JsonConfigField, SetOneRequriedKey) {
+  JsonConfig::RequiredField<int> UnderTest(FieldHandler.get(), {"h1", "h2"});
+  std::string H1{"h1"};
+  std::string H2{"h2"};
+  std::vector<std::string> Comparison{H1, H2};
+  EXPECT_EQ(UnderTest.getKeys(), Comparison);
 }

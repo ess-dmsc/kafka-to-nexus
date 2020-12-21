@@ -21,8 +21,7 @@ namespace HDFOperations {
 
 bool findType(nlohmann::basic_json<> Attribute, std::string &DType);
 
-void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
-                     SharedLogger const &Logger);
+void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value);
 
 void createHDFStructures(
     const nlohmann::json *Value, hdf5::node::Group const &Parent,
@@ -36,8 +35,7 @@ void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                          const std::string &Name);
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
-                              nlohmann::json const &Values,
-                              SharedLogger const &Logger);
+                              nlohmann::json const &Values);
 
 void writeStringDataset(
     hdf5::node::Group const &Parent, const std::string &Name,
@@ -58,8 +56,7 @@ void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              const nlohmann::json &Values);
 
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &ValuesJson,
-                            SharedLogger const &Logger);
+                            const nlohmann::json &ValuesJson);
 
 void writeScalarAttribute(hdf5::node::Node const &Node, const std::string &Name,
                           const nlohmann::json &Values);

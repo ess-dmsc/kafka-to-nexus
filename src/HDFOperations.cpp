@@ -13,6 +13,8 @@
 #include <stack>
 #include <string>
 #include "HDFAttributes.h"
+#include "JsonConfig/FieldHandler.h"
+#include "JsonConfig/Field.h"
 
 namespace HDFOperations {
 using nlohmann::json;
@@ -72,17 +74,28 @@ void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
   HDFAttributes::writeAttribute(Node, Name, system_clock::now());
 }
 
-void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
-                     SharedLogger const &Logger) {
+void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value) {
   if (Value == nullptr) {
     return;
   }
   if (Value->is_array()) {
-    writeArrayOfAttributes(Node, *Value, Logger);
+    writeArrayOfAttributes(Node, *Value);
   } else if (Value->is_object()) {
     writeObjectOfAttributes(Node, *Value);
   }
 }
+
+using namespace std::string_literals;
+class JSONAttribute : public JsonConfig::FieldHandler {
+public:
+  JSONAttribute(nlohmann::json const &JsonObj) {
+    processConfigData(JsonObj);
+  }
+  JsonConfig::RequiredField<std::string> Name{this, "name"};
+  JsonConfig::RequiredField<nlohmann::json> Value{this, "value"};
+  JsonConfig::Field<std::string> Type{this, {{"type"}, {"dtype"}}, "double"};
+  JsonConfig::Field<size_t> StringSize{this, "string_size", 0};
+};
 
 /// \brief Write attributes defined in an array of attribute objects.
 ///
@@ -92,48 +105,30 @@ void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
 /// \param JsonValue    json value array of attribute objects.
 /// \param Logger Pointer to spdlog instance to be used for logging.
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &ValuesJson,
-                            SharedLogger const &Logger) {
-  if (!ValuesJson.is_array()) {
-    return;
-  }
+                            const nlohmann::json &ValuesJson) {
   for (auto const &Attribute : ValuesJson) {
-    if (Attribute.is_object()) {
-      std::string Name;
-      if (auto NameMaybe = find<std::string>("name", Attribute)) {
-        Name = *NameMaybe;
+    try {
+      JSONAttribute CurrentAttribute(Attribute);
+      if (Node.attributes.exists(CurrentAttribute.Name)) {
+          Node.attributes.remove(CurrentAttribute.Name);
+          LOG_DEBUG("Replacing (existing) attribute with key \"{}\".", CurrentAttribute.Name.getValue());
+      }
+      if (CurrentAttribute.Type.hasDefaultValue() and not CurrentAttribute.Value.getValue().is_array()) {
+        writeScalarAttribute(Node, CurrentAttribute.Name, CurrentAttribute.Value);
       } else {
-        continue;
-      }
-      if (auto const &ValuesMaybe = find<json>("values", Attribute)) {
-        std::string DType{"double"};
-        auto const &Values = *ValuesMaybe;
-        uint32_t StringSize = 0;
-        if (auto StringSizeMaybe = find<uint32_t>("string_size", Attribute)) {
-          StringSize = *StringSizeMaybe;
-        }
-        if (Node.attributes.exists(Name)) {
-          Node.attributes.remove(Name);
-          LOG_DEBUG("Replacing (existing) attribute with key \"{}\".", Name);
-        }
-        if (Values.is_array() or StringSize > 0) {
-          if (findType(Attribute, DType)) {
-            Logger->warn("No type defined for attribute, using the default.");
+        auto CValue = CurrentAttribute.Value.getValue();
+        if (CurrentAttribute.Type.hasDefaultValue() and CValue.is_array()) {
+          if (std::any_of(CValue.begin(), CValue.end(), [](auto &A){
+                return A.is_string();
+              })) {
+            CurrentAttribute.Type.setValue("string");
           }
-
-          for (auto const &Elem : Values) {
-            // cppcheck-suppress useStlAlgorithm
-            if (Elem.is_string()) {
-              DType = "string";
-              break;
-            }
-          }
-          writeAttrOfSpecifiedType(DType, Node, Name,
-                                   Values);
-        } else {
-          writeScalarAttribute(Node, Name, Values);
         }
+        writeAttrOfSpecifiedType(CurrentAttribute.Type, Node, CurrentAttribute.Name,
+                                 CurrentAttribute.Value);
       }
+    } catch (std::exception &e) {
+      LOG_ERROR("Failed to write attribute. Error was: {}", e.what());
     }
   }
 }
@@ -223,11 +218,10 @@ void writeScalarAttribute(hdf5::node::Node const &Node, std::string const &Name,
 }
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
-                              nlohmann::json const &Values,
-                              SharedLogger const &Logger) {
+                              nlohmann::json const &Values) {
   if (auto AttributesMaybe = find<json>("attributes", Values)) {
     auto const Attributes = *AttributesMaybe;
-    writeAttributes(Node, &Attributes, Logger);
+    writeAttributes(Node, &Attributes);
   }
 }
 
@@ -447,7 +441,7 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                       &DatasetValuesInnerObject);
   auto dset = hdf5::node::Dataset(Parent.nodes[Name]);
 
-  writeAttributesIfPresent(dset, *Values, Logger);
+  writeAttributesIfPresent(dset, *Values);
 }
 
 void createHDFStructures(
@@ -492,7 +486,7 @@ void createHDFStructures(
     // If the current level in the HDF can act as a parent, then continue the
     // recursion with the (optional) "children" array.
     if (hdf_this.is_valid()) {
-      writeAttributesIfPresent(hdf_this, *Value, Logger);
+      writeAttributesIfPresent(hdf_this, *Value);
       if (auto ChildrenMaybe = find<json>("children", *Value)) {
         auto Children = *ChildrenMaybe;
         if (Children.is_array()) {

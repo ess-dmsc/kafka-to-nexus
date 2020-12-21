@@ -11,6 +11,7 @@
 
 #include <map>
 #include <string>
+#include <nlohmann/json.hpp>
 
 namespace JsonConfig {
 
@@ -19,8 +20,10 @@ class FieldBase;
 class FieldHandler {
 public:
   FieldHandler() = default;
+  virtual ~FieldHandler() = default;
   void registerField(FieldBase *Ptr);
   void processConfigData(std::string const &ConfigJsonStr);
+  void processConfigData(nlohmann::json const &JsonObj);
 
 private:
   std::map<std::string, FieldBase *> FieldMap;
