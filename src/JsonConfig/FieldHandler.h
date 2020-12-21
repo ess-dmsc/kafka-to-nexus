@@ -10,8 +10,8 @@
 #pragma once
 
 #include <map>
-#include <string>
 #include <nlohmann/json.hpp>
+#include <string>
 
 namespace JsonConfig {
 

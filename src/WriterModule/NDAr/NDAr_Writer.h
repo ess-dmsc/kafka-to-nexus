@@ -57,8 +57,7 @@ protected:
     c_string,
   } ElementType{Type::float64};
 
-  JsonConfig::Field<std::string> DataType{this, {"type", "dtype"},
-      "float64"};
+  JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "float64"};
   JsonConfig::Field<int> CueInterval{this, "cue_interval", 1000};
   JsonConfig::Field<hdf5::Dimensions> ChunkSize{this, "chunk_size", {1 << 20}};
   JsonConfig::Field<hdf5::Dimensions> ArrayShape{this, "array_size", {1, 1}};
