@@ -403,6 +403,7 @@ public:
   JsonConfig::Field<nlohmann::json> Size{this, "size", ""};
   JsonConfig::Field<size_t> StringSize{this, "string_size", 0};
   JsonConfig::Field<nlohmann::json> Attributes{this, "attributes", ""};
+  JsonConfig::Field<std::string> Target{this, "target", ""};
 };
 
 void createHDFStructures(
@@ -457,71 +458,36 @@ void createHDFStructures(
 
 void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
               SharedLogger Logger) {
-  if (!Json.is_object()) {
-    throw std::runtime_error(fmt::format(
-        "HDFFile addLinks: We expect a json object but got: {}", Json.dump()));
-  }
-  auto ChildrenIter = Json.find("children");
-  if (ChildrenIter == Json.end()) {
-    return;
-  }
-  auto &Children = *ChildrenIter;
-  if (!Children.is_array()) {
-    throw std::runtime_error("HDFFile addLinks: \"children\" must be an array");
-  }
-  for (auto const &Child : Children) {
-    if (!Child.is_object()) {
-      continue;
-    }
-    if (Child.find("type") == Child.end()) {
-      continue;
-    }
-    if (Child.at("type") != "group") {
-      continue;
-    }
-    if (Child.find("name") == Child.end()) {
-      continue;
-    }
-    auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
-    addLinks(ChildGroup, Child, Logger);
-  }
-  for (auto const &Child : Children) {
-    if (!Child.is_object()) {
-      continue;
-    }
-    if (Child.find("type") == Child.end()) {
-      continue;
-    }
-    if (Child.at("type") != "link") {
-      continue;
-    }
-    if (Child.find("name") == Child.end()) {
-      continue;
-    }
-    if (Child.find("target") == Child.end()) {
-      continue;
-    }
-    auto LinkName = Child.at("name").get<std::string>();
-    auto Target = Child.at("target").get<std::string>();
-    auto GroupBase = Group;
-    auto TargetBase = Target;
-    while (TargetBase.find("../") == 0) {
-      TargetBase = TargetBase.substr(3);
-      GroupBase = GroupBase.link().parent();
-    }
-    auto TargetID =
-        H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
-    if (TargetID < 0) {
-      Logger->warn(
-          "Can not find target object for link target: {}  in group: {}",
-          Target, std::string(Group.link().path()));
-      continue;
-    }
-    if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), LinkName.c_str(),
-                    H5P_DEFAULT, H5P_DEFAULT)) {
-      Logger->warn("can not create link name: {}  in group: {}  to target: {}",
-                   LinkName, std::string(Group.link().path()), Target);
-      continue;
+  JSONHdfNode CNode(Json);
+
+  if (not CNode.Children.hasDefaultValue() and CNode.Children.getValue().is_array()) {
+    for (auto &Child : CNode.Children.getValue()) {
+      JSONHdfNode ChildNode(Child);
+      if (ChildNode.Type.getValue() == "group") {
+        auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
+        addLinks(ChildGroup, Child, Logger);
+      } else if (ChildNode.Type.getValue() == "link" and not ChildNode.Target.hasDefaultValue()) {
+        auto GroupBase = Group;
+        auto TargetBase = ChildNode.Target.getValue();
+        while (TargetBase.find("../") == 0) {
+          TargetBase = TargetBase.substr(3);
+          GroupBase = GroupBase.link().parent();
+        }
+        auto TargetID =
+            H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+        if (TargetID < 0) {
+          Logger->warn(
+              "Can not find target object for link target: {}  in group: {}",
+              ChildNode.Target.getValue(), std::string(Group.link().path()));
+          continue;
+        }
+        if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), CNode.Name.getValue().c_str(),
+                        H5P_DEFAULT, H5P_DEFAULT)) {
+          Logger->warn("can not create link name: {}  in group: {}  to target: {}",
+                       CNode.Name.getValue(), std::string(Group.link().path()), ChildNode.Target.getValue());
+          continue;
+        }
+      }
     }
   }
 }
