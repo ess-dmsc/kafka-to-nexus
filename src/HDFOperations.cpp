@@ -468,31 +468,36 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
               SharedLogger Logger) {
   JSONHdfNode CNode(Json);
 
-  if (not CNode.Children.hasDefaultValue() and CNode.Children.getValue().is_array()) {
+  if (not CNode.Children.hasDefaultValue() and
+      CNode.Children.getValue().is_array()) {
     for (auto &Child : CNode.Children.getValue()) {
       JSONHdfNode ChildNode(Child);
       if (ChildNode.Type.getValue() == "group") {
         auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
         addLinks(ChildGroup, Child, Logger);
-      } else if (ChildNode.Type.getValue() == "link" and not ChildNode.Target.hasDefaultValue()) {
+      } else if (ChildNode.Type.getValue() == "link" and
+                 not ChildNode.Target.hasDefaultValue()) {
         auto GroupBase = Group;
         auto TargetBase = ChildNode.Target.getValue();
         while (TargetBase.find("../") == 0) {
           TargetBase = TargetBase.substr(3);
           GroupBase = GroupBase.link().parent();
         }
-        auto TargetID =
-            H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+        auto TargetID = H5Oopen(static_cast<hid_t>(GroupBase),
+                                TargetBase.c_str(), H5P_DEFAULT);
         if (TargetID < 0) {
           Logger->warn(
               "Can not find target object for link target: {}  in group: {}",
               ChildNode.Target.getValue(), std::string(Group.link().path()));
           continue;
         }
-        if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), CNode.Name.getValue().c_str(),
-                        H5P_DEFAULT, H5P_DEFAULT)) {
-          Logger->warn("can not create link name: {}  in group: {}  to target: {}",
-                       CNode.Name.getValue(), std::string(Group.link().path()), ChildNode.Target.getValue());
+        if (0 > H5Olink(TargetID, static_cast<hid_t>(Group),
+                        CNode.Name.getValue().c_str(), H5P_DEFAULT,
+                        H5P_DEFAULT)) {
+          Logger->warn(
+              "can not create link name: {}  in group: {}  to target: {}",
+              CNode.Name.getValue(), std::string(Group.link().path()),
+              ChildNode.Target.getValue());
           continue;
         }
       }
