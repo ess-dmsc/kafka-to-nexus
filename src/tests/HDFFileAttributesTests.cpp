@@ -22,7 +22,7 @@ public:
 };
 
 TEST_F(HDFFileAttributesTest,
-     whenCommandContainsNumericalAttributeItIsWrittenToFile) {
+       whenCommandContainsNumericalAttributeItIsWrittenToFile) {
   std::string CommandWithNumericalAttr = R""({
       "children": [
         {
@@ -47,7 +47,7 @@ TEST_F(HDFFileAttributesTest,
 }
 
 TEST_F(HDFFileAttributesTest,
-     whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
+       whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
   std::string CommandWithScalarStringAttr = R""({
       "children": [
         {
@@ -72,7 +72,7 @@ TEST_F(HDFFileAttributesTest,
 }
 
 TEST_F(HDFFileAttributesTest,
-     whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
+       whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   std::string CommandWithArrayOfAttrs = R""({
     "children": [
       {
@@ -111,7 +111,7 @@ TEST_F(HDFFileAttributesTest,
 }
 
 TEST_F(HDFFileAttributesTest,
-     whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
+       whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
   std::string CommandWithTypedAttrs = R""({
     "children": [
       {
@@ -183,7 +183,7 @@ TEST_F(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
 }
 
 TEST_F(HDFFileAttributesTest,
-     ArrayOfAttributesWithFixedLengthStringItIsWrittenAsFixedLengthStrings) {
+       ArrayOfAttributesWithFixedLengthStringItIsWrittenAsFixedLengthStrings) {
   std::string CommandWithArrayOfAttrs = R""({
     "children": [
       {
@@ -281,7 +281,8 @@ TEST_F(HDFFileAttributesTest,
     ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     std::vector<std::string> Buffer(3);
     StringArrayAttr.read(Buffer);
-    std::vector<std::string> Expected{"string_value_0","string_value_1","string_value_2"};
+    std::vector<std::string> Expected{"string_value_0", "string_value_1",
+                                      "string_value_2"};
     ASSERT_EQ(Buffer, Expected);
   }
 
@@ -350,7 +351,7 @@ TEST_F(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
 }
 
 TEST_F(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
- std::string CommandWithNumericalAttr = R""({
+  std::string CommandWithNumericalAttr = R""({
       "children": [
         {
           "type": "dataset",

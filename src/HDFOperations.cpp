@@ -8,20 +8,22 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFOperations.h"
+#include "HDFAttributes.h"
+#include "JsonConfig/Field.h"
+#include "JsonConfig/FieldHandler.h"
 #include "TimeUtility.h"
 #include "json.h"
 #include <stack>
 #include <string>
-#include "HDFAttributes.h"
-#include "JsonConfig/FieldHandler.h"
-#include "JsonConfig/Field.h"
 
 namespace HDFOperations {
 using nlohmann::json;
 
-void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions, size_t CurrentLevel);
+void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions,
+                   size_t CurrentLevel);
 
-void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions, size_t CurrentLevel) {
+void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions,
+                   size_t CurrentLevel) {
   if (JsonObj.is_array()) {
     if (Dimensions.size() < CurrentLevel + 1u) {
       Dimensions.push_back(0);
@@ -53,12 +55,12 @@ Shape determineArrayDimensions(nlohmann::json const &Values) {
 }
 
 template <typename T>
-static void writeAttr(hdf5::node::Node const &Node,
-                             std::string const &Name,
-                             nlohmann::json const &Value) {
+static void writeAttr(hdf5::node::Node const &Node, std::string const &Name,
+                      nlohmann::json const &Value) {
   try {
     if (Value.is_array()) {
-      HDFAttributes::writeAttribute(Node, Name, jsonArrayToMultiArray<T>(Value));
+      HDFAttributes::writeAttribute(Node, Name,
+                                    jsonArrayToMultiArray<T>(Value));
     } else {
       HDFAttributes::writeAttribute(Node, Name, Value.get<T>());
     }
@@ -74,7 +76,8 @@ void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
   HDFAttributes::writeAttribute(Node, Name, system_clock::now());
 }
 
-void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value) {
+void writeAttributes(hdf5::node::Node const &Node,
+                     nlohmann::json const *Value) {
   if (Value == nullptr) {
     return;
   }
@@ -87,9 +90,7 @@ void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value) 
 
 class JSONAttribute : public JsonConfig::FieldHandler {
 public:
-  JSONAttribute(nlohmann::json const &JsonObj) {
-    processConfigData(JsonObj);
-  }
+  JSONAttribute(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<nlohmann::json> Value{this, {"value", "values"}};
   JsonConfig::Field<std::string> Type{this, {"type", "dtype"}, "double"};
@@ -109,22 +110,24 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
     try {
       JSONAttribute CurrentAttribute(Attribute);
       if (Node.attributes.exists(CurrentAttribute.Name)) {
-          Node.attributes.remove(CurrentAttribute.Name);
-          LOG_DEBUG("Replacing (existing) attribute with key \"{}\".", CurrentAttribute.Name.getValue());
+        Node.attributes.remove(CurrentAttribute.Name);
+        LOG_DEBUG("Replacing (existing) attribute with key \"{}\".",
+                  CurrentAttribute.Name.getValue());
       }
-      if (CurrentAttribute.Type.hasDefaultValue() and not CurrentAttribute.Value.getValue().is_array()) {
-        writeScalarAttribute(Node, CurrentAttribute.Name, CurrentAttribute.Value);
+      if (CurrentAttribute.Type.hasDefaultValue() and
+          not CurrentAttribute.Value.getValue().is_array()) {
+        writeScalarAttribute(Node, CurrentAttribute.Name,
+                             CurrentAttribute.Value);
       } else {
         auto CValue = CurrentAttribute.Value.getValue();
         if (CurrentAttribute.Type.hasDefaultValue() and CValue.is_array()) {
-          if (std::any_of(CValue.begin(), CValue.end(), [](auto &A){
-                return A.is_string();
-              })) {
+          if (std::any_of(CValue.begin(), CValue.end(),
+                          [](auto &A) { return A.is_string(); })) {
             CurrentAttribute.Type.setValue("string");
           }
         }
-        writeAttrOfSpecifiedType(CurrentAttribute.Type, Node, CurrentAttribute.Name,
-                                 CurrentAttribute.Value);
+        writeAttrOfSpecifiedType(CurrentAttribute.Type, Node,
+                                 CurrentAttribute.Name, CurrentAttribute.Value);
       }
     } catch (std::exception &e) {
       LOG_ERROR("Failed to write attribute. Error was: {}", e.what());
@@ -155,14 +158,12 @@ void writeAttrOfSpecifiedType(std::string const &DType,
         {"int64", [&]() { writeAttr<int64_t>(Node, Name, Values); }},
         {"float", [&]() { writeAttr<float>(Node, Name, Values); }},
         {"double", [&]() { writeAttr<double>(Node, Name, Values); }},
-        {"string", [&]() {
-          writeAttr<std::string>(Node, Name, Values);
-         }}};
+        {"string", [&]() { writeAttr<std::string>(Node, Name, Values); }}};
     WriteAttrMap.at(DType)();
   } catch (std::exception const &e) {
-    auto ErrorStr =
-        fmt::format("Failed attribute write in {}/{} with data type {}. Message was: {}",
-                    std::string(Node.link().path()), Name, DType, e.what());
+    auto ErrorStr = fmt::format(
+        "Failed attribute write in {}/{} with data type {}. Message was: {}",
+        std::string(Node.link().path()), Name, DType, e.what());
     std::throw_with_nested(std::runtime_error(ErrorStr));
   }
 }
@@ -251,13 +252,12 @@ void writeStringDataset(
 
     auto Dataset =
         Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
-    Dataset.write(jsonArrayToMultiArray<std::string>(Values),
-                  DataType, Dataspace, Dataspace,
-                  hdf5::property::DatasetTransferList());
+    Dataset.write(jsonArrayToMultiArray<std::string>(Values), DataType,
+                  Dataspace, Dataspace, hdf5::property::DatasetTransferList());
   } catch (const std::exception &e) {
-    auto ErrorStr =
-        fmt::format("Failed to write variable-size string dataset {}/{}. Message was: {}",
-                    std::string(Parent.link().path()), Name, e.what());
+    auto ErrorStr = fmt::format(
+        "Failed to write variable-size string dataset {}/{}. Message was: {}",
+        std::string(Parent.link().path()), Name, e.what());
     std::throw_with_nested(std::runtime_error(ErrorStr));
   }
 }
@@ -330,21 +330,24 @@ void writeGenericDataset(const std::string &DataType,
                                        Dataspace, Values);
          }},
         {"string",
-         [&]() {writeStringDataset(Parent, Name, DatasetCreationList, Dataspace,
-                                Values);
+         [&]() {
+           writeStringDataset(Parent, Name, DatasetCreationList, Dataspace,
+                              Values);
          }},
     };
     WriteDatasetMap.at(DataType)();
   } catch (std::exception const &e) {
-    std::throw_with_nested(std::runtime_error(fmt::format("Failed dataset write in {}/{}. Type={}, size={}, max={}. Message was: {}", std::string(Parent.link().path()), Name, DataType, Sizes, Max, e.what())));
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("Failed dataset write in {}/{}. Type={}, size={}, max={}. "
+                    "Message was: {}",
+                    std::string(Parent.link().path()), Name, DataType, Sizes,
+                    Max, e.what())));
   }
 }
 
 class JSONDataset : public JsonConfig::FieldHandler {
 public:
-  JSONDataset(nlohmann::json const &JsonObj) {
-    processConfigData(JsonObj);
-  }
+  JSONDataset(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<nlohmann::json> Value{this, {"value", "values"}};
   JsonConfig::Field<std::string> Type{this, "type", ""};
@@ -355,15 +358,16 @@ public:
   JsonConfig::Field<nlohmann::json> Attributes{this, "attributes", ""};
 };
 
-
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                   SharedLogger const &Logger) {
 
   JSONDataset Dataset(*Values);
 
   std::vector<hsize_t> Sizes;
-   if (Dataset.Space.getValue() != "simple") {
-    Logger->warn("Unable to handle data space of type {}. Can only handle simple data spaces.", Dataset.Space.getValue());
+  if (Dataset.Space.getValue() != "simple") {
+    Logger->warn("Unable to handle data space of type {}. Can only handle "
+                 "simple data spaces.",
+                 Dataset.Space.getValue());
   }
   if (Dataset.Size.getValue().is_array()) {
     for (auto const &Element : Dataset.Size.getValue()) {
@@ -391,9 +395,7 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
 
 class JSONHdfNode : public JsonConfig::FieldHandler {
 public:
-  JSONHdfNode(nlohmann::json const &JsonObj) {
-    processConfigData(JsonObj);
-  }
+  JSONHdfNode(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<std::string> Type{this, "type"};
   JsonConfig::Field<nlohmann::json> Value{this, {"value", "values"}, ""};
@@ -419,21 +421,25 @@ void createHDFStructures(
     JSONHdfNode CNode(*Value);
     if (CNode.Type.getValue() == "group") {
       try {
-        auto CurrentGroup = Parent.create_group(CNode.Name, LinkCreationPropertyList);
+        auto CurrentGroup =
+            Parent.create_group(CNode.Name, LinkCreationPropertyList);
         Path.push_back(CNode.Name);
         writeAttributesIfPresent(CurrentGroup, *Value);
-        if (not CNode.Children.hasDefaultValue() and CNode.Children.getValue().is_array()) {
+        if (not CNode.Children.hasDefaultValue() and
+            CNode.Children.getValue().is_array()) {
           for (auto &Child : CNode.Children.getValue()) {
             createHDFStructures(&Child, CurrentGroup, Level + 1,
                                 LinkCreationPropertyList, FixedStringHDFType,
                                 HDFStreamInfo, Path, Logger);
           }
         } else {
-          Logger->debug("Ignoring children as they do not exist or are invalid.");
+          Logger->debug(
+              "Ignoring children as they do not exist or are invalid.");
         }
         Path.pop_back();
       } catch (std::exception const &e) {
-        Logger->error("Failed to create group  Name: {}. Message was: {}", CNode.Name.getValue(), e.what());
+        Logger->error("Failed to create group  Name: {}. Message was: {}",
+                      CNode.Name.getValue(), e.what());
       }
     } else if (CNode.Type.getValue() == "stream") {
       std::string pathstr;
@@ -446,12 +452,14 @@ void createHDFStructures(
     } else if (CNode.Type.getValue() == "dataset") {
       writeDataset(Parent, Value, Logger);
     } else {
-      Logger->error("Unknown hdf node of type {}. Ignoring.", CNode.Type.getValue());
+      Logger->error("Unknown hdf node of type {}. Ignoring.",
+                    CNode.Type.getValue());
     }
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
-    Logger->error("Failed to create structure  parent={} level={}. Message was: {}",
-                  std::string(Parent.link().path()), Level, e.what());
+    Logger->error(
+        "Failed to create structure  parent={} level={}. Message was: {}",
+        std::string(Parent.link().path()), Level, e.what());
   }
 }
 

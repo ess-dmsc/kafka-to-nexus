@@ -7,13 +7,12 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #include "HDFAttributes.h"
 
 namespace HDFAttributes {
 
-void writeAttribute(hdf5::node::Node const &Node,
-                    const std::string &Name, time_point Value) {
+void writeAttribute(hdf5::node::Node const &Node, const std::string &Name,
+                    time_point Value) {
   writeAttribute(Node, Name, toUTCDateTime(Value));
 }
 

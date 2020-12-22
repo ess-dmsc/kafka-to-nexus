@@ -9,13 +9,13 @@
 
 #pragma once
 
+#include "MultiVector.h"
 #include "StreamHDFInfo.h"
 #include "json.h"
 #include "logger.h"
 #include <deque>
 #include <h5cpp/hdf5.hpp>
 #include <string>
-#include "MultiVector.h"
 
 namespace HDFOperations {
 
@@ -71,21 +71,25 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
 
 Shape determineArrayDimensions(nlohmann::json const &Values);
 
-template <typename T>
-T jsonElementConverter(nlohmann::json const &JsonObj) {
+template <typename T> T jsonElementConverter(nlohmann::json const &JsonObj) {
   return JsonObj.get<T>();
 }
 
 template <>
 std::string jsonElementConverter<std::string>(nlohmann::json const &JsonObj);
 
-//void populateMultiVector(nlohmann::json const &JsonObj, MultiVector<std::string> &TargetVector, Shape CurrentPosition, size_t CurrentLevel);
+// void populateMultiVector(nlohmann::json const &JsonObj,
+// MultiVector<std::string> &TargetVector, Shape CurrentPosition, size_t
+// CurrentLevel);
 
 template <typename T>
-void populateMultiVector(nlohmann::json const &JsonObj, MultiVector<T> &TargetVector, Shape CurrentPosition, size_t CurrentLevel) {
+void populateMultiVector(nlohmann::json const &JsonObj,
+                         MultiVector<T> &TargetVector, Shape CurrentPosition,
+                         size_t CurrentLevel) {
   for (auto const &Element : JsonObj) {
     if (Element.is_array()) {
-      populateMultiVector(Element, TargetVector, CurrentPosition, CurrentLevel + 1);
+      populateMultiVector(Element, TargetVector, CurrentPosition,
+                          CurrentLevel + 1);
     } else {
       TargetVector.at(CurrentPosition) = jsonElementConverter<T>(Element);
     }
@@ -101,6 +105,5 @@ MultiVector<T> jsonArrayToMultiArray(nlohmann::json const &ValueJson) {
   populateMultiVector(ValueJson, ReturnVector, Shape(ArraySize.size()), 0);
   return ReturnVector;
 }
-
 
 } // namespace HDFOperations

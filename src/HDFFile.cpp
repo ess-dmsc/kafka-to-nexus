@@ -9,9 +9,9 @@
 
 #include "HDFFile.h"
 #include "Filesystem.h"
+#include "HDFAttributes.h"
 #include "HDFOperations.h"
 #include "HDFVersionCheck.h"
-#include "HDFAttributes.h"
 #include "Version.h"
 #include "json.h"
 
@@ -87,9 +87,10 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
       }
     }
 
-    HDFAttributes::writeAttribute(RootGroup, "HDF5_Version", h5VersionStringLinked());
+    HDFAttributes::writeAttribute(RootGroup, "HDF5_Version",
+                                  h5VersionStringLinked());
     HDFAttributes::writeAttribute(RootGroup, "file_name",
-                         hdfFile().id().file_name().string());
+                                  hdfFile().id().file_name().string());
     HDFAttributes::writeAttribute(
         RootGroup, "creator",
         fmt::format("kafka-to-nexus commit {:.7}", GetVersion()));
