@@ -50,7 +50,7 @@ TEST(JsonArrayToMultiVector, Array1) {
 
 TEST(JsonArrayToMultiVector, Array2) {
   auto JsonObj = nlohmann::json::parse("[1, 2, 4]");
-  std::vector<int> Data{1,2 , 4};
+  std::vector<int> Data{1, 2, 4};
   MultiVector<int> ExpectedResult({3});
   std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
@@ -58,15 +58,16 @@ TEST(JsonArrayToMultiVector, Array2) {
 
 TEST(JsonArrayToMultiVector, Array3) {
   auto JsonObj = nlohmann::json::parse("[[1, 2, 4], [1, 2, 4]]");
-  std::vector<int> Data{1, 1 , 2, 2 , 4, 4};
+  std::vector<int> Data{1, 1, 2, 2, 4, 4};
   MultiVector<int> ExpectedResult({2, 3});
   std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
 
 TEST(JsonArrayToMultiVector, Array4) {
-  auto JsonObj = nlohmann::json::parse("[[[1, 2, 4], [1, 2, 4]], [[3, 6, 8], [10, 20, 40]]]");
-  std::vector<int> Data{1, 3, 1 , 10, 2, 6, 2, 20, 4, 8, 4, 40};
+  auto JsonObj = nlohmann::json::parse(
+      "[[[1, 2, 4], [1, 2, 4]], [[3, 6, 8], [10, 20, 40]]]");
+  std::vector<int> Data{1, 3, 1, 10, 2, 6, 2, 20, 4, 8, 4, 40};
   MultiVector<int> ExpectedResult({2, 2, 3});
   std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));

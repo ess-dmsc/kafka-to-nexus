@@ -12,7 +12,6 @@
 #include <map>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <nlohmann/json.hpp>
 
 namespace JsonConfig {
 

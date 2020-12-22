@@ -9,38 +9,41 @@
 
 #pragma once
 
-#include <vector>
-#include <numeric>
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/hdf5.hpp>
+#include <numeric>
+#include <vector>
 
 using Shape = std::vector<size_t>;
 
 inline size_t extentToSize(Shape S) {
   return std::accumulate(std::next(S.begin()), S.end(), S.at(0),
-                  [](auto a, auto b) { return a * b; });
+                         [](auto a, auto b) { return a * b; });
 }
 
 inline size_t posToIndex(Shape Dimensions, Shape Pos) {
   auto Result = Shape(Pos.size());
   size_t ReturnIndex = 0;
   for (size_t i = 0; i < Pos.size(); i++) {
-    ReturnIndex += std::accumulate(Dimensions.begin(), Dimensions.begin()+i, 1, std::multiplies<size_t>()) * Pos[i];
+    ReturnIndex += std::accumulate(Dimensions.begin(), Dimensions.begin() + i,
+                                   1, std::multiplies<size_t>()) *
+                   Pos[i];
   }
   return ReturnIndex;
 }
 
-template <typename T>
-class MultiVector : public std::vector<T> {
+template <typename T> class MultiVector : public std::vector<T> {
 public:
   MultiVector() = default;
-  MultiVector(Shape Extent) : std::vector<T>(extentToSize(Extent)), Dimensions(Extent) {}
+  MultiVector(Shape Extent)
+      : std::vector<T>(extentToSize(Extent)), Dimensions(Extent) {}
 
   bool operator==(MultiVector<T> const &Other) const {
-    return Dimensions == Other.Dimensions and std::equal(this->cbegin(), this->cend(), Other.cbegin());
+    return Dimensions == Other.Dimensions and
+           std::equal(this->cbegin(), this->cend(), Other.cbegin());
   }
 
-  T& at(Shape const &Index) {
+  T &at(Shape const &Index) {
     if (Index.size() != Dimensions.size()) {
       throw std::out_of_range("Number of dimensions is not equal.");
     }
@@ -51,7 +54,8 @@ public:
     }
     return std::vector<T>::operator[](posToIndex(Dimensions, Index));
   }
-  Shape getDimensions() const {return Dimensions;}
+  Shape getDimensions() const { return Dimensions; }
+
 private:
   Shape Dimensions;
 };
@@ -68,8 +72,7 @@ public:
   }
 };
 
-template <>
-class TypeTrait<MultiVector<std::string>> {
+template <> class TypeTrait<MultiVector<std::string>> {
 public:
   using Type = MultiVector<std::string>;
   using TypeClass = typename TypeTrait<std::string>::TypeClass;
@@ -85,47 +88,40 @@ namespace dataspace {
 // Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<MultiVector<T>> {
 public:
-using DataspaceType = Simple;
+  using DataspaceType = Simple;
 
-static DataspaceType create(const MultiVector<T> &value) {
-  auto Dims = value.getDimensions();
-  return Simple(Dimensions(Dims.begin(), Dims.end()), Dimensions(Dims.begin(), Dims.end()));
-}
+  static DataspaceType create(const MultiVector<T> &value) {
+    auto Dims = value.getDimensions();
+    return Simple(Dimensions(Dims.begin(), Dims.end()),
+                  Dimensions(Dims.begin(), Dims.end()));
+  }
 
-static void *ptr(MultiVector<T> &data) {
-  return reinterpret_cast<void *>(data.data());
-}
+  static void *ptr(MultiVector<T> &data) {
+    return reinterpret_cast<void *>(data.data());
+  }
 
-static const void *cptr(const MultiVector<T> &data) {
-  return reinterpret_cast<const void *>(data.data());
-}
+  static const void *cptr(const MultiVector<T> &data) {
+    return reinterpret_cast<const void *>(data.data());
+  }
 };
 } // namespace dataspace
 
-template<>
-struct VarLengthStringTrait<MultiVector<std::string>>
-{
+template <> struct VarLengthStringTrait<MultiVector<std::string>> {
   using BufferType = VarLengthStringBuffer<char>;
   using DataType = std::vector<std::string>;
 
-  static BufferType to_buffer(const DataType &data)
-  {
+  static BufferType to_buffer(const DataType &data) {
     BufferType buffer;
-    std::transform(data.begin(),data.end(),std::back_inserter(buffer),
-                   [](const std::string &str)
-                   {
-                     return const_cast<char*>(str.c_str());
-                   });
+    std::transform(
+        data.begin(), data.end(), std::back_inserter(buffer),
+        [](const std::string &str) { return const_cast<char *>(str.c_str()); });
     return buffer;
   }
 
-  static void from_buffer(const BufferType &buffer,DataType &data)
-  {
-    std::transform(buffer.begin(),buffer.end(),data.begin(),
-                   [](const char *ptr)
-                   {
-                     return std::string(ptr,std::strlen(ptr));
-                   });
+  static void from_buffer(const BufferType &buffer, DataType &data) {
+    std::transform(
+        buffer.begin(), buffer.end(), data.begin(),
+        [](const char *ptr) { return std::string(ptr, std::strlen(ptr)); });
   }
 };
 } // namespace hdf5

@@ -14,7 +14,6 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 
 template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
   static constexpr auto parse(format_parse_context &ctx) {
