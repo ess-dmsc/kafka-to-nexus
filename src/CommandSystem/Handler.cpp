@@ -90,6 +90,7 @@ enum class CmdOutcome {
   FailedAtServiceId,
   FailedAtJobId,
   FailedAtCmdId,
+  FailedAtTimestamp,
   FailedAtCmd,
   CmdIsDone,
 };
@@ -99,7 +100,7 @@ using LogLevel = spdlog::level::level_enum;
 struct CmdResponse {
   spdlog::level::level_enum LogLevel;
   bool SendResponse;
-  std::string MessageString;
+  std::function<std::string()> MessageString;
   int StatusCode{0};
 };
 
@@ -124,86 +125,93 @@ bool isValidUUID(std::string const &UUIDStr) {
   return false;
 }
 
+bool isMsgTimeStampValid(time_point MsgTime) {
+  if (system_clock::now() < MsgTime + 15s) {
+    return true;
+  }
+  return false;
+}
+
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IgnoreServiceId) {
   try {
     time_point StopTime = time_point::min();
-    CmdOutcome Outcome{CmdOutcome::FailedAtExtraction};
     std::string ExceptionMessage;
     StartMessage StartJob;
-    if (extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
-      Outcome = CmdOutcome::FailedAtServiceId;
-    }
-    if (Outcome == CmdOutcome::FailedAtServiceId and
-        not(IgnoreServiceId xor (StartJob.ServiceID != ServiceId))) {
-      Outcome = CmdOutcome::FailedAtJobId;
-    }
-    auto IdValidity = isValidUUID(StartJob.JobID);
-    if (Outcome == CmdOutcome::FailedAtJobId and IdValidity) {
-      Outcome = CmdOutcome::FailedAtCmd;
-    } else if (not IdValidity) {
-      LOG_ERROR("Job-id verification failure.");
-    }
-    if (Outcome == CmdOutcome::FailedAtCmd) {
-      try {
-        DoStart(StartJob);
-        StopTime = StartJob.StopTime;
-        JobId = StartJob.JobID;
-        PollForJob = false;
-        JobPool->disconnectFromPool();
-        Outcome = CmdOutcome::CmdIsDone;
-      } catch (std::exception const &E) {
-        PollForJob = true;
-        JobId = "";
-        ExceptionMessage = E.what();
+    std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
+    CommandSteps.push_back({
+        [&](){return extractStartMessage(CommandMsg, StartJob, ExceptionMessage);
+        }, {LogLevel::warn, false,
+         [&](){return fmt::format("Failed to extract start command from flatbuffer. The "
+                         "error was: {}",
+                         ExceptionMessage);},
+             0}});
+
+    CommandSteps.push_back({
+        [&](){return not(IgnoreServiceId xor (StartJob.ServiceID != ServiceId));},
+        {LogLevel::debug, false,
+         [&](){return fmt::format("Rejected start command as the service id was wrong. It "
+                     "should be {}, it was {}.",
+                     ServiceId, StartJob.ServiceID);},
+         0}});
+
+    CommandSteps.push_back({
+       [&](){return isValidUUID(StartJob.JobID);},
+       {LogLevel::warn, true,
+        [&](){return fmt::format("Rejected start command as the job id was invalid (it "
+                    "was: {}).",
+                    StartJob.JobID);},
+        400}});
+
+    CommandSteps.push_back({
+        [&](){return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());},
+        {LogLevel::warn, true,
+         [&](){return fmt::format("Rejected start command as its timestamp was bad (it was: {}, current time: {}).",
+                     toUTCDateTime(CommandMsg.getMetaData().timestamp()), toUTCDateTime(system_clock::now()));},
+         400}});
+
+    CommandSteps.push_back({
+        [&](){
+          try {
+            DoStart(StartJob);
+            StopTime = StartJob.StopTime;
+            JobId = StartJob.JobID;
+            PollForJob = false;
+            JobPool->disconnectFromPool();
+          } catch (std::exception const &E) {
+            PollForJob = true;
+            JobId = "";
+            ExceptionMessage = E.what();
+            return false;
+          }
+          return true;
+        },
+        {LogLevel::err, true, [&](){ return
+         fmt::format(
+             "Failed to start filewriting job. The failure message was: {}",
+             ExceptionMessage);},
+         500}});
+
+    ActionResult SendResult{ActionResult::Success};
+    CmdResponse OutcomeValue{
+        LogLevel::info, true,
+        [&](){return fmt::format("Started write job with start time {} and stop time {}.",
+          toUTCDateTime(time_point(std::chrono::milliseconds{StartJob.StartTime})),toUTCDateTime(StartJob.StopTime));},
+                            201};
+    for (auto const &Step : CommandSteps) {
+      if (not Step.first()) {
+        OutcomeValue = Step.second;
+        SendResult = ActionResult::Failure;
+        break;
       }
     }
-    std::map<CmdOutcome, CmdResponse> OutcomeMap{
-        {{CmdOutcome::FailedAtExtraction},
-         {LogLevel::warn, false,
-          fmt::format("Failed to extract start command from flatbuffer. The "
-                      "error was: {}",
-                      ExceptionMessage),
-          0}},
-        {{CmdOutcome::FailedAtServiceId},
-         {LogLevel::debug, false,
-          fmt::format("Rejected start command as the service id was wrong. It "
-                      "should be {}, it was {}.",
-                      ServiceId, StartJob.ServiceID),
-          0}},
-        {{CmdOutcome::FailedAtJobId},
-         {LogLevel::warn, true,
-          fmt::format("Rejected start command as the job id was invalid (it "
-                      "was: {}).",
-                      StartJob.JobID),
-          400}},
-        {{CmdOutcome::FailedAtCmd},
-         {LogLevel::err, true,
-          fmt::format(
-              "Failed to start filewriting job. The failure message was: {}",
-              ExceptionMessage),
-          500}},
-        {{CmdOutcome::CmdIsDone},
-         {LogLevel::info, true,
-          fmt::format("Started write job with start time {} and stop time {}.",
-                      toUTCDateTime(time_point(
-                          std::chrono::milliseconds{StartJob.StartTime})),
-                      toUTCDateTime(StartJob.StopTime)),
-          201}},
-    };
-    ActionResult SendResult{ActionResult::Failure};
-    if (Outcome == CmdOutcome::CmdIsDone) {
-      SendResult = ActionResult::Success;
-    }
-    auto OutcomeValue = OutcomeMap[Outcome];
-    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString);
+
+    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString());
     if (OutcomeValue.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
-          StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString);
+          StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString());
     }
-  } catch (std::out_of_range const &E) {
-    LOG_ERROR("Unknown outcome of start job command");
   } catch (std::exception &E) {
     LOG_ERROR("Unable to process start command, error was: {}", E.what());
   }
@@ -222,92 +230,92 @@ bool extractStopMessage(FileWriter::Msg const &CommandMsg, StopMessage &Msg,
 
 void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
   try {
-    CmdOutcome Outcome{CmdOutcome::FailedAtExtraction};
     std::string ResponseMessage;
     StopMessage StopCmd;
     ActionResponse TypeOfAction{ActionResponse::SetStopTime};
-    if (extractStopMessage(CommandMsg, StopCmd, ResponseMessage)) {
-      Outcome = CmdOutcome::FailedAtServiceId;
-    }
-    if (Outcome == CmdOutcome::FailedAtServiceId and
-        ServiceId == StopCmd.ServiceID) {
-      Outcome = CmdOutcome::FailedAtJobId;
-    }
-    if (Outcome == CmdOutcome::FailedAtJobId and JobId == StopCmd.JobID) {
-      Outcome = CmdOutcome::FailedAtCmdId;
-    }
-    auto IdValidity = isValidUUID(StopCmd.CommandID);
-    if (Outcome == CmdOutcome::FailedAtCmdId and IdValidity) {
-      Outcome = CmdOutcome::FailedAtCmd;
-    } else if (not IdValidity) {
-      LOG_ERROR("Cmd-id verification failure.");
-    }
-    if (Outcome == CmdOutcome::FailedAtCmd and StopCmd.StopTime == 0ms) {
-      try {
-        DoStopNow();
-        Outcome = CmdOutcome::CmdIsDone;
-        ResponseMessage = "Attempting to stop writing job now.";
-      } catch (std::exception const &E) {
-        ResponseMessage = E.what();
-      }
-    } else if (Outcome == CmdOutcome::FailedAtCmd) {
-      try {
-        DoSetStopTime(StopCmd.StopTime);
-        Outcome = CmdOutcome::CmdIsDone;
-        ResponseMessage =
-            fmt::format("File writing job stop time set to: {}",
-                        toUTCDateTime(time_point(StopCmd.StopTime)));
-      } catch (std::exception const &E) {
-        ResponseMessage = E.what();
-      }
-    }
-    std::map<CmdOutcome, CmdResponse> OutcomeMap{
-        {{CmdOutcome::FailedAtExtraction},
-         {LogLevel::warn, false,
-          fmt::format("Failed to extract stop command from flatbuffer. The "
-                      "error was: {}",
-                      ResponseMessage),
-          0}},
-        {{CmdOutcome::FailedAtServiceId},
-         {LogLevel::debug, false,
-          fmt::format("Rejected stop command as the service id was wrong. It "
-                      "should be {}, it was {}.",
-                      ServiceId, StopCmd.ServiceID),
-          0}},
-        {{CmdOutcome::FailedAtJobId},
-         {LogLevel::warn, true,
-          fmt::format("Rejected stop command as the job id was invalid (It "
-                      "should be {}, it was: {}).",
-                      JobId, StopCmd.JobID),
-          400}},
-        {{CmdOutcome::FailedAtCmdId},
-         {LogLevel::err, true,
-          fmt::format("Rejected stop command as the command id was invalid "
-                      "(it was: {}).",
-                      StopCmd.CommandID),
-          400}},
-        {{CmdOutcome::FailedAtCmd},
-         {LogLevel::err, true,
-          fmt::format(
-              "Failed to execute stop command. The failure message was: {}",
-              ResponseMessage),
-          500}},
-        {{CmdOutcome::CmdIsDone}, {LogLevel::info, true, ResponseMessage, 202}},
+    std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
+
+    CommandSteps.push_back({
+        [&](){return extractStopMessage(CommandMsg, StopCmd, ResponseMessage);},
+        {LogLevel::warn, false,
+         [&](){return fmt::format("Failed to extract stop command from flatbuffer. The "
+                     "error was: {}",
+                     ResponseMessage);},0}
+    });
+
+    CommandSteps.push_back({
+        [&](){return ServiceId == StopCmd.ServiceID;},
+        {LogLevel::debug, false,
+         [&](){return fmt::format("Rejected stop command as the service id was wrong. It "
+                     "should be {}, it was {}.",
+                     ServiceId, StopCmd.ServiceID);},
+         0}});
+
+    CommandSteps.push_back({
+        [&](){return JobId == StopCmd.JobID;},
+        {LogLevel::warn, true,
+         [&](){return fmt::format("Rejected stop command as the job id was invalid (It "
+                     "should be {}, it was: {}).",
+                     JobId, StopCmd.JobID);},400}});
+
+    CommandSteps.push_back({
+       [&](){return isValidUUID(StopCmd.CommandID);},
+       {LogLevel::err, true,
+        [&](){return fmt::format("Rejected stop command as the command id was invalid "
+                    "(it was: {}).",
+                    StopCmd.CommandID);},
+        400}});
+
+    CommandSteps.push_back({
+        [&](){return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());},
+        {LogLevel::warn, true,
+         [&](){return fmt::format("Rejected start command as its timestamp was bad (it was: {}, current time: {}).",
+                     toUTCDateTime(CommandMsg.getMetaData().timestamp()), toUTCDateTime(system_clock::now()));},
+         400}});
+
+    CommandSteps.push_back({
+        [&](){
+          try {
+            if (StopCmd.StopTime == 0ms) {
+              DoStopNow();
+              ResponseMessage = "Attempting to stop writing job now.";
+            } else {
+              DoSetStopTime(StopCmd.StopTime);
+              ResponseMessage =
+                  fmt::format("File writing job stop time set to: {}",
+                              toUTCDateTime(time_point(StopCmd.StopTime)));
+            }
+          } catch (std::exception const &E) {
+            ResponseMessage = E.what();
+            return false;
+          }
+          return true;
+        },
+        {LogLevel::err, true,
+         [&](){return fmt::format(
+             "Failed to execute stop command. The failure message was: {}",
+             ResponseMessage);},
+         500}
+    });
+    ActionResult SendResult{ActionResult::Success};
+
+    CmdResponse OutcomeValue{
+        LogLevel::info, true, [&](){return ResponseMessage;}, 201
     };
-    ActionResult SendResult{ActionResult::Failure};
-    if (Outcome == CmdOutcome::CmdIsDone) {
-      SendResult = ActionResult::Success;
+    for (auto const &Step : CommandSteps) {
+      if (not Step.first()) {
+        OutcomeValue = Step.second;
+        SendResult = ActionResult::Failure;
+        break;
+      }
     }
-    auto OutcomeValue = OutcomeMap[Outcome];
-    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString);
+    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString());
     if (OutcomeValue.SendResponse) {
       CommandResponse->publishResponse(
           TypeOfAction, SendResult, StopCmd.JobID, StopCmd.CommandID,
           time_point(std::chrono::milliseconds{StopCmd.StopTime}),
-          OutcomeValue.StatusCode, OutcomeValue.MessageString);
+          OutcomeValue.StatusCode, OutcomeValue.MessageString());
     }
-  } catch (std::out_of_range const &E) {
-    LOG_ERROR("Unknown outcome of set stop time command");
   } catch (std::exception &E) {
     LOG_ERROR("Unable to process stop command, error was: {}", E.what());
   }
