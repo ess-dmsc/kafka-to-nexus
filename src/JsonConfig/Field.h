@@ -58,7 +58,8 @@ public:
   Field(FieldHandler *HandlerPtr, std::vector<KeyString> const &Keys,
         FieldType const &DefaultValue)
       : FieldBase(HandlerPtr, Keys), FieldValue(DefaultValue) {}
-  Field(FieldHandler *HandlerPtr, KeyString const &Key, FieldType const &DefaultValue)
+  Field(FieldHandler *HandlerPtr, KeyString const &Key,
+        FieldType const &DefaultValue)
       : FieldBase(HandlerPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
