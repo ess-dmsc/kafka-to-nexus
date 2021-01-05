@@ -43,7 +43,6 @@ set(UnitTests_SRC
         CommandSystem/CommandParserTests.cpp
         CommandSystem/CommandListenerTests.cpp
        CommandSystem/CommandHandlerTests.cpp
-       CommandSystem/IdCheckerTests.cpp
         TimeUtilityTest.cpp
         WriterModuleConfig/FieldTest.cpp
         WriterModuleConfig/FieldHandlerTest.cpp)

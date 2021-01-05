@@ -49,6 +49,11 @@ set(libraries_common
         z
         )
 
+if (APPLE)
+  conan_find_apple_frameworks(CF_LIBRARY "CoreFoundation" "")
+  list(APPEND libraries_common ${CF_LIBRARY})
+endif()
+
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
 set(USE_GRAYLOG_LOGGER ON CACHE BOOL "Set to OFF to disable log reporting to graylog")
@@ -107,7 +112,6 @@ set(kafka_to_nexus_SRC
         HDFVersionCheck.cpp
         CommandSystem/CommandListener.cpp
         TimeUtility.cpp
-        CommandSystem/IdChecker.cpp
         WriterModuleConfig/Field.cpp
         WriterModuleConfig/FieldHandler.cpp
         WriterModuleBase.cpp)
@@ -179,7 +183,6 @@ set(kafka_to_nexus_INC
         StreamHDFInfo.h
         CommandSystem/CommandListener.h
         CommandSystem/FeedbackProducerBase.h
-        CommandSystem/IdChecker.h
         WriterModuleConfig/Field.h
         CommandSystem/JobListener.h
         WriterModuleConfig/FieldHandler.h)

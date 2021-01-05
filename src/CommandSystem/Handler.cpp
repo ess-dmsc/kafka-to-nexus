@@ -9,10 +9,10 @@
 
 #include "Handler.h"
 #include "FeedbackProducer.h"
-#include "IdChecker.h"
 #include "Msg.h"
 #include "Parser.h"
 #include "TimeUtility.h"
+#include <uuid.h>
 
 namespace Command {
 
@@ -114,6 +114,16 @@ bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
   }
 }
 
+bool isValidUUID(std::string const &UUIDStr) {
+  try {
+    uuids::uuid const Id = uuids::uuid::from_string(UUIDStr);
+    return not Id.is_nil() and Id.version() != uuids::uuid_version::none and Id.variant() == uuids::uuid_variant::rfc;
+  } catch (uuids::uuid_error const &) {
+    return false;
+  }
+  return false;
+}
+
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IgnoreServiceId) {
   try {
@@ -128,12 +138,11 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         not(IgnoreServiceId xor (StartJob.ServiceID != ServiceId))) {
       Outcome = CmdOutcome::FailedAtJobId;
     }
-    auto IdValidity = isJobIdValid(StartJob.JobID);
-    if (Outcome == CmdOutcome::FailedAtJobId and IdValidity.first) {
+    auto IdValidity = isValidUUID(StartJob.JobID);
+    if (Outcome == CmdOutcome::FailedAtJobId and IdValidity) {
       Outcome = CmdOutcome::FailedAtCmd;
-    } else if (not IdValidity.first) {
-      LOG_ERROR("Job-id verification failure. Failure message was: {}",
-                IdValidity.second);
+    } else if (not IdValidity) {
+      LOG_ERROR("Job-id verification failure.");
     }
     if (Outcome == CmdOutcome::FailedAtCmd) {
       try {
@@ -165,8 +174,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {{CmdOutcome::FailedAtJobId},
          {LogLevel::warn, true,
           fmt::format("Rejected start command as the job id was invalid (it "
-                      "was: {}). Reason: {}",
-                      StartJob.JobID, IdValidity.second),
+                      "was: {}).",
+                      StartJob.JobID),
           400}},
         {{CmdOutcome::FailedAtCmd},
          {LogLevel::err, true,
@@ -227,12 +236,11 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     if (Outcome == CmdOutcome::FailedAtJobId and JobId == StopCmd.JobID) {
       Outcome = CmdOutcome::FailedAtCmdId;
     }
-    auto IdValidity = isCmdIdValid(StopCmd.CommandID);
-    if (Outcome == CmdOutcome::FailedAtCmdId and IdValidity.first) {
+    auto IdValidity = isValidUUID(StopCmd.CommandID);
+    if (Outcome == CmdOutcome::FailedAtCmdId and IdValidity) {
       Outcome = CmdOutcome::FailedAtCmd;
-    } else if (not IdValidity.first) {
-      LOG_ERROR("Cmd-id verification failure. Failure message was: {}",
-                IdValidity.second);
+    } else if (not IdValidity) {
+      LOG_ERROR("Cmd-id verification failure.");
     }
     if (Outcome == CmdOutcome::FailedAtCmd and StopCmd.StopTime == 0ms) {
       try {
