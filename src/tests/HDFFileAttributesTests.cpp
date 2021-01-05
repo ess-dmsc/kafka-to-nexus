@@ -312,7 +312,6 @@ TEST_F(HDFFileAttributesTest,
     auto StringAttr =
         hdf5::node::get_group(TestFile->hdfGroup(), "group_with_attributes")
             .attributes["string_fixed_ascii_attribute"];
-    auto Type = hdf5::datatype::String(StringAttr.datatype());
     std::string StringValue;
     StringAttr.read(StringValue, StringAttr.datatype());
     std::string Expected("string_value");

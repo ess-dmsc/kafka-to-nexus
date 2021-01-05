@@ -90,7 +90,7 @@ void writeAttributes(hdf5::node::Node const &Node,
 
 class JSONAttribute : public JsonConfig::FieldHandler {
 public:
-  JSONAttribute(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
+  explicit JSONAttribute(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<nlohmann::json> Value{this, {"value", "values"}};
   JsonConfig::Field<std::string> Type{this, {"type", "dtype"}, "double"};
@@ -347,7 +347,7 @@ void writeGenericDataset(const std::string &DataType,
 
 class JSONDataset : public JsonConfig::FieldHandler {
 public:
-  JSONDataset(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
+  explicit JSONDataset(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<nlohmann::json> Value{this, {"value", "values"}};
   JsonConfig::Field<std::string> Type{this, "type", ""};
@@ -395,7 +395,7 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
 
 class JSONHdfNode : public JsonConfig::FieldHandler {
 public:
-  JSONHdfNode(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
+  explicit JSONHdfNode(nlohmann::json const &JsonObj) { processConfigData(JsonObj); }
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<std::string> Type{this, "type"};
   JsonConfig::Field<nlohmann::json> Value{this, {"value", "values"}, ""};

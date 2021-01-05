@@ -55,17 +55,17 @@ private:
 
 template <class FieldType> class Field : public FieldBase {
 public:
-  Field(FieldHandler *HandlerPtr, std::vector<KeyString> Keys,
-        FieldType DefaultValue)
+  Field(FieldHandler *HandlerPtr, std::vector<KeyString> const &Keys,
+        FieldType const &DefaultValue)
       : FieldBase(HandlerPtr, Keys), FieldValue(DefaultValue) {}
-  Field(FieldHandler *HandlerPtr, KeyString const &Key, FieldType DefaultValue)
+  Field(FieldHandler *HandlerPtr, KeyString const &Key, FieldType const &DefaultValue)
       : FieldBase(HandlerPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
     setValueImpl<FieldType>(ValueString);
   }
 
-  FieldType getValue() { return FieldValue; };
+  FieldType getValue() const { return FieldValue; };
 
   operator FieldType() const { return FieldValue; }
 

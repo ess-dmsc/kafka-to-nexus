@@ -22,7 +22,6 @@ inline size_t extentToSize(Shape S) {
 }
 
 inline size_t posToIndex(Shape Dimensions, Shape Pos) {
-  auto Result = Shape(Pos.size());
   size_t ReturnIndex = 0;
   for (size_t i = 0; i < Pos.size(); i++) {
     ReturnIndex += std::accumulate(Dimensions.begin(), Dimensions.begin() + i,
@@ -35,7 +34,7 @@ inline size_t posToIndex(Shape Dimensions, Shape Pos) {
 template <typename T> class MultiVector : public std::vector<T> {
 public:
   MultiVector() = default;
-  MultiVector(Shape Extent)
+  explicit MultiVector(Shape Extent)
       : std::vector<T>(extentToSize(Extent)), Dimensions(Extent) {}
 
   bool operator==(MultiVector<T> const &Other) const {
