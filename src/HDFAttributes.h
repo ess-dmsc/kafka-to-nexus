@@ -16,7 +16,7 @@
 namespace HDFAttributes {
 
 inline void writeAttribute(hdf5::node::Node const &Node,
-                           const std::string &Name, std::string const Value) {
+                           const std::string &Name, std::string const &Value) {
   auto string_type = hdf5::datatype::String::variable();
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   string_type.padding(hdf5::datatype::StringPad::NULLTERM);
