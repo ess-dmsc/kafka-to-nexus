@@ -85,16 +85,6 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
   }
 }
 
-enum class CmdOutcome {
-  FailedAtExtraction,
-  FailedAtServiceId,
-  FailedAtJobId,
-  FailedAtCmdId,
-  FailedAtTimestamp,
-  FailedAtCmd,
-  CmdIsDone,
-};
-
 using LogLevel = spdlog::level::level_enum;
 
 struct CmdResponse {
