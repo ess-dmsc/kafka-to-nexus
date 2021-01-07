@@ -38,15 +38,11 @@ void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values);
 
 void writeStringDataset(
-    hdf5::node::Group const &Parent, const std::string &Name,
-    hdf5::property::DatasetCreationList &DatasetCreationList,
-    hdf5::dataspace::Dataspace &Dataspace, nlohmann::json const &Values);
+    hdf5::node::Group const &Parent, const std::string &Name, nlohmann::json const &Values);
 
 void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
                          const std::string &Name,
-                         const std::vector<hsize_t> &Sizes,
-                         const std::vector<hsize_t> &Max,
                          nlohmann::json const &Values);
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
@@ -77,10 +73,6 @@ template <typename T> T jsonElementConverter(nlohmann::json const &JsonObj) {
 
 template <>
 std::string jsonElementConverter<std::string>(nlohmann::json const &JsonObj);
-
-// void populateMultiVector(nlohmann::json const &JsonObj,
-// MultiVector<std::string> &TargetVector, Shape CurrentPosition, size_t
-// CurrentLevel);
 
 template <typename T>
 void populateMultiVector(nlohmann::json const &JsonObj,
