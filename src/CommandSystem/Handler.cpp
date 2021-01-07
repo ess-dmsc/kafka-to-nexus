@@ -217,6 +217,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         },
         201};
     for (auto const &Step : CommandSteps) {
+      // cppcheck-suppress useStlAlgorithm
       if (not Step.first()) {
         OutcomeValue = Step.second;
         SendResult = ActionResult::Failure;
@@ -343,6 +344,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     CmdResponse OutcomeValue{LogLevel::info, true,
                              [&]() { return ResponseMessage; }, 201};
     for (auto const &Step : CommandSteps) {
+      // cppcheck-suppress useStlAlgorithm
       if (not Step.first()) {
         OutcomeValue = Step.second;
         SendResult = ActionResult::Failure;
