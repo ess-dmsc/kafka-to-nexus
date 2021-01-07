@@ -37,13 +37,12 @@ void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values);
 
-void writeStringDataset(
-    hdf5::node::Group const &Parent, const std::string &Name, nlohmann::json const &Values);
+void writeStringDataset(hdf5::node::Group const &Parent,
+                        const std::string &Name, nlohmann::json const &Values);
 
 void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
-                         const std::string &Name,
-                         nlohmann::json const &Values);
+                         const std::string &Name, nlohmann::json const &Values);
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                   SharedLogger const &Logger);

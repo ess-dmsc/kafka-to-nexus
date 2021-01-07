@@ -8,8 +8,8 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFOperations.h"
-#include <gtest/gtest.h>
 #include "helpers/HDFFileTestHelper.h"
+#include <gtest/gtest.h>
 
 TEST(JSonArrayDimensions, Array1) {
   auto JSonObj = nlohmann::json::parse("[1]");
@@ -102,8 +102,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleInt) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                      "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
   std::vector<double> ExpectedDataset{3};
@@ -119,8 +118,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleIntAlt) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
   std::vector<double> ExpectedDataset{3};
@@ -136,8 +134,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleFloat) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
   std::vector<double> ExpectedDataset{3.145};
@@ -153,8 +150,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleFloatAlt) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
   std::vector<double> ExpectedDataset{3.145};
@@ -169,7 +165,8 @@ TEST_F(HDFStaticDataTest, UntypedSingleString) {
     "values" : "Hello"
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()), std::runtime_error);
+  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()),
+               std::runtime_error);
 }
 
 TEST_F(HDFStaticDataTest, UntypedSingleStringAlt) {
@@ -180,7 +177,8 @@ TEST_F(HDFStaticDataTest, UntypedSingleStringAlt) {
     "values" : ["Hello"]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()), std::runtime_error);
+  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()),
+               std::runtime_error);
 }
 
 TEST_F(HDFStaticDataTest, IntArray1) {
@@ -193,11 +191,10 @@ TEST_F(HDFStaticDataTest, IntArray1) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<uint64_t> DatasetValues(3);
   HDFDataset.read(DatasetValues);
-  std::vector<uint64_t> ExpectedDataset{1,2,3};
+  std::vector<uint64_t> ExpectedDataset{1, 2, 3};
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
 
@@ -211,11 +208,10 @@ TEST_F(HDFStaticDataTest, IntArray2) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<uint64_t> DatasetValues(6);
   HDFDataset.read(DatasetValues);
-  std::vector<uint64_t> ExpectedDataset{1,4,2,5,3,6};
+  std::vector<uint64_t> ExpectedDataset{1, 4, 2, 5, 3, 6};
   EXPECT_EQ(DatasetValues, ExpectedDataset);
   hdf5::Dimensions ExpectedDimensions{2, 3};
 
@@ -237,8 +233,7 @@ TEST_F(HDFStaticDataTest, SingleString) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
   HDFDataset.read(DatasetValues);
   MultiVector<std::string> ExpectedDataset({1});
@@ -256,8 +251,7 @@ TEST_F(HDFStaticDataTest, SingleStringAlt) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
   HDFDataset.read(DatasetValues);
   MultiVector<std::string> ExpectedDataset({1});
@@ -275,9 +269,8 @@ TEST_F(HDFStaticDataTest, StringArray) {
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
-  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(),
-                                            "/some_name");
-  MultiVector<std::string> DatasetValues({2,2});
+  auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
+  MultiVector<std::string> DatasetValues({2, 2});
   HDFDataset.read(DatasetValues);
   MultiVector<std::string> ExpectedDataset({2, 2});
   ExpectedDataset.at({0, 0}) = "a";

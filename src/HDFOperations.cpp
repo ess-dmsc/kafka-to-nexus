@@ -213,13 +213,15 @@ void writeAttributesIfPresent(hdf5::node::Node const &Node,
 }
 
 template <typename DT>
-static void writeNumericDataset(
-    hdf5::node::Group const &Node, const std::string &Name, nlohmann::json const &Values) {
+static void writeNumericDataset(hdf5::node::Group const &Node,
+                                const std::string &Name,
+                                nlohmann::json const &Values) {
 
   try {
     auto Data = jsonArrayToMultiArray<DT>(Values);
     auto Dims = Data.getDimensions();
-    auto DataSpace = hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
+    auto DataSpace =
+        hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
     auto DCPL = hdf5::property::DatasetCreationList();
     auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
                                        DataSpace, DCPL);
@@ -244,8 +246,8 @@ static void writeNumericDataset(
   }
 }
 
-void writeStringDataset(
-    hdf5::node::Group const &Parent, const std::string &Name, nlohmann::json const &Values) {
+void writeStringDataset(hdf5::node::Group const &Parent,
+                        const std::string &Name, nlohmann::json const &Values) {
 
   try {
     auto DataType = hdf5::datatype::String::variable();
@@ -254,7 +256,8 @@ void writeStringDataset(
     auto StringArray = jsonArrayToMultiArray<std::string>(Values);
     auto Dims = StringArray.getDimensions();
 
-    auto Dataspace = hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
+    auto Dataspace =
+        hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
 
     Parent.create_dataset(Name, DataType, Dataspace).write(StringArray);
   } catch (const std::exception &e) {
@@ -272,56 +275,31 @@ void writeGenericDataset(const std::string &DataType,
   try {
     std::map<std::string, std::function<void()>> WriteDatasetMap{
         {"uint8",
-         [&]() {
-           writeNumericDataset<uint8_t>(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<uint8_t>(Parent, Name, Values); }},
         {"uint16",
-         [&]() {
-           writeNumericDataset<uint16_t>(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<uint16_t>(Parent, Name, Values); }},
         {"uint32",
-         [&]() {
-           writeNumericDataset<uint32_t>(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<uint32_t>(Parent, Name, Values); }},
         {"uint64",
-         [&]() {
-           writeNumericDataset<uint64_t>(Parent, Name, Values);
-         }},
-        {"int8",
-         [&]() {
-           writeNumericDataset<int8_t>(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<uint64_t>(Parent, Name, Values); }},
+        {"int8", [&]() { writeNumericDataset<int8_t>(Parent, Name, Values); }},
         {"int16",
-         [&]() {
-           writeNumericDataset<int16_t>(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<int16_t>(Parent, Name, Values); }},
         {"int32",
-         [&]() {
-           writeNumericDataset<int32_t>(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
         {"int64",
-         [&]() {
-           writeNumericDataset<int64_t>(Parent, Name, Values);
-         }},
-        {"float",
-         [&]() {
-           writeNumericDataset<float>(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<int64_t>(Parent, Name, Values); }},
+        {"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},
         {"double",
-         [&]() {
-           writeNumericDataset<double>(Parent, Name, Values);
-         }},
-        {"string",
-         [&]() {
-           writeStringDataset(Parent, Name, Values);
-         }},
+         [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
+        {"string", [&]() { writeStringDataset(Parent, Name, Values); }},
     };
     WriteDatasetMap.at(DataType)();
   } catch (std::exception const &e) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Failed dataset write in {}/{}. Type={}. "
-                    "Message was: {}",
-                    std::string(Parent.link().path()), Name, DataType, e.what())));
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Failed dataset write in {}/{}. Type={}. "
+        "Message was: {}",
+        std::string(Parent.link().path()), Name, DataType, e.what())));
   }
 }
 
@@ -337,6 +315,7 @@ public:
   JsonConfig::Field<std::string> Space{this, "space", "simple"};
   JsonConfig::Field<size_t> StringSize{this, "string_size", 0};
   JsonConfig::Field<nlohmann::json> Attributes{this, "attributes", ""};
+
 private:
   JsonConfig::Field<nlohmann::json> Size{this, "size", ""}; // Unused
 };
@@ -374,6 +353,7 @@ public:
   JsonConfig::Field<size_t> StringSize{this, "string_size", 0};
   JsonConfig::Field<nlohmann::json> Attributes{this, "attributes", ""};
   JsonConfig::Field<std::string> Target{this, "target", ""};
+
 private:
   JsonConfig::Field<nlohmann::json> Size{this, "size", ""}; // Unused
 };
