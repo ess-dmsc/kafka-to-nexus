@@ -204,6 +204,8 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
     // No message or event within time out - this is usually normal (see
     // librdkafka docs)
     return {PollStatus::TimedOut, FileWriter::Msg()};
+  case RdKafka::ERR__PARTITION_EOF:
+    return {PollStatus::EndOfPartition, FileWriter::Msg()};
   default:
     // Everything else is an error
     return {PollStatus::Error, FileWriter::Msg()};
