@@ -59,7 +59,8 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   }
 }
 
-TEST_F(ConsumerTests, pollReturnsConsumerMessageWithEmptyPollStatusIfEndofPartition) {
+TEST_F(ConsumerTests,
+       pollReturnsConsumerMessageWithEmptyPollStatusIfEndofPartition) {
   auto *Message = new MockMessage;
   REQUIRE_CALL(*Message, err())
       .TIMES(1)

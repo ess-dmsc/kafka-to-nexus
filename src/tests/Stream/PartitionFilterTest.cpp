@@ -68,14 +68,16 @@ TEST_F(PartitionFilterTest, AfterErrorRecoversOnValidMessageWithDelay) {
 
 TEST_F(PartitionFilterTest, AfterErrorRecoversOnEOP) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
+  EXPECT_FALSE(
+      UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
   EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
 TEST_F(PartitionFilterTest, AfterErrorRecoversOnEOPWithDelay) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
   std::this_thread::sleep_for(40ms);
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
+  EXPECT_FALSE(
+      UnderTest.shouldStopPartition(Kafka::PollStatus::EndOfPartition));
   EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
