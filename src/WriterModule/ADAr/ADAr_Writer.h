@@ -28,13 +28,12 @@ using FileWriterBase = WriterModule::Base;
 /// See parent class for documentation.
 class ADAr_Writer : public FileWriterBase {
 public:
-  ADAr_Writer() : WriterModule::Base(false) {}
+  ADAr_Writer() : WriterModule::Base(false, "NXlog") {}
   ~ADAr_Writer() override = default;
 
-  void parse_config(std::string const &ConfigurationStream) override;
+  void config_post_processing() override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
@@ -57,11 +56,16 @@ protected:
     float64,
     c_string,
   } ElementType{Type::float64};
-  hdf5::Dimensions ArrayShape{1, 1};
-  hdf5::Dimensions ChunkSize{64};
   std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
-  int CueInterval{1000};
+  WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
+  WriterModuleConfig::Field<std::string> DataType{
+      this, std::initializer_list<std::string>({"type", "dtype"}),
+      "float64"};
+  WriterModuleConfig::Field<hdf5::Dimensions> ArrayShape{
+      this, "array_size", {1, 1}};
+  WriterModuleConfig::Field<hdf5::Dimensions> ChunkSize{
+      this, "chunk_size", {1 << 20}};
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
