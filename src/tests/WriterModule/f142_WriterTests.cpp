@@ -54,7 +54,7 @@ public:
 
 TEST_F(f142Init, BasicDefaultInit) {
   f142_Writer TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   EXPECT_TRUE(RootGroup.has_dataset("cue_index"));
   EXPECT_TRUE(RootGroup.has_dataset("cue_timestamp_zero"));
   EXPECT_TRUE(RootGroup.has_dataset("time"));
@@ -66,7 +66,7 @@ TEST_F(f142Init, BasicDefaultInit) {
 
 TEST_F(f142Init, ReOpenSuccess) {
   f142_Writer TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   EXPECT_EQ(TestWriter.reopen(RootGroup), WriterModule::InitResult::OK);
 }
 
@@ -77,7 +77,7 @@ TEST_F(f142Init, ReOpenFailure) {
 
 TEST_F(f142Init, CheckInitDataType) {
   f142_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<double>());
@@ -85,7 +85,7 @@ TEST_F(f142Init, CheckInitDataType) {
 
 TEST_F(f142Init, CheckValueInitShape1) {
   f142_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
   EXPECT_EQ(hdf5::Dimensions({0, 1}), Value.get_extent());
@@ -93,8 +93,8 @@ TEST_F(f142Init, CheckValueInitShape1) {
 
 TEST_F(f142Init, CheckValueInitShape2) {
   f142_WriterStandIn TestWriter;
-  TestWriter.ArraySize = 10;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.ArraySize.setValue("10");
+  TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
   EXPECT_EQ(hdf5::Dimensions({0, 10}), Value.get_extent());
@@ -118,7 +118,7 @@ TEST_F(f142Init, CheckAllDataTypes) {
   for (auto &Type : TypeMap) {
     auto CurrentGroup = RootGroup.create_group("Group" + std::to_string(Ctr++));
     TestWriter.ElementType = Type.first;
-    TestWriter.init_hdf(CurrentGroup, "");
+    TestWriter.init_hdf(CurrentGroup);
     NeXusDataset::MultiDimDatasetBase Value(CurrentGroup, Open);
     EXPECT_EQ(Type.second, Value.datatype());
   }
@@ -153,7 +153,7 @@ TEST_F(f142ConfigParse, SetArraySize) {
 TEST_F(f142ConfigParse, SetChunkSize) {
   f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
-              "nexus.chunk_size": 511
+              "chunk_size": 511
             })");
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
@@ -165,7 +165,7 @@ TEST_F(f142ConfigParse, SetChunkSize) {
 TEST_F(f142ConfigParse, CuInterval) {
   f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
-              "nexus.cue_interval": 24
+              "cue_interval": 24
             })");
   f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
@@ -294,7 +294,7 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
       fmt::format(R"({{"value_units": "{}"}})", units_string));
 
   // WHEN the writer module creates the datasets
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
   // THEN a units attributes is created on the value dataset with the specified
@@ -313,17 +313,11 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.parse_config(R"({"value_units": ""})");
 
   // WHEN the writer module creates the datasets
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  // THEN a units attributes is created on the value dataset with an empty
-  // string value
-  std::string attribute_value;
-  EXPECT_NO_THROW(TestWriter.Values.attributes["units"].read(attribute_value))
-      << "Expect units attribute to be present on the value dataset";
-  EXPECT_EQ(attribute_value, "") << "Expect units attribute to have empty "
-                                    "string as the value, as specified in the "
-                                    "JSON configuration";
+  EXPECT_FALSE(TestWriter.Values.attributes.exists("units"))
+      << "units attribute should not be created if the config string is empty";
 }
 
 TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
@@ -332,7 +326,7 @@ TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
   TestWriter.parse_config("{}");
 
   // WHEN the writer module creates the datasets
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
   // THEN a units attributes is not created on the value dataset
@@ -343,7 +337,7 @@ TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
 
 TEST_F(f142WriteData, WriteOneElement) {
   f142_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   double ElementValue{3.14};
   std::uint64_t Timestamp{11};
@@ -364,7 +358,7 @@ TEST_F(f142WriteData, WriteOneElement) {
 
 TEST_F(f142WriteData, WriteOneDefaultValueElement) {
   f142_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   // 0 is the default value for a number in flatbuffers, so it doesn't actually
   // end up in buffer. We'll test this specifically, because it has
@@ -400,7 +394,7 @@ generateFlatbufferArrayMessage(std::vector<double> Value, uint64_t Timestamp) {
 
 TEST_F(f142WriteData, WriteOneArray) {
   f142_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 4.5, 3.1};
   uint64_t Timestamp{12};
@@ -416,7 +410,7 @@ TEST_F(f142WriteData, WriteOneArray) {
 
 TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   f142_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   uint64_t Timestamp{11};
   auto FlatbufferData = generateFlatbufferMessage(
@@ -455,7 +449,7 @@ public:
 
 TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
   f142_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   AlarmWritingTestInfo TestAlarm = GetParam();
   auto FlatbufferData = generateFlatbufferMessage(

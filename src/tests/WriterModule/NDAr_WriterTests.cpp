@@ -66,43 +66,23 @@ size_t AreaDetectorWriter::FileSize = 0;
 TEST_F(AreaDetectorWriter, WriterInitTest) {
   {
     ADWriterStandIn Temp;
-    Temp.init_hdf(UsedGroup, "{}");
+    Temp.init_hdf(UsedGroup);
   }
   EXPECT_TRUE(UsedGroup.has_dataset("cue_index"));
   EXPECT_TRUE(UsedGroup.has_dataset("value"));
   EXPECT_TRUE(UsedGroup.has_dataset("time"));
   EXPECT_TRUE(UsedGroup.has_dataset("cue_timestamp_zero"));
-  bool FoundAttribute{false};
-  for (const auto &Attribute : UsedGroup.attributes) {
-    if (Attribute.name() == "NX_class") {
-      std::string ClassValue;
-      Attribute.read(ClassValue);
-      if (ClassValue == "NXlog") {
-        FoundAttribute = true;
-      }
-    }
-  }
-  EXPECT_TRUE(FoundAttribute);
 }
 
 using WriterModule::InitResult;
 
-TEST_F(AreaDetectorWriter, WriterAttributeExists) {
-  auto ClassAttribute = UsedGroup.attributes.create<std::string>("NX_class");
-  ClassAttribute.write("NXlog");
-  {
-    ADWriterStandIn Temp;
-    EXPECT_TRUE(Temp.init_hdf(UsedGroup, "{}") != InitResult::OK);
-  }
-}
-
 TEST_F(AreaDetectorWriter, WriterInitFail) {
   {
     ADWriterStandIn Temp;
-    Temp.init_hdf(UsedGroup, "{}");
+    Temp.init_hdf(UsedGroup);
   }
   ADWriterStandIn Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") != InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) != InitResult::OK);
 }
 
 TEST_F(AreaDetectorWriter, WriterReOpenFail) {
@@ -116,7 +96,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt8) {
     "type": "int8"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int8_t>(), Writer.Values->datatype());
 }
@@ -127,7 +107,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt8) {
     "type": "uint8"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint8_t>(), Writer.Values->datatype());
 }
@@ -138,7 +118,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt16) {
     "type": "int16"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int16_t>(), Writer.Values->datatype());
 }
@@ -149,7 +129,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt16) {
     "type": "uint16"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint16_t>(), Writer.Values->datatype());
 }
@@ -160,7 +140,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt32) {
     "type": "int32"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int32_t>(), Writer.Values->datatype());
 }
@@ -171,7 +151,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt32) {
     "type": "uint32"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint32_t>(), Writer.Values->datatype());
 }
@@ -182,7 +162,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt64) {
     "type": "int64"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int64_t>(), Writer.Values->datatype());
 }
@@ -193,7 +173,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt64) {
     "type": "uint64"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint64_t>(), Writer.Values->datatype());
 }
@@ -204,7 +184,7 @@ TEST_F(AreaDetectorWriter, WriterInitDouble) {
     "type": "float64"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::double_t>(), Writer.Values->datatype());
 }
@@ -215,7 +195,7 @@ TEST_F(AreaDetectorWriter, WriterInitFloat) {
     "type": "float32"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::float_t>(), Writer.Values->datatype());
 }
@@ -226,14 +206,14 @@ TEST_F(AreaDetectorWriter, WriterInitChar) {
     "type": "c_string"
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<char>(), Writer.Values->datatype());
 }
 
 TEST_F(AreaDetectorWriter, WriterDefaultValuesTest) {
   ADWriterStandIn Temp;
-  Temp.init_hdf(UsedGroup, "{}");
+  Temp.init_hdf(UsedGroup);
   Temp.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<double>(), Temp.Values->datatype());
   auto Dataspace = hdf5::dataspace::Simple(Temp.Values->dataspace());
@@ -242,13 +222,13 @@ TEST_F(AreaDetectorWriter, WriterDefaultValuesTest) {
   EXPECT_EQ(Dataspace.current_dimensions(), (hdf5::Dimensions{0, 1, 1}));
   auto CreationProperties = Temp.Values->creation_list();
   auto ChunkDims = CreationProperties.chunk();
-  EXPECT_EQ(ChunkDims, (hdf5::Dimensions{64, 1, 1}));
+  EXPECT_EQ(ChunkDims, (hdf5::Dimensions{1048576, 1, 1}));
 }
 
 TEST_F(AreaDetectorWriter, WriterWriteTest) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
   ADWriterStandIn Temp;
-  Temp.init_hdf(UsedGroup, "{}");
+  Temp.init_hdf(UsedGroup);
   Temp.reopen(UsedGroup);
   EXPECT_NO_THROW(Temp.write(Message));
   EXPECT_NO_THROW(Temp.write(Message));
@@ -262,7 +242,7 @@ TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
     "cue_interval": 3
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   for (int i = 0; i < 5; i++) {
     EXPECT_NO_THROW(Writer.write(Message));
@@ -287,7 +267,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
     "array_size": [10,10,10]
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   std::vector<double> TestData(10 * 10 * 10);
@@ -319,7 +299,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
 TEST_F(AreaDetectorWriter, WriterDimensionsTest) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
   ADWriterStandIn Writer;
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_NO_THROW(Writer.write(Message));
   auto Dataspace = hdf5::dataspace::Simple(Writer.Values->dataspace());
@@ -329,7 +309,7 @@ TEST_F(AreaDetectorWriter, WriterDimensionsTest) {
 TEST_F(AreaDetectorWriter, WriterTimeStampTest) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
   ADWriterStandIn Writer;
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   auto tempNDArr = FB_Tables::GetNDArray(RawData.get());
   auto compTs = WriterModule::NDAr::NDAr_Writer::epicsTimeToNsec(
@@ -385,9 +365,9 @@ TEST_F(AreaDetectorWriter, ConfigArraySizeTest) {
     "array_size": [5,5,5]
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{1, 1}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{5, 5, 5}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{5, 5, 5}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigArraySizeFailureTest) {
@@ -395,19 +375,19 @@ TEST_F(AreaDetectorWriter, ConfigArraySizeFailureTest) {
     "array_size": "hello"
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{1, 1}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
+  EXPECT_EQ(Writer.ArrayShape.getValue(), (hdf5::Dimensions{1, 1}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigChunkSizeTestAlt) {
   auto JsonConfig = nlohmann::json::parse(R""({
-    "chunk_size": 1024
+    "chunk_size": [2048]
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{1048576}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{1024}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{2048}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigChunkSizeTest) {
@@ -415,9 +395,9 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeTest) {
     "chunk_size": [5,5,5,5]
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{1048576}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{5, 5, 5, 5}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{5, 5, 5, 5}));
 }
 
 TEST_F(AreaDetectorWriter, ConfigChunkSizeFailureTest) {
@@ -425,9 +405,9 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeFailureTest) {
     "chunk_size": "hello"
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{1048576}));
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
+  EXPECT_EQ(Writer.ChunkSize.getValue(), (hdf5::Dimensions{1048576}));
 }
 
 // Note, you must feed it 1000 elements in total
@@ -474,7 +454,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
     "array_size": [10,10,10]
   })"");
   Writer.parse_config(JsonConfig.dump());
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   try {
     Writer.write(Message);

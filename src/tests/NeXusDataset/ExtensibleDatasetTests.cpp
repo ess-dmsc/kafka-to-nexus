@@ -122,7 +122,7 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize1) {
                                               NeXusDataset::Mode::Open);
   auto CreationProperties = ReOpened.creation_list();
   auto ChunkDims = CreationProperties.chunk();
-  DatasetDimensions.insert(DatasetDimensions.begin(), ChunkSize);
+  DatasetDimensions.insert(DatasetDimensions.begin(), ChunkSize / (10 * 10));
   EXPECT_EQ(ChunkDims, DatasetDimensions);
 }
 
@@ -153,7 +153,7 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize3) {
                                               NeXusDataset::Mode::Open);
   auto CreationProperties = ReOpened.creation_list();
   auto ChunkDims = CreationProperties.chunk();
-  DatasetDimensions.insert(DatasetDimensions.begin(), 1024);
+  DatasetDimensions.insert(DatasetDimensions.begin(), 10);
   EXPECT_EQ(ChunkDims, DatasetDimensions);
 }
 

@@ -20,22 +20,42 @@ template <typename T> using uptr = std::unique_ptr<T>;
 
 class hs00_Writer : public WriterModule::Base {
 public:
-  hs00_Writer() : WriterModule::Base(false) {}
+  hs00_Writer() : WriterModule::Base(false, "NXdata") {}
   static WriterModule::ptr create();
-  void parse_config(std::string const &ConfigurationStream) override;
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  void config_post_processing() override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;
 
   WriterUntyped::ptr TheWriterUntyped;
 
-  hsize_t ChunkBytes = 1 << 21;
-  bool DoFlushEachWrite = true;
-  uint64_t TotalWrittenBytes = 0;
-
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 20};
+  WriterModuleConfig::RequiredField<std::string> DataTypeField{this,
+                                                               "data_type"};
+  WriterModuleConfig::RequiredField<std::string> EdgeTypeField{this,
+                                                               "edge_type"};
+  WriterModuleConfig::RequiredField<std::string> ErrorTypeField{this,
+                                                                "error_type"};
+  WriterModuleConfig::RequiredField<std::string> ShapeField{this, "shape"};
+  nlohmann::json Json;
+
+  /// Create the Writer during HDF reopen
+  WriterUntyped::ptr reOpenFromDataType(hdf5::node::Group &Group);
+
+  WriterUntyped::ptr createFromDataType();
+
+  template <typename DataType> WriterUntyped::ptr createFromEdgeType();
+
+  template <typename DataType, typename EdgeType>
+  WriterUntyped::ptr createFromErrorType();
+
+  template <typename DataType>
+  WriterUntyped::ptr reOpenFromEdgeType(hdf5::node::Group &Group);
+
+  template <typename DataType, typename EdgeType>
+  WriterUntyped::ptr reOpenFromErrorType(hdf5::node::Group &Group);
 };
 } // namespace hs00
 } // namespace WriterModule

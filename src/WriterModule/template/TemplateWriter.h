@@ -55,7 +55,7 @@ public:
   /// relatively high up in call hierarchy. You should for this reason probably
   /// try to avoid throwing exceptions here unless you encounter an
   /// unrecoverable state as any exceptions will cause the thread to exit.
-  WriterClass() : WriterModule::Base(false) { std::cout << "WriterClass::WriterClass()\n"; }
+  WriterClass() : WriterModule::Base(false, "NXlog") { std::cout << "WriterClass::WriterClass()\n"; }
 
   /// \brief Use to close datasets and return any other claimed resources.
   ///
@@ -67,8 +67,7 @@ public:
   /// instead of in WriterModule::Base::close().
   ~WriterClass() override { std::cout << "WriterClass::~WriterClass()\n"; }
 
-  /// \brief Used to pass configuration/settings to the current instance of this
-  /// file writing module.
+  /// \brief Used to do additional configuration based on the results of .
   ///
   /// Settings/configurations are passed in JSON form, contained in a
   /// std::string (one is unused, see the parameter documentation).  To extract
@@ -89,8 +88,8 @@ public:
   ///
   /// \param config_stream Contains information about configurations
   /// relevant only to the current instance of this file writing module.
-  void parse_config(std::string const &/*ConfigurationStream*/) override {
-    std::cout << "WriterClass::parse_config()\n";
+  void config_post_processing() override {
+    std::cout << "WriterClass::config_post_processing()\n";
   }
 
   /// \brief Initialise datasets and attributes in the HDF5 file.
@@ -131,8 +130,7 @@ public:
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
   // cppcheck-suppress functionStatic
-  WriterModule::InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/,
-                                    std::string const &/*HDFAttributes*/) override {
+  WriterModule::InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/) override {
     std::cout << "WriterClass::init_hdf()\n";
     return WriterModule::InitResult::OK;
   }

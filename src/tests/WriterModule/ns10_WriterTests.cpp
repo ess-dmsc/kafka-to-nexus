@@ -97,37 +97,25 @@ public:
   using ns10_Writer::CueInterval;
   using ns10_Writer::CueTimestamp;
   using ns10_Writer::CueTimestampIndex;
-  using ns10_Writer::Sourcename;
+  using ns10_Writer::SourceName;
   using ns10_Writer::Timestamp;
   using ns10_Writer::Values;
 };
 
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   ns10_Writer SomeWriter;
-  EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
-              WriterModule::InitResult::OK);
+  EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup) == WriterModule::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) == WriterModule::InitResult::OK);
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {
   ns10_Writer SomeWriter;
-  SomeWriter.init_hdf(UsedGroup, "{}");
+  SomeWriter.init_hdf(UsedGroup);
 
   EXPECT_TRUE(UsedGroup.has_dataset("cue_index"));
   EXPECT_TRUE(UsedGroup.has_dataset("value"));
   EXPECT_TRUE(UsedGroup.has_dataset("time"));
   EXPECT_TRUE(UsedGroup.has_dataset("cue_timestamp_zero"));
-  bool FoundAttribute{false};
-  for (const auto &Attribute : UsedGroup.attributes) {
-    if (Attribute.name() == "NX_class") {
-      std::string ClassValue;
-      Attribute.read(ClassValue);
-      if (ClassValue == "NXlog") {
-        FoundAttribute = true;
-      }
-    }
-  }
-  EXPECT_TRUE(FoundAttribute);
 }
 
 TEST_F(NicosCacheWriterTest, WriterConfiguration) {
@@ -139,8 +127,8 @@ TEST_F(NicosCacheWriterTest, WriterConfiguration) {
 
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
-  EXPECT_EQ(Writer.Sourcename, JsonConfig["source"]);
-  EXPECT_EQ(Writer.ChunkSize.at(0), JsonConfig["chunk_size"].get<uint64_t>());
+  EXPECT_EQ(Writer.SourceName, JsonConfig["source"]);
+  EXPECT_EQ(Writer.ChunkSize, JsonConfig["chunk_size"].get<uint64_t>());
   EXPECT_EQ(Writer.CueInterval, JsonConfig["cue_interval"].get<int>());
 }
 
@@ -152,7 +140,7 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -181,7 +169,7 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -202,36 +190,6 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
   EXPECT_EQ(10.01, storedValue);
 }
 
-TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
-  nlohmann::json JsonConfig = R"({
-    "source" : "nicos/device/parameter"
-  })"_json;
-
-  CacheWriterF Writer;
-  Writer.parse_config(JsonConfig.dump());
-
-  Writer.init_hdf(UsedGroup, "{}");
-  Writer.reopen(UsedGroup);
-
-  nlohmann::json BufferJson = R"({
-    "key": "nicos/device2/parameter",
-    "WriterModule": "ns10",
-    "time": 123.456,
-    "value": "10.01"
-  })"_json;
-
-  auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(Builder->GetBufferPointer(),
-                                               Builder->GetSize());
-
-  Writer.write(Message);
-
-  std::uint64_t storedTs;
-  std::string storedValues;
-  EXPECT_ANY_THROW(Writer.Timestamp.read(storedTs));
-  EXPECT_ANY_THROW(Writer.Values.read(storedValues));
-}
-
 TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
   nlohmann::json JsonConfig = R"({
     "source" : "nicos/device/parameter",
@@ -241,7 +199,7 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -270,7 +228,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueCannotBeCastToDouble) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -295,7 +253,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueDoesNotFitIntoDouble) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init_hdf(UsedGroup, "{}");
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({

@@ -26,34 +26,21 @@ namespace tdct {
 static WriterModule::Registry::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct", "tdct");
 
-void tdct_Writer::parse_config(std::string const &) {
-  Logger->trace("There are currently no runtime configurable options in the "
-                "ChopperTimeStampWriter class.");
-}
-
-WriterModule::InitResult
-tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) {
-  const int DefaultChunkSize = 1024;
+WriterModule::InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);                 // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+        ChunkSize);                 // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto ClassAttribute =
-        CurrentGroup.attributes.create<std::string>("NX_class");
-    ClassAttribute.write("NXlog");
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, SharedLogger());
+        ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     Logger->error("Unable to initialise chopper time stamp tree in "
                   "HDF file with error message: \"{}\"",

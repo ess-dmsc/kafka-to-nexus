@@ -6,7 +6,10 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 find_package(librdkafka REQUIRED)
 find_package(hdf5 REQUIRED)
-find_package(flatbuffers REQUIRED)
+find_package(flatbuffers)
+if (NOT flatbuffers_FOUND)
+  find_package(Flatbuffers)
+endif()
 find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(streaming-data-types)
@@ -102,7 +105,7 @@ set(kafka_to_nexus_SRC
         CommandSystem/CommandListener.cpp
         CommandSystem/JobListener.cpp
         TimeUtility.cpp
-        )
+        WriterModuleConfig/Field.cpp WriterModuleConfig/Field.h WriterModuleBase.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -167,7 +170,7 @@ set(kafka_to_nexus_INC
         StreamHDFInfo.h
         CommandSystem/CommandListener.h
         CommandSystem/JobListener.h
-        )
+        WriterModuleConfig/FieldHandler.cpp WriterModuleConfig/FieldHandler.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

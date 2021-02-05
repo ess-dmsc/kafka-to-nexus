@@ -4,7 +4,19 @@ Schema `ns10_cache_entry.fbs` defines the `CacheEntry` with flatbuffer
 schema id `ns10`.
 
 NICOS uses it to store any cached value, if Kafka is selected as Kache storage.
-The value of the cache entry is **ALWAYS** a string.
+
+## Stream configuration fields
+
+|Name|Type|Required|Description|
+---|---|---|---|
+topic|string|Yes|The kafka topic to listen to for data.|
+source|string|Yes|The source (name) of the data to be written.|
+writer_module|string|Yes|The identifier of this writer module (i.e. "ns10").|
+chunk_size|int|No|The HDF5 chunk size in nr of elemnts. Defaults to 1024.|
+cue_interval|int|No|The interval (in nr of elements/values) at which indices for searching the data should be created. Defaults to 1000.|
+
+
+## Example
 
 We can write the `CacheEntry` stream to HDF with a child in the
 `nexus_structure` like:

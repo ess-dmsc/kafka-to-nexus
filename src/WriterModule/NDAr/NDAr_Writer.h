@@ -25,16 +25,17 @@ namespace NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = WriterModule::Base;
 
+using std::string_literals::operator""s;
+
 /// See parent class for documentation.
 class NDAr_Writer : public FileWriterBase {
 public:
-  NDAr_Writer() : WriterModule::Base(false) {}
+  NDAr_Writer() : WriterModule::Base(false, "NXlog") {}
   ~NDAr_Writer() override = default;
 
-  void parse_config(std::string const &ConfigurationStream) override;
+  void config_post_processing() override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
@@ -43,7 +44,7 @@ public:
   static std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
 
 protected:
-  void initValueDataset(hdf5::node::Group &Parent);
+  void initValueDataset(hdf5::node::Group const &Parent);
   enum class Type {
     int8,
     uint8,
@@ -57,11 +58,18 @@ protected:
     float64,
     c_string,
   } ElementType{Type::float64};
-  hdf5::Dimensions ArrayShape{1, 1};
-  hdf5::Dimensions ChunkSize{64};
+
+  WriterModuleConfig::Field<std::string> DataType{
+      this, std::initializer_list<std::string>({"type"s, "dtype"s}),
+      "float64"s};
+  WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
+  WriterModuleConfig::Field<hdf5::Dimensions> ChunkSize{
+      this, "chunk_size", {1 << 20}};
+  WriterModuleConfig::Field<hdf5::Dimensions> ArrayShape{
+      this, "array_size", {1, 1}};
+
   std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
-  int CueInterval{1000};
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;

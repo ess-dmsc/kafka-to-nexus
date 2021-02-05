@@ -8,13 +8,11 @@ namespace ep00 {
 
 class ep00_Writer final : public WriterModule::Base {
 public:
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
-  void parse_config(std::string const &ConfigurationStream) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
-  ep00_Writer() : WriterModule::Base(false) {}
+  ep00_Writer() : WriterModule::Base(false, "NXlog") {}
   ~ep00_Writer() override = default;
 
 private:
@@ -22,6 +20,7 @@ private:
 
   NeXusDataset::ConnectionStatusTime TimestampDataset;
   NeXusDataset::ConnectionStatus StatusDataset;
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 };
 
 } // namespace ep00

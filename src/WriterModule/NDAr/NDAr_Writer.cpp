@@ -18,6 +18,7 @@
 #include "NDAr_Writer.h"
 #include "WriterRegistrar.h"
 #include <NDAr_NDArray_schema_generated.h>
+#include <numeric>
 
 namespace WriterModule {
 namespace NDAr {
@@ -36,58 +37,25 @@ std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec,
 /// \brief Parse config JSON structure.
 ///
 /// The default is to use double as the element type.
-void NDAr_Writer::parse_config(std::string const &ConfigurationStream) {
-  auto Config = nlohmann::json::parse(ConfigurationStream);
+void NDAr_Writer::config_post_processing() {
+  std::map<std::string, NDAr_Writer::Type> TypeMap{
+      {"int8", Type::int8},         {"uint8", Type::uint8},
+      {"int16", Type::int16},       {"uint16", Type::uint16},
+      {"int32", Type::int32},       {"uint32", Type::uint32},
+      {"int64", Type::int64},       {"uint64", Type::uint64},
+      {"float32", Type::float32},   {"float64", Type::float64},
+      {"c_string", Type::c_string},
+  };
   try {
-    CueInterval = Config["cue_interval"].get<uint64_t>();
-  } catch (...) {
-    // Do nothing
+    ElementType = TypeMap.at(DataType);
+  } catch (std::out_of_range &E) {
+    Logger->error("Unknown type ({}), using the default (double).",
+                  DataType.getValue());
   }
-  try {
-    auto DataType = Config["type"].get<std::string>();
-    std::map<std::string, NDAr_Writer::Type> TypeMap{
-        {"int8", Type::int8},         {"uint8", Type::uint8},
-        {"int16", Type::int16},       {"uint16", Type::uint16},
-        {"int32", Type::int32},       {"uint32", Type::uint32},
-        {"int64", Type::int64},       {"uint64", Type::uint64},
-        {"float32", Type::float32},   {"float64", Type::float64},
-        {"c_string", Type::c_string},
-    };
-    try {
-      ElementType = TypeMap.at(DataType);
-    } catch (std::out_of_range &E) {
-      Logger->error("Unknown type ({}), using the default (double).", DataType);
-    }
-  } catch (nlohmann::json::exception &E) {
-    Logger->warn("Unable to extract data type, using the default "
-                 "(double). Error was: {}",
-                 E.what());
-  }
-
-  try {
-    ArrayShape = Config["array_size"].get<hdf5::Dimensions>();
-  } catch (nlohmann::json::exception &E) {
-    Logger->warn(
-        "Unable to extract array size, using the default (1x1). Error was: {}",
-        E.what());
-  }
-
-  auto JsonChunkSize = Config["chunk_size"];
-  if (JsonChunkSize.is_array()) {
-    ChunkSize = Config["chunk_size"].get<hdf5::Dimensions>();
-  } else if (JsonChunkSize.is_number_integer()) {
-    ChunkSize = hdf5::Dimensions{JsonChunkSize.get<hsize_t>()};
-  } else {
-    Logger->warn("Unable to extract chunk size, using the default (64). "
-                 "This might be very inefficient.");
-  }
-  Logger->info("Using a cue interval of {}.", CueInterval);
 }
 
-WriterModule::InitResult
-NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) {
-  const int DefaultChunkSize = ChunkSize.at(0);
+WriterModule::InitResult NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+  auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions().at(0);
   try {
     initValueDataset(HDFGroup);
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
@@ -102,10 +70,6 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
         HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
-    ClassAttribute.write("NXlog");
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFOperations::writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception &E) {
     Logger->error("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",
@@ -198,58 +162,32 @@ makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
       Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);
 }
 
-void NDAr_Writer::initValueDataset(hdf5::node::Group &Parent) {
+void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) {
   using OpenFuncType =
       std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::c_string,
-       [&Parent, this]() {
-         return makeIt<char>(Parent, this->ArrayShape, this->ChunkSize);
-       }},
+       [&]() { return makeIt<char>(Parent, ArrayShape, ChunkSize); }},
       {Type::int8,
-       [&Parent, this]() {
-         return makeIt<std::int8_t>(Parent, this->ArrayShape, this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::int8_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint8,
-       [&Parent, this]() {
-         return makeIt<std::uint8_t>(Parent, this->ArrayShape, this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint8_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int16,
-       [&Parent, this]() {
-         return makeIt<std::int16_t>(Parent, this->ArrayShape, this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::int16_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint16,
-       [&Parent, this]() {
-         return makeIt<std::uint16_t>(Parent, this->ArrayShape,
-                                      this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint16_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int32,
-       [&Parent, this]() {
-         return makeIt<std::int32_t>(Parent, this->ArrayShape, this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::int32_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint32,
-       [&Parent, this]() {
-         return makeIt<std::uint32_t>(Parent, this->ArrayShape,
-                                      this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint32_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::int64,
-       [&Parent, this]() {
-         return makeIt<std::int64_t>(Parent, this->ArrayShape, this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::int64_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::uint64,
-       [&Parent, this]() {
-         return makeIt<std::uint64_t>(Parent, this->ArrayShape,
-                                      this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::uint64_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::float32,
-       [&Parent, this]() {
-         return makeIt<std::float_t>(Parent, this->ArrayShape, this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::float_t>(Parent, ArrayShape, ChunkSize); }},
       {Type::float64,
-       [&Parent, this]() {
-         return makeIt<std::double_t>(Parent, this->ArrayShape,
-                                      this->ChunkSize);
-       }},
+       [&]() { return makeIt<std::double_t>(Parent, ArrayShape, ChunkSize); }},
   };
   Values = CreateValuesMap.at(ElementType)();
 }

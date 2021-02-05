@@ -17,6 +17,7 @@
 #include "FlatbufferMessage.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
+#include "WriterModuleConfig/Field.h"
 
 namespace WriterModule {
 namespace tdct {
@@ -25,13 +26,10 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 /// See parent class for documentation.
 class tdct_Writer : public WriterModule::Base {
 public:
-  tdct_Writer() : WriterModule::Base(false) {}
+  tdct_Writer() : WriterModule::Base(false, "NXlog") {}
   ~tdct_Writer() override = default;
 
-  void parse_config(std::string const &) override;
-
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
@@ -42,6 +40,7 @@ protected:
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
   SharedLogger Logger = spdlog::get("filewriterlogger");
+  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
 };
 } // namespace tdct
 } // namespace WriterModule

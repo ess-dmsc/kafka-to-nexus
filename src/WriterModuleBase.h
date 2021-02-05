@@ -10,9 +10,12 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
+#include "WriterModuleConfig/Field.h"
+#include "WriterModuleConfig/FieldHandler.h"
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <string>
+#include <string_view>
 
 namespace WriterModule {
 
@@ -30,17 +33,33 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class Base {
 public:
-  Base(bool AcceptRepeatedTimestamps)
-      : WriteRepeatedTimestamps(AcceptRepeatedTimestamps) {}
+  Base(bool AcceptRepeatedTimestamps, std::string_view NX_class)
+      : WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {}
   virtual ~Base() = default;
 
   bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
 
-  /// \brief Parses the configuration of a stream.
+  auto defaultNeXusClass() const { return NX_class; }
+
+  /// \brief Parses the configuration JSON structure for a stream.
   ///
+  /// \note Should  NOT be called by the writer class itself. Is called by the
+  /// application right after the constructor has been called.
   /// \param config_stream Configuration from the write file command for this
   /// stream.
-  virtual void parse_config(std::string const &ConfigurationStream) = 0;
+  void parse_config(std::string const &ConfigurationStream) {
+    ConfigFieldProcessor.processConfigData(ConfigurationStream);
+    config_post_processing();
+  }
+
+  /// \brief For doing extra processing related to the configuration of the
+  /// writer module.
+  ///
+  /// If extra processing of the configuration parameters is requried, for
+  /// example: converting a string to an enum, it should
+  /// be done in this function. This function is called by the application right
+  /// after the constructor and parse_config().
+  virtual void config_post_processing(){};
 
   /// \brief Initialise the HDF file.
   ///
@@ -59,8 +78,7 @@ public:
   /// stream, as defined by the "attributes" key in the Nexus structure.
   ///
   /// \return The result.
-  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                              std::string const &HDFAttributes) = 0;
+  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup) = 0;
 
   /// \brief Reopen the HDF objects which are used by this writer module.
   ///
@@ -75,8 +93,20 @@ public:
   /// \param msg The message to process
   virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
 
+  void addConfigField(WriterModuleConfig::FieldBase *NewField);
+
+private:
+  WriterModuleConfig::FieldHandler ConfigFieldProcessor;
+
+protected:
+  WriterModuleConfig::Field<std::string> SourceName{this, "source", ""};
+  WriterModuleConfig::Field<std::string> Topic{this, "topic", ""};
+  WriterModuleConfig::Field<std::string> WriterModule{this, "writer_module",
+                                                      ""};
+
 private:
   bool WriteRepeatedTimestamps;
+  std::string_view NX_class;
 };
 
 class WriterException : public std::runtime_error {
