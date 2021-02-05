@@ -42,7 +42,7 @@ public:
   static std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
 
 protected:
-  void initValueDataset(hdf5::node::Group &Parent);
+  void initValueDataset(hdf5::node::Group const &Parent);
   enum class Type {
     int8,
     uint8,
