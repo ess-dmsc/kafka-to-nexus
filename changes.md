@@ -25,3 +25,4 @@ approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-
 - Better documentation of writer module configuration options.
 - The application will now print an error message if there is a configuration that is not used (due to e.g. a typo).
 - The error reporting and handling of writer module configurations have overall been greatly improved.
+- Added support for writing ADAr schemas.
