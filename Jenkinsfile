@@ -260,7 +260,7 @@ builders = pipeline_builder.createBuilders { container ->
       def test_output = "cppcheck.xml"
         container.sh """
           cd ${pipeline_builder.project}
-          cppcheck --xml --inline-suppr --suppress=unusedFunction --enable=all --inconclusive src/ 2> ${test_output}
+          cppcheck --xml --inline-suppr --suppress=unusedFunction --suppress=missingInclude --enable=all --inconclusive src/ 2> ${test_output}
         """
         container.copyFrom("${pipeline_builder.project}/${test_output}", '.')
         recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
