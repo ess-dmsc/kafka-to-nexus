@@ -11,11 +11,6 @@
 #include "FieldHandler.h"
 
 namespace JsonConfig {
-FieldBase::FieldBase(FieldHandler *HandlerPtr,
-                     std::vector<KeyString> const &Keys)
-    : FieldKeys(Keys.begin(), Keys.end()) {
-  HandlerPtr->registerField(this);
-}
 
 void FieldBase::makeRequired() { FieldRequired = true; }
 

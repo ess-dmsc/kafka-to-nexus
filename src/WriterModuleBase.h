@@ -31,7 +31,7 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// can be arbitrary but should as a convention contain the flatbuffer schema
 /// id (`FBID`) like `FBID_<writer-module-name>`.
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
-class Base : public JsonConfig::FieldHandler {
+class Base {
 public:
   Base(bool AcceptRepeatedTimestamps, std::string_view NX_class)
       : WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {}
@@ -48,7 +48,7 @@ public:
   /// \param config_stream Configuration from the write file command for this
   /// stream.
   void parse_config(std::string const &ConfigurationStream) {
-    processConfigData(ConfigurationStream);
+    ConfigHandler.processConfigData(ConfigurationStream);
     config_post_processing();
   }
 
@@ -92,6 +92,13 @@ public:
   ///
   /// \param msg The message to process
   virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
+
+  void registerField(JsonConfig::FieldBase *Ptr) {
+    ConfigHandler.registerField(Ptr);
+  }
+private:
+  // Must appear before any config field object.
+  JsonConfig::FieldHandler ConfigHandler;
 
 protected:
   JsonConfig::Field<std::string> SourceName{this, "source", ""};
