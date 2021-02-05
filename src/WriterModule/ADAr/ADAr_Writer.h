@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/** Copyright (C) 2018 European Spallation Source ERIC */
+/** Copyright (C) 2021 European Spallation Source ERIC */
 
 /// \file
 /// \brief Define classes required to implement the ADC file writing module.
