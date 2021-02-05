@@ -36,7 +36,9 @@ using namespace nlohmann;
 class FieldBase {
 public:
   template <class FieldRegistrarType>
-  FieldBase(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys) : FieldKeys(Keys.begin(), Keys.end()) {
+  FieldBase(FieldRegistrarType *RegistrarPtr,
+            std::vector<KeyString> const &Keys)
+      : FieldKeys(Keys.begin(), Keys.end()) {
     RegistrarPtr->registerField(this);
   }
 
@@ -67,7 +69,8 @@ public:
       : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
 
   template <class FieldRegistrarType>
-  Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key, FieldType DefaultValue)
+  Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
+        FieldType DefaultValue)
       : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
@@ -118,7 +121,8 @@ private:
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
   template <class FieldRegistrarType>
-  RequiredField(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys)
+  RequiredField(FieldRegistrarType *RegistrarPtr,
+                std::vector<KeyString> const &Keys)
       : Field<FieldType>(RegistrarPtr, Keys, FieldType()) {
     FieldBase::makeRequired();
   }

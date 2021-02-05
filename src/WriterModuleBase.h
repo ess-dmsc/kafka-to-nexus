@@ -96,6 +96,7 @@ public:
   void registerField(JsonConfig::FieldBase *Ptr) {
     ConfigHandler.registerField(Ptr);
   }
+
 private:
   // Must appear before any config field object.
   JsonConfig::FieldHandler ConfigHandler;
