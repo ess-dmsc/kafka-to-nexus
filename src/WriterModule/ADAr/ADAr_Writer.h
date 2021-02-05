@@ -60,8 +60,7 @@ protected:
   NeXusDataset::Time Timestamp;
   WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
   WriterModuleConfig::Field<std::string> DataType{
-      this, std::initializer_list<std::string>({"type", "dtype"}),
-      "float64"};
+      this, std::initializer_list<std::string>({"type", "dtype"}), "float64"};
   WriterModuleConfig::Field<hdf5::Dimensions> ArrayShape{
       this, "array_size", {1, 1}};
   WriterModuleConfig::Field<hdf5::Dimensions> ChunkSize{
