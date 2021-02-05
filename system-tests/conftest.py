@@ -296,6 +296,7 @@ def writer_channel(request):
     kafka_host = "localhost:9092"
     return WorkerCommandChannel("{}/TEST_writer_commands".format(kafka_host))
 
+
 @pytest.fixture(scope="session", autouse=False)
 def multiple_writers(request):
     pass
