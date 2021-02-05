@@ -13,7 +13,7 @@ from helpers.writer import (
 import pytest
 
 
-def test_ignores_commands_with_incorrect_id(writer_channel):
+def test_ignores_commands_with_incorrect_id(writer_channel, multiple_writers):
     wait_writers_available(writer_channel, nr_of=2, timeout=10)
     now = datetime.now()
     file_name = "output_file_stop_id.nxs"

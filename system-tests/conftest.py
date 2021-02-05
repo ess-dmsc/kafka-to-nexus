@@ -39,18 +39,15 @@ def pytest_collection_modifyitems(items, config):
     involving multiple instances of the file writer
     """
     if config.option.local_build is not None:
-        fixture_name = "docker_compose"
-        fixture_name_stop_command = "docker_compose_stop_command"
+        avoid_fixture_name = "multiple_writers"
         selected_items = []
         deselected_items = []
 
         for item in items:
-            if fixture_name in getattr(
-                item, "fixturenames", ()
-            ) or fixture_name_stop_command in getattr(item, "fixturenames", ()):
-                selected_items.append(item)
-            else:
+            if avoid_fixture_name in getattr(item, "fixturenames", ()):
                 deselected_items.append(item)
+            else:
+                selected_items.append(item)
         config.hook.pytest_deselected(items=deselected_items)
         items[:] = selected_items
         print(
@@ -60,7 +57,7 @@ def pytest_collection_modifyitems(items, config):
 
 def wait_until_kafka_ready(docker_cmd, docker_options):
     print("Waiting for Kafka broker to be ready for system tests...")
-    conf = {"bootstrap.servers": "localhost:9092", "api.version.request": True}
+    conf = {"bootstrap.servers": "localhost:9092", "api.version.request": False}
     producer = Producer(**conf)
     kafka_ready = False
 
@@ -298,3 +295,7 @@ def writer_channel(request):
     """
     kafka_host = "localhost:9092"
     return WorkerCommandChannel("{}/TEST_writer_commands".format(kafka_host))
+
+@pytest.fixture(scope="session", autouse=False)
+def multiple_writers(request):
+    pass

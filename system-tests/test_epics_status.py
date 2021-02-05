@@ -16,13 +16,8 @@ from helpers.writer import (
 
 
 def test_ep00(writer_channel):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
     producer = create_producer()
     topic = "TEST_epicsConnectionStatus"
-
-    file_name = "output_file_ep00.nxs"
-    with open("commands/nexus_structure_epics_status.json", "r") as f:
-        structure = f.read()
     start_time = datetime.now() - timedelta(seconds=60)
     publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, start_time)
     publish_ep00_message(
@@ -31,6 +26,12 @@ def test_ep00(writer_channel):
         EventType.CONNECTED,
         timestamp=start_time + timedelta(seconds=0.01),
     )
+
+    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+
+    file_name = "output_file_ep00.nxs"
+    with open("commands/nexus_structure_epics_status.json", "r") as f:
+        structure = f.read()
 
     write_job = WriteJob(
         nexus_structure=structure,
