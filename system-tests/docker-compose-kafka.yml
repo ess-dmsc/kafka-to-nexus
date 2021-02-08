@@ -2,7 +2,7 @@ version: '2'
 
 services:
   kafka:
-    image: wurstmeister/kafka:2.13-2.7.0
+    image: wurstmeister/kafka:2.12-2.5.0
     depends_on:
       - zookeeper
     hostname: kafka
@@ -20,4 +20,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   zookeeper:
-    image: zookeeper:3.6.2
+    image: zookeeper:3.4
