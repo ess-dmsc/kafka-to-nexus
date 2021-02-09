@@ -35,6 +35,7 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   void write(FileWriter::FlatbufferMessage const &Message) override;
+
 protected:
   void initValueDataset(hdf5::node::Group const &Parent);
   enum class Type {
