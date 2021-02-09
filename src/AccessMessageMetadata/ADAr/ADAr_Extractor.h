@@ -23,8 +23,8 @@ using FBReaderBase = FileWriter::FlatbufferReader;
 /// See parent class for documentation.
 class ADAr_Extractor : public FBReaderBase {
 public:
-  bool verify(FlatbufferMessage const &Message) const override;
-  std::string source_name(FlatbufferMessage const &) const override;
-  uint64_t timestamp(FlatbufferMessage const &Message) const override;
+  [[nodiscard]] bool verify(FlatbufferMessage const &Message) const override;
+  [[nodiscard]] std::string source_name(FlatbufferMessage const &) const override;
+  [[nodiscard]] uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
 } // namespace AccessMessageMetadata

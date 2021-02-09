@@ -22,11 +22,8 @@
 
 namespace WriterModule {
 namespace ADAr {
-using FlatbufferMessage = FileWriter::FlatbufferMessage;
-using FileWriterBase = WriterModule::Base;
-
 /// See parent class for documentation.
-class ADAr_Writer : public FileWriterBase {
+class ADAr_Writer : public WriterModule::Base {
 public:
   ADAr_Writer() : WriterModule::Base(false, "NXlog") {}
   ~ADAr_Writer() override = default;
@@ -37,10 +34,7 @@ public:
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  void write(FlatbufferMessage const &Message) override;
-
-  static std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
-
+  void write(FileWriter::FlatbufferMessage const &Message) override;
 protected:
   void initValueDataset(hdf5::node::Group const &Parent);
   enum class Type {
