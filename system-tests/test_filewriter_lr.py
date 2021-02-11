@@ -1,16 +1,10 @@
 import pytest
 import docker
-from helpers.kafkahelpers import (
-    create_producer,
-    consume_everything,
-)
 from helpers.nexushelpers import OpenNexusFile
 from math import isclose
-from streaming_data_types.status_x5f2 import deserialise_x5f2
 from file_writer_control.WriteJob import WriteJob
 from helpers.writer import (
     wait_start_job,
-    wait_writers_available,
     wait_no_working_writers,
     wait_set_stop_now,
 )
@@ -42,7 +36,7 @@ def change_pv_value(pvname, value):
 
 
 @pytest.mark.skip(reason="Long running test disabled by default")
-def test_long_run(writer_channel, start_lr_images):
+def test_long_run(writer_channel, kafka_address, start_lr_images):
     file_name = "output_file_lr.nxs"
     with open("commands/nexus_structure_long_running.json", "r") as f:
         structure = f.read()
@@ -50,7 +44,7 @@ def test_long_run(writer_channel, start_lr_images):
     write_job = WriteJob(
         nexus_structure=structure,
         file_name=file_name,
-        broker="localhost:9092",
+        broker=kafka_address,
         start_time=start_time,
         stop_time=start_time + timedelta(days=365),
     )

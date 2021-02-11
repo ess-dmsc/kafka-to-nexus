@@ -17,7 +17,7 @@ from helpers.writer import (
 )
 
 
-def test_start_and_stop_time_are_in_the_past(writer_channel):
+def test_start_and_stop_time_are_in_the_past(writer_channel, kafka_address):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     producer = create_producer()
 
@@ -63,7 +63,7 @@ def test_start_and_stop_time_are_in_the_past(writer_channel):
     write_job = WriteJob(
         nexus_structure=structure,
         file_name=file_name,
-        broker="localhost:9092",
+        broker=kafka_address,
         start_time=file_start_time,
         stop_time=file_stop_time,
     )

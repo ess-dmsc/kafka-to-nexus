@@ -1,7 +1,7 @@
 pytest>=4.3.0
-confluent-kafka==0.11.5
-docker-compose==1.20.0
-docker==3.4.1
+kafka-python >= 2.0
+docker-compose>=1.20.0
+docker>=3.4.1
 h5py>=2.10.0
 flatbuffers>=1.12
 black==19.3b0

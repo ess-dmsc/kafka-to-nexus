@@ -10,10 +10,9 @@ from helpers.writer import (
     wait_fail_start_job,
     stop_all_jobs,
 )
-import pytest
 
 
-def test_ignores_commands_with_incorrect_id(writer_channel, multiple_writers):
+def test_ignores_commands_with_incorrect_id(writer_channel, kafka_address, multiple_writers):
     wait_writers_available(writer_channel, nr_of=2, timeout=10)
     now = datetime.now()
     file_name = "output_file_stop_id.nxs"
@@ -22,7 +21,7 @@ def test_ignores_commands_with_incorrect_id(writer_channel, multiple_writers):
     write_job = WriteJob(
         nexus_structure=structure,
         file_name=file_name,
-        broker="localhost:9092",
+        broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
     )
@@ -33,7 +32,7 @@ def test_ignores_commands_with_incorrect_id(writer_channel, multiple_writers):
     )
 
     time.sleep(COMMAND_STATUS_TIMEOUT.total_seconds() + 2)
-    assert cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
+    assert cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE, f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
     cmd_handler = writer_channel.try_send_stop_now(write_job.service_id, "wrong job id")
     start_time = datetime.now()
@@ -51,7 +50,7 @@ def test_ignores_commands_with_incorrect_id(writer_channel, multiple_writers):
     assert Path(file_path).is_file()
 
 
-def test_ignores_commands_with_incorrect_job_id(writer_channel):
+def test_ignores_commands_with_incorrect_job_id(writer_channel, kafka_address):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     now = datetime.now()
     file_name = "output_file_job_id.nxs"
@@ -60,7 +59,7 @@ def test_ignores_commands_with_incorrect_job_id(writer_channel):
     write_job = WriteJob(
         nexus_structure=structure,
         file_name=file_name,
-        broker="localhost:9092",
+        broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
     )

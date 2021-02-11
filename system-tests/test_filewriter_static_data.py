@@ -12,7 +12,7 @@ from helpers.writer import (
 )
 
 
-def test_static_data_reaches_file(writer_channel):
+def test_static_data_reaches_file(writer_channel, kafka_address):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     now = datetime.now()
     file_name = "output_file_static.nxs"
@@ -21,7 +21,7 @@ def test_static_data_reaches_file(writer_channel):
     write_job = WriteJob(
         nexus_structure=structure,
         file_name=file_name,
-        broker="localhost:9092",
+        broker=kafka_address,
         start_time=now - timedelta(seconds=10),
         stop_time=now,
     )

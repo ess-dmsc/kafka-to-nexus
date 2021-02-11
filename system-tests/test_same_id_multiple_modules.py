@@ -14,7 +14,7 @@ from helpers.writer import (
 )
 
 
-def test_two_different_writer_modules_with_same_flatbuffer_id(writer_channel):
+def test_two_different_writer_modules_with_same_flatbuffer_id(writer_channel, kafka_address):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     producer = create_producer()
     start_time = datetime.now() - timedelta(seconds=10)
@@ -38,7 +38,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(writer_channel):
     write_job = WriteJob(
         nexus_structure=structure,
         file_name=file_name,
-        broker="localhost:9092",
+        broker=kafka_address,
         start_time=start_time,
         stop_time=datetime.now(),
     )

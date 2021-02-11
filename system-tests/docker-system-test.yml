@@ -1,9 +1,20 @@
-version: '2'
-
+version: "2"
 services:
+  zookeeper:
+    extends:
+      file: docker-common.yml
+      service: zookeeper
+  kafka:
+    extends:
+      file: docker-common.yml
+      service: kafka
+    depends_on:
+      - zookeeper
   filewriter1:
     image: filewriter-image:latest
-    network_mode: "host"
+    hostname: filewriter1
+    depends_on:
+      - kafka
     environment:
       CONFIG_FILE: "/file_writer_config.ini"
       LOG_FILE: "/filewriter_logs/filewriter_1.log"
@@ -13,7 +24,9 @@ services:
       - ./logs/:/filewriter_logs/
   filewriter2:
     image: filewriter-image:latest
-    network_mode: "host"
+    hostname: filewriter2
+    depends_on:
+      - kafka
     environment:
       CONFIG_FILE: "/file_writer_config.ini"
       LOG_FILE: "/filewriter_logs/filewriter_2.log"
