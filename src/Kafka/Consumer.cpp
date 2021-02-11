@@ -58,6 +58,9 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
         "Could not assign topic-partition of topic {}, RdKafka error: \"{}\"",
         Topic, err2str(ReturnCode)));
   }
+  for (auto Ptr : Assignments) {
+    delete Ptr;
+  }
 }
 
 std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
