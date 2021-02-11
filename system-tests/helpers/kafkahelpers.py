@@ -7,11 +7,15 @@ from datetime import datetime
 
 
 def create_producer() -> KafkaProducer:
-    return KafkaProducer(bootstrap_servers='localhost:9093')
+    return KafkaProducer(bootstrap_servers="localhost:9093")
 
 
 def create_consumer():
-    return KafkaConsumer(bootstrap_servers='localhost:9093', group_id=uuid.uuid4(), auto_offset_reset='latest')
+    return KafkaConsumer(
+        bootstrap_servers="localhost:9093",
+        group_id=uuid.uuid4(),
+        auto_offset_reset="latest",
+    )
 
 
 def datetime_to_ms(time: datetime) -> int:
@@ -50,7 +54,9 @@ def publish_f142_message(
         alarm_status,
         alarm_severity,
     )
-    producer.send(topic=topic, value=f142_message, timestamp_ms=datetime_to_ms(timestamp))
+    producer.send(
+        topic=topic, value=f142_message, timestamp_ms=datetime_to_ms(timestamp)
+    )
     producer.flush()
 
 
@@ -60,5 +66,7 @@ def publish_ep00_message(
     if source_name is None:
         source_name = "SIMPLE:DOUBLE"
     ep00_message = serialise_ep00(datetime_to_ns(timestamp), status, source_name)
-    producer.send(topic=topic, value=ep00_message, timestamp_ms=datetime_to_ms(timestamp))
+    producer.send(
+        topic=topic, value=ep00_message, timestamp_ms=datetime_to_ms(timestamp)
+    )
     producer.flush()

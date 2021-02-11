@@ -261,6 +261,7 @@ def writer_channel(request):
 
     def stop_current_jobs():
         stop_all_jobs(worker)
+
     request.addfinalizer(stop_current_jobs)
     return worker
 

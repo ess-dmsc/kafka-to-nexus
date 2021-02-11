@@ -12,7 +12,9 @@ from helpers.writer import (
 )
 
 
-def test_ignores_commands_with_incorrect_id(writer_channel, kafka_address, multiple_writers):
+def test_ignores_commands_with_incorrect_id(
+    writer_channel, kafka_address, multiple_writers
+):
     wait_writers_available(writer_channel, nr_of=2, timeout=10)
     now = datetime.now()
     file_name = "output_file_stop_id.nxs"
@@ -32,7 +34,9 @@ def test_ignores_commands_with_incorrect_id(writer_channel, kafka_address, multi
     )
 
     time.sleep(COMMAND_STATUS_TIMEOUT.total_seconds() + 2)
-    assert cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE, f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
+    assert (
+        cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
+    ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
     cmd_handler = writer_channel.try_send_stop_now(write_job.service_id, "wrong job id")
     start_time = datetime.now()

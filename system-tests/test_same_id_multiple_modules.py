@@ -14,7 +14,9 @@ from helpers.writer import (
 )
 
 
-def test_two_different_writer_modules_with_same_flatbuffer_id(writer_channel, kafka_address):
+def test_two_different_writer_modules_with_same_flatbuffer_id(
+    writer_channel, kafka_address
+):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     producer = create_producer()
     start_time = datetime.now() - timedelta(seconds=10)
