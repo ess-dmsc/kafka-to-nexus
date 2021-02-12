@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <numeric>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -40,6 +41,28 @@ template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
         });
     return fmt::format_to(ctx.out(), "[{}{}]", ReturnString, Suffix);
   }
+};
+
+template <> struct fmt::formatter<nlohmann::json> {
+  static auto parse(format_parse_context &ctx) {
+    const auto begin = ctx.begin();
+    const auto end = std::find(begin, ctx.end(), '}');
+    return end;
+  }
+
+  // clang-format off
+  template <typename FormatContext>
+  auto format(const nlohmann::json &Data, FormatContext &ctx) { // cppcheck-suppress functionStatic
+    auto DataString = Data.dump();
+    if (DataString.empty()) {
+      return fmt::format_to(ctx.out(), "\"\"");
+    }
+    if (DataString.size() > 30) {
+      DataString = DataString.substr(0, 30) + "...";
+    }
+    return fmt::format_to(ctx.out(), "\"{}\"", DataString);
+  }
+//clang-format on
 };
 
 #define UNUSED_ARG(x) (void)x;
