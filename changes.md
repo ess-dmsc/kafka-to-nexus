@@ -26,3 +26,7 @@ approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-
 - The application will now print an error message if there is a configuration that is not used (due to e.g. a typo).
 - The error reporting and handling of writer module configurations have overall been greatly improved.
 - Added support for writing ADAr schemas.
+- The a warning/error message will now be produced if an unknown node in the JSON structure is encountered.
+- The shape of (multidimensional) static data sets and metadata sets have been unified such they are now in both cases determined from the shape of the actual data in the JSON-code. The `size` field for static data sets will thus be ignored.
+- Support for multiple different (non-UTF) text encodings was deemed fragile and incomplete and was thus removed. This means that the use of the `encoding`-field in a JSON structure will result in an error message.
+-
