@@ -54,12 +54,9 @@ protected:
   std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
   JsonConfig::Field<int> CueInterval{this, "cue_interval", 1000};
-  JsonConfig::Field<std::string> DataType{
-      this, {"type", "dtype"}, "float64"};
-  JsonConfig::Field<hdf5::Dimensions> ArrayShape{
-      this, "array_size", {1, 1}};
-  JsonConfig::Field<hdf5::Dimensions> ChunkSize{
-      this, "chunk_size", {1 << 20}};
+  JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "float64"};
+  JsonConfig::Field<hdf5::Dimensions> ArrayShape{this, "array_size", {1, 1}};
+  JsonConfig::Field<hdf5::Dimensions> ChunkSize{this, "chunk_size", {1 << 20}};
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
