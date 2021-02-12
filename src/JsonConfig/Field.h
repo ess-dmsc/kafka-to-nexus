@@ -64,7 +64,7 @@ private:
 template <class FieldType> class Field : public FieldBase {
 public:
   template <class FieldRegistrarType>
-  Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> Keys,
+  Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys,
         FieldType DefaultValue)
       : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
 
@@ -77,7 +77,7 @@ public:
     setValueImpl<FieldType>(ValueString);
   }
 
-  FieldType getValue() { return FieldValue; };
+  FieldType getValue() const { return FieldValue; }
 
   operator FieldType() const { return FieldValue; }
 
