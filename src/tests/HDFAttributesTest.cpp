@@ -87,7 +87,7 @@ TEST_F(HDFAttributesTest, WriteMultiVectorAttr) {
   HDFAttributes::writeAttribute(UsedGroup, AttributeName, AttributeValue);
   ASSERT_TRUE(UsedGroup.attributes.exists(AttributeName));
   MultiVector<int> TempValue({2, 3});
-  UsedGroup.attributes[AttributeName].read(TempValue);
+  UsedGroup.attributes[AttributeName].read(TempValue.Data);
   EXPECT_EQ(TempValue, AttributeValue);
 }
 
@@ -100,6 +100,6 @@ TEST_F(HDFAttributesTest, WriteMultiVectorStrAttr) {
   HDFAttributes::writeAttribute(UsedGroup, AttributeName, AttributeValue);
   ASSERT_TRUE(UsedGroup.attributes.exists(AttributeName));
   MultiVector<std::string> TempValue({2, 3});
-  UsedGroup.attributes[AttributeName].read(TempValue);
+  UsedGroup.attributes[AttributeName].read(TempValue.Data);
   EXPECT_EQ(TempValue, AttributeValue);
 }

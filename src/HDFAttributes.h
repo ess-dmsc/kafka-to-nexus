@@ -47,7 +47,7 @@ inline void writeAttribute(hdf5::node::Node const &Node,
       .create(
           Name, string_type,
           hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end())))
-      .write(Values);
+      .write(Values.Data);
 }
 
 template <typename T>

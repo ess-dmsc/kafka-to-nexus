@@ -45,7 +45,7 @@ TEST(JsonArrayToMultiVector, Array1) {
   auto JsonObj = nlohmann::json::parse("[1]");
   std::vector<int> Data{1};
   MultiVector<int> ExpectedResult({1});
-  std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
+  std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
 
@@ -53,7 +53,7 @@ TEST(JsonArrayToMultiVector, Array2) {
   auto JsonObj = nlohmann::json::parse("[1, 2, 4]");
   std::vector<int> Data{1, 2, 4};
   MultiVector<int> ExpectedResult({3});
-  std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
+  std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
 
@@ -61,7 +61,7 @@ TEST(JsonArrayToMultiVector, Array3) {
   auto JsonObj = nlohmann::json::parse("[[1, 2, 4], [1, 2, 4]]");
   std::vector<int> Data{1, 1, 2, 2, 4, 4};
   MultiVector<int> ExpectedResult({2, 3});
-  std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
+  std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
 
@@ -70,7 +70,7 @@ TEST(JsonArrayToMultiVector, Array4) {
       "[[[1, 2, 4], [1, 2, 4]], [[3, 6, 8], [10, 20, 40]]]");
   std::vector<int> Data{1, 3, 1, 10, 2, 6, 2, 20, 4, 8, 4, 40};
   MultiVector<int> ExpectedResult({2, 2, 3});
-  std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
+  std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
 
@@ -78,7 +78,7 @@ TEST(JsonArrayToMultiVector, Array5) {
   auto JsonObj = nlohmann::json::parse("42");
   std::vector<int> Data{42};
   MultiVector<int> ExpectedResult({1});
-  std::copy(Data.begin(), Data.end(), ExpectedResult.begin());
+  std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
 
@@ -235,9 +235,9 @@ TEST_F(HDFStaticDataTest, SingleString) {
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
-  HDFDataset.read(DatasetValues);
+  HDFDataset.read(DatasetValues.Data);
   MultiVector<std::string> ExpectedDataset({1});
-  ExpectedDataset[0] = "some string";
+  ExpectedDataset.Data[0] = "some string";
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
 
@@ -253,9 +253,9 @@ TEST_F(HDFStaticDataTest, SingleStringAlt) {
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
-  HDFDataset.read(DatasetValues);
+  HDFDataset.read(DatasetValues.Data);
   MultiVector<std::string> ExpectedDataset({1});
-  ExpectedDataset[0] = "some string";
+  ExpectedDataset.Data[0] = "some string";
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
 
@@ -271,7 +271,7 @@ TEST_F(HDFStaticDataTest, StringArray) {
   HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({2, 2});
-  HDFDataset.read(DatasetValues);
+  HDFDataset.read(DatasetValues.Data);
   MultiVector<std::string> ExpectedDataset({2, 2});
   ExpectedDataset.at({0, 0}) = "a";
   ExpectedDataset.at({0, 1}) = "b";

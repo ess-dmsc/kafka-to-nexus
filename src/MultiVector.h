@@ -31,15 +31,15 @@ inline size_t posToIndex(Shape Dimensions, Shape Pos) {
   return ReturnIndex;
 }
 
-template <typename T> class MultiVector : public std::vector<T> {
+template <typename T> class MultiVector {
 public:
   MultiVector() = default;
   explicit MultiVector(Shape Extent)
-      : std::vector<T>(extentToSize(Extent)), Dimensions(Extent) {}
+      : Data(extentToSize(Extent)), Dimensions(Extent) {}
 
   bool operator==(MultiVector<T> const &Other) const {
     return Dimensions == Other.Dimensions and
-           std::equal(this->cbegin(), this->cend(), Other.cbegin());
+           std::equal(Data.cbegin(), Data.cend(), Other.Data.cbegin());
   }
 
   T &at(Shape const &Index) {
@@ -51,11 +51,12 @@ public:
         throw std::out_of_range("Outside of range.");
       }
     }
-    return std::vector<T>::operator[](posToIndex(Dimensions, Index));
+    return Data.operator[](posToIndex(Dimensions, Index));
   }
   Shape getDimensions() const { return Dimensions; }
-
-private:
+  T *data() { return Data.data(); }
+  size_t size() { return Data.size(); }
+  std::vector<T> Data;
   Shape Dimensions;
 };
 
@@ -96,11 +97,11 @@ public:
   }
 
   static void *ptr(MultiVector<T> &data) {
-    return reinterpret_cast<void *>(data.data());
+    return reinterpret_cast<void *>(data.Data.data());
   }
 
   static const void *cptr(const MultiVector<T> &data) {
-    return reinterpret_cast<const void *>(data.data());
+    return reinterpret_cast<const void *>(data.Data.data());
   }
 };
 } // namespace dataspace

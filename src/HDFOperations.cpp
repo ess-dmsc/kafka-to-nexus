@@ -259,7 +259,7 @@ void writeStringDataset(hdf5::node::Group const &Parent,
     auto Dataspace =
         hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
 
-    Parent.create_dataset(Name, DataType, Dataspace).write(StringArray);
+    Parent.create_dataset(Name, DataType, Dataspace).write(StringArray.Data);
   } catch (const std::exception &e) {
     auto ErrorStr = fmt::format(
         "Failed to write variable-size string dataset {}/{}. Message was: {}",
