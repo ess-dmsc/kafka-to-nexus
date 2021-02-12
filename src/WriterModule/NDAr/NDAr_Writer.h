@@ -25,8 +25,6 @@ namespace NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = WriterModule::Base;
 
-using std::string_literals::operator""s;
-
 /// See parent class for documentation.
 class NDAr_Writer : public FileWriterBase {
 public:
@@ -59,14 +57,10 @@ protected:
     c_string,
   } ElementType{Type::float64};
 
-  WriterModuleConfig::Field<std::string> DataType{
-      this, std::initializer_list<std::string>({"type"s, "dtype"s}),
-      "float64"s};
-  WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
-  WriterModuleConfig::Field<hdf5::Dimensions> ChunkSize{
-      this, "chunk_size", {1 << 20}};
-  WriterModuleConfig::Field<hdf5::Dimensions> ArrayShape{
-      this, "array_size", {1, 1}};
+  JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "float64"};
+  JsonConfig::Field<int> CueInterval{this, "cue_interval", 1000};
+  JsonConfig::Field<hdf5::Dimensions> ChunkSize{this, "chunk_size", {1 << 20}};
+  JsonConfig::Field<hdf5::Dimensions> ArrayShape{this, "array_size", {1, 1}};
 
   std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;

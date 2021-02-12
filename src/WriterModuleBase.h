@@ -10,8 +10,8 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "WriterModuleConfig/Field.h"
-#include "WriterModuleConfig/FieldHandler.h"
+#include "JsonConfig/Field.h"
+#include "JsonConfig/FieldHandler.h"
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <string>
@@ -48,7 +48,7 @@ public:
   /// \param config_stream Configuration from the write file command for this
   /// stream.
   void parse_config(std::string const &ConfigurationStream) {
-    ConfigFieldProcessor.processConfigData(ConfigurationStream);
+    ConfigHandler.processConfigData(ConfigurationStream);
     config_post_processing();
   }
 
@@ -93,16 +93,18 @@ public:
   /// \param msg The message to process
   virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
 
-  void addConfigField(WriterModuleConfig::FieldBase *NewField);
+  void registerField(JsonConfig::FieldBase *Ptr) {
+    ConfigHandler.registerField(Ptr);
+  }
 
 private:
-  WriterModuleConfig::FieldHandler ConfigFieldProcessor;
+  // Must appear before any config field object.
+  JsonConfig::FieldHandler ConfigHandler;
 
 protected:
-  WriterModuleConfig::Field<std::string> SourceName{this, "source", ""};
-  WriterModuleConfig::Field<std::string> Topic{this, "topic", ""};
-  WriterModuleConfig::Field<std::string> WriterModule{this, "writer_module",
-                                                      ""};
+  JsonConfig::Field<std::string> SourceName{this, "source", ""};
+  JsonConfig::Field<std::string> Topic{this, "topic", ""};
+  JsonConfig::Field<std::string> WriterModule{this, "writer_module", ""};
 
 private:
   bool WriteRepeatedTimestamps;

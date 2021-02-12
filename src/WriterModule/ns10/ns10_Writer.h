@@ -15,9 +15,9 @@
 
 #pragma once
 #include "FlatbufferMessage.h"
+#include "JsonConfig/Field.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
-#include "WriterModuleConfig/Field.h"
 
 namespace WriterModule {
 namespace ns10 {
@@ -39,8 +39,8 @@ protected:
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
-  WriterModuleConfig::Field<int> CueInterval{this, "cue_interval", 1000};
-  WriterModuleConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
+  JsonConfig::Field<int> CueInterval{this, "cue_interval", 1000};
+  JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");

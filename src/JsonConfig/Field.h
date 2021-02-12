@@ -13,19 +13,39 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-namespace WriterModule {
-class Base;
-}
+namespace JsonConfig {
 
-namespace WriterModuleConfig {
+// \brief String class that removes the iterator constructor from std::string.
+//
+// \note Due to (serious) bugs caused by the accidental misuse of std::string,
+// this class inherits from std::string but does not expose a constructor
+// that takes a start and an end iterator.
+class KeyString : public std::string {
+public:
+  KeyString(std::string const &Str) // cppcheck-suppress noExplicitConstructor
+      : std::string(Str) {}
+  KeyString(const char *Ptr) // cppcheck-suppress noExplicitConstructor
+      : std::string(Ptr) {}
+  KeyString(const char *Ptr, size_t Size) : std::string(Ptr, Size) {}
+};
+
+class FieldHandler;
 
 using namespace nlohmann;
 
 class FieldBase {
 public:
-  FieldBase(WriterModule::Base *Ptr, std::vector<std::string> const &Keys);
-  FieldBase(WriterModule::Base *Ptr, std::string const &Key)
-      : FieldBase(Ptr, std::vector<std::string>{Key}) {}
+  template <class FieldRegistrarType>
+  FieldBase(FieldRegistrarType *RegistrarPtr,
+            std::vector<KeyString> const &Keys)
+      : FieldKeys(Keys.begin(), Keys.end()) {
+    RegistrarPtr->registerField(this);
+  }
+
+  template <class FieldRegistrarType>
+  FieldBase(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
+      : FieldBase(RegistrarPtr, std::vector<KeyString>{Key}) {}
+
   virtual ~FieldBase() {}
   virtual void setValue(std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
@@ -43,12 +63,15 @@ private:
 
 template <class FieldType> class Field : public FieldBase {
 public:
-  Field(WriterModule::Base *WriterPtr, std::string const &Key,
+  template <class FieldRegistrarType>
+  Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> Keys,
         FieldType DefaultValue)
-      : FieldBase(WriterPtr, Key), FieldValue(DefaultValue) {}
-  Field(WriterModule::Base *WriterPtr, std::vector<std::string> Keys,
+      : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
+
+  template <class FieldRegistrarType>
+  Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
         FieldType DefaultValue)
-      : FieldBase(WriterPtr, Keys), FieldValue(DefaultValue) {}
+      : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
     setValueImpl<FieldType>(ValueString);
@@ -87,7 +110,7 @@ private:
           std::accumulate(std::next(Keys.begin()), Keys.end(), Keys[0],
                           [](auto a, auto b) { return a + ", " + b; });
       LOG_WARN("Replacing the previously given value of \"{}\" with \"{}\" in "
-               "writer module config field with key(s): ",
+               "json config field with key(s): ",
                FieldValue, NewValue, AllKeys);
     }
     GotDefault = false;
@@ -97,10 +120,22 @@ private:
 
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
-  RequiredField(WriterModule::Base *WriterPtr, std::string const &Key)
-      : Field<FieldType>(WriterPtr, Key, FieldType()) {
+  template <class FieldRegistrarType>
+  RequiredField(FieldRegistrarType *RegistrarPtr,
+                std::vector<KeyString> const &Keys)
+      : Field<FieldType>(RegistrarPtr, Keys, FieldType()) {
+    FieldBase::makeRequired();
+  }
+
+  template <class FieldRegistrarType>
+  RequiredField(FieldRegistrarType *RegistrarPtr, char const *const StrPtr)
+      : RequiredField(RegistrarPtr, std::string(StrPtr)) {}
+
+  template <class FieldRegistrarType>
+  RequiredField(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
+      : Field<FieldType>(RegistrarPtr, Key, FieldType()) {
     FieldBase::makeRequired();
   }
 };
 
-} // namespace WriterModuleConfig
+} // namespace JsonConfig
