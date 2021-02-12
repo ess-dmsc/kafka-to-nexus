@@ -35,9 +35,17 @@ using namespace nlohmann;
 
 class FieldBase {
 public:
-  FieldBase(FieldHandler *HandlerPtr, std::vector<KeyString> const &Keys);
-  FieldBase(FieldHandler *HandlerPtr, KeyString const &Key)
-      : FieldBase(HandlerPtr, std::vector<KeyString>{Key}) {}
+  template <class FieldRegistrarType>
+  FieldBase(FieldRegistrarType *RegistrarPtr,
+            std::vector<KeyString> const &Keys)
+      : FieldKeys(Keys.begin(), Keys.end()) {
+    RegistrarPtr->registerField(this);
+  }
+
+  template <class FieldRegistrarType>
+  FieldBase(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
+      : FieldBase(RegistrarPtr, std::vector<KeyString>{Key}) {}
+
   virtual ~FieldBase() {}
   virtual void setValue(std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
@@ -55,12 +63,15 @@ private:
 
 template <class FieldType> class Field : public FieldBase {
 public:
-  Field(FieldHandler *HandlerPtr, std::vector<KeyString> const &Keys,
-        FieldType const &DefaultValue)
-      : FieldBase(HandlerPtr, Keys), FieldValue(DefaultValue) {}
-  Field(FieldHandler *HandlerPtr, KeyString const &Key,
-        FieldType const &DefaultValue)
-      : FieldBase(HandlerPtr, Key), FieldValue(DefaultValue) {}
+  template <class FieldRegistrarType>
+  Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> Keys,
+        FieldType DefaultValue)
+      : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
+
+  template <class FieldRegistrarType>
+  Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
+        FieldType DefaultValue)
+      : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &ValueString) override {
     setValueImpl<FieldType>(ValueString);
@@ -109,14 +120,20 @@ private:
 
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
-  RequiredField(FieldHandler *HandlerPtr, std::vector<KeyString> const &Keys)
-      : Field<FieldType>(HandlerPtr, Keys, FieldType()) {
+  template <class FieldRegistrarType>
+  RequiredField(FieldRegistrarType *RegistrarPtr,
+                std::vector<KeyString> const &Keys)
+      : Field<FieldType>(RegistrarPtr, Keys, FieldType()) {
     FieldBase::makeRequired();
   }
-  RequiredField(FieldHandler *HandlerPtr, char const *const StrPtr)
-      : RequiredField(HandlerPtr, std::string(StrPtr)) {}
-  RequiredField(FieldHandler *HandlerPtr, KeyString const &Key)
-      : Field<FieldType>(HandlerPtr, Key, FieldType()) {
+
+  template <class FieldRegistrarType>
+  RequiredField(FieldRegistrarType *RegistrarPtr, char const *const StrPtr)
+      : RequiredField(RegistrarPtr, std::string(StrPtr)) {}
+
+  template <class FieldRegistrarType>
+  RequiredField(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
+      : Field<FieldType>(RegistrarPtr, Key, FieldType()) {
     FieldBase::makeRequired();
   }
 };
