@@ -112,9 +112,8 @@ set(kafka_to_nexus_SRC
         HDFVersionCheck.cpp
         CommandSystem/CommandListener.cpp
         TimeUtility.cpp
-        WriterModuleConfig/Field.cpp
-        WriterModuleConfig/FieldHandler.cpp
-        WriterModuleBase.cpp)
+        JsonConfig/Field.cpp
+        JsonConfig/FieldHandler.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -183,9 +182,9 @@ set(kafka_to_nexus_INC
         StreamHDFInfo.h
         CommandSystem/CommandListener.h
         CommandSystem/FeedbackProducerBase.h
-        WriterModuleConfig/Field.h
         CommandSystem/JobListener.h
-        WriterModuleConfig/FieldHandler.h)
+        JsonConfig/Field.h
+        JsonConfig/FieldHandler.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

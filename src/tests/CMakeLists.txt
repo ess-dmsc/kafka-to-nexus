@@ -42,10 +42,10 @@ set(UnitTests_SRC
         HelperTests.cpp
         CommandSystem/CommandParserTests.cpp
         CommandSystem/CommandListenerTests.cpp
-       CommandSystem/CommandHandlerTests.cpp
+        CommandSystem/CommandHandlerTests.cpp
         TimeUtilityTest.cpp
-        WriterModuleConfig/FieldTest.cpp
-        WriterModuleConfig/FieldHandlerTest.cpp)
+        JsonConfig/FieldTest.cpp
+        JsonConfig/FieldHandlerTest.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
