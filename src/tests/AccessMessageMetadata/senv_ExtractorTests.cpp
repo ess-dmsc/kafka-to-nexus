@@ -18,12 +18,15 @@ GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint16_t> TestValues{0, 1, 2, 3, 4, 5};
   std::vector<std::uint64_t> TestTimestamps{1, 2, 3, 4, 5, 6};
+
   auto FBValuesOffset = builder.CreateVector(TestValues);
+  auto ValueObjectOffset = CreateUInt16Array(builder, FBValuesOffset);
   auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
   auto FBNameStringOffset = builder.CreateString("SomeTestString");
   SampleEnvironmentDataBuilder MessageBuilder(builder);
   MessageBuilder.add_Name(FBNameStringOffset);
-  MessageBuilder.add_Values(FBValuesOffset);
+  MessageBuilder.add_Values(ValueObjectOffset.Union());
+  MessageBuilder.add_Values_type(ValueUnion::UInt16Array);
   MessageBuilder.add_Timestamps(FBTimestampOffset);
   MessageBuilder.add_Channel(42);
   MessageBuilder.add_PacketTimestamp(123456789);

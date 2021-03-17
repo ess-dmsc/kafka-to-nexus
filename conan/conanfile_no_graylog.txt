@@ -4,7 +4,7 @@ fmt/6.0.0
 h5cpp/dc5aeda@ess-dmsc/stable
 librdkafka/1.5.0@ess-dmsc/stable
 jsonformoderncpp/3.7.3@vthiery/stable
-streaming-data-types/d356a77@ess-dmsc/stable
+streaming-data-types/416487f@ess-dmsc/stable
 CLI11/1.9.1@cliutils/stable
 trompeloeil/v38@rollbear/stable
 spdlog/1.4.2
