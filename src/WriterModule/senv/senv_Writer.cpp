@@ -55,7 +55,8 @@ WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "raw_value", NeXusDataset::Mode::Open);
+    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "raw_value",
+                                                NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
@@ -72,10 +73,10 @@ WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
 
 void senv_Writer::config_post_processing() {
   std::map<std::string, senv_Writer::Type> TypeMap{
-      {"int8", Type::int8},         {"uint8", Type::uint8},
-      {"int16", Type::int16},       {"uint16", Type::uint16},
-      {"int32", Type::int32},       {"uint32", Type::uint32},
-      {"int64", Type::int64},       {"uint64", Type::uint64},
+      {"int8", Type::int8},   {"uint8", Type::uint8},
+      {"int16", Type::int16}, {"uint16", Type::uint16},
+      {"int32", Type::int32}, {"uint32", Type::uint32},
+      {"int64", Type::int64}, {"uint64", Type::uint64},
   };
   try {
     ElementType = TypeMap.at(DataType);
@@ -101,56 +102,49 @@ void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto ValuesType = FbPointer->Values_type();
   size_t NrOfElements{0};
   switch (ValuesType) {
-    case ValueUnion::Int8Array: {
+  case ValueUnion::Int8Array: {
     auto ValuePtr = FbPointer->Values_as_Int8Array()->value();
     NrOfElements = ValuePtr->size();
     Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
     break;
   }
-    case ValueUnion::UInt8Array: {
-      auto ValuePtr = FbPointer->Values_as_UInt8Array()->value();
-      NrOfElements = ValuePtr->size();
-      Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
-    }
-      break;
-    case ValueUnion::Int16Array: {
-      auto ValuePtr = FbPointer->Values_as_Int16Array()->value();
-      NrOfElements = ValuePtr->size();
-      Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
-    }
-      break;
-    case ValueUnion::UInt16Array: {
-      auto ValuePtr = FbPointer->Values_as_UInt16Array()->value();
-      NrOfElements = ValuePtr->size();
-      Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
-    }
-      break;
-    case ValueUnion::Int32Array: {
-      auto ValuePtr = FbPointer->Values_as_Int32Array()->value();
-      NrOfElements = ValuePtr->size();
-      Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
-    }
-      break;
-    case ValueUnion::UInt32Array: {
-      auto ValuePtr = FbPointer->Values_as_UInt32Array()->value();
-      NrOfElements = ValuePtr->size();
-      Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
-    }
-      break;
-    case ValueUnion::Int64Array: {
-      auto ValuePtr = FbPointer->Values_as_Int64Array()->value();
-      NrOfElements = ValuePtr->size();
-      Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
-    }
-      break;
-    case ValueUnion::UInt64Array: {
-      auto ValuePtr = FbPointer->Values_as_UInt64Array()->value();
-      NrOfElements = ValuePtr->size();
-      Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
-    }
-      break;
-    default:
-      Logger->warn("Unknown data type in flatbuffer.");
+  case ValueUnion::UInt8Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt8Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::Int16Array: {
+    auto ValuePtr = FbPointer->Values_as_Int16Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::UInt16Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt16Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::Int32Array: {
+    auto ValuePtr = FbPointer->Values_as_Int32Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::UInt32Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt32Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::Int64Array: {
+    auto ValuePtr = FbPointer->Values_as_Int64Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::UInt64Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt64Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  default:
+    Logger->warn("Unknown data type in flatbuffer.");
   }
   if (NrOfElements == 0) {
     return;
@@ -181,22 +175,17 @@ makeIt(hdf5::node::Group const &Parent, size_t const &ChunkSize) {
 
 void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) {
   using OpenFuncType =
-  std::function<std::unique_ptr<hdf5::node::ChunkedDataset>()>;
+      std::function<std::unique_ptr<hdf5::node::ChunkedDataset>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
-      {Type::int8,
-       [&]() { return makeIt<std::int8_t>(Parent, ChunkSize); }},
-      {Type::uint8,
-       [&]() { return makeIt<std::uint8_t>(Parent, ChunkSize); }},
-      {Type::int16,
-       [&]() { return makeIt<std::int16_t>(Parent, ChunkSize); }},
+      {Type::int8, [&]() { return makeIt<std::int8_t>(Parent, ChunkSize); }},
+      {Type::uint8, [&]() { return makeIt<std::uint8_t>(Parent, ChunkSize); }},
+      {Type::int16, [&]() { return makeIt<std::int16_t>(Parent, ChunkSize); }},
       {Type::uint16,
        [&]() { return makeIt<std::uint16_t>(Parent, ChunkSize); }},
-      {Type::int32,
-       [&]() { return makeIt<std::int32_t>(Parent, ChunkSize); }},
+      {Type::int32, [&]() { return makeIt<std::int32_t>(Parent, ChunkSize); }},
       {Type::uint32,
        [&]() { return makeIt<std::uint32_t>(Parent, ChunkSize); }},
-      {Type::int64,
-       [&]() { return makeIt<std::int64_t>(Parent, ChunkSize); }},
+      {Type::int64, [&]() { return makeIt<std::int64_t>(Parent, ChunkSize); }},
       {Type::uint64,
        [&]() { return makeIt<std::uint64_t>(Parent, ChunkSize); }},
   };

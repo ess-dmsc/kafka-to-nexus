@@ -172,11 +172,13 @@ enum class Mode { Create, Open };
 class ExtensibleDatasetBase : public hdf5::node::ChunkedDataset {
 public:
   ExtensibleDatasetBase() = default;
-  ExtensibleDatasetBase(const hdf5::node::Group &Parent, std::string Name, Mode CMode)
+  ExtensibleDatasetBase(const hdf5::node::Group &Parent, std::string Name,
+                        Mode CMode)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
-      throw std::runtime_error("ExtensibleDatasetBase::ExtensibleDatasetBase(): "
-                               "Can only open datasets, not create.");
+      throw std::runtime_error(
+          "ExtensibleDatasetBase::ExtensibleDatasetBase(): "
+          "Can only open datasets, not create.");
     } else if (Mode::Open == CMode) {
       Dataset::operator=(Parent.get_dataset(Name));
     } else {
@@ -205,7 +207,9 @@ public:
 
   template <class DataType>
   void appendArray(ArrayAdapter<const DataType> const &NewData) {
-    if (NewData.size() == 0) {return;}
+    if (NewData.size() == 0) {
+      return;
+    }
     NewDimensions[0] = NrOfElements + NewData.size();
     Dataset::resize(NewDimensions);
     ArraySelection.offset({NrOfElements});
@@ -220,6 +224,7 @@ public:
 
     NrOfElements += NewData.size();
   }
+
 protected:
   hdf5::dataspace::Simple ArrayDataSpace;
   hdf5::Dimensions NewDimensions{0};
@@ -227,7 +232,6 @@ protected:
   hdf5::property::DatasetTransferList Dtpl;
   size_t NrOfElements{0};
 };
-
 
 /// h5cpp dataset class that implements methods for appending data.
 template <class DataType>

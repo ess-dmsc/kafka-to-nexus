@@ -16,7 +16,9 @@
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 
-std::unique_ptr<std::uint8_t[]> GenerateFlatbufferData(size_t &DataSize, size_t NrOfElements = 6, bool CreateTimestamps = true) {
+std::unique_ptr<std::uint8_t[]>
+GenerateFlatbufferData(size_t &DataSize, size_t NrOfElements = 6,
+                       bool CreateTimestamps = true) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint16_t> TestValues(NrOfElements);
   std::vector<std::uint64_t> TestTimestamps(NrOfElements);
@@ -161,8 +163,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
   RawValuesDataset.read(AppendedValues);
   for (int i = 0; i < DataspaceSize; i++) {
-    ASSERT_EQ(AppendedValues.at(i),
-              ValuesObjPtr->operator[](i % ValuesSize));
+    ASSERT_EQ(AppendedValues.at(i), ValuesObjPtr->operator[](i % ValuesSize));
   }
 
   EXPECT_EQ(TimestampDataset.dataspace().size(), DataspaceSize);
