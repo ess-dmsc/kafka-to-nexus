@@ -9,6 +9,9 @@ add_subdirectory(NeXusDataset)
 set(UnitTests_SRC
         UnitTests.cpp
         HDFFileAttributesTests.cpp
+        HDFOperationsTests.cpp
+        MultiVectorTest.cpp
+        HDFAttributesTest.cpp
         helpers/HDFFileTestHelper.cpp
         helpers/RunStartStopHelpers.cpp
         JsonTests.cpp

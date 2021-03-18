@@ -81,6 +81,7 @@ set(kafka_to_nexus_SRC
         Source.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
+        HDFAttributes.cpp
         Kafka/Consumer.cpp
         Kafka/Producer.cpp
         Kafka/ProducerTopic.cpp
@@ -126,6 +127,7 @@ set(kafka_to_nexus_INC
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h
+        HDFAttributes.h
         WriterModuleBase.h
         helper.h
         json.h
@@ -184,7 +186,9 @@ set(kafka_to_nexus_INC
         CommandSystem/FeedbackProducerBase.h
         CommandSystem/JobListener.h
         JsonConfig/Field.h
-        JsonConfig/FieldHandler.h)
+        JsonConfig/FieldHandler.h
+        MultiVector.h
+        )
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}
