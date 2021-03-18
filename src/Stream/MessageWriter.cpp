@@ -30,8 +30,8 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
                              Metrics::Registrar const &MetricReg)
     : FlushDataFunction(FlushFunction),
       Registrar(MetricReg.getNewRegistrar("writer")),
-      WriterThread(&MessageWriter::threadFunction, this),
-      FlushInterval(FlushIntervalTime) {
+      FlushInterval(FlushIntervalTime),
+      WriterThread(&MessageWriter::threadFunction, this) {
   Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
   Registrar.registerMetric(WriteErrors,
                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
@@ -42,7 +42,7 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
 }
 
 MessageWriter::~MessageWriter() {
-  RunThread = false;
+  RunThread.store(false);
   if (WriterThread.joinable()) {
     WriterThread.join();
   }
@@ -52,7 +52,7 @@ void MessageWriter::addMessage(Message const &Msg) {
   WriteJobs.enqueue([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
 }
 
-void MessageWriter::stop() { RunThread = false; }
+void MessageWriter::stop() { RunThread.store(false); }
 
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
                                  FileWriter::FlatbufferMessage const &Msg) {
@@ -106,10 +106,10 @@ void MessageWriter::threadFunction() {
       }
     }
   };
-  while (RunThread) {
+  while (RunThread.load()) {
     WriteOperation();
     FlushOperation();
-    if (not RunThread) { // cppcheck-suppress oppositeInnerCondition
+    if (not RunThread.load()) { // cppcheck-suppress oppositeInnerCondition
       break;
     }
     std::this_thread::sleep_for(SleepTime);
