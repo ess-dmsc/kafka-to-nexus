@@ -29,11 +29,8 @@ static WriterModule::Registry::Registrar<senv_Writer>
 
 WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
+    initValueDataset(HDFGroup);
     auto &CurrentGroup = HDFGroup;
-    NeXusDataset::UInt16Value(      // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
@@ -58,7 +55,8 @@ WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = NeXusDataset::UInt16Value(CurrentGroup, NeXusDataset::Mode::Open);
+    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "raw_value",
+                                                NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
@@ -73,6 +71,21 @@ WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
+void senv_Writer::config_post_processing() {
+  std::map<std::string, senv_Writer::Type> TypeMap{
+      {"int8", Type::int8},   {"uint8", Type::uint8},
+      {"int16", Type::int16}, {"uint16", Type::uint16},
+      {"int32", Type::int32}, {"uint32", Type::uint32},
+      {"int64", Type::int64}, {"uint64", Type::uint64},
+  };
+  try {
+    ElementType = TypeMap.at(DataType);
+  } catch (std::out_of_range &E) {
+    Logger->error("Unknown type ({}), using the default (int64).",
+                  DataType.getValue());
+  }
+}
+
 std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
                                               double TimeDelta,
                                               int NumberOfElements) {
@@ -85,30 +98,98 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
 
 void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
-  auto TempDataPtr = FbPointer->Values()->data();
-  auto TempDataSize = FbPointer->Values()->size();
-  if (TempDataSize == 0) {
-    Logger->warn("Received a flatbuffer with zero (0) data elements in it.");
+  auto CueIndexValue = Value.dataspace().size();
+  auto ValuesType = FbPointer->Values_type();
+  size_t NrOfElements{0};
+  switch (ValuesType) {
+  case ValueUnion::Int8Array: {
+    auto ValuePtr = FbPointer->Values_as_Int8Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    break;
+  }
+  case ValueUnion::UInt8Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt8Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::Int16Array: {
+    auto ValuePtr = FbPointer->Values_as_Int16Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::UInt16Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt16Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::Int32Array: {
+    auto ValuePtr = FbPointer->Values_as_Int32Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::UInt32Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt32Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::Int64Array: {
+    auto ValuePtr = FbPointer->Values_as_Int64Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  case ValueUnion::UInt64Array: {
+    auto ValuePtr = FbPointer->Values_as_UInt64Array()->value();
+    NrOfElements = ValuePtr->size();
+    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+  } break;
+  default:
+    Logger->warn("Unknown data type in flatbuffer.");
+  }
+  if (NrOfElements == 0) {
     return;
   }
-  ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
-  auto CueIndexValue = Value.dataspace().size();
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
   CueTimestamp.appendElement(FbPointer->PacketTimestamp());
-  Value.appendArray(CArray);
+
   // Time-stamps are available in the flatbuffer
   if (flatbuffers::IsFieldPresent(FbPointer,
-                                  SampleEnvironmentData::VT_TIMESTAMPS) and
-      FbPointer->Values()->size() == FbPointer->Timestamps()->size()) {
+                                  SampleEnvironmentData::VT_TIMESTAMPS)) {
     auto TimestampPtr = FbPointer->Timestamps()->data();
     auto TimestampSize = FbPointer->Timestamps()->size();
     ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
     Timestamp.appendArray(TSArray);
   } else { // If timestamps are not available, generate them
     std::vector<std::uint64_t> TempTimeStamps(GenerateTimeStamps(
-        FbPointer->PacketTimestamp(), FbPointer->TimeDelta(), TempDataSize));
+        FbPointer->PacketTimestamp(), FbPointer->TimeDelta(), NrOfElements));
     Timestamp.appendArray(TempTimeStamps);
   }
+}
+
+template <typename Type>
+std::unique_ptr<hdf5::node::ChunkedDataset>
+makeIt(hdf5::node::Group const &Parent, size_t const &ChunkSize) {
+  return std::make_unique<NeXusDataset::ExtensibleDataset<Type>>(
+      Parent, "raw_value", NeXusDataset::Mode::Create, ChunkSize);
+}
+
+void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) {
+  using OpenFuncType =
+      std::function<std::unique_ptr<hdf5::node::ChunkedDataset>()>;
+  std::map<Type, OpenFuncType> CreateValuesMap{
+      {Type::int8, [&]() { return makeIt<std::int8_t>(Parent, ChunkSize); }},
+      {Type::uint8, [&]() { return makeIt<std::uint8_t>(Parent, ChunkSize); }},
+      {Type::int16, [&]() { return makeIt<std::int16_t>(Parent, ChunkSize); }},
+      {Type::uint16,
+       [&]() { return makeIt<std::uint16_t>(Parent, ChunkSize); }},
+      {Type::int32, [&]() { return makeIt<std::int32_t>(Parent, ChunkSize); }},
+      {Type::uint32,
+       [&]() { return makeIt<std::uint32_t>(Parent, ChunkSize); }},
+      {Type::int64, [&]() { return makeIt<std::int64_t>(Parent, ChunkSize); }},
+      {Type::uint64,
+       [&]() { return makeIt<std::uint64_t>(Parent, ChunkSize); }},
+  };
+  CreateValuesMap.at(ElementType)();
 }
 
 } // namespace senv

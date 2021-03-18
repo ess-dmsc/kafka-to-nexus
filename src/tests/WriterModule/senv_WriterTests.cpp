@@ -16,17 +16,28 @@
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 
-std::unique_ptr<std::uint8_t[]> GenerateFlatbufferData(size_t &DataSize) {
+std::unique_ptr<std::uint8_t[]>
+GenerateFlatbufferData(size_t &DataSize, size_t NrOfElements = 6,
+                       bool CreateTimestamps = true) {
   flatbuffers::FlatBufferBuilder builder;
-  std::vector<std::uint16_t> TestValues{0, 1, 2, 3, 4, 5};
-  std::vector<std::uint64_t> TestTimestamps{1, 2, 3, 4, 5, 6};
+  std::vector<std::uint16_t> TestValues(NrOfElements);
+  std::vector<std::uint64_t> TestTimestamps(NrOfElements);
+  for (size_t i = 0; i < NrOfElements; i++) {
+    TestValues.push_back(i + 1);
+    TestTimestamps.push_back(i);
+  }
+
   auto FBValuesOffset = builder.CreateVector(TestValues);
+  auto ValueObjectOffset = CreateUInt16Array(builder, FBValuesOffset);
   auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
   auto FBNameStringOffset = builder.CreateString("SomeTestString");
   SampleEnvironmentDataBuilder MessageBuilder(builder);
   MessageBuilder.add_Name(FBNameStringOffset);
-  MessageBuilder.add_Values(FBValuesOffset);
-  MessageBuilder.add_Timestamps(FBTimestampOffset);
+  MessageBuilder.add_Values(ValueObjectOffset.Union());
+  MessageBuilder.add_Values_type(ValueUnion::UInt16Array);
+  if (CreateTimestamps) {
+    MessageBuilder.add_Timestamps(FBTimestampOffset);
+  }
   MessageBuilder.add_Channel(42);
   MessageBuilder.add_PacketTimestamp(123456789);
   MessageBuilder.add_TimeDelta(0.565656);
@@ -101,12 +112,15 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
   auto FbPointer = GetSampleEnvironmentData(TestMsg.data());
 
+  auto ValuesObjPtr = FbPointer->Values_as_UInt16Array()->value();
+  auto ValuesSize = ValuesObjPtr->size();
+
   auto DataspaceSize = RawValuesDataset.dataspace().size();
-  EXPECT_EQ(DataspaceSize, FbPointer->Values()->size());
+  EXPECT_EQ(DataspaceSize, ValuesSize);
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
   RawValuesDataset.read(AppendedValues);
   for (int i = 0; i < DataspaceSize; i++) {
-    ASSERT_EQ(AppendedValues.at(i), FbPointer->Values()->operator[](i));
+    ASSERT_EQ(AppendedValues.at(i), ValuesObjPtr->operator[](i));
   }
 
   auto NrOfTimeStampElements = TimestampDataset.dataspace().size();
@@ -141,13 +155,15 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
   auto FbPointer = GetSampleEnvironmentData(TestMsg.data());
 
+  auto ValuesObjPtr = FbPointer->Values_as_UInt16Array()->value();
+  auto ValuesSize = ValuesObjPtr->size();
+
   auto DataspaceSize = RawValuesDataset.dataspace().size();
-  EXPECT_EQ(DataspaceSize, FbPointer->Values()->size() * 2);
+  EXPECT_EQ(DataspaceSize, ValuesSize * 2);
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
   RawValuesDataset.read(AppendedValues);
   for (int i = 0; i < DataspaceSize; i++) {
-    ASSERT_EQ(AppendedValues.at(i),
-              FbPointer->Values()->operator[](i % FbPointer->Values()->size()));
+    ASSERT_EQ(AppendedValues.at(i), ValuesObjPtr->operator[](i % ValuesSize));
   }
 
   EXPECT_EQ(TimestampDataset.dataspace().size(), DataspaceSize);
@@ -155,7 +171,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   std::vector<std::uint32_t> CueIndex(2);
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0u);
-  EXPECT_EQ(CueIndex.at(1), FbPointer->Values()->size());
+  EXPECT_EQ(CueIndex.at(1), ValuesSize);
 
   std::vector<std::uint32_t> CueTimestamp(2);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
@@ -165,13 +181,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
 
 TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   size_t BufferSize;
-  auto Buffer = GenerateFlatbufferData(BufferSize);
-  auto FbPointer = GetSampleEnvironmentData(Buffer.get());
-  auto ValueLengthPtr =
-      reinterpret_cast<flatbuffers::uoffset_t *>(
-          const_cast<std::uint8_t *>(FbPointer->Values()->Data())) -
-      1;
-  *ValueLengthPtr = 0;
+  auto Buffer = GenerateFlatbufferData(BufferSize, 0);
   WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
@@ -189,13 +199,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
 
 TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   size_t BufferSize;
-  auto Buffer = GenerateFlatbufferData(BufferSize);
+  auto Buffer = GenerateFlatbufferData(BufferSize, 16, false);
   auto FbPointer = GetSampleEnvironmentData(Buffer.get());
-  auto TimestampsLengthPtr =
-      reinterpret_cast<flatbuffers::uoffset_t *>(
-          const_cast<std::uint8_t *>(FbPointer->Timestamps()->Data())) -
-      1;
-  *TimestampsLengthPtr = 0;
   WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
@@ -206,12 +211,15 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
 
+  auto ValuesObjPtr = FbPointer->Values_as_UInt16Array()->value();
+  auto ValuesSize = ValuesObjPtr->size();
+
   auto DataspaceSize = RawValuesDataset.dataspace().size();
-  EXPECT_EQ(DataspaceSize, FbPointer->Values()->size());
+  EXPECT_EQ(DataspaceSize, ValuesSize);
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
   RawValuesDataset.read(AppendedValues);
   for (int i = 0; i < DataspaceSize; i++) {
-    ASSERT_EQ(AppendedValues.at(i), FbPointer->Values()->operator[](i));
+    ASSERT_EQ(AppendedValues.at(i), ValuesObjPtr->operator[](i));
   }
 
   auto NrOfTimeStampElements = TimestampDataset.dataspace().size();
