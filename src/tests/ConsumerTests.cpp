@@ -59,11 +59,12 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   }
 }
 
-TEST_F(ConsumerTests, pollReturnsConsumerMessageWithEmptyPollStatusIfTimedOut) {
+TEST_F(ConsumerTests,
+       pollReturnsConsumerMessageWithEmptyPollStatusIfEndofPartition) {
   auto *Message = new MockMessage;
   REQUIRE_CALL(*Message, err())
       .TIMES(1)
-      .RETURN(RdKafka::ErrorCode::ERR__TIMED_OUT);
+      .RETURN(RdKafka::ErrorCode::ERR__PARTITION_EOF);
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
   REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
@@ -75,7 +76,7 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithEmptyPollStatusIfTimedOut) {
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<Kafka::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage.first, PollStatus::TimedOut);
+    ASSERT_EQ(ConsumedMessage.first, PollStatus::EndOfPartition);
   }
 }
 
