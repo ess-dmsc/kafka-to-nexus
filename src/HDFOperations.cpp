@@ -354,6 +354,7 @@ public:
   JsonConfig::Field<nlohmann::json> Attributes{this, "attributes", ""};
   JsonConfig::Field<std::string> Target{this, "target", ""};
   JsonConfig::Field<nlohmann::json> Stream{this, "stream", ""};
+
 private:
   JsonConfig::Field<nlohmann::json> Size{this, "size", ""}; // Unused
 };
@@ -412,9 +413,9 @@ void createHDFStructures(
     }
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
-    Logger->error(
-        "Failed to create structure with path \"{}\" ({} levels deep). Message was: {}",
-        std::string(Parent.link().path()), Level, e.what());
+    Logger->error("Failed to create structure with path \"{}\" ({} levels "
+                  "deep). Message was: {}",
+                  std::string(Parent.link().path()), Level, e.what());
   }
 }
 
@@ -424,7 +425,7 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json) {
     if (Children.is_array()) {
       for (auto &Child : Children) {
         auto NodeGroup = Group.get_group(Child.at("name").get<std::string>());
-        addLinkToNode(NodeGroup,Child);
+        addLinkToNode(NodeGroup, Child);
       }
     }
   }
@@ -459,10 +460,9 @@ void addLinkToNode(hdf5::node::Group const &Group, nlohmann::json const &Json) {
         if (0 > H5Olink(TargetID, static_cast<hid_t>(Group),
                         CNode.Name.getValue().c_str(), H5P_DEFAULT,
                         H5P_DEFAULT)) {
-          LOG_WARN(
-              "can not create link name: {}  in group: {}  to target: {}",
-              CNode.Name.getValue(), std::string(Group.link().path()),
-              ChildNode.Target.getValue());
+          LOG_WARN("can not create link name: {}  in group: {}  to target: {}",
+                   CNode.Name.getValue(), std::string(Group.link().path()),
+                   ChildNode.Target.getValue());
           continue;
         }
       }
