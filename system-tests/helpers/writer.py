@@ -53,7 +53,9 @@ def wait_start_job(
                 )
             time.sleep(0.5)
     except RuntimeError as e:
-        raise RuntimeError(e.__str__() + f" The message was: {start_handler.get_message()}")
+        raise RuntimeError(
+            e.__str__() + f" The message was: {start_handler.get_message()}"
+        )
     return job_handler
 
 
