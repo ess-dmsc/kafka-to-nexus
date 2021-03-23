@@ -201,7 +201,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addSecondsDurationOption(
       App, "--kafka-metadata-max-timeout-seconds",
       MainOptions.StreamerConfiguration.BrokerSettings.MaxMetadataTimeout,
-      "Max timoeut for kafka metadata calls. Note: metadata calls block the "
+      "Max timeout for kafka metadata calls. Note: metadata calls block the "
       "application.",
       true);
   addSecondsDurationOption(

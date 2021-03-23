@@ -407,6 +407,7 @@ void createHDFStructures(
       HDFStreamInfo.push_back(StreamHDFInfo{pathstr, Value->dump()});
     } else if (CNode.Type.getValue() == "dataset") {
       writeDataset(Parent, Value, Logger);
+      writeAttributesIfPresent(Parent.get_dataset(CNode.Name.getValue()), *Value);
     } else {
       Logger->error("Unknown hdf node of type {}. Ignoring.",
                     CNode.Type.getValue());
