@@ -109,7 +109,7 @@ void MessageWriter::threadFunction() {
   while (RunThread.load()) {
     WriteOperation();
     FlushOperation();
-    if (not RunThread.load()) { // cppcheck-suppress oppositeInnerCondition
+    if (not RunThread.load()) {
       break;
     }
     std::this_thread::sleep_for(SleepTime);
