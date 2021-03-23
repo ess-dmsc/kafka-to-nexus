@@ -310,13 +310,13 @@ public:
   }
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<nlohmann::json> Value{this, {"value", "values"}};
-  JsonConfig::Field<std::string> Type{this, "type", ""};
   JsonConfig::Field<std::string> DataType{this, "dtype", "double"};
   JsonConfig::Field<std::string> Space{this, "space", "simple"};
   JsonConfig::Field<size_t> StringSize{this, "string_size", 0};
   JsonConfig::Field<nlohmann::json> Attributes{this, "attributes", ""};
 
 private:
+  JsonConfig::Field<std::string> Type{this, "type", ""};
   JsonConfig::Field<nlohmann::json> Size{this, "size", ""}; // Unused
 };
 
@@ -344,7 +344,7 @@ public:
   explicit JSONHdfNode(nlohmann::json const &JsonObj) {
     processConfigData(JsonObj);
   }
-  JsonConfig::RequiredField<std::string> Name{this, "name"};
+  JsonConfig::Field<std::string> Name{this, "name", ""};
   JsonConfig::RequiredField<std::string> Type{this, "type"};
   JsonConfig::Field<nlohmann::json> Value{this, {"value", "values"}, ""};
   JsonConfig::Field<nlohmann::json> Children{this, "children", ""};
@@ -353,7 +353,7 @@ public:
   JsonConfig::Field<size_t> StringSize{this, "string_size", 0};
   JsonConfig::Field<nlohmann::json> Attributes{this, "attributes", ""};
   JsonConfig::Field<std::string> Target{this, "target", ""};
-
+  JsonConfig::Field<nlohmann::json> Stream{this, "stream", ""};
 private:
   JsonConfig::Field<nlohmann::json> Size{this, "size", ""}; // Unused
 };
@@ -371,6 +371,10 @@ void createHDFStructures(
     // The HDF object that we will maybe create at the current level.
     JSONHdfNode CNode(*Value);
     if (CNode.Type.getValue() == "group") {
+      if (CNode.Name.getValue().empty()) {
+        Logger->error("HDF group name was empty/missing, ignoring.");
+        return;
+      }
       try {
         auto CurrentGroup =
             Parent.create_group(CNode.Name, LinkCreationPropertyList);
@@ -409,13 +413,24 @@ void createHDFStructures(
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
     Logger->error(
-        "Failed to create structure  parent={} level={}. Message was: {}",
+        "Failed to create structure with path \"{}\" ({} levels deep). Message was: {}",
         std::string(Parent.link().path()), Level, e.what());
   }
 }
 
-void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
-              SharedLogger Logger) {
+void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json) {
+  if (auto ChildrenMaybe = find<nlohmann::json>("children", Json)) {
+    auto Children = *ChildrenMaybe;
+    if (Children.is_array()) {
+      for (auto &Child : Children) {
+        auto NodeGroup = Group.get_group(Child.at("name").get<std::string>());
+        addLinkToNode(NodeGroup,Child);
+      }
+    }
+  }
+}
+
+void addLinkToNode(hdf5::node::Group const &Group, nlohmann::json const &Json) {
   JSONHdfNode CNode(Json);
 
   if (not CNode.Children.hasDefaultValue() and
@@ -424,7 +439,7 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
       JSONHdfNode ChildNode(Child);
       if (ChildNode.Type.getValue() == "group") {
         auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
-        addLinks(ChildGroup, Child, Logger);
+        addLinkToNode(ChildGroup, Child);
       } else if (ChildNode.Type.getValue() == "link" and
                  not ChildNode.Target.hasDefaultValue()) {
         auto GroupBase = Group;
@@ -436,7 +451,7 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
         auto TargetID = H5Oopen(static_cast<hid_t>(GroupBase),
                                 TargetBase.c_str(), H5P_DEFAULT);
         if (TargetID < 0) {
-          Logger->warn(
+          LOG_WARN(
               "Can not find target object for link target: {}  in group: {}",
               ChildNode.Target.getValue(), std::string(Group.link().path()));
           continue;
@@ -444,7 +459,7 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
         if (0 > H5Olink(TargetID, static_cast<hid_t>(Group),
                         CNode.Name.getValue().c_str(), H5P_DEFAULT,
                         H5P_DEFAULT)) {
-          Logger->warn(
+          LOG_WARN(
               "can not create link name: {}  in group: {}  to target: {}",
               CNode.Name.getValue(), std::string(Group.link().path()),
               ChildNode.Target.getValue());

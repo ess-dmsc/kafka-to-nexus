@@ -150,7 +150,7 @@ void HDFFile::openFileInRegularMode() {
 }
 
 void HDFFile::addLinks() {
-  HDFOperations::addLinks(hdfGroup(), StoredNexusStructure, Logger);
+  HDFOperations::addLinks(hdfGroup(), StoredNexusStructure);
 }
 
 } // namespace FileWriter

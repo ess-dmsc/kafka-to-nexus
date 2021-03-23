@@ -7,25 +7,21 @@
         {
           "type": "dataset",
           "name": "duration",
-          "dataset": {
-            "type": "float",
-            "size": [
-              1
-            ]
-          },
+          "dtype": "float",
+          "size": [
+            1
+          ],
           "values": [
             1817.0
           ]
         },
         {
           "type": "dataset",
+          "dtype": "string",
           "name": "end_time",
-          "dataset": {
-            "type": "string",
-            "size": [
-              1
-            ]
-          },
+          "size": [
+            1
+          ],
           "values": [
             "2016-04-12T03:29:11"
           ]
@@ -33,12 +29,10 @@
         {
           "type": "dataset",
           "name": "features",
-          "dataset": {
-            "type": "uint64",
-            "size": [
-              1
-            ]
-          },
+          "dtype": "uint64",
+          "size": [
+            1
+          ],
           "values": [
             10138143369737381149
           ]
@@ -54,17 +48,13 @@
                 {
                   "type": "dataset",
                   "name": "depends_on",
-                  "dataset": {
-                    "type": "string"
-                  },
+                  "dtype": "string",
                   "values": "/entry/instrument/monitor1/transformations/location"
                 },
                 {
                   "type": "dataset",
                   "name": "detector_id",
-                  "dataset": {
-                    "type": "int64"
-                  },
+                  "dtype": "int64",
                   "values": 1
                 },
                 {
@@ -74,9 +64,7 @@
                     {
                       "type": "dataset",
                       "name": "location",
-                      "dataset": {
-                        "type": "double"
-                      },
+                      "dtype": "double",
                       "values": 12.064,
                       "attributes": [
                         {
@@ -94,7 +82,7 @@
                             0.0,
                             -1.0
                           ],
-                          "type": "double"
+                          "dtype": "double"
                         },
                         {
                           "name": "depends_on",
@@ -125,9 +113,7 @@
             {
               "type": "dataset",
               "name": "name",
-              "dataset": {
-                "type": "string"
-              },
+              "dtype": "string",
               "values": "SANS2D",
               "attributes": [
                 {
@@ -143,17 +129,13 @@
                 {
                   "type": "dataset",
                   "name": "depends_on",
-                  "dataset": {
-                    "type": "string"
-                  },
+                  "dtype": "string",
                   "values": "/entry/instrument/source/transformations/location"
                 },
                 {
                   "type": "dataset",
                   "name": "name",
-                  "dataset": {
-                    "type": "string"
-                  },
+                  "dtype": "string",
                   "values": "source"
                 },
                 {
@@ -163,9 +145,7 @@
                     {
                       "type": "dataset",
                       "name": "location",
-                      "dataset": {
-                        "type": "double"
-                      },
+                      "dtype": "double",
                       "values": 0.0,
                       "attributes": [
                         {
@@ -183,7 +163,7 @@
                             0.0,
                             0.0
                           ],
-                          "type": "double"
+                          "dtype": "double"
                         },
                         {
                           "name": "depends_on",
@@ -222,12 +202,10 @@
         {
           "type": "dataset",
           "name": "start_time",
-          "dataset": {
-            "type": "string",
-            "size": [
-              1
-            ]
-          },
+          "dtype": "string",
+          "size": [
+            1
+          ],
           "values": [
             "2016-04-12T02:58:52"
           ]
@@ -239,12 +217,10 @@
             {
               "type": "dataset",
               "name": "affiliation",
-              "dataset": {
-                "type": "string"
-              },
+              "dtype": "string",
               "values": "ISIS, STFC"
             }
-            ],
+          ],
           "attributes": [
             {
               "name": "NX_class",

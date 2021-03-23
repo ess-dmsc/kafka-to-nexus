@@ -61,8 +61,8 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               std::string const &Name,
                               nlohmann::json const &Values);
 
-void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
-              SharedLogger Logger);
+void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json);
+void addLinkToNode(hdf5::node::Group const &Group, nlohmann::json const &Json);
 
 Shape determineArrayDimensions(nlohmann::json const &Values);
 

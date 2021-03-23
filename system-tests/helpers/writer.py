@@ -43,14 +43,17 @@ def wait_start_job(
     job_handler = JobHandler(worker_finder=worker_command)
     start_handler = job_handler.start_job(write_job)
     start_time = datetime.now()
-    while not start_handler.is_done():
-        if start_time + timedelta(seconds=timeout) < datetime.now():
-            raise RuntimeError("Timed out when waiting for write job to start")
-        elif start_handler.get_state() == CommandState.ERROR:
-            raise RuntimeError(
-                f"Got error when trying to start job. Message was: {start_handler.get_message()}"
-            )
-        time.sleep(0.5)
+    try:
+        while not start_handler.is_done():
+            if start_time + timedelta(seconds=timeout) < datetime.now():
+                raise RuntimeError("Timed out when waiting for write job to start")
+            elif start_handler.get_state() == CommandState.ERROR:
+                raise RuntimeError(
+                    f"Got error when trying to start job. Message was: {start_handler.get_message()}"
+                )
+            time.sleep(0.5)
+    except RuntimeError as e:
+        raise RuntimeError(e.__str__() + f" The message was: {start_handler.get_message()}")
     return job_handler
 
 
