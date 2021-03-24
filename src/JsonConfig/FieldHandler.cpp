@@ -43,7 +43,7 @@ void FieldHandler::processConfigData(nlohmann::json const &JsonObj) {
     } else {
       auto CurrentField = FieldMap.find(Iter.key());
       try {
-        CurrentField->second->setValue(Iter.value().dump());
+        CurrentField->second->setValue(Iter.key(), Iter.value().dump());
       } catch (json::type_error &E) {
         LOG_ERROR("Got type error when trying to set json config "
                   "field value (with key \"{}\"). The error message was: {}",

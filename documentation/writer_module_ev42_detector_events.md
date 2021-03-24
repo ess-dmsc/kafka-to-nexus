@@ -21,11 +21,10 @@ Example `nexus_structure` to write radiation detector events:
   "nexus_structure": {
     "children": [
       {
-        "type": "stream",
-        "stream": {
+        "module": "ev42",
+        "config": {
           "topic": "the_kafka_topic",
-          "source": "the_source_name",
-          "writer_module": "ev42"
+          "source": "the_source_name"
         }
       }
     ]

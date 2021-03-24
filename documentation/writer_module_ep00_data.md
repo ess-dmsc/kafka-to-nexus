@@ -22,11 +22,10 @@ Example `nexus_structure` to write status messages from `ExampleTopic`:
             "name": "EpicsConnectionStatus",
             "children": [
               {
-                "type": "stream",
-                "stream": {
+                "module": "ep00",
+                "config": {
                   "topic": "ExampleTopic",
-                  "source": "SIMPLE:DOUBLE",
-                  "writer_module": "ep00"
+                  "source": "SIMPLE:DOUBLE"
                 }
               }
             ]

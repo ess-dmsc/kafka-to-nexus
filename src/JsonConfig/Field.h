@@ -47,7 +47,7 @@ public:
       : FieldBase(RegistrarPtr, std::vector<KeyString>{Key}) {}
 
   virtual ~FieldBase() {}
-  virtual void setValue(std::string const &NewValue) = 0;
+  virtual void setValue(std::string const &Key, std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
   [[nodiscard]] auto getKeys() const { return FieldKeys; }
   [[nodiscard]] bool isRequried() const { return FieldRequired; }
@@ -59,6 +59,28 @@ protected:
 private:
   std::vector<std::string> FieldKeys;
   bool FieldRequired{false};
+};
+
+template <class FieldType> class ObsoleteField : public FieldBase {
+public:
+  template <class FieldRegistrarType>
+  ObsoleteField(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys)
+      : FieldBase(RegistrarPtr, Keys) {}
+
+  template <class FieldRegistrarType>
+  ObsoleteField(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
+      : FieldBase(RegistrarPtr, Key) {}
+
+  void setValue(std::string const&, std::string const &) override {
+    LOG_WARN("The field with the key(s) \"{}\" is obsolete. Any value set will be ignored.", getKeys());
+  }
+
+  FieldType getValue() const {
+    throw std::runtime_error("Unable to return a value for the field with the key(s) \"{}\" as it has been made obsolete.", getKeys());
+    return {};
+  }
+
+  operator FieldType() const { return getValue(); }
 };
 
 template <class FieldType> class Field : public FieldBase {
@@ -73,37 +95,40 @@ public:
         FieldType DefaultValue)
       : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
-  void setValue(std::string const &ValueString) override {
-    setValueImpl<FieldType>(ValueString);
+  void setValue(std::string const &Key, std::string const &ValueString) override {
+    setValueImpl<FieldType>(Key, ValueString);
   }
 
   FieldType getValue() const { return FieldValue; }
 
   operator FieldType() const { return FieldValue; }
 
+  std::string getUsedKey() const { return UsedKey; }
+
 protected:
+  std::string UsedKey;
   FieldType FieldValue;
   using FieldBase::makeRequired;
 
 private:
   template <typename T,
             std::enable_if_t<!std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &ValueString) {
+  void setValueImpl(std::string const &Key, std::string const &ValueString) {
     auto JsonData = json::parse(ValueString);
-    setValueInternal(JsonData.get<FieldType>());
+    setValueInternal(Key, JsonData.get<FieldType>());
   }
 
   template <typename T,
             std::enable_if_t<std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &ValueString) {
+  void setValueImpl(std::string const &Key, std::string const &ValueString) {
     try {
       auto JsonData = json::parse(ValueString);
-      setValueInternal(JsonData.get<FieldType>());
+      setValueInternal(Key, JsonData.get<FieldType>());
     } catch (json::exception const &) {
-      setValueInternal(ValueString);
+      setValueInternal(Key, ValueString);
     }
   }
-  void setValueInternal(FieldType NewValue) {
+  void setValueInternal(std::string const &Key, FieldType NewValue) {
     if (not GotDefault) {
       auto Keys = getKeys();
       auto AllKeys =
@@ -113,6 +138,7 @@ private:
                "json config field with key(s): ",
                FieldValue, NewValue, AllKeys);
     }
+    UsedKey = Key;
     GotDefault = false;
     FieldValue = NewValue;
   }

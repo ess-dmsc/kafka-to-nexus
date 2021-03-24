@@ -18,11 +18,10 @@ Example `nexus_structure` to write chopper TDC timestamps:
   "nexus_structure": {
     "children": [
       {
-        "type": "stream",
-        "stream": {
+        "module": "tdct",
+        "config": {
           "topic": "the_kafka_topic",
-          "source": "the_source_name",
-          "writer_module": "tdct"
+          "source": "the_source_name"
         }
       }
     ]

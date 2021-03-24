@@ -44,8 +44,7 @@ void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
                          const std::string &Name, nlohmann::json const &Values);
 
-void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
-                  SharedLogger const &Logger);
+std::string writeDataset(hdf5::node::Group const &Parent, nlohmann::json const &Values);
 
 void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              const nlohmann::json &Values);

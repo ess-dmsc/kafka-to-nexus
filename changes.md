@@ -36,6 +36,7 @@ approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-
 - A warning/error message will now be produced if an unknown node in the JSON structure is encountered.
 - The shape of (multidimensional) static data sets and metadata sets have been unified such they are now in both cases determined from the shape of the actual data in the JSON-code. The `size` field for static data sets will thus be ignored.
 - Support for multiple different (non-UTF) text encodings was deemed fragile and incomplete and was thus removed. This means that the use of the `encoding`-field in a JSON structure will result in an error message.
+- The JSON structure for defining static and streaming datasets (writer modules in the later case) has been unified and made more logical. Read the corresponding documentation for how these structure should now be defined.
 
 ## Command system re-write
 

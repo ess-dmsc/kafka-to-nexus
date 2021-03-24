@@ -42,20 +42,20 @@ JobCreator::initializeHDF(FileWriterTask &Task,
 
 StreamSettings
 extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
+  if (StreamInfo.WriterModule.empty()) {
+    throw std::runtime_error("Empty writer module name encountered.");
+  }
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
 
   json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
 
-  auto ConfigStreamInner =
-      Command::Parser::getRequiredValue<json>("stream", ConfigStream);
-  StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
+  StreamSettings.ConfigStreamJson = ConfigStream.dump();
   StreamSettings.Topic = Command::Parser::getRequiredValue<std::string>(
-      "topic", ConfigStreamInner);
+      "topic", ConfigStream);
   StreamSettings.Source = Command::Parser::getRequiredValue<std::string>(
-      "source", ConfigStreamInner);
-  StreamSettings.Module = Command::Parser::getRequiredValue<std::string>(
-      "writer_module", ConfigStreamInner);
+      "source", ConfigStream);
+  StreamSettings.Module = StreamInfo.WriterModule;
   StreamSettings.Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
