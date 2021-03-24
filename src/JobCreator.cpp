@@ -51,10 +51,10 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
 
   StreamSettings.ConfigStreamJson = ConfigStream.dump();
-  StreamSettings.Topic = Command::Parser::getRequiredValue<std::string>(
-      "topic", ConfigStream);
-  StreamSettings.Source = Command::Parser::getRequiredValue<std::string>(
-      "source", ConfigStream);
+  StreamSettings.Topic =
+      Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
+  StreamSettings.Source =
+      Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
   StreamSettings.Module = StreamInfo.WriterModule;
   StreamSettings.Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")

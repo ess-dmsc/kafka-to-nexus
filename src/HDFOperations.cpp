@@ -96,6 +96,7 @@ public:
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<nlohmann::json> Value{this, {"value", "values"}};
   JsonConfig::Field<std::string> Type{this, {"type", "dtype"}, "double"};
+
 private:
   JsonConfig::ObsoleteField<nlohmann::json> Size{this, "size"};
   JsonConfig::ObsoleteField<size_t> StringSize{this, "string_size"};
@@ -313,12 +314,17 @@ public:
   JsonConfig::RequiredField<std::string> Name{this, "name"};
   JsonConfig::RequiredField<nlohmann::json> Value{this, {"value", "values"}};
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "double"};
+
 private:
   JsonConfig::ObsoleteField<size_t> StringSize{this, "string_size"};
-  JsonConfig::ObsoleteField<nlohmann::json> Size{this, "size", }; // Unused
+  JsonConfig::ObsoleteField<nlohmann::json> Size{
+      this,
+      "size",
+  }; // Unused
 };
 
-std::string writeDataset(hdf5::node::Group const &Parent, nlohmann::json const &Values) {
+std::string writeDataset(hdf5::node::Group const &Parent,
+                         nlohmann::json const &Values) {
 
   JSONDataset Dataset(Values);
 
@@ -406,7 +412,8 @@ void createHDFStructures(
           // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
-        HDFStreamInfo.push_back(StreamHDFInfo{CNode.Type.getValue(), pathstr, CNode.Config.getValue().dump()});
+        HDFStreamInfo.push_back(StreamHDFInfo{CNode.Type.getValue(), pathstr,
+                                              CNode.Config.getValue().dump()});
       }
     }
   } catch (const std::exception &e) {

@@ -47,7 +47,8 @@ public:
       : FieldBase(RegistrarPtr, std::vector<KeyString>{Key}) {}
 
   virtual ~FieldBase() {}
-  virtual void setValue(std::string const &Key, std::string const &NewValue) = 0;
+  virtual void setValue(std::string const &Key,
+                        std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
   [[nodiscard]] auto getKeys() const { return FieldKeys; }
   [[nodiscard]] bool isRequried() const { return FieldRequired; }
@@ -64,19 +65,24 @@ private:
 template <class FieldType> class ObsoleteField : public FieldBase {
 public:
   template <class FieldRegistrarType>
-  ObsoleteField(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys)
+  ObsoleteField(FieldRegistrarType *RegistrarPtr,
+                std::vector<KeyString> const &Keys)
       : FieldBase(RegistrarPtr, Keys) {}
 
   template <class FieldRegistrarType>
   ObsoleteField(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
       : FieldBase(RegistrarPtr, Key) {}
 
-  void setValue(std::string const&, std::string const &) override {
-    LOG_WARN("The field with the key(s) \"{}\" is obsolete. Any value set will be ignored.", getKeys());
+  void setValue(std::string const &, std::string const &) override {
+    LOG_WARN("The field with the key(s) \"{}\" is obsolete. Any value set will "
+             "be ignored.",
+             getKeys());
   }
 
   FieldType getValue() const {
-    throw std::runtime_error("Unable to return a value for the field with the key(s) \"{}\" as it has been made obsolete.", getKeys());
+    throw std::runtime_error("Unable to return a value for the field with the "
+                             "key(s) \"{}\" as it has been made obsolete.",
+                             getKeys());
     return {};
   }
 
@@ -95,7 +101,8 @@ public:
         FieldType DefaultValue)
       : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
-  void setValue(std::string const &Key, std::string const &ValueString) override {
+  void setValue(std::string const &Key,
+                std::string const &ValueString) override {
     setValueImpl<FieldType>(Key, ValueString);
   }
 
