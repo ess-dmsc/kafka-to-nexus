@@ -66,10 +66,6 @@ void addWriterModule(ModuleFlatbufferID const &ID,
     throw std::runtime_error(
         "The number of characters in the Flatbuffer id string must be 4.");
   }
-  if (ModuleName == "dataset") {
-    throw std::runtime_error("The writer module name \"dataset\" has been "
-                             "reserved and can not be used.");
-  }
   auto ModuleHash = getWriterModuleHash(ID, ModuleName);
   if (Factories.find(ModuleHash) != Factories.end()) {
     auto s = fmt::format("Writer module with name \"{}\" that processes \"{}\" "

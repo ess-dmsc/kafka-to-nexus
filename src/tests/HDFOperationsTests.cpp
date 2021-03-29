@@ -96,11 +96,12 @@ public:
 TEST_F(HDFStaticDataTest, UntypedSingleInt) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "values" : 3
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -111,11 +112,12 @@ TEST_F(HDFStaticDataTest, UntypedSingleInt) {
 TEST_F(HDFStaticDataTest, UntypedSingleIntAlt) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "values" : [3]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -126,11 +128,12 @@ TEST_F(HDFStaticDataTest, UntypedSingleIntAlt) {
 TEST_F(HDFStaticDataTest, UntypedSingleFloat) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "values" : [3.145]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -141,11 +144,12 @@ TEST_F(HDFStaticDataTest, UntypedSingleFloat) {
 TEST_F(HDFStaticDataTest, UntypedSingleFloatAlt) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "values" : 3.145
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -156,34 +160,37 @@ TEST_F(HDFStaticDataTest, UntypedSingleFloatAlt) {
 TEST_F(HDFStaticDataTest, UntypedSingleString) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "values" : "Hello"
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, Temp),
+  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()),
                std::runtime_error);
 }
 
 TEST_F(HDFStaticDataTest, UntypedSingleStringAlt) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "values" : ["Hello"]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, Temp),
+  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()),
                std::runtime_error);
 }
 
 TEST_F(HDFStaticDataTest, IntArray1) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "dtype": "uint64",
     "values" : [1, 2, 3]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<uint64_t> DatasetValues(3);
   HDFDataset.read(DatasetValues);
@@ -194,12 +201,13 @@ TEST_F(HDFStaticDataTest, IntArray1) {
 TEST_F(HDFStaticDataTest, IntArray2) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "dtype": "uint64",
     "values" : [[1, 2, 3], [4, 5, 6]]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<uint64_t> DatasetValues(6);
   HDFDataset.read(DatasetValues);
@@ -218,12 +226,13 @@ TEST_F(HDFStaticDataTest, IntArray2) {
 TEST_F(HDFStaticDataTest, SingleString) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "dtype": "string",
     "values" : "some string"
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
   HDFDataset.read(DatasetValues.Data);
@@ -235,12 +244,13 @@ TEST_F(HDFStaticDataTest, SingleString) {
 TEST_F(HDFStaticDataTest, SingleStringAlt) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "dtype": "string",
     "values" : ["some string"]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
   HDFDataset.read(DatasetValues.Data);
@@ -252,12 +262,13 @@ TEST_F(HDFStaticDataTest, SingleStringAlt) {
 TEST_F(HDFStaticDataTest, StringArray) {
   std::string JsonString = R""(
   {
+    "type": "dataset",
     "name": "some_name",
     "dtype": "string",
     "values" : [["a", "b"], ["c", "d"]]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, Temp);
+  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({2, 2});
   HDFDataset.read(DatasetValues.Data);

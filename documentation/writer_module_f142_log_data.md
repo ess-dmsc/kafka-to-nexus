@@ -22,10 +22,11 @@ Example `nexus_structure` to write a scalar `double` value:
   "nexus_structure": {
     "children": [
       {
-        "module": "f142",
-        "config": {
+        "type": "stream",
+        "stream": {
           "topic": "the_kafka_topic",
           "source": "the_source_name",
+          "writer_module": "f142",
           "type": "double",
           "value_units": "cubits"
         }
@@ -44,10 +45,11 @@ For arrays, we have to specify the `array_size`:
   "nexus_structure": {
     "children": [
       {
-        "module": "f142",
-        "config": {
+        "type": "stream",
+        "stream": {
           "topic": "the_kafka_topic",
           "source": "the_source_name",
+          "writer_module": "f142",
           "type": "double",
           "array_size": 32
         }

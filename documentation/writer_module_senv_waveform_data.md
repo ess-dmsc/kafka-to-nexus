@@ -18,10 +18,11 @@ Example `nexus_structure` to write sample environment wave forms:
   "nexus_structure": {
     "children": [
       {
-        "module": "senv",
-        "config": {
+        "type": "stream",
+        "stream": {
           "topic": "the_kafka_topic",
-          "source": "the_source_name"
+          "source": "the_source_name",
+          "writer_module": "senv"
         }
       }
     ]

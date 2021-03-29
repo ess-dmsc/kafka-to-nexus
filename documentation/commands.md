@@ -52,14 +52,12 @@ The `nexus_structure` represents the HDF root object of the file to be written.
 For more detailed information on all aspects of HDF5 see the [official HDF5 documentation](https://portal.hdfgroup.org/display/HDF5/HDF5).
 For more information about NeXus see the [NeXus website](https://www.nexusformat.org/).
 
-#### Groups
-
 Groups are the container mechanism by which HDF5 files are organised; they can be thought of as analogous to directories in a file system. In the file-writer, they can contain datasets, streams, links or, even, other groups in their array of `children`. They can also have attributes defined which are used to provide metadata about the group; see [below](Attributes) for more information on attributes.
 
 NeXus classes are defined using a group with an attribute named `NX_class` which contains the relevant class name.
 Other NeXus-related information can also defined using attributes. See the [NeXus website](https://www.nexusformat.org/) for more information.
 
-The following shows a simple example of a structure of nested groups:
+The following shows an example of adding a group to a structure:
 
 ```JSON
 "nexus_structure": {
@@ -69,48 +67,10 @@ The following shows a simple example of a structure of nested groups:
         "name": "my_test_group",
         "children": [
           {
-            "type": "group",
-            "name": "my_nested_group_1"
-          },
-          {
-            "type": "group",
-            "name": "my_nested_group_2",
-            "attributes": [
-              {
-                "NX_class": "NXlog",
-                "unit": "blintz"
-              }
-            ]
-          }
-        ],
-        "attributes": [
-          {
-            "NX_class": "NXentry",
-            "origin": "spaaaaace"
-          }
-        ]
-      }
-    ]
-}
-```
-
-In the above example, the attributes are assigned to the groups that are defined on the same level.
-
-#### Data streams *alt.* writer modules
-
-The (stream/writer) module definition instructs the file-writer that there is data available which should be written to the containing group. The example below illustrates how this can be done.
-
-```JSON
-"nexus_structure": {
-    "children": [
-      {
-        "type": "group",
-        "name": "my_test_group",
-        "children": [
-          {
-            "module": "f142",
-            "config": {
+            "type": "stream",
+            "stream": {
               "dtype": "double",
+              "writer_module": "f142",
               "source": "my_test_pv",
               "topic": "my_test_topic"
             }
@@ -118,8 +78,8 @@ The (stream/writer) module definition instructs the file-writer that there is da
         ],
         "attributes": [
           {
-            "NXclass": "NXtransformation",
-            "unit": "mm"
+            "name": "units",
+            "values": "ms"
           }
         ]
       }
@@ -128,37 +88,44 @@ The (stream/writer) module definition instructs the file-writer that there is da
 ```
 
 
-In the example above, a group called my_test_group is defined which in turn has a (stream) writer module and an attribute defined.
+In the example above, a group called my_test_group is defined which in turn has a stream and an attribute defined.
+The stream definition instructs the file-writer that there is data available which should be written to the containing group.
+The parameters for the stream definition are:
 
-The parameters for the stream/module definition are:
-
-- module: The either the file identifier of a FlatBuffers schema in the [streaming-data-types](https://github.com/ess-dmsc/streaming-data-types) repository that was used to serialise the data or another identifier if there exists multiple writer modules for the same schema.
-- dtype: The type of the data. The possible types are defined in the schema declared in the `writer_module`. Program allows both `type` and `dtype` spellings for better Python usability. **Note** that not all the writer modules take this parameter. 
+- writer_module: The FlatBuffers schema in the [streaming-data-types](https://github.com/ess-dmsc/streaming-data-types) repository that was used to serialise the data.
+- type/dtype: The type of the data. The possible types are defined in the schema declared in the `writer_module`. Program allows both `type` and `dtype` spellings for better python usability.
 - source: The name of the data source. For example, the EPICS PV name.
 - topic: The Kafka topic where the data can be found.
 
-Note also that some module specific parameters exists. You can find the documentation on individual writer modules in this directory.
+Note: some streams are automatically assigned a NeXus class based on the `writer_module` while some need a NeXus class declaring.
 
-A NX_class value will be assigned to the group containing the dataset automatically. If you want to override this assignment, set the corresponding attribute of the group.
-
-
-#### Static datasets
-
-Static datasets use the same general structure as writer-modules.
+In the following example a dataset is defined:
 
 ```JSON
 "nexus_structure": {
     "children": [
       {
-        "module": "dataset",
-        "config": {
-          "name": "some_static_data",
-          "dtype": "int64",
-          "values": [
-            [0, 1, 3 ],
-            [2, 2, 1 ]
-          ]
+        "name": "some_static_data",
+        "type": "dataset",
+        "dataset": {
+          "size": [
+            2,
+            3
+          ],
+          "type": "int64"
         },
+        "values": [
+          [
+            0,
+            1,
+            3
+          ],
+          [
+            2,
+            2,
+            1
+          ]
+        ]
         "attributes": {
           "NX_class": "NXlog"
         }
@@ -167,16 +134,14 @@ Static datasets use the same general structure as writer-modules.
 }
 ```
 
-In the above example, a dataset is defined which contains some values in two dimenstional array.
-
+In the above example a dataset is defined which contains some values in a 1-D array.
 The parameters for the dataset definition are:
-- name: The name of the dataset in the NeXus file.
-- values: The data to be stored in the dataset. Note that the shape of the dataset is determined from the layout of the data in the JSON structure.
-- dtype: The data type of the individual elements in the dataset. Defaults to double.
 
-In this example, attributes are assigned to the dataset on the same level in the hierarchy.
+- dataset: Defines information about the dataset:
+  * size: The shape of the data. Can be scalar, 1-D, 2-D, and so on.
+- values: Contains the actual data.
 
-#### Links
+The attributes are used to define the NeXus class as log data.
 
 In HDF5 links are used to link a group to objects in other groups in a manner similar to links on a filesystem.
 The links are created as hard links when the file is closed. A link is defined in the `children` of a group.
@@ -202,12 +167,21 @@ For example:
       "name": "group_with_dataset",
       "children": [
         {
-          "module": "dataset",
-          "config": {
-            "name": "some_static_data",
-            "dtype": "int64",
-            "values": [ 0, 1, 3, 2, 2 ]
+          "name": "some_static_data",
+          "type": "dataset",
+          "dataset": {
+            "size": [
+              5
+            ],
+            "type": "int64"
           },
+          "values": [
+            0,
+            1,
+            3,
+            2,
+            2
+          ],
           "attributes": {
             "NX_class": "NXlog"
           }
@@ -286,12 +260,14 @@ For example:
   {
     "name": "some_string_attribute",
     "values": "some_string_value",
-    "dtype": "string",
+    "type": "string",
+    "encoding": "ascii",
+    "string_size": 17
   },
   {
     "name": "array_attribute",
     "values": [1, 2, 3],
-    "dtype": "uint32"
+    "type": "uint32"
   }
 ]
 ```

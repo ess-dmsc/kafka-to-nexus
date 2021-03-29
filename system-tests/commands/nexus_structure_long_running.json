@@ -9,11 +9,12 @@
       "name": "cont_data",
       "children": [
         {
-          "module": "f142",
-          "config": {
+          "type": "stream",
+          "stream": {
             "type": "double",
             "topic": "TEST_forwarderDataLR",
-            "source": "SIMPLE:DOUBLE"
+            "source": "SIMPLE:DOUBLE",
+            "writer_module": "f142"
           }
         }
       ],

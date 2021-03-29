@@ -21,10 +21,11 @@ Example `nexus_structure` to write sample environment wave forms:
   "nexus_structure": {
     "children": [
       {
-        "module": "NDAr",
-        "config": {
+        "type": "stream",
+        "stream": {
           "topic": "the_kafka_topic",
           "source": "the_source_name",
+          "writer_module": "NDAr",
           "array_size": [256,256],
           "chunk_size": [2048,256],
           "dtype": "uint64",

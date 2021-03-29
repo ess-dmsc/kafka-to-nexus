@@ -24,10 +24,11 @@
               "name": "dataset1",
               "children": [
                 {
-                  "module": "f142",
-                  "config": {
+                  "type": "stream",
+                  "stream": {
                     "source": "test_source_1",
-                    "topic": "TEST_sampleEnv"
+                    "topic": "TEST_sampleEnv",
+                    "writer_module": "f142"
                   }
                 }
               ]
@@ -37,10 +38,11 @@
               "name": "dataset2",
               "children": [
                 {
-                  "module": "f142",
-                  "config": {
+                  "type": "stream",
+                  "stream": {
                     "source": "test_source_2",
-                    "topic": "TEST_sampleEnv"
+                    "topic": "TEST_sampleEnv",
+                    "writer_module": "f142_test"
                   }
                 }
               ]

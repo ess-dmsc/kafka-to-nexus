@@ -26,11 +26,9 @@ TEST_F(HDFFileAttributesTest,
   std::string CommandWithNumericalAttr = R""({
       "children": [
         {
-          "module": "dataset",
-          "config": {
-            "name": "dataset_with_numerical_attr",
-            "values" : 3
-          },
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
           "attributes": {
             "the_answer_is": 42
           }
@@ -355,11 +353,9 @@ TEST_F(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
   std::string CommandWithNumericalAttr = R""({
       "children": [
         {
-          "module": "dataset",
-          "config": {
-            "name": "dataset_with_numerical_attr",
-            "values" : 3
-          },
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
           "attributes": [
             {
               "name": "vec",
@@ -385,11 +381,9 @@ TEST_F(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
   std::string CommandWithNumericalAttr = R""({
       "children": [
         {
-          "module": "dataset",
-          "config": {
-            "name": "dataset_with_numerical_attr",
-            "values" : 3
-          },
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
           "attributes": [
             {
               "name": "vec",
@@ -416,11 +410,9 @@ TEST_F(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
   std::string CommandWithNumericalAttr = R""({
       "children": [
         {
-          "module": "dataset",
-          "config": {
-            "name": "dataset_with_numerical_attr",
-            "values" : 3
-          },
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
           "attributes": [
             {
               "name": "vec",
@@ -447,11 +439,9 @@ TEST_F(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
   std::string CommandWithNumericalAttr = R""({
       "children": [
         {
-          "module": "dataset",
-          "config": {
-            "name": "dataset_with_numerical_attr",
-            "values" : 3
-          },
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
           "attributes": [
             {
               "name": "vec",

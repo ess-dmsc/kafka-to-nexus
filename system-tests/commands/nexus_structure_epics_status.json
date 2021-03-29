@@ -5,10 +5,11 @@
       "name": "EpicsConnectionStatus",
       "children": [
         {
-          "module": "ep00",
-          "config": {
+          "type": "stream",
+          "stream": {
             "topic": "TEST_epicsConnectionStatus",
-            "source": "SIMPLE:DOUBLE"
+            "source": "SIMPLE:DOUBLE",
+            "writer_module": "ep00"
           }
         }
       ]
