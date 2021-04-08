@@ -30,7 +30,7 @@ StreamController::~StreamController() {
 }
 
 void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
-  Executor.sendWork([=](){
+  Executor.sendWork([=]() {
     KafkaSettings.StopTimestamp = time_point(StopTime);
     auto CStopTime = std::chrono::system_clock::time_point(StopTime);
     for (auto &s : Streamers) {

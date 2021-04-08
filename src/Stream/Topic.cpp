@@ -48,7 +48,7 @@ void Topic::stop() {
 }
 
 void Topic::setStopTime(std::chrono::system_clock::time_point StopTime) {
-  Executor.sendWork([=](){
+  Executor.sendWork([=]() {
     StopConsumeTime = StopTime;
     for (auto &Stream : ConsumerThreads) {
       Stream->setStopTime(StopTime);
