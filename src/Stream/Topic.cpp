@@ -48,9 +48,12 @@ void Topic::stop() {
 }
 
 void Topic::setStopTime(std::chrono::system_clock::time_point StopTime) {
-  for (auto &Stream : ConsumerThreads) {
-    Stream->setStopTime(StopTime);
-  }
+  Executor.sendWork([=](){
+    StopConsumeTime = StopTime;
+    for (auto &Stream : ConsumerThreads) {
+      Stream->setStopTime(StopTime);
+    }
+  });
 }
 
 void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
