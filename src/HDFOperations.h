@@ -21,10 +21,10 @@ namespace HDFOperations {
 
 bool findType(nlohmann::basic_json<> Attribute, std::string &DType);
 
-void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value);
+void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const &Value);
 
 void createHDFStructures(
-    const nlohmann::json *Value, hdf5::node::Group const &Parent,
+    const nlohmann::json &Value, hdf5::node::Group const &Parent,
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
@@ -44,7 +44,7 @@ void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
                          const std::string &Name, nlohmann::json const &Values);
 
-void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
+void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json &Values,
                   SharedLogger const &Logger);
 
 void writeObjectOfAttributes(hdf5::node::Node const &Node,

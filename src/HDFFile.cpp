@@ -80,7 +80,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
         auto Children = *ChildrenMaybe;
         if (Children.is_array()) {
           for (auto &Child : Children) {
-            createHDFStructures(&Child, RootGroup, 0, lcpl, var_string,
+            createHDFStructures(Child, RootGroup, 0, lcpl, var_string,
                                 StreamHDFInfo, path, Logger);
           }
         }

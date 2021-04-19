@@ -101,7 +101,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleInt) {
     "values" : 3
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -117,7 +117,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleIntAlt) {
     "values" : [3]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -133,7 +133,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleFloat) {
     "values" : [3.145]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -149,7 +149,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleFloatAlt) {
     "values" : 3.145
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<double> DatasetValues(1);
   HDFDataset.read(DatasetValues);
@@ -165,7 +165,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleString) {
     "values" : "Hello"
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()),
+  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, Temp, getLogger()),
                std::runtime_error);
 }
 
@@ -177,7 +177,7 @@ TEST_F(HDFStaticDataTest, UntypedSingleStringAlt) {
     "values" : ["Hello"]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, &Temp, getLogger()),
+  EXPECT_THROW(HDFOperations::writeDataset(RootGroup, Temp, getLogger()),
                std::runtime_error);
 }
 
@@ -190,7 +190,7 @@ TEST_F(HDFStaticDataTest, IntArray1) {
     "values" : [1, 2, 3]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<uint64_t> DatasetValues(3);
   HDFDataset.read(DatasetValues);
@@ -207,7 +207,7 @@ TEST_F(HDFStaticDataTest, IntArray2) {
     "values" : [[1, 2, 3], [4, 5, 6]]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<uint64_t> DatasetValues(6);
   HDFDataset.read(DatasetValues);
@@ -232,7 +232,7 @@ TEST_F(HDFStaticDataTest, SingleString) {
     "values" : "some string"
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
   HDFDataset.read(DatasetValues.Data);
@@ -250,7 +250,7 @@ TEST_F(HDFStaticDataTest, SingleStringAlt) {
     "values" : ["some string"]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({1});
   HDFDataset.read(DatasetValues.Data);
@@ -268,7 +268,7 @@ TEST_F(HDFStaticDataTest, StringArray) {
     "values" : [["a", "b"], ["c", "d"]]
   })"";
   auto Temp = nlohmann::json::parse(JsonString);
-  HDFOperations::writeDataset(RootGroup, &Temp, getLogger());
+  HDFOperations::writeDataset(RootGroup, Temp, getLogger());
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   MultiVector<std::string> DatasetValues({2, 2});
   HDFDataset.read(DatasetValues.Data);
@@ -278,4 +278,141 @@ TEST_F(HDFStaticDataTest, StringArray) {
   ExpectedDataset.at({1, 0}) = "c";
   ExpectedDataset.at({1, 1}) = "d";
   EXPECT_EQ(DatasetValues, ExpectedDataset);
+}
+
+class HDFGroupCreationTest : public ::testing::Test {
+public:
+  void SetUp() override {
+    TestFile =
+        HDFFileTestHelper::createInMemoryTestFile("test-static-data.nxs", true);
+    RootGroup = TestFile->hdfGroup();
+    var_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    lcpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  }
+  hdf5::property::AttributeCreationList acpl;
+
+  hdf5::property::LinkCreationList lcpl;
+
+  hdf5::datatype::String var_string{hdf5::datatype::String::variable()};
+  std::unique_ptr<HDFFileTestHelper::DebugHDFFile> TestFile;
+  hdf5::node::Group RootGroup;
+};
+
+TEST_F(HDFGroupCreationTest, SingleGroup) {
+  std::string JsonString = R""({"type": "group","name": "some_group"})"";
+  auto Temp = nlohmann::json::parse(JsonString);
+  std::deque<std::string> path;
+  std::vector<StreamHDFInfo> StreamHDFInfo;
+  HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
+                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+  EXPECT_TRUE(RootGroup.has_group("some_group"));
+}
+
+TEST_F(HDFGroupCreationTest, SingleNestedGroup) {
+  std::string JsonString = R""(
+  {
+    "type": "group",
+    "name": "some_group",
+    "children": [
+      {
+        "type": "group",
+        "name": "some_other_group"
+      }
+    ]
+  })"";
+  auto Temp = nlohmann::json::parse(JsonString);
+  std::deque<std::string> path;
+  std::vector<StreamHDFInfo> StreamHDFInfo;
+  HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
+                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+  ASSERT_TRUE(RootGroup.has_group("some_group"));
+  auto SubGroup = RootGroup.get_group("some_group");
+  EXPECT_TRUE(SubGroup.has_group("some_other_group"));
+}
+
+TEST_F(HDFGroupCreationTest, TwoNestedGroups) {
+  std::string JsonString = R""(
+  {
+    "type": "group",
+    "name": "some_group",
+    "children": [
+      {
+        "type": "group",
+        "name": "some_other_group1"
+      },
+      {
+        "type": "group",
+        "name": "some_other_group2"
+      }
+    ]
+  })"";
+  auto Temp = nlohmann::json::parse(JsonString);
+  std::deque<std::string> path;
+  std::vector<StreamHDFInfo> StreamHDFInfo;
+  HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
+                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+  ASSERT_TRUE(RootGroup.has_group("some_group"));
+  auto SubGroup = RootGroup.get_group("some_group");
+  EXPECT_TRUE(SubGroup.has_group("some_other_group1"));
+  EXPECT_TRUE(SubGroup.has_group("some_other_group2"));
+}
+
+TEST_F(HDFGroupCreationTest, TwoIdenticalGroupNames) {
+  std::string JsonString = R""(
+  {
+    "type": "group",
+    "name": "some_group",
+    "children": [
+      {
+        "type": "group",
+        "name": "identical_group_name"
+      },
+      {
+        "type": "group",
+        "name": "identical_group_name"
+      }
+    ]
+  })"";
+  auto Temp = nlohmann::json::parse(JsonString);
+  std::deque<std::string> path;
+  std::vector<StreamHDFInfo> StreamHDFInfo;
+  HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
+                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+  ASSERT_TRUE(RootGroup.has_group("some_group"));
+  auto SubGroup = RootGroup.get_group("some_group");
+  EXPECT_TRUE(SubGroup.has_group("identical_group_name"));
+  EXPECT_TRUE(SubGroup.has_group("identical_group_name(2)"));
+}
+
+TEST_F(HDFGroupCreationTest, ThreeIdenticalGroupNames) {
+  std::string JsonString = R""(
+  {
+    "type": "group",
+    "name": "some_group",
+    "children": [
+      {
+        "type": "group",
+        "name": "identical_group_name"
+      },
+      {
+        "type": "group",
+        "name": "identical_group_name"
+      },
+      {
+        "type": "group",
+        "name": "identical_group_name"
+      }
+    ]
+  })"";
+  auto Temp = nlohmann::json::parse(JsonString);
+  std::deque<std::string> path;
+  std::vector<StreamHDFInfo> StreamHDFInfo;
+  HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
+                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+  ASSERT_TRUE(RootGroup.has_group("some_group"));
+  auto SubGroup = RootGroup.get_group("some_group");
+  EXPECT_TRUE(SubGroup.has_group("identical_group_name"));
+  EXPECT_TRUE(SubGroup.has_group("identical_group_name(2)"));
+  EXPECT_TRUE(SubGroup.has_group("identical_group_name(3)"));
 }

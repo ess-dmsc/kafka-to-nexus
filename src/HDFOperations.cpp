@@ -77,14 +77,11 @@ void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
 }
 
 void writeAttributes(hdf5::node::Node const &Node,
-                     nlohmann::json const *Value) {
-  if (Value == nullptr) {
-    return;
-  }
-  if (Value->is_array()) {
-    writeArrayOfAttributes(Node, *Value);
-  } else if (Value->is_object()) {
-    writeObjectOfAttributes(Node, *Value);
+                     nlohmann::json const &Value) {
+  if (Value.is_array()) {
+    writeArrayOfAttributes(Node, Value);
+  } else if (Value.is_object()) {
+    writeObjectOfAttributes(Node, Value);
   }
 }
 
@@ -208,7 +205,7 @@ void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values) {
   if (auto AttributesMaybe = find<json>("attributes", Values)) {
     auto const Attributes = *AttributesMaybe;
-    writeAttributes(Node, &Attributes);
+    writeAttributes(Node, Attributes);
   }
 }
 
@@ -320,10 +317,10 @@ private:
   JsonConfig::Field<nlohmann::json> Size{this, "size", ""}; // Unused
 };
 
-void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
+void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json &Values,
                   SharedLogger const &Logger) {
 
-  JSONDataset Dataset(*Values);
+  JSONDataset Dataset(Values);
   if (Dataset.Space.getValue() != "simple") {
     Logger->warn("Unable to handle data space of type {}. Can only handle "
                  "simple data spaces.",
@@ -336,7 +333,7 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                       Dataset.Value.getValue());
   auto dset = hdf5::node::Dataset(Parent.nodes[Dataset.Name]);
 
-  writeAttributesIfPresent(dset, *Values);
+  writeAttributesIfPresent(dset, Values);
 }
 
 class JSONHdfNode : public JsonConfig::FieldHandler {
@@ -360,7 +357,7 @@ private:
 };
 
 void createHDFStructures(
-    const nlohmann::json *Value, hdf5::node::Group const &Parent,
+    const nlohmann::json &Value, hdf5::node::Group const &Parent,
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
@@ -370,21 +367,29 @@ void createHDFStructures(
   try {
 
     // The HDF object that we will maybe create at the current level.
-    JSONHdfNode CNode(*Value);
+    JSONHdfNode CNode(Value);
     if (CNode.Type.getValue() == "group") {
       if (CNode.Name.getValue().empty()) {
         Logger->error("HDF group name was empty/missing, ignoring.");
         return;
       }
       try {
+        auto UsedGroupName = CNode.Name.getValue();
+        if (Parent.has_group(UsedGroupName)) {
+          int i = 1;
+          do {
+            UsedGroupName = fmt::format("{}({})", CNode.Name.getValue(), ++i);
+          } while (Parent.has_group(UsedGroupName));
+          Logger->warn("Group with name \"{}\" already exists. Using the group name \"{}\" instead.", CNode.Name.getValue(), UsedGroupName);
+        }
         auto CurrentGroup =
-            Parent.create_group(CNode.Name, LinkCreationPropertyList);
-        Path.push_back(CNode.Name);
-        writeAttributesIfPresent(CurrentGroup, *Value);
+            Parent.create_group(UsedGroupName, LinkCreationPropertyList);
+        Path.push_back(UsedGroupName);
+        writeAttributesIfPresent(CurrentGroup, Value);
         if (not CNode.Children.hasDefaultValue() and
             CNode.Children.getValue().is_array()) {
           for (auto &Child : CNode.Children.getValue()) {
-            createHDFStructures(&Child, CurrentGroup, Level + 1,
+            createHDFStructures(Child, CurrentGroup, Level + 1,
                                 LinkCreationPropertyList, FixedStringHDFType,
                                 HDFStreamInfo, Path, Logger);
           }
@@ -404,11 +409,11 @@ void createHDFStructures(
         pathstr += "/" + x;
       }
 
-      HDFStreamInfo.push_back(StreamHDFInfo{pathstr, Value->dump()});
+      HDFStreamInfo.push_back(StreamHDFInfo{pathstr, Value.dump()});
     } else if (CNode.Type.getValue() == "dataset") {
       writeDataset(Parent, Value, Logger);
       writeAttributesIfPresent(Parent.get_dataset(CNode.Name.getValue()),
-                               *Value);
+                               Value);
     } else {
       Logger->error("Unknown hdf node of type {}. Ignoring.",
                     CNode.Type.getValue());
