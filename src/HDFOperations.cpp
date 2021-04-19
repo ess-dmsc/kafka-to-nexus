@@ -380,7 +380,9 @@ void createHDFStructures(
           do {
             UsedGroupName = fmt::format("{}({})", CNode.Name.getValue(), ++i);
           } while (Parent.has_group(UsedGroupName));
-          Logger->warn("Group with name \"{}\" already exists. Using the group name \"{}\" instead.", CNode.Name.getValue(), UsedGroupName);
+          Logger->warn("Group with name \"{}\" already exists. Using the group "
+                       "name \"{}\" instead.",
+                       CNode.Name.getValue(), UsedGroupName);
         }
         auto CurrentGroup =
             Parent.create_group(UsedGroupName, LinkCreationPropertyList);

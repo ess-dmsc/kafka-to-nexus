@@ -305,7 +305,8 @@ TEST_F(HDFGroupCreationTest, SingleGroup) {
   std::deque<std::string> path;
   std::vector<StreamHDFInfo> StreamHDFInfo;
   HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
-                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+                                     StreamHDFInfo, path,
+                                     spdlog::get("filewriterlogger"));
   EXPECT_TRUE(RootGroup.has_group("some_group"));
 }
 
@@ -325,7 +326,8 @@ TEST_F(HDFGroupCreationTest, SingleNestedGroup) {
   std::deque<std::string> path;
   std::vector<StreamHDFInfo> StreamHDFInfo;
   HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
-                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+                                     StreamHDFInfo, path,
+                                     spdlog::get("filewriterlogger"));
   ASSERT_TRUE(RootGroup.has_group("some_group"));
   auto SubGroup = RootGroup.get_group("some_group");
   EXPECT_TRUE(SubGroup.has_group("some_other_group"));
@@ -351,7 +353,8 @@ TEST_F(HDFGroupCreationTest, TwoNestedGroups) {
   std::deque<std::string> path;
   std::vector<StreamHDFInfo> StreamHDFInfo;
   HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
-                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+                                     StreamHDFInfo, path,
+                                     spdlog::get("filewriterlogger"));
   ASSERT_TRUE(RootGroup.has_group("some_group"));
   auto SubGroup = RootGroup.get_group("some_group");
   EXPECT_TRUE(SubGroup.has_group("some_other_group1"));
@@ -378,7 +381,8 @@ TEST_F(HDFGroupCreationTest, TwoIdenticalGroupNames) {
   std::deque<std::string> path;
   std::vector<StreamHDFInfo> StreamHDFInfo;
   HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
-                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+                                     StreamHDFInfo, path,
+                                     spdlog::get("filewriterlogger"));
   ASSERT_TRUE(RootGroup.has_group("some_group"));
   auto SubGroup = RootGroup.get_group("some_group");
   EXPECT_TRUE(SubGroup.has_group("identical_group_name"));
@@ -409,7 +413,8 @@ TEST_F(HDFGroupCreationTest, ThreeIdenticalGroupNames) {
   std::deque<std::string> path;
   std::vector<StreamHDFInfo> StreamHDFInfo;
   HDFOperations::createHDFStructures(Temp, RootGroup, 0, lcpl, var_string,
-                                     StreamHDFInfo, path, spdlog::get("filewriterlogger"));
+                                     StreamHDFInfo, path,
+                                     spdlog::get("filewriterlogger"));
   ASSERT_TRUE(RootGroup.has_group("some_group"));
   auto SubGroup = RootGroup.get_group("some_group");
   EXPECT_TRUE(SubGroup.has_group("identical_group_name"));
