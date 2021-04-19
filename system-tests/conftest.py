@@ -1,17 +1,19 @@
 import os.path
 import pytest
 from compose.cli.main import TopLevelCommand, project_from_options
-from confluent_kafka import Producer
-from confluent_kafka.admin import AdminClient
+from kafka.errors import NoBrokersAvailable, UnrecognizedBrokerVersion
 import docker
-from datetime import datetime
-from time import sleep
-from helpers.timehelpers import unix_time_milliseconds
+import time
 from subprocess import Popen
 import signal
 import warnings
+from file_writer_control.WorkerCommandChannel import WorkerCommandChannel
+from helpers.kafkahelpers import create_consumer
+from helpers.writer import stop_all_jobs
 
 LOCAL_BUILD = "--local-build"
+LOCAL_BUILD_DOCKER = "docker-local-writer.yml"
+SYSTEM_TEST_DOCKER = "docker-system-test.yml"
 WAIT_FOR_DEBUGGER_ATTACH = "--wait-to-attach-debugger"
 
 
@@ -38,18 +40,15 @@ def pytest_collection_modifyitems(items, config):
     involving multiple instances of the file writer
     """
     if config.option.local_build is not None:
-        fixture_name = "docker_compose"
-        fixture_name_stop_command = "docker_compose_stop_command"
+        avoid_fixture_name = "multiple_writers"
         selected_items = []
         deselected_items = []
 
         for item in items:
-            if fixture_name in getattr(
-                item, "fixturenames", ()
-            ) or fixture_name_stop_command in getattr(item, "fixturenames", ()):
-                selected_items.append(item)
-            else:
+            if avoid_fixture_name in getattr(item, "fixturenames", ()):
                 deselected_items.append(item)
+            else:
+                selected_items.append(item)
         config.hook.pytest_deselected(items=deselected_items)
         items[:] = selected_items
         print(
@@ -59,41 +58,33 @@ def pytest_collection_modifyitems(items, config):
 
 def wait_until_kafka_ready(docker_cmd, docker_options):
     print("Waiting for Kafka broker to be ready for system tests...")
-    conf = {"bootstrap.servers": "localhost:9092", "api.version.request": True}
-    producer = Producer(**conf)
     kafka_ready = False
 
-    def delivery_callback(err, msg):
-        nonlocal n_polls
-        nonlocal kafka_ready
-        if not err:
-            print("Kafka is ready!")
+    for i in range(10):
+        try:
+            consumer = create_consumer()
             kafka_ready = True
-
-    n_polls = 0
-    while n_polls < 10 and not kafka_ready:
-        producer.produce(
-            "waitUntilUp", value="Test message", on_delivery=delivery_callback
-        )
-        producer.poll(10)
-        n_polls += 1
+            print("Kafka is ready!", flush=True)
+            break
+        except NoBrokersAvailable:
+            time.sleep(5)
+        except UnrecognizedBrokerVersion:
+            time.sleep(5)
 
     if not kafka_ready:
         docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka broker was not ready after 100 seconds, aborting tests.")
 
-    client = AdminClient(conf)
     topic_ready = False
 
-    n_polls = 0
-    while n_polls < 10 and not topic_ready:
-        topics = client.list_topics().topics.keys()
-        if "TEST_writerCommand" in topics and "TEST_writerCommandMultiple" in topics:
+    for i in range(10):
+        all_topics = consumer.topics()
+        if "TEST_writer_jobs" in all_topics and "TEST_writer_commands" in all_topics:
             topic_ready = True
             print("Topic is ready!", flush=True)
             break
-        sleep(6)
-        n_polls += 1
+        else:
+            time.sleep(5)
 
     if not topic_ready:
         docker_cmd.down(docker_options)  # Bring down containers cleanly
@@ -121,12 +112,12 @@ common_options = {
 }
 
 
-@pytest.fixture(scope="session", autouse=True)
 def build_filewriter_image(request):
+    print("Build filewriter image")
     # Only build image if we are not running against a local build
     if request.config.getoption(LOCAL_BUILD) is None:
         client = docker.from_env()
-        print("Building Filewriter image", flush=True)
+        print("Building filewriter image", flush=True)
         from create_filewriter_image import create_filewriter_image
 
         create_filewriter_image()
@@ -148,7 +139,6 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
 
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
-    start_time = str(int(unix_time_milliseconds(datetime.utcnow())))
     run_containers(cmd, options)
 
     if local_path is not None:
@@ -200,29 +190,25 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
     request.addfinalizer(fin)
-    # Return the start time so the filewriter knows when to start consuming data
-    # from to get all data which was published
-    return start_time
 
 
-@pytest.fixture(scope="session", autouse=True)
-def start_kafka(request):
-    print("Starting zookeeper and kafka", flush=True)
+@pytest.fixture(scope="session", autouse=False)
+def start_lr_images(request):
+    print("Starting ioc and forwarder", flush=True)
     options = common_options
-    options["--project-name"] = "kafka"
-    options["--file"] = ["docker-compose-kafka.yml"]
+    options["--project-name"] = "forwarder"
+    options["--file"] = ["docker-compose-lr.yml"]
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
 
     cmd.up(options)
-    print("Started kafka containers", flush=True)
-    wait_until_kafka_ready(cmd, options)
+    print("Started ioc and forwarder containers", flush=True)
 
     def fin():
-        print("Stopping zookeeper and kafka", flush=True)
+        print("Stopping ioc and forwarder", flush=True)
         options["--timeout"] = 30
-        options["--project-name"] = "kafka"
-        options["--file"] = ["docker-compose-kafka.yml"]
+        options["--project-name"] = "forwarder"
+        options["--file"] = ["docker-compose-lr.yml"]
         cmd.down(options)
 
     request.addfinalizer(fin)
@@ -236,27 +222,27 @@ def remove_logs_from_previous_run(request):
     for filename in output_dirlist:
         if filename.endswith(".nxs"):
             os.remove(os.path.join(output_dir_name, filename))
-    print("Removed previous NeXus files", flush=True)
     print("Removing previous log files", flush=True)
     log_dir_name = os.path.join(os.getcwd(), "logs")
     dirlist = os.listdir(log_dir_name)
     for filename in dirlist:
         if filename.endswith(".log"):
             os.remove(os.path.join(log_dir_name, filename))
-    print("Removed previous log files", flush=True)
 
 
-@pytest.fixture(scope="module")
-def docker_compose(request):
+@pytest.fixture(scope="session", autouse=True)
+def start_file_writer(request):
     """
     :type request: _pytest.python.FixtureRequest
     """
-    print("Started preparing test environment...", flush=True)
-
+    print("Starting the file-writer", flush=True)
     # Options must be given as long form
     options = common_options
     if request.config.getoption(LOCAL_BUILD) is None:
-        options["--file"] = ["docker-compose.yml"]
+        build_filewriter_image(request)
+        options["--file"] = [SYSTEM_TEST_DOCKER]
+    else:
+        options["--file"] = [LOCAL_BUILD_DOCKER]
     return build_and_run(
         options,
         request,
@@ -265,55 +251,28 @@ def docker_compose(request):
     )
 
 
-@pytest.fixture(scope="module")
-def docker_compose_multiple_instances(request):
+@pytest.fixture(scope="function", autouse=True)
+def writer_channel(request):
     """
     :type request: _pytest.python.FixtureRequest
     """
-    print("Started preparing test environment...", flush=True)
+    kafka_host = "localhost:9093"
+    worker = WorkerCommandChannel("{}/TEST_writer_commands".format(kafka_host))
 
-    # Options must be given as long form
-    options = common_options
-    options["--file"] = ["docker-compose-multiple-instances.yml"]
-    return build_and_run(options, request)
+    def stop_current_jobs():
+        stop_all_jobs(worker)
+
+    request.addfinalizer(stop_current_jobs)
+    return worker
 
 
-@pytest.fixture(scope="module")
-def docker_compose_stop_command(request):
-    """
-    :type request: _pytest.python.FixtureRequest
-    """
-    print("Started preparing test environment...", flush=True)
-    options = common_options
+@pytest.fixture(scope="session", autouse=True)
+def kafka_address(request):
     if request.config.getoption(LOCAL_BUILD) is None:
-        options["--file"] = ["docker-compose.yml"]
-    return build_and_run(
-        options,
-        request,
-        request.config.getoption(LOCAL_BUILD),
-        request.config.getoption(WAIT_FOR_DEBUGGER_ATTACH),
-    )
+        return "kafka:9092"
+    return "localhost:9093"
 
 
-@pytest.fixture(scope="module")
-def docker_compose_static_data(request):
-    """
-    :type request: _pytest.python.FixtureRequest
-    """
-    print("Started preparing test environment...", flush=True)
-    # Options must be given as long form
-    options = common_options
-    options["--file"] = ["docker-compose-static-data.yml"]
-    return build_and_run(options, request)
-
-
-@pytest.fixture(scope="module", autouse=False)
-def docker_compose_long_running(request):
-    """
-    :type request: _pytest.python.FixtureRequest
-    """
-    print("Started preparing test environment...", flush=True)
-    # Options must be given as long form
-    options = common_options
-    options["--file"] = ["docker-compose-lr.yml"]
-    return build_and_run(options, request)
+@pytest.fixture(scope="session", autouse=False)
+def multiple_writers(request):
+    pass

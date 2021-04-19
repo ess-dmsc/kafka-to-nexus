@@ -10,5 +10,5 @@
 #pragma once
 
 namespace Kafka {
-enum class PollStatus { Message, Error, TimedOut };
+enum class PollStatus { Message, Error, EndOfPartition, TimedOut };
 }

@@ -11,38 +11,24 @@
 
 #include "TimeUtility.h"
 
+#include "Commands.h"
+#include "Msg.h"
 #include "URI.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
 
-namespace FileWriter {
+using FileWriter::Msg;
 
-struct Msg;
+namespace Command {
 
-struct StartCommandInfo {
-  std::string JobID;
-  std::string Filename;
-  std::string NexusStructure;
-  std::string ServiceID;
-  uri::URI BrokerInfo{"localhost:9092"};
-  std::chrono::milliseconds StartTime{0};
-  time_point StopTime{time_point::max()};
-};
-
-struct StopCommandInfo {
-  std::string JobID;
-  std::chrono::milliseconds StopTime{0};
-  std::string ServiceID;
-};
-
-namespace CommandParser {
+namespace Parser {
 /// \brief Extract the information from the start command.
 ///
 /// \param JSONCommand The JSON Command.
 /// \param DefaultStartTime The start time to use if not supplied in the JSON
 /// \return The start information.
-StartCommandInfo extractStartInformation(
+StartMessage extractStartMessage(
     Msg const &CommandMessage,
     std::chrono::milliseconds DefaultStartTime = getCurrentTimeStampMS());
 
@@ -50,7 +36,7 @@ StartCommandInfo extractStartInformation(
 ///
 /// \param JSONCommand The JSON Command.
 /// \return The stop information.
-StopCommandInfo extractStopInformation(Msg const &CommandMessage);
+StopMessage extractStopMessage(Msg const &CommandMessage);
 
 bool isStartCommand(Msg const &CommandMessage);
 bool isStopCommand(Msg const &CommandMessage);
@@ -88,5 +74,5 @@ T getOptionalValue(std::string const &Key, nlohmann::json const &JSONCommand,
 
   return Default;
 }
-} // namespace CommandParser
-} // namespace FileWriter
+} // namespace Parser
+} // namespace Command

@@ -14,8 +14,8 @@
 #include <pl72_run_start_generated.h>
 #include <sstream>
 
-#include "CommandParser.h"
 #include "Msg.h"
+#include "Parser.h"
 
 namespace {
 void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
@@ -55,13 +55,16 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
 }
 } // namespace
 
-namespace FileWriter {
-namespace CommandParser {
+namespace Command {
 
-StartCommandInfo
-extractStartInformation(Msg const &CommandMessage,
-                        std::chrono::milliseconds DefaultStartTime) {
-  StartCommandInfo Result;
+namespace Parser {
+
+using FileWriter::Msg;
+
+Command::StartMessage
+extractStartMessage(Msg const &CommandMessage,
+                    std::chrono::milliseconds DefaultStartTime) {
+  Command::StartMessage Result;
 
   auto const RunStartData = GetRunStart(CommandMessage.data());
 
@@ -83,11 +86,14 @@ extractStartInformation(Msg const &CommandMessage,
   }
   Result.BrokerInfo = uri::URI(RunStartData->broker()->str());
   Result.Filename = RunStartData->filename()->str();
+  if (RunStartData->metadata() != nullptr) {
+    Result.Metadata = RunStartData->metadata()->str();
+  }
 
   return Result;
 }
 
-StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
+Command::StopMessage extractStopMessage(Msg const &CommandMessage) {
   auto const RunStopData = GetRunStop(CommandMessage.data());
 
   if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {
@@ -95,9 +101,10 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
                              "Job ID missing, this field is required");
   }
 
-  StopCommandInfo Result;
+  StopMessage Result;
   Result.JobID = RunStopData->job_id()->str();
   Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
+  Result.CommandID = RunStopData->command_id()->str();
   if (RunStopData->service_id() != nullptr) {
     Result.ServiceID = RunStopData->service_id()->str();
   }
@@ -106,22 +113,20 @@ StopCommandInfo extractStopInformation(Msg const &CommandMessage) {
 }
 
 bool isStartCommand(Msg const &CommandMessage) {
-  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStartBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           RunStartIdentifier());
-
-  // Ideally we would run Verify on the buffer, but there is currently a problem
-  // making verifiable flatbuffer messages from python (Nicos).
-  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
 bool isStopCommand(Msg const &CommandMessage) {
-  return flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyRunStopBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           RunStopIdentifier());
-
-  // Ideally we would run Verify on the buffer, but there is currently a problem
-  // making verifiable flatbuffer messages from python (Nicos).
-  // There are some disabled unit tests to cover this in CommandParserTests.
 }
 
-} // namespace CommandParser
-} // namespace FileWriter
+} // namespace Parser
+} // namespace Command

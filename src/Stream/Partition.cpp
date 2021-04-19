@@ -54,6 +54,8 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
   RegisterMetric.registerMetric(
       KafkaErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(
+      EndOfPartition, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
   RegisterMetric.registerMetric(MessagesProcessed, {Metrics::LogTo::CARBON});
   RegisterMetric.registerMetric(
@@ -118,6 +120,9 @@ void Partition::pollForMessage() {
   switch (Msg.first) {
   case Kafka::PollStatus::Message:
     MessagesReceived++;
+    break;
+  case Kafka::PollStatus::EndOfPartition:
+    EndOfPartition++;
     break;
   case Kafka::PollStatus::TimedOut:
     KafkaTimeouts++;

@@ -29,7 +29,8 @@ void StatusReporterBase::updateStopTime(std::chrono::milliseconds StopTime) {
 }
 
 void StatusReporterBase::resetStatusInfo() {
-  updateStatusInfo({"", "", std::chrono::milliseconds(0)});
+  updateStatusInfo(
+      {JobStatusInfo::WorkerState::Idle, "", "", std::chrono::milliseconds(0)});
 }
 
 flatbuffers::DetachedBuffer
@@ -59,7 +60,10 @@ StatusReporterBase::createReport(std::string const &JSONReport) const {
 std::string StatusReporterBase::createJSONReport() const {
   auto Info = nlohmann::json::object();
   std::lock_guard<std::mutex> const lock(StatusMutex);
-
+  std::map<JobStatusInfo::WorkerState, std::string> StateMap{
+      {JobStatusInfo::WorkerState::Idle, "idle"},
+      {JobStatusInfo::WorkerState::Writing, "writing"}};
+  Info["state"] = StateMap[Status.State];
   Info["job_id"] = Status.JobId;
   Info["file_being_written"] = Status.Filename;
   Info["start_time"] = Status.StartTime.count();

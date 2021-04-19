@@ -376,7 +376,7 @@ def get_macos_pipeline() {
 
 def get_system_tests_pipeline() {
   return {
-    node('system-test') {
+    node('systest01.dm.esss.dk') {
       cleanWs()
       dir("${project}") {
         try {

@@ -9,11 +9,10 @@
 
 #pragma once
 
-#include "CommandParser.h"
+#include "CommandSystem/Commands.h"
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "Metrics/Registrar.h"
-#include "States.h"
 #include "StreamController.h"
 #include "json.h"
 #include <memory>
@@ -33,7 +32,7 @@ struct StreamSettings {
 class IJobCreator {
 public:
   virtual std::unique_ptr<IStreamController>
-  createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
+  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                        SharedLogger const &Logger,
                        Metrics::Registrar Registrar) = 0;
   virtual ~IJobCreator() = default;
@@ -49,7 +48,7 @@ public:
   /// \param Logger The logger.
   /// \return The new file-writing job.
   std::unique_ptr<IStreamController>
-  createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
+  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                        SharedLogger const &Logger,
                        Metrics::Registrar Registrar) override;
 

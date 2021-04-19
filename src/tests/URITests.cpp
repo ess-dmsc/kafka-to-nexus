@@ -145,3 +145,12 @@ TEST(URI, topic_picked_up_when_after_port) {
   ASSERT_EQ(TestURI.Topic, "TEST_writerCommand");
   ASSERT_EQ(TestURI.getURIString(), "localhost:9092/TEST_writerCommand");
 }
+
+TEST(URI, EmptyStringDoesNotThrow) {
+  try {
+    URI TestURI("");
+    EXPECT_TRUE(TestURI.HostPort.empty());
+  } catch (...) {
+    FAIL();
+  }
+}

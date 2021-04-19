@@ -20,8 +20,7 @@
 SharedLogger getLogger() { return spdlog::get("filewriterlogger"); }
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
-                  const std::string & /*ServiceID*/, const std::string &LogFile,
-                  const uri::URI &GraylogURI) {
+                  const std::string &LogFile, const uri::URI &GraylogURI) {
   std::vector<spdlog::sink_ptr> sinks;
   if (!LogFile.empty()) {
     auto FileSink =

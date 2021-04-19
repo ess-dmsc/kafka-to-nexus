@@ -19,8 +19,6 @@ public:
   explicit MockConsumer(const Kafka::BrokerSettings &Settings){
       UNUSED_ARG(Settings)};
   using PollReturnType = std::pair<Kafka::PollStatus, FileWriter::Msg>;
-  IMPLEMENT_MOCK1(addTopic);
-  IMPLEMENT_MOCK1(queryTopicPartitions);
   IMPLEMENT_MOCK0(poll);
   IMPLEMENT_MOCK3(addPartitionAtOffset);
 };

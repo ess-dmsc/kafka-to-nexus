@@ -49,6 +49,11 @@ set(libraries_common
         z
         )
 
+if (APPLE)
+  conan_find_apple_frameworks(CF_LIBRARY "CoreFoundation" "")
+  list(APPEND libraries_common ${CF_LIBRARY})
+endif()
+
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
 set(USE_GRAYLOG_LOGGER ON CACHE BOOL "Set to OFF to disable log reporting to graylog")
@@ -66,12 +71,17 @@ set(kafka_to_nexus_SRC
         StreamController.cpp
         Master.cpp
         logger.cpp
-        CommandListener.cpp
+        CommandSystem/JobListener.cpp
+        CommandSystem/CommandListener.cpp
+        CommandSystem/FeedbackProducer.cpp
+        CommandSystem/Handler.cpp
+        CommandSystem/Parser.cpp
         JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
+        HDFAttributes.cpp
         Kafka/Consumer.cpp
         Kafka/Producer.cpp
         Kafka/ProducerTopic.cpp
@@ -84,7 +94,6 @@ set(kafka_to_nexus_SRC
         MainOpt.cpp
         CLIOptions.cpp
         StreamController.cpp
-        CommandParser.cpp
         WriterRegistrar.cpp
         Metrics/Reporter.cpp
         Metrics/Registrar.cpp
@@ -103,17 +112,22 @@ set(kafka_to_nexus_SRC
         HDFOperations.cpp
         HDFVersionCheck.cpp
         CommandSystem/CommandListener.cpp
-        CommandSystem/JobListener.cpp
         TimeUtility.cpp
         JsonConfig/Field.cpp
         JsonConfig/FieldHandler.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
-        CommandListener.h
+        CommandSystem/Commands.h
+        CommandSystem/JobListener.h
+        CommandSystem/CommandListener.h
+        CommandSystem/FeedbackProducer.h
+        CommandSystem/Handler.h
+        CommandSystem/Parser.h
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h
+        HDFAttributes.h
         WriterModuleBase.h
         helper.h
         json.h
@@ -142,7 +156,6 @@ set(kafka_to_nexus_INC
         CLIOptions.h
         Kafka/ConfigureKafka.cpp
         Kafka/ConfigureKafka.h
-        CommandParser.h
         WriterRegistrar.h
         Metrics/Registrar.h
         Metrics/Metric.h
@@ -170,9 +183,12 @@ set(kafka_to_nexus_INC
         HDFVersionCheck.h
         StreamHDFInfo.h
         CommandSystem/CommandListener.h
+        CommandSystem/FeedbackProducerBase.h
         CommandSystem/JobListener.h
         JsonConfig/Field.h
-        JsonConfig/FieldHandler.h)
+        JsonConfig/FieldHandler.h
+        MultiVector.h
+        )
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

@@ -50,6 +50,8 @@ public:
     return ModuleErrorCounters.size();
   }
 
+  void runJob(std::function<void()> Job) { WriteJobs.enqueue(Job); }
+
 protected:
   virtual void writeMsgImpl(WriterModule::Base *ModulePtr,
                             FileWriter::FlatbufferMessage const &Msg);
@@ -69,11 +71,11 @@ protected:
 
   using JobType = std::function<void()>;
   moodycamel::ConcurrentQueue<JobType> WriteJobs;
-  std::thread WriterThread;
   std::atomic_bool RunThread{true};
   const duration SleepTime{10ms};
   duration FlushInterval{10s};
   const int MaxTimeCheckCounter{200};
+  std::thread WriterThread; // Must be last
 };
 
 } // namespace Stream

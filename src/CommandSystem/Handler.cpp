@@ -1,0 +1,366 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
+#include "Handler.h"
+#include "FeedbackProducer.h"
+#include "Msg.h"
+#include "Parser.h"
+#include "TimeUtility.h"
+#include <uuid.h>
+
+namespace Command {
+
+Handler::Handler(std::string const &ServiceIdentifier,
+                 Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
+                 uri::URI CommandTopicUri)
+    : Handler(ServiceIdentifier,
+              std::make_unique<JobListener>(JobPoolUri, Settings),
+              std::make_unique<CommandListener>(CommandTopicUri, Settings),
+              std::make_unique<FeedbackProducer>(ServiceIdentifier,
+                                                 CommandTopicUri, Settings)) {}
+
+Handler::Handler(std::string ServiceIdentifier,
+                 std::unique_ptr<JobListener> JobConsumer,
+                 std::unique_ptr<CommandListener> CommandConsumer,
+                 std::unique_ptr<FeedbackProducerBase> Response)
+    : ServiceId(std::move(ServiceIdentifier)), JobPool(std::move(JobConsumer)),
+      CommandSource(std::move(CommandConsumer)),
+      CommandResponse(std::move(Response)) {}
+
+void Handler::loopFunction() {
+  if (PollForJob and JobPool != nullptr) {
+    auto JobMsg = JobPool->pollForJob();
+    if (JobMsg.first == Kafka::PollStatus::Message) {
+      handleCommand(std::move(JobMsg.second), true);
+    }
+  }
+  auto CommandMsg = CommandSource->pollForCommand();
+  if (CommandMsg.first == Kafka::PollStatus::Message) {
+    handleCommand(std::move(CommandMsg.second), false);
+  }
+}
+
+void Handler::registerStartFunction(StartFuncType StartFunction) {
+  DoStart = StartFunction;
+}
+
+void Handler::registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) {
+  DoSetStopTime = StopTimeFunction;
+}
+
+void Handler::registerStopNowFunction(StopNowFuncType StopNowFunction) {
+  DoStopNow = StopNowFunction;
+}
+
+void Handler::sendHasStoppedMessage(std::string FileName,
+                                    std::string Metadata) {
+  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
+                                     Metadata);
+  PollForJob = true;
+}
+
+void Handler::sendErrorEncounteredMessage(std::string FileName,
+                                          std::string Metadata,
+                                          std::string ErrorMessage) {
+  CommandResponse->publishStoppedMsg(ActionResult::Failure, JobId, ErrorMessage,
+                                     FileName, Metadata);
+  PollForJob = true;
+}
+
+void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
+  if (Parser::isStartCommand(CommandMsg)) {
+    handleStartCommand(std::move(CommandMsg), IgnoreServiceId);
+  } else if (Parser::isStopCommand(CommandMsg)) {
+    handleStopCommand(std::move(CommandMsg));
+  } else {
+    std::string SchemaId(reinterpret_cast<char const *>(CommandMsg.data()) + 4,
+                         4);
+    LOG_DEBUG("Unable to handle (command) message of type: {}", SchemaId);
+  }
+}
+
+using LogLevel = spdlog::level::level_enum;
+
+struct CmdResponse {
+  spdlog::level::level_enum LogLevel;
+  bool SendResponse;
+  std::function<std::string()> MessageString;
+  int StatusCode{0};
+};
+
+bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
+                         std::string &ErrorStr) {
+  try {
+    Msg = Parser::extractStartMessage(CommandMsg);
+    return true;
+  } catch (std::runtime_error &E) {
+    ErrorStr = E.what();
+    return false;
+  }
+}
+
+bool isValidUUID(std::string const &UUIDStr) {
+  try {
+    uuids::uuid const Id = uuids::uuid::from_string(UUIDStr);
+    return not Id.is_nil() and Id.version() != uuids::uuid_version::none and
+           Id.variant() == uuids::uuid_variant::rfc;
+  } catch (uuids::uuid_error const &) {
+    return false;
+  }
+  return false;
+}
+
+bool isMsgTimeStampValid(time_point MsgTime) {
+  if (system_clock::now() < MsgTime + 15s) {
+    return true;
+  }
+  return false;
+}
+
+void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
+                                 bool IgnoreServiceId) {
+  try {
+    time_point StopTime = time_point::min();
+    std::string ExceptionMessage;
+    StartMessage StartJob;
+    std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
+    CommandSteps.push_back(
+        {[&]() {
+           return extractStartMessage(CommandMsg, StartJob, ExceptionMessage);
+         },
+         {LogLevel::warn, false,
+          [&]() {
+            return fmt::format(
+                "Failed to extract start command from flatbuffer. The "
+                "error was: {}",
+                ExceptionMessage);
+          },
+          0}});
+
+    CommandSteps.push_back(
+        {[&]() {
+           return not(IgnoreServiceId xor (StartJob.ServiceID != ServiceId));
+         },
+         {LogLevel::debug, false,
+          [&]() {
+            return fmt::format(
+                "Rejected start command as the service id was wrong. It "
+                "should be {}, it was {}.",
+                ServiceId, StartJob.ServiceID);
+          },
+          0}});
+
+    CommandSteps.push_back(
+        {[&]() { return isValidUUID(StartJob.JobID); },
+         {LogLevel::warn, true,
+          [&]() {
+            return fmt::format(
+                "Rejected start command as the job id was invalid (it "
+                "was: {}).",
+                StartJob.JobID);
+          },
+          400}});
+
+    CommandSteps.push_back(
+        {[&]() {
+           return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());
+         },
+         {LogLevel::warn, true,
+          [&]() {
+            return fmt::format(
+                "Rejected start command as its timestamp was bad (it was: {}, "
+                "current time: {}).",
+                toUTCDateTime(CommandMsg.getMetaData().timestamp()),
+                toUTCDateTime(system_clock::now()));
+          },
+          400}});
+
+    CommandSteps.push_back(
+        {[&]() {
+           try {
+             DoStart(StartJob);
+             StopTime = StartJob.StopTime;
+             JobId = StartJob.JobID;
+             PollForJob = false;
+             JobPool->disconnectFromPool();
+           } catch (std::exception const &E) {
+             PollForJob = true;
+             JobId = "";
+             ExceptionMessage = E.what();
+             return false;
+           }
+           return true;
+         },
+         {LogLevel::err, true,
+          [&]() {
+            return fmt::format(
+                "Failed to start filewriting job. The failure message was: {}",
+                ExceptionMessage);
+          },
+          500}});
+
+    ActionResult SendResult{ActionResult::Success};
+    CmdResponse OutcomeValue{
+        LogLevel::info, true,
+        [&]() {
+          return fmt::format(
+              "Started write job with start time {} and stop time {}.",
+              toUTCDateTime(
+                  time_point(std::chrono::milliseconds{StartJob.StartTime})),
+              toUTCDateTime(StartJob.StopTime));
+        },
+        201};
+    for (auto const &Step : CommandSteps) {
+      // cppcheck-suppress useStlAlgorithm
+      if (not Step.first()) {
+        OutcomeValue = Step.second;
+        SendResult = ActionResult::Failure;
+        break;
+      }
+    }
+
+    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString());
+    if (OutcomeValue.SendResponse) {
+      CommandResponse->publishResponse(
+          ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
+          StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString());
+    }
+  } catch (std::exception &E) {
+    LOG_ERROR("Unable to process start command, error was: {}", E.what());
+  }
+}
+
+bool extractStopMessage(FileWriter::Msg const &CommandMsg, StopMessage &Msg,
+                        std::string &ErrorStr) {
+  try {
+    Msg = Parser::extractStopMessage(CommandMsg);
+    return true;
+  } catch (std::runtime_error &E) {
+    ErrorStr = E.what();
+    return false;
+  }
+}
+
+void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
+  try {
+    std::string ResponseMessage;
+    StopMessage StopCmd;
+    ActionResponse TypeOfAction{ActionResponse::SetStopTime};
+    std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
+
+    CommandSteps.push_back(
+        {[&]() {
+           return extractStopMessage(CommandMsg, StopCmd, ResponseMessage);
+         },
+         {LogLevel::warn, false,
+          [&]() {
+            return fmt::format(
+                "Failed to extract stop command from flatbuffer. The "
+                "error was: {}",
+                ResponseMessage);
+          },
+          0}});
+
+    CommandSteps.push_back(
+        {[&]() { return ServiceId == StopCmd.ServiceID; },
+         {LogLevel::debug, false,
+          [&]() {
+            return fmt::format(
+                "Rejected stop command as the service id was wrong. It "
+                "should be {}, it was {}.",
+                ServiceId, StopCmd.ServiceID);
+          },
+          0}});
+
+    CommandSteps.push_back(
+        {[&]() { return JobId == StopCmd.JobID; },
+         {LogLevel::warn, true,
+          [&]() {
+            return fmt::format(
+                "Rejected stop command as the job id was invalid (It "
+                "should be {}, it was: {}).",
+                JobId, StopCmd.JobID);
+          },
+          400}});
+
+    CommandSteps.push_back(
+        {[&]() { return isValidUUID(StopCmd.CommandID); },
+         {LogLevel::err, true,
+          [&]() {
+            return fmt::format(
+                "Rejected stop command as the command id was invalid "
+                "(it was: {}).",
+                StopCmd.CommandID);
+          },
+          400}});
+
+    CommandSteps.push_back(
+        {[&]() {
+           return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());
+         },
+         {LogLevel::warn, true,
+          [&]() {
+            return fmt::format(
+                "Rejected start command as its timestamp was bad (it was: {}, "
+                "current time: {}).",
+                toUTCDateTime(CommandMsg.getMetaData().timestamp()),
+                toUTCDateTime(system_clock::now()));
+          },
+          400}});
+
+    CommandSteps.push_back(
+        {[&]() {
+           try {
+             if (StopCmd.StopTime == 0ms) {
+               DoStopNow();
+               ResponseMessage = "Attempting to stop writing job now.";
+             } else {
+               DoSetStopTime(StopCmd.StopTime);
+               ResponseMessage =
+                   fmt::format("File writing job stop time set to: {}",
+                               toUTCDateTime(time_point(StopCmd.StopTime)));
+             }
+           } catch (std::exception const &E) {
+             ResponseMessage = E.what();
+             return false;
+           }
+           return true;
+         },
+         {LogLevel::err, true,
+          [&]() {
+            return fmt::format(
+                "Failed to execute stop command. The failure message was: {}",
+                ResponseMessage);
+          },
+          500}});
+    ActionResult SendResult{ActionResult::Success};
+
+    CmdResponse OutcomeValue{LogLevel::info, true,
+                             [&]() { return ResponseMessage; }, 201};
+    for (auto const &Step : CommandSteps) {
+      // cppcheck-suppress useStlAlgorithm
+      if (not Step.first()) {
+        OutcomeValue = Step.second;
+        SendResult = ActionResult::Failure;
+        break;
+      }
+    }
+    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString());
+    if (OutcomeValue.SendResponse) {
+      CommandResponse->publishResponse(
+          TypeOfAction, SendResult, StopCmd.JobID, StopCmd.CommandID,
+          time_point(std::chrono::milliseconds{StopCmd.StopTime}),
+          OutcomeValue.StatusCode, OutcomeValue.MessageString());
+    }
+  } catch (std::exception &E) {
+    LOG_ERROR("Unable to process stop command, error was: {}", E.what());
+  }
+}
+
+} // namespace Command

@@ -171,9 +171,9 @@ TEST_F(PartitionTest, ErrorMessageIsCountedButThenIgnored) {
   EXPECT_EQ(int(UnderTest->KafkaErrors), 1);
 }
 
-TEST_F(PartitionTest, TimeOutIsIgnored) {
+TEST_F(PartitionTest, EndOfPartitionMessageIsIgnored) {
   Kafka::MockConsumer::PollReturnType PollReturn;
-  PollReturn.first = Kafka::PollStatus::TimedOut;
+  PollReturn.first = Kafka::PollStatus::EndOfPartition;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();

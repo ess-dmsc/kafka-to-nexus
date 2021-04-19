@@ -36,6 +36,8 @@ public:
   senv_Writer() : FileWriterBase(false, "NXlog") {}
   ~senv_Writer() override = default;
 
+  void config_post_processing() override;
+
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
@@ -43,12 +45,24 @@ public:
   void write(FlatbufferMessage const &Message) override;
 
 protected:
-  NeXusDataset::UInt16Value Value;
+  void initValueDataset(hdf5::node::Group const &Parent);
+  enum class Type {
+    int8,
+    uint8,
+    int16,
+    uint16,
+    int32,
+    uint32,
+    int64,
+    uint64,
+  } ElementType{Type::int64};
+  NeXusDataset::ExtensibleDatasetBase Value;
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
   SharedLogger Logger = spdlog::get("filewriterlogger");
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
+  JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "int64"};
 };
 } // namespace senv
 } // namespace WriterModule

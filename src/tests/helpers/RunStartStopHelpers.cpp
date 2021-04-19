@@ -45,12 +45,13 @@ FileWriter::Msg buildRunStartMessage(
 
 FileWriter::Msg
 buildRunStopMessage(uint64_t StopTime, std::string const &RunName,
-                    std::string const &JobID,
+                    std::string const &JobID, std::string const &CommandID,
                     std::optional<std::string> const &ServiceID) {
   flatbuffers::FlatBufferBuilder Builder;
 
   const auto RunIDOffset = Builder.CreateString(RunName);
   const auto JobIDOffset = Builder.CreateString(JobID);
+  const auto CommandIDOffset = Builder.CreateString(CommandID);
   flatbuffers::Offset<flatbuffers::String> ServiceIDOffset;
   if (ServiceID) {
     ServiceIDOffset = Builder.CreateString(*ServiceID);
@@ -60,6 +61,7 @@ buildRunStopMessage(uint64_t StopTime, std::string const &RunName,
   StopBuilder.add_stop_time(StopTime);
   StopBuilder.add_run_name(RunIDOffset);
   StopBuilder.add_job_id(JobIDOffset);
+  StopBuilder.add_command_id(CommandIDOffset);
   if (ServiceID) {
     StopBuilder.add_service_id(ServiceIDOffset);
   }

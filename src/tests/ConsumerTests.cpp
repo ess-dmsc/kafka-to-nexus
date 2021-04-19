@@ -59,11 +59,12 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   }
 }
 
-TEST_F(ConsumerTests, pollReturnsConsumerMessageWithEmptyPollStatusIfTimedOut) {
+TEST_F(ConsumerTests,
+       pollReturnsConsumerMessageWithEmptyPollStatusIfEndofPartition) {
   auto *Message = new MockMessage;
   REQUIRE_CALL(*Message, err())
       .TIMES(1)
-      .RETURN(RdKafka::ErrorCode::ERR__TIMED_OUT);
+      .RETURN(RdKafka::ErrorCode::ERR__PARTITION_EOF);
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
   REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
@@ -75,7 +76,7 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithEmptyPollStatusIfTimedOut) {
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<Kafka::KafkaEventCb>());
     auto ConsumedMessage = Consumer->poll();
-    ASSERT_EQ(ConsumedMessage.first, PollStatus::TimedOut);
+    ASSERT_EQ(ConsumedMessage.first, PollStatus::EndOfPartition);
   }
 }
 
@@ -100,126 +101,37 @@ TEST_F(ConsumerTests,
   }
 }
 
-TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicsEmpty) {
-  auto Metadata = new MockMetadata;
-  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
-      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
-  auto TopicVector = RdKafka::Metadata::TopicMetadataVector{};
+#include "Kafka/ConfigureKafka.h"
 
-  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
+TEST(ConsumerAssignmentTest, Test1) {
+  BrokerSettings SettingsCopy;
 
-  REQUIRE_CALL(*MockConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
+  SettingsCopy.KafkaConfiguration.insert({"group.id", "GroupIdStr"});
 
-  {
-    auto Consumer = std::make_unique<Kafka::Consumer>(
-        std::move(MockConsumer),
-        std::unique_ptr<RdKafka::Conf>(
-            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-        std::make_unique<Kafka::KafkaEventCb>());
-    EXPECT_THROW(Consumer->addTopic("something"), std::runtime_error);
+  SettingsCopy.Address = "broker";
+
+  auto Conf = std::unique_ptr<RdKafka::Conf>(
+      RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
+  configureKafka(Conf.get(), SettingsCopy);
+  auto EventCallback = std::make_unique<KafkaEventCb>();
+  std::string ErrorString;
+  auto KafkaConsumer = std::unique_ptr<RdKafka::KafkaConsumer>(
+      RdKafka::KafkaConsumer::create(Conf.get(), ErrorString));
+  auto ConsumerPtr = KafkaConsumer.get();
+  if (KafkaConsumer == nullptr) {
+    spdlog::get("filewriterlogger")
+        ->error("can not create kafka consumer: {}", ErrorString);
+    throw std::runtime_error("can not create Kafka consumer");
   }
-}
+  auto TestConsumer = std::make_unique<Consumer>(
+      std::move(KafkaConsumer), std::move(Conf), std::move(EventCallback));
+  std::vector<RdKafka::TopicPartition *> Assignments;
+  TestConsumer->addPartitionAtOffset("some_topic1", 0, 0);
+  TestConsumer->addPartitionAtOffset("some_topic2", 1, 0);
+  ConsumerPtr->assignment(Assignments);
 
-TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicDoesntExist) {
-  auto Metadata = new MockMetadata;
-  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
-      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
-
-  auto TopicMetadata = std::make_unique<MockTopicMetadata>("not_something");
-  auto TopicVector =
-      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
-  REQUIRE_CALL(*Metadata, topics()).TIMES((1)).RETURN(&TopicVector);
-  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
-  {
-    auto Consumer = std::make_unique<Kafka::Consumer>(
-        std::move(MockConsumer),
-        std::unique_ptr<RdKafka::Conf>(
-            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-        std::make_unique<Kafka::KafkaEventCb>());
-    EXPECT_THROW(Consumer->addTopic("something"), std::runtime_error);
-  }
-}
-
-TEST_F(ConsumerTests,
-       getTopicPartitionNumbersReturnsPartitionNumbersIfTopicDoesExist) {
-  auto Metadata = new MockMetadata;
-  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
-      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
-
-  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
-  auto TopicVector =
-      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
-  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
-  auto PartitionMetadataVector =
-      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
-
-  REQUIRE_CALL(*MockConsumer, query_watermark_offsets(_, _, _, _, _))
-      .TIMES((1))
-      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
-  REQUIRE_CALL(*Metadata, topics()).TIMES((1)).RETURN(&TopicVector);
-  REQUIRE_CALL(*TopicMetadata, partitions())
-      .TIMES((1))
-      .RETURN(&PartitionMetadataVector);
-  REQUIRE_CALL(*PartitionMetadata, id()).TIMES((1)).RETURN(1);
-  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
-  REQUIRE_CALL(*MockConsumer, assign(_))
-      .TIMES((1))
-      .RETURN(RdKafka::ERR_NO_ERROR);
-  {
-    auto Consumer = std::make_unique<Kafka::Consumer>(
-        std::move(MockConsumer),
-        std::unique_ptr<RdKafka::Conf>(
-            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-        std::make_unique<Kafka::KafkaEventCb>());
-    ASSERT_NO_THROW(Consumer->addTopic("something"));
-  }
-}
-
-TEST_F(ConsumerTests, testUpdatingMetadataMultipleTimes) {
-  auto Metadata = new MockMetadata;
-  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
-      RdKafka::ErrorCode::ERR__TRANSPORT, Metadata);
-  REQUIRE_CALL(*MockConsumer, close())
-      .TIMES((1))
-      .RETURN(RdKafka::ERR__TRANSPORT);
-  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
-  auto TopicVector =
-      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
-  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
-  auto PartitionMetadataVector =
-      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
-  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
-  REQUIRE_CALL(*TopicMetadata, partitions())
-      .TIMES((1))
-      .RETURN(&PartitionMetadataVector);
-  REQUIRE_CALL(*PartitionMetadata, id()).TIMES((1)).RETURN(1);
-  REQUIRE_CALL(*MockConsumer, query_watermark_offsets(_, _, _, _, _))
-      .TIMES((1))
-      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
-  REQUIRE_CALL(*MockConsumer, assign(_))
-      .TIMES((1))
-      .RETURN(RdKafka::ERR_NO_ERROR);
-  {
-    auto Consumer = std::make_unique<Kafka::Consumer>(
-        std::move(MockConsumer),
-        std::unique_ptr<RdKafka::Conf>(
-            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-        std::make_unique<Kafka::KafkaEventCb>());
-    EXPECT_NO_THROW(Consumer->addTopic("something"));
-  }
-}
-
-TEST_F(ConsumerTests, testMetadataCallThrowsAnError) {
-  auto Metadata = new MockMetadata;
-  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
-      RdKafka::ErrorCode::ERR__ALL_BROKERS_DOWN, Metadata);
-  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
-  {
-    auto Consumer = std::make_unique<Kafka::Consumer>(
-        std::move(MockConsumer),
-        std::unique_ptr<RdKafka::Conf>(
-            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
-        std::make_unique<Kafka::KafkaEventCb>());
-    EXPECT_THROW(Consumer->addTopic("something"), MetadataException);
+  std::cout << "Size of assignemnts: " << Assignments.size() << std::endl;
+  for (auto const &Ass : Assignments) {
+    std::cout << "Name of assignemnt: " << Ass->topic() << std::endl;
   }
 }

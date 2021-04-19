@@ -24,6 +24,6 @@ FileWriter::Msg buildRunStartMessage(
 
 FileWriter::Msg
 buildRunStopMessage(uint64_t StopTime, std::string const &RunName,
-                    std::string const &JobID,
+                    std::string const &JobID, std::string const &CommandID,
                     std::optional<std::string> const &ServiceID);
 } // namespace RunStartStopHelpers

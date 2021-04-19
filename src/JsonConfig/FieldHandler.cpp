@@ -64,10 +64,10 @@ void FieldHandler::processConfigData(nlohmann::json const &JsonObj) {
         fmt::format("{}. {}", Ctr, (*MissingFields.begin())->getKeys()),
         [&](auto a, auto b) {
           Ctr++;
-          return a + fmt::format("{}. {}", Ctr, b->getKeys());
+          return a + fmt::format(" {}. {}", Ctr, b->getKeys());
         });
     throw std::runtime_error(
-        "Missing (requried) json config field(s) with key(s): " + ListOfKeys);
+        "Missing (required) json config field(s) with key(s): " + ListOfKeys);
   }
 }
 

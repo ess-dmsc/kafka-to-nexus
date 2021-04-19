@@ -19,16 +19,10 @@ class WriterModuleStandIn : public WriterModule::Base {
 public:
   MAKE_MOCK0(config_post_processing, void(), override);
   WriterModuleStandIn() : WriterModule::Base(true, "test") {}
+  ~WriterModuleStandIn() = default;
   MAKE_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(write, void(FileWriter::FlatbufferMessage const &), override);
-};
-
-class DataMessageWriterStandIn : public Stream::MessageWriter {
-public:
-  explicit DataMessageWriterStandIn(Metrics::Registrar const &Registrar)
-      : MessageWriter([]() {}, 1s, Registrar) {}
-  using Stream::MessageWriter::WriteJobs;
 };
 
 class DataMessageWriterTest : public ::testing::Test {
@@ -45,9 +39,9 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
-    DataMessageWriterStandIn Writer{MetReg};
+    Stream::MessageWriter Writer{[]() {}, 1s, MetReg};
     Writer.addMessage(SomeMessage);
-    Writer.WriteJobs.enqueue([&Writer]() {
+    Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 1);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 0);
     });
@@ -62,12 +56,12 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
-    DataMessageWriterStandIn Writer{MetReg};
-    Writer.WriteJobs.enqueue([&Writer]() {
+    Stream::MessageWriter Writer{[]() {}, 1s, MetReg};
+    Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
     Writer.addMessage(SomeMessage);
-    Writer.WriteJobs.enqueue([&Writer]() {
+    Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 1);
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
@@ -100,12 +94,12 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
-    DataMessageWriterStandIn Writer{MetReg};
-    Writer.WriteJobs.enqueue([&Writer]() {
+    Stream::MessageWriter Writer{[]() {}, 1s, MetReg};
+    Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
     Writer.addMessage(SomeMessage);
-    Writer.WriteJobs.enqueue([&Writer]() {
+    Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 1);
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 2);

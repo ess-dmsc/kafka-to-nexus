@@ -9,6 +9,9 @@ add_subdirectory(NeXusDataset)
 set(UnitTests_SRC
         UnitTests.cpp
         HDFFileAttributesTests.cpp
+        HDFOperationsTests.cpp
+        MultiVectorTest.cpp
+        HDFAttributesTest.cpp
         helpers/HDFFileTestHelper.cpp
         helpers/RunStartStopHelpers.cpp
         JsonTests.cpp
@@ -21,14 +24,12 @@ set(UnitTests_SRC
         ProducerDeliveryTests.cpp
         ConsumerTests.cpp
         StreamControllerTests.cpp
-        CommandParserTests.cpp
         Metrics/MetricsRegistrarTest.cpp
         Metrics/MetricTest.cpp
         Metrics/CarbonConnectionTest.cpp
         Metrics/CarbonTestServer.cpp
         Metrics/MetricsReporterTest.cpp
         Metrics/LogSinkTest.cpp
-        MasterTests.cpp
         MetaDataQueryTests.cpp
         Stream/PartitionFilterTest.cpp
         Stream/MessageWriterTests.cpp
@@ -42,9 +43,12 @@ set(UnitTests_SRC
         StatusReporterTests.cpp
         helpers/StatusHelpers.cpp
         HelperTests.cpp
+        CommandSystem/CommandParserTests.cpp
         CommandSystem/CommandListenerTests.cpp
+        CommandSystem/CommandHandlerTests.cpp
         TimeUtilityTest.cpp
-        JsonConfig/FieldTest.cpp JsonConfig/FieldHandlerTest.cpp)
+        JsonConfig/FieldTest.cpp
+        JsonConfig/FieldHandlerTest.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h

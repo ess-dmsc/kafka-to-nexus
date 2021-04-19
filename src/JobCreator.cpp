@@ -10,7 +10,7 @@
 /// \file  CommandHandler.cpp
 
 #include "JobCreator.h"
-#include "CommandParser.h"
+#include "CommandSystem/Parser.h"
 #include "FileWriterTask.h"
 #include "HDFOperations.h"
 #include "Msg.h"
@@ -48,16 +48,16 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
 
   auto ConfigStreamInner =
-      CommandParser::getRequiredValue<json>("stream", ConfigStream);
+      Command::Parser::getRequiredValue<json>("stream", ConfigStream);
   StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
-  StreamSettings.Topic =
-      CommandParser::getRequiredValue<std::string>("topic", ConfigStreamInner);
-  StreamSettings.Source =
-      CommandParser::getRequiredValue<std::string>("source", ConfigStreamInner);
-  StreamSettings.Module = CommandParser::getRequiredValue<std::string>(
+  StreamSettings.Topic = Command::Parser::getRequiredValue<std::string>(
+      "topic", ConfigStreamInner);
+  StreamSettings.Source = Command::Parser::getRequiredValue<std::string>(
+      "source", ConfigStreamInner);
+  StreamSettings.Module = Command::Parser::getRequiredValue<std::string>(
       "writer_module", ConfigStreamInner);
   StreamSettings.Attributes =
-      CommandParser::getOptionalValue<json>("attributes", ConfigStream, "")
+      Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
 
   return StreamSettings;
@@ -116,7 +116,7 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
        {"source", StreamSettings.Source}});
 
   auto AttributesJson = nlohmann::json::parse(StreamSettings.Attributes);
-  HDFOperations::writeAttributes(StreamGroup, &AttributesJson, SharedLogger());
+  HDFOperations::writeAttributes(StreamGroup, AttributesJson);
 
   HDFWriterModule->init_hdf({StreamGroup});
 }
@@ -156,10 +156,10 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 }
 
 std::unique_ptr<IStreamController>
-JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
+JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
                                  MainOpt &Settings, SharedLogger const &Logger,
                                  Metrics::Registrar Registrar) {
-  auto Task = std::make_unique<FileWriterTask>(Settings.ServiceID);
+  auto Task = std::make_unique<FileWriterTask>();
   Task->setJobId(StartInfo.JobID);
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
@@ -188,9 +188,8 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
       StartInfo.BrokerInfo.HostPort;
 
   Logger->info("Write file with job_id: {}", Task->jobID());
-  return std::make_unique<StreamController>(std::move(Task), Settings.ServiceID,
-                                            Settings.StreamerConfiguration,
-                                            Registrar);
+  return std::make_unique<StreamController>(
+      std::move(Task), Settings.StreamerConfiguration, Registrar);
 }
 
 void JobCreator::addStreamSourceToWriterModule(

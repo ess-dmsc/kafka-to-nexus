@@ -44,7 +44,8 @@ protected:
   std::string const HostPort;
 
   std::thread AsioThread;
-  MsgQueue Messages;
+  const size_t MaxMessageQueueSize{1000};
+  MsgQueue Messages{MaxMessageQueueSize};
 
 private:
   size_t const MessageAdditionLimit{3000};

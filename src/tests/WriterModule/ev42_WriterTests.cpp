@@ -436,7 +436,7 @@ TEST_F(EventWriterTests,
   auto SecondMessageBuffer =
       generateFlatbufferData("TestSource", 0, 1, {0, 0, 0}, {0, 0, 0}, false);
   FileWriter::FlatbufferMessage SecondTestMessage(SecondMessageBuffer.data(),
-                                                  MessageBuffer.size());
+                                                  SecondMessageBuffer.size());
 
   // Create writer and give it the message to write
   {

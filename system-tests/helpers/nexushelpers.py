@@ -1,24 +1,26 @@
 import h5py
-from time import sleep
+from datetime import datetime, timedelta
+import time
 
 
-class OpenNexusFileWhenAvailable:
+class OpenNexusFile:
     """
-    Context manager for opening NeXus files
-    Retries opening until successful
+    Context manager for opening NeXus files.
     """
 
-    def __init__(self, filepath):
-        attempts = 0
-        while attempts < 50:
+    def __init__(self, filepath: str, timeout: float = 10):
+        used_timeout = timedelta(seconds=timeout)
+        start_time = datetime.now()
+        while True:
             try:
                 self.file = h5py.File(filepath, mode="r")
-            except OSError:
-                attempts += 1
-                sleep(1)
+            except OSError as e:
+                if datetime.now() > start_time + used_timeout:
+                    print(f'Failed to open file "{filepath}"')
+                    raise e
+                time.sleep(0.5)
                 continue
-            return
-        raise OSError(f"Failed to open NeXus file {filepath} after {attempts} attempts")
+            break
 
     def __enter__(self):
         return self.file

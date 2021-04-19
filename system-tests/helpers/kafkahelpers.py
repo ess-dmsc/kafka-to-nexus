@@ -1,92 +1,35 @@
-from confluent_kafka import Producer, Consumer, TopicPartition
+from kafka import KafkaConsumer, KafkaProducer
 from typing import Optional
 import uuid
-from streaming_data_types.run_start_pl72 import serialise_pl72
-from streaming_data_types.run_stop_6s4t import serialise_6s4t
 from streaming_data_types.logdata_f142 import serialise_f142
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
+from datetime import datetime
 
 
-def create_producer() -> Producer:
-    producer_config = {
-        "bootstrap.servers": "localhost:9092",
-        "message.max.bytes": "20000000",
-    }
-    producer = Producer(**producer_config)
-    return producer
-
-
-def publish_run_start_message(
-    producer: Producer,
-    nexus_structure_filepath: str,
-    nexus_filename: str,
-    topic: str = "TEST_writerCommand",
-    start_time: Optional[int] = None,
-    stop_time: Optional[int] = None,
-    job_id: Optional[str] = str(uuid.uuid4()),
-    service_id: Optional[str] = None,
-) -> str:
-    with open(nexus_structure_filepath, "r") as nexus_structure_file:
-        nexus_structure = nexus_structure_file.read().replace("\n", "")
-
-    runstart_message = serialise_pl72(
-        job_id,
-        nexus_filename,
-        start_time,
-        stop_time,
-        nexus_structure=nexus_structure,
-        service_id=service_id,
-    )
-    producer.produce(topic, bytes(runstart_message))
-    producer.poll(0)
-    producer.flush()
-    return job_id
-
-
-def publish_run_stop_message(
-    producer: Producer,
-    job_id: str,
-    topic: str = "TEST_writerCommand",
-    stop_time: Optional[int] = None,
-    service_id: Optional[str] = None,
-) -> str:
-    runstop_message = serialise_6s4t(job_id, service_id=service_id, stop_time=stop_time)
-
-    producer.produce(topic, bytes(runstop_message))
-    producer.poll(0)
-    producer.flush()
-    return job_id
+def create_producer() -> KafkaProducer:
+    return KafkaProducer(bootstrap_servers="localhost:9093")
 
 
 def create_consumer():
-    return Consumer(
-        {
-            "bootstrap.servers": "localhost:9092",
-            "group.id": uuid.uuid4(),
-            "default.topic.config": {"auto.offset.reset": "latest"},
-        }
+    return KafkaConsumer(
+        bootstrap_servers="localhost:9093",
+        group_id=uuid.uuid4(),
+        auto_offset_reset="latest",
     )
 
 
-def consume_everything(topic):
-    consumer = Consumer(
-        {"bootstrap.servers": "localhost:9092", "group.id": uuid.uuid4()}
-    )
-    topicpart = TopicPartition(topic, 0, 0)
-    consumer.assign([topicpart])
-    low, high = consumer.get_watermark_offsets(topicpart)
-
-    return consumer.consume(high - 1)
+def datetime_to_ms(time: datetime) -> int:
+    return int(time.timestamp() * 1000)
 
 
-def _millseconds_to_nanoseconds(time_ms: int) -> int:
-    return int(time_ms * 1000000)
+def datetime_to_ns(time: datetime):
+    return int(time.timestamp() * 1e9)
 
 
 def publish_f142_message(
-    producer: Producer,
+    producer: KafkaProducer,
     topic: str,
-    kafka_timestamp: Optional[int] = None,
+    timestamp: datetime,
     source_name: Optional[str] = None,
     alarm_status: Optional[int] = None,
     alarm_severity: Optional[int] = None,
@@ -96,7 +39,7 @@ def publish_f142_message(
     Optionally set the timestamp in the kafka header to allow, for example, fake "historical" data.
     :param producer: Producer to publish the message with
     :param topic: Name of topic to publish to
-    :param kafka_timestamp: Timestamp to set in the Kafka header (milliseconds after unix epoch)
+    :param timestamp: Timestamp of message
     :param source_name: Name of the source in the f142 message
     :param alarm_status: EPICS alarm status, use enum-like class from streaming_data_types.fbschemas.logdata_f142.AlarmStatus
     :param alarm_severity: EPICS alarm severity, use enum-like class from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity
@@ -107,23 +50,23 @@ def publish_f142_message(
     f142_message = serialise_f142(
         value,
         source_name,
-        _millseconds_to_nanoseconds(kafka_timestamp),
+        datetime_to_ns(timestamp),
         alarm_status,
         alarm_severity,
     )
-    producer.produce(topic, f142_message, timestamp=kafka_timestamp)
-    producer.poll(0)
+    producer.send(
+        topic=topic, value=f142_message, timestamp_ms=datetime_to_ms(timestamp)
+    )
     producer.flush()
 
 
 def publish_ep00_message(
-    producer, topic, status, kafka_timestamp: int, source_name: Optional[str] = None
+    producer, topic, status, timestamp: datetime, source_name: Optional[str] = None
 ):
     if source_name is None:
         source_name = "SIMPLE:DOUBLE"
-    ep00_message = serialise_ep00(
-        _millseconds_to_nanoseconds(kafka_timestamp), status, source_name
+    ep00_message = serialise_ep00(datetime_to_ns(timestamp), status, source_name)
+    producer.send(
+        topic=topic, value=ep00_message, timestamp_ms=datetime_to_ms(timestamp)
     )
-    producer.produce(topic, ep00_message, timestamp=kafka_timestamp)
-    producer.poll(0)
     producer.flush()

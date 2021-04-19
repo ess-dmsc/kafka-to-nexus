@@ -29,13 +29,15 @@ public:
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
+  virtual void stop() = 0;
+  virtual bool hasErrorState() const = 0;
+  virtual std::string errorMessage() = 0;
 };
 
 /// \brief The StreamController's task is to coordinate the different Streamers.
 class StreamController : public IStreamController {
 public:
   StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
-                   std::string ServiceID,
                    FileWriter::StreamerOptions const &Settings,
                    Metrics::Registrar const &Registrar);
   ~StreamController() override;
@@ -56,12 +58,22 @@ public:
   /// last message to be written in nanoseconds.
   void setStopTime(const std::chrono::milliseconds &StopTime) override;
 
+  /// \brief Stop the streams as soon as possible.
+  ///
+  /// This call is not blocking but will trigger open streams to stop as soon as
+  /// possible.
+  void stop() override final;
+
   /// \brief Returns true if all topics are done AND current system time
   /// is greater than stop time.
   ///
   /// \note If stop time has not been set, it will be treated as the maximum
   /// possible time.
   bool isDoneWriting() override;
+
+  bool hasErrorState() const override;
+
+  std::string errorMessage() override;
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
@@ -70,16 +82,19 @@ public:
   std::string getJobId() const override;
 
 private:
+  bool StopNow{false};
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
   void checkIfStreamsAreDone();
   std::chrono::system_clock::duration CurrentMetadataTimeOut;
   std::atomic<bool> StreamersRemaining{true};
+  std::atomic<bool> HasError{false};
+  std::mutex ErrorMsgMutex;
+  std::string ErrorMessage;
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;
-  std::string ServiceId;
   FileWriter::StreamerOptions KafkaSettings;
   ThreadedExecutor Executor; // Must be last
 };

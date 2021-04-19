@@ -4,14 +4,15 @@ fmt/6.0.0
 h5cpp/dc5aeda@ess-dmsc/stable
 librdkafka/1.5.0@ess-dmsc/stable
 jsonformoderncpp/3.7.3@vthiery/stable
-streaming-data-types/d356a77@ess-dmsc/stable
+streaming-data-types/416487f@ess-dmsc/stable
 CLI11/1.9.1@cliutils/stable
 trompeloeil/v38@rollbear/stable
-spdlog/1.4.2
 date/2.4.1
+spdlog/1.4.2
 asio/1.13.0
 readerwriterqueue/07e22ec@ess-dmsc/stable
 concurrentqueue/8f7e861@ess-dmsc/stable
+stduuid/1.0
 
 [generators]
 cmake

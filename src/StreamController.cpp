@@ -8,7 +8,7 @@
 
 namespace FileWriter {
 StreamController::StreamController(
-    std::unique_ptr<FileWriterTask> FileWriterTask, std::string ServiceID,
+    std::unique_ptr<FileWriterTask> FileWriterTask,
     FileWriter::StreamerOptions const &Settings,
     Metrics::Registrar const &Registrar)
 
@@ -16,7 +16,7 @@ StreamController::StreamController(
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
-      ServiceId(std::move(ServiceID)), KafkaSettings(Settings) {
+      KafkaSettings(Settings) {
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -24,23 +24,35 @@ StreamController::StreamController(
 }
 
 StreamController::~StreamController() {
-  // Hint streamers of exit
+  stop();
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
 }
 
 void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
-  KafkaSettings.StopTimestamp = time_point(StopTime);
-  auto CStopTime = std::chrono::system_clock::time_point(StopTime);
-  for (auto &s : Streamers) {
-    s->setStopTime(CStopTime);
-  }
+  Executor.sendWork([=]() {
+    KafkaSettings.StopTimestamp = time_point(StopTime);
+    auto CStopTime = std::chrono::system_clock::time_point(StopTime);
+    for (auto &s : Streamers) {
+      s->setStopTime(CStopTime);
+    }
+  });
 }
+
+void StreamController::stop() {
+  for (auto &Stream : Streamers) {
+    Stream->stop();
+  }
+  WriterThread.stop();
+  StopNow = true;
+}
+
 using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
-  return !StreamersRemaining.load() and
-         KafkaSettings.StopTimestamp != time_point(duration(0)) and
-         std::chrono::system_clock::now() > KafkaSettings.StopTimestamp;
+  return StopNow or
+         (!StreamersRemaining.load() and
+          KafkaSettings.StopTimestamp != time_point(duration(0)) and
+          std::chrono::system_clock::now() > KafkaSettings.StopTimestamp);
 }
 
 std::string StreamController::getJobId() const { return WriterTask->jobID(); }
@@ -93,18 +105,35 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
   }
   Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
 }
+
+bool StreamController::hasErrorState() const { return HasError; }
+
+std::string StreamController::errorMessage() {
+  std::lock_guard Guard(ErrorMsgMutex);
+  return ErrorMessage;
+}
+
 using std::chrono_literals::operator""ms;
 void StreamController::checkIfStreamsAreDone() {
-  Streamers.erase(
-      std::remove_if(Streamers.begin(), Streamers.end(),
-                     [](auto const &Elem) { return Elem->isDone(); }),
-      Streamers.end());
+  try {
+    Streamers.erase(
+        std::remove_if(Streamers.begin(), Streamers.end(),
+                       [](auto const &Elem) { return Elem->isDone(); }),
+        Streamers.end());
 
-  if (Streamers.empty()) {
+    if (Streamers.empty()) {
+      StreamersRemaining.store(false);
+    }
+    std::this_thread::sleep_for(50ms);
+    Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
+  } catch (std::exception &E) {
+    HasError = true;
+    std::lock_guard Guard(ErrorMsgMutex);
+    ErrorMessage =
+        fmt::format("Got stream error. The error message was: {}", E.what());
+    stop();
     StreamersRemaining.store(false);
   }
-  std::this_thread::sleep_for(50ms);
-  Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
 }
 
 } // namespace FileWriter
