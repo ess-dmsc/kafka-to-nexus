@@ -272,8 +272,10 @@ builders = pipeline_builder.createBuilders { container ->
           cd build
           pwd
           ninja docs 2> ${test_output}
+          cd ..
+          cp ./build/${test_output} ${test_output}
         """
-        container.copyFrom("build/${test_output}", '.')
+        // container.copyFrom("build/${test_output}", '.')
         archiveArtifacts "${test_output}"
     }  // stage
   }  // if
