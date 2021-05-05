@@ -178,7 +178,9 @@ builders = pipeline_builder.createBuilders { container ->
         def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
 
         withCredentials([usernamePassword(credentialsId: 'cow-bot-username-with-token', usernameVariable: 'UNUSED_VARIABLE', passwordVariable: 'GITHUB_TOKEN')]) {
-          sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${env.CHANGE_ID}/comments\""
+          withEnv(["comment_text=${comment_text}", "repository_name=${repository_name}"]) {
+            sh 'curl -s -H \"Authorization: token $GITHUB_TOKEN\" -X POST -d '{\"body\": \"$comment_text\"}' \"https://api.github.com/repos/$repository_name/issues/$CHANGE_ID/comments\"'
+          }
         }
       }
 
