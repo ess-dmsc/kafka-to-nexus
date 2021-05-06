@@ -21,6 +21,8 @@
 
 namespace Stream {
 
+/// \brief Represents the consumption of messages from a topic with one or more
+/// partitions.
 class Topic {
 public:
   Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
@@ -42,6 +44,8 @@ public:
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
+  /// \brief Check if done consuming messages from the partitions on the current
+  /// topic.
   bool isDone() { return IsDone.load(); };
 
   virtual ~Topic() = default;
