@@ -271,7 +271,7 @@ builders = pipeline_builder.createBuilders { container ->
         container.sh """
           cd build
           pwd
-          ninja docs 2> ${test_output}
+          ninja docs 2>&1 > ${test_output}
         """
         container.copyFrom("build/${test_output}", '.')
         archiveArtifacts "${test_output}"
