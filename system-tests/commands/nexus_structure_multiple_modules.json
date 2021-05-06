@@ -37,7 +37,7 @@
               "name": "dataset2",
               "children": [
                 {
-                  "module": "f142",
+                  "module": "f142_test",
                   "config": {
                     "source": "test_source_2",
                     "topic": "TEST_sampleEnv"
