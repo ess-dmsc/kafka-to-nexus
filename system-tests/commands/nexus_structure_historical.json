@@ -9,12 +9,11 @@
           "name": "historical_data_1",
           "children": [
             {
-              "type": "stream",
-              "stream": {
+              "module": "f142",
+              "config": {
                 "type": "int32",
                 "topic": "TEST_historicalData1",
-                "source": "fw-test-helpers",
-                "writer_module": "f142"
+                "source": "fw-test-helpers"
               }
             }
           ]
@@ -24,12 +23,11 @@
           "name": "no_data",
           "children": [
             {
-              "type": "stream",
-              "stream": {
+              "module": "f142",
+              "config": {
                 "type": "int32",
                 "topic": "TEST_emptyTopic",
-                "source": "other-source",
-                "writer_module": "f142"
+                "source": "other-source"
               }
             }
           ]
@@ -39,12 +37,11 @@
           "name": "historical_data_2",
           "children": [
             {
-              "type": "stream",
-              "stream": {
+              "module": "f142",
+              "config": {
                 "type": "int32",
                 "topic": "TEST_historicalData2",
-                "source": "fw-test-helpers",
-                "writer_module": "f142"
+                "source": "fw-test-helpers"
               }
             }
           ]
@@ -54,12 +51,11 @@
           "name": "historical_data_3",
           "children": [
             {
-              "type": "stream",
-              "stream": {
+              "module": "f142",
+              "config": {
                 "type": "int32",
                 "topic": "TEST_historicalData3",
-                "source": "fw-test-helpers",
-                "writer_module": "f142"
+                "source": "fw-test-helpers"
               }
             }
           ]

@@ -5,37 +5,34 @@
       "name": "entry",
       "children": [
         {
-          "type": "dataset",
-          "name": "duration",
-          "dtype": "float",
-          "size": [
-            1
-          ],
-          "values": [
-            1817.0
-          ]
+          "module": "dataset",
+          "config": {
+            "name": "duration",
+            "dtype": "float",
+            "values": [
+              1817.0
+            ]
+          }
         },
         {
-          "type": "dataset",
-          "dtype": "string",
-          "name": "end_time",
-          "size": [
-            1
-          ],
-          "values": [
-            "2016-04-12T03:29:11"
-          ]
+          "module": "dataset",
+          "config": {
+            "dtype": "string",
+            "name": "end_time",
+            "values": [
+              "2016-04-12T03:29:11"
+            ]
+          }
         },
         {
-          "type": "dataset",
-          "name": "features",
-          "dtype": "uint64",
-          "size": [
-            1
-          ],
-          "values": [
-            10138143369737381149
-          ]
+          "module": "dataset",
+          "config": {
+            "name": "features",
+            "dtype": "uint64",
+            "values": [
+              10138143369737381149
+            ]
+          }
         },
         {
           "type": "group",
@@ -46,26 +43,32 @@
               "name": "monitor1",
               "children": [
                 {
-                  "type": "dataset",
-                  "name": "depends_on",
-                  "dtype": "string",
-                  "values": "/entry/instrument/monitor1/transformations/location"
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "dtype": "string",
+                    "values": "/entry/instrument/monitor1/transformations/location"
+                  }
                 },
                 {
-                  "type": "dataset",
-                  "name": "detector_id",
-                  "dtype": "int64",
-                  "values": 1
+                  "module": "dataset",
+                  "config": {
+                    "name": "detector_id",
+                    "dtype": "int64",
+                    "values": 1
+                  }
                 },
                 {
                   "type": "group",
                   "name": "transformations",
                   "children": [
                     {
-                      "type": "dataset",
-                      "name": "location",
-                      "dtype": "double",
-                      "values": 12.064,
+                      "module": "dataset",
+                      "config": {
+                        "name": "location",
+                        "dtype": "double",
+                        "values": 12.064
+                      },
                       "attributes": [
                         {
                           "name": "units",
@@ -111,10 +114,12 @@
               ]
             },
             {
-              "type": "dataset",
-              "name": "name",
-              "dtype": "string",
-              "values": "SANS2D",
+              "module": "dataset",
+              "config": {
+                "name": "name",
+                "dtype": "string",
+                "values": "SANS2D"
+              },
               "attributes": [
                 {
                   "name": "short_name",
@@ -127,26 +132,32 @@
               "name": "source",
               "children": [
                 {
-                  "type": "dataset",
-                  "name": "depends_on",
-                  "dtype": "string",
-                  "values": "/entry/instrument/source/transformations/location"
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "dtype": "string",
+                    "values": "/entry/instrument/source/transformations/location"
+                  }
                 },
                 {
-                  "type": "dataset",
-                  "name": "name",
-                  "dtype": "string",
-                  "values": "source"
+                  "module": "dataset",
+                  "config": {
+                    "name": "name",
+                    "dtype": "string",
+                    "values": "source"
+                  }
                 },
                 {
                   "type": "group",
                   "name": "transformations",
                   "children": [
                     {
-                      "type": "dataset",
-                      "name": "location",
-                      "dtype": "double",
-                      "values": 0.0,
+                      "module": "dataset",
+                      "config": {
+                        "name": "location",
+                        "dtype": "double",
+                        "values": 0.0
+                      },
                       "attributes": [
                         {
                           "name": "units",
@@ -200,25 +211,26 @@
           ]
         },
         {
-          "type": "dataset",
-          "name": "start_time",
-          "dtype": "string",
-          "size": [
-            1
-          ],
-          "values": [
-            "2016-04-12T02:58:52"
-          ]
+          "module": "dataset",
+          "config": {
+            "name": "start_time",
+            "dtype": "string",
+            "values": [
+              "2016-04-12T02:58:52"
+            ]
+          }
         },
         {
           "type": "group",
           "name": "user_1",
           "children": [
             {
-              "type": "dataset",
-              "name": "affiliation",
-              "dtype": "string",
-              "values": "ISIS, STFC"
+              "module": "dataset",
+              "config": {
+                "name": "affiliation",
+                "dtype": "string",
+                "values": "ISIS, STFC"
+              }
             }
           ],
           "attributes": [
