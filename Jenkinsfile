@@ -177,7 +177,7 @@ builders = pipeline_builder.createBuilders { container ->
         def repository_name = repository_url.replace("git@github.com:","").replace(".git","").replace("https://github.com/","")
         def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
 
-        withCredentials([string(credentialsId: 'cow-bot-token', variable: 'GITHUB_TOKEN')]) {
+        withCredentials([usernamePassword(credentialsId: 'cow-bot-username-with-token', usernameVariable: 'UNUSED_VARIABLE', passwordVariable: 'GITHUB_TOKEN')]) {
           sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${env.CHANGE_ID}/comments\""
         }
       }
@@ -376,7 +376,7 @@ def get_macos_pipeline() {
 
 def get_system_tests_pipeline() {
   return {
-    node('systest01.dm.esss.dk') {
+    node('system-test') {
       cleanWs()
       dir("${project}") {
         try {
