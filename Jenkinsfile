@@ -177,8 +177,10 @@ builders = pipeline_builder.createBuilders { container ->
         def repository_name = repository_url.replace("git@github.com:","").replace(".git","").replace("https://github.com/","")
         def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
 
-        withCredentials([string(credentialsId: 'cow-bot-token', variable: 'GITHUB_TOKEN')]) {
-          sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${env.CHANGE_ID}/comments\""
+        withCredentials([usernamePassword(credentialsId: 'cow-bot-username-with-token', usernameVariable: 'UNUSED_VARIABLE', passwordVariable: 'GITHUB_TOKEN')]) {
+          withEnv(["comment_text=${comment_text}", "repository_name=${repository_name}"]) {
+            sh 'curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\\"body\\": \\"$comment_text\\"}" "https://api.github.com/repos/$repository_name/issues/$CHANGE_ID/comments"'
+          }
         }
       }
 
@@ -239,16 +241,18 @@ builders = pipeline_builder.createBuilders { container ->
       try {
         withCredentials([
           usernamePassword(
-          credentialsId: 'cow-bot-username',
+          credentialsId: 'cow-bot-username-with-token',
           usernameVariable: 'USERNAME',
           passwordVariable: 'PASSWORD'
           )
         ]) {
-          container.sh """
-            cd ${project}
-            git push https://${USERNAME}:${PASSWORD}@github.com/ess-dmsc/kafka-to-nexus.git HEAD:${CHANGE_BRANCH}
-          """
-        } // withCredentials
+          withEnv(["PROJECT=${pipeline_builder.project}"]) {
+            container.sh '''
+              cd $PROJECT
+              git push https://$USERNAME:$PASSWORD@github.com/ess-dmsc/$PROJECT.git HEAD:$CHANGE_BRANCH
+            '''
+          }  // withEnv
+        }  // withCredentials
       } catch (e) {
         // Okay to fail; there may be nothing to push
       } finally {
