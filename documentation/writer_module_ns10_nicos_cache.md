@@ -23,11 +23,10 @@ We can write the `CacheEntry` stream to HDF with a child in the
 
 ```json
 {
-  "type": "stream",
-  "stream": {
+  "module": "ns10",
+  "config": {
     "topic": "nicos.cache.topic",
-    "source": "nicos/device/parameter",
-    "writer_module": "ns10",
+    "source": "nicos/device/parameter"
   }
 }
 ```
