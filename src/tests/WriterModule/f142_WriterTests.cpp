@@ -93,7 +93,7 @@ TEST_F(f142Init, CheckValueInitShape1) {
 
 TEST_F(f142Init, CheckValueInitShape2) {
   f142_WriterStandIn TestWriter;
-  TestWriter.ArraySize.setValue("10");
+  TestWriter.ArraySize.setValue("", "10");
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
