@@ -293,11 +293,11 @@ builders = pipeline_builder.createBuilders { container ->
         int numFailedCases = failingCases.size()
         if(numFailedCases) {
             doxygenStepFailed = true
-            println "Doxygen failed to generate HTML documentation due to following warnings:"
+            println "Doxygen failed to generate HTML documentation due to issued warnings displayed below."
+            println "The total number of Doxygen warnings that needs to be corrected is $numFailedCases and are following:"
             for(line in failingCases) {
                 println line
             }
-            println "Total number of Doxygen warnings that needs to be corrected is $numFailedCases."
         }
         else{
             println "Doxygen successfully generated all the FileWriter HTML documentation without warnings."
