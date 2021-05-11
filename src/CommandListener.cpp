@@ -23,7 +23,7 @@ void CommandListener::start() {
   Kafka::BrokerSettings BrokerSettings =
       config.StreamerConfiguration.BrokerSettings;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
-  Consumer = Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
+    Consumer =  Kafka::createConsumer(BrokerSettings, BrokerSettings.Address);
   Consumer->addTopic(config.CommandBrokerURI.Topic);
 }
 
