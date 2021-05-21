@@ -31,11 +31,10 @@ We can write the `EventHistogram` stream to HDF with a child in the
 
 ```json
 {
-  "type": "stream",
-  "stream": {
+  "module": "hs00",
+  "config": {
     "topic": "topic.with.multiple.sources",
     "source": "some_histogram_producer",
-    "writer_module": "hs00",
     "data_type": "uint64",
     "error_type": "double",
     "edge_type": "double",
