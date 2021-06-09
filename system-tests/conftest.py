@@ -192,28 +192,6 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     request.addfinalizer(fin)
 
 
-@pytest.fixture(scope="session", autouse=False)
-def start_lr_images(request):
-    print("Starting ioc and forwarder", flush=True)
-    options = common_options
-    options["--project-name"] = "forwarder"
-    options["--file"] = ["docker-compose-lr.yml"]
-    project = project_from_options(os.path.dirname(__file__), options)
-    cmd = TopLevelCommand(project)
-
-    cmd.up(options)
-    print("Started ioc and forwarder containers", flush=True)
-
-    def fin():
-        print("Stopping ioc and forwarder", flush=True)
-        options["--timeout"] = 30
-        options["--project-name"] = "forwarder"
-        options["--file"] = ["docker-compose-lr.yml"]
-        cmd.down(options)
-
-    request.addfinalizer(fin)
-
-
 @pytest.fixture(scope="session", autouse=True)
 def remove_logs_from_previous_run(request):
     print("Removing previous NeXus files", flush=True)
