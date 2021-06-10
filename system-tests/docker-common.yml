@@ -18,3 +18,7 @@ services:
 
   zookeeper:
     image: zookeeper:3.6.2
+
+  wait_for_zookeeper:
+    image: dadarek/wait-for-dependencies
+    command: zookeeper:2181

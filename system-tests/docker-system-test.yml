@@ -4,12 +4,18 @@ services:
     extends:
       file: docker-common.yml
       service: zookeeper
+  wait_for_zookeeper:
+    extends:
+      file: docker-common.yml
+      service: wait_for_zookeeper
+    depends_on:
+      - zookeeper
   kafka:
     extends:
       file: docker-common.yml
       service: kafka
     depends_on:
-      - zookeeper
+      - wait_for_zookeeper
   filewriter1:
     image: filewriter-image:latest
     hostname: filewriter1

@@ -170,18 +170,7 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
-        if local_path is None:
-            try:
-                # Used for when there are multiple filewriter instances
-                # as the service is not called "filewriter"
-                multiple_log_options = dict(options)
-                multiple_log_options["SERVICE"] = ["filewriter1", "filewriter2"]
-                cmd.logs(multiple_log_options)
-            except:
-                log_options = dict(options)
-                log_options["SERVICE"] = ["filewriter"]
-                cmd.logs(log_options)
-        else:
+        if local_path is not None:
             proc.kill()
         options["--timeout"] = 30
         cmd.down(options)
