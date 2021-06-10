@@ -96,6 +96,7 @@ public:
         FieldType DefaultValue)
       : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
 
+  // cppcheck-suppress functionStatic
   template <class FieldRegistrarType>
   Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
         FieldType DefaultValue)

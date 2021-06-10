@@ -328,7 +328,6 @@ std::string writeDataset(hdf5::node::Group const &Parent,
 
   writeGenericDataset(UsedDataType, Parent, Dataset.Name,
                       Dataset.Value.getValue());
-  auto dset = hdf5::node::Dataset(Parent.nodes[Dataset.Name]);
   return Dataset.Name.getValue();
 }
 
