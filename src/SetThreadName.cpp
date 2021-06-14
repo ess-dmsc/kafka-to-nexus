@@ -16,6 +16,6 @@ void setThreadName(std::string NewName) {
 #elif __linux__
   pthread_setname_np(pthread_self(), NewName.c_str());
 #else
-  #pragma message("Unsupported platform. Unable to set thread name.")
+#pragma message("Unsupported platform. Unable to set thread name.")
 #endif
 }

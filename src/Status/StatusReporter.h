@@ -9,10 +9,10 @@
 
 #pragma once
 
+#include "SetThreadName.h"
 #include "StatusReporterBase.h"
 #include <asio.hpp>
 #include <chrono>
-#include "SetThreadName.h"
 
 namespace Status {
 
@@ -29,7 +29,10 @@ public:
 
 private:
   void start();
-  void run() { setThreadName("status_update"); IO.run(); }
+  void run() {
+    setThreadName("status_update");
+    IO.run();
+  }
   asio::io_context IO;
   asio::steady_timer AsioTimer;
   std::thread StatusThread;

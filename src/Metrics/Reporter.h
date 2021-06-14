@@ -10,12 +10,12 @@
 #pragma once
 
 #include "InternalMetric.h"
+#include "SetThreadName.h"
 #include "Sink.h"
 #include <asio.hpp>
 #include <map>
 #include <memory>
 #include <thread>
-#include "SetThreadName.h"
 
 namespace Metrics {
 
@@ -34,7 +34,10 @@ public:
   LogTo getSinkType();
 
 private:
-  void run() { setThreadName("metric_reporter"); IO.run(); }
+  void run() {
+    setThreadName("metric_reporter");
+    IO.run();
+  }
   void start();
   void waitForStop();
 

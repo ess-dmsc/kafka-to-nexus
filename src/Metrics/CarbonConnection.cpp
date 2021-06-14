@@ -1,8 +1,8 @@
 #include "CarbonConnection.h"
+#include "SetThreadName.h"
 #include <chrono>
 #include <ciso646>
 #include <utility>
-#include "SetThreadName.h"
 
 namespace {
 #define UNUSED_ARG(x) (void)x;
@@ -189,7 +189,10 @@ Connection::Impl::~Impl() {
 
 Status Connection::Impl::getConnectionStatus() const { return ConnectionState; }
 
-void Connection::Impl::threadFunction() { setThreadName("carbon_connection"); Service.run(); }
+void Connection::Impl::threadFunction() {
+  setThreadName("carbon_connection");
+  Service.run();
+}
 
 void Connection::Impl::setState(Status NewState) { ConnectionState = NewState; }
 

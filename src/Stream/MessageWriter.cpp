@@ -11,8 +11,8 @@
 ///
 
 #include "MessageWriter.h"
-#include "WriterModuleBase.h"
 #include "SetThreadName.h"
+#include "WriterModuleBase.h"
 
 namespace Stream {
 

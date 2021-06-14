@@ -9,12 +9,12 @@
 
 #pragma once
 
+#include "SetThreadName.h"
 #include <concurrentqueue/concurrentqueue.h>
 #include <functional>
 #include <future>
 #include <memory>
 #include <thread>
-#include "SetThreadName.h"
 
 using JobType = std::function<void()>;
 
