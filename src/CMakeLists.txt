@@ -114,7 +114,8 @@ set(kafka_to_nexus_SRC
         CommandSystem/CommandListener.cpp
         TimeUtility.cpp
         JsonConfig/Field.cpp
-        JsonConfig/FieldHandler.cpp)
+        JsonConfig/FieldHandler.cpp
+        SetThreadName.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -188,7 +189,7 @@ set(kafka_to_nexus_INC
         JsonConfig/Field.h
         JsonConfig/FieldHandler.h
         MultiVector.h
-        )
+        SetThreadName.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

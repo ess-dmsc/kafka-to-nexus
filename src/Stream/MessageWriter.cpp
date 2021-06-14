@@ -12,6 +12,7 @@
 
 #include "MessageWriter.h"
 #include "WriterModuleBase.h"
+#include "SetThreadName.h"
 
 namespace Stream {
 
@@ -84,6 +85,7 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
 }
 
 void MessageWriter::threadFunction() {
+  setThreadName("writer");
   int CheckTimeCounter{0};
   JobType CurrentJob;
   time_point NextFlushTime{system_clock::now() + FlushInterval};

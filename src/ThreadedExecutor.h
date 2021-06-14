@@ -14,6 +14,7 @@
 #include <future>
 #include <memory>
 #include <thread>
+#include "SetThreadName.h"
 
 using JobType = std::function<void()>;
 
@@ -65,6 +66,7 @@ public:
 private:
   bool RunThread{true};
   std::function<void()> ThreadFunction{[=]() {
+    setThreadName("executor");
     while (RunThread) {
       JobType CurrentTask;
       if (TaskQueue.try_dequeue(CurrentTask)) {
