@@ -34,6 +34,10 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {
+  if (CurrentState == WriterState::Writing) {
+    throw std::runtime_error(
+        "Unable to start new writing job when waiting for the current one to finish.");
+  }
   try {
     CurrentStreamController = Creator_->createFileWritingJob(
         StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
