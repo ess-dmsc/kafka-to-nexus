@@ -81,7 +81,7 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
   } else {
     std::string SchemaId(reinterpret_cast<char const *>(CommandMsg.data()) + 4,
                          4);
-    LOG_DEBUG("Unable to handle (command) message of type: {}", SchemaId);
+    LOG_TRACE("Unable to handle (command) message of type: {}", SchemaId);
   }
 }
 

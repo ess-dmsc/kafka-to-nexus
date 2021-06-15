@@ -101,3 +101,9 @@ void LOG_DEBUG(spdlog::string_view_t fmt, const Args &... args) {
   getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::debug, fmt,
                    args...);
 }
+
+template <typename... Args>
+void LOG_TRACE(spdlog::string_view_t fmt, const Args &... args) {
+  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::trace, fmt,
+                   args...);
+}
