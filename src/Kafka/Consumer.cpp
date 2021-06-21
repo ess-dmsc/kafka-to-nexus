@@ -71,15 +71,19 @@ void Consumer::addTopic(std::string const &Topic, int64_t Offset) {
   auto ErrorCode = KafkaConsumer->subscription(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     Logger->error("Could not get current topic subscriptions.");
-    throw std::runtime_error(
-        fmt::format("Could not get current topic subscriptions. RdKafka error: \"{}\"", err2str(ErrorCode)));
+    throw std::runtime_error(fmt::format(
+        "Could not get current topic subscriptions. RdKafka error: \"{}\"",
+        err2str(ErrorCode)));
   }
   Topics.emplace_back(Topic);
   ErrorCode = KafkaConsumer->subscribe(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    Logger->error("Unable to add topic \"{}\" to list of subscribed topics.", Topic);
+    Logger->error("Unable to add topic \"{}\" to list of subscribed topics.",
+                  Topic);
     throw std::runtime_error(
-        fmt::format("Unable to add topic \"{}\" to list of subscribed topics. RdKafka error: \"{}\"", Topic, err2str(ErrorCode)));
+        fmt::format("Unable to add topic \"{}\" to list of subscribed topics. "
+                    "RdKafka error: \"{}\"",
+                    Topic, err2str(ErrorCode)));
   }
 }
 

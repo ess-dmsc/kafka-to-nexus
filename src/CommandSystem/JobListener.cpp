@@ -28,8 +28,6 @@ std::pair<Kafka::PollStatus, Msg> JobListener::pollForJob() {
   return pollForCommand();
 }
 
-void JobListener::disconnectFromPool() {
-  Consumer.reset();
-}
+void JobListener::disconnectFromPool() { Consumer.reset(); }
 
 } // namespace Command
