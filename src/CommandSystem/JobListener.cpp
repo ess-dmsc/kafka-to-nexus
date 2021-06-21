@@ -29,7 +29,6 @@ std::pair<Kafka::PollStatus, Msg> JobListener::pollForJob() {
 }
 
 void JobListener::disconnectFromPool() {
-  CurrentTimeOut = KafkaSettings.MinMetadataTimeout;
   Consumer.reset();
 }
 

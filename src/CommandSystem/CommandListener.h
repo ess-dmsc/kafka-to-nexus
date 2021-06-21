@@ -36,6 +36,5 @@ protected:
   Kafka::BrokerSettings KafkaSettings;
   void setUpConsumer();
   std::unique_ptr<Kafka::ConsumerInterface> Consumer;
-  duration CurrentTimeOut;
 };
 } // namespace Command

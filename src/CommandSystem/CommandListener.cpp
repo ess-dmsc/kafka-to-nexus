@@ -20,8 +20,7 @@ namespace Command {
 CommandListener::CommandListener(uri::URI CommandTopicUri,
                                  Kafka::BrokerSettings Settings)
     : KafkaAddress(CommandTopicUri.HostPort),
-      CommandTopic(CommandTopicUri.Topic), KafkaSettings(Settings),
-      CurrentTimeOut(Settings.MinMetadataTimeout) {
+      CommandTopic(CommandTopicUri.Topic), KafkaSettings(Settings) {
   KafkaSettings.Address = CommandTopicUri.HostPort;
 }
 
@@ -37,28 +36,8 @@ std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
 }
 
 void CommandListener::setUpConsumer() {
-  try {
-    auto Partitions = Kafka::getPartitionsForTopic(KafkaAddress, CommandTopic,
-                                                   CurrentTimeOut);
-    Consumer = Kafka::createConsumer(KafkaSettings);
-    for (auto const &PartitionId : Partitions) {
-      Consumer->addPartitionAtOffset(CommandTopic, PartitionId,
-                                     RdKafka::Topic::OFFSET_END);
-    }
-  } catch (MetadataException const &E) {
-    CurrentTimeOut *= 2;
-    if (CurrentTimeOut > KafkaSettings.MaxMetadataTimeout) {
-      CurrentTimeOut = KafkaSettings.MaxMetadataTimeout;
-    }
-    LOG_WARN(
-        "Meta data call for retrieving partition IDs for topic \"{}\" "
-        "from the broker "
-        "failed. The failure message was: \"{}\". Re-trying with a "
-        "timeout of {} ms.",
-        CommandTopic, E.what(),
-        std::chrono::duration_cast<std::chrono::milliseconds>(CurrentTimeOut)
-            .count());
-  }
+  Consumer = Kafka::createConsumer(KafkaSettings);
+  Consumer->addTopic(CommandTopic, RdKafka::Topic::OFFSET_END);
 }
 
 } // namespace Command
