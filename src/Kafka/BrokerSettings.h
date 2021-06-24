@@ -22,7 +22,7 @@ using std::chrono_literals::operator""ms;
 struct BrokerSettings {
   BrokerSettings() = default;
   std::string Address;
-  int PollTimeoutMS = 500;
+  int PollTimeoutMS = 100;
   duration MinMetadataTimeout{
       400ms}; // When doing Kafka metadata calls, start with this timeout
   duration MaxMetadataTimeout{
