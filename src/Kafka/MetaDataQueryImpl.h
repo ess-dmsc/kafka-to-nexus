@@ -47,10 +47,7 @@ getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
                      std::vector<int> const &Partitions, time_point Time,
                      duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
-  auto UsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                      Time.time_since_epoch())
-                      .count();
-
+  auto UsedTime = toMilliSeconds(Time);
   std::vector<std::unique_ptr<RdKafka::TopicPartition>> TopicPartitions;
   std::vector<RdKafka::TopicPartition *> TopicPartitionsRaw;
   for (const auto &PartitionId : Partitions) {
@@ -60,8 +57,7 @@ getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
     TopicPartitions.push_back(std::move(CTopicPartition));
   }
 
-  auto TimeOutInMs =
-      std::chrono::duration_cast<std::chrono::milliseconds>(TimeOut).count();
+  auto TimeOutInMs = toMilliSeconds(TimeOut);
 
   auto ReturnCode = Handle->offsetsForTimes(TopicPartitionsRaw, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
@@ -94,8 +90,7 @@ std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
   std::string ErrorStr;
   auto TopicObj = std::unique_ptr<RdKafka::Topic>(
       KafkaTopic::create(Handle.get(), Topic, nullptr, ErrorStr));
-  auto TimeOutInMs =
-      std::chrono::duration_cast<std::chrono::milliseconds>(TimeOut).count();
+  auto TimeOutInMs = toMilliSeconds(TimeOut);
   RdKafka::Metadata *MetadataPtr{nullptr};
   auto ReturnCode =
       Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
@@ -115,8 +110,7 @@ std::set<std::string> getTopicListImpl(std::string const &Broker,
                                        duration TimeOut) {
   auto Handle = getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker);
   std::string ErrorStr;
-  auto TimeOutInMs =
-      std::chrono::duration_cast<std::chrono::milliseconds>(TimeOut).count();
+  auto TimeOutInMs = toMilliSeconds(TimeOut);
   RdKafka::Metadata *MetadataPtr{nullptr};
   auto ReturnCode = Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
