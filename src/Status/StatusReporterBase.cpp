@@ -46,7 +46,7 @@ StatusReporterBase::createReport(std::string const &JSONReport) const {
   auto ServiceId = Builder.CreateString(StaticStatusInformation.ServiceID);
   auto HostName = Builder.CreateString(StaticStatusInformation.HostName);
   uint32_t ProcessId = StaticStatusInformation.ProcessID;
-  uint32_t UpdateInterval = Period.count();
+  uint32_t UpdateInterval = toMilliSeconds(Period);
   auto JSONStatus = Builder.CreateString(JSONReport);
 
   auto MsgBuffer = FlatBuffer::CreateStatus(

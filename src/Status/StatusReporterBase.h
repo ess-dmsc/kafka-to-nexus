@@ -56,7 +56,7 @@ public:
   std::string createJSONReport() const;
 
 protected:
-  std::chrono::milliseconds const Period;
+  duration const Period;
   SharedLogger Logger = getLogger();
   void reportStatus();
 

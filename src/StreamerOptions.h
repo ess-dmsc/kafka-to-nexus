@@ -21,8 +21,8 @@ struct StreamerOptions {
   Kafka::BrokerSettings BrokerSettings;
   std::chrono::milliseconds StartTimestamp{0};
   time_point StopTimestamp{time_point::max()};
-  std::chrono::milliseconds BeforeStartTime{1000};
-  std::chrono::milliseconds AfterStopTime{1000};
+  duration BeforeStartTime{10s};
+  duration AfterStopTime{10s};
 };
 
 } // namespace FileWriter

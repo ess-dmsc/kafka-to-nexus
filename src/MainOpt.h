@@ -70,7 +70,7 @@ struct MainOpt {
 
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
-  std::chrono::milliseconds StatusMasterIntervalMS{2000};
+  duration StatusMasterInterval{2000ms};
 
 private:
   std::string ServiceId{getDefaultServiceId()};

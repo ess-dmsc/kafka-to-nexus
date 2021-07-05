@@ -28,7 +28,7 @@ struct JobStatusInfo {
 // This info is constant for this instance of the software
 struct ApplicationStatusInfo {
   // Time interval between publishing status messages
-  std::chrono::milliseconds const UpdateInterval;
+  duration const UpdateInterval;
   std::string const ApplicationName;
   std::string const ApplicationVersion;
   std::string const HostName;

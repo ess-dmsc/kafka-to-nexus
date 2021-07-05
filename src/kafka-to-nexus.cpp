@@ -46,7 +46,7 @@ createStatusReporter(MainOpt const &MainConfig,
   auto StatusProducerTopic = std::make_unique<Kafka::ProducerTopic>(
       StatusProducer, MainConfig.CommandBrokerURI.Topic);
   auto const StatusInformation =
-      Status::ApplicationStatusInfo{MainConfig.StatusMasterIntervalMS,
+      Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,
                                     ApplicationName,
                                     ApplicationVersion,
                                     getHostName(),

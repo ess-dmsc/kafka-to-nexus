@@ -11,6 +11,7 @@
 #include "MainOpt.h"
 #include "URI.h"
 #include <CLI/CLI.hpp>
+#include <regex>
 
 CLI::Option *uriOption(CLI::App &App, const std::string &Name,
                        CLI::callback_t Fun, const std::string &Description,
@@ -66,23 +67,28 @@ CLI::Option *addUriOption(CLI::App &App, const std::string &Name,
   return uriOption(App, Name, Fun, Description, Defaulted);
 }
 
-void addMillisecondOption(CLI::App &App, const std::string &Name,
-                          std::chrono::milliseconds &MSArg,
-                          const std::string &Description = "",
-                          bool Defaulted = false) {
+void addDurationOption(CLI::App &App, const std::string &Name, duration &MSArg,
+                       const std::string &Description = "",
+                       bool Defaulted = false) {
   CLI::callback_t Fun = [&MSArg](CLI::results_t Results) {
-    MSArg = std::chrono::milliseconds(std::stoi(Results[0]));
-    return true;
-  };
-  App.add_option(Name, Fun, Description, Defaulted);
-}
-
-void addSecondsDurationOption(CLI::App &App, const std::string &Name,
-                              std::chrono::system_clock::duration &MSArg,
-                              const std::string &Description = "",
-                              bool Defaulted = false) {
-  CLI::callback_t Fun = [&MSArg](CLI::results_t Results) {
-    MSArg = std::chrono::seconds(std::stoi(Results[0]));
+    std::regex const TimeRe{"(\\d+.?\\d*)\\s?(s|ms|min|m|h|sec)"};
+    std::smatch Match;
+    if (not std::regex_match(Results[0], Match, TimeRe)) {
+      return false;
+    }
+    int TotalMilliseconds{0};
+    if (Match[2] == "s" or Match[2] == "sec" or Match[2] == "") {
+      TotalMilliseconds = std::round(std::stod(Match[1]) * 1000);
+    } else if (Match[2] == "ms") {
+      TotalMilliseconds = std::round(std::stod(Match[1]));
+    } else if (Match[2] == "m" or Match[2] == "min") {
+      TotalMilliseconds = std::round(std::stod(Match[1]) * 1000 * 60);
+    } else if (Match[2] == "h") {
+      TotalMilliseconds = std::round(std::stod(Match[1]) * 1000 * 60 * 60);
+    } else {
+      return false;
+    }
+    MSArg = std::chrono::milliseconds(TotalMilliseconds);
     return true;
   };
   App.add_option(Name, Fun, Description, Defaulted);
@@ -188,32 +194,38 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
-  addMillisecondOption(App, "--status-master-interval",
-                       MainOptions.StatusMasterIntervalMS,
-                       "Interval in milliseconds for status updates", true);
-  addMillisecondOption(App, "--streamer-ms-before-start",
-                       MainOptions.StreamerConfiguration.BeforeStartTime,
-                       "Streamer option - milliseconds before start time",
-                       true);
-  addMillisecondOption(App, "--streamer-ms-after-stop",
-                       MainOptions.StreamerConfiguration.AfterStopTime,
-                       "Streamer option - milliseconds after stop time", true);
-  addSecondsDurationOption(
-      App, "--kafka-metadata-max-timeout-seconds",
+  addDurationOption(App, "--status-master-interval",
+                    MainOptions.StatusMasterInterval,
+                    "Interval between status updates.  Ex. \"10s\". Accepts "
+                    "\"h\", \"m\", \"s\" and \"ms\".",
+                    true);
+  addDurationOption(App, "--time-before-start",
+                    MainOptions.StreamerConfiguration.BeforeStartTime,
+                    "Pre-consume messages this amount of time.  Ex. \"10s\". "
+                    "Accepts \"h\", \"m\", \"s\" and \"ms\".",
+                    true);
+  addDurationOption(
+      App, "--time-after-stop", MainOptions.StreamerConfiguration.AfterStopTime,
+      "Allow for this much leeway after stop time before stopping message "
+      "consumption.  Ex. \"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
+      true);
+  addDurationOption(
+      App, "--kafka-metadata-max-timeout",
       MainOptions.StreamerConfiguration.BrokerSettings.MaxMetadataTimeout,
       "Max timeout for kafka metadata calls. Note: metadata calls block the "
-      "application.",
+      "application. Ex. \"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
       true);
-  addSecondsDurationOption(
-      App, "--kafka-error-timeout-seconds",
+  addDurationOption(
+      App, "--kafka-error-timeout",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaErrorTimeout,
       "Number of seconds to wait for recovery from kafka error before "
-      "abandoning stream.",
+      "abandoning stream. Ex. \"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
       true);
-  addSecondsDurationOption(
+  addDurationOption(
       App, "--data-flush-interval",
       MainOptions.StreamerConfiguration.DataFlushInterval,
-      "(Max) amount of time between flushing of data to file, in seconds.",
+      "(Max) amount of time between flushing of data to file, in seconds.  Ex. "
+      "\"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
       true);
   addKafkaOption(
       App, "-X,--kafka-config",
