@@ -271,10 +271,41 @@ builders = pipeline_builder.createBuilders { container ->
         container.sh """
           cd build
           pwd
-          ninja docs 2> ${test_output}
+          ninja docs 2>&1 > ${test_output}
         """
         container.copyFrom("build/${test_output}", '.')
+
+        String regexMissingDocsMemberConsumer = /.* warning: Member Consumer .* of class .* is not documented .*/
+        String regexInvalidArg = /.* warning: argument: .* is not found in the argument list of .*/
+        String regexMissingCompoundDocs = /.*warning: Compound .* is not documented./
+        boolean doxygenStepFailed = false
+        def failingCases = []
+        def doxygenResultContent = readFile test_output
+        def doxygenResultLines = doxygenResultContent.readLines()
+
+        for(line in doxygenResultLines) {
+            if(line ==~ regexMissingDocsMemberConsumer || line ==~ regexInvalidArg ||
+                line ==~ regexMissingCompoundDocs) {
+                failingCases.add(line)
+            }
+        }
+
+        int numFailedCases = failingCases.size()
+        if(numFailedCases) {
+            doxygenStepFailed = true
+            println "Doxygen failed to generate HTML documentation due to issued warnings displayed below."
+            println "The total number of Doxygen warnings that needs to be corrected is $numFailedCases and are following:"
+            for(line in failingCases) {
+                println line
+            }
+        }
+        else{
+            println "Doxygen successfully generated all the FileWriter HTML documentation without warnings."
+        }
         archiveArtifacts "${test_output}"
+        if(doxygenStepFailed) {
+            error("Doxygen step failed. See log output for further information.")
+        }
     }  // stage
   }  // if
 

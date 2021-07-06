@@ -27,6 +27,9 @@ class Base;
 
 namespace Stream {
 
+/// \brief Implements the writing of flatbuffer messages to disk.
+///
+/// We can only have one writer per (HDF5) file.
 class MessageWriter {
 public:
   explicit MessageWriter(std::function<void()> FlushFunction,
