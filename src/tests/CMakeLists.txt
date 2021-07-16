@@ -48,7 +48,8 @@ set(UnitTests_SRC
         CommandSystem/CommandHandlerTests.cpp
         TimeUtilityTest.cpp
         JsonConfig/FieldTest.cpp
-        JsonConfig/FieldHandlerTest.cpp)
+        JsonConfig/FieldHandlerTest.cpp
+        MetaData/ValueTest.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
@@ -60,8 +61,7 @@ set(UnitTests_INC
         Metrics/MockSink.h
         Metrics/MockReporter.h
         helpers/SetExtractorModule.h
-        helpers/StatusHelpers.h
-   )
+        helpers/StatusHelpers.h MetaData/TrackerTest.cpp MetaData/HDF5DataTest.cpp)
 
 add_executable(UnitTests
         ${UnitTests_SRC}

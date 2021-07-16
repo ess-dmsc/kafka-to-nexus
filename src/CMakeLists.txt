@@ -115,7 +115,13 @@ set(kafka_to_nexus_SRC
         TimeUtility.cpp
         JsonConfig/Field.cpp
         JsonConfig/FieldHandler.cpp
-        SetThreadName.cpp)
+        SetThreadName.cpp
+        MetaData/Tracker.cpp
+        MetaData/Value.cpp
+        MetaData/ValueInternal.cpp
+        MetaData/HDF5MetaData.cpp
+        MetaData/HDF5Dataset.cpp
+        MetaData/HDF5Storage.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -189,7 +195,13 @@ set(kafka_to_nexus_INC
         JsonConfig/Field.h
         JsonConfig/FieldHandler.h
         MultiVector.h
-        SetThreadName.h)
+        SetThreadName.h
+        MetaData/Tracker.h
+        MetaData/Value.h
+        MetaData/ValueInternal.h
+        MetaData/HDF5MetaData.h
+        MetaData/HDF5Dataset.h
+        MetaData/HDF5Storage.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}
@@ -211,8 +223,7 @@ set(sources
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         $<TARGET_OBJECTS:NeXusDataset>
         ${WRITER_MODULES}
-        ${FB_METADATA_EXTRACTORS}
-        )
+        ${FB_METADATA_EXTRACTORS})
 add_executable(kafka-to-nexus ${sources})
 target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
 target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
