@@ -66,6 +66,11 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
       getOffsetsForPartitions(Settings, Topic, FoundPartitions);
     });
   } catch (MetadataException &E) {
+    if (shouldGiveUp(fmt::format("Meta data call for retrieving partition IDs for topic \"{}\" "
+                                 "from the broker "
+                                 "failed. The failure message was: \"{}\". Abandoning attempt.", Topic, E.what()))) {
+      return;
+    }
     CurrentMetadataTimeOut *= 2;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
@@ -81,6 +86,17 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
     Executor.sendLowPriorityWork(
         [=]() { getPartitionsForTopic(Settings, Topic); });
   }
+}
+
+bool Topic::shouldGiveUp(const std::string &GiveUpMessage) {
+  if (system_clock::now() > StartMetaDataTime + MetaDataGiveUp) {
+    HasError = true;
+    std::lock_guard Lock(ErrorMsgMutex);
+    ErrorMessage = GiveUpMessage;
+    LOG_ERROR(ErrorMessage);
+    return true;
+  }
+  return false;
 }
 
 std::vector<std::pair<int, int64_t>>
@@ -109,6 +125,11 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
       createStreams(Settings, Topic, PartitionOffsetList);
     });
   } catch (MetadataException &E) {
+    if (shouldGiveUp(fmt::format("Meta data call for retrieving partition IDs for topic \"{}\" "
+                                 "from the broker "
+                                 "failed. The failure message was: \"{}\". Abandoning attempt.", Topic, E.what()))) {
+      return;
+    }
     CurrentMetadataTimeOut *= 2;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
@@ -159,4 +180,13 @@ void Topic::checkIfDone() {
   std::this_thread::sleep_for(50ms);
   checkIfDoneTask();
 }
+
+bool Topic::isDone() {
+  if (HasError) {
+    std::lock_guard Lock(ErrorMsgMutex);
+    throw std::runtime_error(ErrorMessage);
+  }
+  return IsDone;
+}
+
 } // namespace Stream

@@ -42,11 +42,21 @@ public:
 
   void setStopTime(std::chrono::system_clock::time_point StopTime);
 
-  bool isDone() { return IsDone.load(); };
+  /// \brief Check if message consumption is done.
+  ///
+  /// Non blocking. Will throw an exception if an error was encountered when setting up streaming or during streaming.
+  bool isDone();
 
   virtual ~Topic() = default;
 
 protected:
+  std::atomic_bool HasError{false};
+  std::mutex ErrorMsgMutex;
+  std::string ErrorMessage;
+
+  time_point const StartMetaDataTime{system_clock::now()};
+  duration const MetaDataGiveUp{60s};
+
   std::atomic_bool IsDone{false};
   Kafka::BrokerSettings KafkaSettings;
   std::string TopicName;
@@ -86,6 +96,8 @@ protected:
 
   void checkIfDone();
   virtual void checkIfDoneTask();
+
+  bool shouldGiveUp(std::string const& GiveUpMessage);
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;

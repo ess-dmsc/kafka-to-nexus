@@ -49,7 +49,7 @@ void StreamController::stop() {
 
 using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
-  return StopNow or
+  return HasError or StopNow or
          (!StreamersRemaining.load() and
           KafkaSettings.StopTimestamp != time_point(duration(0)) and
           std::chrono::system_clock::now() > KafkaSettings.StopTimestamp);
@@ -79,6 +79,7 @@ void StreamController::getTopicNames() {
 
 void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
   std::map<std::string, Stream::SrcToDst> TopicSrcMap;
+  std::string GetTopicsErrorString;
   for (auto &Src : WriterTask->sources()) {
     if (KnownTopicNames.find(Src.topic()) != KnownTopicNames.end()) {
       TopicSrcMap[Src.topic()].push_back(
@@ -86,10 +87,19 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
            Src.sourcename(), Src.flatbufferID(), Src.writerModuleID(),
            Src.getWriterPtr()->acceptsRepeatedTimestamps()});
     } else {
-      LOG_ERROR("Unable to set up consumer for source {} on topic {} as this "
-                "topic does not exist.",
-                Src.sourcename(), Src.topic());
+      GetTopicsErrorString += fmt::format("Unable to set up consumer for source {} on topic {} as this "
+                                          "topic does not exist. ",
+                                          Src.sourcename(), Src.topic());
+
+
     }
+  }
+  if (not GetTopicsErrorString.empty()) {
+    LOG_ERROR(GetTopicsErrorString);
+    std::lock_guard Guard(ErrorMsgMutex);
+    ErrorMessage = GetTopicsErrorString;
+    HasError = true;
+    return;
   }
   for (auto &CItem : TopicSrcMap) {
     auto CStartTime =

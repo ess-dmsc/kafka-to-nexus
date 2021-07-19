@@ -37,6 +37,7 @@ approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-
 - The shape of (multidimensional) static data sets and metadata sets have been unified such they are now in both cases determined from the shape of the actual data in the JSON-code. The `size` field for static data sets will thus be ignored.
 - Support for multiple different (non-UTF) text encodings was deemed fragile and incomplete and was thus removed. This means that the use of the `encoding`-field in a JSON structure will result in an error message.
 - The JSON structure for defining static and streaming datasets (writer modules in the later case) has been unified and made more logical. Read the corresponding documentation for how these structure should now be defined.
+- Command line arguments that sets a duration have been changed into arguments that accepts a unit _e.g._ "200ms".
 
 ## Command system re-write
 
@@ -45,3 +46,4 @@ approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-
 - The code is (currently) the documentation. Instead of implementing your own code for commanding the file-writer, you can use the [file-writer-control](https://github.com/ess-dmsc/file-writer-control) Python library.
 - Furthermore, command and status topics have been merged into one command + status topic. The command line argument has thus also been changed to `--command-status-uri`.
 - There is now a job pool functionality. The job pool topic is set with the argument `--job-pool-uri`.
+- Errors encountered while setting up data streaming or while streaming data from Kafka will now result in the termination of the write job and a message that explains why being posted to the relevant command topic.

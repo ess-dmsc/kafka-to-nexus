@@ -104,7 +104,3 @@ def test_start_and_stop_time_are_in_the_past(writer_channel, kafka_address):
         assert file["entry/historical_data_1/alarm_time"][1] == int(
             alarm_change_time_2.timestamp() * 1e9
         )  # ns
-
-        assert (
-            file["entry/no_data/time"].len() == 0
-        ), "Expect there to be no data as the source topic is empty"

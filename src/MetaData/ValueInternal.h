@@ -26,6 +26,7 @@ public:
   virtual nlohmann::json getAsJSON() const override { nlohmann::json RetObj;
     RetObj[getKey()] = MetaDataValue;
     return RetObj;}
+  virtual void writeToHDF5File(hdf5::node::Group ) override {};
 private:
   DataType MetaDataValue;
   std::function<void(hdf5::node::Group, DataType)> WriteToFile;

@@ -71,7 +71,7 @@ void addDurationOption(CLI::App &App, const std::string &Name, duration &MSArg,
                        const std::string &Description = "",
                        bool Defaulted = false) {
   CLI::callback_t Fun = [&MSArg](CLI::results_t Results) {
-    std::regex const TimeRe{"(\\d+.?\\d*)\\s?(s|ms|min|m|h|sec)"};
+    std::regex const TimeRe{"(\\d+\\.?\\d*)\\s?(ms|min|m|h|sec|s)*$"};
     std::smatch Match;
     if (not std::regex_match(Results[0], Match, TimeRe)) {
       return false;

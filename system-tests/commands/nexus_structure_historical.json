@@ -20,20 +20,6 @@
         },
         {
           "type": "group",
-          "name": "no_data",
-          "children": [
-            {
-              "module": "f142",
-              "config": {
-                "type": "int32",
-                "topic": "TEST_emptyTopic",
-                "source": "other-source"
-              }
-            }
-          ]
-        },
-        {
-          "type": "group",
           "name": "historical_data_2",
           "children": [
             {
@@ -41,20 +27,6 @@
               "config": {
                 "type": "int32",
                 "topic": "TEST_historicalData2",
-                "source": "fw-test-helpers"
-              }
-            }
-          ]
-        },
-        {
-          "type": "group",
-          "name": "historical_data_3",
-          "children": [
-            {
-              "module": "f142",
-              "config": {
-                "type": "int32",
-                "topic": "TEST_historicalData3",
                 "source": "fw-test-helpers"
               }
             }
