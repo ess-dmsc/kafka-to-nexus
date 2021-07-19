@@ -8,4 +8,4 @@ class HDF5MetaData : public MetaDataInternal::HDF5Storage {
 public:
 };
 
-}
+} // namespace MetaData

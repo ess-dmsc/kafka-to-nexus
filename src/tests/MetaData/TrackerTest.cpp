@@ -25,5 +25,7 @@ TEST(MetaDataTracker, TwoValues) {
   UnderTest.registerMetaData(TestValue2);
   nlohmann::json TestJSON("{}"_json);
   UnderTest.writeToJSONDict(TestJSON);
-  EXPECT_EQ(TestJSON, nlohmann::json("{\"some_key1\":12345, \"some_key2\":\"hello\"}"_json));
+  EXPECT_EQ(
+      TestJSON,
+      nlohmann::json("{\"some_key1\":12345, \"some_key2\":\"hello\"}"_json));
 }

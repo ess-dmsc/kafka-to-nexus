@@ -10,4 +10,4 @@ public:
   HDF5Dataset(std::string Path);
 };
 
-}
+} // namespace MetaData

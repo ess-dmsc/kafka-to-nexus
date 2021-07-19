@@ -10,8 +10,10 @@ public:
   void registerMetaData(MetaData::ValueBase NewMetaData);
   void clearMetaData();
   void writeToJSONDict(nlohmann::json &JSONNode);
+
 private:
-  std::vector<std::shared_ptr<MetaDataInternal::ValueBaseInternal>> KnownMetaData;
+  std::vector<std::shared_ptr<MetaDataInternal::ValueBaseInternal>>
+      KnownMetaData;
 };
 
-}
+} // namespace MetaData

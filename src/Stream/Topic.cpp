@@ -66,9 +66,11 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
       getOffsetsForPartitions(Settings, Topic, FoundPartitions);
     });
   } catch (MetadataException &E) {
-    if (shouldGiveUp(fmt::format("Meta data call for retrieving partition IDs for topic \"{}\" "
-                                 "from the broker "
-                                 "failed. The failure message was: \"{}\". Abandoning attempt.", Topic, E.what()))) {
+    if (shouldGiveUp(fmt::format(
+            "Meta data call for retrieving partition IDs for topic \"{}\" "
+            "from the broker "
+            "failed. The failure message was: \"{}\". Abandoning attempt.",
+            Topic, E.what()))) {
       return;
     }
     CurrentMetadataTimeOut *= 2;
@@ -125,9 +127,11 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
       createStreams(Settings, Topic, PartitionOffsetList);
     });
   } catch (MetadataException &E) {
-    if (shouldGiveUp(fmt::format("Meta data call for retrieving partition IDs for topic \"{}\" "
-                                 "from the broker "
-                                 "failed. The failure message was: \"{}\". Abandoning attempt.", Topic, E.what()))) {
+    if (shouldGiveUp(fmt::format(
+            "Meta data call for retrieving partition IDs for topic \"{}\" "
+            "from the broker "
+            "failed. The failure message was: \"{}\". Abandoning attempt.",
+            Topic, E.what()))) {
       return;
     }
     CurrentMetadataTimeOut *= 2;

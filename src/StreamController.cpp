@@ -87,11 +87,10 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
            Src.sourcename(), Src.flatbufferID(), Src.writerModuleID(),
            Src.getWriterPtr()->acceptsRepeatedTimestamps()});
     } else {
-      GetTopicsErrorString += fmt::format("Unable to set up consumer for source {} on topic {} as this "
-                                          "topic does not exist. ",
-                                          Src.sourcename(), Src.topic());
-
-
+      GetTopicsErrorString += fmt::format(
+          "Unable to set up consumer for source {} on topic {} as this "
+          "topic does not exist. ",
+          Src.sourcename(), Src.topic());
     }
   }
   if (not GetTopicsErrorString.empty()) {

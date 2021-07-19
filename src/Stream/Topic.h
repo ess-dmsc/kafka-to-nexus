@@ -44,7 +44,8 @@ public:
 
   /// \brief Check if message consumption is done.
   ///
-  /// Non blocking. Will throw an exception if an error was encountered when setting up streaming or during streaming.
+  /// Non blocking. Will throw an exception if an error was encountered when
+  /// setting up streaming or during streaming.
   bool isDone();
 
   virtual ~Topic() = default;
@@ -97,7 +98,7 @@ protected:
   void checkIfDone();
   virtual void checkIfDoneTask();
 
-  bool shouldGiveUp(std::string const& GiveUpMessage);
+  bool shouldGiveUp(std::string const &GiveUpMessage);
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;

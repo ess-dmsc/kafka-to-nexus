@@ -4,15 +4,12 @@
 
 #include "Tracker.h"
 
-
 namespace MetaData {
 
 void Tracker::registerMetaData(MetaData::ValueBase NewMetaData) {
   KnownMetaData.emplace_back(NewMetaData.getValuePtr());
 }
-void Tracker::clearMetaData() {
-  KnownMetaData.clear();
-}
+void Tracker::clearMetaData() { KnownMetaData.clear(); }
 
 void Tracker::writeToJSONDict(nlohmann::json &JSONNode) {
   for (auto const &MetaData : KnownMetaData) {
@@ -21,4 +18,4 @@ void Tracker::writeToJSONDict(nlohmann::json &JSONNode) {
   }
 }
 
-}
+} // namespace MetaData

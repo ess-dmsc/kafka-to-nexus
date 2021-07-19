@@ -8,10 +8,10 @@ class HDF5Storage {
 public:
   HDF5Storage() = default;
   virtual ~HDF5Storage() = default;
-  virtual void writeToFile(hdf5::node::Group) {};
+  virtual void writeToFile(hdf5::node::Group){};
 };
 
-}
+} // namespace MetaDataInternal
 
 namespace MetaData {
 using StoragePtr = std::unique_ptr<MetaDataInternal::HDF5Storage>;
