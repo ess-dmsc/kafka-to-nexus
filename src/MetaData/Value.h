@@ -42,7 +42,7 @@ public:
                getValuePtr())
         ->getValue();
   }
-  std::string getKey() const { getKey(); }
+  std::string getKey() const { return getKey(); }
 };
 
 } // namespace MetaData
