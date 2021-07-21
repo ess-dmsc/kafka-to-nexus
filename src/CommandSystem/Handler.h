@@ -46,8 +46,8 @@ public:
   void loopFunction();
 
 private:
-  void handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId);
-  void handleStartCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId);
+  void handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
+  void handleStartCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
   void handleStopCommand(FileWriter::Msg CommandMsg);
   std::string const ServiceId;
   std::string JobId;
@@ -61,7 +61,12 @@ private:
   bool PollForJob{true};
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
+  std::unique_ptr<CommandListener> AltCommandSource;
   std::unique_ptr<FeedbackProducerBase> CommandResponse;
+  std::unique_ptr<FeedbackProducerBase> AltCommandResponse;
+  uri::URI const CommandTopicAddress;
+  Kafka::BrokerSettings const KafkaSettings;
+  bool UsingAltTopic{false};
 };
 
 } // namespace Command

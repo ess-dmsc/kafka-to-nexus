@@ -11,6 +11,7 @@
 
 #include "../Kafka/ProducerTopic.h"
 #include "StatusInfo.h"
+#include "URI.h"
 #include "logger.h"
 #include <asio.hpp>
 #include <chrono>
@@ -24,9 +25,18 @@ namespace Status {
 
 class StatusReporterBase {
 public:
-  StatusReporterBase(std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic,
+  StatusReporterBase(Kafka::BrokerSettings Settings, std::string StatusTopic,
                      ApplicationStatusInfo StatusInformation)
       : Period(StatusInformation.UpdateInterval),
+        Producer(std::make_shared<Kafka::Producer>(Settings)),
+        StatusProducerTopic(
+            std::make_unique<Kafka::ProducerTopic>(Producer, StatusTopic)),
+        StaticStatusInformation(StatusInformation),
+        StatusTopicName(StatusTopic) {}
+  StatusReporterBase(std::shared_ptr<Kafka::Producer> Producer,
+                     std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic,
+                     ApplicationStatusInfo StatusInformation)
+      : Period(StatusInformation.UpdateInterval), Producer(Producer),
         StatusProducerTopic(std::move(StatusProducerTopic)),
         StaticStatusInformation(std::move(StatusInformation)) {}
 
@@ -36,6 +46,10 @@ public:
   ///
   /// \param NewInfo The new information to report
   void updateStatusInfo(JobStatusInfo const &NewInfo);
+
+  void useAlternativeStatusTopic(std::string const &AltTopicName);
+
+  void revertToDefaultStatusTopic();
 
   /// \brief Update the stop time to be reported.
   ///
@@ -64,8 +78,12 @@ private:
   virtual void postReportStatusActions(){};
   JobStatusInfo Status{};
   mutable std::mutex StatusMutex;
+  std::shared_ptr<Kafka::Producer> Producer;
   std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic;
+  std::unique_ptr<Kafka::ProducerTopic> AltStatusProducerTopic;
+  bool UsingAlternativeStatusTopic{false};
   ApplicationStatusInfo const StaticStatusInformation;
+  std::string const StatusTopicName;
 };
 
 } // namespace Status

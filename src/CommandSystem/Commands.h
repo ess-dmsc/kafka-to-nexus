@@ -25,6 +25,7 @@ struct StartInfo {
   uri::URI BrokerInfo{"localhost:9092"};
   std::chrono::milliseconds StartTime{0};
   time_point StopTime{time_point::max()};
+  std::string ControlTopic;
 };
 
 /// \brief A de-serialised "start writing" message.

@@ -41,7 +41,7 @@ public:
     std::unique_ptr<Kafka::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     ReporterPtr = std::make_unique<Status::StatusReporterBase>(
-        std::move(ProducerTopic), TestStatusInformation);
+        Producer, std::move(ProducerTopic), TestStatusInformation);
   }
 
   std::unique_ptr<Status::StatusReporterBase> ReporterPtr;
