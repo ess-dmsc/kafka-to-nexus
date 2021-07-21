@@ -60,7 +60,8 @@ void Handler::sendHasStoppedMessage(std::string FileName,
   if (UsingAltTopic) {
     LOG_INFO("Reverting to default command topic: {}",
              CommandTopicAddress.Topic);
-    std::swap(AltCommandSource, CommandSource);
+    CommandSource =
+        std::make_unique<CommandListener>(CommandTopicAddress, KafkaSettings);
     std::swap(AltCommandResponse, CommandResponse);
     UsingAltTopic = false;
   }
@@ -188,14 +189,13 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
              if (IsJobPoolCommand) {
                LOG_INFO("Connecting to an alternative command topic: {}",
                         StartJob.ControlTopic);
-               AltCommandSource = std::make_unique<CommandListener>(
+               CommandSource = std::make_unique<CommandListener>(
                    uri::URI{CommandTopicAddress, StartJob.ControlTopic},
                    KafkaSettings);
                AltCommandResponse = std::make_unique<FeedbackProducer>(
                    ServiceId,
                    uri::URI{CommandTopicAddress, StartJob.ControlTopic},
                    KafkaSettings);
-               std::swap(CommandSource, AltCommandSource);
                std::swap(CommandResponse, AltCommandResponse);
                UsingAltTopic = true;
              } else {

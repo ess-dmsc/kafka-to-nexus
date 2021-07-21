@@ -63,10 +63,8 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
   }
 }
 
-void Consumer::addTopic(std::string const &Topic, int64_t Offset) {
-  Logger->info("Consumer::addTopic()  topic: {}, "
-               "offset: {}",
-               Topic, Offset);
+void Consumer::addTopic(std::string const &Topic) {
+  Logger->info("Consumer::addTopic()  topic: {}", Topic);
   std::vector<std::string> Topics;
   auto ErrorCode = KafkaConsumer->subscription(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {

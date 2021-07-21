@@ -31,7 +31,7 @@ public:
   virtual std::pair<PollStatus, FileWriter::Msg> poll() = 0;
   virtual void addPartitionAtOffset(std::string const &Topic, int PartitionId,
                                     int64_t Offset) = 0;
-  virtual void addTopic(std::string const &Topic, int64_t Offset) = 0;
+  virtual void addTopic(std::string const &Topic) = 0;
 };
 
 class Consumer : public ConsumerInterface {
@@ -56,7 +56,7 @@ public:
   void addPartitionAtOffset(std::string const &Topic, int PartitionId,
                             int64_t Offset) override;
 
-  void addTopic(std::string const &Topic, int64_t Offset) override;
+  void addTopic(std::string const &Topic) override;
 
   /// Polls for any new messages.
   ///
@@ -89,9 +89,6 @@ public:
     UNUSED_ARG(Offset);
   };
 
-  void addTopic(std::string const &Topic, int64_t Offset) override {
-    UNUSED_ARG(Topic);
-    UNUSED_ARG(Offset);
-  }
+  void addTopic(std::string const &Topic) override { UNUSED_ARG(Topic); }
 };
 } // namespace Kafka

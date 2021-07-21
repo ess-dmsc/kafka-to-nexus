@@ -21,7 +21,7 @@ public:
   using PollReturnType = std::pair<Kafka::PollStatus, FileWriter::Msg>;
   IMPLEMENT_MOCK0(poll);
   IMPLEMENT_MOCK3(addPartitionAtOffset);
-  IMPLEMENT_MOCK2(addTopic);
+  IMPLEMENT_MOCK1(addTopic);
 };
 
 } // namespace Kafka

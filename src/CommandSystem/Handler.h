@@ -61,7 +61,6 @@ private:
   bool PollForJob{true};
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
-  std::unique_ptr<CommandListener> AltCommandSource;
   std::unique_ptr<FeedbackProducerBase> CommandResponse;
   std::unique_ptr<FeedbackProducerBase> AltCommandResponse;
   uri::URI const CommandTopicAddress;

@@ -37,7 +37,7 @@ std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
 
 void CommandListener::setUpConsumer() {
   Consumer = Kafka::createConsumer(KafkaSettings);
-  Consumer->addTopic(CommandTopic, RdKafka::Topic::OFFSET_END);
+  Consumer->addTopic(CommandTopic);
 }
 
 } // namespace Command
