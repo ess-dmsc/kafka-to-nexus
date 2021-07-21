@@ -11,4 +11,4 @@
 
 #include <string>
 
-void setThreadName(std::string NewName);
+void setThreadName(std::string const &NewName);

@@ -154,7 +154,7 @@ public:
                   hdf5::Dimensions{value.size()});
   }
 
-  static void *ptr(ArrayAdapter<T> &data) {
+  static void *ptr(ArrayAdapter<T> const &data) {
     return reinterpret_cast<void *>(data.data());
   }
 

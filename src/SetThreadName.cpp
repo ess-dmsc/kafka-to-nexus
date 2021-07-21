@@ -10,7 +10,7 @@
 #include "SetThreadName.h"
 #include <pthread.h>
 
-void setThreadName(std::string NewName) {
+void setThreadName(std::string const &NewName) {
 #ifdef __APPLE__
   pthread_setname_np(NewName.c_str());
 #elif __linux__

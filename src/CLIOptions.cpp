@@ -77,13 +77,15 @@ void addDurationOption(CLI::App &App, const std::string &Name, duration &MSArg,
       return false;
     }
     int TotalMilliseconds{0};
-    if (Match[2] == "s" or Match[2] == "sec" or Match[2] == "") {
+    std::string FoundUnit{Match[2]};
+    using std::string_literals::operator""s;
+    if (FoundUnit == "s"s or FoundUnit == "sec"s or FoundUnit == ""s) {
       TotalMilliseconds = std::round(std::stod(Match[1]) * 1000);
-    } else if (Match[2] == "ms") {
+    } else if (FoundUnit == "ms"s) {
       TotalMilliseconds = std::round(std::stod(Match[1]));
-    } else if (Match[2] == "m" or Match[2] == "min") {
+    } else if (FoundUnit == "m"s or FoundUnit == "min"s) {
       TotalMilliseconds = std::round(std::stod(Match[1]) * 1000 * 60);
-    } else if (Match[2] == "h") {
+    } else if (FoundUnit == "h"s) {
       TotalMilliseconds = std::round(std::stod(Match[1]) * 1000 * 60 * 60);
     } else {
       return false;
