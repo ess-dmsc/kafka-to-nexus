@@ -18,9 +18,17 @@ namespace Status {
 
 class StatusReporter : public StatusReporterBase {
 public:
-  StatusReporter(std::unique_ptr<Kafka::ProducerTopic> &StatusProducerTopic,
+  StatusReporter(Kafka::BrokerSettings Settings, std::string StatusTopic,
                  ApplicationStatusInfo const &StatusInformation)
-      : StatusReporterBase(std::move(StatusProducerTopic), StatusInformation),
+      : StatusReporterBase(Settings, StatusTopic, StatusInformation), IO(),
+        AsioTimer(IO, StatusInformation.UpdateInterval) {
+    this->start();
+  }
+  StatusReporter(std::shared_ptr<Kafka::Producer> Producer,
+                 std::unique_ptr<Kafka::ProducerTopic> &StatusProducerTopic,
+                 ApplicationStatusInfo const &StatusInformation)
+      : StatusReporterBase(Producer, std::move(StatusProducerTopic),
+                           StatusInformation),
         IO(), AsioTimer(IO, StatusInformation.UpdateInterval) {
     this->start();
   }

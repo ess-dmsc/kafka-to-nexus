@@ -44,6 +44,9 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     CurrentFileName = StartInfo.Filename;
     CurrentMetadata = StartInfo.Metadata;
     CurrentState = WriterState::Writing;
+    if (not StartInfo.ControlTopic.empty()) {
+      Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);
+    }
     Reporter->updateStatusInfo({Status::JobStatusInfo::WorkerState::Writing,
                                 StartInfo.JobID, StartInfo.Filename,
                                 StartInfo.StartTime, StartInfo.StopTime});
@@ -96,6 +99,7 @@ void Master::setToIdle() {
   CurrentStreamController.reset(nullptr);
   CurrentState = WriterState::Idle;
   Reporter->resetStatusInfo();
+  Reporter->revertToDefaultStatusTopic();
 }
 
 } // namespace FileWriter

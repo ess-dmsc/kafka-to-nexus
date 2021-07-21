@@ -84,4 +84,29 @@ void StatusReporterBase::reportStatus() {
   postReportStatusActions();
 }
 
+void StatusReporterBase::useAlternativeStatusTopic(
+    std::string const &AltTopicName) {
+
+  if (not UsingAlternativeStatusTopic) {
+    AltStatusProducerTopic =
+        std::make_unique<Kafka::ProducerTopic>(Producer, AltTopicName);
+    std::swap(StatusProducerTopic, AltStatusProducerTopic);
+    UsingAlternativeStatusTopic = true;
+    LOG_DEBUG("Now using the alternative status topic \"{}\".", AltTopicName);
+  } else {
+    LOG_WARN("Unable to set new alternative status topic \"{}\" as the "
+             "alternative topic \"\" is already used.",
+             AltTopicName, StatusProducerTopic->name());
+  }
+}
+
+void StatusReporterBase::revertToDefaultStatusTopic() {
+  if (UsingAlternativeStatusTopic) {
+    std::swap(StatusProducerTopic, AltStatusProducerTopic);
+    UsingAlternativeStatusTopic = false;
+    LOG_DEBUG("Reverting to default status topic name \"{}\".",
+              StatusProducerTopic->name());
+  }
+}
+
 } // namespace Status

@@ -45,7 +45,6 @@ set(UnitTests_SRC
         HelperTests.cpp
         CommandSystem/CommandParserTests.cpp
         CommandSystem/CommandListenerTests.cpp
-        CommandSystem/CommandHandlerTests.cpp
         TimeUtilityTest.cpp
         JsonConfig/FieldTest.cpp
         JsonConfig/FieldHandlerTest.cpp

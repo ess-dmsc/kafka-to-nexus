@@ -42,9 +42,6 @@ createStatusReporter(MainOpt const &MainConfig,
                      std::string const &ApplicationVersion) {
   Kafka::BrokerSettings BrokerSettings;
   BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
-  auto StatusProducer = std::make_shared<Kafka::Producer>(BrokerSettings);
-  auto StatusProducerTopic = std::make_unique<Kafka::ProducerTopic>(
-      StatusProducer, MainConfig.CommandBrokerURI.Topic);
   auto const StatusInformation =
       Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,
                                     ApplicationName,
@@ -53,7 +50,7 @@ createStatusReporter(MainOpt const &MainConfig,
                                     MainConfig.ServiceName,
                                     MainConfig.getServiceId(),
                                     getPID()};
-  return std::make_unique<Status::StatusReporter>(StatusProducerTopic,
+  return std::make_unique<Status::StatusReporter>(BrokerSettings, MainConfig.CommandBrokerURI.Topic,
                                                   StatusInformation);
 }
 

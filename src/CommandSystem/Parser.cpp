@@ -89,6 +89,9 @@ extractStartMessage(Msg const &CommandMessage,
   if (RunStartData->metadata() != nullptr) {
     Result.Metadata = RunStartData->metadata()->str();
   }
+  if (RunStartData->control_topic() != nullptr) {
+    Result.ControlTopic = RunStartData->control_topic()->str();
+  }
 
   return Result;
 }

@@ -19,19 +19,13 @@ namespace Command {
 Handler::Handler(std::string const &ServiceIdentifier,
                  Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
                  uri::URI CommandTopicUri)
-    : Handler(ServiceIdentifier,
-              std::make_unique<JobListener>(JobPoolUri, Settings),
-              std::make_unique<CommandListener>(CommandTopicUri, Settings),
-              std::make_unique<FeedbackProducer>(ServiceIdentifier,
-                                                 CommandTopicUri, Settings)) {}
-
-Handler::Handler(std::string ServiceIdentifier,
-                 std::unique_ptr<JobListener> JobConsumer,
-                 std::unique_ptr<CommandListener> CommandConsumer,
-                 std::unique_ptr<FeedbackProducerBase> Response)
-    : ServiceId(std::move(ServiceIdentifier)), JobPool(std::move(JobConsumer)),
-      CommandSource(std::move(CommandConsumer)),
-      CommandResponse(std::move(Response)) {}
+    : ServiceId(ServiceIdentifier),
+      JobPool(std::make_unique<JobListener>(JobPoolUri, Settings)),
+      CommandSource(
+          std::make_unique<CommandListener>(CommandTopicUri, Settings)),
+      CommandResponse(std::make_unique<FeedbackProducer>(
+          ServiceIdentifier, CommandTopicUri, Settings)),
+      CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
 
 void Handler::loopFunction() {
   if (PollForJob and JobPool != nullptr) {
@@ -63,6 +57,13 @@ void Handler::sendHasStoppedMessage(std::string FileName,
   CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
                                      Metadata);
   PollForJob = true;
+  if (UsingAltTopic) {
+    LOG_INFO("Reverting to default command topic: {}",
+             CommandTopicAddress.Topic);
+    std::swap(AltCommandSource, CommandSource);
+    std::swap(AltCommandResponse, CommandResponse);
+    UsingAltTopic = false;
+  }
 }
 
 void Handler::sendErrorEncounteredMessage(std::string FileName,
@@ -73,9 +74,9 @@ void Handler::sendErrorEncounteredMessage(std::string FileName,
   PollForJob = true;
 }
 
-void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IgnoreServiceId) {
+void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
   if (Parser::isStartCommand(CommandMsg)) {
-    handleStartCommand(std::move(CommandMsg), IgnoreServiceId);
+    handleStartCommand(std::move(CommandMsg), IsJobPoolCommand);
   } else if (Parser::isStopCommand(CommandMsg)) {
     handleStopCommand(std::move(CommandMsg));
   } else {
@@ -124,7 +125,7 @@ bool isMsgTimeStampValid(time_point MsgTime) {
 }
 
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
-                                 bool IgnoreServiceId) {
+                                 bool IsJobPoolCommand) {
   try {
     time_point StopTime = time_point::min();
     std::string ExceptionMessage;
@@ -145,7 +146,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 
     CommandSteps.push_back(
         {[&]() {
-           return not(IgnoreServiceId xor (StartJob.ServiceID != ServiceId));
+           return not(IsJobPoolCommand xor (StartJob.ServiceID != ServiceId));
          },
          {LogLevel::debug, false,
           [&]() {
@@ -178,6 +179,37 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                 "current time: {}).",
                 toUTCDateTime(CommandMsg.getMetaData().timestamp()),
                 toUTCDateTime(system_clock::now()));
+          },
+          400}});
+
+    CommandSteps.push_back(
+        {[&]() {
+           if (not StartJob.ControlTopic.empty()) {
+             if (IsJobPoolCommand) {
+               LOG_INFO("Connecting to an alternative command topic: {}",
+                        StartJob.ControlTopic);
+               AltCommandSource = std::make_unique<CommandListener>(
+                   uri::URI{CommandTopicAddress, StartJob.ControlTopic},
+                   KafkaSettings);
+               AltCommandResponse = std::make_unique<FeedbackProducer>(
+                   ServiceId,
+                   uri::URI{CommandTopicAddress, StartJob.ControlTopic},
+                   KafkaSettings);
+               std::swap(CommandSource, AltCommandSource);
+               std::swap(CommandResponse, AltCommandResponse);
+               UsingAltTopic = true;
+             } else {
+               return false;
+             }
+           }
+           return true;
+         },
+         {LogLevel::err, true,
+          [&]() {
+            return fmt::format(
+                "Rejected new/alternative command topic (\"{}\") as the job "
+                "was not received from job pool.",
+                StartJob.ControlTopic);
           },
           400}});
 

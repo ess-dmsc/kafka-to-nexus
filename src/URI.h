@@ -22,6 +22,12 @@ struct URI {
   /// \param URIString The default to initialise with.
   explicit URI(const std::string &URIString);
 
+  /// Constructor
+  ///
+  /// \param Template A template URI object.
+  /// \param NewTopic The alternative/new topic name to use.
+  URI(URI const &Template, std::string const &NewTopic);
+
   /// \brief Sets new values, if value successfully parsed.
   ///
   /// \param URIString The value to parse.
