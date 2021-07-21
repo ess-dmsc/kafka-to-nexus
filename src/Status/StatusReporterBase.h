@@ -29,9 +29,10 @@ public:
                      ApplicationStatusInfo StatusInformation)
       : Period(StatusInformation.UpdateInterval),
         Producer(std::make_shared<Kafka::Producer>(Settings)),
-        StatusProducerTopic(std::make_unique<Kafka::ProducerTopic>(
-            Producer, StatusTopic)),
-        StaticStatusInformation(StatusInformation), StatusTopicName(StatusTopic) {}
+        StatusProducerTopic(
+            std::make_unique<Kafka::ProducerTopic>(Producer, StatusTopic)),
+        StaticStatusInformation(StatusInformation),
+        StatusTopicName(StatusTopic) {}
   StatusReporterBase(std::shared_ptr<Kafka::Producer> Producer,
                      std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic,
                      ApplicationStatusInfo StatusInformation)

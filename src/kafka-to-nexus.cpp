@@ -50,8 +50,8 @@ createStatusReporter(MainOpt const &MainConfig,
                                     MainConfig.ServiceName,
                                     MainConfig.getServiceId(),
                                     getPID()};
-  return std::make_unique<Status::StatusReporter>(BrokerSettings, MainConfig.CommandBrokerURI.Topic,
-                                                  StatusInformation);
+  return std::make_unique<Status::StatusReporter>(
+      BrokerSettings, MainConfig.CommandBrokerURI.Topic, StatusInformation);
 }
 
 bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
