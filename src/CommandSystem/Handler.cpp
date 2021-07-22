@@ -128,7 +128,7 @@ bool isMsgTimeStampValid(time_point MsgTime) {
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IsJobPoolCommand) {
   try {
-    time_point StopTime = time_point::min();
+    time_point StopTime{0ms};
     std::string ExceptionMessage;
     StartMessage StartJob;
     std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
@@ -243,8 +243,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         [&]() {
           return fmt::format(
               "Started write job with start time {} and stop time {}.",
-              toUTCDateTime(
-                  time_point(std::chrono::milliseconds{StartJob.StartTime})),
+              toUTCDateTime(StartJob.StartTime),
               toUTCDateTime(StartJob.StopTime));
         },
         201};
@@ -349,7 +348,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     CommandSteps.push_back(
         {[&]() {
            try {
-             if (StopCmd.StopTime == 0ms) {
+             if (StopCmd.StopTime == time_point{0ms}) {
                DoStopNow();
                ResponseMessage = "Attempting to stop writing job now.";
              } else {
@@ -385,10 +384,10 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     }
     getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString());
     if (OutcomeValue.SendResponse) {
-      CommandResponse->publishResponse(
-          TypeOfAction, SendResult, StopCmd.JobID, StopCmd.CommandID,
-          time_point(std::chrono::milliseconds{StopCmd.StopTime}),
-          OutcomeValue.StatusCode, OutcomeValue.MessageString());
+      CommandResponse->publishResponse(TypeOfAction, SendResult, StopCmd.JobID,
+                                       StopCmd.CommandID, StopCmd.StopTime,
+                                       OutcomeValue.StatusCode,
+                                       OutcomeValue.MessageString());
     }
   } catch (std::exception &E) {
     LOG_ERROR("Unable to process stop command, error was: {}", E.what());

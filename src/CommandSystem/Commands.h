@@ -23,7 +23,7 @@ struct StartInfo {
   std::string NexusStructure;
   std::string Metadata;
   uri::URI BrokerInfo{"localhost:9092"};
-  std::chrono::milliseconds StartTime{0};
+  time_point StartTime{0ms};
   time_point StopTime{time_point::max()};
   std::string ControlTopic;
 };
@@ -37,7 +37,7 @@ struct StartMessage : StartInfo {
 struct StopMessage {
   std::string JobID;
   std::string CommandID;
-  std::chrono::milliseconds StopTime{0};
+  time_point StopTime{0ms};
   std::string ServiceID;
 };
 

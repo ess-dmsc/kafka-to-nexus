@@ -27,7 +27,7 @@ class IStreamController {
 public:
   virtual ~IStreamController() = default;
   virtual std::string getJobId() const = 0;
-  virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
+  virtual void setStopTime(const time_point &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
   virtual void stop() = 0;
   virtual bool hasErrorState() const = 0;
@@ -56,7 +56,7 @@ public:
   ///
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
-  void setStopTime(const std::chrono::milliseconds &StopTime) override;
+  void setStopTime(const time_point &StopTime) override;
 
   /// \brief Stop the streams as soon as possible.
   ///

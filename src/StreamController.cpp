@@ -29,12 +29,11 @@ StreamController::~StreamController() {
            StreamController::getJobId());
 }
 
-void StreamController::setStopTime(std::chrono::milliseconds const &StopTime) {
+void StreamController::setStopTime(time_point const &StopTime) {
   Executor.sendWork([=]() {
-    KafkaSettings.StopTimestamp = time_point(StopTime);
-    auto CStopTime = std::chrono::system_clock::time_point(StopTime);
+    KafkaSettings.StopTimestamp = StopTime;
     for (auto &s : Streamers) {
-      s->setStopTime(CStopTime);
+      s->setStopTime(StopTime);
     }
   });
 }

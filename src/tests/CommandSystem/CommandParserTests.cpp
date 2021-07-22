@@ -63,7 +63,8 @@ TEST_F(CommandParserHappyStartTests,
 }
 
 TEST_F(CommandParserHappyStartTests, IfStartPresentThenExtractedCorrectly) {
-  ASSERT_EQ(std::chrono::milliseconds{StartTimeInput}, StartInfo.StartTime);
+  ASSERT_EQ(time_point{std::chrono::milliseconds{StartTimeInput}},
+            StartInfo.StartTime);
 }
 
 TEST_F(CommandParserHappyStartTests, IfStopPresentThenExtractedCorrectly) {
@@ -137,12 +138,12 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
       ServiceIDInput, BrokerInput, FilenameInput, NoStartTime, StopTimeInput);
 
-  auto FakeCurrentTime = std::chrono::milliseconds{987654321};
+  auto FakeCurrentTime = time_point{987654321ms};
 
   auto StartInfo =
       Command::Parser::extractStartMessage(MessageBuffer, FakeCurrentTime);
 
-  ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
+  ASSERT_EQ(time_point{FakeCurrentTime}, StartInfo.StartTime);
 }
 
 TEST(CommandParserStartTests, IfBlankServiceIdThenIsBlank) {
@@ -192,7 +193,8 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
 
   auto StopInfo = Command::Parser::extractStopMessage(MessageBuffer);
 
-  ASSERT_EQ(std::chrono::milliseconds{StopTimeInput}, StopInfo.StopTime);
+  ASSERT_EQ(time_point{std::chrono::milliseconds{StopTimeInput}},
+            StopInfo.StopTime);
 }
 
 TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {

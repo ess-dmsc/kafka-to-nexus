@@ -62,14 +62,14 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
 
   ASSERT_EQ(StatusMsg.first.JobId, "");
   ASSERT_EQ(StatusMsg.first.Filename, "");
-  ASSERT_EQ(StatusMsg.first.StartTime.count(), 0);
+  ASSERT_EQ(StatusMsg.first.StartTime, time_point(0ms));
   ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
   Status::JobStatusInfo const Info{
       Status::JobStatusInfo::WorkerState::Writing, "1234", "file1.nxs",
-      std::chrono::milliseconds(1234567890), time_point(19876543210ms)};
+      time_point(1234567890ms), time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   auto JSONReport = ReporterPtr->createJSONReport();
@@ -79,7 +79,7 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
   // Write job status information
   ASSERT_EQ(StatusMsg.first.JobId, Info.JobId);
   ASSERT_EQ(StatusMsg.first.Filename, Info.Filename);
-  ASSERT_EQ(StatusMsg.first.StartTime.count(), Info.StartTime.count());
+  ASSERT_EQ(StatusMsg.first.StartTime, Info.StartTime);
   ASSERT_EQ(StatusMsg.first.StopTime, Info.StopTime);
 
   // Application status information
@@ -95,20 +95,20 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
 }
 
 TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
-  auto const StopTime = 1234567890ms;
+  auto const StopTime = time_point(1234567890ms);
   ReporterPtr->updateStopTime(StopTime);
 
   auto JSONReport = ReporterPtr->createJSONReport();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), StopTime.count());
+  ASSERT_EQ(StatusMsg.first.StopTime, StopTime);
 }
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
   Status::JobStatusInfo const Info{
       Status::JobStatusInfo::WorkerState::Writing, "1234", "file1.nxs",
-      std::chrono::milliseconds(1234567890), time_point(19876543210ms)};
+      time_point(1234567890ms), time_point(19876543210ms)};
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();
@@ -118,6 +118,6 @@ TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
 
   ASSERT_EQ(StatusMsg.first.JobId, "");
   ASSERT_EQ(StatusMsg.first.Filename, "");
-  ASSERT_EQ(StatusMsg.first.StartTime.count(), 0);
+  ASSERT_EQ(StatusMsg.first.StartTime, time_point(0ms));
   ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
 }

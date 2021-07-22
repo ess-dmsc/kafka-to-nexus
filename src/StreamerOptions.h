@@ -19,7 +19,7 @@ struct StreamerOptions {
   // Amount of time between flushing of data to file.
   duration DataFlushInterval{10s};
   Kafka::BrokerSettings BrokerSettings;
-  std::chrono::milliseconds StartTimestamp{0};
+  time_point StartTimestamp{0ms};
   time_point StopTimestamp{time_point::max()};
   duration BeforeStartTime{10s};
   duration AfterStopTime{10s};

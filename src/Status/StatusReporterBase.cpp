@@ -23,14 +23,13 @@ void StatusReporterBase::updateStatusInfo(JobStatusInfo const &NewInfo) {
   Status = NewInfo;
 }
 
-void StatusReporterBase::updateStopTime(std::chrono::milliseconds StopTime) {
+void StatusReporterBase::updateStopTime(time_point StopTime) {
   const std::lock_guard<std::mutex> lock(StatusMutex);
-  Status.StopTime = time_point(StopTime);
+  Status.StopTime = StopTime;
 }
 
 void StatusReporterBase::resetStatusInfo() {
-  updateStatusInfo(
-      {JobStatusInfo::WorkerState::Idle, "", "", std::chrono::milliseconds(0)});
+  updateStatusInfo({JobStatusInfo::WorkerState::Idle, "", "", time_point{0ms}});
 }
 
 flatbuffers::DetachedBuffer
@@ -66,7 +65,7 @@ std::string StatusReporterBase::createJSONReport() const {
   Info["state"] = StateMap[Status.State];
   Info["job_id"] = Status.JobId;
   Info["file_being_written"] = Status.Filename;
-  Info["start_time"] = Status.StartTime.count();
+  Info["start_time"] = toMilliSeconds(Status.StartTime);
   Info["stop_time"] = toMilliSeconds(Status.StopTime);
 
   return Info.dump();

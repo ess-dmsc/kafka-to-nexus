@@ -10,9 +10,12 @@
 #pragma once
 
 #include <chrono>
+#include <ratio>
 #include <string>
 
 using time_point = std::chrono::system_clock::time_point;
+static_assert(std::ratio_greater_equal<std::milli, time_point::period::type>(),
+              "The system clock must have a millisecond resolution or better.");
 using duration = std::chrono::system_clock::duration;
 using std::chrono_literals::operator""ms;
 using std::chrono_literals::operator""s;

@@ -63,10 +63,10 @@ void Master::stopNow() {
   }
   LOG_INFO("Attempting to stop file-writing (quickly).");
   CurrentStreamController->stop();
-  Reporter->updateStopTime(0ms);
+  Reporter->updateStopTime(time_point{0ms});
 }
 
-void Master::setStopTime(std::chrono::milliseconds StopTime) {
+void Master::setStopTime(time_point StopTime) {
   if (CurrentState != WriterState::Writing) {
     throw std::runtime_error(
         "Unable to set stop time when not in \"Writing\" state.");

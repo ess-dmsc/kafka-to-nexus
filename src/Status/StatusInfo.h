@@ -21,7 +21,7 @@ struct JobStatusInfo {
   WorkerState State{WorkerState::Idle};
   std::string JobId{""};
   std::string Filename{""};
-  std::chrono::milliseconds StartTime{0};
+  time_point StartTime{0ms};
   time_point StopTime{0ms};
 };
 

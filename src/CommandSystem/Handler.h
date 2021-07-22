@@ -22,7 +22,7 @@
 namespace Command {
 
 using StartFuncType = std::function<void(StartInfo)>;
-using StopTimeFuncType = std::function<void(std::chrono::milliseconds)>;
+using StopTimeFuncType = std::function<void(time_point)>;
 using StopNowFuncType = std::function<void()>;
 
 class Handler {

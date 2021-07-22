@@ -61,9 +61,8 @@ namespace Parser {
 
 using FileWriter::Msg;
 
-Command::StartMessage
-extractStartMessage(Msg const &CommandMessage,
-                    std::chrono::milliseconds DefaultStartTime) {
+Command::StartMessage extractStartMessage(Msg const &CommandMessage,
+                                          time_point DefaultStartTime) {
   Command::StartMessage Result;
 
   auto const RunStartData = GetRunStart(CommandMessage.data());
@@ -71,7 +70,8 @@ extractStartMessage(Msg const &CommandMessage,
   checkRequiredFieldsArePresent(RunStartData);
 
   if (RunStartData->start_time() > 0) {
-    Result.StartTime = std::chrono::milliseconds{RunStartData->start_time()};
+    Result.StartTime =
+        time_point(std::chrono::milliseconds{RunStartData->start_time()});
   } else {
     Result.StartTime = DefaultStartTime;
   }
@@ -106,7 +106,8 @@ Command::StopMessage extractStopMessage(Msg const &CommandMessage) {
 
   StopMessage Result;
   Result.JobID = RunStopData->job_id()->str();
-  Result.StopTime = std::chrono::milliseconds{RunStopData->stop_time()};
+  Result.StopTime =
+      time_point(std::chrono::milliseconds{RunStopData->stop_time()});
   Result.CommandID = RunStopData->command_id()->str();
   if (RunStopData->service_id() != nullptr) {
     Result.ServiceID = RunStopData->service_id()->str();

@@ -36,7 +36,7 @@ deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message) {
   return {Status::JobStatusInfo{
               Status::JobStatusInfo::WorkerState::Idle, JobId.value_or(""),
               Filename.value_or(""),
-              std::chrono::milliseconds{StartTime.value_or(0)},
+              time_point{std::chrono::milliseconds{StartTime.value_or(0)}},
               time_point{std::chrono::milliseconds{StopTime.value_or(0)}}},
           Status::ApplicationStatusInfo{
               UpdateInterval, SoftwareName, SoftwareVersion, HostName,

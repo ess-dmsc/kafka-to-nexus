@@ -44,7 +44,7 @@ public:
   /// Continues running until stop requested.
   void run();
 
-  void setStopTime(std::chrono::milliseconds StopTime);
+  void setStopTime(time_point StopTime);
   void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);
 

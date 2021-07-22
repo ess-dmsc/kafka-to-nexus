@@ -55,7 +55,7 @@ public:
   /// \brief Update the stop time to be reported.
   ///
   /// \param StopTime The new stop time.
-  void updateStopTime(std::chrono::milliseconds StopTime);
+  void updateStopTime(time_point StopTime);
 
   /// \brief Clear out the current information.
   ///

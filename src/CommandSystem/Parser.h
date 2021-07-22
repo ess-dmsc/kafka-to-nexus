@@ -28,9 +28,9 @@ namespace Parser {
 /// \param JSONCommand The JSON Command.
 /// \param DefaultStartTime The start time to use if not supplied in the JSON
 /// \return The start information.
-StartMessage extractStartMessage(
-    Msg const &CommandMessage,
-    std::chrono::milliseconds DefaultStartTime = getCurrentTimeStampMS());
+StartMessage
+extractStartMessage(Msg const &CommandMessage,
+                    time_point DefaultStartTime = system_clock::now());
 
 /// \brief Extract the information from the stop command.
 ///
