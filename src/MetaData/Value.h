@@ -13,13 +13,14 @@ class Tracker;
 
 class ValueBase {
 public:
-  ValueBase(std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValuePtr)
+  explicit ValueBase(
+      std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValuePtr)
       : ValueObj(ValuePtr) {}
-  nlohmann::json getAsJSON() { return ValueObj->getAsJSON(); }
-  std::string getKey() { return ValueObj->getKey(); }
+  nlohmann::json getAsJSON() const { return ValueObj->getAsJSON(); }
+  std::string getKey() const { return ValueObj->getKey(); }
 
 protected:
-  auto getValuePtr() { return ValueObj; }
+  auto getValuePtr() const { return ValueObj; }
 
 private:
   std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValueObj;
@@ -37,7 +38,7 @@ public:
         getValuePtr())
         ->setValue(NewValue);
   }
-  DataType getValue() {
+  DataType getValue() const {
     return std::dynamic_pointer_cast<MetaDataInternal::ValueInternal<DataType>>(
                getValuePtr())
         ->getValue();

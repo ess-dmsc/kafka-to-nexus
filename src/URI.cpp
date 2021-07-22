@@ -16,7 +16,7 @@ namespace uri {
 URI::URI(const std::string &URIString) { parse(URIString); }
 
 URI::URI(URI const &Template, std::string const &NewTopic) : URI(Template) {
-  Topic = NewTopic;
+  Topic = NewTopic; // cppcheck-suppress useInitializationList
 }
 
 void URI::parse(const std::string &URIString) {

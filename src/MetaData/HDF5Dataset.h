@@ -7,7 +7,7 @@ namespace MetaData {
 
 class HDF5Dataset : public MetaDataInternal::HDF5Storage {
 public:
-  HDF5Dataset(std::string Path);
+  explicit HDF5Dataset(std::string Path);
 };
 
 } // namespace MetaData

@@ -25,8 +25,9 @@ namespace Status {
 
 class StatusReporterBase {
 public:
-  StatusReporterBase(Kafka::BrokerSettings Settings, std::string StatusTopic,
-                     ApplicationStatusInfo StatusInformation)
+  StatusReporterBase(Kafka::BrokerSettings const &Settings,
+                     std::string const &StatusTopic,
+                     ApplicationStatusInfo const &StatusInformation)
       : Period(StatusInformation.UpdateInterval),
         Producer(std::make_shared<Kafka::Producer>(Settings)),
         StatusProducerTopic(

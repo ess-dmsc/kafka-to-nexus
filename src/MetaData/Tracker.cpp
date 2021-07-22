@@ -11,7 +11,7 @@ void Tracker::registerMetaData(MetaData::ValueBase NewMetaData) {
 }
 void Tracker::clearMetaData() { KnownMetaData.clear(); }
 
-void Tracker::writeToJSONDict(nlohmann::json &JSONNode) {
+void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
   for (auto const &MetaData : KnownMetaData) {
     auto JSONObj = MetaData->getAsJSON();
     JSONNode.insert(JSONObj.cbegin(), JSONObj.cend());
