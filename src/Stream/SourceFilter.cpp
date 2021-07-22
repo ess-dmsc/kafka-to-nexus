@@ -49,6 +49,7 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage InMsg) {
   if (InMsg.getTimestamp() == CurrentTimeStamp) {
     RepeatedTimestamp++;
     if (not WriteRepeatedTimestamps) {
+      MessagesDiscarded++;
       return false;
     }
   } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
