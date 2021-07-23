@@ -54,10 +54,10 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
     Logger->info("Creating HDF file {}", Filename);
     File = std::make_unique<HDFFile>(Filename, NexusStructureJson, HdfInfo);
   } catch (std::exception const &E) {
-    LOG_ERROR("Failed to initialize HDF file \"{}\". Error was: {}", Filename,
-              E.what());
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("can not initialize hdf file {}", Filename)));
+    std::string ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: {}", Filename,
+                                          E.what());
+    LOG_ERROR(ErrorString);
+    std::throw_with_nested(std::runtime_error(ErrorString));
   }
 }
 
