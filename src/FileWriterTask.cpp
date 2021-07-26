@@ -35,7 +35,7 @@ std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 void FileWriterTask::setFilename(std::string const &Prefix,
                                  std::string const &Name) {
-  FilePath = Prefix;
+  FileDirectory = Prefix;
   if (Prefix.empty()) {
     Filename = Name;
   } else {
@@ -56,8 +56,8 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
                               "A file with that filename already exists in that directory. Delete the existing file or provide another filename.");
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
-  else if(not FilePath.empty() and not std::filesystem::exists(FilePath)){
-    ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: The directory \"{}\" does not exist.", Filename, FilePath);
+  else if(not FileDirectory.empty() and not std::filesystem::exists(FileDirectory)){
+    ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: The directory \"{}\" does not exist.", Filename, FileDirectory);
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 
