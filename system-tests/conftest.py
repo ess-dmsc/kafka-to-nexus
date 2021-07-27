@@ -1,14 +1,16 @@
 import os.path
+import signal
+import time
+import warnings
+from subprocess import Popen
+
+import docker
 import pytest
 from compose.cli.main import TopLevelCommand, project_from_options
-from kafka.errors import NoBrokersAvailable, UnrecognizedBrokerVersion
-import docker
-import time
-from subprocess import Popen
-import signal
-import warnings
+from confluent_kafka import Producer
+from confluent_kafka.admin import AdminClient
 from file_writer_control.WorkerCommandChannel import WorkerCommandChannel
-from helpers.kafkahelpers import create_consumer
+
 from helpers.writer import stop_all_jobs
 
 LOCAL_BUILD = "--local-build"
@@ -58,33 +60,41 @@ def pytest_collection_modifyitems(items, config):
 
 def wait_until_kafka_ready(docker_cmd, docker_options):
     print("Waiting for Kafka broker to be ready for system tests...")
+    conf = {"bootstrap.servers": "localhost:9093"}
+    producer = Producer(conf)
+
     kafka_ready = False
 
-    for i in range(10):
-        try:
-            consumer = create_consumer()
+    def delivery_callback(err, msg):
+        nonlocal kafka_ready
+        if not err:
+            print("Kafka is ready!")
             kafka_ready = True
-            print("Kafka is ready!", flush=True)
-            break
-        except NoBrokersAvailable:
-            time.sleep(5)
-        except UnrecognizedBrokerVersion:
-            time.sleep(5)
+
+    n_polls = 0
+    while n_polls < 10 and not kafka_ready:
+        producer.produce(
+            "waitUntilUp", value="Test message", on_delivery=delivery_callback
+        )
+        producer.poll(10)
+        n_polls += 1
 
     if not kafka_ready:
         docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka broker was not ready after 100 seconds, aborting tests.")
 
+    client = AdminClient(conf)
     topic_ready = False
 
-    for i in range(10):
-        all_topics = consumer.topics()
+    n_polls = 0
+    while n_polls < 10 and not topic_ready:
+        all_topics = client.list_topics().topics.keys()
         if "TEST_writer_jobs" in all_topics and "TEST_writer_commands" in all_topics:
             topic_ready = True
             print("Topic is ready!", flush=True)
             break
-        else:
-            time.sleep(5)
+        time.sleep(6)
+        n_polls += 1
 
     if not topic_ready:
         docker_cmd.down(docker_options)  # Bring down containers cleanly
