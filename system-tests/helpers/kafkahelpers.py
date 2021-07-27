@@ -15,7 +15,7 @@ def create_producer() -> Producer:
     return Producer(conf)
 
 
-def create_consumer():
+def create_consumer() -> Consumer:
     conf = {
         "bootstrap.servers": "localhost:9093",
         "group_id":uuid.uuid4(),
