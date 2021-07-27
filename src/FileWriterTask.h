@@ -86,6 +86,7 @@ public:
   void flushDataToFile();
 
 private:
+  std::string FileDirectory;
   std::string Filename;
   std::vector<Source> SourceToModuleMap;
   std::string JobId;
