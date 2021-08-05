@@ -284,7 +284,7 @@ builders = pipeline_builder.createBuilders { container ->
   }  // if
 
   if (container.key == release_os) {
-    pipeline_builder.stage("${container.key}: Formatting") {
+    pipeline_builder.stage("${container.key}: Archiving") {
       def archive_output = "${pipeline_builder.project}-${container.key}.tar.gz"
       container.sh """
         cd build
