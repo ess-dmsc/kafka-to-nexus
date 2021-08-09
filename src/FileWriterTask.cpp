@@ -35,7 +35,6 @@ std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 void FileWriterTask::setFilename(std::string const &Prefix,
                                  std::string const &Name) {
-  FileDirectory = Prefix;
   if (Prefix.empty()) {
     Filename = Name;
   } else {
@@ -51,13 +50,20 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
                                    std::vector<StreamHDFInfo> &HdfInfo) {
   auto NexusStructureJson = hdf_parse(NexusStructure, Logger);
   std::string ErrorString;
+  std::filesystem::path FilePath(Filename);
+  
   if (std::filesystem::exists(Filename)){
-    ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: \"{}\"", Filename,
-                              "A file with that filename already exists in that directory. Delete the existing file or provide another filename.");
+    ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: \"{}\".", Filename,
+                              "a file with that filename already exists in that directory. Delete the existing file or provide another filename");
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
-  else if(not FileDirectory.empty() and not std::filesystem::exists(FileDirectory)){
-    ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: The directory \"{}\" does not exist.", Filename, FileDirectory);
+  else if(not FilePath.has_filename()){
+    ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: \"{}\".", Filename,
+                              "filename is empty");
+    std::throw_with_nested(std::runtime_error(ErrorString));
+  }
+  else if(FilePath.has_parent_path() and not std::filesystem::exists(FilePath.parent_path())){
+    ErrorString = fmt::format("Failed to initialize HDF file \"{}\". Error was: The parent directory does not exist.", Filename);
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 
