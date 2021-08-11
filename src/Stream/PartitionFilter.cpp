@@ -25,25 +25,29 @@ PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
 void PartitionFilter::forceStop() { ForceStop = true; }
 
 bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
+  auto StopFunc = [&](auto ComparisonReason){
+    if (Reason != ComparisonReason) {
+      Reason = ComparisonReason;
+      ErrorTime = std::chrono::system_clock::now();
+    } else if (std::chrono::system_clock::now() > ErrorTime + ErrorTimeOut) {
+      return true;
+    }
+    return false;
+  };
   if (ForceStop) {
     return true;
   }
   switch (CurrentPollStatus) {
   case Kafka::PollStatus::Message:
-    HasError = false;
+    Reason = StopReason::NO_REASON;
     return false;
   case Kafka::PollStatus::EndOfPartition:
-    HasError = false;
+    Reason = StopReason::END_OF_PARTITION;
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case Kafka::PollStatus::TimedOut:
+    return StopFunc(StopReason::TIMEOUT);
   case Kafka::PollStatus::Error:
-    if (not HasError) {
-      HasError = true;
-      ErrorTime = std::chrono::system_clock::now();
-    } else if (std::chrono::system_clock::now() > ErrorTime + ErrorTimeOut) {
-      return true;
-    }
-    break;
+    return StopFunc(StopReason::ERROR);
   }
   return false;
 }

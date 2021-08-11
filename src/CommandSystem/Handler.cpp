@@ -223,7 +223,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
              JobPool->disconnectFromPool();
            } catch (std::exception const &E) {
              PollForJob = true;
-             JobId = "";
+             JobId = "not_currently_writing";
              ExceptionMessage = E.what();
              return false;
            }

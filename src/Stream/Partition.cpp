@@ -102,11 +102,23 @@ void Partition::addPollTask() {
 
 bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
   if (StopTester.shouldStopPartition(CStatus)) {
-    if (StopTester.hasErrorState()) {
+    switch (StopTester.reasonForStopping()) {
+    case PartitionFilter::StopReason::ERROR:
       LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
-                "topic {} due to error.",
+                "topic {} due to poll error.",
                 PartitionID, Topic);
-    } else {
+      break;
+    case PartitionFilter::StopReason::TIMEOUT:
+      LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
+                "topic {} due to timeout when polling for new data.",
+                PartitionID, Topic);
+      break;
+    case PartitionFilter::StopReason::END_OF_PARTITION:
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\" (reached the end of the partition).",
+               PartitionID, Topic);
+      break;
+    case PartitionFilter::StopReason::NO_REASON:
+    default:
       LOG_INFO("Done consuming data from partition {} of topic \"{}\".",
                PartitionID, Topic);
     }
