@@ -24,6 +24,7 @@ namespace Command {
 using StartFuncType = std::function<void(StartInfo)>;
 using StopTimeFuncType = std::function<void(time_point)>;
 using StopNowFuncType = std::function<void()>;
+using IsWritingFuncType = std::function<bool()>;
 
 class Handler {
 public:
@@ -38,6 +39,7 @@ public:
   void registerStartFunction(StartFuncType StartFunction);
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction);
   void registerStopNowFunction(StopNowFuncType StopNowFunction);
+  void registerIsWritingFunction(IsWritingFuncType IsWritingFunction);
 
   void sendHasStoppedMessage(std::string FileName, std::string Metadata);
   void sendErrorEncounteredMessage(std::string FileName, std::string Metadata,
@@ -57,6 +59,8 @@ private:
       [](auto) { throw std::runtime_error("Not implemented."); }};
   StopNowFuncType DoStopNow{
       []() { throw std::runtime_error("Not implemented."); }};
+  IsWritingFuncType IsWritingNow{
+      []() -> bool { throw std::runtime_error("Not implemented."); }};
 
   bool PollForJob{true};
   std::unique_ptr<JobListener> JobPool;

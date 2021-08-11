@@ -30,13 +30,17 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
   CommandAndControl->registerSetStopTimeFunction(
       [this](auto StopTime) { this->setStopTime(StopTime); });
   CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
+  CommandAndControl->registerIsWritingFunction(
+      [this]() { return WriterState::Writing == CurrentState; });
   Logger->info("file-writer service id: {}", Config.getServiceId());
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {
   if (CurrentState == WriterState::Writing) {
-    throw std::runtime_error("Unable to start new writing job when waiting for "
-                             "the current one to finish.");
+    throw std::runtime_error(fmt::format(
+        "Unable to start new writing job (with id: \"{}\") when waiting for "
+        "the current one to finish.",
+        StartInfo.JobID));
   }
   try {
     CurrentStreamController = Creator_->createFileWritingJob(

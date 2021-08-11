@@ -107,7 +107,8 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
 void HDFFile::closeFile() {
   try {
     if (hdfFile().is_valid()) {
-      Logger->trace("Closing file.");
+      Logger->trace("Closing file \"{}\".",
+                    hdfFile().id().file_name().string());
       hdfFile().close();
       hdfFile() = hdf5::file::File();
     } else {
@@ -125,6 +126,7 @@ void HDFFile::closeFile() {
 }
 
 void HDFFile::openFileInSWMRMode() {
+  Logger->trace("Opening file \"{}\" in SWMR mode.", H5FileName);
   hdfFile() = hdf5::file::open(H5FileName,
                                hdf5::file::AccessFlags::READWRITE |
                                    hdf5::file::AccessFlags::SWMR_WRITE,

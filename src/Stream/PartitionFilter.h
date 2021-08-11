@@ -27,12 +27,7 @@ namespace Stream {
 /// kafka-to-nexus/documentation/PartitionFilter_logic.png
 class PartitionFilter {
 public:
-  enum class StopReason {
-    NO_REASON,
-    ERROR,
-    TIMEOUT,
-    END_OF_PARTITION
-  };
+  enum class StopReason { NO_REASON, ERROR, TIMEOUT, END_OF_PARTITION };
   PartitionFilter() = default;
   PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
                   duration ErrorTimeOut);
@@ -52,7 +47,9 @@ public:
   StopReason reasonForStopping() const { return Reason; }
 
   /// \brief Check if we currently have an error state.
-  bool hasErrorState() const { return Reason == StopReason::ERROR or Reason == StopReason::TIMEOUT; }
+  bool hasErrorState() const {
+    return Reason == StopReason::ERROR or Reason == StopReason::TIMEOUT;
+  }
 
 protected:
   bool ForceStop{false};

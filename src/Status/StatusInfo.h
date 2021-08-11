@@ -19,7 +19,7 @@ namespace Status {
 struct JobStatusInfo {
   enum class WorkerState { Idle, Writing };
   WorkerState State{WorkerState::Idle};
-  std::string JobId{""};
+  std::string JobId{"not_currently_writing"};
   std::string Filename{""};
   time_point StartTime{0ms};
   time_point StopTime{0ms};

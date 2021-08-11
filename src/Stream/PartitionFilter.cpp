@@ -25,7 +25,7 @@ PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
 void PartitionFilter::forceStop() { ForceStop = true; }
 
 bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
-  auto StopFunc = [&](auto ComparisonReason){
+  auto StopFunc = [&](auto ComparisonReason) {
     if (Reason != ComparisonReason) {
       Reason = ComparisonReason;
       ErrorTime = std::chrono::system_clock::now();

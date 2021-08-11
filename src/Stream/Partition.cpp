@@ -114,7 +114,8 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
                 PartitionID, Topic);
       break;
     case PartitionFilter::StopReason::END_OF_PARTITION:
-      LOG_INFO("Done consuming data from partition {} of topic \"{}\" (reached the end of the partition).",
+      LOG_INFO("Done consuming data from partition {} of topic \"{}\" (reached "
+               "the end of the partition).",
                PartitionID, Topic);
       break;
     case PartitionFilter::StopReason::NO_REASON:

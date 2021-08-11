@@ -27,10 +27,13 @@ Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
 }
 
 Consumer::~Consumer() {
-  Logger->debug("~Consumer()");
   if (KafkaConsumer != nullptr) {
+    std::vector<std::string> Topics;
+    auto ErrorCode = KafkaConsumer->subscription(Topics);
     KafkaConsumer->close();
-    Logger->debug("Consumer closed");
+    if (ErrorCode == RdKafka::ERR_NO_ERROR) {
+      Logger->debug("Consumer consuming from topic(s) {} closed.", Topics);
+    }
   }
 }
 

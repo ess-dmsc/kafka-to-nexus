@@ -52,6 +52,10 @@ void Handler::registerStopNowFunction(StopNowFuncType StopNowFunction) {
   DoStopNow = StopNowFunction;
 }
 
+void Handler::registerIsWritingFunction(IsWritingFuncType IsWritingFunction) {
+  IsWritingNow = IsWritingFunction;
+}
+
 void Handler::sendHasStoppedMessage(std::string FileName,
                                     std::string Metadata) {
   CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
@@ -153,7 +157,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
           [&]() {
             return fmt::format(
                 "Rejected start command as the service id was wrong. It "
-                "should be {}, it was {}.",
+                "should be \"{}\", it was \"{}\".",
                 ServiceId, StartJob.ServiceID);
           },
           0}});
@@ -164,7 +168,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
           [&]() {
             return fmt::format(
                 "Rejected start command as the job id was invalid (it "
-                "was: {}).",
+                "was: \"{}\").",
                 StartJob.JobID);
           },
           400}});
@@ -187,7 +191,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            if (not StartJob.ControlTopic.empty()) {
              if (IsJobPoolCommand) {
-               LOG_INFO("Connecting to an alternative command topic: {}",
+               LOG_INFO("Connecting to an alternative command topic: \"{}\"",
                         StartJob.ControlTopic);
                CommandSource = std::make_unique<CommandListener>(
                    uri::URI{CommandTopicAddress, StartJob.ControlTopic},
@@ -309,6 +313,15 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           },
           0}});
 
+    CommandSteps.push_back({[&]() { return IsWritingNow(); },
+                            {LogLevel::err, true,
+                             [&]() {
+                               return fmt::format(
+                                   "Rejected stop command as there is "
+                                   "currently no write job in progress.");
+                             },
+                             400}});
+
     CommandSteps.push_back(
         {[&]() { return JobId == StopCmd.JobID; },
          {LogLevel::warn, true,
@@ -338,7 +351,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
          {LogLevel::warn, true,
           [&]() {
             return fmt::format(
-                "Rejected start command as its timestamp was bad (it was: {}, "
+                "Rejected stop command as its timestamp was bad (it was: {}, "
                 "current time: {}).",
                 toUTCDateTime(CommandMsg.getMetaData().timestamp()),
                 toUTCDateTime(system_clock::now()));
