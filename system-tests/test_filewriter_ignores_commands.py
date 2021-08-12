@@ -40,9 +40,10 @@ def test_ignores_commands_with_incorrect_id(
 
     cmd_handler = writer_channel.try_send_stop_now(write_job.service_id, "wrong job id")
     start_time = datetime.now()
-    timeout = timedelta(seconds=10)
+    timeout = timedelta(seconds=20)
     while True:
-        if cmd_handler.get_state() == CommandState.ERROR:
+        current_state = cmd_handler.get_state()
+        if current_state == CommandState.ERROR or current_state == CommandState.TIMEOUT_RESPONSE:
             break
         if start_time + timeout < datetime.now():
             assert False
