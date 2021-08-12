@@ -46,7 +46,7 @@ def test_ignores_commands_with_incorrect_id(
         if current_state == CommandState.ERROR or current_state == CommandState.TIMEOUT_RESPONSE:
             break
         if start_time + timeout < datetime.now():
-            assert False
+            raise RuntimeError(f"Failed with the current status {current_state}.")
         time.sleep(1)
 
     stop_all_jobs(writer_channel)
