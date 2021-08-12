@@ -43,7 +43,10 @@ def test_ignores_commands_with_incorrect_id(
     timeout = timedelta(seconds=20)
     while True:
         current_state = cmd_handler.get_state()
-        if current_state == CommandState.ERROR or current_state == CommandState.TIMEOUT_RESPONSE:
+        if (
+            current_state == CommandState.ERROR
+            or current_state == CommandState.TIMEOUT_RESPONSE
+        ):
             break
         if start_time + timeout < datetime.now():
             assert False
