@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from streaming_data_types.fbschemas.epics_connection_info_ep00.EventType import (
     EventType,
 )
-from file_writer_control.WriteJob import WriteJob
+from file_writer_control import WriteJob
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -15,7 +15,7 @@ from helpers.writer import (
 )
 
 
-def test_ep00(writer_channel, kafka_address):
+def test_ep00(writer_channel, worker_pool, kafka_address):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
 
     producer = create_producer()
@@ -40,7 +40,7 @@ def test_ep00(writer_channel, kafka_address):
         start_time=start_time,
         stop_time=datetime.now(),
     )
-    wait_start_job(writer_channel, write_job, timeout=20)
+    wait_start_job(worker_pool, write_job, timeout=20)
 
     wait_no_working_writers(writer_channel, timeout=30)
 

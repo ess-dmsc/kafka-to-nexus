@@ -13,7 +13,7 @@ from helpers.writer import (
 
 
 def test_ignores_commands_with_incorrect_id(
-    writer_channel, kafka_address, multiple_writers
+    writer_channel, worker_pool, kafka_address, multiple_writers
 ):
     wait_writers_available(writer_channel, nr_of=2, timeout=10)
     now = datetime.now()
@@ -27,7 +27,7 @@ def test_ignores_commands_with_incorrect_id(
         start_time=now,
         stop_time=now + timedelta(days=30),
     )
-    wait_start_job(writer_channel, write_job, timeout=20)
+    wait_start_job(worker_pool, write_job, timeout=20)
 
     cmd_handler = writer_channel.try_send_stop_now(
         "incorrect service id", write_job.job_id
@@ -54,7 +54,9 @@ def test_ignores_commands_with_incorrect_id(
     assert Path(file_path).is_file()
 
 
-def test_ignores_commands_with_incorrect_job_id(writer_channel, kafka_address):
+def test_ignores_commands_with_incorrect_job_id(
+    writer_channel, worker_pool, kafka_address
+):
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     now = datetime.now()
     file_name = "output_file_job_id.nxs"
@@ -68,7 +70,7 @@ def test_ignores_commands_with_incorrect_job_id(writer_channel, kafka_address):
         stop_time=now + timedelta(days=30),
     )
     write_job.job_id = "invalid id"
-    wait_fail_start_job(writer_channel, write_job, timeout=20)
+    wait_fail_start_job(worker_pool, write_job, timeout=20)
 
     wait_no_working_writers(writer_channel, timeout=0)
     file_path = f"output-files/{file_name}"

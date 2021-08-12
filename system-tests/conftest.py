@@ -9,7 +9,7 @@ import pytest
 from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
-from file_writer_control.WorkerCommandChannel import WorkerCommandChannel
+from file_writer_control import WorkerJobPool, WorkerCommandChannel
 
 from helpers.writer import stop_all_jobs
 
@@ -234,7 +234,27 @@ def writer_channel(request):
     :type request: _pytest.python.FixtureRequest
     """
     kafka_host = "localhost:9093"
-    worker = WorkerCommandChannel("{}/TEST_writer_commands".format(kafka_host))
+    worker = WorkerCommandChannel(
+        command_topic_url=f"{kafka_host}/TEST_writer_commands"
+    )
+
+    def stop_current_jobs():
+        stop_all_jobs(worker)
+
+    request.addfinalizer(stop_current_jobs)
+    return worker
+
+
+@pytest.fixture(scope="function", autouse=True)
+def worker_pool(request):
+    """
+    :type request: _pytest.python.FixtureRequest
+    """
+    kafka_host = "localhost:9093"
+    worker = WorkerJobPool(
+        job_topic_url=f"{kafka_host}/TEST_writer_jobs",
+        command_topic_url=f"{kafka_host}/TEST_writer_commands",
+    )
 
     def stop_current_jobs():
         stop_all_jobs(worker)

@@ -18,8 +18,8 @@ def create_producer() -> Producer:
 def create_consumer() -> Consumer:
     conf = {
         "bootstrap.servers": "localhost:9093",
-        "group_id":uuid.uuid4(),
-        "auto.offset.reset":"latest",
+        "group_id": uuid.uuid4(),
+        "auto.offset.reset": "latest",
     }
     return Consumer(conf)
 
