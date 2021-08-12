@@ -178,7 +178,9 @@ builders = pipeline_builder.createBuilders { container ->
         def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
 
         withCredentials([usernamePassword(credentialsId: 'cow-bot-username-with-token', usernameVariable: 'UNUSED_VARIABLE', passwordVariable: 'GITHUB_TOKEN')]) {
-          sh "curl -s -H \"Authorization: token ${GITHUB_TOKEN}\" -X POST -d '{\"body\": \"${comment_text}\"}' \"https://api.github.com/repos/${repository_name}/issues/${env.CHANGE_ID}/comments\""
+          withEnv(["comment_text=${comment_text}", "repository_name=${repository_name}"]) {
+            sh 'curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\\"body\\": \\"$comment_text\\"}" "https://api.github.com/repos/$repository_name/issues/$CHANGE_ID/comments"'
+          }
         }
       }
 
@@ -200,6 +202,9 @@ builders = pipeline_builder.createBuilders { container ->
         // Ignore non-PRs
         return
       }
+
+      container.setupLocalGitUser(pipeline_builder.project)
+
       try {
         // Do clang-format of C++ files
         container.sh """
@@ -207,8 +212,6 @@ builders = pipeline_builder.createBuilders { container ->
           cd ${project}
           find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
           -exec clang-format -i {} +
-          git config user.email 'dm-jenkins-integration@esss.se'
-          git config user.name 'cow-bot'
           git status -s
           git add -u
           git commit -m 'GO FORMAT YOURSELF (clang-format)'
@@ -239,16 +242,18 @@ builders = pipeline_builder.createBuilders { container ->
       try {
         withCredentials([
           usernamePassword(
-          credentialsId: 'cow-bot-username',
+          credentialsId: 'cow-bot-username-with-token',
           usernameVariable: 'USERNAME',
           passwordVariable: 'PASSWORD'
           )
         ]) {
-          container.sh """
-            cd ${project}
-            git push https://${USERNAME}:${PASSWORD}@github.com/ess-dmsc/kafka-to-nexus.git HEAD:${CHANGE_BRANCH}
-          """
-        } // withCredentials
+          withEnv(["PROJECT=${pipeline_builder.project}"]) {
+            container.sh '''
+              cd $PROJECT
+              git push https://$USERNAME:$PASSWORD@github.com/ess-dmsc/$PROJECT.git HEAD:$CHANGE_BRANCH
+            '''
+          }  // withEnv
+        }  // withCredentials
       } catch (e) {
         // Okay to fail; there may be nothing to push
       } finally {
@@ -279,7 +284,7 @@ builders = pipeline_builder.createBuilders { container ->
   }  // if
 
   if (container.key == release_os) {
-    pipeline_builder.stage("${container.key}: Formatting") {
+    pipeline_builder.stage("${container.key}: Archiving") {
       def archive_output = "${pipeline_builder.project}-${container.key}.tar.gz"
       container.sh """
         cd build

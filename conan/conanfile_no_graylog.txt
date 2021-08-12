@@ -1,12 +1,13 @@
 [requires]
 gtest/1.10.0
-fmt/6.0.0
+fmt/6.1.2
 h5cpp/dc5aeda@ess-dmsc/stable
 librdkafka/1.5.0@ess-dmsc/stable
-jsonformoderncpp/3.7.3@vthiery/stable
+nlohmann_json/3.9.1
 streaming-data-types/b6b7922@ess-dmsc/stable
-CLI11/1.9.1@cliutils/stable
-trompeloeil/v38@rollbear/stable
+cli11/1.9.1
+trompeloeil/40
+spdlog/1.8.5
 date/2.4.1
 spdlog/1.4.2
 asio/1.13.0
