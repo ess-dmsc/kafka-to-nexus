@@ -46,6 +46,9 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
           reinterpret_cast<void *>(const_cast<char *>(TestPayload.c_str())));
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
+  REQUIRE_CALL(*RdConsumer, subscription(_))
+      .TIMES(1)
+      .RETURN(RdKafka::ERR_NO_ERROR);
   REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
   // Put this in scope to call standin destructor
   {
@@ -67,6 +70,9 @@ TEST_F(ConsumerTests,
       .RETURN(RdKafka::ErrorCode::ERR__PARTITION_EOF);
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
+  REQUIRE_CALL(*RdConsumer, subscription(_))
+      .TIMES(1)
+      .RETURN(RdKafka::ERR_NO_ERROR);
   REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
   // Put this in scope to call standin destructor
   {
@@ -88,6 +94,9 @@ TEST_F(ConsumerTests,
       .RETURN(RdKafka::ErrorCode::ERR__BAD_MSG);
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
+  REQUIRE_CALL(*RdConsumer, subscription(_))
+      .TIMES(1)
+      .RETURN(RdKafka::ERR_NO_ERROR);
   REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
   // Put this in scope to call standin destructor
   {

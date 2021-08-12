@@ -55,12 +55,11 @@ public:
                                     0};
 };
 
-TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
+TEST_F(StatusReporterTests, OnInitialisationValues) {
   auto JSONReport = ReporterPtr->createJSONReport();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 
-  ASSERT_EQ(StatusMsg.first.JobId, "");
   ASSERT_EQ(StatusMsg.first.Filename, "");
   ASSERT_EQ(StatusMsg.first.StartTime, time_point(0ms));
   ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
