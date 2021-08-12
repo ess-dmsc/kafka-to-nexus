@@ -9,7 +9,6 @@ cli11/1.9.1
 trompeloeil/40
 spdlog/1.8.5
 date/2.4.1
-spdlog/1.4.2
 asio/1.13.0
 readerwriterqueue/07e22ec@ess-dmsc/stable
 concurrentqueue/8f7e861@ess-dmsc/stable
