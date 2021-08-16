@@ -46,7 +46,7 @@ def test_ignores_commands_with_incorrect_id(
 
     time.sleep(used_timeout.total_seconds() + 2)
     assert (
-            cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
+        cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
     ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
     stop_all_jobs(writer_channel)
