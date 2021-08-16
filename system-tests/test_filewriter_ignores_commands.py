@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from file_writer_control.CommandStatus import CommandState, COMMAND_STATUS_TIMEOUT
+from file_writer_control.CommandStatus import CommandState
 from file_writer_control.WriteJob import WriteJob
 from helpers.writer import (
     wait_start_job,
@@ -33,24 +33,21 @@ def test_ignores_commands_with_incorrect_id(
         "incorrect service id", write_job.job_id
     )
 
-    time.sleep(COMMAND_STATUS_TIMEOUT.total_seconds() + 2)
+    used_timeout = timedelta(seconds=5)
+    cmd_handler.set_timeout(used_timeout)
+
+    time.sleep(used_timeout.total_seconds() + 2)
     assert (
         cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
     ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
     cmd_handler = writer_channel.try_send_stop_now(write_job.service_id, "wrong job id")
-    start_time = datetime.now()
-    timeout = timedelta(seconds=20)
-    while True:
-        current_state = cmd_handler.get_state()
-        if (
-            current_state == CommandState.ERROR
-            or current_state == CommandState.TIMEOUT_RESPONSE
-        ):
-            break
-        if start_time + timeout < datetime.now():
-            raise RuntimeError(f"Failed with the current status {current_state}.")
-        time.sleep(1)
+    cmd_handler.set_timeout(used_timeout)
+
+    time.sleep(used_timeout.total_seconds() + 2)
+    assert (
+            cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
+    ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
     stop_all_jobs(writer_channel)
     wait_no_working_writers(writer_channel, timeout=0)
