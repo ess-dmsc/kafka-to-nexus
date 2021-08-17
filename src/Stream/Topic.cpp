@@ -128,7 +128,7 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
     });
   } catch (MetadataException &E) {
     if (shouldGiveUp(fmt::format(
-            "Meta data call for retrieving partition IDs for topic \"{}\" "
+            "Meta data call for retrieving offsets for topic \"{}\" "
             "from the broker "
             "failed. The failure message was: \"{}\". Abandoning attempt.",
             Topic, E.what()))) {
