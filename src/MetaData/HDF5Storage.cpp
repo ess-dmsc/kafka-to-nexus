@@ -7,5 +7,4 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #include "HDF5Storage.h"

@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #include "Tracker.h"
 
 namespace MetaData {

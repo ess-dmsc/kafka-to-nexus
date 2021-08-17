@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #pragma once
 #include "Value.h"
 #include <memory>

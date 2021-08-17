@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #include "Value.h"
 
 namespace MetaData {
