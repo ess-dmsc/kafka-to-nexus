@@ -91,7 +91,7 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
 }
 
 bool Topic::shouldGiveUp(const std::string &GiveUpMessage) {
-  if (system_clock::now() > StartMetaDataTime + MetaDataGiveUp) {
+  if (getCurrentTime() > StartMetaDataTime + MetaDataGiveUp) {
     HasError = true;
     std::lock_guard Lock(ErrorMsgMutex);
     ErrorMessage = GiveUpMessage;

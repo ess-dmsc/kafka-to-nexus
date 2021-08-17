@@ -98,7 +98,9 @@ protected:
   void checkIfDone();
   virtual void checkIfDoneTask();
 
-  bool shouldGiveUp(std::string const &GiveUpMessage);
+  virtual bool shouldGiveUp(std::string const &GiveUpMessage);
+
+  virtual time_point getCurrentTime() const { return system_clock::now(); }
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
