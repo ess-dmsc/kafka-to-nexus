@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #pragma once
 
 #include <h5cpp/hdf5.hpp>
