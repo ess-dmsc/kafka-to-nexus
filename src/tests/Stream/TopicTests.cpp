@@ -80,9 +80,7 @@ public:
     Topic::getOffsetsForPartitions(Settings, Topic, Partitions);
   }
 
-  auto shouldGiveUpBase() {
-    return Topic::shouldGiveUp();
-  }
+  auto shouldGiveUpBase() { return Topic::shouldGiveUp(); }
 
   void createStreamsBase(
       Kafka::BrokerSettings const &Settings, std::string const &Topic,
