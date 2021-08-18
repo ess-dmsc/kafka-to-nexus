@@ -66,11 +66,12 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
       getOffsetsForPartitions(Settings, Topic, FoundPartitions);
     });
   } catch (MetadataException &E) {
-    if (shouldGiveUp(fmt::format(
-            "Meta data call for retrieving partition IDs for topic \"{}\" "
-            "from the broker "
-            "failed. The failure message was: \"{}\". Abandoning attempt.",
-            Topic, E.what()))) {
+    if (shouldGiveUp()) {
+      setErrorState(fmt::format(
+          "Meta data call for retrieving partition IDs for topic \"{}\" "
+          "from the broker "
+          "failed. The failure message was: \"{}\". Abandoning attempt.",
+          Topic, E.what()));
       return;
     }
     CurrentMetadataTimeOut *= 2;
@@ -90,15 +91,16 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
   }
 }
 
-bool Topic::shouldGiveUp(const std::string &GiveUpMessage) {
-  if (getCurrentTime() > StartMetaDataTime + MetaDataGiveUp) {
-    HasError = true;
-    std::lock_guard Lock(ErrorMsgMutex);
-    ErrorMessage = GiveUpMessage;
-    LOG_ERROR(ErrorMessage);
-    return true;
-  }
-  return false;
+bool Topic::shouldGiveUp() {
+  return getCurrentTime() > StartMetaDataTime + MetaDataGiveUp;
+}
+
+void Topic::setErrorState(const std::string &Msg) {
+  HasError = true;
+  std::lock_guard Lock(ErrorMsgMutex);
+  ErrorMessage = Msg;
+  LOG_ERROR(ErrorMessage);
+  return;
 }
 
 std::vector<std::pair<int, int64_t>>
@@ -127,11 +129,12 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
       createStreams(Settings, Topic, PartitionOffsetList);
     });
   } catch (MetadataException &E) {
-    if (shouldGiveUp(fmt::format(
-            "Meta data call for retrieving offsets for topic \"{}\" "
-            "from the broker "
-            "failed. The failure message was: \"{}\". Abandoning attempt.",
-            Topic, E.what()))) {
+    if (shouldGiveUp()) {
+      setErrorState(fmt::format(
+          "Meta data call for retrieving offsets for topic \"{}\" "
+          "from the broker "
+          "failed. The failure message was: \"{}\". Abandoning attempt.",
+          Topic, E.what()));
       return;
     }
     CurrentMetadataTimeOut *= 2;

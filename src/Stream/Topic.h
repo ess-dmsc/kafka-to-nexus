@@ -98,7 +98,8 @@ protected:
   void checkIfDone();
   virtual void checkIfDoneTask();
 
-  virtual bool shouldGiveUp(std::string const &GiveUpMessage);
+  virtual bool shouldGiveUp();
+  void setErrorState(std::string const &Msg);
 
   virtual time_point getCurrentTime() const { return system_clock::now(); }
 

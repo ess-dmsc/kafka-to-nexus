@@ -60,7 +60,7 @@ public:
              void(Kafka::BrokerSettings const &, std::string const &,
                   std::vector<std::pair<int, int64_t>> const &),
              override);
-  MAKE_MOCK1(shouldGiveUp, bool(std::string const &), override);
+  MAKE_MOCK0(shouldGiveUp, bool(), override);
   MAKE_CONST_MOCK0(getCurrentTime, time_point(), override);
   void initMetadataCalls(Kafka::BrokerSettings const &,
                          std::string const &) override {}
@@ -80,8 +80,8 @@ public:
     Topic::getOffsetsForPartitions(Settings, Topic, Partitions);
   }
 
-  auto shouldGiveUpBase(std::string const &Msg) {
-    return Topic::shouldGiveUp(Msg);
+  auto shouldGiveUpBase() {
+    return Topic::shouldGiveUp();
   }
 
   void createStreamsBase(
@@ -133,7 +133,7 @@ TEST_F(TopicTest, IfGetPartitionsForTopicExceptionThenReExecute) {
 
   // The metadata request can time out, so it is important to retry if
   // unsuccessful
-  REQUIRE_CALL(*UnderTest, shouldGiveUp(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(false);
   REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
   REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
@@ -149,7 +149,7 @@ TEST_F(TopicTest, GetPartitionsForTopicTimeOut) {
   // The metadata request can time out, so it is important to retry if
   // unsuccessful
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
-  REQUIRE_CALL(*UnderTest, shouldGiveUp(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(true);
   REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
@@ -180,7 +180,7 @@ TEST_F(TopicTest, IfGetOffsetsForPartitionsExceptionThenReExecute) {
 
   // The query to the broker can time out, so it is important to retry if
   // unsuccessful
-  REQUIRE_CALL(*UnderTest, shouldGiveUp(_)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(false);
   REQUIRE_CALL(*UnderTest,
                getOffsetsForPartitions(_, UsedTopicName, Partitions))
       .TIMES(1);
@@ -201,7 +201,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsTimeOut) {
   // The query to the broker can time out, so it is important to retry if
   // unsuccessful
   FORBID_CALL(*UnderTest, getOffsetsForPartitions(_, _, _));
-  REQUIRE_CALL(*UnderTest, shouldGiveUp(_)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(true);
   REQUIRE_CALL(*UnderTest,
                getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
       .TIMES(1)
@@ -236,8 +236,7 @@ TEST_F(TopicTest, ShouldNotGiveUp) {
   REQUIRE_CALL(*UnderTest, getCurrentTime())
       .TIMES(1)
       .RETURN(system_clock::now());
-  EXPECT_FALSE(UnderTest->shouldGiveUpBase("Some message."));
-  EXPECT_FALSE(UnderTest->isDone());
+  EXPECT_FALSE(UnderTest->shouldGiveUpBase());
 }
 
 using std::chrono_literals::operator""h;
@@ -248,8 +247,7 @@ TEST_F(TopicTest, ShouldGiveUp) {
   REQUIRE_CALL(*UnderTest, getCurrentTime())
       .TIMES(1)
       .RETURN(system_clock::now() + duration(1h));
-  EXPECT_TRUE(UnderTest->shouldGiveUpBase("Some other message."));
-  EXPECT_THROW(UnderTest->isDone(), std::runtime_error);
+  EXPECT_TRUE(UnderTest->shouldGiveUpBase());
 }
 
 TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
