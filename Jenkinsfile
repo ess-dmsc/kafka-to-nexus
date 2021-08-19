@@ -293,17 +293,18 @@ builders = pipeline_builder.createBuilders { container ->
         cp ./bin/kafka-to-nexus ${pipeline_builder.project}/bin/
         cp -r ./lib ${pipeline_builder.project}/
         cp -r ./licenses ${pipeline_builder.project}/
-        tar czf ${archive_output} ${pipeline_builder.project}
 
         # Create file with build information
-        touch BUILD_INFO
-        echo 'Repository: ${pipeline_builder.project}/${env.BRANCH_NAME}' >> BUILD_INFO
-        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> BUILD_INFO
-        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> BUILD_INFO
+        touch ${pipeline_builder.project}/BUILD_INFO
+        echo 'Repository: ${pipeline_builder.project}/${env.BRANCH_NAME}' >> ${pipeline_builder.project}/BUILD_INFO
+        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${pipeline_builder.project}/BUILD_INFO
+        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${pipeline_builder.project}/BUILD_INFO
+
+        tar czf ${archive_output} ${pipeline_builder.project}
       """
 
       container.copyFrom("build/${archive_output}", '.')
-      container.copyFrom('build/BUILD_INFO', '.')
+      container.copyFrom("build/${pipeline_builder.project}/BUILD_INFO", '.')
       archiveArtifacts "${archive_output},BUILD_INFO"
     }  // stage
   }  // if
