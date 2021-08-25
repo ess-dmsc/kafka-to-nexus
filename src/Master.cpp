@@ -43,8 +43,9 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
         StartInfo.JobID));
   }
   try {
+    MetaDataTracker->clearMetaData();
     CurrentStreamController = Creator_->createFileWritingJob(
-        StartInfo, MainConfig, Logger, MasterMetricsRegistrar);
+        StartInfo, MainConfig, Logger, MasterMetricsRegistrar, MetaDataTracker);
     CurrentFileName = StartInfo.Filename;
     CurrentMetadata = StartInfo.Metadata;
     CurrentState = WriterState::Writing;

@@ -34,7 +34,7 @@ public:
   virtual std::unique_ptr<IStreamController>
   createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                        SharedLogger const &Logger,
-                       Metrics::Registrar Registrar) = 0;
+                       Metrics::Registrar Registrar, MetaData::TrackerPtr const &Tracker) = 0;
   virtual ~IJobCreator() = default;
 };
 
@@ -50,7 +50,7 @@ public:
   std::unique_ptr<IStreamController>
   createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                        SharedLogger const &Logger,
-                       Metrics::Registrar Registrar) override;
+                       Metrics::Registrar Registrar, MetaData::TrackerPtr const &Tracker) override;
 
 private:
   static void addStreamSourceToWriterModule(

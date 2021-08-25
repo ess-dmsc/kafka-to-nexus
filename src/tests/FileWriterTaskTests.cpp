@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 
 TEST(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task;
+  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
 
   Task.setFilename("SomePrefix", "File.hdf");
 
@@ -20,7 +20,7 @@ TEST(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
 }
 
 TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task;
+  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
 
   Task.setFilename("", "File.hdf");
 
@@ -28,7 +28,7 @@ TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
 }
 
 TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
-  FileWriter::FileWriterTask Task;
+  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
   FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);
 
   Task.addSource(std::move(Src));
@@ -37,7 +37,7 @@ TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
 }
 
 TEST(FileWriterTask, SettingJobIdSetsID) {
-  FileWriter::FileWriterTask Task;
+  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
   std::string NewId = "NewID";
 
   Task.setJobId(NewId);

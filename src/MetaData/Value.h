@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include "HDF5Storage.h"
 #include "ValueInternal.h"
 #include <functional>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <h5cpp/hdf5.hpp>
 
 namespace MetaData {
 
@@ -26,7 +26,7 @@ public:
       std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValuePtr)
       : ValueObj(ValuePtr) {}
   nlohmann::json getAsJSON() const { return ValueObj->getAsJSON(); }
-  std::string getKey() const { return ValueObj->getKey(); }
+  std::string getKey() const { return ValueObj->getName(); }
 
 protected:
   auto getValuePtr() const { return ValueObj; }
@@ -38,10 +38,22 @@ private:
 
 template <class DataType> class Value : public ValueBase {
 public:
-  Value(std::string const &Key,
-        std::function<void(hdf5::node::Group, DataType)> HDF5Writer = {})
+  Value(std::string const &Path, std::string const &Name,
+        std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer = {})
       : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
-            Key, HDF5Writer)) {}
+            Path, Name, HDF5Writer)) {}
+
+  Value(char const * const Path, std::string const &Name,
+        std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer = {})
+        : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
+            Path, Name, HDF5Writer)) {}
+
+  template <class NodeType>
+  Value(NodeType const &Node, std::string const &Name,
+                  std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer = {})
+                  : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(std::string(Node.link().path()),
+                      Name, HDF5Writer)) {}
+
   void setValue(DataType NewValue) {
     std::dynamic_pointer_cast<MetaDataInternal::ValueInternal<DataType>>(
         getValuePtr())

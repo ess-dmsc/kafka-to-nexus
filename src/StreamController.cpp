@@ -5,18 +5,23 @@
 #include "Kafka/MetadataException.h"
 #include "Stream/Partition.h"
 #include "helper.h"
+#include "TimeUtility.h"
 
 namespace FileWriter {
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     FileWriter::StreamerOptions const &Settings,
-    Metrics::Registrar const &Registrar)
+    Metrics::Registrar const &Registrar, MetaData::TrackerPtr const &Tracker)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
-      KafkaSettings(Settings) {
+      KafkaSettings(Settings), MetaDataTracker(Tracker) {
+  StartTimeMetaData.setValue(toUTCDateTime(Settings.StartTimestamp));
+  EndTimeMetaData.setValue(toUTCDateTime(Settings.StopTimestamp));
+  MetaDataTracker->registerMetaData(StartTimeMetaData);
+  MetaDataTracker->registerMetaData(EndTimeMetaData);
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -30,6 +35,7 @@ StreamController::~StreamController() {
 }
 
 void StreamController::setStopTime(time_point const &StopTime) {
+  EndTimeMetaData.setValue(toUTCDateTime(StopTime));
   Executor.sendWork([=]() {
     KafkaSettings.StopTimestamp = StopTime;
     for (auto &s : Streamers) {

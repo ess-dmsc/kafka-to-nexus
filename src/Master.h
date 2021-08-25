@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "MetaData/Tracker.h"
 
 namespace Status {
 class StatusReporter;
@@ -60,8 +61,8 @@ private:
   WriterState CurrentState{WriterState::Idle};
   std::string CurrentFileName;
   std::string CurrentMetadata;
+  MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   virtual bool hasWritingStopped();
-  //  virtual FileWriterState handleCommand(Msg const &CommandMessage);
   void setToIdle();
 };
 } // namespace FileWriter

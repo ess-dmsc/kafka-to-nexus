@@ -10,8 +10,11 @@
 #pragma once
 #include "Value.h"
 #include <memory>
+#include <h5cpp/hdf5.hpp>
 
 namespace MetaData {
+
+using TrackerPtr = std::shared_ptr<Tracker>;
 
 class Tracker {
 public:
@@ -19,6 +22,7 @@ public:
   void registerMetaData(MetaData::ValueBase NewMetaData);
   void clearMetaData();
   void writeToJSONDict(nlohmann::json &JSONNode) const;
+  void writeToHDF5File(hdf5::node::Group RootNode) const;
 
 private:
   std::vector<std::shared_ptr<MetaDataInternal::ValueBaseInternal>>

@@ -18,6 +18,8 @@
 #include <h5cpp/hdf5.hpp>
 #include <string>
 #include <vector>
+#include "MetaData/Tracker.h"
+#include <memory>
 
 namespace FileWriter {
 
@@ -45,7 +47,7 @@ private:
 class HDFFile : public HDFFileBase {
 public:
   HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
-          std::vector<StreamHDFInfo> &StreamHDFInfo);
+          std::vector<StreamHDFInfo> &StreamHDFInfo, MetaData::TrackerPtr &TrackerPtr);
   virtual ~HDFFile();
 
 private:
@@ -57,6 +59,7 @@ private:
 
   std::string H5FileName;
   nlohmann::json StoredNexusStructure;
+  MetaData::TrackerPtr const MetaDataTracker;
 };
 
 } // namespace FileWriter

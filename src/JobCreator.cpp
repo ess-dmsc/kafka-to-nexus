@@ -158,8 +158,8 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 std::unique_ptr<IStreamController>
 JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
                                  MainOpt &Settings, SharedLogger const &Logger,
-                                 Metrics::Registrar Registrar) {
-  auto Task = std::make_unique<FileWriterTask>();
+                                 Metrics::Registrar Registrar, MetaData::TrackerPtr const &Tracker) {
+  auto Task = std::make_unique<FileWriterTask>(Tracker);
   Task->setJobId(StartInfo.JobID);
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
@@ -189,7 +189,7 @@ JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
 
   Logger->info("Write file with job_id: {}", Task->jobID());
   return std::make_unique<StreamController>(
-      std::move(Task), Settings.StreamerConfiguration, Registrar);
+      std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);
 }
 
 void JobCreator::addStreamSourceToWriterModule(

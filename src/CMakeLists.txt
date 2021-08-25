@@ -118,10 +118,7 @@ set(kafka_to_nexus_SRC
         SetThreadName.cpp
         MetaData/Tracker.cpp
         MetaData/Value.cpp
-        MetaData/ValueInternal.cpp
-        MetaData/HDF5MetaData.cpp
-        MetaData/HDF5Dataset.cpp
-        MetaData/HDF5Storage.cpp)
+        MetaData/ValueInternal.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -199,9 +196,7 @@ set(kafka_to_nexus_INC
         MetaData/Tracker.h
         MetaData/Value.h
         MetaData/ValueInternal.h
-        MetaData/HDF5MetaData.h
-        MetaData/HDF5Dataset.h
-        MetaData/HDF5Storage.h)
+        MetaData/HDF5DataWriter.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

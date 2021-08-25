@@ -23,4 +23,18 @@ void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
   }
 }
 
+void Tracker::writeToHDF5File(hdf5::node::Group RootNode) const {
+  int ErrorCounter{0};
+  for (auto const &MetaData : KnownMetaData) {
+    try {
+      MetaData->writeToHDF5File(RootNode);
+    } catch (std::exception const &E) {
+      ErrorCounter++;
+    }
+  }
+  if (ErrorCounter > 0) {
+    LOG_ERROR("Failed to write {} (out of a total of {}) meta-data values to file.", ErrorCounter, KnownMetaData.size());
+  }
+}
+
 } // namespace MetaData

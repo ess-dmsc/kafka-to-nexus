@@ -22,8 +22,8 @@ using HDFOperations::writeHDFISO8601AttributeCurrentTime;
 
 HDFFile::HDFFile(std::string const &FileName,
                  nlohmann::json const &NexusStructure,
-                 std::vector<StreamHDFInfo> &StreamHDFInfo)
-    : H5FileName(FileName) {
+                 std::vector<StreamHDFInfo> &StreamHDFInfo, MetaData::TrackerPtr &TrackerPtr)
+    : H5FileName(FileName), MetaDataTracker(TrackerPtr) {
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
   }
@@ -39,6 +39,7 @@ HDFFile::~HDFFile() {
     closeFile();
     openFileInRegularMode();
     addLinks();
+    MetaDataTracker->writeToHDF5File(hdfFile().root());
   } catch (std::exception const &E) {
     LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
               E.what());

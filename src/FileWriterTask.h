@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "MetaData/Tracker.h"
 
 namespace FileWriter {
 
@@ -35,7 +36,7 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  explicit FileWriterTask() : Logger(getLogger()){};
+  explicit FileWriterTask(MetaData::TrackerPtr const &Tracker) : Logger(getLogger()), MetaDataTracker(Tracker) {};
 
   ~FileWriterTask() = default;
 
@@ -91,6 +92,7 @@ private:
   std::string JobId;
   std::unique_ptr<HDFFile> File;
   SharedLogger Logger;
+  MetaData::TrackerPtr MetaDataTracker;
 };
 
 } // namespace FileWriter
