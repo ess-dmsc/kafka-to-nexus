@@ -9,16 +9,18 @@
 
 #pragma once
 
+#include "logger.h"
 #include <functional>
+#include <h5cpp/hdf5.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
-#include "logger.h"
-#include <h5cpp/hdf5.hpp>
 
 namespace MetaDataInternal {
 class ValueBaseInternal {
 public:
-  ValueBaseInternal(std::string const &LocationPath, std::string const &ValueName) : Path(LocationPath), Name(ValueName) {}
+  ValueBaseInternal(std::string const &LocationPath,
+                    std::string const &ValueName)
+      : Path(LocationPath), Name(ValueName) {}
   virtual ~ValueBaseInternal() = default;
   virtual nlohmann::json getAsJSON() const = 0;
   virtual void writeToHDF5File(hdf5::node::Node) = 0;
@@ -32,8 +34,9 @@ private:
 
 template <class DataType> class ValueInternal : public ValueBaseInternal {
 public:
-  ValueInternal(std::string const &LocationPath, std::string const &Name,
-                std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer)
+  ValueInternal(
+      std::string const &LocationPath, std::string const &Name,
+      std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer)
       : ValueBaseInternal(LocationPath, Name), WriteToFile(HDF5Writer) {}
   void setValue(DataType NewValue) { MetaDataValue = NewValue; }
   DataType getValue() { return MetaDataValue; }
@@ -47,7 +50,9 @@ public:
       auto UsedNode = get_node(RootNode, getPath());
       WriteToFile(UsedNode, getName(), MetaDataValue);
     } catch (std::exception &E) {
-      LOG_ERROR("Failed to write the value \"{}\" to the path \"{}\" in HDF5-file. The message was: {}", MetaDataValue, getPath(), E.what());
+      LOG_ERROR("Failed to write the value \"{}\" to the path \"{}\" in "
+                "HDF5-file. The message was: {}",
+                MetaDataValue, getPath(), E.what());
       throw;
     }
   };

@@ -20,7 +20,8 @@ public:
         HDFFileTestHelper::createInMemoryTestFile("test-meta-data.nxs", false);
     RootGroup = TestFile->hdfGroup();
     UsedGroup = RootGroup.create_group(GroupName);
-    NeXusDataset::ExtensibleDataset<int> TempDataset(UsedGroup, DatasetName, NeXusDataset::Mode::Create);
+    NeXusDataset::ExtensibleDataset<int> TempDataset(
+        UsedGroup, DatasetName, NeXusDataset::Mode::Create);
     UsedDataset = TempDataset.link().parent().get_dataset(DatasetName);
   }
   std::string const GroupName{"SomeGroupName"};
@@ -31,13 +32,12 @@ public:
   hdf5::node::Dataset UsedDataset;
 };
 
-
 TEST_F(HDF5Data, IntFunctionCall) {
   bool FunctionCalled{false};
-  std::function<void(hdf5::node::Node,std::string,int)> HDF5WriteFunction = [&](hdf5::node::Node, std::string, int){
-    FunctionCalled = true;
-  };
-  MetaDataInternal::ValueInternal<int> UnderTest{"/", "SomeKey", HDF5WriteFunction};
+  std::function<void(hdf5::node::Node, std::string, int)> HDF5WriteFunction =
+      [&](hdf5::node::Node, std::string, int) { FunctionCalled = true; };
+  MetaDataInternal::ValueInternal<int> UnderTest{"/", "SomeKey",
+                                                 HDF5WriteFunction};
   UnderTest.writeToHDF5File(UsedGroup);
   EXPECT_TRUE(FunctionCalled);
 }
@@ -90,7 +90,8 @@ TEST_F(HDF5Data, StringDatasetWritten) {
 
 TEST_F(HDF5Data, GroupStringDataDestination) {
   std::string Name{"someName"};
-  MetaData::Value<int>  TestDataset(fmt::format("/{}", GroupName), Name, MetaData::basicDatasetWriter<int>);
+  MetaData::Value<int> TestDataset(fmt::format("/{}", GroupName), Name,
+                                   MetaData::basicDatasetWriter<int>);
   MetaData::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
@@ -106,7 +107,8 @@ TEST_F(HDF5Data, GroupStringDataDestination) {
 
 TEST_F(HDF5Data, GroupNodeDataDestination) {
   std::string Name{"someName"};
-  MetaData::Value<int>  TestDataset(UsedGroup, Name, MetaData::basicDatasetWriter<int>);
+  MetaData::Value<int> TestDataset(UsedGroup, Name,
+                                   MetaData::basicDatasetWriter<int>);
   MetaData::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
@@ -122,7 +124,8 @@ TEST_F(HDF5Data, GroupNodeDataDestination) {
 
 TEST_F(HDF5Data, GroupStringAttributeDestination) {
   std::string Name{"someName"};
-  MetaData::Value<int>  TestDataset(fmt::format("/{}", GroupName), Name, MetaData::basicAttributeWriter<int>);
+  MetaData::Value<int> TestDataset(fmt::format("/{}", GroupName), Name,
+                                   MetaData::basicAttributeWriter<int>);
   MetaData::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
@@ -137,7 +140,8 @@ TEST_F(HDF5Data, GroupStringAttributeDestination) {
 
 TEST_F(HDF5Data, GroupNodeAttributeDestination) {
   std::string Name{"someName"};
-  MetaData::Value<int>  TestDataset(UsedGroup, Name, MetaData::basicAttributeWriter<int>);
+  MetaData::Value<int> TestDataset(UsedGroup, Name,
+                                   MetaData::basicAttributeWriter<int>);
   MetaData::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
@@ -152,7 +156,8 @@ TEST_F(HDF5Data, GroupNodeAttributeDestination) {
 
 TEST_F(HDF5Data, DatasetDatasetDestinationFailure) {
   std::string Name{"someName"};
-  MetaData::Value<int>  TestDataset(UsedDataset, Name, MetaData::basicDatasetWriter<int>);
+  MetaData::Value<int> TestDataset(UsedDataset, Name,
+                                   MetaData::basicDatasetWriter<int>);
   MetaData::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
@@ -163,7 +168,8 @@ TEST_F(HDF5Data, DatasetDatasetDestinationFailure) {
 
 TEST_F(HDF5Data, AttributeDatasetDestinationSuccess) {
   std::string Name{"someName"};
-  MetaData::Value<int>  TestDataset(UsedDataset, Name, MetaData::basicAttributeWriter<int>);
+  MetaData::Value<int> TestDataset(UsedDataset, Name,
+                                   MetaData::basicAttributeWriter<int>);
   MetaData::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
@@ -178,7 +184,8 @@ TEST_F(HDF5Data, AttributeDatasetDestinationSuccess) {
 
 TEST_F(HDF5Data, GroupNodeDataDestinationFailure) {
   std::string Name{"someName"};
-  MetaData::Value<int>  TestDataset("/SomeGroupThatDoesNotExist", Name, MetaData::basicDatasetWriter<int>);
+  MetaData::Value<int> TestDataset("/SomeGroupThatDoesNotExist", Name,
+                                   MetaData::basicDatasetWriter<int>);
   MetaData::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);

@@ -9,13 +9,13 @@
 
 #pragma once
 
+#include "MetaData/Tracker.h"
 #include "Source.h"
 #include "json.h"
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include "MetaData/Tracker.h"
 
 namespace FileWriter {
 
@@ -36,7 +36,8 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  explicit FileWriterTask(MetaData::TrackerPtr const &Tracker) : Logger(getLogger()), MetaDataTracker(Tracker) {};
+  explicit FileWriterTask(MetaData::TrackerPtr const &Tracker)
+      : Logger(getLogger()), MetaDataTracker(Tracker){};
 
   ~FileWriterTask() = default;
 

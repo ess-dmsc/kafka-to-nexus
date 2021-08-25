@@ -13,14 +13,14 @@
 #pragma once
 
 #include "MainOpt.h"
+#include "MetaData/HDF5DataWriter.h"
+#include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
 #include <atomic>
 #include <set>
 #include <vector>
-#include "MetaData/Tracker.h"
-#include "MetaData/HDF5DataWriter.h"
 
 namespace FileWriter {
 class FileWriterTask;
@@ -41,7 +41,8 @@ class StreamController : public IStreamController {
 public:
   StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
                    FileWriter::StreamerOptions const &Settings,
-                   Metrics::Registrar const &Registrar, MetaData::TrackerPtr const &Tracker);
+                   Metrics::Registrar const &Registrar,
+                   MetaData::TrackerPtr const &Tracker);
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;
@@ -99,8 +100,10 @@ private:
   Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions KafkaSettings;
   MetaData::TrackerPtr MetaDataTracker;
-  MetaData::Value<std::string> StartTimeMetaData{"/entry/", "start_time", MetaData::basicDatasetWriter<std::string>};
-  MetaData::Value<std::string> EndTimeMetaData{"/entry/", "end_time", MetaData::basicDatasetWriter<std::string>};
+  MetaData::Value<std::string> StartTimeMetaData{
+      "/entry/", "start_time", MetaData::basicDatasetWriter<std::string>};
+  MetaData::Value<std::string> EndTimeMetaData{
+      "/entry/", "end_time", MetaData::basicDatasetWriter<std::string>};
   ThreadedExecutor Executor; // Must be last
 };
 

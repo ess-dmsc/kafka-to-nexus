@@ -9,8 +9,8 @@
 
 #pragma once
 #include "Value.h"
-#include <memory>
 #include <h5cpp/hdf5.hpp>
+#include <memory>
 
 namespace MetaData {
 

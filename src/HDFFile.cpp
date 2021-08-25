@@ -22,7 +22,8 @@ using HDFOperations::writeHDFISO8601AttributeCurrentTime;
 
 HDFFile::HDFFile(std::string const &FileName,
                  nlohmann::json const &NexusStructure,
-                 std::vector<StreamHDFInfo> &StreamHDFInfo, MetaData::TrackerPtr &TrackerPtr)
+                 std::vector<StreamHDFInfo> &StreamHDFInfo,
+                 MetaData::TrackerPtr &TrackerPtr)
     : H5FileName(FileName), MetaDataTracker(TrackerPtr) {
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");

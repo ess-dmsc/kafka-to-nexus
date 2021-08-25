@@ -4,8 +4,8 @@
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
 #include "Stream/Partition.h"
-#include "helper.h"
 #include "TimeUtility.h"
+#include "helper.h"
 
 namespace FileWriter {
 StreamController::StreamController(

@@ -12,13 +12,13 @@
 #include "CommandSystem/Handler.h"
 #include "Kafka/PollStatus.h"
 #include "MainOpt.h"
+#include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
 #include "Msg.h"
 #include <atomic>
 #include <memory>
 #include <string>
 #include <vector>
-#include "MetaData/Tracker.h"
 
 namespace Status {
 class StatusReporter;

@@ -11,10 +11,10 @@
 
 #include "ValueInternal.h"
 #include <functional>
+#include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <h5cpp/hdf5.hpp>
 
 namespace MetaData {
 
@@ -39,20 +39,23 @@ private:
 template <class DataType> class Value : public ValueBase {
 public:
   Value(std::string const &Path, std::string const &Name,
-        std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer = {})
+        std::function<void(hdf5::node::Node, std::string, DataType)>
+            HDF5Writer = {})
       : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
             Path, Name, HDF5Writer)) {}
 
-  Value(char const * const Path, std::string const &Name,
-        std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer = {})
-        : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
+  Value(char const *const Path, std::string const &Name,
+        std::function<void(hdf5::node::Node, std::string, DataType)>
+            HDF5Writer = {})
+      : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
             Path, Name, HDF5Writer)) {}
 
   template <class NodeType>
   Value(NodeType const &Node, std::string const &Name,
-                  std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer = {})
-                  : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(std::string(Node.link().path()),
-                      Name, HDF5Writer)) {}
+        std::function<void(hdf5::node::Node, std::string, DataType)>
+            HDF5Writer = {})
+      : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
+            std::string(Node.link().path()), Name, HDF5Writer)) {}
 
   void setValue(DataType NewValue) {
     std::dynamic_pointer_cast<MetaDataInternal::ValueInternal<DataType>>(
