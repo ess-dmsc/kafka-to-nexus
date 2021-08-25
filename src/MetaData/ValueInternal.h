@@ -10,7 +10,6 @@
 #pragma once
 
 #include "logger.h"
-#include <atomic>
 #include <functional>
 #include <h5cpp/hdf5.hpp>
 #include <nlohmann/json.hpp>
@@ -59,7 +58,7 @@ public:
   };
 
 private:
-  std::atomic<DataType> MetaDataValue;
+  DataType MetaDataValue;
   std::function<void(hdf5::node::Node, std::string, DataType)> WriteToFile;
 };
 } // namespace MetaDataInternal
