@@ -32,8 +32,7 @@ public:
         Producer(std::make_shared<Kafka::Producer>(Settings)),
         StatusProducerTopic(
             std::make_unique<Kafka::ProducerTopic>(Producer, StatusTopic)),
-        StaticStatusInformation(StatusInformation),
-        StatusTopicName(StatusTopic) {}
+        StaticStatusInformation(StatusInformation) {}
   StatusReporterBase(std::shared_ptr<Kafka::Producer> Producer,
                      std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic,
                      ApplicationStatusInfo StatusInformation)
@@ -70,6 +69,11 @@ public:
   /// Create the JSON part of the status report.
   std::string createJSONReport() const;
 
+  void setJSONMetaDataGenerator(
+      std::function<void(nlohmann::json &JSONNode)> GeneratorFunction) {
+    JSONGenerator = GeneratorFunction;
+  }
+
 protected:
   duration const Period;
   SharedLogger Logger = getLogger();
@@ -84,7 +88,7 @@ private:
   std::unique_ptr<Kafka::ProducerTopic> AltStatusProducerTopic;
   bool UsingAlternativeStatusTopic{false};
   ApplicationStatusInfo const StaticStatusInformation;
-  std::string const StatusTopicName;
+  std::function<void(nlohmann::json &JSONNode)> JSONGenerator;
 };
 
 } // namespace Status

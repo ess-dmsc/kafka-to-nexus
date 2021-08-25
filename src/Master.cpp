@@ -33,6 +33,8 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
   CommandAndControl->registerIsWritingFunction(
       [this]() { return WriterState::Writing == CurrentState; });
   Logger->info("file-writer service id: {}", Config.getServiceId());
+  this->Reporter->setJSONMetaDataGenerator(
+      [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {
@@ -103,6 +105,7 @@ void Master::setToIdle() {
   }
   CurrentStreamController.reset(nullptr);
   CurrentState = WriterState::Idle;
+  MetaDataTracker->clearMetaData();
   Reporter->resetStatusInfo();
   Reporter->revertToDefaultStatusTopic();
 }

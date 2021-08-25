@@ -12,6 +12,7 @@
 #include "logger.h"
 #include <functional>
 #include <h5cpp/hdf5.hpp>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -22,7 +23,7 @@ public:
                     std::string const &ValueName)
       : Path(LocationPath), Name(ValueName) {}
   virtual ~ValueBaseInternal() = default;
-  virtual nlohmann::json getAsJSON() const = 0;
+  virtual nlohmann::json getAsJSON() = 0;
   virtual void writeToHDF5File(hdf5::node::Node) = 0;
   std::string getName() const { return Name; }
   std::string getPath() const { return Path; }
@@ -38,14 +39,22 @@ public:
       std::string const &LocationPath, std::string const &Name,
       std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer)
       : ValueBaseInternal(LocationPath, Name), WriteToFile(HDF5Writer) {}
-  void setValue(DataType NewValue) { MetaDataValue = NewValue; }
-  DataType getValue() { return MetaDataValue; }
-  virtual nlohmann::json getAsJSON() const override {
+  void setValue(DataType NewValue) {
+    std::lock_guard Lock(ValueMutex);
+    MetaDataValue = NewValue;
+  }
+  DataType getValue() {
+    std::lock_guard Lock(ValueMutex);
+    return MetaDataValue;
+  }
+  virtual nlohmann::json getAsJSON() override {
+    std::lock_guard Lock(ValueMutex);
     nlohmann::json RetObj;
     RetObj[getName()] = MetaDataValue;
     return RetObj;
   }
   virtual void writeToHDF5File(hdf5::node::Node RootNode) override {
+    std::lock_guard Lock(ValueMutex);
     try {
       auto UsedNode = get_node(RootNode, getPath());
       WriteToFile(UsedNode, getName(), MetaDataValue);
@@ -58,6 +67,7 @@ public:
   };
 
 private:
+  std::mutex ValueMutex;
   DataType MetaDataValue;
   std::function<void(hdf5::node::Node, std::string, DataType)> WriteToFile;
 };
