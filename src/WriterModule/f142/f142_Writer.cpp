@@ -80,8 +80,8 @@ void f142_Writer::config_post_processing() {
 
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
-/// `init_hdf`.
-InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+/// `init`.
+InitResult f142_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -114,7 +114,7 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 }
 
 /// \brief Implement the writer module interface, forward to the OPEN case of
-/// `init_hdf`.
+/// `init`.
 InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {

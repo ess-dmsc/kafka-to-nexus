@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include "MetaData/Tracker.h"
 
 namespace WriterModule {
 
@@ -61,24 +62,16 @@ public:
   /// after the constructor and parse_config().
   virtual void config_post_processing(){};
 
-  /// \brief Initialise the HDF file.
+  /// \brief Initialise the writer instance for writing.
   ///
-  /// Called before any data has arrived with the json configuration of this
-  /// stream to allow the writer module to create any structures in the HDF
-  /// file.
+  /// Must be called before any data has arrived. Is used to initialise the HDF structure and (e.g. meta data) variables used in the writing process.
   ///
   /// \param HDFGroup The \p HDFGroup into which this module
   /// should write its data.
-  /// \param HDFAttributes Additional attributes as defined in the Nexus
-  /// structure which the module should write to the file. Because the
-  /// writer module is free to create the structure and data sets according to
-  /// its needs, it must also take the responsibility to write these
-  /// attributes.
-  /// \param HDFAttributes Json string of the attributes associated with the
-  /// stream, as defined by the "attributes" key in the Nexus structure.
+  /// \param Tracker The meta data tracker used to register meta data variables.
   ///
   /// \return The result.
-  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup) = 0;
+  virtual InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) = 0;
 
   /// \brief Reopen the HDF objects which are used by this writer module.
   ///

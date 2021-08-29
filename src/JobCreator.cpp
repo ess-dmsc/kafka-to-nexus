@@ -118,7 +118,7 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
   auto AttributesJson = nlohmann::json::parse(StreamSettings.Attributes);
   HDFOperations::writeAttributes(StreamGroup, AttributesJson);
 
-  HDFWriterModule->init_hdf({StreamGroup});
+  HDFWriterModule->init({StreamGroup},);
 }
 
 /// Helper to extract information about the provided streams.

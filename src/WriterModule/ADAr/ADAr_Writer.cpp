@@ -46,7 +46,7 @@ void ADAr_Writer::config_post_processing() {
   }
 }
 
-WriterModule::InitResult ADAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult ADAr_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
   auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions().at(0);
   try {
     initValueDataset(HDFGroup);

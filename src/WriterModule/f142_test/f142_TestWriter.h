@@ -20,7 +20,7 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class f142_TestWriter : public WriterModule::Base {
 public:
   /// Implements writer module interface.
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
+  InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) override;
   /// Implements writer module interface.
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

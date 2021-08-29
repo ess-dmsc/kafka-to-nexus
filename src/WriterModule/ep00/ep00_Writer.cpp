@@ -20,7 +20,7 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+InitResult ep00_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::ConnectionStatusTime(

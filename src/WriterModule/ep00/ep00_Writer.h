@@ -8,7 +8,7 @@ namespace ep00 {
 
 class ep00_Writer final : public WriterModule::Base {
 public:
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
+  InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr Tracker) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FileWriter::FlatbufferMessage const &Message) override;
 

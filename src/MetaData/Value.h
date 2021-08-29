@@ -25,19 +25,26 @@ public:
   explicit ValueBase(
       std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValuePtr)
       : ValueObj(ValuePtr) {}
-  nlohmann::json getAsJSON() const { return ValueObj->getAsJSON(); }
-  std::string getKey() const { return ValueObj->getName(); }
+      nlohmann::json getAsJSON() const { throwIfInvalid(); return ValueObj->getAsJSON(); }
+  std::string getKey() const { throwIfInvalid(); return ValueObj->getName(); }
+  bool isValid() const {return ValueObj != nullptr; }
+  void throwIfInvalid() const {
+    if (not isValid()) {
+      throw std::runtime_error("Unable to set or get meta data value as it has not been initialised.");
+    }
+  }
 
 protected:
-  auto getValuePtr() const { return ValueObj; }
+  auto getValuePtr() const { throwIfInvalid(); return ValueObj; }
 
 private:
-  std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValueObj;
+  std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValueObj{nullptr};
   friend Tracker;
 };
 
 template <class DataType> class Value : public ValueBase {
 public:
+  Value() = default;
   Value(std::string const &Path, std::string const &Name,
         std::function<void(hdf5::node::Node, std::string, DataType)>
             HDF5Writer = {})
@@ -67,7 +74,6 @@ public:
                getValuePtr())
         ->getValue();
   }
-  std::string getKey() const { return getKey(); }
 };
 
 } // namespace MetaData

@@ -21,7 +21,7 @@ static WriterModule::Registry::Registrar<ns10_Writer> RegisterWriter("ns10",
 
 using FileWriterBase = WriterModule::Base;
 
-WriterModule::InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult ns10_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::DoubleValue(      // NOLINT(bugprone-unused-raii)

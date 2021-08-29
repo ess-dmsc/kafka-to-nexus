@@ -12,6 +12,7 @@
 #include "FlatbufferMessage.h"
 #include "JsonConfig/Field.h"
 #include "WriterModuleBase.h"
+#include "MetaData/Value.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
 #include <array>
@@ -28,7 +29,7 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class f142_Writer : public WriterModule::Base {
 public:
   /// Implements writer module interface.
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
+  InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr Tracker) override;
   /// Implements writer module interface.
   void config_post_processing() override;
   /// Implements writer module interface.
@@ -37,7 +38,7 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  f142_Writer() : WriterModule::Base(false, "NXlog") {}
+  f142_Writer() : WriterModule::Base(false, "NXlog"), MetaDataMin("", "min"), MetaDataMax("", "max"), MetaDataMean("", "mean") {}
   ~f142_Writer() override = default;
 
   enum class Type {
@@ -85,6 +86,11 @@ protected:
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "double"};
   JsonConfig::Field<std::string> Unit{this, {"value_units", "unit"}, ""};
+  JsonConfig::Field<bool> MetaData{this, "meta_data", false};
+
+  MetaData::Value<double> MetaDataMin;
+  MetaData::Value<double> MetaDataMax;
+  MetaData::Value<double> MetaDataMean;
 };
 
 } // namespace f142

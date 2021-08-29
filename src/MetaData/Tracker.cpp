@@ -12,7 +12,9 @@
 namespace MetaData {
 
 void Tracker::registerMetaData(MetaData::ValueBase NewMetaData) {
-  KnownMetaData.emplace_back(NewMetaData.getValuePtr());
+  if (NewMetaData.getValuePtr() != nullptr) {
+    KnownMetaData.emplace_back(NewMetaData.getValuePtr());
+  }
 }
 void Tracker::clearMetaData() { KnownMetaData.clear(); }
 

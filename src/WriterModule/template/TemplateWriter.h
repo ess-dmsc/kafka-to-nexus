@@ -104,7 +104,7 @@ public:
   /// is as follows:
   /// \li WriterModule::Base::Base()
   /// \li WriterModule::Base::parse_config()
-  /// \li WriterModule::Base::init_hdf()
+  /// \li WriterModule::Base::init()
   /// \li WriterModule::Base::close()
   /// \li WriterModule::Base::~Base()
   ///
@@ -119,24 +119,20 @@ public:
   ///
   /// \param hdf_parent This is the HDF5 group where the relevant
   /// datasets should be created.
-  /// \param HDFAttributes Additional attributes as defined in the Nexus
-  /// structure which the HDFWriterModule should write to the file. Because the
-  /// writer module is free to create the structure and datasets according to
-  /// its needs, it must also take the responsibility to write these
-  /// attributes.
+  /// \param Tracker Used to register meta data variables.
   /// \return An instance of InitResult. Note that these instances can only be
   /// constructed using the static methods InitResult::OK(),
   /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
   // cppcheck-suppress functionStatic
-  WriterModule::InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/) override {
-    std::cout << "WriterClass::init_hdf()\n";
+  WriterModule::InitResult init(hdf5::node::Group &/*HDFGroup*/, MetaData::TrackerPtr /*Tracker*/) override {
+    std::cout << "WriterClass::init()\n";
     return WriterModule::InitResult::OK;
   }
 
   /// \brief Re-open datasets that have been created when calling
-  /// WriterModule::Base::init_hdf().
+  /// WriterModule::Base::init().
   ///
   /// This function should not modify attributes, create datasets or a number of
   /// other things. See the following link for a list of things that you are not
@@ -158,7 +154,7 @@ public:
   /// exceptions will cause the thread to exit.
   ///
   /// \param hdf_parent This is HDF5 group which has the datasets created
-  /// using the call to init_hdf().
+  /// using the call to init().
   ///
   /// \return An instance of InitResult. Note that these instances can only be
   /// constructed using the static methods InitResult::OK(),

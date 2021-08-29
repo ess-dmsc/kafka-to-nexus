@@ -30,7 +30,7 @@ public:
 
   void config_post_processing() override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
+  InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr Tracker) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

@@ -16,8 +16,8 @@ namespace f142 {
 
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
-/// `init_hdf`.
-InitResult f142_TestWriter::init_hdf(hdf5::node::Group &HDFGroup) {
+/// `init`.
+InitResult f142_TestWriter::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::CueIndex(HDFGroup, Create,
@@ -31,7 +31,7 @@ InitResult f142_TestWriter::init_hdf(hdf5::node::Group &HDFGroup) {
 }
 
 /// \brief Implement the writer module interface, forward to the OPEN case of
-/// `init_hdf`.
+/// `init`.
 InitResult f142_TestWriter::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
