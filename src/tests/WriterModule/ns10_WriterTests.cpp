@@ -104,13 +104,13 @@ public:
 
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   ns10_Writer SomeWriter;
-  EXPECT_TRUE(SomeWriter.init(UsedGroup) == WriterModule::InitResult::OK);
+  EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup) == WriterModule::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) == WriterModule::InitResult::OK);
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {
   ns10_Writer SomeWriter;
-  SomeWriter.init(UsedGroup);
+  SomeWriter.init_hdf(UsedGroup);
 
   EXPECT_TRUE(UsedGroup.has_dataset("cue_index"));
   EXPECT_TRUE(UsedGroup.has_dataset("value"));
@@ -140,7 +140,7 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init(UsedGroup);
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -169,7 +169,7 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init(UsedGroup);
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -199,7 +199,7 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init(UsedGroup);
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -228,7 +228,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueCannotBeCastToDouble) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init(UsedGroup);
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({
@@ -253,7 +253,7 @@ TEST_F(NicosCacheWriterTest, ThrowsIfValueDoesNotFitIntoDouble) {
   CacheWriterF Writer;
   Writer.parse_config(JsonConfig.dump());
 
-  Writer.init(UsedGroup);
+  Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
 
   nlohmann::json BufferJson = R"({

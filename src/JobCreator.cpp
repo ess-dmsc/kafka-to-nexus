@@ -118,36 +118,34 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
   auto AttributesJson = nlohmann::json::parse(StreamSettings.Attributes);
   HDFOperations::writeAttributes(StreamGroup, AttributesJson);
 
-  HDFWriterModule->init({StreamGroup},);
+  HDFWriterModule->init_hdf({StreamGroup});
 }
 
 /// Helper to extract information about the provided streams.
-/// \param Logger Pointer to spdlog instance to be used for logging.
 static vector<StreamSettings>
 extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
-                                 std::vector<StreamHDFInfo> &StreamHDFInfoList,
-                                 SharedLogger const &Logger) {
-  Logger->info("Command contains {} streams", StreamHDFInfoList.size());
+                                 std::vector<StreamHDFInfo> &StreamHDFInfoList) {
+  LOG_INFO("Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
       StreamSettingsList.push_back(
           extractStreamInformationFromJsonForSource(StreamHDFInfo));
-      Logger->info("Adding stream: {}",
+      LOG_INFO("Adding stream: {}",
                    StreamSettingsList.back().ConfigStreamJson);
       setUpHdfStructure(StreamSettingsList.back(), Task);
       StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
-      Logger->warn("Invalid json: {}", StreamHDFInfo.ConfigStream);
+      LOG_WARN("Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
     } catch (std::runtime_error const &E) {
-      Logger->warn("Exception while initialising writer module  what: {}  "
+      LOG_WARN("Exception while initialising writer module  what: {}  "
                    "parent: {}  json: {}",
                    E.what(), StreamHDFInfo.HDFParentName,
                    StreamHDFInfo.ConfigStream);
       continue;
     } catch (...) {
-      Logger->error("Unknown error caught while trying to initialise stream  "
+      LOG_ERROR("Unknown error caught while trying to initialise stream  "
                     "parent: {}  json: {}",
                     StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
     }
@@ -157,7 +155,7 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 
 std::unique_ptr<IStreamController>
 JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
-                                 MainOpt &Settings, SharedLogger const &Logger,
+                                 MainOpt &Settings,
                                  Metrics::Registrar Registrar,
                                  MetaData::TrackerPtr const &Tracker) {
   auto Task = std::make_unique<FileWriterTask>(Tracker);
@@ -168,7 +166,7 @@ JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
       initializeHDF(*Task, StartInfo.NexusStructure);
 
   std::vector<StreamSettings> StreamSettingsList =
-      extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
+      extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
   if (Settings.AbortOnUninitialisedStream) {
     for (auto const &Item : StreamHDFInfoList) {
@@ -188,7 +186,7 @@ JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
   Settings.StreamerConfiguration.BrokerSettings.Address =
       StartInfo.BrokerInfo.HostPort;
 
-  Logger->info("Write file with job_id: {}", Task->jobID());
+  LOG_INFO("Write file with job_id: {}", Task->jobID());
   return std::make_unique<StreamController>(
       std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);
 }
@@ -196,16 +194,15 @@ JobCreator::createFileWritingJob(Command::StartInfo const &StartInfo,
 void JobCreator::addStreamSourceToWriterModule(
     vector<StreamSettings> const &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
-  auto Logger = getLogger();
 
   for (auto const &StreamSettings : StreamSettingsList) {
-    Logger->trace("Add Source: {}", StreamSettings.Topic);
+    LOG_TRACE("Add Source: {}", StreamSettings.Topic);
     WriterModule::Registry::FactoryAndID ModuleFactory;
 
     try {
       ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
     } catch (std::exception const &E) {
-      Logger->info("WriterModule '{}' is not available, error {}",
+      LOG_INFO("WriterModule '{}' is not available, error {}",
                    StreamSettings.Module, E.what());
       continue;
     }
@@ -213,7 +210,7 @@ void JobCreator::addStreamSourceToWriterModule(
     auto AcceptedFlatbufferID = ModuleFactory.second;
     auto HDFWriterModule = ModuleFactory.first();
     if (!HDFWriterModule) {
-      Logger->info("Can not create a writer module for '{}'",
+      LOG_INFO("Can not create a writer module for '{}'",
                    StreamSettings.Module);
       continue;
     }
@@ -227,12 +224,12 @@ void JobCreator::addStreamSourceToWriterModule(
             RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
         auto Err = HDFWriterModule->reopen({StreamGroup});
         if (Err != WriterModule::InitResult::OK) {
-          Logger->error("can not reopen HDF file for stream {}",
+          LOG_ERROR("can not reopen HDF file for stream {}",
                         StreamSettings.StreamHDFInfoObj.HDFParentName);
           continue;
         }
       } catch (std::runtime_error const &e) {
-        Logger->error("Exception on WriterModule::Base->reopen(): {}",
+        LOG_ERROR("Exception on WriterModule::Base->reopen(): {}",
                       e.what());
         continue;
       }
@@ -243,7 +240,7 @@ void JobCreator::addStreamSourceToWriterModule(
                         move(HDFWriterModule));
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
-      Logger->warn(
+      LOG_WARN(
           "Exception while initializing writer module {} for source {}: {}",
           StreamSettings.Module, StreamSettings.Source, E.what());
       continue;

@@ -32,8 +32,7 @@ struct StreamSettings {
 class IJobCreator {
 public:
   virtual std::unique_ptr<IStreamController>
-  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
-                       SharedLogger const &Logger, Metrics::Registrar Registrar,
+  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings, Metrics::Registrar Registrar,
                        MetaData::TrackerPtr const &Tracker) = 0;
   virtual ~IJobCreator() = default;
 };
@@ -48,8 +47,7 @@ public:
   /// \param Logger The logger.
   /// \return The new file-writing job.
   std::unique_ptr<IStreamController>
-  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
-                       SharedLogger const &Logger, Metrics::Registrar Registrar,
+  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings, Metrics::Registrar Registrar,
                        MetaData::TrackerPtr const &Tracker) override;
 
 private:

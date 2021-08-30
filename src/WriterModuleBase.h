@@ -68,10 +68,8 @@ public:
   ///
   /// \param HDFGroup The \p HDFGroup into which this module
   /// should write its data.
-  /// \param Tracker The meta data tracker used to register meta data variables.
-  ///
   /// \return The result.
-  virtual InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) = 0;
+  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup) const = 0;
 
   /// \brief Reopen the HDF objects which are used by this writer module.
   ///

@@ -38,14 +38,14 @@ public:
 
   void config_post_processing() override;
 
-  InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr Tracker) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   void write(FlatbufferMessage const &Message) override;
 
 protected:
-  void initValueDataset(hdf5::node::Group const &Parent);
+  void initValueDataset(hdf5::node::Group const &Parent) const;
   enum class Type {
     int8,
     uint8,

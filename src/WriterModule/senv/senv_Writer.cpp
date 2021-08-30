@@ -27,7 +27,7 @@ namespace senv {
 static WriterModule::Registry::Registrar<senv_Writer>
     RegisterSenvWriter("senv", "senv");
 
-WriterModule::InitResult senv_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
+WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
     initValueDataset(HDFGroup);
     auto &CurrentGroup = HDFGroup;
@@ -173,7 +173,7 @@ makeIt(hdf5::node::Group const &Parent, size_t const &ChunkSize) {
       Parent, "raw_value", NeXusDataset::Mode::Create, ChunkSize);
 }
 
-void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) {
+void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) const {
   using OpenFuncType =
       std::function<std::unique_ptr<hdf5::node::ChunkedDataset>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{

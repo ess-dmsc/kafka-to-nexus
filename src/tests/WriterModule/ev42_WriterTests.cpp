@@ -130,7 +130,7 @@ TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
     WriterModule::ev42::ev42_Writer Writer;
     Writer.parse_config("{}");
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
   }
   ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
@@ -153,7 +153,7 @@ TEST_F(EventWriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
   {
     WriterModule::ev42::ev42_Writer Writer;
     Writer.parse_config("{}");
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
   }
   ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
@@ -183,7 +183,7 @@ TEST_F(
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
   }
   ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
   EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
@@ -209,14 +209,14 @@ TEST_F(EventWriterTests, WriterFailsToReopenGroupWhichWasNeverInitialised) {
 
 TEST_F(EventWriterTests, WriterSuccessfullyReopensGroupWhichWasInitialised) {
   WriterModule::ev42::ev42_Writer Writer;
-  EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
 }
 
 TEST_F(EventWriterTests, WriterReportsFailureIfTryToInitialiseTwice) {
   WriterModule::ev42::ev42_Writer Writer;
-  EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
-  EXPECT_FALSE(Writer.init(TestGroup) == InitResult::OK);
+  EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
+  EXPECT_FALSE(Writer.init_hdf(TestGroup) == InitResult::OK);
 }
 
 TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
@@ -233,7 +233,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
   // Create writer and give it the message to write
   {
     WriterModule::ev42::ev42_Writer Writer;
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
   } // These braces are required due to "h5.cpp"
@@ -288,7 +288,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   // Create writer and give it the message to write
   {
     WriterModule::ev42::ev42_Writer Writer;
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
     EXPECT_NO_THROW(Writer.write(TestMessage));
@@ -353,7 +353,7 @@ TEST_F(EventWriterTests,
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
   } // These braces are required due to "h5.cpp"
@@ -389,7 +389,7 @@ TEST_F(EventWriterTests,
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage)); // First message
     EXPECT_NO_THROW(Writer.write(TestMessage)); // Second message
@@ -443,7 +443,7 @@ TEST_F(EventWriterTests,
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
-    EXPECT_TRUE(Writer.init(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));       // First message
     EXPECT_NO_THROW(Writer.write(SecondTestMessage)); // Second message

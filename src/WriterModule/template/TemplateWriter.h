@@ -97,14 +97,14 @@ public:
   /// This member function is used to initialise HDF groups, datasets,
   /// attributes etc. As SWMR (single writer, multiple reader) support in HDF5
   /// only allows for writing data pre-existing datasets, this
-  /// function must implement the init functionality. A list of rules to follow
+  /// function must implement the init_hdf functionality. A list of rules to follow
   /// when using SWMR can be found here:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
   /// When initialising the HDF5 file, the call order (relevant to this class)
   /// is as follows:
   /// \li WriterModule::Base::Base()
   /// \li WriterModule::Base::parse_config()
-  /// \li WriterModule::Base::init()
+  /// \li WriterModule::Base::init_hdf()
   /// \li WriterModule::Base::close()
   /// \li WriterModule::Base::~Base()
   ///
@@ -126,13 +126,13 @@ public:
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
   // cppcheck-suppress functionStatic
-  WriterModule::InitResult init(hdf5::node::Group &/*HDFGroup*/, MetaData::TrackerPtr /*Tracker*/) override {
-    std::cout << "WriterClass::init()\n";
+  WriterModule::InitResult init_hdf(hdf5::node::Group &) const override {
+    std::cout << "WriterClass::init_hdf()\n";
     return WriterModule::InitResult::OK;
   }
 
   /// \brief Re-open datasets that have been created when calling
-  /// WriterModule::Base::init().
+  /// WriterModule::Base::init_hdf().
   ///
   /// This function should not modify attributes, create datasets or a number of
   /// other things. See the following link for a list of things that you are not
@@ -154,7 +154,7 @@ public:
   /// exceptions will cause the thread to exit.
   ///
   /// \param hdf_parent This is HDF5 group which has the datasets created
-  /// using the call to init().
+  /// using the call to init_hdf().
   ///
   /// \return An instance of InitResult. Note that these instances can only be
   /// constructed using the static methods InitResult::OK(),

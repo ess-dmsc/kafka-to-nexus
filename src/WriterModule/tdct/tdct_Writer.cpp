@@ -26,7 +26,7 @@ namespace tdct {
 static WriterModule::Registry::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct", "tdct");
 
-WriterModule::InitResult tdct_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
+InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)

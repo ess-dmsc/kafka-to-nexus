@@ -20,7 +20,7 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-InitResult ep00_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
+InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::ConnectionStatusTime(
@@ -29,7 +29,7 @@ InitResult ep00_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) 
                                    ChunkSize); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    Logger->error("ep00 could not init HDFGroup: {}  trace: {}",
+    Logger->error("ep00 could not init_hdf HDFGroup: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }

@@ -16,7 +16,7 @@ using WriterModule::InitResult;
 class StubWriterModule : public WriterModule::Base {
 public:
   StubWriterModule() : WriterModule::Base(false, "NXlog") {}
-  InitResult init(hdf5::node::Group & /*HDFGroup*/) override {
+  InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/) const override {
     return InitResult::OK;
   }
   InitResult reopen(hdf5::node::Group & /*HDFGroup*/) override {

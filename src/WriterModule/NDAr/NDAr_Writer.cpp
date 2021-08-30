@@ -54,7 +54,7 @@ void NDAr_Writer::config_post_processing() {
   }
 }
 
-WriterModule::InitResult NDAr_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
+WriterModule::InitResult NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions().at(0);
   try {
     initValueDataset(HDFGroup);
@@ -162,7 +162,7 @@ makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
       Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);
 }
 
-void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) {
+void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) const {
   using OpenFuncType =
       std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
@@ -189,7 +189,7 @@ void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) {
       {Type::float64,
        [&]() { return makeIt<std::double_t>(Parent, ArrayShape, ChunkSize); }},
   };
-  Values = CreateValuesMap.at(ElementType)();
+  CreateValuesMap.at(ElementType)();
 }
 } // namespace NDAr
 } // namespace WriterModule

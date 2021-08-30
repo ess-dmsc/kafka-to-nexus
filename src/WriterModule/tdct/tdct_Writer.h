@@ -29,7 +29,7 @@ public:
   tdct_Writer() : WriterModule::Base(false, "NXlog") {}
   ~tdct_Writer() override = default;
 
-  InitResult init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr Tracker) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

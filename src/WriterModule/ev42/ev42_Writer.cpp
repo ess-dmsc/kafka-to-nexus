@@ -64,7 +64,7 @@ void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
       ChunkSize);                 // NOLINT(bugprone-unused-raii)
 }
 
-WriterModule::InitResult ev42_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
+InitResult ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
 
@@ -103,7 +103,7 @@ WriterModule::InitResult ev42_Writer::init(hdf5::node::Group &HDFGroup, MetaData
     }
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    Logger->error("ev42 could not init hdf_parent: {}  trace: {}",
+    Logger->error("ev42 could not init_hdf hdf_parent: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
     return WriterModule::InitResult::ERROR;
   }

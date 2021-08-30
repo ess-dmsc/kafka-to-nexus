@@ -80,8 +80,8 @@ void f142_Writer::config_post_processing() {
 
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
-/// `init`.
-InitResult f142_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) {
+/// `init_hdf`.
+InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -105,7 +105,7 @@ InitResult f142_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) 
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    Logger->error("f142 could not init hdf_parent: {}  trace: {}",
+    Logger->error("f142 could not init_hdf hdf_parent: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
@@ -114,7 +114,7 @@ InitResult f142_Writer::init(hdf5::node::Group &HDFGroup, MetaData::TrackerPtr) 
 }
 
 /// \brief Implement the writer module interface, forward to the OPEN case of
-/// `init`.
+/// `init_hdf`.
 InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
