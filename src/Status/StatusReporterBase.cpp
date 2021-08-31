@@ -68,7 +68,9 @@ std::string StatusReporterBase::createJSONReport() const {
   Info["start_time"] = toMilliSeconds(Status.StartTime);
   Info["stop_time"] = toMilliSeconds(Status.StopTime);
   auto TempObject = nlohmann::json::object();
-  JSONGenerator(TempObject);
+  if (JSONGenerator != nullptr) {
+    JSONGenerator(TempObject);
+  }
   Info["extra"] = TempObject;
   return Info.dump();
 }

@@ -7,12 +7,4 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#pragma once
-
-#include <string>
-
-struct StreamHDFInfo {
-  std::string WriterModule;
-  std::string HDFParentName;
-  std::string ConfigStream;
-};
+#include <gtest/gtest.h>

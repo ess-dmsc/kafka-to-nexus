@@ -25,7 +25,6 @@ class StatusReporter;
 }
 
 namespace FileWriter {
-class IJobCreator;
 class IStreamController;
 
 /// \brief Listens to the Kafka configuration topic and handles any requests.
@@ -35,7 +34,6 @@ class IStreamController;
 class Master {
 public:
   Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
-         std::unique_ptr<IJobCreator> Creator,
          std::unique_ptr<Status::StatusReporter> Reporter,
          Metrics::Registrar const &Registrar);
   virtual ~Master() = default;
@@ -54,7 +52,6 @@ private:
   SharedLogger Logger;
   MainOpt &MainConfig;
   std::unique_ptr<Command::Handler> CommandAndControl;
-  std::unique_ptr<IJobCreator> Creator_;
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporter> Reporter;
   Metrics::Registrar MasterMetricsRegistrar;

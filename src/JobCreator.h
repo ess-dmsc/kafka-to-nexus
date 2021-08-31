@@ -27,37 +27,19 @@ struct StreamSettings {
   std::string Source;
   std::string ConfigStreamJson;
   std::string Attributes;
+  std::unique_ptr<WriterModule::Base> WriterModule;
 };
 
-class IJobCreator {
-public:
-  virtual std::unique_ptr<IStreamController>
-  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings, Metrics::Registrar Registrar,
-                       MetaData::TrackerPtr const &Tracker) = 0;
-  virtual ~IJobCreator() = default;
-};
+std::unique_ptr<IStreamController>
+createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings, Metrics::Registrar Registrar,
+                     MetaData::TrackerPtr const &Tracker);
 
-class JobCreator : public IJobCreator {
-public:
-  /// \brief Create a new file-writing job.
-  ///
-  /// \param StartInfo The details for starting the job.
-  /// \param StatusProducer The producer for the job to report its status on.
-  /// \param Settings General settings for the file writer.
-  /// \param Logger The logger.
-  /// \return The new file-writing job.
-  std::unique_ptr<IStreamController>
-  createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings, Metrics::Registrar Registrar,
-                       MetaData::TrackerPtr const &Tracker) override;
+void addStreamSourceToWriterModule(
+    std::vector<StreamSettings> &StreamSettingsList,
+    std::unique_ptr<FileWriterTask> &Task);
 
-private:
-  static void addStreamSourceToWriterModule(
-      std::vector<StreamSettings> const &StreamSettingsList,
-      std::unique_ptr<FileWriterTask> &Task);
-
-  static std::vector<StreamHDFInfo>
-  initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
-};
+std::vector<StreamHDFInfo>
+initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 
 /// \brief Extract information about the stream.
 ///
@@ -65,5 +47,9 @@ private:
 /// \return The stream information.
 StreamSettings
 extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
+
+std::unique_ptr<WriterModule::Base> generateWriterInstance(StreamSettings const &StreamInfo);
+
+void setWriterHDFAttributes(hdf5::node::Group &RootNode, StreamSettings const &StreamInfo);
 
 } // namespace FileWriter

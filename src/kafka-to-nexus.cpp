@@ -151,7 +151,6 @@ int main(int argc, char **argv) {
             Options->getServiceId(),
             Options->StreamerConfiguration.BrokerSettings, Options->JobPoolURI,
             Options->CommandBrokerURI),
-        std::make_unique<FileWriter::JobCreator>(),
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
         UsedRegistrar);
   };
