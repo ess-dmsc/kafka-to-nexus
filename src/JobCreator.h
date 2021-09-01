@@ -34,6 +34,9 @@ std::unique_ptr<IStreamController>
 createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings, Metrics::Registrar Registrar,
                      MetaData::TrackerPtr const &Tracker);
 
+
+// Note: The functions below are "private" helper functions.
+
 void addStreamSourceToWriterModule(
     std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task);

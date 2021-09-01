@@ -31,8 +31,6 @@ HDFFile::HDFFile(std::string const &FileName,
   createFileInRegularMode();
   init(NexusStructure, StreamHDFInfo);
   StoredNexusStructure = NexusStructure;
-  closeFile();
-  openFileInSWMRMode();
 }
 
 HDFFile::~HDFFile() {
@@ -40,7 +38,9 @@ HDFFile::~HDFFile() {
     closeFile();
     openFileInRegularMode();
     addLinks();
-    MetaDataTracker->writeToHDF5File(hdfFile().root());
+    if (MetaDataTracker != nullptr) {
+      MetaDataTracker->writeToHDF5File(hdfFile().root());
+    }
   } catch (std::exception const &E) {
     LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
               E.what());
@@ -77,11 +77,9 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
 
     std::deque<std::string> path;
     if (NexusStructure.is_object()) {
-      auto value = &NexusStructure;
-      if (auto ChildrenMaybe = find<nlohmann::json>("children", *value)) {
-        auto Children = *ChildrenMaybe;
-        if (Children.is_array()) {
-          for (auto &Child : Children) {
+      if (auto Children = find<nlohmann::json>("children", NexusStructure)) {
+        if (Children->is_array()) {
+          for (auto &Child : *Children) {
             createHDFStructures(Child, RootGroup, 0, lcpl, var_string,
                                 StreamHDFInfo, path, Logger);
           }
@@ -155,6 +153,30 @@ void HDFFile::openFileInRegularMode() {
 
 void HDFFile::addLinks() {
   HDFOperations::addLinks(hdfGroup(), StoredNexusStructure);
+}
+
+void HDFFile::openInSWMRMode() {
+  if (not SWMRMode) {
+    closeFile();
+    openFileInSWMRMode();
+    SWMRMode = true;
+  }
+}
+
+void HDFFile::openInRegularMode() {
+  if (SWMRMode) {
+    closeFile();
+    openFileInRegularMode();
+    SWMRMode = false;
+  }
+}
+
+bool HDFFile::isSWMRMode() {
+  return SWMRMode;
+}
+
+bool HDFFile::isRegularMode() {
+  return not SWMRMode;
 }
 
 } // namespace FileWriter

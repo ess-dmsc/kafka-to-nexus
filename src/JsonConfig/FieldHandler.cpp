@@ -37,8 +37,7 @@ void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
 void FieldHandler::processConfigData(nlohmann::json const &JsonObj) {
   for (auto Iter = JsonObj.begin(); Iter != JsonObj.end(); ++Iter) {
     if (FieldMap.find(Iter.key()) == FieldMap.end()) {
-      LOG_ERROR("Json config field with name (key) \"{}\" is unknown. "
-                "Is it a typo?",
+      LOG_ERROR("Json config field with name (key) \"{}\" is unknown. ",
                 Iter.key());
     } else {
       auto CurrentField = FieldMap.find(Iter.key());

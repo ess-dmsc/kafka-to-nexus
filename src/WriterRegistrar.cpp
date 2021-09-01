@@ -46,7 +46,7 @@ FactoryAndID const find(std::string const &ModuleName) {
                                   return CItem.second.Name == ModuleName;
                                 });
   if (FoundItem == Factories.end()) {
-    throw std::out_of_range("Unable to find module with name \" " + ModuleName +
+    throw std::out_of_range("Unable to find module with name \"" + ModuleName +
                             "\"");
   }
   return {FoundItem->second.FactoryPtr, FoundItem->second.Id};

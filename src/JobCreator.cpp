@@ -114,10 +114,11 @@ std::unique_ptr<IStreamController> createFileWritingJob(Command::StartInfo const
         std::throw_with_nested(std::runtime_error(ErrorMsg));
       }
     }
-
   }
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
+
+  Task->switchToWriteMode();
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
@@ -141,7 +142,7 @@ void addStreamSourceToWriterModule(
             RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
         auto Err = StreamSettings.WriterModule->reopen({StreamGroup});
         if (Err != WriterModule::InitResult::OK) {
-          LOG_ERROR("can not reopen HDF file for stream {}",
+          LOG_ERROR("Failed when reopening HDF datasets for stream {}",
                         StreamSettings.StreamHDFInfoObj.HDFParentName);
           continue;
         }

@@ -48,7 +48,8 @@ set(UnitTests_SRC
         TimeUtilityTest.cpp
         JsonConfig/FieldTest.cpp
         JsonConfig/FieldHandlerTest.cpp
-        MetaData/ValueTest.cpp)
+        MetaData/ValueTest.cpp
+        JobCreatorTests.cpp HDFFileTest.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h

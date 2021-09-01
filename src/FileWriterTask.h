@@ -85,6 +85,10 @@ public:
   /// \return The group.
   hdf5::node::Group hdfGroup() const;
 
+  void switchToWriteMode();
+
+  bool isInWriteMode();
+
   void flushDataToFile();
 
 private:

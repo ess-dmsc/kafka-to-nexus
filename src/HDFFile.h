@@ -49,9 +49,14 @@ public:
   HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
           std::vector<StreamHDFInfo> &StreamHDFInfo,
           MetaData::TrackerPtr &TrackerPtr);
+  void openInSWMRMode();
+  void openInRegularMode();
+  bool isSWMRMode();
+  bool isRegularMode();
   virtual ~HDFFile();
 
 private:
+  bool SWMRMode{false};
   void createFileInRegularMode();
   void openFileInRegularMode();
   void openFileInSWMRMode();
