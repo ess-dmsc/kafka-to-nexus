@@ -68,7 +68,7 @@ public:
 
 private:
   std::mutex ValueMutex;
-  DataType MetaDataValue;
+  DataType MetaDataValue{};
   std::function<void(hdf5::node::Node, std::string, DataType)> WriteToFile;
 };
 } // namespace MetaDataInternal

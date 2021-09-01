@@ -100,10 +100,11 @@ std::unique_ptr<IStreamController> createFileWritingJob(Command::StartInfo const
   auto RootGroup = Task->hdfGroup();
 
   for (auto &Item : StreamSettingsList) {
+    auto StreamGroup = hdf5::node::get_group(
+        RootGroup, Item.StreamHDFInfoObj.HDFParentName);
     try {
       Item.WriterModule = generateWriterInstance(Item);
-      auto StreamGroup = hdf5::node::get_group(
-          RootGroup, Item.StreamHDFInfoObj.HDFParentName);
+
       setWriterHDFAttributes(StreamGroup, Item);
       Item.WriterModule->init_hdf(StreamGroup);
     } catch (std::runtime_error const &E) {
@@ -113,6 +114,14 @@ std::unique_ptr<IStreamController> createFileWritingJob(Command::StartInfo const
       if (Settings.AbortOnUninitialisedStream) {
         std::throw_with_nested(std::runtime_error(ErrorMsg));
       }
+    }
+    try {
+      Item.WriterModule->register_meta_data(StreamGroup, Tracker);
+    } catch (std::exception const &E) {
+      std::throw_with_nested(std::runtime_error(fmt::format(
+          "Exception encountered in WriterModule::Base::register_meta_data(). Module: \"{}\" "
+          " Source: \"{}\"  Error message: {}",
+          Item.Module, Item.Source, E.what())));
     }
   }
 
@@ -188,8 +197,8 @@ std::unique_ptr<WriterModule::Base> generateWriterInstance(StreamSettings const 
     HDFWriterModule->parse_config(StreamInfo.ConfigStreamJson);
   } catch (std::exception const &E) {
     std::throw_with_nested(std::runtime_error(fmt::format(
-        "Exception while WriterModule::Base::parse_config  module: {} "
-        " source: {}  error message: {}",
+        "Exception encountered in WriterModule::Base::parse_config()  Module: \"{}\" "
+        " Source: \"{}\"  Error message: {}",
         StreamInfo.Module, StreamInfo.Source, E.what())));
   }
   return HDFWriterModule;

@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cctype>
 #include <f142_logdata_generated.h>
+#include "MetaData/HDF5DataWriter.h"
 
 namespace WriterModule {
 namespace f142 {
@@ -20,6 +21,13 @@ namespace f142 {
 using nlohmann::json;
 
 using Type = f142_Writer::Type;
+
+struct ValuesInformation {
+  double Min{0};
+  double Max{0};
+  double Sum{0};
+  uint64_t NrOfElements{0};
+};
 
 template <typename Type>
 void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
@@ -135,12 +143,23 @@ InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
 }
 
 template <typename DataType, class DatasetType>
-void appendData(DatasetType &Dataset, const void *Pointer, size_t Size) {
-  Dataset.appendArray(
-      ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size),
-      {
-          Size,
-      });
+ValuesInformation appendData(DatasetType &Dataset, const void *Pointer, size_t Size, bool GetArrayMetaData) {
+  if (Size == 0) {
+    return {};
+  }
+  auto DataArray = ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size);
+  Dataset.appendArray(DataArray, {Size});
+  double Min{double(DataArray[0])};
+  double Max{double(DataArray[0])};
+  double Sum{double(DataArray[0])};
+  if (GetArrayMetaData) {
+    for (auto i = 1u; i < Size; ++i) {
+      Sum += double(DataArray[i]);
+      Min = std::min(Min, double(DataArray[i]));
+      Max = std::max(Max, double(DataArray[i]));
+    }
+  }
+  return {Min, Max, Sum, Size};
 }
 
 template <typename FBValueType, typename ReturnType>
@@ -150,9 +169,10 @@ ReturnType extractScalarValue(const LogData *LogDataMessage) {
 }
 
 template <typename DataType, typename ValueType, class DatasetType>
-void appendScalarData(DatasetType &Dataset, const LogData *LogDataMessage) {
+ValuesInformation appendScalarData(DatasetType &Dataset, const LogData *LogDataMessage) {
   auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
   Dataset.appendArray(ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
+  return {double(ScalarValue), double(ScalarValue), double(ScalarValue), 1};
 }
 
 std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
@@ -204,80 +224,95 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
         reinterpret_cast<int const *>(DataPtr) + 2);
   };
 
+  ValuesInformation CValuesInfo;
   switch (Type) {
   case Value::ArrayByte:
     extractArrayInfo();
-    appendData<const std::int8_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::int8_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::Byte:
-    appendScalarData<const std::int8_t, Byte>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::int8_t, Byte>(Values, LogDataMessage);
     break;
   case Value::ArrayUByte:
     extractArrayInfo();
-    appendData<const std::uint8_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::uint8_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::UByte:
-    appendScalarData<const std::uint8_t, UByte>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::uint8_t, UByte>(Values, LogDataMessage);
     break;
   case Value::ArrayShort:
     extractArrayInfo();
-    appendData<const std::int16_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::Short:
-    appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
     break;
   case Value::ArrayUShort:
     extractArrayInfo();
-    appendData<const std::uint16_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::uint16_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::UShort:
-    appendScalarData<const std::uint16_t, UShort>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::uint16_t, UShort>(Values, LogDataMessage);
     break;
   case Value::ArrayInt:
     extractArrayInfo();
-    appendData<const std::int32_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::int32_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::Int:
-    appendScalarData<const std::int32_t, Int>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::int32_t, Int>(Values, LogDataMessage);
     break;
   case Value::ArrayUInt:
     extractArrayInfo();
-    appendData<const std::uint32_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::uint32_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::UInt:
-    appendScalarData<const std::uint32_t, UInt>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::uint32_t, UInt>(Values, LogDataMessage);
     break;
   case Value::ArrayLong:
     extractArrayInfo();
-    appendData<const std::int64_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::int64_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::Long:
-    appendScalarData<const std::int64_t, Long>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::int64_t, Long>(Values, LogDataMessage);
     break;
   case Value::ArrayULong:
     extractArrayInfo();
-    appendData<const std::uint64_t>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const std::uint64_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::ULong:
-    appendScalarData<const std::uint64_t, ULong>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const std::uint64_t, ULong>(Values, LogDataMessage);
     break;
   case Value::ArrayFloat:
     extractArrayInfo();
-    appendData<const float>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const float>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::Float:
-    appendScalarData<const float, Float>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const float, Float>(Values, LogDataMessage);
     break;
   case Value::ArrayDouble:
     extractArrayInfo();
-    appendData<const double>(Values, DataPtr, NrOfElements);
+    CValuesInfo = appendData<const double>(Values, DataPtr, NrOfElements, MetaData.getValue());
     break;
   case Value::Double:
-    appendScalarData<const double, Double>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const double, Double>(Values, LogDataMessage);
     break;
   default:
     throw WriterModule::WriterException(
         "Unknown data type in f142 flatbuffer.");
+  }
+
+  if (MetaData.getValue()) {
+    if (NrOfElements == 0) {
+      Min = CValuesInfo.Min;
+      Max = CValuesInfo.Max;
+    }
+    Min = std::min(Min, CValuesInfo.Min);
+    Max = std::max(Max, CValuesInfo.Max);
+    Sum += CValuesInfo.Sum;
+    NrOfElements += CValuesInfo.NrOfElements;
+    MetaDataMin.setValue(Min);
+    MetaDataMax.setValue(Max);
+    MetaDataMean.setValue(Sum / NrOfElements);
   }
 
   // AlarmStatus::NO_CHANGE is not a real EPICS alarm status value, it is used
@@ -304,6 +339,21 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     AlarmSeverity.appendStringElement(AlarmSeverityString);
   }
 }
+
+void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup, const MetaData::TrackerPtr &Tracker) {
+  auto UsedAttributeWriter = MetaData::getPathOffsetAttributeWriter<double>("value");
+  if (MetaData.getValue()) {
+    MetaDataMin = MetaData::Value<double>(HDFGroup, "min", UsedAttributeWriter);
+    Tracker->registerMetaData(MetaDataMin);
+
+    MetaDataMax = MetaData::Value<double>(HDFGroup, "max", UsedAttributeWriter);
+    Tracker->registerMetaData(MetaDataMax);
+
+    MetaDataMean = MetaData::Value<double>(HDFGroup, "mean", UsedAttributeWriter);
+    Tracker->registerMetaData(MetaDataMean);
+  }
+}
+
 /// Register the writer module.
 static WriterModule::Registry::Registrar<f142_Writer> RegisterWriter("f142",
                                                                      "f142");

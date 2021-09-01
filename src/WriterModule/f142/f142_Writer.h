@@ -33,6 +33,9 @@ public:
   /// Implements writer module interface.
   void config_post_processing() override;
   /// Implements writer module interface.
+
+  void register_meta_data(hdf5::node::Group const &HDFGroup, MetaData::TrackerPtr const &Tracker) override;
+
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.
@@ -56,7 +59,6 @@ public:
 
 protected:
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  std::string findDataType(nlohmann::basic_json<> const &Attribute);
 
   Type ElementType{Type::float64};
 
@@ -91,6 +93,8 @@ protected:
   MetaData::Value<double> MetaDataMin;
   MetaData::Value<double> MetaDataMax;
   MetaData::Value<double> MetaDataMean;
+  double Min{0}, Max{0}, Sum{0};
+  uint64_t NrOfElements{0};
 };
 
 } // namespace f142

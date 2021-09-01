@@ -26,7 +26,7 @@ public:
   ArrayAdapter(T *data, size_t size) : data_(data), size_(size) {}
   size_t size() const { return size_; }
   const T *data() const { return data_; }
-
+  T operator[](size_t i) const {return data()[i];}
 private:
   T *data_;
   size_t size_;

@@ -62,6 +62,16 @@ public:
   /// after the constructor and parse_config().
   virtual void config_post_processing(){};
 
+
+  /// \brief Override this function to register meta data values/fields.
+  ///
+  /// This function is called after Base::config_post_processing() and before Base::reopen() thus it is
+  /// expected that the writer is properly configured. When it is called. Meta-data values that are to be stored to file
+  /// will be written at the end of the write job just before closing the file for good.
+  /// \param HDFGroup The (base/root) location in the HDF5 hierarchy for the meta-data.
+  /// \param Tracker A unique pointer to an instance of the MetaData::Tracker class that is used to keep track of known meta-data fields.
+  virtual void register_meta_data([[maybe_unused]] hdf5::node::Group const &HDFGroup, [[maybe_unused]] MetaData::TrackerPtr const &Tracker) {};
+
   /// \brief Initialise the writer instance for writing.
   ///
   /// Must be called before any data has arrived. Is used to initialise the HDF structure and (e.g. meta data) variables used in the writing process.
