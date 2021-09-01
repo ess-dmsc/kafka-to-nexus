@@ -171,12 +171,8 @@ void HDFFile::openInRegularMode() {
   }
 }
 
-bool HDFFile::isSWMRMode() {
-  return SWMRMode;
-}
+bool HDFFile::isSWMRMode() { return SWMRMode; }
 
-bool HDFFile::isRegularMode() {
-  return not SWMRMode;
-}
+bool HDFFile::isRegularMode() { return not SWMRMode; }
 
 } // namespace FileWriter

@@ -25,17 +25,27 @@ public:
   explicit ValueBase(
       std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValuePtr)
       : ValueObj(ValuePtr) {}
-      nlohmann::json getAsJSON() const { throwIfInvalid(); return ValueObj->getAsJSON(); }
-  std::string getKey() const { throwIfInvalid(); return ValueObj->getName(); }
-  bool isValid() const {return ValueObj != nullptr; }
+  nlohmann::json getAsJSON() const {
+    throwIfInvalid();
+    return ValueObj->getAsJSON();
+  }
+  std::string getKey() const {
+    throwIfInvalid();
+    return ValueObj->getName();
+  }
+  bool isValid() const { return ValueObj != nullptr; }
   void throwIfInvalid() const {
     if (not isValid()) {
-      throw std::runtime_error("Unable to set or get meta data value as it has not been initialised.");
+      throw std::runtime_error("Unable to set or get meta data value as it has "
+                               "not been initialised.");
     }
   }
 
 protected:
-  auto getValuePtr() const { throwIfInvalid(); return ValueObj; }
+  auto getValuePtr() const {
+    throwIfInvalid();
+    return ValueObj;
+  }
 
 private:
   std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValueObj{nullptr};

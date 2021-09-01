@@ -8,12 +8,12 @@
 // Screaming Udder!                              https://esss.se
 
 #include "f142_Writer.h"
+#include "MetaData/HDF5DataWriter.h"
 #include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
 #include <cctype>
 #include <f142_logdata_generated.h>
-#include "MetaData/HDF5DataWriter.h"
 
 namespace WriterModule {
 namespace f142 {
@@ -143,11 +143,13 @@ InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
 }
 
 template <typename DataType, class DatasetType>
-ValuesInformation appendData(DatasetType &Dataset, const void *Pointer, size_t Size, bool GetArrayMetaData) {
+ValuesInformation appendData(DatasetType &Dataset, const void *Pointer,
+                             size_t Size, bool GetArrayMetaData) {
   if (Size == 0) {
     return {};
   }
-  auto DataArray = ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size);
+  auto DataArray =
+      ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size);
   Dataset.appendArray(DataArray, {Size});
   double Min{double(DataArray[0])};
   double Max{double(DataArray[0])};
@@ -169,7 +171,8 @@ ReturnType extractScalarValue(const LogData *LogDataMessage) {
 }
 
 template <typename DataType, typename ValueType, class DatasetType>
-ValuesInformation appendScalarData(DatasetType &Dataset, const LogData *LogDataMessage) {
+ValuesInformation appendScalarData(DatasetType &Dataset,
+                                   const LogData *LogDataMessage) {
   auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
   Dataset.appendArray(ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
   return {double(ScalarValue), double(ScalarValue), double(ScalarValue), 1};
@@ -228,73 +231,92 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   switch (Type) {
   case Value::ArrayByte:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::int8_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::int8_t>(Values, DataPtr, NrOfElements,
+                                                MetaData.getValue());
     break;
   case Value::Byte:
-    CValuesInfo = appendScalarData<const std::int8_t, Byte>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::int8_t, Byte>(Values, LogDataMessage);
     break;
   case Value::ArrayUByte:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::uint8_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::uint8_t>(Values, DataPtr, NrOfElements,
+                                                 MetaData.getValue());
     break;
   case Value::UByte:
-    CValuesInfo = appendScalarData<const std::uint8_t, UByte>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::uint8_t, UByte>(Values, LogDataMessage);
     break;
   case Value::ArrayShort:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements,
+                                                 MetaData.getValue());
     break;
   case Value::Short:
-    CValuesInfo = appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
     break;
   case Value::ArrayUShort:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::uint16_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::uint16_t>(Values, DataPtr, NrOfElements,
+                                                  MetaData.getValue());
     break;
   case Value::UShort:
-    CValuesInfo = appendScalarData<const std::uint16_t, UShort>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::uint16_t, UShort>(Values, LogDataMessage);
     break;
   case Value::ArrayInt:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::int32_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::int32_t>(Values, DataPtr, NrOfElements,
+                                                 MetaData.getValue());
     break;
   case Value::Int:
-    CValuesInfo = appendScalarData<const std::int32_t, Int>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::int32_t, Int>(Values, LogDataMessage);
     break;
   case Value::ArrayUInt:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::uint32_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::uint32_t>(Values, DataPtr, NrOfElements,
+                                                  MetaData.getValue());
     break;
   case Value::UInt:
-    CValuesInfo = appendScalarData<const std::uint32_t, UInt>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::uint32_t, UInt>(Values, LogDataMessage);
     break;
   case Value::ArrayLong:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::int64_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::int64_t>(Values, DataPtr, NrOfElements,
+                                                 MetaData.getValue());
     break;
   case Value::Long:
-    CValuesInfo = appendScalarData<const std::int64_t, Long>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::int64_t, Long>(Values, LogDataMessage);
     break;
   case Value::ArrayULong:
     extractArrayInfo();
-    CValuesInfo = appendData<const std::uint64_t>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const std::uint64_t>(Values, DataPtr, NrOfElements,
+                                                  MetaData.getValue());
     break;
   case Value::ULong:
-    CValuesInfo = appendScalarData<const std::uint64_t, ULong>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::uint64_t, ULong>(Values, LogDataMessage);
     break;
   case Value::ArrayFloat:
     extractArrayInfo();
-    CValuesInfo = appendData<const float>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const float>(Values, DataPtr, NrOfElements,
+                                          MetaData.getValue());
     break;
   case Value::Float:
     CValuesInfo = appendScalarData<const float, Float>(Values, LogDataMessage);
     break;
   case Value::ArrayDouble:
     extractArrayInfo();
-    CValuesInfo = appendData<const double>(Values, DataPtr, NrOfElements, MetaData.getValue());
+    CValuesInfo = appendData<const double>(Values, DataPtr, NrOfElements,
+                                           MetaData.getValue());
     break;
   case Value::Double:
-    CValuesInfo = appendScalarData<const double, Double>(Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const double, Double>(Values, LogDataMessage);
     break;
   default:
     throw WriterModule::WriterException(
@@ -340,8 +362,10 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   }
 }
 
-void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup, const MetaData::TrackerPtr &Tracker) {
-  auto UsedAttributeWriter = MetaData::getPathOffsetAttributeWriter<double>("value");
+void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
+                                     const MetaData::TrackerPtr &Tracker) {
+  auto UsedAttributeWriter =
+      MetaData::getPathOffsetAttributeWriter<double>("value");
   if (MetaData.getValue()) {
     MetaDataMin = MetaData::Value<double>(HDFGroup, "min", UsedAttributeWriter);
     Tracker->registerMetaData(MetaDataMin);
@@ -349,7 +373,8 @@ void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup, const Me
     MetaDataMax = MetaData::Value<double>(HDFGroup, "max", UsedAttributeWriter);
     Tracker->registerMetaData(MetaDataMax);
 
-    MetaDataMean = MetaData::Value<double>(HDFGroup, "mean", UsedAttributeWriter);
+    MetaDataMean =
+        MetaData::Value<double>(HDFGroup, "mean", UsedAttributeWriter);
     Tracker->registerMetaData(MetaDataMean);
   }
 }

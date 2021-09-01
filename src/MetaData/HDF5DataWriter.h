@@ -27,15 +27,16 @@ void basicAttributeWriter(hdf5::node::Node Node, std::string Name,
 }
 
 template <class DataType>
-    std::function<void(hdf5::node::Node, std::string,
-        DataType)> getPathOffsetAttributeWriter(std::string PathOffset) {
-          auto TempFunction = [PathOffset](hdf5::node::Node Node, std::string Name,
-              DataType Value) {
-            auto UsedNode = hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
-            MetaData::basicAttributeWriter<double>(UsedNode, Name, Value);
-          };
-          return TempFunction;
-        }
+std::function<void(hdf5::node::Node, std::string, DataType)>
+getPathOffsetAttributeWriter(std::string PathOffset) {
+  auto TempFunction = [PathOffset](hdf5::node::Node Node, std::string Name,
+                                   DataType Value) {
+    auto UsedNode =
+        hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
+    MetaData::basicAttributeWriter<double>(UsedNode, Name, Value);
+  };
+  return TempFunction;
+}
 
 template <class DataType>
 void basicDatasetWriter(hdf5::node::Node Node, std::string Name,
@@ -57,14 +58,15 @@ void basicDatasetWriter(hdf5::node::Node Node, std::string Name,
 }
 
 template <class DataType>
-    std::function<void(hdf5::node::Node, std::string,
-        DataType)> getPathOffsetDatasetWriter(std::string PathOffset) {
-          auto TempFunction = [PathOffset](hdf5::node::Node Node, std::string Name,
-              DataType Value) {
-            auto UsedNode = hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
-            MetaData::basicDatasetWriter<double>(UsedNode, Name, Value);
-          };
-          return TempFunction;
-        }
+std::function<void(hdf5::node::Node, std::string, DataType)>
+getPathOffsetDatasetWriter(std::string PathOffset) {
+  auto TempFunction = [PathOffset](hdf5::node::Node Node, std::string Name,
+                                   DataType Value) {
+    auto UsedNode =
+        hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
+    MetaData::basicDatasetWriter<double>(UsedNode, Name, Value);
+  };
+  return TempFunction;
+}
 
 } // namespace MetaData

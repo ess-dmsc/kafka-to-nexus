@@ -31,9 +31,9 @@ struct StreamSettings {
 };
 
 std::unique_ptr<IStreamController>
-createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings, Metrics::Registrar Registrar,
+createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
+                     Metrics::Registrar Registrar,
                      MetaData::TrackerPtr const &Tracker);
-
 
 // Note: The functions below are "private" helper functions.
 
@@ -51,8 +51,10 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 StreamSettings
 extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
 
-std::unique_ptr<WriterModule::Base> generateWriterInstance(StreamSettings const &StreamInfo);
+std::unique_ptr<WriterModule::Base>
+generateWriterInstance(StreamSettings const &StreamInfo);
 
-void setWriterHDFAttributes(hdf5::node::Group &RootNode, StreamSettings const &StreamInfo);
+void setWriterHDFAttributes(hdf5::node::Group &RootNode,
+                            StreamSettings const &StreamInfo);
 
 } // namespace FileWriter

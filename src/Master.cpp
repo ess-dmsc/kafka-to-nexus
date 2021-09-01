@@ -22,8 +22,8 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
                std::unique_ptr<Status::StatusReporter> Reporter,
                Metrics::Registrar const &Registrar)
     : Logger(getLogger()), MainConfig(Config),
-      CommandAndControl(std::move(Listener)),
-      Reporter(std::move(Reporter)), MasterMetricsRegistrar(Registrar) {
+      CommandAndControl(std::move(Listener)), Reporter(std::move(Reporter)),
+      MasterMetricsRegistrar(Registrar) {
   CommandAndControl->registerStartFunction(
       [this](auto StartInfo) { this->startWriting(StartInfo); });
   CommandAndControl->registerSetStopTimeFunction(

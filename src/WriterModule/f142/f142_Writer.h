@@ -11,8 +11,8 @@
 
 #include "FlatbufferMessage.h"
 #include "JsonConfig/Field.h"
-#include "WriterModuleBase.h"
 #include "MetaData/Value.h"
+#include "WriterModuleBase.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
 #include <array>
@@ -34,14 +34,17 @@ public:
   void config_post_processing() override;
   /// Implements writer module interface.
 
-  void register_meta_data(hdf5::node::Group const &HDFGroup, MetaData::TrackerPtr const &Tracker) override;
+  void register_meta_data(hdf5::node::Group const &HDFGroup,
+                          MetaData::TrackerPtr const &Tracker) override;
 
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  f142_Writer() : WriterModule::Base(false, "NXlog"), MetaDataMin("", "min"), MetaDataMax("", "max"), MetaDataMean("", "mean") {}
+  f142_Writer()
+      : WriterModule::Base(false, "NXlog"), MetaDataMin("", "min"),
+        MetaDataMax("", "max"), MetaDataMean("", "mean") {}
   ~f142_Writer() override = default;
 
   enum class Type {

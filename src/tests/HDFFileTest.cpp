@@ -7,10 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <gtest/gtest.h>
 #include "HDFFile.h"
 #include <filesystem>
-
+#include <gtest/gtest.h>
 
 class HDFFile : public ::testing::Test {
 public:
@@ -27,7 +26,8 @@ public:
 };
 
 TEST_F(HDFFile, FileModes) {
-  FileWriter::HDFFile UnderTest{FileName, NexusStructure, StreamHDFInfo, Tracker};
+  FileWriter::HDFFile UnderTest{FileName, NexusStructure, StreamHDFInfo,
+                                Tracker};
   EXPECT_TRUE(UnderTest.isRegularMode());
   EXPECT_FALSE(UnderTest.isSWMRMode());
   UnderTest.openInSWMRMode();
@@ -39,7 +39,8 @@ TEST_F(HDFFile, FileModes) {
 }
 
 TEST_F(HDFFile, DefaultFileAttributes) {
-  FileWriter::HDFFile UnderTest{FileName, NexusStructure, StreamHDFInfo, Tracker};
+  FileWriter::HDFFile UnderTest{FileName, NexusStructure, StreamHDFInfo,
+                                Tracker};
   auto RootGroup = UnderTest.hdfGroup();
   EXPECT_TRUE(RootGroup.attributes.exists("HDF5_Version"));
   EXPECT_TRUE(RootGroup.attributes.exists("creator"));
@@ -48,7 +49,8 @@ TEST_F(HDFFile, DefaultFileAttributes) {
   RootGroup.attributes["file_name"].read(TempString);
   EXPECT_EQ(TempString, FileName);
   EXPECT_TRUE(RootGroup.attributes.exists("file_time"));
-  EXPECT_FALSE(RootGroup.attributes.exists("some_attribute_that_does_not_exist"));
+  EXPECT_FALSE(
+      RootGroup.attributes.exists("some_attribute_that_does_not_exist"));
 }
 
 TEST_F(HDFFile, SimpleNexusStructure) {
@@ -78,7 +80,9 @@ TEST_F(HDFFile, SimpleNexusStructure) {
       ]
   })"";
   EXPECT_TRUE(StreamHDFInfo.empty());
-  FileWriter::HDFFile UnderTest{FileName, nlohmann::json::parse(SimpleNexusStructure), StreamHDFInfo, Tracker};
+  FileWriter::HDFFile UnderTest{FileName,
+                                nlohmann::json::parse(SimpleNexusStructure),
+                                StreamHDFInfo, Tracker};
   EXPECT_TRUE(UnderTest.hdfGroup().has_group("entry"));
   EXPECT_EQ(StreamHDFInfo.size(), 1u);
 }

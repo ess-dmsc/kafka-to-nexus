@@ -86,9 +86,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
 
 std::string FileWriterTask::jobID() const { return JobId; }
 
-hdf5::node::Group FileWriterTask::hdfGroup() const {
-  return File->hdfGroup();
-}
+hdf5::node::Group FileWriterTask::hdfGroup() const { return File->hdfGroup(); }
 
 void FileWriterTask::switchToWriteMode() {
   if (File->isRegularMode()) {
@@ -96,9 +94,7 @@ void FileWriterTask::switchToWriteMode() {
   }
 }
 
-bool FileWriterTask::isInWriteMode() {
-  return File->isSWMRMode();
-}
+bool FileWriterTask::isInWriteMode() { return File->isSWMRMode(); }
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
