@@ -7,7 +7,7 @@ from file_writer_control import JobHandler
 from datetime import datetime, timedelta
 import time
 
-SLEEP_TIME = 0.2
+SLEEP_TIME = 1.5
 
 
 def wait_writers_available(
