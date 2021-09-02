@@ -214,11 +214,11 @@ void ev42_Writer::padDatasetsWithZeroesEqualToNumberOfEvents(
   auto EventMsgFlatbuffer = GetEventMessage(Message.data());
   size_t NumberOfEventsInMessage = EventMsgFlatbuffer->time_of_flight()->size();
   std::vector<uint32_t> ZeroesUInt32(NumberOfEventsInMessage, 0);
-  hdf5::ArrayAdapter<const uint32_t> ZeroesUInt32ArrayAdapter(ZeroesUInt32.data(),
-                                                        ZeroesUInt32.size());
+  hdf5::ArrayAdapter<const uint32_t> ZeroesUInt32ArrayAdapter(
+      ZeroesUInt32.data(), ZeroesUInt32.size());
   std::vector<uint64_t> ZeroesUInt64(NumberOfEventsInMessage, 0);
-  hdf5::ArrayAdapter<const uint64_t> ZeroesUInt64ArrayAdapter(ZeroesUInt64.data(),
-                                                        ZeroesUInt64.size());
+  hdf5::ArrayAdapter<const uint64_t> ZeroesUInt64ArrayAdapter(
+      ZeroesUInt64.data(), ZeroesUInt64.size());
 
   AmplitudeDataset.appendArray(ZeroesUInt32ArrayAdapter);
   PeakAreaDataset.appendArray(ZeroesUInt32ArrayAdapter);

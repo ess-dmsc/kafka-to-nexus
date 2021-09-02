@@ -148,8 +148,8 @@ ValuesInformation appendData(DatasetType &Dataset, const void *Pointer,
   if (Size == 0) {
     return {};
   }
-  auto DataArray =
-      hdf5::ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size);
+  auto DataArray = hdf5::ArrayAdapter<const DataType>(
+      reinterpret_cast<DataType *>(Pointer), Size);
   Dataset.appendArray(DataArray, {Size});
   double Min{double(DataArray.data()[0])};
   double Max{double(DataArray.data()[0])};

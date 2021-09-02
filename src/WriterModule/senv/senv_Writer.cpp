@@ -158,7 +158,8 @@ void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
                                   SampleEnvironmentData::VT_TIMESTAMPS)) {
     auto TimestampPtr = FbPointer->Timestamps()->data();
     auto TimestampSize = FbPointer->Timestamps()->size();
-    hdf5::ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
+    hdf5::ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr,
+                                                    TimestampSize);
     Timestamp.appendArray(TSArray);
   } else { // If timestamps are not available, generate them
     std::vector<std::uint64_t> TempTimeStamps(GenerateTimeStamps(
