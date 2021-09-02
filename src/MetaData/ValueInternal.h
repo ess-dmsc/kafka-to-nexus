@@ -50,7 +50,7 @@ public:
   virtual nlohmann::json getAsJSON() override {
     std::lock_guard Lock(ValueMutex);
     nlohmann::json RetObj;
-    RetObj[getName()] = MetaDataValue;
+    RetObj[getPath() + ":" + getName()] = MetaDataValue;
     return RetObj;
   }
   virtual void writeToHDF5File(hdf5::node::Node RootNode) override {

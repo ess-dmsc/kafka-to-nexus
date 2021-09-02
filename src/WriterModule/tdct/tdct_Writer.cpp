@@ -76,7 +76,7 @@ void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
         "Received a flatbuffer with zero (0) timestamps elements in it.");
     return;
   }
-  ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);
+  hdf5::ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);
   auto CueIndexValue = Timestamp.dataspace().size();
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
   CueTimestamp.appendElement(FbPointer->timestamps()->operator[](0));

@@ -18,21 +18,6 @@
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/hdf5.hpp>
 
-/// \brief Used to write c-arrays to hdf5 files using h5cpp.
-///
-/// The member functions of this class need no extra documentation.
-template <typename T> class ArrayAdapter {
-public:
-  ArrayAdapter(T *data, size_t size) : data_(data), size_(size) {}
-  size_t size() const { return size_; }
-  const T *data() const { return data_; }
-  T operator[](size_t i) const { return data()[i]; }
-
-private:
-  T *data_;
-  size_t size_;
-};
-
 namespace hdf5 {
 namespace datatype {
 template <> class TypeTrait<std::int8_t const> {
@@ -133,37 +118,7 @@ public:
     return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
   }
 };
-/// Required for h5cpp to write data provided using ArrayAdapter.
-template <typename T> class TypeTrait<ArrayAdapter<T>> {
-public:
-  using Type = ArrayAdapter<T>;
-  using TypeClass = typename TypeTrait<T>::TypeClass;
-  static TypeClass create(const Type & = Type()) {
-    return TypeTrait<T>::create();
-  }
-};
 } // namespace datatype
-namespace dataspace {
-
-/// Required for h5cpp to write data provided using ArrayAdapter.
-template <typename T> class TypeTrait<ArrayAdapter<T>> {
-public:
-  using DataspaceType = Simple;
-
-  static DataspaceType create(const ArrayAdapter<T> &value) {
-    return Simple(hdf5::Dimensions{value.size()},
-                  hdf5::Dimensions{value.size()});
-  }
-
-  static void *ptr(ArrayAdapter<T> const &data) {
-    return reinterpret_cast<void *>(data.data());
-  }
-
-  static const void *cptr(const ArrayAdapter<T> &data) {
-    return reinterpret_cast<const void *>(data.data());
-  }
-};
-} // namespace dataspace
 } // namespace hdf5
 
 namespace NeXusDataset {
@@ -207,7 +162,7 @@ public:
   }
 
   template <class DataType>
-  void appendArray(ArrayAdapter<const DataType> const &NewData) {
+  void appendArray(hdf5::ArrayAdapter<const DataType> const &NewData) {
     if (NewData.size() == 0) {
       return;
     }

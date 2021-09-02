@@ -17,7 +17,7 @@
 
 namespace {
 template <typename DataType>
-ArrayAdapter<const DataType> const
+hdf5::ArrayAdapter<const DataType> const
 getFBVectorAsArrayAdapter(const flatbuffers::Vector<DataType> *Data) {
   return {Data->data(), Data->size()};
 }
@@ -185,23 +185,23 @@ void ev42_Writer::writeAdcPulseDataFromMessageToFile(
   auto AdcPulseDebugMsgFlatbuffer =
       EventMsgFlatbuffer->facility_specific_data_as_AdcPulseDebug();
 
-  ArrayAdapter<const uint32_t> AmplitudeArray =
+  hdf5::ArrayAdapter<const uint32_t> AmplitudeArray =
       getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->amplitude());
   AmplitudeDataset.appendArray(AmplitudeArray);
 
-  ArrayAdapter<const uint32_t> PeakAreaArray =
+  hdf5::ArrayAdapter<const uint32_t> PeakAreaArray =
       getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->peak_area());
   PeakAreaDataset.appendArray(PeakAreaArray);
 
-  ArrayAdapter<const uint32_t> BackgroundArray =
+  hdf5::ArrayAdapter<const uint32_t> BackgroundArray =
       getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->background());
   BackgroundDataset.appendArray(BackgroundArray);
 
-  ArrayAdapter<const uint64_t> ThresholdTimeArray =
+  hdf5::ArrayAdapter<const uint64_t> ThresholdTimeArray =
       getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->threshold_time());
   ThresholdTimeDataset.appendArray(ThresholdTimeArray);
 
-  ArrayAdapter<const uint64_t> PeakTimeArray =
+  hdf5::ArrayAdapter<const uint64_t> PeakTimeArray =
       getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->peak_time());
   PeakTimeDataset.appendArray(PeakTimeArray);
 }
@@ -214,10 +214,10 @@ void ev42_Writer::padDatasetsWithZeroesEqualToNumberOfEvents(
   auto EventMsgFlatbuffer = GetEventMessage(Message.data());
   size_t NumberOfEventsInMessage = EventMsgFlatbuffer->time_of_flight()->size();
   std::vector<uint32_t> ZeroesUInt32(NumberOfEventsInMessage, 0);
-  ArrayAdapter<const uint32_t> ZeroesUInt32ArrayAdapter(ZeroesUInt32.data(),
+  hdf5::ArrayAdapter<const uint32_t> ZeroesUInt32ArrayAdapter(ZeroesUInt32.data(),
                                                         ZeroesUInt32.size());
   std::vector<uint64_t> ZeroesUInt64(NumberOfEventsInMessage, 0);
-  ArrayAdapter<const uint64_t> ZeroesUInt64ArrayAdapter(ZeroesUInt64.data(),
+  hdf5::ArrayAdapter<const uint64_t> ZeroesUInt64ArrayAdapter(ZeroesUInt64.data(),
                                                         ZeroesUInt64.size());
 
   AmplitudeDataset.appendArray(ZeroesUInt32ArrayAdapter);

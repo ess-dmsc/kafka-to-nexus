@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 from confluent_kafka import Consumer, Producer
 
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 from streaming_data_types.logdata_f142 import serialise_f142
+import numpy as np
 
 
 def create_producer() -> Producer:
@@ -36,6 +37,7 @@ def publish_f142_message(
     producer: Producer,
     topic: str,
     timestamp: datetime,
+    value: Union[float, np.ndarray] = 42,
     source_name: Optional[str] = None,
     alarm_status: Optional[int] = None,
     alarm_severity: Optional[int] = None,
@@ -52,7 +54,6 @@ def publish_f142_message(
     """
     if source_name is None:
         source_name = "fw-test-helpers"
-    value = 42
     f142_message = serialise_f142(
         value,
         source_name,

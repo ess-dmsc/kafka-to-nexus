@@ -63,6 +63,9 @@ private:
   void closeFile();
   void addLinks();
 
+  hdf5::property::FileAccessList FileAccessList;
+  hdf5::property::FileCreationList FileCreationList;
+
   std::string H5FileName;
   nlohmann::json StoredNexusStructure;
   MetaData::TrackerPtr const MetaDataTracker;

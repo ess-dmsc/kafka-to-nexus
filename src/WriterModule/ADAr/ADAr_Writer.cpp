@@ -92,7 +92,7 @@ template <typename DataType, class DatasetType>
 void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
                 hdf5::Dimensions const &Shape) {
   Dataset->appendArray(
-      ArrayAdapter<DataType>(reinterpret_cast<DataType *>(Pointer), Size),
+      hdf5::ArrayAdapter<DataType>(reinterpret_cast<DataType *>(Pointer), Size),
       Shape);
 }
 

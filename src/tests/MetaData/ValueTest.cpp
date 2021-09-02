@@ -20,7 +20,7 @@ TEST(MetaData, IntValue) {
   UnderTest.setValue(TestValue);
 
   EXPECT_EQ(TestValue, UnderTest.getValue());
-  EXPECT_EQ(UnderTest.getAsJSON(), R"({"SomeKey":1235})"_json);
+  EXPECT_EQ(UnderTest.getAsJSON(), R"({"/:SomeKey":1235})"_json);
 }
 
 TEST(MetaData, IntVectorValue) {
@@ -29,7 +29,7 @@ TEST(MetaData, IntVectorValue) {
   UnderTest.setValue(TestValue);
 
   EXPECT_EQ(TestValue, UnderTest.getValue());
-  EXPECT_EQ(UnderTest.getAsJSON(), R"({"SomeKey":[1,2,3,4]})"_json);
+  EXPECT_EQ(UnderTest.getAsJSON(), R"({"/:SomeKey":[1,2,3,4]})"_json);
 }
 
 TEST(MetaData, StringValue) {
@@ -38,5 +38,5 @@ TEST(MetaData, StringValue) {
   UnderTest.setValue(TestValue);
 
   EXPECT_EQ(TestValue, UnderTest.getValue());
-  EXPECT_EQ(UnderTest.getAsJSON(), R"({"SomeKey":"hello"})"_json);
+  EXPECT_EQ(UnderTest.getAsJSON(), R"({"/:SomeKey":"hello"})"_json);
 }

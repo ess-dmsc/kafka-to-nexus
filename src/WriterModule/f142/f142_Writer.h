@@ -97,7 +97,7 @@ protected:
   MetaData::Value<double> MetaDataMax;
   MetaData::Value<double> MetaDataMean;
   double Min{0}, Max{0}, Sum{0};
-  uint64_t NrOfElements{0};
+  uint64_t TotalNrOfElementsWritten{0};
 };
 
 } // namespace f142

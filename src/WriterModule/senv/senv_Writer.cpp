@@ -106,43 +106,43 @@ void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   case ValueUnion::Int8Array: {
     auto ValuePtr = FbPointer->Values_as_Int8Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
     break;
   }
   case ValueUnion::UInt8Array: {
     auto ValuePtr = FbPointer->Values_as_UInt8Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::Int16Array: {
     auto ValuePtr = FbPointer->Values_as_Int16Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::UInt16Array: {
     auto ValuePtr = FbPointer->Values_as_UInt16Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::Int32Array: {
     auto ValuePtr = FbPointer->Values_as_Int32Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::UInt32Array: {
     auto ValuePtr = FbPointer->Values_as_UInt32Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::Int64Array: {
     auto ValuePtr = FbPointer->Values_as_Int64Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::UInt64Array: {
     auto ValuePtr = FbPointer->Values_as_UInt64Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   default:
     Logger->warn("Unknown data type in flatbuffer.");
@@ -158,7 +158,7 @@ void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
                                   SampleEnvironmentData::VT_TIMESTAMPS)) {
     auto TimestampPtr = FbPointer->Timestamps()->data();
     auto TimestampSize = FbPointer->Timestamps()->size();
-    ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
+    hdf5::ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
     Timestamp.appendArray(TSArray);
   } else { // If timestamps are not available, generate them
     std::vector<std::uint64_t> TempTimeStamps(GenerateTimeStamps(

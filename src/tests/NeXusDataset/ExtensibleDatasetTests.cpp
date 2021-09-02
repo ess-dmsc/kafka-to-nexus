@@ -296,7 +296,7 @@ TEST_F(DatasetCreation, AppendArrayAdpaterDataTwice) {
   std::array<const std::uint16_t, 4> SomeData{{0, 1, 2, 3}};
   NeXusDataset::ExtensibleDataset<std::uint16_t> TestDataset(
       RootGroup, "SomeDataset", NeXusDataset::Mode::Create, ChunkSize);
-  ArrayAdapter<const std::uint16_t> TempAdapter{
+  hdf5::ArrayAdapter<const std::uint16_t> TempAdapter{
       SomeData.data(), static_cast<size_t>(SomeData.size())};
   TestDataset.appendArray(TempAdapter);
   TestDataset.appendArray(TempAdapter);

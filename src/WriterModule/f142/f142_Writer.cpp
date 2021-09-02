@@ -149,16 +149,16 @@ ValuesInformation appendData(DatasetType &Dataset, const void *Pointer,
     return {};
   }
   auto DataArray =
-      ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size);
+      hdf5::ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size);
   Dataset.appendArray(DataArray, {Size});
-  double Min{double(DataArray[0])};
-  double Max{double(DataArray[0])};
-  double Sum{double(DataArray[0])};
+  double Min{double(DataArray.data()[0])};
+  double Max{double(DataArray.data()[0])};
+  double Sum{double(DataArray.data()[0])};
   if (GetArrayMetaData) {
     for (auto i = 1u; i < Size; ++i) {
-      Sum += double(DataArray[i]);
-      Min = std::min(Min, double(DataArray[i]));
-      Max = std::max(Max, double(DataArray[i]));
+      Sum += double(DataArray.data()[i]);
+      Min = std::min(Min, double(DataArray.data()[i]));
+      Max = std::max(Max, double(DataArray.data()[i]));
     }
   }
   return {Min, Max, Sum, Size};
@@ -174,7 +174,7 @@ template <typename DataType, typename ValueType, class DatasetType>
 ValuesInformation appendScalarData(DatasetType &Dataset,
                                    const LogData *LogDataMessage) {
   auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
-  Dataset.appendArray(ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
+  Dataset.appendArray(hdf5::ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
   return {double(ScalarValue), double(ScalarValue), double(ScalarValue), 1};
 }
 
@@ -324,17 +324,17 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   }
 
   if (MetaData.getValue()) {
-    if (NrOfElements == 0) {
+    if (TotalNrOfElementsWritten == 0) {
       Min = CValuesInfo.Min;
       Max = CValuesInfo.Max;
     }
     Min = std::min(Min, CValuesInfo.Min);
     Max = std::max(Max, CValuesInfo.Max);
     Sum += CValuesInfo.Sum;
-    NrOfElements += CValuesInfo.NrOfElements;
+    TotalNrOfElementsWritten += CValuesInfo.NrOfElements;
     MetaDataMin.setValue(Min);
     MetaDataMax.setValue(Max);
-    MetaDataMean.setValue(Sum / NrOfElements);
+    MetaDataMean.setValue(Sum / TotalNrOfElementsWritten);
   }
 
   // AlarmStatus::NO_CHANGE is not a real EPICS alarm status value, it is used

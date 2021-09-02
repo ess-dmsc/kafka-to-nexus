@@ -28,6 +28,8 @@ HDFFile::HDFFile(std::string const &FileName,
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
   }
+  FileAccessList.library_version_bounds(hdf5::property::LibVersion::LATEST,
+                                        hdf5::property::LibVersion::LATEST);
   createFileInRegularMode();
   init(NexusStructure, StreamHDFInfo);
   StoredNexusStructure = NexusStructure;
@@ -35,8 +37,7 @@ HDFFile::HDFFile(std::string const &FileName,
 
 HDFFile::~HDFFile() {
   try {
-    closeFile();
-    openFileInRegularMode();
+    openInRegularMode();
     addLinks();
     if (MetaDataTracker != nullptr) {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
@@ -49,9 +50,7 @@ HDFFile::~HDFFile() {
 
 void HDFFile::createFileInRegularMode() {
   hdfFile() = hdf5::file::create(H5FileName,
-                                 hdf5::file::AccessFlags::EXCLUSIVE |
-                                     hdf5::file::AccessFlags::SWMR_WRITE,
-                                 {}, {});
+                                 hdf5::file::AccessFlags::EXCLUSIVE, FileCreationList, FileAccessList);
 }
 
 void HDFFileBase::init(const std::string &NexusStructure,
@@ -127,10 +126,7 @@ void HDFFile::closeFile() {
 
 void HDFFile::openFileInSWMRMode() {
   Logger->trace("Opening file \"{}\" in SWMR mode.", H5FileName);
-  hdfFile() = hdf5::file::open(H5FileName,
-                               hdf5::file::AccessFlags::READWRITE |
-                                   hdf5::file::AccessFlags::SWMR_WRITE,
-                               {});
+  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE, FileAccessList);
 }
 
 void HDFFileBase::flush() {
@@ -147,8 +143,9 @@ void HDFFileBase::flush() {
 }
 
 void HDFFile::openFileInRegularMode() {
+  Logger->trace("Opening file \"{}\" in regular (non SWMR) mode.", H5FileName);
   hdfFile() =
-      hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE, {});
+      hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE, FileAccessList);
 }
 
 void HDFFile::addLinks() {
