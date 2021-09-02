@@ -24,7 +24,7 @@ def test_f142_meta_data(
     wait_writers_available(writer_channel, nr_of=1, timeout=10)
     producer = create_producer()
 
-    data_topic = "TEST_historicalData1"
+    data_topic = "TEST_sampleEnv"
     source_name1 = "someSource1"
     source_name2 = "someSource2"
 

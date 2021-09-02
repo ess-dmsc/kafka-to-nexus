@@ -12,7 +12,7 @@
               "module": "f142",
               "config": {
                 "type": "int32",
-                "topic": "TEST_historicalData1",
+                "topic": "TEST_sampleEnv",
                 "source": "someSource1",
                 "meta_data": true
               }
@@ -27,7 +27,7 @@
               "module": "f142",
               "config": {
                 "type": "int32",
-                "topic": "TEST_historicalData1",
+                "topic": "TEST_sampleEnv",
                 "source": "someSource2",
                 "meta_data": true
               }
