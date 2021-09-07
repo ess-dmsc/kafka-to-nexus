@@ -17,6 +17,7 @@
 #include "../logger.h"
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/hdf5.hpp>
+#include <h5cpp/utilities/array_adapter.hpp>
 
 namespace hdf5 {
 namespace datatype {
