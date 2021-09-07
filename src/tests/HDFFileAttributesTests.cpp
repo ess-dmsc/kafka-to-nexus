@@ -394,7 +394,6 @@ TEST_F(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
             {
               "name": "vec",
               "values": ["one", "two", "three", "four"],
-              "encoding":"ascii"
             }
           ]
         }
@@ -425,7 +424,6 @@ TEST_F(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
             {
               "name": "vec",
               "values": ["one", 2, "three", "four"],
-              "encoding":"ascii"
             }
           ]
         }
@@ -456,7 +454,6 @@ TEST_F(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
             {
               "name": "vec",
               "values": ["", ""],
-              "encoding":"ascii"
             }
           ]
         }
