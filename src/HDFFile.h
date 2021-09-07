@@ -51,8 +51,8 @@ public:
           MetaData::TrackerPtr &TrackerPtr);
   void openInSWMRMode();
   void openInRegularMode();
-  bool isSWMRMode();
-  bool isRegularMode();
+  bool isSWMRMode() const;
+  bool isRegularMode() const;
   virtual ~HDFFile();
 
 private:
