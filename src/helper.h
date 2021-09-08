@@ -18,5 +18,3 @@ int getPID();
 std::string getHostName();
 
 std::string randomHexString(size_t Length);
-
-std::chrono::duration<long long int, std::milli> getCurrentTimeStampMS();

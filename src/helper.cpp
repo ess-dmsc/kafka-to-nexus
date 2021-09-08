@@ -40,8 +40,3 @@ std::string getHostName() {
   }
   return Buffer.data();
 }
-
-std::chrono::duration<long long int, std::milli> getCurrentTimeStampMS() {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::system_clock::now().time_since_epoch());
-}
