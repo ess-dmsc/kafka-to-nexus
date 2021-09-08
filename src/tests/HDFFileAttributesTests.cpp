@@ -16,7 +16,7 @@ class HDFFileAttributesTest : public ::testing::Test {
 public:
   void SetUp() override {
     TestFile =
-        HDFFileTestHelper::createInMemoryTestFile("test-attribute.nxs", false);
+        HDFFileTestHelper::createInMemoryTestFile("test-attribute.nxs", true);
   }
   std::unique_ptr<HDFFileTestHelper::DebugHDFFile> TestFile;
 };
@@ -141,7 +141,7 @@ TEST_F(HDFFileAttributesTest,
   ASSERT_EQ(IntValue, 42u);
 }
 
-TEST_F(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
+TEST_F(HDFFileAttributesTest, IntArrayAttribute) {
   std::string CommandWithArrayAttr = R""({
     "children": [
       {
@@ -152,11 +152,6 @@ TEST_F(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
             "name": "array_attribute",
             "values": [1, 2, 3],
             "type": "uint64"
-          },
-          {
-            "name": "array_string_attribute",
-            "values": ["A", "B"],
-            "type": "string"
           }
         ]
       }
@@ -174,14 +169,35 @@ TEST_F(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   ASSERT_EQ(ArrayAttrValues[0], 1);
   ASSERT_EQ(ArrayAttrValues[1], 2);
   ASSERT_EQ(ArrayAttrValues[2], 3);
+}
 
-  auto ArrayStringAttr =
-      hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
-          .attributes["array_string_attribute"];
-  std::vector<std::string> ArrayStringAttrValues(2);
-  ArrayStringAttr.read(ArrayStringAttrValues);
-  ASSERT_EQ(ArrayStringAttrValues[0], "A");
-  ASSERT_EQ(ArrayStringAttrValues[1], "B");
+TEST_F(HDFFileAttributesTest, StringArrayAttribute) {
+  std::string CommandWithArrayAttr = R""({
+    "children": [
+      {
+        "type": "group",
+        "name": "group_with_array_attrs",
+        "attributes": [
+          {
+            "name": "array_string_attribute",
+            "values": ["A", "B"],
+            "type": "string"
+          }
+        ]
+      }
+    ]
+  })"";
+
+  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile->init(CommandWithArrayAttr, EmptyStreamHDFInfo);
+
+    auto ArrayStringAttr =
+        hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
+            .attributes["array_string_attribute"];
+    std::vector<std::string> ArrayStringAttrValues(2);
+    ArrayStringAttr.read(ArrayStringAttrValues);
+    ASSERT_EQ(ArrayStringAttrValues[0], "A");
+    ASSERT_EQ(ArrayStringAttrValues[1], "B");
 }
 
 TEST_F(HDFFileAttributesTest,
