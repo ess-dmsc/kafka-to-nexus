@@ -393,7 +393,7 @@ TEST_F(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
           "attributes": [
             {
               "name": "vec",
-              "values": ["one", "two", "three", "four"],
+              "values": ["one", "two", "three", "four"]
             }
           ]
         }
@@ -423,7 +423,7 @@ TEST_F(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
           "attributes": [
             {
               "name": "vec",
-              "values": ["one", 2, "three", "four"],
+              "values": ["one", 2, "three", "four"]
             }
           ]
         }
@@ -453,7 +453,7 @@ TEST_F(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
           "attributes": [
             {
               "name": "vec",
-              "values": ["", ""],
+              "values": ["", ""]
             }
           ]
         }
