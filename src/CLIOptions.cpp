@@ -127,12 +127,9 @@ bool parseLogLevel(std::vector<std::string> LogLevelString,
     return InString;
   };
   std::map<std::string, Log::Severity> LevelMap{
-      {"critical", Log::Severity::Critical},
-      {"error", Log::Severity::Error},
-      {"warning", Log::Severity::Warning},
-      {"info", Log::Severity::Info},
-      {"debug", Log::Severity::Debug},
-      {"trace", Log::Severity::Trace}};
+      {"critical", Log::Severity::Critical}, {"error", Log::Severity::Error},
+      {"warning", Log::Severity::Warning},   {"info", Log::Severity::Info},
+      {"debug", Log::Severity::Debug},       {"trace", Log::Severity::Trace}};
 
   if (LogLevelString.size() != 1) {
     return false;
