@@ -102,9 +102,8 @@ int main(int argc, char **argv) {
 
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
-  auto Logger = getLogger();
   if (not versionOfHDF5IsOk()) {
-    Logger->error("Failed HDF5 version check. Exiting.");
+    LOG_ERROR("Failed HDF5 version check. Exiting.");
     return EXIT_FAILURE;
   }
 
@@ -190,20 +189,20 @@ int main(int argc, char **argv) {
         MasterPtr->run();
       }
     } catch (std::system_error const &e) {
-      Logger->critical(
+      LOG_ERROR(
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
           e.code().value(), e.code().category().name(), e.code().message(),
           e.what());
       break;
     } catch (std::runtime_error const &e) {
-      Logger->critical("std::runtime_error  what: {}", e.what());
+      LOG_ERROR("std::runtime_error  what: {}", e.what());
       break;
     } catch (std::exception const &e) {
-      Logger->critical("std::exception  what: {}", e.what());
+      LOG_ERROR("std::exception  what: {}", e.what());
       break;
     }
   }
-  Logger->debug("Exiting.");
-  Logger->flush();
+  LOG_DEBUG("Exiting.");
+  Log::Flush();
   return EXIT_SUCCESS;
 }

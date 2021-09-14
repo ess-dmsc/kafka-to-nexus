@@ -13,7 +13,7 @@
 namespace Status {
 
 void StatusReporter::start() {
-  Logger->trace("Starting the StatusTimer");
+  LOG_TRACE("Starting the StatusTimer");
   AsioTimer.async_wait([this](std::error_code const &Error) {
     if (Error != asio::error::operation_aborted) {
       this->reportStatus();
@@ -23,7 +23,7 @@ void StatusReporter::start() {
 }
 
 void StatusReporter::waitForStop() {
-  Logger->trace("Stopping StatusTimer");
+  LOG_TRACE("Stopping StatusTimer");
   IO.stop();
   StatusThread.join();
 }

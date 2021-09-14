@@ -21,7 +21,7 @@ namespace FileWriter {
 Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
                std::unique_ptr<Status::StatusReporter> Reporter,
                Metrics::Registrar const &Registrar)
-    : Logger(getLogger()), MainConfig(Config),
+    : MainConfig(Config),
       CommandAndControl(std::move(Listener)), Reporter(std::move(Reporter)),
       MasterMetricsRegistrar(Registrar) {
   CommandAndControl->registerStartFunction(
@@ -31,7 +31,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
   CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
   CommandAndControl->registerIsWritingFunction(
       [this]() { return WriterState::Writing == CurrentState; });
-  Logger->info("file-writer service id: {}", Config.getServiceId());
+  LOG_INFO("file-writer service id: {}", Config.getServiceId());
   this->Reporter->setJSONMetaDataGenerator(
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
 }
@@ -57,7 +57,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
                                 StartInfo.JobID, StartInfo.Filename,
                                 StartInfo.StartTime, StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
-    Logger->error("{}", Error.what());
+    LOG_ERROR("{}", Error.what());
     throw;
   }
 }

@@ -52,7 +52,6 @@ public:
   hdf5::file::File File;
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
-  SharedLogger Logger = getLogger();
 };
 
 // cppcheck-suppress syntaxError

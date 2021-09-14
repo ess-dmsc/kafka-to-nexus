@@ -357,8 +357,7 @@ void createHDFStructures(
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
-    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path,
-    SharedLogger const &Logger) {
+    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
 
   try {
 
@@ -367,7 +366,7 @@ void createHDFStructures(
     if (CNode.Type.getUsedKey() == "type") {
       if (CNode.Type.getValue() == "group") {
         if (CNode.Name.getValue().empty()) {
-          Logger->error("HDF group name was empty/missing, ignoring.");
+          LOG_ERROR("HDF group name was empty/missing, ignoring.");
           return;
         }
         try {
@@ -380,21 +379,21 @@ void createHDFStructures(
             for (auto &Child : CNode.Children.getValue()) {
               createHDFStructures(Child, CurrentGroup, Level + 1,
                                   LinkCreationPropertyList, FixedStringHDFType,
-                                  HDFStreamInfo, Path, Logger);
+                                  HDFStreamInfo, Path);
             }
           } else {
-            Logger->debug(
+            LOG_DEBUG(
                 "Ignoring children as they do not exist or are invalid.");
           }
           Path.pop_back();
         } catch (std::exception const &e) {
-          Logger->error("Failed to create group  Name: {}. Message was: {}",
+          LOG_ERROR("Failed to create group  Name: {}. Message was: {}",
                         CNode.Name.getValue(), e.what());
         }
       } else if (CNode.Type.getUsedKey() == "link") {
         // Do nothing for now
       } else {
-        Logger->error("Unknown hdf node of type {}. Ignoring.",
+        LOG_ERROR("Unknown hdf node of type {}. Ignoring.",
                       CNode.Type.getValue());
       }
     } else if (CNode.Type.getUsedKey() == "module") {
@@ -413,7 +412,7 @@ void createHDFStructures(
     }
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
-    Logger->error("Failed to create structure with path \"{}\" ({} levels "
+    LOG_ERROR("Failed to create structure with path \"{}\" ({} levels "
                   "deep). Message was: {}",
                   std::string(Parent.link().path()), Level, e.what());
   }

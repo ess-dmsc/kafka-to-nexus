@@ -11,9 +11,10 @@
 
 #include <nlohmann/json.hpp>
 #include <numeric>
-#include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
+#include <fmt/format.h>
+#include <graylog_logger/Log.hpp>
 
 template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
   static constexpr auto parse(format_parse_context &ctx) {
@@ -71,39 +72,31 @@ namespace uri {
 struct URI;
 }
 
-using SharedLogger = std::shared_ptr<spdlog::logger>;
-
-SharedLogger getLogger();
-
-void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
-                  const std::string &LogFile, const uri::URI &GraylogURI);
+void setUpLogging(const Log::Severity &LoggingLevel,
+                  const std::string &LogFileName, const uri::URI &GraylogURI);
 
 template <typename... Args>
-void LOG_ERROR(spdlog::string_view_t fmt, const Args &... args) {
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::err, fmt,
-                   args...);
+void LOG_ERROR(std::string fmt, const Args &... args) {
+  Log::FmtMsg(Log::Severity::Error, fmt, args...);
 }
 
 template <typename... Args>
-void LOG_WARN(spdlog::string_view_t fmt, const Args &... args) {
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::warn, fmt,
-                   args...);
+void LOG_WARN(std::string fmt, const Args &... args) {
+  Log::FmtMsg(Log::Severity::Warning, fmt, args...);
 }
 
 template <typename... Args>
-void LOG_INFO(spdlog::string_view_t fmt, const Args &... args) {
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::info, fmt,
-                   args...);
+void LOG_INFO(std::string fmt, const Args &... args) {
+  Log::FmtMsg(Log::Severity::Info, fmt, args...);
 }
 
 template <typename... Args>
-void LOG_DEBUG(spdlog::string_view_t fmt, const Args &... args) {
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::debug, fmt,
-                   args...);
+void LOG_DEBUG(std::string fmt, const Args &... args) {
+  Log::FmtMsg(Log::Severity::Debug, fmt, args...);
 }
 
 template <typename... Args>
-void LOG_TRACE(spdlog::string_view_t fmt, const Args &... args) {
-  getLogger()->log(spdlog::source_loc{}, spdlog::level::level_enum::trace, fmt,
-                   args...);
+void LOG_TRACE(std::string fmt, const Args &... args) {
+  Log::FmtMsg(Log::Severity::Debug, fmt, args...);
+// Fix this, what do we do about log levels?
 }

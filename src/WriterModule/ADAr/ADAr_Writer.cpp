@@ -41,7 +41,7 @@ void ADAr_Writer::config_post_processing() {
   try {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
-    Logger->error("Unknown type ({}), using the default (double).",
+    LOG_ERROR("Unknown type ({}), using the default (double).",
                   DataType.getValue());
   }
 }
@@ -63,7 +63,7 @@ InitResult ADAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    Logger->error("Unable to initialise areaDetector data tree in "
+    LOG_ERROR("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
     return WriterModule::InitResult::ERROR;
@@ -81,7 +81,7 @@ WriterModule::InitResult ADAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    Logger->error(
+    LOG_ERROR(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;

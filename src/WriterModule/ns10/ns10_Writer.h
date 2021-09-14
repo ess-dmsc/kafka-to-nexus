@@ -41,9 +41,6 @@ protected:
   NeXusDataset::CueTimestampZero CueTimestamp;
   JsonConfig::Field<int> CueInterval{this, "cue_interval", 1000};
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
-
-private:
-  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 
 } // namespace ns10

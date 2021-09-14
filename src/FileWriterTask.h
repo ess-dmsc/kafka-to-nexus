@@ -37,7 +37,7 @@ public:
   ///
   /// \param TaskID The service ID.
   explicit FileWriterTask(MetaData::TrackerPtr const &Tracker)
-      : Logger(getLogger()), MetaDataTracker(Tracker){};
+      : MetaDataTracker(Tracker){};
 
   ~FileWriterTask() = default;
 
@@ -96,7 +96,6 @@ private:
   std::vector<Source> SourceToModuleMap;
   std::string JobId;
   std::unique_ptr<HDFFile> File;
-  SharedLogger Logger;
   MetaData::TrackerPtr MetaDataTracker;
 };
 

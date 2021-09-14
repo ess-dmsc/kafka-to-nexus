@@ -12,7 +12,7 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
     TimestampDataset = NeXusDataset::ConnectionStatusTime(HDFGroup, Open);
     StatusDataset = NeXusDataset::ConnectionStatus(HDFGroup, Open);
   } catch (std::exception &E) {
-    Logger->error(
+    LOG_ERROR(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return InitResult::ERROR;
@@ -29,7 +29,7 @@ InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
                                    ChunkSize); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    Logger->error("ep00 could not init_hdf HDFGroup: {}  trace: {}",
+    LOG_ERROR("ep00 could not init_hdf HDFGroup: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }

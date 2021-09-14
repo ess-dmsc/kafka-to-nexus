@@ -23,7 +23,7 @@ public:
 
   void dr_cb(RdKafka::Message &Message) override {
     if (Message.err() != RdKafka::ERR_NO_ERROR) {
-      Logger->error("ERROR on delivery, topic {}, {} [{}]",
+      LOG_ERROR("ERROR on delivery, topic {}, {} [{}]",
                     Message.topic_name(), Message.err(), Message.errstr());
       ++Stats.produce_cb_fail;
     } else {
@@ -37,6 +37,5 @@ public:
 
 private:
   ProducerStats &Stats;
-  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace Kafka

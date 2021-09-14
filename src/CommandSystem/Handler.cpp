@@ -91,10 +91,10 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
   }
 }
 
-using LogLevel = spdlog::level::level_enum;
+using LogLevel = Log::Severity;
 
 struct CmdResponse {
-  spdlog::level::level_enum LogLevel;
+  Log::Severity LogLevel;
   bool SendResponse;
   std::function<std::string()> MessageString;
   int StatusCode{0};
@@ -140,7 +140,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            return extractStartMessage(CommandMsg, StartJob, ExceptionMessage);
          },
-         {LogLevel::warn, false,
+         {LogLevel::Warning, false,
           [&]() {
             return fmt::format(
                 "Failed to extract start command from flatbuffer. The "
@@ -153,7 +153,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            return not(IsJobPoolCommand xor (StartJob.ServiceID != ServiceId));
          },
-         {LogLevel::debug, false,
+         {LogLevel::Debug, false,
           [&]() {
             return fmt::format(
                 "Rejected start command as the service id was wrong. It "
@@ -164,7 +164,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 
     CommandSteps.push_back(
         {[&]() { return isValidUUID(StartJob.JobID); },
-         {LogLevel::warn, true,
+         {LogLevel::Warning, true,
           [&]() {
             return fmt::format(
                 "Rejected start command as the job id was invalid (it "
@@ -177,7 +177,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());
          },
-         {LogLevel::warn, true,
+         {LogLevel::Warning, true,
           [&]() {
             return fmt::format(
                 "Rejected start command as its timestamp was bad (it was: {}, "
@@ -208,7 +208,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
            }
            return true;
          },
-         {LogLevel::err, true,
+         {LogLevel::Error, true,
           [&]() {
             return fmt::format(
                 "Rejected new/alternative command topic (\"{}\") as the job "
@@ -233,7 +233,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
            }
            return true;
          },
-         {LogLevel::err, true,
+         {LogLevel::Error, true,
           [&]() {
             return fmt::format(
                 "Failed to start filewriting job. The failure message was: {}",
@@ -243,7 +243,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 
     ActionResult SendResult{ActionResult::Success};
     CmdResponse OutcomeValue{
-        LogLevel::info, true,
+        LogLevel::Info, true,
         [&]() {
           return fmt::format(
               "Started write job with start time {} and stop time {}.",
@@ -260,7 +260,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
       }
     }
 
-    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString());
+    Log::Msg(OutcomeValue.LogLevel, OutcomeValue.MessageString());
     if (OutcomeValue.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
@@ -293,7 +293,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
         {[&]() {
            return extractStopMessage(CommandMsg, StopCmd, ResponseMessage);
          },
-         {LogLevel::warn, false,
+         {LogLevel::Warning, false,
           [&]() {
             return fmt::format(
                 "Failed to extract stop command from flatbuffer. The "
@@ -304,7 +304,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
 
     CommandSteps.push_back(
         {[&]() { return ServiceId == StopCmd.ServiceID; },
-         {LogLevel::debug, false,
+         {LogLevel::Debug, false,
           [&]() {
             return fmt::format(
                 "Rejected stop command as the service id was wrong. It "
@@ -314,7 +314,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           0}});
 
     CommandSteps.push_back({[&]() { return IsWritingNow(); },
-                            {LogLevel::err, true,
+                            {LogLevel::Error, true,
                              [&]() {
                                return fmt::format(
                                    "Rejected stop command as there is "
@@ -324,7 +324,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
 
     CommandSteps.push_back(
         {[&]() { return JobId == StopCmd.JobID; },
-         {LogLevel::warn, true,
+         {LogLevel::Warning, true,
           [&]() {
             return fmt::format(
                 "Rejected stop command as the job id was invalid (It "
@@ -335,7 +335,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
 
     CommandSteps.push_back(
         {[&]() { return isValidUUID(StopCmd.CommandID); },
-         {LogLevel::err, true,
+         {LogLevel::Error, true,
           [&]() {
             return fmt::format(
                 "Rejected stop command as the command id was invalid "
@@ -348,7 +348,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
         {[&]() {
            return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());
          },
-         {LogLevel::warn, true,
+         {LogLevel::Warning, true,
           [&]() {
             return fmt::format(
                 "Rejected stop command as its timestamp was bad (it was: {}, "
@@ -376,7 +376,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
            }
            return true;
          },
-         {LogLevel::err, true,
+         {LogLevel::Error, true,
           [&]() {
             return fmt::format(
                 "Failed to execute stop command. The failure message was: {}",
@@ -385,7 +385,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           500}});
     ActionResult SendResult{ActionResult::Success};
 
-    CmdResponse OutcomeValue{LogLevel::info, true,
+    CmdResponse OutcomeValue{LogLevel::Info, true,
                              [&]() { return ResponseMessage; }, 201};
     for (auto const &Step : CommandSteps) {
       // cppcheck-suppress useStlAlgorithm
@@ -395,7 +395,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
         break;
       }
     }
-    getLogger()->log(OutcomeValue.LogLevel, OutcomeValue.MessageString());
+    Log::Msg(OutcomeValue.LogLevel, OutcomeValue.MessageString());
     if (OutcomeValue.SendResponse) {
       CommandResponse->publishResponse(TypeOfAction, SendResult, StopCmd.JobID,
                                        StopCmd.CommandID, StopCmd.StopTime,

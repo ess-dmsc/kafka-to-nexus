@@ -24,7 +24,7 @@ f142_Extractor::source_name(FlatbufferMessage const &Message) const {
   auto const LogDataBuffer = GetLogData(Message.data());
   auto const SourceNameFlatbufferStr = LogDataBuffer->source_name();
   if (SourceNameFlatbufferStr == nullptr) {
-    spdlog::get("filewriterlogger")->warn("message has no source name");
+    LOG_WARN("message has no source name");
     return "";
   }
   return SourceNameFlatbufferStr->str();

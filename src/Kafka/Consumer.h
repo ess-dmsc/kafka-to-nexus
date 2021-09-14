@@ -71,7 +71,6 @@ private:
   BrokerSettings ConsumerBrokerSettings;
   int id = 0;
   std::unique_ptr<KafkaEventCb> EventCallback;
-  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 
 class StubConsumer : public ConsumerInterface {

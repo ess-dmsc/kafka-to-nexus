@@ -81,7 +81,7 @@ void StatusReporterBase::reportStatus() {
   }
 
   auto const StatusJSONReport = createJSONReport();
-  Logger->debug("status: {}", StatusJSONReport);
+  LOG_DEBUG("status: {}", StatusJSONReport);
 
   StatusProducerTopic->produce(createReport(StatusJSONReport));
   postReportStatusActions();

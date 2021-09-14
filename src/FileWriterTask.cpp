@@ -20,12 +20,12 @@ namespace {
 
 using nlohmann::json;
 
-json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
+json hdf_parse(std::string const &Structure) {
   try {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
   } catch (...) {
-    Logger->error("Parse Error: ", Structure);
+    LOG_ERROR("Parse Error: ", Structure);
     throw FileWriter::ParseError(Structure);
   }
 }
@@ -48,7 +48,7 @@ void FileWriterTask::addSource(Source &&Source) {
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
                                    std::vector<StreamHDFInfo> &HdfInfo) {
-  auto NexusStructureJson = hdf_parse(NexusStructure, Logger);
+  auto NexusStructureJson = hdf_parse(NexusStructure);
   std::string ErrorString;
   std::filesystem::path FilePath(Filename);
 
@@ -72,7 +72,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
   }
 
   try {
-    Logger->info("Creating HDF file {}", Filename);
+    LOG_INFO("Creating HDF file {}", Filename);
     File = std::make_unique<HDFFile>(Filename, NexusStructureJson, HdfInfo,
                                      MetaDataTracker);
   } catch (std::exception const &E) {

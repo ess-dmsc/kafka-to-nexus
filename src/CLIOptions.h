@@ -39,4 +39,4 @@ CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
 /// \param LogLevelResult Result of parsing returned through reference
 /// \return bool signalizing successful parsing
 bool parseLogLevel(std::vector<std::string> LogLevelString,
-                   spdlog::level::level_enum &LogLevelResult);
+                   Log::Severity &LogLevelResult);

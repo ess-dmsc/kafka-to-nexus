@@ -38,8 +38,6 @@ protected:
   void init(const nlohmann::json &NexusStructure,
             std::vector<StreamHDFInfo> &StreamHDFInfo);
 
-  SharedLogger Logger = getLogger();
-
 private:
   hdf5::file::File H5File;
 };

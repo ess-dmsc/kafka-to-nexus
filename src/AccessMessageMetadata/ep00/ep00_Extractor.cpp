@@ -14,7 +14,7 @@ std::string ep00_Extractor::source_name(
   auto FBuffer = GetEpicsConnectionInfo(Message.data());
   auto SourceName = FBuffer->source_name();
   if (SourceName == nullptr) {
-    spdlog::get("filewriterlogger")->warn("Message has no source name.");
+    LOG_WARN("Message has no source name.");
     return "";
   }
   return SourceName->str();

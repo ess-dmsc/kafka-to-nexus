@@ -40,7 +40,6 @@ private:
   NeXusDataset::Background BackgroundDataset;
   NeXusDataset::ThresholdTime ThresholdTimeDataset;
   NeXusDataset::PeakTime PeakTimeDataset;
-  SharedLogger Logger = spdlog::get("filewriterlogger");
   void reopenAdcDatasets(const hdf5::node::Group &HDFGroup);
   void writeAdcPulseData(FlatbufferMessage const &Message);
   void

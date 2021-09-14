@@ -19,6 +19,5 @@ public:
   void reportMetric(InternalMetric &MetricToBeReported) override;
   LogTo getType() override { return LogTo::LOG_MSG; };
   bool isHealthy() override { return true; };
-  SharedLogger Logger = getLogger();
 };
 } // namespace Metrics

@@ -60,7 +60,6 @@ protected:
   virtual void flushData() { FlushDataFunction(); };
   std::function<void()> FlushDataFunction;
 
-  SharedLogger Log{getLogger()};
   Metrics::Metric WritesDone{"writes_done",
                              "Number of completed writes to HDF file."};
   Metrics::Metric WriteErrors{"write_errors",

@@ -45,7 +45,7 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    Logger->error("Unable to initialise fast sample environment data tree in "
+    LOG_ERROR("Unable to initialise fast sample environment data tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
     return WriterModule::InitResult::ERROR;
@@ -64,7 +64,7 @@ WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    Logger->error(
+    LOG_ERROR(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -82,7 +82,7 @@ void senv_Writer::config_post_processing() {
   try {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
-    Logger->error("Unknown type ({}), using the default (int64).",
+    LOG_ERROR("Unknown type ({}), using the default (int64).",
                   DataType.getValue());
   }
 }
@@ -145,7 +145,7 @@ void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
     Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   default:
-    Logger->warn("Unknown data type in flatbuffer.");
+    LOG_WARN("Unknown data type in flatbuffer.");
   }
   if (NrOfElements == 0) {
     return;

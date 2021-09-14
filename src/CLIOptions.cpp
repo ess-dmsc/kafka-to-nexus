@@ -120,11 +120,11 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
 }
 
 bool parseLogLevel(std::vector<std::string> LogLevelString,
-                   spdlog::level::level_enum &LogLevelResult) {
-  std::map<std::string, spdlog::level::level_enum> LevelMap{
-      {"Critical", spdlog::level::critical}, {"Error", spdlog::level::err},
-      {"Warning", spdlog::level::warn},      {"Info", spdlog::level::info},
-      {"Debug", spdlog::level::debug},       {"Trace", spdlog::level::trace}};
+                   Log::Severity &LogLevelResult) {
+  std::map<std::string, Log::Severity> LevelMap{
+    {"Critical", Log::Severity::Critical}, {"Error", Log::Severity::Error},
+    {"Warning", Log::Severity::Warning},      {"Info", Log::Severity::Info},
+    {"Debug", Log::Severity::Debug}};
 
   if (LogLevelString.size() != 1) {
     return false;
@@ -140,7 +140,7 @@ bool parseLogLevel(std::vector<std::string> LogLevelString,
     if (TempLogMessageLevel < 0 or TempLogMessageLevel > 5) {
       return false;
     }
-    LogLevelResult = spdlog::level::level_enum(TempLogMessageLevel);
+    LogLevelResult = Log::Severity(TempLogMessageLevel);
   } catch (std::invalid_argument &e) {
     return false;
   }
@@ -168,7 +168,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                "<host:port> Address to the Grafana (Carbon) metrics service.");
   std::string LogLevelInfoStr =
       R"*(Set log message level. Set to 0 - 5 or one of
-  `Trace`, `Debug`, `Info`, `Warning`, `Error`
+  `Debug`, `Info`, `Warning`, `Error`
   or `Critical`. Ex: "-v Debug". Default: `Error`)*";
   App.add_option(
       "-v,--verbosity",

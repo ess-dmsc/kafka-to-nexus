@@ -28,8 +28,7 @@ void createHDFStructures(
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
-    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path,
-    SharedLogger const &Logger);
+    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
 
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                          const std::string &Name);

@@ -9,46 +9,30 @@
 
 #include "logger.h"
 #include "URI.h"
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
-#ifdef HAVE_GRAYLOG_LOGGER
+#include <graylog_logger/FileInterface.hpp>
 #include <graylog_logger/GraylogInterface.hpp>
-#include <spdlog/sinks/graylog_sink.h>
-#endif
+#include <graylog_logger/ConsoleInterface.hpp>
+#include <date/date.h>
 
-SharedLogger getLogger() { return spdlog::get("filewriterlogger"); }
+std::string consoleFormatter(Log::LogMessage const &Msg) {
+  std::array<std::string, 8> const sevToStr = {{"EMERGENCY", "ALERT", "CRITICAL",
+                                          "ERROR", "WARNING", "Notice", "Info",
+                                          "Debug"}};
+  return date::format("[%H:%M:%S] ", Msg.Timestamp) + "[" + sevToStr[int(Msg.SeverityLevel)] + "] " + Msg.MessageString;
+}
 
-void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
-                  const std::string &LogFile, const uri::URI &GraylogURI) {
-  std::vector<spdlog::sink_ptr> sinks;
-  if (!LogFile.empty()) {
-    auto FileSink =
-        std::make_shared<spdlog::sinks::basic_file_sink_mt>(LogFile);
-    FileSink->set_pattern("[%Y-%m-%d %H:%M:%S.%f] [%l] [processID: %P]: %v");
-    sinks.push_back(FileSink);
+void setUpLogging(Log::Severity const &LoggingLevel,
+                  const std::string &LogFileName, const uri::URI &GraylogURI) {
+  Log::SetMinimumSeverity(LoggingLevel);
+  Log::RemoveAllHandlers();
+  if (!LogFileName.empty()) {
+    Log::AddLogHandler(std::make_shared<Log::FileInterface>(LogFileName));
   }
   if (GraylogURI.getURIString() != "/") {
-#ifdef HAVE_GRAYLOG_LOGGER
-    auto GraylogSink = std::make_shared<spdlog::sinks::graylog_sink_mt>(
-        LoggingLevel,
-        GraylogURI.HostPort.substr(0, GraylogURI.HostPort.find(':')),
-        GraylogURI.Port);
-    GraylogSink->set_pattern("[%l] [processID: %P]: %v");
-    sinks.push_back(GraylogSink);
-#else
-    spdlog::log(
-        spdlog::level::err,
-        "ERROR not compiled with support for graylog_logger. Would have used{}",
-        GraylogURI.HostPort);
-#endif
+    Log::AddLogHandler(std::make_shared<Log::GraylogInterface>(GraylogURI.Host, GraylogURI.Port));
   }
-  auto ConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-  ConsoleSink->set_pattern("[%H:%M:%S.%f] [%l] [processID: %P]: %v");
-  sinks.push_back(ConsoleSink);
-  auto combined_logger = std::make_shared<spdlog::logger>(
-      "filewriterlogger", cbegin(sinks), cend(sinks));
-  spdlog::register_logger(combined_logger);
-  combined_logger->set_level(LoggingLevel);
-  combined_logger->flush_on(spdlog::level::err);
+  auto TempConsoleInterface = std::make_shared<Log::ConsoleInterface>();
+  TempConsoleInterface->setMessageStringCreatorFunction(consoleFormatter);
+  Log::AddLogHandler(TempConsoleInterface);
 }

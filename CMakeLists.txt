@@ -53,7 +53,7 @@ set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUA
 
 if(${CONAN} MATCHES "AUTO")
   include(${SRC_CMAKE_MODULE_PATH}/conan.cmake)
-  conan_cmake_run(CONANFILE conan/${CONAN_FILE}
+  conan_cmake_run(CONANFILE ${CONAN_FILE}
           PROFILE ${CONAN_PROFILE}
           BASIC_SETUP ${OUTPUT_DIRS}
           BUILD_TYPE "None"

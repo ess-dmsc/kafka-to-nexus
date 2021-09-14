@@ -30,7 +30,6 @@ public:
   WriterUntyped::ptr TheWriterUntyped;
 
 private:
-  SharedLogger Logger = spdlog::get("filewriterlogger");
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1 << 20};
   JsonConfig::RequiredField<std::string> DataTypeField{this, "data_type"};
   JsonConfig::RequiredField<std::string> EdgeTypeField{this, "edge_type"};

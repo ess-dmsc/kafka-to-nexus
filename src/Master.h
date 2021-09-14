@@ -49,7 +49,6 @@ public:
 
 private:
   enum class WriterState { Idle, Writing };
-  SharedLogger Logger;
   MainOpt &MainConfig;
   std::unique_ptr<Command::Handler> CommandAndControl;
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};

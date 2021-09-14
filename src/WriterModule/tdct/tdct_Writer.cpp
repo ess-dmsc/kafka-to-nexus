@@ -42,7 +42,7 @@ InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    Logger->error("Unable to initialise chopper time stamp tree in "
+    LOG_ERROR("Unable to initialise chopper time stamp tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
     return WriterModule::InitResult::ERROR;
@@ -59,7 +59,7 @@ WriterModule::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    Logger->error(
+    LOG_ERROR(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -72,7 +72,7 @@ void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto TempTimePtr = FbPointer->timestamps()->data();
   auto TempTimeSize = FbPointer->timestamps()->size();
   if (TempTimeSize == 0) {
-    Logger->warn(
+    LOG_WARN(
         "Received a flatbuffer with zero (0) timestamps elements in it.");
     return;
   }

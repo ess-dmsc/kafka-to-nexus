@@ -61,8 +61,6 @@ public:
   };
 
 protected:
-  SharedLogger Logger = spdlog::get("filewriterlogger");
-
   Type ElementType{Type::float64};
 
   NeXusDataset::MultiDimDatasetBase Values;

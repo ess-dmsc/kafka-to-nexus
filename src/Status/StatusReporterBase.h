@@ -76,7 +76,6 @@ public:
 
 protected:
   duration const Period;
-  SharedLogger Logger = getLogger();
   void reportStatus();
 
 private:

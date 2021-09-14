@@ -16,8 +16,6 @@ public:
   ~ep00_Writer() override = default;
 
 private:
-  SharedLogger Logger = getLogger();
-
   NeXusDataset::ConnectionStatusTime TimestampDataset;
   NeXusDataset::ConnectionStatus StatusDataset;
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};

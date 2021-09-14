@@ -53,14 +53,14 @@ struct Msg {
 
   uint8_t const *data() const {
     if (DataPtr == nullptr) {
-      getLogger()->error("error at type: {}", -1);
+      LOG_ERROR("Msg::data(): Data pointer is null.");
     }
     return reinterpret_cast<uint8_t const *>(DataPtr.get());
   }
 
   size_t size() const {
     if (DataPtr == nullptr) {
-      getLogger()->error("error at type: {}", -1);
+      LOG_ERROR("Msg::size(): Data pointer is null.");
     }
     return Size;
   }

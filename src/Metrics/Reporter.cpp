@@ -16,7 +16,7 @@ void Reporter::reportMetrics() {
     if (SinkNameMap.find(MetricSink->getType()) != SinkNameMap.end()) {
       MetricsSinkName = SinkNameMap[MetricSink->getType()];
     }
-    getLogger()->error("Unable to push metrics to the {} sink.",
+    LOG_ERROR("Unable to push metrics to the {} sink.",
                        MetricsSinkName);
   }
   AsioTimer.expires_at(AsioTimer.expires_at() + Period);
@@ -59,13 +59,12 @@ Reporter::~Reporter() {
   {
     std::lock_guard<std::mutex> Lock(MetricsMapMutex);
     if (!MetricsToReportOn.empty()) {
-      auto Logger = getLogger();
       std::string NamesOfMetricsStillRegistered;
       for (auto &NameMetricPair : MetricsToReportOn) {
         NamesOfMetricsStillRegistered += NameMetricPair.first;
         NamesOfMetricsStillRegistered += ", ";
       }
-      Logger->error(
+      LOG_ERROR(
           "Reporter is being cleaned up, but still has the following metrics "
           "registered to it: {}",
           NamesOfMetricsStillRegistered);

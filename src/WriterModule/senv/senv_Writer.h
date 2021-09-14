@@ -60,7 +60,6 @@ protected:
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
-  SharedLogger Logger = spdlog::get("filewriterlogger");
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "int64"};
 };

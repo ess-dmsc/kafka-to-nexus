@@ -10,7 +10,6 @@
 #include "URI.h"
 #include "logger.h"
 #include <gtest/gtest.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <trompeloeil.hpp>
 
 namespace trompeloeil {
@@ -34,9 +33,7 @@ int main(int argc, char **argv) {
   // do not use filewriterlogger during tests
   std::string LogFile;
   auto GraylogURI = uri::URI();
-  ::setUpLogging(spdlog::level::err, LogFile, GraylogURI);
+  ::setUpLogging(Log::Severity::Error, LogFile, GraylogURI);
 
-  // set level for test logger
-  spdlog::stdout_color_mt("testlogger")->set_level(spdlog::level::trace);
   return RUN_ALL_TESTS();
 }

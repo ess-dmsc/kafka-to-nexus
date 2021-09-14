@@ -32,20 +32,20 @@ Consumer::~Consumer() {
     auto ErrorCode = KafkaConsumer->subscription(Topics);
     KafkaConsumer->close();
     if (ErrorCode == RdKafka::ERR_NO_ERROR) {
-      Logger->debug("Consumer consuming from topic(s) {} closed.", Topics);
+      LOG_DEBUG("Consumer consuming from topic(s) {} closed.", Topics);
     }
   }
 }
 
 void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
                                     int64_t Offset) {
-  Logger->info("Consumer::addPartitionAtOffset()  topic: {},  partitionId: {}, "
+  LOG_INFO("Consumer::addPartitionAtOffset()  topic: {},  partitionId: {}, "
                "offset: {}",
                Topic, PartitionId, Offset);
   std::vector<RdKafka::TopicPartition *> Assignments;
   auto ErrorCode = KafkaConsumer->assignment(Assignments);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    Logger->error("Could not assign to {}. Could not get current assignments.",
+    LOG_ERROR("Could not assign to {}. Could not get current assignments.",
                   Topic);
     throw std::runtime_error(
         fmt::format("Could not assign topic-partition of topic {}. Could not "
@@ -56,7 +56,7 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
       RdKafka::TopicPartition::create(Topic, PartitionId, Offset));
   auto ReturnCode = KafkaConsumer->assign(Assignments);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    Logger->error("Could not assign to {}", Topic);
+    LOG_ERROR("Could not assign to {}", Topic);
     throw std::runtime_error(fmt::format(
         "Could not assign topic-partition of topic {}, RdKafka error: \"{}\"",
         Topic, err2str(ReturnCode)));
@@ -67,11 +67,11 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
 }
 
 void Consumer::addTopic(std::string const &Topic) {
-  Logger->info("Consumer::addTopic()  topic: {}", Topic);
+  LOG_INFO("Consumer::addTopic()  topic: {}", Topic);
   std::vector<std::string> Topics;
   auto ErrorCode = KafkaConsumer->subscription(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    Logger->error("Could not get current topic subscriptions.");
+    LOG_ERROR("Could not get current topic subscriptions.");
     throw std::runtime_error(fmt::format(
         "Could not get current topic subscriptions. RdKafka error: \"{}\"",
         err2str(ErrorCode)));
@@ -79,7 +79,7 @@ void Consumer::addTopic(std::string const &Topic) {
   Topics.emplace_back(Topic);
   ErrorCode = KafkaConsumer->subscribe(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    Logger->error("Unable to add topic \"{}\" to list of subscribed topics.",
+    LOG_ERROR("Unable to add topic \"{}\" to list of subscribed topics.",
                   Topic);
     throw std::runtime_error(
         fmt::format("Unable to add topic \"{}\" to list of subscribed topics. "

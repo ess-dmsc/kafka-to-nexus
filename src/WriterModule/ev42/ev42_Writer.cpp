@@ -103,7 +103,7 @@ InitResult ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
     }
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    Logger->error("ev42 could not init_hdf hdf_parent: {}  trace: {}",
+    LOG_ERROR("ev42 could not init_hdf hdf_parent: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
     return WriterModule::InitResult::ERROR;
   }
@@ -123,7 +123,7 @@ WriterModule::InitResult ev42_Writer::reopen(hdf5::node::Group &HDFGroup) {
       reopenAdcDatasets(HDFGroup);
     }
   } catch (std::exception &E) {
-    Logger->error(
+    LOG_ERROR(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -149,7 +149,7 @@ void ev42_Writer::write(FlatbufferMessage const &Message) {
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->detector_id()));
   if (EventMsgFlatbuffer->time_of_flight()->size() !=
       EventMsgFlatbuffer->detector_id()->size()) {
-    Logger->warn("written data lengths differ");
+    LOG_WARN("written data lengths differ");
   }
   auto CurrentRefTime = EventMsgFlatbuffer->pulse_time();
   auto CurrentNumberOfEvents = EventMsgFlatbuffer->detector_id()->size();

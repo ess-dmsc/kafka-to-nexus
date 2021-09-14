@@ -280,7 +280,7 @@ public:
     ++CurrentExtent[0];
     Shape.insert(Shape.begin(), 1);
     if (Shape.size() != CurrentExtent.size()) {
-      Logger->error(
+      LOG_ERROR(
           "Data has {} dimension(s) and dataset has {} (+1) dimensions.",
           Shape.size() - 1, CurrentExtent.size() - 1);
       throw std::runtime_error(
@@ -288,12 +288,12 @@ public:
     }
     for (size_t i = 1; i < Shape.size(); i++) {
       if (Shape[i] > CurrentExtent[i]) {
-        Logger->warn("Dimension {} of new data is larger than that of the "
+        LOG_WARN("Dimension {} of new data is larger than that of the "
                      "dataset. Extending dataset.",
                      i - 1);
         CurrentExtent[i] = Shape[i];
       } else if (Shape[i] < CurrentExtent[i]) {
-        Logger->warn("Dimension {} of new data is smaller than that of "
+        LOG_WARN("Dimension {} of new data is smaller than that of "
                      "the dataset. Using 0 as a filler.",
                      i - 1);
       }
@@ -302,9 +302,6 @@ public:
     hdf5::dataspace::Hyperslab Selection{{Origin}, {Shape}};
     write(NewData, Selection);
   }
-
-protected:
-  SharedLogger Logger = getLogger();
 };
 
 /// h5cpp dataset class that implements methods for appending data.
@@ -331,7 +328,7 @@ public:
                                hdf5::dataspace::Simple::UNLIMITED);
       std::vector<hsize_t> VectorChunkSize;
       if (ChunkSize.empty()) {
-        Logger->warn("No chunk size given. Using the default value 1024.");
+        LOG_WARN("No chunk size given. Using the default value 1024.");
         ChunkSize.emplace_back(1024);
       }
       if (ChunkSize.size() == Shape.size()) {
@@ -347,7 +344,7 @@ public:
         }
         VectorChunkSize[0] = NrOfRows;
       } else {
-        Logger->error("Unable to reconcile a data shape with {} dimensions "
+        LOG_ERROR("Unable to reconcile a data shape with {} dimensions "
                       "and chunk size with {} dimensions. Using default "
                       "values.",
                       Shape.size(), ChunkSize.size());

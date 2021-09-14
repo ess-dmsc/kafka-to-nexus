@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "helper.h"
-#include <fstream>
 #include <unistd.h>
 
 #include <algorithm>

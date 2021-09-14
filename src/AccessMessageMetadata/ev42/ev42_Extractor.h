@@ -18,9 +18,6 @@ public:
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
-
-private:
-  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 
 } // namespace AccessMessageMetadata

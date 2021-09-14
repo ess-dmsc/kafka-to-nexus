@@ -80,7 +80,7 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
     (*ModuleErrorCounters[UsedHash])++;
   } catch (std::exception &E) {
     WriteErrors++;
-    Log->critical("Unknown file writing error: {}", E.what());
+    LOG_ERROR("Unknown file writing error: {}", E.what());
   }
 }
 

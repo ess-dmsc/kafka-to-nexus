@@ -13,15 +13,14 @@
 namespace Kafka {
 void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
                     Kafka::BrokerSettings Settings) {
-  SharedLogger Logger = spdlog::get("filewriterlogger");
   std::string ErrorString;
   for (const auto &ConfigurationItem : Settings.KafkaConfiguration) {
-    Logger->debug("set config: {} = {}", ConfigurationItem.first,
+    LOG_DEBUG("set config: {} = {}", ConfigurationItem.first,
                   ConfigurationItem.second);
     if (RdKafka::Conf::ConfResult::CONF_OK !=
         RdKafkaConfiguration->set(ConfigurationItem.first,
                                   ConfigurationItem.second, ErrorString)) {
-      Logger->warn("Failure setting config: {} = {}", ConfigurationItem.first,
+      LOG_WARN("Failure setting config: {} = {}", ConfigurationItem.first,
                    ConfigurationItem.second);
     }
   }
