@@ -1,6 +1,4 @@
-# *NDAr* EPICS area detector data
-
-__Note: This writer module is deprecated and has been replaced by the ADAr writer module.__
+# *ADAr* EPICS area detector data
 
 ## Stream configuration fields
 
@@ -23,7 +21,7 @@ Example `nexus_structure` to write sample environment wave forms:
   "nexus_structure": {
     "children": [
       {
-        "module": "NDAr",
+        "module": "ADAr",
         "config": {
           "topic": "the_kafka_topic",
           "source": "the_source_name",
