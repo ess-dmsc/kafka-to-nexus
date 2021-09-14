@@ -49,8 +49,7 @@ HDFFile::~HDFFile() {
 }
 
 void HDFFile::createFileInRegularMode() {
-  hdfFile() = hdf5::file::create(H5FileName,
-                                 hdf5::file::AccessFlags::EXCLUSIVE,
+  hdfFile() = hdf5::file::create(H5FileName, hdf5::file::AccessFlags::EXCLUSIVE,
                                  FileCreationList, FileAccessList);
 }
 
@@ -126,8 +125,7 @@ void HDFFile::closeFile() {
 
 void HDFFile::openFileInSWMRMode() {
   LOG_DEBUG("Opening file \"{}\" in SWMR mode.", H5FileName);
-  hdfFile() = hdf5::file::open(H5FileName,
-                               hdf5::file::AccessFlags::READWRITE,
+  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE,
                                FileAccessList);
 }
 
