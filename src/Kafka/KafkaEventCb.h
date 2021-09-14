@@ -20,7 +20,7 @@ public:
       Log::FmtMsg(LogLevels.at(Event.severity()),
                   "Kafka EVENT_ERROR id: {}  broker: {}  errorname: {}  "
                   "errorstring: {}",
-                  Event.broker_id(), Event.broker_name().c_str(),
+                  Event.broker_id(), Event.broker_name(),
                   RdKafka::err2str(Event.err()), Event.str());
       break;
     case RdKafka::Event::EVENT_STATS:

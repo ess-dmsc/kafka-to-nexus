@@ -34,7 +34,7 @@ CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
                           bool Defaulted);
 
 /// \brief Parsing log level from user's input.
-/// Look for \p LogLevelString value in a map containing spdlog levels.
+/// Look for \p LogLevelString value in a map containing log levels.
 /// \param LogLevelString User's input
 /// \param LogLevelResult Result of parsing returned through reference
 /// \return bool signalizing successful parsing

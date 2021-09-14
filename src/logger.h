@@ -77,26 +77,26 @@ void setUpLogging(const Log::Severity &LoggingLevel,
 
 template <typename... Args>
 void LOG_ERROR(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Error, fmt, args...);
+  Log::Msg(Log::Severity::Error, fmt::format(fmt, args...));
 }
 
 template <typename... Args>
 void LOG_WARN(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Warning, fmt, args...);
+  Log::Msg(Log::Severity::Warning, fmt::format(fmt, args...));
 }
 
 template <typename... Args>
 void LOG_INFO(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Info, fmt, args...);
+  Log::Msg(Log::Severity::Info, fmt::format(fmt, args...));
 }
 
 template <typename... Args>
 void LOG_DEBUG(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Debug, fmt, args...);
+  Log::Msg(Log::Severity::Debug, fmt::format(fmt, args...));
 }
 
 template <typename... Args>
 void LOG_TRACE(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Debug, fmt, args...);
+  Log::Msg(Log::Severity::Debug, fmt::format(fmt, args...));
 // Fix this, what do we do about log levels?
 }

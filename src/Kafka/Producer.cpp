@@ -62,7 +62,7 @@ Producer::Producer(BrokerSettings const &Settings)
   }
 
   LOG_INFO("new Kafka producer: {}, with brokers: {}", ProducerPtr->name(),
-               ProducerBrokerSettings.Address.c_str());
+               ProducerBrokerSettings.Address);
 }
 
 void Producer::poll() {

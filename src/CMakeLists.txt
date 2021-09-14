@@ -15,6 +15,7 @@ find_package(h5cpp REQUIRED)
 find_package(streaming-data-types)
 find_package(date REQUIRED)
 find_package(asio REQUIRED)
+find_package(graylog-logger REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 
@@ -47,6 +48,7 @@ set(libraries_common
         asio::asio
         pthread
         z
+        graylog-logger::graylog-logger
         )
 
 if (APPLE)
@@ -55,17 +57,6 @@ if (APPLE)
 endif()
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
-
-set(USE_GRAYLOG_LOGGER ON CACHE BOOL "Set to OFF to disable log reporting to graylog")
-if (${USE_GRAYLOG_LOGGER})
-  find_package(spdlog-graylog REQUIRED)
-  message(STATUS "Using graylog_logger")
-  list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
-  list(APPEND libraries_common spdlog-graylog::spdlog-graylog)
-else()
-  find_package(spdlog REQUIRED)
-  list(APPEND libraries_common spdlog::spdlog)
-endif()
 
 set(kafka_to_nexus_SRC
         StreamController.cpp
