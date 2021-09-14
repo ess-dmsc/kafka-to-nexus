@@ -121,25 +121,31 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
 
 bool parseLogLevel(std::vector<std::string> LogLevelString,
                    Log::Severity &LogLevelResult) {
+  auto ToLower = [](auto InString) {
+    std::transform(InString.begin(), InString.end(), InString.begin(),
+                   [](auto C) { return std::tolower(C); });
+    return InString;
+  };
   std::map<std::string, Log::Severity> LevelMap{
-      {"Critical", Log::Severity::Critical},
-      {"Error", Log::Severity::Error},
-      {"Warning", Log::Severity::Warning},
-      {"Info", Log::Severity::Info},
-      {"Debug", Log::Severity::Debug}};
+      {"critical", Log::Severity::Critical},
+      {"error", Log::Severity::Error},
+      {"warning", Log::Severity::Warning},
+      {"info", Log::Severity::Info},
+      {"debug", Log::Severity::Debug},
+      {"trace", Log::Severity::Trace}};
 
   if (LogLevelString.size() != 1) {
     return false;
   }
   try {
-    LogLevelResult = LevelMap.at(LogLevelString.at(0));
+    LogLevelResult = LevelMap.at(ToLower(LogLevelString.at(0)));
     return true;
   } catch (std::out_of_range &e) {
     // Do nothing
   }
   try {
     int TempLogMessageLevel = std::stoi(LogLevelString.at(0));
-    if (TempLogMessageLevel < 0 or TempLogMessageLevel > 5) {
+    if (TempLogMessageLevel < 0 or TempLogMessageLevel > 6) {
       return false;
     }
     LogLevelResult = Log::Severity(TempLogMessageLevel);

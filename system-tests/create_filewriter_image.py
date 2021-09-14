@@ -117,7 +117,7 @@ def run_conan(container):
     print("Running conan")
     container.exec_run("mkdir build", workdir="/home/jenkins/")
     execute_command(
-        "conan install --build=outdated ../conan", "/home/jenkins/build", container
+        "conan install --build=outdated ..", "/home/jenkins/build", container
     )
     execute_command(
         "cp {} {}".format(CONAN_HASH_NAME_NEW, CONAN_HASH_NAME_OLD),

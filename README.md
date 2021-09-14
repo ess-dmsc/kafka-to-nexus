@@ -95,7 +95,7 @@ From within the file-writer's top directory:
 ```bash
 mkdir _build
 cd _build
-conan install ../conan --build=missing
+conan install .. --build=missing
 cmake ..
 make
 ```
