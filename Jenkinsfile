@@ -4,17 +4,12 @@ import ecdcpipeline.PipelineBuilder
 
 project = "kafka-to-nexus"
 
-
-// 'no_graylog' builds code with plain spdlog conan package instead of ess-dmsc spdlog-graylog.
-// It fails to build in case graylog functionality was used without prior checking if graylog was available.
 clangformat_os = "ubuntu2004"
 test_and_coverage_os = "ubuntu2004"
 release_os = "centos7-release"
-no_graylog = "centos7-no_graylog"
 
 container_build_nodes = [
   'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'ubuntu2004': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
 ]
 
@@ -59,35 +54,24 @@ builders = pipeline_builder.createBuilders { container ->
       // Fixed at HEAD, so can be removed when flatbuffers 1.12 is released
       // Explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
       container.sh """
-        sed -i '10iflatbuffers/1.10.0@google/stable' ${pipeline_builder.project}/conan/conanfile.txt
+        sed -i '10iflatbuffers/1.10.0@google/stable' ${pipeline_builder.project}/conanfile.txt
         conan install "boost_build/1.69.0@bincrafters/stable" --build
       """
     }
 
     def conan_remote = "ess-dmsc-local"
-    if (container.key == no_graylog) {
-      container.sh """
-        mkdir build
-          cd build
-          conan remote add \
-            --insert 0 \
-            ${conan_remote} ${local_conan_server}
-          conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile_no_graylog.txt
-        """
-    } else {
     container.sh """
       mkdir build
       cd build
       conan remote add \
         --insert 0 \
         ${conan_remote} ${local_conan_server}
-      conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile.txt
+      conan install --build=outdated ../${pipeline_builder.project}/conanfile.txt
     """
-    }
   }  // stage
 
   pipeline_builder.stage("${container.key}: Configure") {
-    if (container.key != release_os && container.key != no_graylog) {
+    if (container.key != release_os) {
       def coverage_on
       if (container.key == test_and_coverage_os) {
         coverage_on = '-DCOV=ON'
@@ -108,12 +92,6 @@ builders = pipeline_builder.createBuilders { container ->
         cmake ${coverage_on} ${doxygen_on} -GNinja ../${pipeline_builder.project}
       """
     } else {
-      def graylog_cmake_option
-      if (container.key == no_graylog) {
-        graylog_cmake_option = '-DUSE_GRAYLOG_LOGGER=OFF'
-      } else {
-        graylog_cmake_option = '-DUSE_GRAYLOG_LOGGER=ON'
-      }
 
       container.sh """
         cd build
@@ -123,7 +101,6 @@ builders = pipeline_builder.createBuilders { container ->
           -DCMAKE_BUILD_TYPE=Release \
           -DCONAN=MANUAL \
           -DCMAKE_SKIP_RPATH=FALSE \
-          ${graylog_cmake_option} \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
           -DBUILD_TESTS=FALSE \
@@ -184,7 +161,7 @@ builders = pipeline_builder.createBuilders { container ->
         }
       }
 
-    } else if (container.key != release_os && container.key != no_graylog) {
+    } else if (container.key != release_os) {
       def test_dir
       test_dir = 'bin'
 
