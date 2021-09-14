@@ -11,10 +11,10 @@
 #include "MetaData/HDF5DataWriter.h"
 #include "WriterRegistrar.h"
 #include "json.h"
+#include "logger.h"
 #include <algorithm>
 #include <cctype>
 #include <f142_logdata_generated.h>
-#include "logger.h"
 
 namespace WriterModule {
 namespace f142 {
@@ -83,7 +83,7 @@ void f142_Writer::config_post_processing() {
     ElementType = TypeMap.at(ToLower(DataType.getValue()));
   } catch (std::out_of_range &E) {
     LOG_WARN("Unknown data type with name \"{}\". Using double.",
-                 DataType.getValue());
+             DataType.getValue());
   }
 }
 
@@ -115,7 +115,7 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("f142 could not init_hdf hdf_parent: {}  trace: {}",
-                  static_cast<std::string>(HDFGroup.link().path()), message);
+              static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
 

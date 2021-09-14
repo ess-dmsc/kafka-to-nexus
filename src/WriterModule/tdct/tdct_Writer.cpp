@@ -43,8 +43,8 @@ InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     LOG_ERROR("Unable to initialise chopper time stamp tree in "
-                  "HDF file with error message: \"{}\"",
-                  E.what());
+              "HDF file with error message: \"{}\"",
+              E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
@@ -72,8 +72,7 @@ void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto TempTimePtr = FbPointer->timestamps()->data();
   auto TempTimeSize = FbPointer->timestamps()->size();
   if (TempTimeSize == 0) {
-    LOG_WARN(
-        "Received a flatbuffer with zero (0) timestamps elements in it.");
+    LOG_WARN("Received a flatbuffer with zero (0) timestamps elements in it.");
     return;
   }
   hdf5::ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);

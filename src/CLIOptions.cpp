@@ -122,9 +122,11 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
 bool parseLogLevel(std::vector<std::string> LogLevelString,
                    Log::Severity &LogLevelResult) {
   std::map<std::string, Log::Severity> LevelMap{
-    {"Critical", Log::Severity::Critical}, {"Error", Log::Severity::Error},
-    {"Warning", Log::Severity::Warning},      {"Info", Log::Severity::Info},
-    {"Debug", Log::Severity::Debug}};
+      {"Critical", Log::Severity::Critical},
+      {"Error", Log::Severity::Error},
+      {"Warning", Log::Severity::Warning},
+      {"Info", Log::Severity::Info},
+      {"Debug", Log::Severity::Debug}};
 
   if (LogLevelString.size() != 1) {
     return false;

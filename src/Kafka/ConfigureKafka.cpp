@@ -16,12 +16,12 @@ void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
   std::string ErrorString;
   for (const auto &ConfigurationItem : Settings.KafkaConfiguration) {
     LOG_DEBUG("set config: {} = {}", ConfigurationItem.first,
-                  ConfigurationItem.second);
+              ConfigurationItem.second);
     if (RdKafka::Conf::ConfResult::CONF_OK !=
         RdKafkaConfiguration->set(ConfigurationItem.first,
                                   ConfigurationItem.second, ErrorString)) {
       LOG_WARN("Failure setting config: {} = {}", ConfigurationItem.first,
-                   ConfigurationItem.second);
+               ConfigurationItem.second);
     }
   }
 }

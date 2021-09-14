@@ -62,16 +62,15 @@ Producer::Producer(BrokerSettings const &Settings)
   }
 
   LOG_INFO("new Kafka producer: {}, with brokers: {}", ProducerPtr->name(),
-               ProducerBrokerSettings.Address);
+           ProducerBrokerSettings.Address);
 }
 
 void Producer::poll() {
   auto EventsHandled = ProducerPtr->poll(ProducerBrokerSettings.PollTimeoutMS);
   auto OutputQueueLength = outputQueueLength();
-  LOG_DEBUG(
-      "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
-      ProducerID, ProducerBrokerSettings.Address, EventsHandled,
-      OutputQueueLength);
+  LOG_DEBUG("IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
+            ProducerID, ProducerBrokerSettings.Address, EventsHandled,
+            OutputQueueLength);
   Stats.poll_served += EventsHandled;
   Stats.out_queue = OutputQueueLength;
 }

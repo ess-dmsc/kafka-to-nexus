@@ -9,17 +9,18 @@
 
 #include "logger.h"
 #include "URI.h"
-#include <string>
+#include <date/date.h>
+#include <graylog_logger/ConsoleInterface.hpp>
 #include <graylog_logger/FileInterface.hpp>
 #include <graylog_logger/GraylogInterface.hpp>
-#include <graylog_logger/ConsoleInterface.hpp>
-#include <date/date.h>
+#include <string>
 
 std::string consoleFormatter(Log::LogMessage const &Msg) {
-  std::array<std::string, 8> const sevToStr = {{"EMERGENCY", "ALERT", "CRITICAL",
-                                          "ERROR", "WARNING", "Notice", "Info",
-                                          "Debug"}};
-  return date::format("[%H:%M:%S] ", Msg.Timestamp) + "[" + sevToStr[int(Msg.SeverityLevel)] + "] " + Msg.MessageString;
+  std::array<std::string, 8> const sevToStr = {{"EMERGENCY", "ALERT",
+                                                "CRITICAL", "ERROR", "WARNING",
+                                                "Notice", "Info", "Debug"}};
+  return date::format("[%H:%M:%S] ", Msg.Timestamp) + "[" +
+         sevToStr[int(Msg.SeverityLevel)] + "] " + Msg.MessageString;
 }
 
 void setUpLogging(Log::Severity const &LoggingLevel,
@@ -30,7 +31,8 @@ void setUpLogging(Log::Severity const &LoggingLevel,
     Log::AddLogHandler(std::make_shared<Log::FileInterface>(LogFileName));
   }
   if (GraylogURI.getURIString() != "/") {
-    Log::AddLogHandler(std::make_shared<Log::GraylogInterface>(GraylogURI.Host, GraylogURI.Port));
+    Log::AddLogHandler(std::make_shared<Log::GraylogInterface>(
+        GraylogURI.Host, GraylogURI.Port));
   }
   auto TempConsoleInterface = std::make_shared<Log::ConsoleInterface>();
   TempConsoleInterface->setMessageStringCreatorFunction(consoleFormatter);

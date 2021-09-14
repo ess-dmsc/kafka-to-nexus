@@ -280,22 +280,21 @@ public:
     ++CurrentExtent[0];
     Shape.insert(Shape.begin(), 1);
     if (Shape.size() != CurrentExtent.size()) {
-      LOG_ERROR(
-          "Data has {} dimension(s) and dataset has {} (+1) dimensions.",
-          Shape.size() - 1, CurrentExtent.size() - 1);
+      LOG_ERROR("Data has {} dimension(s) and dataset has {} (+1) dimensions.",
+                Shape.size() - 1, CurrentExtent.size() - 1);
       throw std::runtime_error(
           "Rank (dimensions) of data to be written is wrong.");
     }
     for (size_t i = 1; i < Shape.size(); i++) {
       if (Shape[i] > CurrentExtent[i]) {
         LOG_WARN("Dimension {} of new data is larger than that of the "
-                     "dataset. Extending dataset.",
-                     i - 1);
+                 "dataset. Extending dataset.",
+                 i - 1);
         CurrentExtent[i] = Shape[i];
       } else if (Shape[i] < CurrentExtent[i]) {
         LOG_WARN("Dimension {} of new data is smaller than that of "
-                     "the dataset. Using 0 as a filler.",
-                     i - 1);
+                 "the dataset. Using 0 as a filler.",
+                 i - 1);
       }
     }
     Dataset::extent(CurrentExtent);
@@ -345,9 +344,9 @@ public:
         VectorChunkSize[0] = NrOfRows;
       } else {
         LOG_ERROR("Unable to reconcile a data shape with {} dimensions "
-                      "and chunk size with {} dimensions. Using default "
-                      "values.",
-                      Shape.size(), ChunkSize.size());
+                  "and chunk size with {} dimensions. Using default "
+                  "values.",
+                  Shape.size(), ChunkSize.size());
         VectorChunkSize = Shape;
         VectorChunkSize[0] = 1024;
       }

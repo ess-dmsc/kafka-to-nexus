@@ -50,7 +50,7 @@ void NDAr_Writer::config_post_processing() {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
     LOG_ERROR("Unknown type ({}), using the default (double).",
-                  DataType.getValue());
+              DataType.getValue());
   }
 }
 
@@ -73,8 +73,8 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     LOG_ERROR("Unable to initialise areaDetector data tree in "
-                  "HDF file with error message: \"{}\"",
-                  E.what());
+              "HDF file with error message: \"{}\"",
+              E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;

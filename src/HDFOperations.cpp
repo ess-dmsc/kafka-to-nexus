@@ -380,19 +380,18 @@ void createHDFStructures(
                                   HDFStreamInfo, Path);
             }
           } else {
-            LOG_DEBUG(
-                "Ignoring children as they do not exist or are invalid.");
+            LOG_DEBUG("Ignoring children as they do not exist or are invalid.");
           }
           Path.pop_back();
         } catch (std::exception const &e) {
           LOG_ERROR("Failed to create group  Name: {}. Message was: {}",
-                        CNode.Name.getValue(), e.what());
+                    CNode.Name.getValue(), e.what());
         }
       } else if (CNode.Type.getUsedKey() == "link") {
         // Do nothing for now
       } else {
         LOG_ERROR("Unknown hdf node of type {}. Ignoring.",
-                      CNode.Type.getValue());
+                  CNode.Type.getValue());
       }
     } else if (CNode.Type.getUsedKey() == "module") {
       if (CNode.Type.getValue() == "dataset") {
@@ -411,8 +410,8 @@ void createHDFStructures(
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
     LOG_ERROR("Failed to create structure with path \"{}\" ({} levels "
-                  "deep). Message was: {}",
-                  std::string(Parent.link().path()), Level, e.what());
+              "deep). Message was: {}",
+              std::string(Parent.link().path()), Level, e.what());
   }
 }
 

@@ -46,8 +46,8 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     LOG_ERROR("Unable to initialise fast sample environment data tree in "
-                  "HDF file with error message: \"{}\"",
-                  E.what());
+              "HDF file with error message: \"{}\"",
+              E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
@@ -83,7 +83,7 @@ void senv_Writer::config_post_processing() {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
     LOG_ERROR("Unknown type ({}), using the default (int64).",
-                  DataType.getValue());
+              DataType.getValue());
   }
 }
 

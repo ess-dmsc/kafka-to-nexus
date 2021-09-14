@@ -1,19 +1,18 @@
 #include "Metrics/InternalMetric.h"
 #include "Metrics/LogSink.h"
 #include "Metrics/Metric.h"
+#include <graylog_logger/ConsoleInterface.hpp>
+#include <graylog_logger/LogUtil.hpp>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
-#include <graylog_logger/LogUtil.hpp>
-#include <graylog_logger/ConsoleInterface.hpp>
 
 using trompeloeil::_;
 using trompeloeil::re;
 
-bool messageContainsSubstring(
-    Log::LogMessage const &InputStringMessage,
-    std::string const &InputSubstring) {
-  return InputStringMessage.MessageString
-             .find(InputSubstring) != std::string::npos;
+bool messageContainsSubstring(Log::LogMessage const &InputStringMessage,
+                              std::string const &InputSubstring) {
+  return InputStringMessage.MessageString.find(InputSubstring) !=
+         std::string::npos;
 }
 
 class MockLogger : public Log::BaseLogHandler {
@@ -47,7 +46,6 @@ TEST_F(LogSinkTest, LogSinkReportsSinkTypeAsLog) {
   LogSink TestLogSink{};
   ASSERT_EQ(TestLogSink.getType(), LogTo::LOG_MSG);
 }
-
 
 TEST_F(LogSinkTest, NothingIsLoggedIfMetricDidNotIncrement) {
   LogSink TestLogSink{};

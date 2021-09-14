@@ -9,12 +9,12 @@
 
 #pragma once
 
+#include <fmt/format.h>
+#include <graylog_logger/Log.hpp>
 #include <nlohmann/json.hpp>
 #include <numeric>
 #include <string>
 #include <vector>
-#include <fmt/format.h>
-#include <graylog_logger/Log.hpp>
 
 template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
   static constexpr auto parse(format_parse_context &ctx) {

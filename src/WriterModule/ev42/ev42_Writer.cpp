@@ -104,7 +104,7 @@ InitResult ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("ev42 could not init_hdf hdf_parent: {}  trace: {}",
-                  static_cast<std::string>(HDFGroup.link().path()), message);
+              static_cast<std::string>(HDFGroup.link().path()), message);
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;

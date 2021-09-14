@@ -30,7 +30,7 @@ InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("ep00 could not init_hdf HDFGroup: {}  trace: {}",
-                  static_cast<std::string>(HDFGroup.link().path()), message);
+              static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
   return InitResult::OK;

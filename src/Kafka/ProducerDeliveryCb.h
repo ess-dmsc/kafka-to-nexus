@@ -23,8 +23,8 @@ public:
 
   void dr_cb(RdKafka::Message &Message) override {
     if (Message.err() != RdKafka::ERR_NO_ERROR) {
-      LOG_ERROR("ERROR on delivery, topic {}, {} [{}]",
-                    Message.topic_name(), Message.err(), Message.errstr());
+      LOG_ERROR("ERROR on delivery, topic {}, {} [{}]", Message.topic_name(),
+                Message.err(), Message.errstr());
       ++Stats.produce_cb_fail;
     } else {
       ++Stats.produce_cb;

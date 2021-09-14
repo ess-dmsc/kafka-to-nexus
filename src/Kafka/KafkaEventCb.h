@@ -36,23 +36,24 @@ public:
           Event.str());
       break;
     default:
-      Log::FmtMsg(LogLevels.at(Event.severity()),
-                  "Kafka Event {} ({}): {}", Event.type(),
-                  RdKafka::err2str(Event.err()), Event.str());
+      Log::FmtMsg(LogLevels.at(Event.severity()), "Kafka Event {} ({}): {}",
+                  Event.type(), RdKafka::err2str(Event.err()), Event.str());
       break;
     }
   };
 
 private:
   std::map<RdKafka::Event::Severity, Log::Severity> LogLevels{
-    {RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG, Log::Severity::Debug},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG, Log::Severity::Debug},
       {RdKafka::Event::Severity::EVENT_SEVERITY_INFO, Log::Severity::Info},
       {RdKafka::Event::Severity::EVENT_SEVERITY_NOTICE, Log::Severity::Notice},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_WARNING, Log::Severity::Warning},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_WARNING,
+       Log::Severity::Warning},
       {RdKafka::Event::Severity::EVENT_SEVERITY_ERROR, Log::Severity::Error},
       {RdKafka::Event::Severity::EVENT_SEVERITY_CRITICAL,
        Log::Severity::Critical},
       {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT, Log::Severity::Critical},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG, Log::Severity::Critical}};
+      {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG,
+       Log::Severity::Critical}};
 };
 } // namespace Kafka

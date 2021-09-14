@@ -42,8 +42,8 @@ InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     LOG_ERROR("Unable to initialise areaDetector data tree in "
-                  "HDF file with error message: \"{}\"",
-                  E.what());
+              "HDF file with error message: \"{}\"",
+              E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
@@ -79,8 +79,7 @@ void ns10_Writer::write(const FileWriter::FlatbufferMessage &Message) {
     double ConvertedValue = std::stod(Value->str());
     Values.appendElement(ConvertedValue);
   } catch (std::invalid_argument const &Exception) {
-    LOG_ERROR("Could not convert string value to double: '{}'",
-                  Value->str());
+    LOG_ERROR("Could not convert string value to double: '{}'", Value->str());
     throw;
   } catch (std::out_of_range const &Exception) {
     LOG_ERROR("Converted value too big for result type: {}", Value->str());

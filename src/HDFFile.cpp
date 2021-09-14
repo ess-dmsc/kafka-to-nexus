@@ -49,7 +49,9 @@ HDFFile::~HDFFile() {
 }
 
 void HDFFile::createFileInRegularMode() {
-  hdfFile() = hdf5::file::create(H5FileName, hdf5::file::AccessFlags::EXCLUSIVE | hdf5::file::AccessFlags::SWMR_WRITE,
+  hdfFile() = hdf5::file::create(H5FileName,
+                                 hdf5::file::AccessFlags::EXCLUSIVE |
+                                     hdf5::file::AccessFlags::SWMR_WRITE,
                                  FileCreationList, FileAccessList);
 }
 
@@ -97,8 +99,8 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
     LOG_ERROR("Failed to initialize  file={}  trace:\n{}",
-                     hdfFile().id().file_name().string(),
-                     hdf5::error::print_nested(E));
+              hdfFile().id().file_name().string(),
+              hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
 }
@@ -106,8 +108,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
 void HDFFile::closeFile() {
   try {
     if (hdfFile().is_valid()) {
-      LOG_DEBUG("Closing file \"{}\".",
-                    hdfFile().id().file_name().string());
+      LOG_DEBUG("Closing file \"{}\".", hdfFile().id().file_name().string());
       hdfFile().close();
       hdfFile() = hdf5::file::File();
     } else {
@@ -116,7 +117,7 @@ void HDFFile::closeFile() {
   } catch (const std::runtime_error &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG_ERROR("Got error when closing file \"{}\". Failure was: {}",
-                  hdfFile().id().file_name().string(), Trace);
+              hdfFile().id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
         fs::current_path().string(), hdfFile().id().file_name().string(),
@@ -126,7 +127,9 @@ void HDFFile::closeFile() {
 
 void HDFFile::openFileInSWMRMode() {
   LOG_DEBUG("Opening file \"{}\" in SWMR mode.", H5FileName);
-  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE | hdf5::file::AccessFlags::SWMR_WRITE,
+  hdfFile() = hdf5::file::open(H5FileName,
+                               hdf5::file::AccessFlags::READWRITE |
+                                   hdf5::file::AccessFlags::SWMR_WRITE,
                                FileAccessList);
 }
 

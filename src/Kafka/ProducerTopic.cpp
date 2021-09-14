@@ -70,7 +70,7 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
   case RdKafka::ERR__QUEUE_FULL:
     ++ProducerStats.local_queue_full;
     LOG_WARN("Producer queue full, outq: {}",
-                 KafkaProducer->outputQueueLength());
+             KafkaProducer->outputQueueLength());
     break;
 
   case RdKafka::ERR_MSG_SIZE_TOO_LARGE:
@@ -81,7 +81,7 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
   default:
     ++ProducerStats.produce_fail;
     LOG_ERROR("Publishing message on topic \"{}\" failed",
-                  RdKafkaTopic->name());
+              RdKafkaTopic->name());
     break;
   }
   return 1;

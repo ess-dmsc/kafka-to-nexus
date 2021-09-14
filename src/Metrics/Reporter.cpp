@@ -16,8 +16,7 @@ void Reporter::reportMetrics() {
     if (SinkNameMap.find(MetricSink->getType()) != SinkNameMap.end()) {
       MetricsSinkName = SinkNameMap[MetricSink->getType()];
     }
-    LOG_ERROR("Unable to push metrics to the {} sink.",
-                       MetricsSinkName);
+    LOG_ERROR("Unable to push metrics to the {} sink.", MetricsSinkName);
   }
   AsioTimer.expires_at(AsioTimer.expires_at() + Period);
   AsioTimer.async_wait([this](std::error_code const &Error) {
