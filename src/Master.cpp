@@ -99,7 +99,10 @@ void Master::setToIdle() {
         CurrentFileName, CurrentMetadata,
         CurrentStreamController->errorMessage());
   } else {
-    CommandAndControl->sendHasStoppedMessage(CurrentFileName, CurrentMetadata);
+    auto CurrentJSONStatus = nlohmann::json::parse(Reporter->createJSONReport());
+    auto StaticMetaData = nlohmann::json::parse(CurrentMetadata);
+    CurrentJSONStatus.update(StaticMetaData);
+    CommandAndControl->sendHasStoppedMessage(CurrentFileName, CurrentJSONStatus.dump());
   }
   CurrentStreamController.reset(nullptr);
   CurrentState = WriterState::Idle;
