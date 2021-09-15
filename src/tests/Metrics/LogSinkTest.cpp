@@ -47,6 +47,7 @@ TEST_F(LogSinkTest, LogSinkReportsSinkTypeAsLog) {
   ASSERT_EQ(TestLogSink.getType(), LogTo::LOG_MSG);
 }
 
+// cppcheck-suppress syntaxError
 TEST_F(LogSinkTest, NothingIsLoggedIfMetricDidNotIncrement) {
   LogSink TestLogSink{};
   std::string const TestMetricName = "some_name";
