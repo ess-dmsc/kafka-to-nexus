@@ -26,7 +26,12 @@ std::string consoleFormatter(Log::LogMessage const &Msg) {
 void setUpLogging(Log::Severity const &LoggingLevel,
                   const std::string &LogFileName, const uri::URI &GraylogURI) {
   Log::SetMinimumSeverity(LoggingLevel);
-  Log::RemoveAllHandlers();
+  auto Handlers = Log::GetHandlers();
+  for (auto &Handler : Handlers) {
+    if (dynamic_cast<Log::ConsoleInterface*>(Handler.get()) != nullptr) {
+      dynamic_cast<Log::ConsoleInterface*>(Handler.get())->setMessageStringCreatorFunction(consoleFormatter);
+    }
+  }
   if (!LogFileName.empty()) {
     Log::AddLogHandler(std::make_shared<Log::FileInterface>(LogFileName));
   }
@@ -34,7 +39,4 @@ void setUpLogging(Log::Severity const &LoggingLevel,
     Log::AddLogHandler(std::make_shared<Log::GraylogInterface>(
         GraylogURI.Host, GraylogURI.Port));
   }
-  auto TempConsoleInterface = std::make_shared<Log::ConsoleInterface>();
-  TempConsoleInterface->setMessageStringCreatorFunction(consoleFormatter);
-  Log::AddLogHandler(TempConsoleInterface);
 }
