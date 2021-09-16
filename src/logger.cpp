@@ -28,8 +28,9 @@ void setUpLogging(Log::Severity const &LoggingLevel,
   Log::SetMinimumSeverity(LoggingLevel);
   auto Handlers = Log::GetHandlers();
   for (auto &Handler : Handlers) {
-    if (dynamic_cast<Log::ConsoleInterface*>(Handler.get()) != nullptr) {
-      dynamic_cast<Log::ConsoleInterface*>(Handler.get())->setMessageStringCreatorFunction(consoleFormatter);
+    if (dynamic_cast<Log::ConsoleInterface *>(Handler.get()) != nullptr) {
+      dynamic_cast<Log::ConsoleInterface *>(Handler.get())
+          ->setMessageStringCreatorFunction(consoleFormatter);
     }
   }
   if (!LogFileName.empty()) {
