@@ -19,8 +19,8 @@ std::string consoleFormatter(Log::LogMessage const &Msg) {
   std::array<std::string, 8> const sevToStr = {{"EMERGENCY", "ALERT",
                                                 "CRITICAL", "ERROR", "WARNING",
                                                 "Notice", "Info", "Debug"}};
-  return date::format("[%H:%M:%S] ", Msg.Timestamp) + "[" +
-         sevToStr[int(Msg.SeverityLevel)] + "] " + Msg.MessageString;
+  return fmt::format("{} [{}] {}", date::format("[%H:%M:%S] ", Msg.Timestamp),
+                     sevToStr[int(Msg.SeverityLevel)], Msg.MessageString);
 }
 
 void setUpLogging(Log::Severity const &LoggingLevel,
