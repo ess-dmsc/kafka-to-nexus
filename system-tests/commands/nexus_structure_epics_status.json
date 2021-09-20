@@ -12,6 +12,11 @@
           }
         }
       ]
+    },
+    {
+      "type": "group",
+      "name": "entry",
+      "children": []
     }
   ]
 }

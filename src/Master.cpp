@@ -101,7 +101,12 @@ void Master::setToIdle() {
   } else {
     auto CurrentJSONStatus =
         nlohmann::json::parse(Reporter->createJSONReport());
-    auto StaticMetaData = nlohmann::json::parse(CurrentMetadata);
+    auto StaticMetaData = nlohmann::json::object();
+    try {
+      StaticMetaData = nlohmann::json::parse(CurrentMetadata);
+    } catch (nlohmann::json::parse_error const &E) {
+      LOG_WARN("Failed to parse JSON metadata string from start message. Skipping.");
+    }
     CurrentJSONStatus.update(StaticMetaData);
     CommandAndControl->sendHasStoppedMessage(CurrentFileName,
                                              CurrentJSONStatus.dump());
