@@ -12,8 +12,8 @@
 /// \file
 /// \brief Implement classes required to implement the ADC file writing module.
 
-#include "HDFOperations.h"
 #include "NDAr_Writer.h"
+#include "HDFOperations.h"
 #include "WriterRegistrar.h"
 #include <NDAr_NDArray_schema_generated.h>
 #include <numeric>
