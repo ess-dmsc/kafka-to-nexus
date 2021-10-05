@@ -107,7 +107,8 @@ set(kafka_to_nexus_SRC
         JsonConfig/Field.cpp
         JsonConfig/FieldHandler.cpp
         SetThreadName.cpp
-        MetaData/Tracker.cpp)
+        MetaData/Tracker.cpp
+        MetaData/HDF5DataWriter.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h

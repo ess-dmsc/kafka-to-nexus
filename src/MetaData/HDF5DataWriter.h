@@ -57,6 +57,9 @@ void basicDatasetWriter(hdf5::node::Node Node, std::string Name,
   Dataset.appendElement(Value);
 }
 
+void basicStringDatasetWriter(hdf5::node::Node Node, std::string Name,
+                              std::string Value);
+
 template <class DataType>
 std::function<void(hdf5::node::Node, std::string, DataType)>
 getPathOffsetDatasetWriter(std::string PathOffset) {

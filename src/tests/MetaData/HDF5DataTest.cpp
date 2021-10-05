@@ -79,7 +79,7 @@ TEST_F(HDF5Data, StringAttributeWritten) {
 TEST_F(HDF5Data, StringDatasetWritten) {
   std::string Name{"someName"};
   std::string const Value{"hello"};
-  MetaData::basicDatasetWriter<std::string>(UsedGroup, Name, Value);
+  MetaData::basicStringDatasetWriter(UsedGroup, Name, Value);
   ASSERT_TRUE(UsedGroup.has_dataset(Name));
   auto Dataset = UsedGroup.get_dataset(Name);
   std::vector<std::string> ReadInto;

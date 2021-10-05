@@ -245,7 +245,6 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
 
 void writeStringDataset(hdf5::node::Group const &Parent,
                         const std::string &Name, nlohmann::json const &Values) {
-
   try {
     auto DataType = hdf5::datatype::String::variable();
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -256,7 +255,8 @@ void writeStringDataset(hdf5::node::Group const &Parent,
     auto Dataspace =
         hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
 
-    Parent.create_dataset(Name, DataType, Dataspace).write(StringArray.Data);
+    Parent.create_dataset(Name, DataType, Dataspace)
+        .write(StringArray.Data, DataType, Dataspace);
   } catch (const std::exception &e) {
     auto ErrorStr = fmt::format(
         "Failed to write variable-size string dataset {}/{}. Message was: {}",

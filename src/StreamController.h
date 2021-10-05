@@ -101,9 +101,9 @@ private:
   FileWriter::StreamerOptions KafkaSettings;
   MetaData::TrackerPtr MetaDataTracker;
   MetaData::Value<std::string> StartTimeMetaData{
-      "/entry/", "start_time", MetaData::basicDatasetWriter<std::string>};
+      "/entry/", "start_time", MetaData::basicStringDatasetWriter};
   MetaData::Value<std::string> EndTimeMetaData{
-      "/entry/", "end_time", MetaData::basicDatasetWriter<std::string>};
+      "/entry/", "end_time", MetaData::basicStringDatasetWriter};
   ThreadedExecutor Executor; // Must be last
 };
 

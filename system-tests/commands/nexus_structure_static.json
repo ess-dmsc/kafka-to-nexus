@@ -19,9 +19,7 @@
           "config": {
             "dtype": "string",
             "name": "end_time",
-            "values": [
-              "2016-04-12T03:29:11"
-            ]
+            "values": "2016-04-12T03:29:11"
           }
         },
         {
@@ -215,9 +213,7 @@
           "config": {
             "name": "start_time",
             "dtype": "string",
-            "values": [
-              "2016-04-12T02:58:52"
-            ]
+            "values": "2016-04-12T02:58:52"
           }
         },
         {
