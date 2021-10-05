@@ -386,9 +386,9 @@ def get_system_tests_pipeline() {
             // The statements below return true because the build should pass
             // even if there are no docker containers or output files to be
             // removed.
-            sh """rm -rf system-tests/output-files/* || true
-            docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
-            """
+//             sh """rm -rf system-tests/output-files/* || true
+//             docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
+//             """
           }  // stage
           stage("System tests: Archive") {
             junit "system-tests/SystemTestsOutput.xml"
