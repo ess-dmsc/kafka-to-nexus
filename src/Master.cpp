@@ -10,11 +10,9 @@
 #include "Master.h"
 #include "JobCreator.h"
 #include "Status/StatusReporter.h"
-#include "helper.h"
 #include "logger.h"
 #include <chrono>
 #include <functional>
-#include <variant>
 
 namespace FileWriter {
 

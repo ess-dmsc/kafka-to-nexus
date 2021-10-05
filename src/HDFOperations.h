@@ -19,8 +19,6 @@
 
 namespace HDFOperations {
 
-bool findType(nlohmann::basic_json<> Attribute, std::string &DType);
-
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const &Value);
 
 void createHDFStructures(

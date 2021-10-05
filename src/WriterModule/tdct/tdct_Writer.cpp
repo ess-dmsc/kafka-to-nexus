@@ -15,8 +15,6 @@
 #include "tdct_Writer.h"
 #include "HDFOperations.h"
 #include "WriterRegistrar.h"
-#include <limits>
-#include <nlohmann/json.hpp>
 #include <tdct_timestamps_generated.h>
 
 namespace WriterModule {

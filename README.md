@@ -58,7 +58,7 @@ streamer-ms-before-start=123456
 kafka-config=consumer.timeout.ms 501 fetch.message.max.bytes 1234 api.version.request true
 ```
 
-Note: the Kafka options are key-value pairs and the file-writer can be given multiple by appending the key-value pair to 
+Note: the Kafka options are key-value pairs and the file-writer can be given multiple such by appending the key-value pair to 
 the end of the command line option.
 
 ### Sending commands to the file-writer
@@ -103,7 +103,7 @@ make
 There are additional CMake flags for adjusting the build:
 * `-DRUN_DOXYGEN=ON` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
 * `-DBUILD_TESTS=OFF` to skip building the unit tests
-* `-DHTML_COVERAGE_REPORT=ON` to generate an html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
+* `-DHTML_COVERAGE_REPORT=ON` to generate a html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
 
 ### Running the unit tests
 

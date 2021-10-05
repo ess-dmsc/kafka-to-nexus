@@ -39,34 +39,6 @@ CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
   return uriOption(App, Name, Fun, Description, Defaulted);
 }
 
-/// \brief Adding a URI option.
-///
-/// If the URI is given then TrueIfOptionGiven is set to true
-///
-/// \param App
-/// \param Name
-/// \param URIArg
-/// \param TrueIfOptionGiven
-/// \param Description
-/// \param Defaulted
-/// \return
-CLI::Option *addUriOption(CLI::App &App, const std::string &Name,
-                          uri::URI &URIArg, bool &TrueIfOptionGiven,
-                          const std::string &Description = "",
-                          bool Defaulted = false) {
-  CLI::callback_t Fun = [&URIArg, &TrueIfOptionGiven](CLI::results_t Results) {
-    TrueIfOptionGiven = true;
-    try {
-      URIArg.parse(Results[0]);
-    } catch (std::runtime_error &E) {
-      return false;
-    }
-    return true;
-  };
-
-  return uriOption(App, Name, Fun, Description, Defaulted);
-}
-
 void addDurationOption(CLI::App &App, const std::string &Name, duration &MSArg,
                        const std::string &Description = "",
                        bool Defaulted = false) {

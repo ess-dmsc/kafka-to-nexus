@@ -27,15 +27,6 @@ namespace WriterModule {
 namespace ev42 {
 
 using nlohmann::json;
-using HDFWriterModule = WriterModule::Base;
-
-struct append_ret {
-  int status;
-  uint64_t written_bytes;
-  uint64_t ix0;
-
-  explicit operator bool() const { return status == 0; }
-};
 
 void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
   NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)

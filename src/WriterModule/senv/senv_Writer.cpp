@@ -17,7 +17,6 @@
 #include "HDFOperations.h"
 #include "WriterRegistrar.h"
 #include "senv_Writer.h"
-#include <limits>
 #include <senv_data_generated.h>
 
 namespace WriterModule {
