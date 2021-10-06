@@ -6,7 +6,7 @@ import hashlib
 import io
 import argparse
 
-IMAGE_NAME = "screamingudder/ubuntu20.04-build-node:2.0.1"
+IMAGE_NAME = "screamingudder/ubuntu20.04-build-node:2.1.0"
 TEST_IMAGE_NAME = "filewriter-image"
 CONTAINER_NAME = "filewriter-system-test"
 DEBUG_MODE = False
@@ -84,6 +84,12 @@ def generate_new_container():
         print("Unable to find docker base image, downloading.")
         client.images.pull(IMAGE_NAME)
         print("Done downloading docker image.")
+        try:
+          client.containers.get(TEST_IMAGE_NAME)
+          print(f"Found an old container with the name \"{CONTAINER_NAME}\". Removing.")
+          client.containers.get(TEST_IMAGE_NAME).remove(force=True)
+        except Exception as e:
+          print(f"Failed to remove container due to: {e}")
     container = client.containers.create(
         IMAGE_NAME,
         name=CONTAINER_NAME,
@@ -106,11 +112,16 @@ def generate_new_container():
 
 
 def kill_and_remove(container):
+    container_name = container.attrs["Name"][1:]
     try:
-        container.kill()
+        try:
+            container.kill()
+        except docker.errors.APIError as e:
+          pass
         container.remove()
+        print(f"Removed container with name \"{container_name}\"")
     except docker.errors.APIError as e:
-        pass
+        print(f"Failed to remove container \"{container_name}\" due to error: {e}")
 
 
 def run_conan(container):
@@ -188,7 +199,7 @@ def create_filewriter_image(do_cleanup=False):
             found_container = True
             container = client.containers.get(CONTAINER_NAME)
             if container.attrs["Config"]["Image"] != IMAGE_NAME:
-                print("Filewriter container uses outdated image, ignoring")
+                print("Filewriter container uses outdated image, removing.")
                 kill_and_remove(container)
                 found_container = False
             break
