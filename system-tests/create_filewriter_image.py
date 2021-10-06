@@ -85,11 +85,11 @@ def generate_new_container():
         client.images.pull(IMAGE_NAME)
         print("Done downloading docker image.")
         try:
-          client.containers.get(TEST_IMAGE_NAME)
-          print(f"Found an old container with the name \"{CONTAINER_NAME}\". Removing.")
-          client.containers.get(TEST_IMAGE_NAME).remove(force=True)
+            client.containers.get(TEST_IMAGE_NAME)
+            print(f'Found an old container with the name "{CONTAINER_NAME}". Removing.')
+            client.containers.get(TEST_IMAGE_NAME).remove(force=True)
         except Exception as e:
-          print(f"Failed to remove container due to: {e}")
+            print(f"Failed to remove container due to: {e}")
     container = client.containers.create(
         IMAGE_NAME,
         name=CONTAINER_NAME,
@@ -117,11 +117,11 @@ def kill_and_remove(container):
         try:
             container.kill()
         except docker.errors.APIError as e:
-          pass
+            pass
         container.remove()
-        print(f"Removed container with name \"{container_name}\"")
+        print(f'Removed container with name "{container_name}"')
     except docker.errors.APIError as e:
-        print(f"Failed to remove container \"{container_name}\" due to error: {e}")
+        print(f'Failed to remove container "{container_name}" due to error: {e}')
 
 
 def run_conan(container):
