@@ -163,7 +163,8 @@ void Partition::pollForMessage() {
     } else if (Msg.second.getMetaData().timestamp() >
                StopTime + StopTimeLeeway) {
       LOG_INFO("Done consuming data from partition {} of topic \"{}\" as we "
-               "have reached the stop time. The timestamp of the last message was: {}",
+               "have reached the stop time. The timestamp of the last message "
+               "was: {}",
                PartitionID, Topic, Msg.second.getMetaData().timestamp());
       HasFinished = true;
       return;

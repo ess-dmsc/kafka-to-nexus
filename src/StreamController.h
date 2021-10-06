@@ -94,9 +94,11 @@ private:
   std::atomic<bool> HasError{false};
   std::mutex ErrorMsgMutex;
   std::string ErrorMessage;
-  
+
   /// \brief The file-writing task object
-  /// \note Must be located before the streamers and the writer thread to guarantee that its destructor is not called before the writer modules have been de-allocated.
+  /// \note Must be located before the streamers and the writer thread to
+  /// guarantee that its destructor is not called before the writer modules have
+  /// been de-allocated.
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   Metrics::Registrar StreamMetricRegistrar;

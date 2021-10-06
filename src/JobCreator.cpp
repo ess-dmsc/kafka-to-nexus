@@ -102,8 +102,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       extractStreamInformationFromJson(StreamHDFInfoList);
 
   for (auto &Item : StreamSettingsList) {
-    auto StreamGroup =
-        hdf5::node::get_group(Task->hdfGroup(), Item.StreamHDFInfoObj.HDFParentName);
+    auto StreamGroup = hdf5::node::get_group(
+        Task->hdfGroup(), Item.StreamHDFInfoObj.HDFParentName);
     try {
       Item.WriterModule = generateWriterInstance(Item);
 
