@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "TimeUtility.h"
 #include <fmt/format.h>
 #include <graylog_logger/Log.hpp>
 #include <nlohmann/json.hpp>
@@ -62,6 +63,22 @@ template <> struct fmt::formatter<nlohmann::json> {
       DataString = DataString.substr(0, 30) + "...";
     }
     return fmt::format_to(ctx.out(), "\"{}\"", DataString);
+  }
+//clang-format on
+};
+
+template <> struct fmt::formatter<time_point> {
+  static auto parse(format_parse_context &ctx) {
+    const auto begin = ctx.begin();
+    const auto end = std::find(begin, ctx.end(), '}');
+    return end;
+  }
+
+  // clang-format off
+  template <typename FormatContext>
+  auto format(const time_point &TimeStamp, FormatContext &ctx) { // cppcheck-suppress functionStatic
+    auto TimeString = toUTCDateTime(TimeStamp);
+    return fmt::format_to(ctx.out(), "{}", TimeString);
   }
 //clang-format on
 };

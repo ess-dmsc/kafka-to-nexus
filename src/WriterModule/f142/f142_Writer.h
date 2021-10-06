@@ -89,7 +89,7 @@ protected:
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "double"};
   JsonConfig::Field<std::string> Unit{this, {"value_units", "unit"}, ""};
-  JsonConfig::Field<bool> MetaData{this, "meta_data", false};
+  JsonConfig::Field<bool> MetaData{this, "meta_data", true};
 
   MetaData::Value<double> MetaDataMin;
   MetaData::Value<double> MetaDataMax;

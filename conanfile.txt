@@ -9,7 +9,7 @@ streaming-data-types/b6b7922@ess-dmsc/stable
 cli11/1.9.1
 trompeloeil/41
 graylog-logger/2.1.1-dm1
-date/2.4.1
+date/3.0.1
 asio/1.13.0
 readerwriterqueue/07e22ec@ess-dmsc/stable
 concurrentqueue/8f7e861@ess-dmsc/stable
