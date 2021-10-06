@@ -93,10 +93,13 @@ public:
 
 private:
   std::string Filename;
+  MetaData::TrackerPtr MetaDataTracker;
+  
+  /// \brief The HDF5 file object
+  /// \note Must be located before the "source to module map" to guarantee that its destructor is not called before the writer modules have been de-allocated.
+  std::unique_ptr<HDFFile> File;
   std::vector<Source> SourceToModuleMap;
   std::string JobId;
-  std::unique_ptr<HDFFile> File;
-  MetaData::TrackerPtr MetaDataTracker;
 };
 
 } // namespace FileWriter

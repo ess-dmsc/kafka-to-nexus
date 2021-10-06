@@ -101,11 +101,9 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(StreamHDFInfoList);
 
-  auto RootGroup = Task->hdfGroup();
-
   for (auto &Item : StreamSettingsList) {
     auto StreamGroup =
-        hdf5::node::get_group(RootGroup, Item.StreamHDFInfoObj.HDFParentName);
+        hdf5::node::get_group(Task->hdfGroup(), Item.StreamHDFInfoObj.HDFParentName);
     try {
       Item.WriterModule = generateWriterInstance(Item);
 
@@ -131,9 +129,9 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     }
   }
 
-  addStreamSourceToWriterModule(StreamSettingsList, Task);
-
   Task->switchToWriteMode();
+
+  addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
