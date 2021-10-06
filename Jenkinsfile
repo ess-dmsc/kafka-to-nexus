@@ -377,6 +377,7 @@ def get_system_tests_pipeline() {
             sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
             timeout(time: 30, activity: true){
               sh """cd system-tests/
+              chmod go+w logs output-files
               python3.6 -m pytest -s --junitxml=./SystemTestsOutput.xml .
               """
             }
@@ -389,6 +390,7 @@ def get_system_tests_pipeline() {
 //             sh """rm -rf system-tests/output-files/* || true
 //             docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
 //             """
+              sh "chmod go-w logs output-files"
           }  // stage
           stage("System tests: Archive") {
             junit "system-tests/SystemTestsOutput.xml"
