@@ -21,6 +21,8 @@
 
 namespace Stream {
 
+/// \brief Represents the consumption of messages from a topic with one or more
+/// partitions.
 class Topic {
 public:
   Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,

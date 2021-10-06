@@ -18,6 +18,7 @@
 
 namespace NeXusDataset {
 
+/// \brief Class for representing a uint16 NeXus dataset.
 class UInt16Value : public ExtensibleDataset<std::uint16_t> {
 public:
   UInt16Value() = default;
@@ -27,6 +28,8 @@ public:
               size_t ChunkSize = 1024);
 };
 
+/// \brief Class for representing a double precision floating point NeXus
+/// dataset.
 class DoubleValue : public NeXusDataset::ExtensibleDataset<double> {
 public:
   DoubleValue() = default;
@@ -35,6 +38,8 @@ public:
               size_t ChunkSize = 1024);
 };
 
+/// \brief Class for representing a timestamp (NeXus) dataset where the
+/// timestamps are in ns since UNIX epoch.
 class Time : public ExtensibleDataset<std::uint64_t> {
 public:
   Time() = default;
@@ -43,6 +48,8 @@ public:
   Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
+/// \brief Represents the index register for searching a large NXlog
+/// (relatively) quickly based on timestamp.
 class CueIndex : public ExtensibleDataset<std::uint32_t> {
 public:
   CueIndex() = default;
@@ -52,6 +59,8 @@ public:
            size_t ChunkSize = 1024);
 };
 
+/// \brief Represents the timestamp register for searching a large NXlog
+/// (relatively) quickly.
 class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
 public:
   CueTimestampZero() = default;
@@ -61,6 +70,8 @@ public:
                    size_t ChunkSize = 1024);
 };
 
+/// \brief Represents the (radiation) detector event id dataset in a
+/// NXevent_data.
 class EventId : public ExtensibleDataset<std::uint32_t> {
 public:
   EventId() = default;
@@ -69,6 +80,8 @@ public:
   EventId(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
+/// \brief Represents the (radiation) detector event timestamp offset from zero
+/// time in a NXevent_data.
 class EventTimeOffset : public ExtensibleDataset<std::uint32_t> {
 public:
   EventTimeOffset() = default;
@@ -78,6 +91,8 @@ public:
                   size_t ChunkSize = 1024);
 };
 
+/// \brief Represents the (radiation) detector event index that ties
+/// EventTimeZero to event id and offset in a NXevent_data.
 class EventIndex : public ExtensibleDataset<std::uint32_t> {
 public:
   EventIndex() = default;
@@ -87,6 +102,8 @@ public:
              size_t ChunkSize = 1024);
 };
 
+/// \brief Represents the (radiation) detector event reference timestamp dataset
+/// in a NXevent_data.
 class EventTimeZero : public ExtensibleDataset<std::uint64_t> {
 public:
   EventTimeZero() = default;

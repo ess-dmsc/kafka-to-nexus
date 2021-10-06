@@ -36,6 +36,8 @@ struct SrcDstKey {
 };
 using SrcToDst = std::vector<SrcDstKey>;
 
+/// \brief Implements consumption of Kafka messages from partitions and (time
+/// based) filtering of those messages.
 class Partition {
 public:
   Partition() = default;
