@@ -286,8 +286,7 @@ builders = pipeline_builder.createBuilders { container ->
         }
         archiveArtifacts "${test_output}"
         if(doxygenStepFailed) {
-            // Error due to missing documentation is disabled for now.
-//          error("Doxygen step failed. See log output for further information.")
+         error("Doxygen step failed. See log output for further information.")
         }
     }  // stage
   }  // if
