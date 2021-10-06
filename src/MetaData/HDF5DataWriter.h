@@ -33,7 +33,7 @@ getPathOffsetAttributeWriter(std::string PathOffset) {
                                    DataType Value) {
     auto UsedNode =
         hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
-    MetaData::basicAttributeWriter<double>(UsedNode, Name, Value);
+    MetaData::basicAttributeWriter<DataType>(UsedNode, Name, Value);
   };
   return TempFunction;
 }
@@ -67,7 +67,7 @@ getPathOffsetDatasetWriter(std::string PathOffset) {
                                    DataType Value) {
     auto UsedNode =
         hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
-    MetaData::basicDatasetWriter<double>(UsedNode, Name, Value);
+    MetaData::basicDatasetWriter<DataType>(UsedNode, Name, Value);
   };
   return TempFunction;
 }

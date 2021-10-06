@@ -1,5 +1,9 @@
 # Changes
 
+## Version 4.1.0: Quality of life
+
+- Each ev42 writer module instance will now publish the number of events written to file.
+
 ## Version 4.0.0: Many, many changes
 
 - Messages with the same timestamp, in the FlatBuffer, as the previous message are not written to file.
