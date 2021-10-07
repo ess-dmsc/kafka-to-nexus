@@ -26,7 +26,26 @@ using StopTimeFuncType = std::function<void(time_point)>;
 using StopNowFuncType = std::function<void()>;
 using IsWritingFuncType = std::function<bool()>;
 
-class Handler {
+class HandlerBase {
+public:
+  HandlerBase() = default;
+  virtual ~HandlerBase() = default;
+  virtual void registerStartFunction(StartFuncType StartFunction) = 0;
+  virtual void
+  registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) = 0;
+  virtual void registerStopNowFunction(StopNowFuncType StopNowFunction) = 0;
+  virtual void
+  registerIsWritingFunction(IsWritingFuncType IsWritingFunction) = 0;
+
+  virtual void sendHasStoppedMessage(std::string FileName,
+                                     std::string Metadata) = 0;
+  virtual void sendErrorEncounteredMessage(std::string FileName,
+                                           std::string Metadata,
+                                           std::string ErrorMessage) = 0;
+  virtual void loopFunction() {}
+};
+
+class Handler : public HandlerBase {
 public:
   Handler(std::string const &ServiceIdentifier,
           Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
@@ -36,16 +55,17 @@ public:
           std::unique_ptr<CommandListener> CommandConsumer,
           std::unique_ptr<FeedbackProducerBase> Response);
 
-  void registerStartFunction(StartFuncType StartFunction);
-  void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction);
-  void registerStopNowFunction(StopNowFuncType StopNowFunction);
-  void registerIsWritingFunction(IsWritingFuncType IsWritingFunction);
+  void registerStartFunction(StartFuncType StartFunction) override;
+  void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) override;
+  void registerStopNowFunction(StopNowFuncType StopNowFunction) override;
+  void registerIsWritingFunction(IsWritingFuncType IsWritingFunction) override;
 
-  void sendHasStoppedMessage(std::string FileName, std::string Metadata);
+  void sendHasStoppedMessage(std::string FileName,
+                             std::string Metadata) override;
   void sendErrorEncounteredMessage(std::string FileName, std::string Metadata,
-                                   std::string ErrorMessage);
+                                   std::string ErrorMessage) override;
 
-  void loopFunction();
+  void loopFunction() override;
 
 private:
   void handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);

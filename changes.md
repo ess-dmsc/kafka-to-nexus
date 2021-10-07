@@ -1,5 +1,9 @@
 # Changes
 
+## Version 4.1.0: Quality of life
+
+- It is no longer possible to set a stop time if the previously set stop time has passed. Also added unit tests for this feature.
+
 ## Version 4.0.0: Many, many changes
 
 - Messages with the same timestamp, in the FlatBuffer, as the previous message are not written to file.

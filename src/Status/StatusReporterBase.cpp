@@ -28,6 +28,11 @@ void StatusReporterBase::updateStopTime(time_point StopTime) {
   Status.StopTime = StopTime;
 }
 
+time_point StatusReporterBase::getStopTime() {
+  const std::lock_guard<std::mutex> lock(StatusMutex);
+  return Status.StopTime;
+}
+
 void StatusReporterBase::resetStatusInfo() {
   updateStatusInfo({JobStatusInfo::WorkerState::Idle, "", "", time_point{0ms}});
 }
