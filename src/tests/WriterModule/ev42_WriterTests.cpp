@@ -384,16 +384,23 @@ TEST_F(EventWriterTests,
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
                                             MessageBuffer.size());
 
+  MetaData::TrackerPtr Tracker = std::make_shared<MetaData::Tracker>();
+
   // Create writer and give it the message to write
   {
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
+    Writer.register_meta_data(TestGroup, Tracker);
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage)); // First message
     EXPECT_NO_THROW(Writer.write(TestMessage)); // Second message
   } // These braces are required due to "h5.cpp"
+
+  auto DestinationDict = nlohmann::json::object();
+  Tracker->writeToJSONDict(DestinationDict);
+  EXPECT_EQ(DestinationDict["/test_group:events"], 6);
 
   // Repeat the input value vectors as the same message should be written twice
   repeatVector(Amplitude);
