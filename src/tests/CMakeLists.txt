@@ -49,7 +49,9 @@ set(UnitTests_SRC
         JsonConfig/FieldTest.cpp
         JsonConfig/FieldHandlerTest.cpp
         MetaData/ValueTest.cpp
-        JobCreatorTests.cpp HDFFileTest.cpp)
+        JobCreatorTests.cpp
+        HDFFileTest.cpp
+        MasterTests.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
