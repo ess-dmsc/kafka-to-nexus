@@ -402,7 +402,6 @@ TEST_F(EventWriterTests,
   Tracker->writeToJSONDict(DestinationDict);
   EXPECT_EQ(DestinationDict["/test_group:events"], 6);
 
-
   // Repeat the input value vectors as the same message should be written twice
   repeatVector(Amplitude);
   repeatVector(PeakArea);
