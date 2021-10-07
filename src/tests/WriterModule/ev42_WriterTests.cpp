@@ -398,7 +398,7 @@ TEST_F(EventWriterTests,
     EXPECT_NO_THROW(Writer.write(TestMessage)); // Second message
   } // These braces are required due to "h5.cpp"
 
-  nlohmann::json DestinationDict{nlohmann::json::parse("{}")};
+  auto DestinationDict = nlohmann::json::object();
   Tracker->writeToJSONDict(DestinationDict);
   EXPECT_EQ(DestinationDict["/test_group:events"], 6);
 
