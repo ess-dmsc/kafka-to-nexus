@@ -37,7 +37,9 @@ public:
   ///
   /// \param TaskID The service ID.
   explicit FileWriterTask(MetaData::TrackerPtr const &Tracker)
-      : MetaDataTracker(Tracker){};
+      : MetaDataTracker(Tracker), FileSizeMB("", "approx_file_size_mb") {
+    MetaDataTracker->registerMetaData(FileSizeMB);
+  }
 
   ~FileWriterTask() = default;
 
@@ -91,9 +93,15 @@ public:
 
   void flushDataToFile();
 
+  /// \brief Updates the "arpproximate file size" meta data status field.
+  /// \note Due to uncertainties in the file size, this function will round up
+  /// to the closest 10MB.
+  void updateApproximateFileSize();
+
 private:
   std::string Filename;
   MetaData::TrackerPtr MetaDataTracker;
+  MetaData::Value<uint32_t> FileSizeMB;
 
   /// \brief The HDF5 file object
   /// \note Must be located before the "source to module map" to guarantee that

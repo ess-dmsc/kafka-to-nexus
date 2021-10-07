@@ -70,6 +70,10 @@ public:
   /// \brief Returns true if all topics are done AND current system time
   /// is greater than stop time.
   ///
+  /// Will trigger a re-calculation of the approximate file size of the
+  /// file-writing job is not done. But only every x number of seconds as
+  /// hardcoded in this header file.
+  ///
   /// \note If stop time has not been set, it will be treated as the maximum
   /// possible time.
   bool isDoneWriting() override;
@@ -94,6 +98,8 @@ private:
   std::atomic<bool> HasError{false};
   std::mutex ErrorMsgMutex;
   std::string ErrorMessage;
+  duration const FileSizeCalcInterval{5s};
+  time_point LastFileSizeCalcTime{system_clock::now() - FileSizeCalcInterval};
 
   /// \brief The file-writing task object
   /// \note Must be located before the streamers and the writer thread to

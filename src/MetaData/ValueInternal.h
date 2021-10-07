@@ -56,8 +56,10 @@ public:
   virtual void writeToHDF5File(hdf5::node::Node RootNode) override {
     std::lock_guard Lock(ValueMutex);
     try {
-      auto UsedNode = get_node(RootNode, getPath());
-      WriteToFile(UsedNode, getName(), MetaDataValue);
+      if (WriteToFile) {
+        auto UsedNode = get_node(RootNode, getPath());
+        WriteToFile(UsedNode, getName(), MetaDataValue);
+      }
     } catch (std::exception &E) {
       LOG_ERROR("Failed to write the value \"{}\" to the path \"{}\" in "
                 "HDF5-file. The message was: {}",

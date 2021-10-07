@@ -58,9 +58,9 @@ public:
 
   void addTopic(std::string const &Topic) override;
 
-  /// Polls for any new messages.
-  ///
-  /// \return Any new messages consumed.
+  /// \brief Polls for any new messages.
+  /// \note Is a blocking call with a timeout that is hard coded in the broker
+  /// settings. \return Any new messages consumed.
   std::pair<PollStatus, FileWriter::Msg> poll() override;
 
 protected:
@@ -68,7 +68,7 @@ protected:
 
 private:
   std::unique_ptr<RdKafka::Conf> Conf;
-  BrokerSettings ConsumerBrokerSettings;
+  BrokerSettings const ConsumerBrokerSettings;
   int id = 0;
   std::unique_ptr<KafkaEventCb> EventCallback;
 };

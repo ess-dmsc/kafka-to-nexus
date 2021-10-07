@@ -42,6 +42,11 @@ TEST_F(HDF5Data, IntFunctionCall) {
   EXPECT_TRUE(FunctionCalled);
 }
 
+TEST_F(HDF5Data, NoFunctionCall) {
+  MetaDataInternal::ValueInternal<int> UnderTest{"/", "SomeKey", {}};
+  EXPECT_NO_THROW(UnderTest.writeToHDF5File(UsedGroup));
+}
+
 TEST_F(HDF5Data, IntAttributeWritten) {
   std::string Name{"someName"};
   int const Value{42};
