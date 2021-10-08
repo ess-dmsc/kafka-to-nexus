@@ -16,8 +16,8 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
-               std::unique_ptr<Status::StatusReporter> Reporter,
+Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
+               std::unique_ptr<Status::StatusReporterBase> Reporter,
                Metrics::Registrar const &Registrar)
     : MainConfig(Config), CommandAndControl(std::move(Listener)),
       Reporter(std::move(Reporter)), MasterMetricsRegistrar(Registrar) {
@@ -73,6 +73,10 @@ void Master::setStopTime(time_point StopTime) {
   if (CurrentState != WriterState::Writing) {
     throw std::runtime_error(
         "Unable to set stop time when not in \"Writing\" state.");
+  }
+  if (Reporter->getStopTime() < system_clock::now()) {
+    throw std::runtime_error("Unable to set a new stop time as the stop time "
+                             "has already been passed.");
   }
   CurrentStreamController->setStopTime(StopTime);
   Reporter->updateStopTime(StopTime);

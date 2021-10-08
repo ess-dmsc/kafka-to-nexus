@@ -158,6 +158,7 @@ void ev42_Writer::write(FlatbufferMessage const &Message) {
   if (RecordAdcPulseDebugData) {
     writeAdcPulseData(Message);
   }
+  EventsWrittenMetadataField.setValue(EventsWritten);
 }
 
 void ev42_Writer::writeAdcPulseData(FlatbufferMessage const &Message) {
@@ -216,6 +217,12 @@ void ev42_Writer::padDatasetsWithZeroesEqualToNumberOfEvents(
   BackgroundDataset.appendArray(ZeroesUInt32ArrayAdapter);
   ThresholdTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
   PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
+}
+
+void ev42_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
+                                     const MetaData::TrackerPtr &Tracker) {
+  EventsWrittenMetadataField = MetaData::Value<uint64_t>(HDFGroup, "events");
+  Tracker->registerMetaData(EventsWrittenMetadataField);
 }
 
 static WriterModule::Registry::Registrar<ev42_Writer> RegisterWriter("ev42",

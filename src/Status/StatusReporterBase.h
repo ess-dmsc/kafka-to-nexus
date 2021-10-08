@@ -23,6 +23,8 @@ class DetachedBuffer;
 
 namespace Status {
 
+using JsonGeneratorFuncType = std::function<void(nlohmann::json &)>;
+
 class StatusReporterBase {
 public:
   StatusReporterBase(Kafka::BrokerSettings const &Settings,
@@ -45,32 +47,36 @@ public:
   /// \brief Set the slow changing information to report.
   ///
   /// \param NewInfo The new information to report
-  void updateStatusInfo(JobStatusInfo const &NewInfo);
+  virtual void updateStatusInfo(JobStatusInfo const &NewInfo);
 
-  void useAlternativeStatusTopic(std::string const &AltTopicName);
+  virtual void useAlternativeStatusTopic(std::string const &AltTopicName);
 
-  void revertToDefaultStatusTopic();
+  virtual void revertToDefaultStatusTopic();
 
   /// \brief Update the stop time to be reported.
   ///
   /// \param StopTime The new stop time.
-  void updateStopTime(time_point StopTime);
+  virtual void updateStopTime(time_point StopTime);
+
+  /// \brief Get the currently reported stop time.
+  virtual time_point getStopTime();
 
   /// \brief Clear out the current information.
   ///
   /// Used when a file has finished writing.
-  void resetStatusInfo();
+  virtual void resetStatusInfo();
 
   /// \brief Generate a FlatBuffer serialised report.
   ///
   /// \return The report message buffer.
-  flatbuffers::DetachedBuffer createReport(std::string const &JSONReport) const;
+  virtual flatbuffers::DetachedBuffer
+  createReport(std::string const &JSONReport) const;
 
   /// Create the JSON part of the status report.
-  std::string createJSONReport() const;
+  virtual std::string createJSONReport() const;
 
-  void setJSONMetaDataGenerator(
-      std::function<void(nlohmann::json &JSONNode)> GeneratorFunction) {
+  virtual void
+  setJSONMetaDataGenerator(JsonGeneratorFuncType GeneratorFunction) {
     JSONGenerator = GeneratorFunction;
   }
 

@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FlatbufferMessage.h"
+#include "MetaData/Value.h"
 #include "NeXusDataset/AdcDatasets.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
@@ -19,7 +20,9 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 class ev42_Writer : public WriterModule::Base {
 public:
-  ev42_Writer() : WriterModule::Base(true, "NXevent_data") {}
+  ev42_Writer()
+      : WriterModule::Base(true, "NXevent_data"),
+        EventsWrittenMetadataField("", "events") {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;
@@ -30,8 +33,9 @@ public:
   NeXusDataset::EventIndex EventIndex;
   NeXusDataset::CueIndex CueIndex;
   NeXusDataset::CueTimestampZero CueTimestampZero;
-  uint64_t EventsWritten = 0;
-  uint64_t LastEventIndex = 0;
+
+  void register_meta_data(hdf5::node::Group const &HDFGroup,
+                          MetaData::TrackerPtr const &Tracker) override;
 
 private:
   void createAdcDatasets(hdf5::node::Group &HDFGroup) const;
@@ -51,6 +55,9 @@ private:
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
   JsonConfig::Field<bool> RecordAdcPulseDebugData{this, "adc_pulse_debug",
                                                   false};
+  uint64_t EventsWritten{0};
+  uint64_t LastEventIndex{0};
+  MetaData::Value<uint64_t> EventsWrittenMetadataField;
 };
 } // namespace ev42
 } // namespace WriterModule

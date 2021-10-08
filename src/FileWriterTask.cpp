@@ -13,6 +13,7 @@
 #include "helper.h"
 #include "logger.h"
 #include <atomic>
+#include <filesystem>
 
 namespace FileWriter {
 
@@ -104,6 +105,18 @@ void FileWriterTask::flushDataToFile() {
   if (File != nullptr) {
     File->flush();
   }
+}
+
+void FileWriterTask::updateApproximateFileSize() {
+  std::error_code ErrorCode;
+  auto size = std::filesystem::file_size(Filename, ErrorCode);
+  if (ErrorCode) {
+    LOG_ERROR(
+        "Unable to determine file size of the file \"{}\". The error was: {}",
+        Filename, ErrorCode.message());
+    return;
+  }
+  FileSizeMB.setValue(int(std::ceil(size / 10'000'000.0) * 10));
 }
 
 } // namespace FileWriter

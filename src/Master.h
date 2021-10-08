@@ -21,7 +21,7 @@
 #include <vector>
 
 namespace Status {
-class StatusReporter;
+class StatusReporterBase;
 }
 
 namespace FileWriter {
@@ -33,8 +33,8 @@ class IStreamController;
 /// Reacts also to stop, and possibly other future commands.
 class Master {
 public:
-  Master(MainOpt &Config, std::unique_ptr<Command::Handler> Listener,
-         std::unique_ptr<Status::StatusReporter> Reporter,
+  Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
+         std::unique_ptr<Status::StatusReporterBase> Reporter,
          Metrics::Registrar const &Registrar);
   virtual ~Master() = default;
 
@@ -50,9 +50,9 @@ public:
 private:
   enum class WriterState { Idle, Writing };
   MainOpt &MainConfig;
-  std::unique_ptr<Command::Handler> CommandAndControl;
+  std::unique_ptr<Command::HandlerBase> CommandAndControl;
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
-  std::unique_ptr<Status::StatusReporter> Reporter;
+  std::unique_ptr<Status::StatusReporterBase> Reporter;
   Metrics::Registrar MasterMetricsRegistrar;
   WriterState CurrentState{WriterState::Idle};
   std::string CurrentFileName;

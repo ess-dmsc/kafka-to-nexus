@@ -54,10 +54,21 @@ void StreamController::stop() {
 
 using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
-  return HasError or StopNow or
-         (!StreamersRemaining.load() and
-          KafkaSettings.StopTimestamp != time_point(duration(0)) and
-          std::chrono::system_clock::now() > KafkaSettings.StopTimestamp);
+  auto Now = std::chrono::system_clock::now();
+  auto IsDoneWriting =
+      HasError or StopNow or
+      (!StreamersRemaining.load() and
+       KafkaSettings.StopTimestamp != time_point(duration(0)) and
+       Now > KafkaSettings.StopTimestamp);
+  if (not IsDoneWriting) {
+    auto TimeDiffPeriods = (Now - LastFileSizeCalcTime) / FileSizeCalcInterval;
+    if (TimeDiffPeriods >= 1.0) {
+      WriterTask->updateApproximateFileSize();
+      LastFileSizeCalcTime +=
+          FileSizeCalcInterval * int(std::round(TimeDiffPeriods));
+    }
+  }
+  return IsDoneWriting;
 }
 
 std::string StreamController::getJobId() const { return WriterTask->jobID(); }
