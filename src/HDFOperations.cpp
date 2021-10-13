@@ -429,7 +429,6 @@ void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json) {
 
 void addLinkToNode(hdf5::node::Group const &Group, nlohmann::json const &Json) {
   JSONHdfNode CNode(Json);
-
   if (not CNode.Children.hasDefaultValue() and
       CNode.Children.getValue().is_array()) {
     for (auto &Child : CNode.Children.getValue()) {
@@ -454,10 +453,10 @@ void addLinkToNode(hdf5::node::Group const &Group, nlohmann::json const &Json) {
           continue;
         }
         if (0 > H5Olink(TargetID, static_cast<hid_t>(Group),
-                        CNode.Name.getValue().c_str(), H5P_DEFAULT,
+                        ChildNode.Name.getValue().c_str(), H5P_DEFAULT,
                         H5P_DEFAULT)) {
           LOG_WARN("can not create link name: {}  in group: {}  to target: {}",
-                   CNode.Name.getValue(), std::string(Group.link().path()),
+                   ChildNode.Name.getValue(), std::string(Group.link().path()),
                    ChildNode.Target.getValue());
           continue;
         }
