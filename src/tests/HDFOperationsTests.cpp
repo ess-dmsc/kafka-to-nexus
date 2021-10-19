@@ -268,3 +268,30 @@ TEST_F(HDFStaticDataTest, StringArray) {
   ExpectedDataset.at({1, 1}) = "d";
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
+
+TEST_F(HDFStaticDataTest, AddLinkToNode1) {
+  RootGroup.create_group("data_to_link");
+  RootGroup.create_group("data_link");
+  std::string JsonString = R""({
+    "name": "data_link",
+    "type": "link",
+    "target": "/data_to_link"})"";
+  auto Temp = nlohmann::json::parse(JsonString);
+  HDFOperations::addLinkToNode(RootGroup, Temp);
+  auto link = RootGroup.links["data_link"];
+  ASSERT_TRUE(link.is_resolvable());
+  ASSERT_TRUE(link.type() == hdf5::node::LinkType::HARD);
+}
+
+TEST_F(HDFStaticDataTest, AddLinkToNode2) {
+  RootGroup.create_group("data_link");
+  std::string JsonString = R""({
+    "name": "data_link",
+    "type": "link",
+    "target": "/data/data_to_link"})"";
+  auto Temp = nlohmann::json::parse(JsonString);
+  HDFOperations::addLinkToNode(RootGroup, Temp);
+  auto link = RootGroup.links["data_link"];
+  ASSERT_FALSE(link.is_resolvable());
+}
+
