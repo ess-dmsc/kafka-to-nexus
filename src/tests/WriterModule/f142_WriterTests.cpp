@@ -417,8 +417,7 @@ TEST_F(f142WriteData, WriteCueIndex) {
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 1.234};
   for (unsigned int i = 0; i < 10; ++i) {
-    auto FlatbufferData =
-        generateFlatbufferArrayMessage(ElementValues, i + 10);
+    auto FlatbufferData = generateFlatbufferArrayMessage(ElementValues, i + 10);
     TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                    FlatbufferData.second));
   }
@@ -428,7 +427,7 @@ TEST_F(f142WriteData, WriteCueIndex) {
   std::vector<uint64_t> WrittenCueTimestamps(2);
   TestWriter.CueIndex.read(WrittenCueIndices);
   TestWriter.CueTimestampZero.read(WrittenCueTimestamps);
-  std::vector<uint32_t> ExpectedIndices{3,7};
+  std::vector<uint32_t> ExpectedIndices{3, 7};
   std::vector<uint64_t> ExpectedTimestamps{13, 17};
   EXPECT_EQ(WrittenCueIndices, ExpectedIndices);
   EXPECT_EQ(WrittenCueTimestamps, ExpectedTimestamps);
@@ -448,8 +447,7 @@ TEST_F(f142WriteData, WriteNoCueIndex) {
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 1.234};
   for (unsigned int i = 0; i < 10; ++i) {
-    auto FlatbufferData =
-        generateFlatbufferArrayMessage(ElementValues, i + 10);
+    auto FlatbufferData = generateFlatbufferArrayMessage(ElementValues, i + 10);
     TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                    FlatbufferData.second));
   }
