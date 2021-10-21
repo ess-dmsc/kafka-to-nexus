@@ -182,6 +182,8 @@ public:
     NrOfElements += NewData.size();
   }
 
+  size_t size() const { return NrOfElements; }
+
 protected:
   hdf5::dataspace::Simple ArrayDataSpace;
   hdf5::Dimensions NewDimensions{0};

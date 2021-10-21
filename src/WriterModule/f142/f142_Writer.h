@@ -83,8 +83,8 @@ protected:
   /// Severity corresponding to EPICS alarm status
   NeXusDataset::AlarmSeverity AlarmSeverity;
 
-  JsonConfig::Field<uint64_t> ValueIndexInterval{
-      this, "cue_interval", std::numeric_limits<uint64_t>::max()};
+  JsonConfig::Field<uint32_t> ValueIndexInterval{
+      this, "cue_interval", std::numeric_limits<uint32_t>::max()};
   JsonConfig::Field<size_t> ArraySize{this, "array_size", 1};
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "double"};
@@ -95,6 +95,8 @@ protected:
   MetaData::Value<double> MetaDataMax;
   MetaData::Value<double> MetaDataMean;
   double Min{0}, Max{0}, Sum{0};
+  uint64_t LastIndexAtWrite{0};
+  uint64_t NrOfWrites{0};
   uint64_t TotalNrOfElementsWritten{0};
 };
 
