@@ -35,9 +35,6 @@ HDFFile::HDFFile(std::string const &FileName,
   StoredNexusStructure = NexusStructure;
 }
 
-HDFFile::~HDFFile() {
-}
-
 void HDFFile::createFileInRegularMode() {
   hdfFile() = hdf5::file::create(H5FileName,
                                  hdf5::file::AccessFlags::EXCLUSIVE |

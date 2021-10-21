@@ -52,7 +52,7 @@ public:
   void openInRegularMode();
   bool isSWMRMode() const;
   bool isRegularMode() const;
-  virtual ~HDFFile();
+  ~HDFFile() = default;
 
 private:
   bool SWMRMode{false};
