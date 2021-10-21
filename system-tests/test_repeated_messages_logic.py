@@ -26,8 +26,14 @@ def test_start_and_stop_time_are_in_the_past(
     step_time = timedelta(seconds=1)
 
     # Create pre-start messages
+    publish_f142_message(producer, data_topic, start_time - step_time * 5, value=1)
+    publish_f142_message(producer, data_topic, start_time - step_time * 4, value=2)
+    publish_f142_message(producer, data_topic, start_time - step_time * 3, value=3)
     for i in range(3):
-        publish_f142_message(producer, data_topic, start_time - step_time, value=10 + i)
+        publish_f142_message(
+            producer, data_topic, start_time - step_time * 2, value=10 + i
+        )
+    publish_f142_message(producer, data_topic, start_time - step_time, value=19)
 
     # Create post-start messages
     for i in range(3):
@@ -36,6 +42,7 @@ def test_start_and_stop_time_are_in_the_past(
     # Create post-stop messages
     for i in range(3):
         publish_f142_message(producer, data_topic, stop_time + step_time, value=30 + i)
+    publish_f142_message(producer, data_topic, stop_time + step_time * 2, value=40)
 
     file_name = "output_file_repeated_messages.nxs"
     with open("commands/nexus_structure_repeated_messages.json", "r") as f:
@@ -58,5 +65,5 @@ def test_start_and_stop_time_are_in_the_past(
             expected_elements
         ), f"Expected there to be {expected_elements} saved messages"
         assert np.array_equal(
-            file["entry/repeated_messages/value"][:], [[12], [20], [30]]
+            file["entry/repeated_messages/value"][:], [[19], [20], [30]]
         ), "The wrong elements/messages were saved to file."
