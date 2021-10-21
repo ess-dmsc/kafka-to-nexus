@@ -10,6 +10,7 @@ from helpers.writer import (
     wait_writers_available,
     wait_no_working_writers,
 )
+import numpy as np
 
 
 def test_start_and_stop_time_are_in_the_past(
@@ -26,15 +27,15 @@ def test_start_and_stop_time_are_in_the_past(
 
     # Create pre-start messages
     for i in range(3):
-        publish_f142_message(producer, data_topic, start_time - step_time)
+        publish_f142_message(producer, data_topic, start_time - step_time, value=10 + i)
 
     # Create post-start messages
     for i in range(3):
-        publish_f142_message(producer, data_topic, start_time + step_time)
+        publish_f142_message(producer, data_topic, start_time + step_time, value=20 + i)
 
     # Create post-stop messages
     for i in range(3):
-        publish_f142_message(producer, data_topic, stop_time + step_time)
+        publish_f142_message(producer, data_topic, stop_time + step_time, value=30 + i)
 
     file_name = "output_file_repeated_messages.nxs"
     with open("commands/nexus_structure_repeated_messages.json", "r") as f:
@@ -56,3 +57,6 @@ def test_start_and_stop_time_are_in_the_past(
         assert file["entry/repeated_messages/time"].len() == (
             expected_elements
         ), f"Expected there to be {expected_elements} saved messages"
+        assert np.array_equal(
+            file["entry/repeated_messages/value"][:], [[12], [20], [30]]
+        ), "The wrong elements/messages were saved to file."
