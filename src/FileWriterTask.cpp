@@ -101,6 +101,10 @@ void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 std::string FileWriterTask::filename() const { return Filename; }
 
+void FileWriterTask::writeLinks(){
+  File->addLinks();
+}
+
 void FileWriterTask::flushDataToFile() {
   if (File != nullptr) {
     File->flush();

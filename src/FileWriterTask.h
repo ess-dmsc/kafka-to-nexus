@@ -90,6 +90,8 @@ public:
   void switchToWriteMode();
 
   bool isInWriteMode();
+  
+  void writeLinks();
 
   void flushDataToFile();
 

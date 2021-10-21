@@ -47,6 +47,7 @@ public:
   HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
           std::vector<StreamHDFInfo> &StreamHDFInfo,
           MetaData::TrackerPtr &TrackerPtr);
+  void addLinks();
   void openInSWMRMode();
   void openInRegularMode();
   bool isSWMRMode() const;
@@ -59,7 +60,6 @@ private:
   void openFileInRegularMode();
   void openFileInSWMRMode();
   void closeFile();
-  void addLinks();
 
   hdf5::property::FileAccessList FileAccessList;
   hdf5::property::FileCreationList FileCreationList;

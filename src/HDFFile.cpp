@@ -36,16 +36,6 @@ HDFFile::HDFFile(std::string const &FileName,
 }
 
 HDFFile::~HDFFile() {
-  try {
-    openInRegularMode();
-    addLinks();
-    if (MetaDataTracker != nullptr) {
-      MetaDataTracker->writeToHDF5File(hdfFile().root());
-    }
-  } catch (std::exception const &E) {
-    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
-              E.what());
-  }
 }
 
 void HDFFile::createFileInRegularMode() {
@@ -153,7 +143,16 @@ void HDFFile::openFileInRegularMode() {
 }
 
 void HDFFile::addLinks() {
-  HDFOperations::addLinks(hdfGroup(), StoredNexusStructure);
+  try {
+    openInRegularMode();
+    HDFOperations::addLinks(hdfGroup(), StoredNexusStructure);
+    if (MetaDataTracker != nullptr) {
+      MetaDataTracker->writeToHDF5File(hdfFile().root());
+    }
+  } catch (std::exception const &E) {
+    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
+              E.what());
+  }
 }
 
 void HDFFile::openInSWMRMode() {
