@@ -324,6 +324,12 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
         "Unknown data type in f142 flatbuffer.");
   }
 
+  ++NrOfWrites;
+  if ((NrOfWrites - LastIndexAtWrite) / ValueIndexInterval.getValue() > 0) {
+    LastIndexAtWrite = NrOfWrites;
+    CueIndex.appendElement(NrOfWrites - 1);
+    CueTimestampZero.appendElement(LogDataMessage->timestamp());
+  }
   if (MetaData.getValue()) {
     if (TotalNrOfElementsWritten == 0) {
       Min = CValuesInfo.Min;
