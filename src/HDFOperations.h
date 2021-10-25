@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "LinkAndStreamSettings.h"
 #include "MultiVector.h"
 #include "StreamHDFInfo.h"
 #include "json.h"
@@ -58,8 +59,8 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               std::string const &Name,
                               nlohmann::json const &Values);
 
-void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json);
-void addLinkToNode(hdf5::node::Group const &Group, nlohmann::json const &Json);
+void addLinks(hdf5::node::Group const &Group, std::vector<LinkSettings> const &LinkSettingslist);
+void addLinkToNode(hdf5::node::Group const &Group, LinkSettings const &LinkSettings);
 
 Shape determineArrayDimensions(nlohmann::json const &Values);
 

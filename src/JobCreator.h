@@ -11,6 +11,7 @@
 
 #include "CommandSystem/Commands.h"
 #include "FileWriterTask.h"
+#include "LinkAndStreamSettings.h"
 #include "MainOpt.h"
 #include "Metrics/Registrar.h"
 #include "StreamController.h"
@@ -18,17 +19,6 @@
 #include <memory>
 
 namespace FileWriter {
-
-/// \brief Holder for the stream settings.
-struct StreamSettings {
-  StreamHDFInfo StreamHDFInfoObj;
-  std::string Topic;
-  std::string Module;
-  std::string Source;
-  std::string ConfigStreamJson;
-  std::string Attributes;
-  std::unique_ptr<WriterModule::Base> WriterModule;
-};
 
 std::unique_ptr<IStreamController>
 createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
@@ -50,6 +40,13 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 /// \return The stream information.
 StreamSettings
 extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
+
+/// \brief Extract information about the link.
+///
+/// \param LinkInfo
+/// \return The link information.
+LinkSettings
+extractLinkInformationFromJsonForLinking(StreamHDFInfo const &LinkInfo);
 
 std::unique_ptr<WriterModule::Base>
 generateWriterInstance(StreamSettings const &StreamInfo);

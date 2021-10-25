@@ -139,10 +139,10 @@ void HDFFile::openFileInRegularMode() {
                                FileAccessList);
 }
 
-void HDFFile::addLinks() {
+void HDFFile::addLinks(std::vector<LinkSettings> const &LinkSettingsList) {
   try {
     openInRegularMode();
-    HDFOperations::addLinks(hdfGroup(), StoredNexusStructure);
+    HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
     if (MetaDataTracker != nullptr) {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
     }

@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "LinkAndStreamSettings.h"
 #include "MetaData/Tracker.h"
 #include "Source.h"
 #include "json.h"
@@ -91,7 +92,7 @@ public:
 
   bool isInWriteMode();
   
-  void writeLinks();
+  void writeLinks(std::vector<LinkSettings> const &LinkSettingsList);
 
   void flushDataToFile();
 
