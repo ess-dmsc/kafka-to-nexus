@@ -48,7 +48,7 @@ public:
   HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
           std::vector<StreamHDFInfo> &StreamHDFInfo,
           MetaData::TrackerPtr &TrackerPtr);
-  void addLinks(std::vector<LinkSettings> const &LinkSettingsList);
+  void addLinksAndMetaData(std::vector<LinkSettings> const &LinkSettingsList);
   void openInSWMRMode();
   void openInRegularMode();
   bool isSWMRMode() const;

@@ -72,7 +72,7 @@ LinkSettings extractLinkInformationFromJsonForLinking(StreamHDFInfo const &LinkI
   return LinkSettings;
 }
 
-/// Helper to extract information about the provided streams.
+/// Helper to extract information about the provided stream.
 static std::vector<StreamSettings> extractStreamInformationFromJson(
   std::vector<StreamHDFInfo> &StreamHDFInfoList){
   std::vector<StreamSettings> StreamSettingsList;
@@ -166,7 +166,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
           Item.Module, Item.Source, E.what())));
     }
   }
-  Task->writeLinks(LinkSettingsList);
+  Task->writeLinksAndMetaData(LinkSettingsList);
   Task->switchToWriteMode();
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);

@@ -139,7 +139,7 @@ void HDFFile::openFileInRegularMode() {
                                FileAccessList);
 }
 
-void HDFFile::addLinks(std::vector<LinkSettings> const &LinkSettingsList) {
+void HDFFile::addLinksAndMetaData(std::vector<LinkSettings> const &LinkSettingsList) {
   try {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);

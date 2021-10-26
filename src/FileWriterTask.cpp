@@ -101,8 +101,8 @@ void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 std::string FileWriterTask::filename() const { return Filename; }
 
-void FileWriterTask::writeLinks(std::vector<LinkSettings> const &LinkSettingsList) {
-  File->addLinks(LinkSettingsList);
+void FileWriterTask::writeLinksAndMetaData(std::vector<LinkSettings> const &LinkSettingsList) {
+  File->addLinksAndMetaData(LinkSettingsList);
 }
 
 void FileWriterTask::flushDataToFile() {
