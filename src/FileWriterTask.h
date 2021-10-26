@@ -92,7 +92,9 @@ public:
 
   bool isInWriteMode();
   
-  void writeLinksAndMetaData(std::vector<LinkSettings> const &LinkSettingsList);
+  void writeLinks(std::vector<LinkSettings> const &LinkSettingsList);
+  
+  void writeMetaData();
 
   void flushDataToFile();
 

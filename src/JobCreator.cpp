@@ -166,7 +166,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
           Item.Module, Item.Source, E.what())));
     }
   }
-  Task->writeLinksAndMetaData(LinkSettingsList);
+  Task->writeLinks(LinkSettingsList);
   Task->switchToWriteMode();
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);

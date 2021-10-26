@@ -48,12 +48,13 @@ public:
   HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
           std::vector<StreamHDFInfo> &StreamHDFInfo,
           MetaData::TrackerPtr &TrackerPtr);
-  void addLinksAndMetaData(std::vector<LinkSettings> const &LinkSettingsList);
+  void addLinks(std::vector<LinkSettings> const &LinkSettingsList);
+  void addMetaData();
   void openInSWMRMode();
   void openInRegularMode();
   bool isSWMRMode() const;
   bool isRegularMode() const;
-  ~HDFFile() = default;
+  virtual ~HDFFile();
 
 private:
   bool SWMRMode{false};
