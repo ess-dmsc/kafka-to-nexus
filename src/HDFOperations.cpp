@@ -452,6 +452,7 @@ void addLinkToNode(hdf5::node::Group const &Group, LinkSettings const &LinkSetti
              Name, std::string(Group.link().path()),
              TargetBase);
   }
+  H5Oclose(TargetID);
 }
 
 } // namespace HDFOperations
