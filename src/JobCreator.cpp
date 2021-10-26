@@ -72,6 +72,7 @@ LinkSettings extractLinkInformationFromJsonForLinking(StreamHDFInfo const &LinkI
   return LinkSettings;
 }
 
+/// Helper to extract information about the provided streams.
 static std::vector<StreamSettings> extractStreamInformationFromJson(
   std::vector<StreamHDFInfo> &StreamHDFInfoList){
   std::vector<StreamSettings> StreamSettingsList;
@@ -98,7 +99,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
 }
 
 
-/// Helper to extract information about the provided streams.
+/// Helper to extract information about the provided links.
 static std::vector<LinkSettings> extractLinkInformationFromJson(
     std::vector<StreamHDFInfo> &StreamHDFInfoList) {
   std::vector<LinkSettings> LinkSettingsList;
@@ -110,11 +111,11 @@ static std::vector<LinkSettings> extractLinkInformationFromJson(
       }
     } catch (json::parse_error const &E) {
       LOG_WARN(
-          "Invalid stream configuration JSON encountered. The error was: {}",
+          "Invalid link configuration JSON encountered. The error was: {}",
           E.what());
       continue;
     } catch (std::runtime_error const &E) {
-      LOG_WARN("Unknown exception encountered when extracting stream "
+      LOG_WARN("Unknown exception encountered when extracting link "
                "information. The error was: {}",
                E.what());
       continue;
