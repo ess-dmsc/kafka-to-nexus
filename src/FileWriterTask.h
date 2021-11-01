@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "LinkAndStreamSettings.h"
+#include "ModuleSettings.h"
 #include "MetaData/Tracker.h"
 #include "Source.h"
 #include "json.h"

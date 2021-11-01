@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "LinkAndStreamSettings.h"
+#include "ModuleSettings.h"
 #include "MultiVector.h"
 #include "StreamHDFInfo.h"
 #include "json.h"

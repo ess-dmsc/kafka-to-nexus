@@ -11,7 +11,7 @@
 
 #include "CommandSystem/Commands.h"
 #include "FileWriterTask.h"
-#include "LinkAndStreamSettings.h"
+#include "ModuleSettings.h"
 #include "MainOpt.h"
 #include "Metrics/Registrar.h"
 #include "StreamController.h"
