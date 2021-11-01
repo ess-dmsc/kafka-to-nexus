@@ -20,8 +20,9 @@ TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
+      std::runtime_error);
 }
 
 TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
@@ -34,8 +35,9 @@ TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
+      std::runtime_error);
 }
 
 TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
@@ -48,8 +50,9 @@ TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
   ModuleHDFInfo Info;
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
-               std::runtime_error);
+  ASSERT_THROW(
+      FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
+      std::runtime_error);
 }
 
 TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
@@ -63,7 +66,8 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  auto Settings = FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info);
+  auto Settings =
+      FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info);
 
   ASSERT_EQ("my_test_topic", Settings.Topic);
   ASSERT_EQ("f142", Settings.Module);
@@ -84,7 +88,8 @@ TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  auto Settings = FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info);
+  auto Settings =
+      FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info);
 
   ASSERT_EQ("{\"NX_class\":\"NXlog\"}", Settings.Attributes);
 }

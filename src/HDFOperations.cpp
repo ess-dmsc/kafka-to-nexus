@@ -395,8 +395,7 @@ void createHDFStructures(
       if (CNode.Type.getValue() == "dataset") {
         auto DatasetName = writeDataset(Parent, CNode.Config.getValue());
         writeAttributesIfPresent(Parent.get_dataset(DatasetName), Value);
-      }
-      else {
+      } else {
         std::string pathstr;
         for (auto &x : Path) {
           // cppcheck-suppress useStlAlgorithm
@@ -414,14 +413,17 @@ void createHDFStructures(
   }
 }
 
-void addLinks(hdf5::node::Group const &Group, std::vector<ModuleSettings> const &LinkSettingsList) {
+void addLinks(hdf5::node::Group const &Group,
+              std::vector<ModuleSettings> const &LinkSettingsList) {
   for (auto &LinkSettings : LinkSettingsList) {
-    auto NodeGroup = Group.get_group(LinkSettings.ModuleHDFInfoObj.HDFParentName);
+    auto NodeGroup =
+        Group.get_group(LinkSettings.ModuleHDFInfoObj.HDFParentName);
     addLinkToNode(NodeGroup, LinkSettings);
   }
 }
 
-void addLinkToNode(hdf5::node::Group const &Group, ModuleSettings const &LinkSettings) {
+void addLinkToNode(hdf5::node::Group const &Group,
+                   ModuleSettings const &LinkSettings) {
   std::string TargetBase = LinkSettings.Source;
   std::string Name = LinkSettings.Name;
   auto GroupBase = Group;
@@ -429,16 +431,16 @@ void addLinkToNode(hdf5::node::Group const &Group, ModuleSettings const &LinkSet
     TargetBase = TargetBase.substr(3);
     GroupBase = GroupBase.link().parent();
   }
-  auto TargetID = H5Oopen(static_cast<hid_t>(GroupBase),
-                          TargetBase.c_str(), H5P_DEFAULT);
+  auto TargetID =
+      H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
   if (TargetID < 0) {
     LOG_WARN("Can not find target object for link target: {}  in group: {}",
              Name, std::string(Group.link().path()));
   }
-  if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), Name.c_str(), H5P_DEFAULT, H5P_DEFAULT)) {
-    LOG_WARN("can not create link name: {}  in group: {}  to target: {}",
-             Name, std::string(Group.link().path()),
-             TargetBase);
+  if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), Name.c_str(),
+                  H5P_DEFAULT, H5P_DEFAULT)) {
+    LOG_WARN("can not create link name: {}  in group: {}  to target: {}", Name,
+             std::string(Group.link().path()), TargetBase);
   }
   H5Oclose(TargetID);
 }

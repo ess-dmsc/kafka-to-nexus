@@ -11,9 +11,9 @@
 
 #include "CommandSystem/Commands.h"
 #include "FileWriterTask.h"
-#include "ModuleSettings.h"
 #include "MainOpt.h"
 #include "Metrics/Registrar.h"
+#include "ModuleSettings.h"
 #include "StreamController.h"
 #include "json.h"
 #include <memory>
@@ -38,8 +38,8 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 ///
 /// \param StreamInfo
 /// \return The stream or link information.
-ModuleSettings
-extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo const &StreamInfo);
+ModuleSettings extractLinkAndStreamInformationFromJsonForSource(
+    ModuleHDFInfo const &StreamInfo);
 
 std::unique_ptr<WriterModule::Base>
 generateWriterInstance(ModuleSettings const &StreamInfo);

@@ -40,8 +40,8 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
   }
 }
 
-ModuleSettings
-extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo const &StreamInfo) {
+ModuleSettings extractLinkAndStreamInformationFromJsonForSource(
+    ModuleHDFInfo const &StreamInfo) {
   if (StreamInfo.WriterModule.empty()) {
     throw std::runtime_error("Empty writer module name encountered.");
   }
@@ -54,12 +54,12 @@ extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo const &StreamInfo
   ModuleSettings.Source =
       Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
   ModuleSettings.Module = StreamInfo.WriterModule;
-  if(ModuleSettings.Module != "link") {
+  if (ModuleSettings.Module != "link") {
     ModuleSettings.Topic =
         Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
-  }
-  else {
-    ModuleSettings.Name = Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
+  } else {
+    ModuleSettings.Name =
+        Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
     ModuleSettings.isLink = true;
   }
   ModuleSettings.Attributes =
@@ -75,7 +75,8 @@ static std::vector<ModuleSettings> extractLinkAndStreamInformationFromJson(
   std::vector<ModuleSettings> SettingsList;
   for (auto &ModuleHDFInfo : ModuleHDFInfoList) {
     try {
-      SettingsList.push_back(extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo));
+      SettingsList.push_back(
+          extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo));
     } catch (json::parse_error const &E) {
       LOG_WARN(
           "Invalid module configuration JSON encountered. The error was: {}",
@@ -102,19 +103,19 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
-  std::vector<ModuleSettings> SettingsList = extractLinkAndStreamInformationFromJson(ModuleHDFInfoList);
+  std::vector<ModuleSettings> SettingsList =
+      extractLinkAndStreamInformationFromJson(ModuleHDFInfoList);
   std::vector<ModuleSettings> StreamSettingsList;
   std::vector<ModuleSettings> LinkSettingsList;
-  
+
   for (auto &Item : SettingsList) {
     if (Item.isLink) {
       LinkSettingsList.push_back(std::move(Item));
-    }
-    else {
+    } else {
       StreamSettingsList.push_back(std::move(Item));
     }
   }
-  
+
   for (auto &Item : StreamSettingsList) {
     auto StreamGroup = hdf5::node::get_group(
         Task->hdfGroup(), Item.ModuleHDFInfoObj.HDFParentName);
