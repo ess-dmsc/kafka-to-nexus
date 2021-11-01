@@ -92,7 +92,7 @@ public:
 
   bool isInWriteMode();
   
-  void writeLinks(std::vector<LinkSettings> const &LinkSettingsList);
+  void writeLinks(std::vector<StreamSettings> const &LinkSettingsList);
   
   void writeMetaData();
 

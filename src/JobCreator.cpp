@@ -41,7 +41,7 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
 }
 
 StreamSettings
-extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
+extractLinkAndStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   if (StreamInfo.WriterModule.empty()) {
     throw std::runtime_error("Empty writer module name encountered.");
   }
@@ -51,11 +51,17 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
 
   StreamSettings.ConfigStreamJson = ConfigStream.dump();
-  StreamSettings.Topic =
-      Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
   StreamSettings.Source =
       Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
   StreamSettings.Module = StreamInfo.WriterModule;
+  if(StreamSettings.Module != "link") {
+    StreamSettings.Topic =
+        Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
+  }
+  else {
+    StreamSettings.Name = Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
+    StreamSettings.isLink = true;
+  }
   StreamSettings.Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
@@ -63,66 +69,27 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   return StreamSettings;
 }
 
-LinkSettings extractLinkInformationFromJsonForLinking(StreamHDFInfo const &LinkInfo){
-  LinkSettings LinkSettings;
-  LinkSettings.Name = LinkInfo.WriterModule;
-  LinkSettings.Target = LinkInfo.ConfigStream;
-  LinkSettings.Path = LinkInfo.HDFParentName;
-  
-  return LinkSettings;
-}
-
-/// Helper to extract information about the provided stream.
-static std::vector<StreamSettings> extractStreamInformationFromJson(
-  std::vector<StreamHDFInfo> &StreamHDFInfoList){
-  std::vector<StreamSettings> StreamSettingsList;
-  for (auto &StreamHDFInfo : StreamHDFInfoList) {
-    try {
-      if(not StreamHDFInfo.isLink){
-        StreamSettingsList.push_back(
-            extractStreamInformationFromJsonForSource(StreamHDFInfo));
-      }
-    } catch (json::parse_error const &E) {
-      LOG_WARN(
-          "Invalid stream configuration JSON encountered. The error was: {}",
-          E.what());
-      continue;
-    } catch (std::runtime_error const &E) {
-      LOG_WARN("Unknown exception encountered when extracting stream "
-               "information. The error was: {}",
-               E.what());
-      continue;
-    }
-  }
-  LOG_INFO("Command contains {} streams", StreamSettingsList.size());
-  return StreamSettingsList;
-}
-
-
-/// Helper to extract information about the provided links.
-static std::vector<LinkSettings> extractLinkInformationFromJson(
+/// Helper to extract information about the provided links and streams.
+static std::vector<StreamSettings> extractLinkAndStreamInformationFromJson(
     std::vector<StreamHDFInfo> &StreamHDFInfoList) {
-  std::vector<LinkSettings> LinkSettingsList;
+  std::vector<StreamSettings> SettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
-      if(StreamHDFInfo.isLink){
-        LinkSettingsList.push_back(
-            extractLinkInformationFromJsonForLinking(StreamHDFInfo));
-      }
+      SettingsList.push_back(extractLinkAndStreamInformationFromJsonForSource(StreamHDFInfo));
     } catch (json::parse_error const &E) {
       LOG_WARN(
-          "Invalid link configuration JSON encountered. The error was: {}",
+          "Invalid module configuration JSON encountered. The error was: {}",
           E.what());
       continue;
     } catch (std::runtime_error const &E) {
-      LOG_WARN("Unknown exception encountered when extracting link "
+      LOG_WARN("Unknown exception encountered when extracting module "
                "information. The error was: {}",
                E.what());
       continue;
     }
   }
-  LOG_INFO("Command contains {} links", LinkSettingsList.size());
-  return LinkSettingsList;
+  LOG_INFO("Command contains {} links and streams.", SettingsList.size());
+  return SettingsList;
 }
 
 std::unique_ptr<IStreamController>
@@ -135,10 +102,19 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   std::vector<StreamHDFInfo> StreamHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
-
-  auto StreamSettingsList = extractStreamInformationFromJson(StreamHDFInfoList);
-  auto LinkSettingsList = extractLinkInformationFromJson(StreamHDFInfoList);
-
+  std::vector<StreamSettings> SettingsList = extractLinkAndStreamInformationFromJson(StreamHDFInfoList);
+  std::vector<StreamSettings> StreamSettingsList;
+  std::vector<StreamSettings> LinkSettingsList;
+  
+  for (auto &Item : SettingsList) {
+    if (Item.isLink) {
+      LinkSettingsList.push_back(std::move(Item));
+    }
+    else {
+      StreamSettingsList.push_back(std::move(Item));
+    }
+  }
+  
   for (auto &Item : StreamSettingsList) {
     auto StreamGroup = hdf5::node::get_group(
         Task->hdfGroup(), Item.StreamHDFInfoObj.HDFParentName);

@@ -34,19 +34,12 @@ void addStreamSourceToWriterModule(
 std::vector<StreamHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 
-/// \brief Extract information about the stream.
+/// \brief Extract information about the stream or link.
 ///
 /// \param StreamInfo
-/// \return The stream information.
+/// \return The stream or link information.
 StreamSettings
-extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
-
-/// \brief Extract information about the link.
-///
-/// \param LinkInfo
-/// \return The link information.
-LinkSettings
-extractLinkInformationFromJsonForLinking(StreamHDFInfo const &LinkInfo);
+extractLinkAndStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
 
 std::unique_ptr<WriterModule::Base>
 generateWriterInstance(StreamSettings const &StreamInfo);

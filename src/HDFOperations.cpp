@@ -387,19 +387,6 @@ void createHDFStructures(
           LOG_ERROR("Failed to create group  Name: {}. Message was: {}",
                     CNode.Name.getValue(), e.what());
         }
-      } else if (CNode.Type.getValue() == "link") {
-
-        if (CNode.Name.getValue().empty()) {
-          LOG_ERROR("HDF link name was empty/missing, ignoring.");
-          return;
-        }
-        std::string pathstr;
-        for (auto &x : Path) {
-          // cppcheck-suppress useStlAlgorithm
-          pathstr += "/" + x;
-        }
-        HDFStreamInfo.push_back(StreamHDFInfo{CNode.Name.getValue(), pathstr,
-                                              CNode.Target.getValue(), true});
       } else {
         LOG_ERROR("Unknown hdf node of type {}. Ignoring.",
                   CNode.Type.getValue());
@@ -408,14 +395,15 @@ void createHDFStructures(
       if (CNode.Type.getValue() == "dataset") {
         auto DatasetName = writeDataset(Parent, CNode.Config.getValue());
         writeAttributesIfPresent(Parent.get_dataset(DatasetName), Value);
-      } else {
+      }
+      else {
         std::string pathstr;
         for (auto &x : Path) {
           // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
         HDFStreamInfo.push_back(StreamHDFInfo{CNode.Type.getValue(), pathstr,
-                                              CNode.Config.getValue().dump(), false});
+                                              CNode.Config.getValue().dump()});
       }
     }
   } catch (const std::exception &e) {
@@ -426,15 +414,15 @@ void createHDFStructures(
   }
 }
 
-void addLinks(hdf5::node::Group const &Group, std::vector<LinkSettings> const &LinkSettingsList) {
+void addLinks(hdf5::node::Group const &Group, std::vector<StreamSettings> const &LinkSettingsList) {
   for (auto &LinkSettings : LinkSettingsList) {
-    auto NodeGroup = Group.get_group(LinkSettings.Path);
+    auto NodeGroup = Group.get_group(LinkSettings.StreamHDFInfoObj.HDFParentName);
     addLinkToNode(NodeGroup, LinkSettings);
   }
 }
 
-void addLinkToNode(hdf5::node::Group const &Group, LinkSettings const &LinkSettings) {
-  std::string TargetBase = LinkSettings.Target;
+void addLinkToNode(hdf5::node::Group const &Group, StreamSettings const &LinkSettings) {
+  std::string TargetBase = LinkSettings.Source;
   std::string Name = LinkSettings.Name;
   auto GroupBase = Group;
   while (TargetBase.find("../") == 0) {
