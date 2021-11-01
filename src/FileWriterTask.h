@@ -50,7 +50,7 @@ public:
   /// \param HdfInfo The HDF information for the stream.
   /// \param UseSwmr Whether to use SWMR.
   void InitialiseHdf(std::string const &NexusStructure,
-                     std::vector<StreamHDFInfo> &HdfInfo);
+                     std::vector<ModuleHDFInfo> &HdfInfo);
 
   /// \brief  Set the `JobID`.
   ///

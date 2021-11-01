@@ -355,7 +355,7 @@ void createHDFStructures(
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
-    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
+    std::vector<ModuleHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
 
   try {
 
@@ -402,7 +402,7 @@ void createHDFStructures(
           // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
-        HDFStreamInfo.push_back(StreamHDFInfo{CNode.Type.getValue(), pathstr,
+        HDFStreamInfo.push_back(ModuleHDFInfo{CNode.Type.getValue(), pathstr,
                                               CNode.Config.getValue().dump()});
       }
     }
@@ -416,7 +416,7 @@ void createHDFStructures(
 
 void addLinks(hdf5::node::Group const &Group, std::vector<ModuleSettings> const &LinkSettingsList) {
   for (auto &LinkSettings : LinkSettingsList) {
-    auto NodeGroup = Group.get_group(LinkSettings.StreamHDFInfoObj.HDFParentName);
+    auto NodeGroup = Group.get_group(LinkSettings.ModuleHDFInfoObj.HDFParentName);
     addLinkToNode(NodeGroup, LinkSettings);
   }
 }

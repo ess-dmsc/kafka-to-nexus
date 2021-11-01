@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "JobCreator.h"
-#include "StreamHDFInfo.h"
+#include "ModuleHDFInfo.h"
 #include "WriterModule/f142/f142_Writer.h"
 #include "WriterModule/hs00/hs00_Writer.h"
 #include "WriterRegistrar.h"
@@ -33,7 +33,7 @@ TEST_F(JobCreator, ExtractStreamSettingsEmptyModule) {
               "dtype": "double",
               "source": "my_test_pv",
               "topic": "my_test_topic"})""};
-  StreamHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
+  ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   EXPECT_THROW(
       FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig),
       std::runtime_error);
@@ -46,7 +46,7 @@ TEST_F(JobCreator, ExtractStreamSettings) {
               "dtype": "double",
               "source": "my_test_pv",
   "topic": "my_test_topic"})""};
-  StreamHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
+  ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
       FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
   EXPECT_EQ(Result.Module, ModuleId);
@@ -63,7 +63,7 @@ TEST_F(JobCreator, Generatef142Writer) {
               "dtype": "double",
               "source": "my_test_pv",
   "topic": "my_test_topic"})""};
-  StreamHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
+  ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
       FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
   auto WriterInstance = FileWriter::generateWriterInstance(Result);
@@ -78,7 +78,7 @@ TEST_F(JobCreator, GenerateWriterFailWithBadId) {
               "dtype": "double",
               "source": "my_test_pv",
   "topic": "my_test_topic"})""};
-  StreamHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
+  ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
       FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
   EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
@@ -91,7 +91,7 @@ TEST_F(JobCreator, GenerateWriterFailWithMissingFields) {
               "source": "my_test_pv",
   "topic": "my_test_topic"})""};
   // Fields are missing in the JSON structure above for the hs00 module
-  StreamHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
+  ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
       FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
   EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
@@ -106,7 +106,7 @@ TEST_F(JobCreator, SetWriterAttributes) {
               "dtype": "double",
               "source": "my_test_pv",
   "topic": "my_test_topic"})""};
-  StreamHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
+  ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto StreamInfo =
       FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
   auto WriterModule = FileWriter::generateWriterInstance(StreamInfo);

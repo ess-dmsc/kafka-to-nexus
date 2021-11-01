@@ -48,7 +48,7 @@ void FileWriterTask::addSource(Source &&Source) {
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
-                                   std::vector<StreamHDFInfo> &HdfInfo) {
+                                   std::vector<ModuleHDFInfo> &HdfInfo) {
   auto NexusStructureJson = hdf_parse(NexusStructure);
   std::string ErrorString;
   std::filesystem::path FilePath(Filename);

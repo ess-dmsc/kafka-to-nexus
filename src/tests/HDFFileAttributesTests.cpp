@@ -37,8 +37,8 @@ TEST_F(HDFFileAttributesTest,
         }
       ]
     })"";
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -61,8 +61,8 @@ TEST_F(HDFFileAttributesTest,
         }
       ]
     })"";
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithScalarStringAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithScalarStringAttr, EmptyModuleHDFInfo);
 
   auto StringAttr = hdf5::node::get_group(TestFile->hdfGroup(),
                                           "/group_with_scalar_string_attr")
@@ -94,8 +94,8 @@ TEST_F(HDFFileAttributesTest,
     ]
   })"";
 
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithArrayOfAttrs, EmptyModuleHDFInfo);
 
   auto IntAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_of_attrs")
@@ -130,8 +130,8 @@ TEST_F(HDFFileAttributesTest,
     ]
   })"";
 
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithTypedAttrs, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithTypedAttrs, EmptyModuleHDFInfo);
 
   auto IntAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_typed_attrs")
@@ -158,8 +158,8 @@ TEST_F(HDFFileAttributesTest, IntArrayAttribute) {
     ]
   })"";
 
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithArrayAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithArrayAttr, EmptyModuleHDFInfo);
 
   auto ArrayAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
@@ -188,8 +188,8 @@ TEST_F(HDFFileAttributesTest, StringArrayAttribute) {
     ]
   })"";
 
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithArrayAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithArrayAttr, EmptyModuleHDFInfo);
 
   auto ArrayStringAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
@@ -251,8 +251,8 @@ TEST_F(HDFFileAttributesTest,
     ]
   })"";
 
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithArrayOfAttrs, EmptyModuleHDFInfo);
 
   {
     auto StringAttr =
@@ -351,8 +351,8 @@ TEST_F(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
     ]
   })"";
 
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(Command, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(Command, EmptyModuleHDFInfo);
 
   {
     auto StringAttr = hdf5::node::get_group(TestFile->hdfGroup(),
@@ -385,8 +385,8 @@ TEST_F(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -415,8 +415,8 @@ TEST_F(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -445,8 +445,8 @@ TEST_F(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -475,8 +475,8 @@ TEST_F(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
         }
       ]
     })"";
-  std::vector<StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+  std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")

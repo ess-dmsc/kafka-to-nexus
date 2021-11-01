@@ -16,7 +16,7 @@ TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
         "topic": "my_test_topic"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
@@ -30,7 +30,7 @@ TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
         "source": "my_test_pv"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
@@ -45,7 +45,7 @@ TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
         "topic": "my_test_topic"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.ConfigStream = Command;
 
   ASSERT_THROW(FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
@@ -59,7 +59,7 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
         "topic": "my_test_topic"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
@@ -80,7 +80,7 @@ TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
     }
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 

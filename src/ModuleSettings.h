@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "StreamHDFInfo.h"
+#include "ModuleHDFInfo.h"
 #include "WriterModuleBase.h"
 #include <string>
 
 /// \brief Holder for the stream settings.
 struct ModuleSettings {
-  StreamHDFInfo StreamHDFInfoObj;
+  ModuleHDFInfo ModuleHDFInfoObj;
   std::string Name;
   std::string Topic;
   std::string Module;

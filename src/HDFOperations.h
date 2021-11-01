@@ -11,7 +11,7 @@
 
 #include "ModuleSettings.h"
 #include "MultiVector.h"
-#include "StreamHDFInfo.h"
+#include "ModuleHDFInfo.h"
 #include "json.h"
 #include "logger.h"
 #include <deque>
@@ -27,7 +27,7 @@ void createHDFStructures(
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
-    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
+    std::vector<ModuleHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
 
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                          const std::string &Name);
