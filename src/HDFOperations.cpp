@@ -414,14 +414,14 @@ void createHDFStructures(
   }
 }
 
-void addLinks(hdf5::node::Group const &Group, std::vector<StreamSettings> const &LinkSettingsList) {
+void addLinks(hdf5::node::Group const &Group, std::vector<ModuleSettings> const &LinkSettingsList) {
   for (auto &LinkSettings : LinkSettingsList) {
     auto NodeGroup = Group.get_group(LinkSettings.StreamHDFInfoObj.HDFParentName);
     addLinkToNode(NodeGroup, LinkSettings);
   }
 }
 
-void addLinkToNode(hdf5::node::Group const &Group, StreamSettings const &LinkSettings) {
+void addLinkToNode(hdf5::node::Group const &Group, ModuleSettings const &LinkSettings) {
   std::string TargetBase = LinkSettings.Source;
   std::string Name = LinkSettings.Name;
   auto GroupBase = Group;

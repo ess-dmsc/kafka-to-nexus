@@ -40,39 +40,39 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
   }
 }
 
-StreamSettings
+ModuleSettings
 extractLinkAndStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   if (StreamInfo.WriterModule.empty()) {
     throw std::runtime_error("Empty writer module name encountered.");
   }
-  StreamSettings StreamSettings;
-  StreamSettings.StreamHDFInfoObj = StreamInfo;
+  ModuleSettings ModuleSettings;
+  ModuleSettings.StreamHDFInfoObj = StreamInfo;
 
-  json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
+  json ConfigStream = json::parse(ModuleSettings.StreamHDFInfoObj.ConfigStream);
 
-  StreamSettings.ConfigStreamJson = ConfigStream.dump();
-  StreamSettings.Source =
+  ModuleSettings.ConfigStreamJson = ConfigStream.dump();
+  ModuleSettings.Source =
       Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
-  StreamSettings.Module = StreamInfo.WriterModule;
-  if(StreamSettings.Module != "link") {
-    StreamSettings.Topic =
+  ModuleSettings.Module = StreamInfo.WriterModule;
+  if(ModuleSettings.Module != "link") {
+    ModuleSettings.Topic =
         Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
   }
   else {
-    StreamSettings.Name = Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
-    StreamSettings.isLink = true;
+    ModuleSettings.Name = Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
+    ModuleSettings.isLink = true;
   }
-  StreamSettings.Attributes =
+  ModuleSettings.Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
 
-  return StreamSettings;
+  return ModuleSettings;
 }
 
 /// Helper to extract information about the provided links and streams.
-static std::vector<StreamSettings> extractLinkAndStreamInformationFromJson(
+static std::vector<ModuleSettings> extractLinkAndStreamInformationFromJson(
     std::vector<StreamHDFInfo> &StreamHDFInfoList) {
-  std::vector<StreamSettings> SettingsList;
+  std::vector<ModuleSettings> SettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
       SettingsList.push_back(extractLinkAndStreamInformationFromJsonForSource(StreamHDFInfo));
@@ -102,9 +102,9 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   std::vector<StreamHDFInfo> StreamHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
-  std::vector<StreamSettings> SettingsList = extractLinkAndStreamInformationFromJson(StreamHDFInfoList);
-  std::vector<StreamSettings> StreamSettingsList;
-  std::vector<StreamSettings> LinkSettingsList;
+  std::vector<ModuleSettings> SettingsList = extractLinkAndStreamInformationFromJson(StreamHDFInfoList);
+  std::vector<ModuleSettings> StreamSettingsList;
+  std::vector<ModuleSettings> LinkSettingsList;
   
   for (auto &Item : SettingsList) {
     if (Item.isLink) {
@@ -157,7 +157,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);
 }
 
-void addStreamSourceToWriterModule(vector<StreamSettings> &StreamSettingsList,
+void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
                                    std::unique_ptr<FileWriterTask> &Task) {
 
   for (auto &StreamSettings : StreamSettingsList) {
@@ -194,7 +194,7 @@ void addStreamSourceToWriterModule(vector<StreamSettings> &StreamSettingsList,
 }
 
 std::unique_ptr<WriterModule::Base>
-generateWriterInstance(StreamSettings const &StreamInfo) {
+generateWriterInstance(ModuleSettings const &StreamInfo) {
   WriterModule::Registry::FactoryAndID ModuleFactory;
   try {
     ModuleFactory = WriterModule::Registry::find(StreamInfo.Module);
@@ -225,7 +225,7 @@ generateWriterInstance(StreamSettings const &StreamInfo) {
 }
 
 void setWriterHDFAttributes(hdf5::node::Group &RootNode,
-                            StreamSettings const &StreamInfo) {
+                            ModuleSettings const &StreamInfo) {
   auto StreamGroup = hdf5::node::get_group(
       RootNode, StreamInfo.StreamHDFInfoObj.HDFParentName);
 

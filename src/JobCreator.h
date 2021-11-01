@@ -28,7 +28,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 // Note: The functions below are "private" helper functions.
 
 void addStreamSourceToWriterModule(
-    std::vector<StreamSettings> &StreamSettingsList,
+    std::vector<ModuleSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task);
 
 std::vector<StreamHDFInfo>
@@ -38,13 +38,13 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 ///
 /// \param StreamInfo
 /// \return The stream or link information.
-StreamSettings
+ModuleSettings
 extractLinkAndStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
 
 std::unique_ptr<WriterModule::Base>
-generateWriterInstance(StreamSettings const &StreamInfo);
+generateWriterInstance(ModuleSettings const &StreamInfo);
 
 void setWriterHDFAttributes(hdf5::node::Group &RootNode,
-                            StreamSettings const &StreamInfo);
+                            ModuleSettings const &StreamInfo);
 
 } // namespace FileWriter

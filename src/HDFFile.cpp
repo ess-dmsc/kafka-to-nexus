@@ -143,7 +143,7 @@ void HDFFile::openFileInRegularMode() {
                                FileAccessList);
 }
 
-void HDFFile::addLinks(std::vector<StreamSettings> const &LinkSettingsList) {
+void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
   try {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);

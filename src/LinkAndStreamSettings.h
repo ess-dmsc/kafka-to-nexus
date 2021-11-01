@@ -14,7 +14,7 @@
 #include <string>
 
 /// \brief Holder for the stream settings.
-struct StreamSettings {
+struct ModuleSettings {
   StreamHDFInfo StreamHDFInfoObj;
   std::string Name;
   std::string Topic;

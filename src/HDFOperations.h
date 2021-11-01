@@ -59,8 +59,8 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               std::string const &Name,
                               nlohmann::json const &Values);
 
-void addLinks(hdf5::node::Group const &Group, std::vector<StreamSettings> const &LinkSettingslist);
-void addLinkToNode(hdf5::node::Group const &Group, StreamSettings const &LinkSettings);
+void addLinks(hdf5::node::Group const &Group, std::vector<ModuleSettings> const &LinkSettingslist);
+void addLinkToNode(hdf5::node::Group const &Group, ModuleSettings const &LinkSettings);
 
 Shape determineArrayDimensions(nlohmann::json const &Values);
 
