@@ -57,6 +57,7 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   if (ModuleSettings.Module != "link") {
     ModuleSettings.Topic =
         Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
+    ModuleSettings.isLink = false;
   } else {
     ModuleSettings.Name =
         Command::Parser::getRequiredValue<std::string>("name", ConfigStream);

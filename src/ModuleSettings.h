@@ -23,5 +23,5 @@ struct ModuleSettings {
   std::string ConfigStreamJson;
   std::string Attributes;
   std::unique_ptr<WriterModule::Base> WriterModule;
-  bool isLink = false;
+  bool isLink;
 };
