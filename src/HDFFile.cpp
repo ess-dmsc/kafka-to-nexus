@@ -22,7 +22,7 @@ using HDFOperations::writeHDFISO8601AttributeCurrentTime;
 
 HDFFile::HDFFile(std::string const &FileName,
                  nlohmann::json const &NexusStructure,
-                 std::vector<StreamHDFInfo> &StreamHDFInfo,
+                 std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                  MetaData::TrackerPtr &TrackerPtr)
     : H5FileName(FileName), MetaDataTracker(TrackerPtr) {
   if (FileName.empty()) {
@@ -31,13 +31,11 @@ HDFFile::HDFFile(std::string const &FileName,
   FileAccessList.library_version_bounds(hdf5::property::LibVersion::LATEST,
                                         hdf5::property::LibVersion::LATEST);
   createFileInRegularMode();
-  init(NexusStructure, StreamHDFInfo);
+  init(NexusStructure, ModuleHDFInfo);
   StoredNexusStructure = NexusStructure;
 }
 
-HDFFile::~HDFFile(){
-  addMetaData();
-}
+HDFFile::~HDFFile() { addMetaData(); }
 
 void HDFFile::createFileInRegularMode() {
   hdfFile() = hdf5::file::create(H5FileName,
@@ -47,13 +45,13 @@ void HDFFile::createFileInRegularMode() {
 }
 
 void HDFFileBase::init(const std::string &NexusStructure,
-                       std::vector<StreamHDFInfo> &StreamHDFInfo) {
+                       std::vector<ModuleHDFInfo> &ModuleHDFInfo) {
   auto Document = nlohmann::json::parse(NexusStructure);
-  init(Document, StreamHDFInfo);
+  init(Document, ModuleHDFInfo);
 }
 
 void HDFFileBase::init(const nlohmann::json &NexusStructure,
-                       std::vector<StreamHDFInfo> &StreamHDFInfo) {
+                       std::vector<ModuleHDFInfo> &ModuleHDFInfo) {
 
   try {
     hdf5::property::AttributeCreationList acpl;
@@ -73,7 +71,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
         if (Children->is_array()) {
           for (auto &Child : *Children) {
             createHDFStructures(Child, RootGroup, 0, lcpl, var_string,
-                                StreamHDFInfo, path);
+                                ModuleHDFInfo, path);
           }
         }
       }
@@ -143,7 +141,7 @@ void HDFFile::openFileInRegularMode() {
                                FileAccessList);
 }
 
-void HDFFile::addLinks(std::vector<LinkSettings> const &LinkSettingsList) {
+void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
   try {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
@@ -159,8 +157,7 @@ void HDFFile::addMetaData() {
     if (MetaDataTracker != nullptr) {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
     }
-  }
-  catch(std::exception const &E) {
+  } catch (std::exception const &E) {
     LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
               E.what());
   }

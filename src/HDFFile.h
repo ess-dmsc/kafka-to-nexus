@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "LinkAndStreamSettings.h"
 #include "MetaData/Tracker.h"
-#include "StreamHDFInfo.h"
+#include "ModuleHDFInfo.h"
+#include "ModuleSettings.h"
 #include "json.h"
 #include "logger.h"
 #include <H5Ipublic.h>
@@ -34,10 +34,10 @@ public:
 protected:
   auto &hdfFile() { return H5File; }
   void init(const std::string &NexusStructure,
-            std::vector<StreamHDFInfo> &StreamHDFInfo);
+            std::vector<ModuleHDFInfo> &ModuleHDFInfo);
 
   void init(const nlohmann::json &NexusStructure,
-            std::vector<StreamHDFInfo> &StreamHDFInfo);
+            std::vector<ModuleHDFInfo> &ModuleHDFInfo);
 
 private:
   hdf5::file::File H5File;
@@ -46,9 +46,9 @@ private:
 class HDFFile : public HDFFileBase {
 public:
   HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
-          std::vector<StreamHDFInfo> &StreamHDFInfo,
+          std::vector<ModuleHDFInfo> &ModuleHDFInfo,
           MetaData::TrackerPtr &TrackerPtr);
-  void addLinks(std::vector<LinkSettings> const &LinkSettingsList);
+  void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
   void addMetaData();
   void openInSWMRMode();
   void openInRegularMode();

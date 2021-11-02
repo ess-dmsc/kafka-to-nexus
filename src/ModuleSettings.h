@@ -9,24 +9,19 @@
 
 #pragma once
 
-#include "StreamHDFInfo.h"
+#include "ModuleHDFInfo.h"
 #include "WriterModuleBase.h"
 #include <string>
 
 /// \brief Holder for the stream settings.
-struct StreamSettings {
-  StreamHDFInfo StreamHDFInfoObj;
+struct ModuleSettings {
+  ModuleHDFInfo ModuleHDFInfoObj;
+  std::string Name;
   std::string Topic;
   std::string Module;
   std::string Source;
   std::string ConfigStreamJson;
   std::string Attributes;
   std::unique_ptr<WriterModule::Base> WriterModule;
-};
-
-/// \brief Holder for the link settings.
-struct LinkSettings {
-  std::string Target;
-  std::string Name;
-  std::string Path;
+  bool isLink;
 };

@@ -16,11 +16,11 @@ TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
         "topic": "my_test_topic"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
+  ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
                std::runtime_error);
 }
 
@@ -30,11 +30,11 @@ TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
         "source": "my_test_pv"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
+  ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
                std::runtime_error);
 }
 
@@ -45,10 +45,10 @@ TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
         "topic": "my_test_topic"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
+  ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
                std::runtime_error);
 }
 
@@ -59,11 +59,11 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
         "topic": "my_test_topic"
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  auto Settings = FileWriter::extractStreamInformationFromJsonForSource(Info);
+  auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
 
   ASSERT_EQ("my_test_topic", Settings.Topic);
   ASSERT_EQ("f142", Settings.Module);
@@ -80,11 +80,11 @@ TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
     }
   })"""};
 
-  StreamHDFInfo Info;
+  ModuleHDFInfo Info;
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  auto Settings = FileWriter::extractStreamInformationFromJsonForSource(Info);
+  auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
 
   ASSERT_EQ("{\"NX_class\":\"NXlog\"}", Settings.Attributes);
 }

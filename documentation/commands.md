@@ -191,9 +191,11 @@ For example:
       "name": "group_with_a_link",
       "children": [
         {
-          "type": "link",
-          "name": "some_link_to_value",
-          "target": "../group_with_dataset/some_static_data/values"
+          "module": "link",
+          "config": {
+            "name": "some_link_to_value",
+            "source": "../group_with_dataset/some_static_data/values"
+        }
         },
       ]
     },

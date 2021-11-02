@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "LinkAndStreamSettings.h"
+#include "ModuleHDFInfo.h"
+#include "ModuleSettings.h"
 #include "MultiVector.h"
-#include "StreamHDFInfo.h"
 #include "json.h"
 #include "logger.h"
 #include <deque>
@@ -27,7 +27,7 @@ void createHDFStructures(
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
-    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
+    std::vector<ModuleHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
 
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                          const std::string &Name);
@@ -59,8 +59,10 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               std::string const &Name,
                               nlohmann::json const &Values);
 
-void addLinks(hdf5::node::Group const &Group, std::vector<LinkSettings> const &LinkSettingslist);
-void addLinkToNode(hdf5::node::Group const &Group, LinkSettings const &LinkSettings);
+void addLinks(hdf5::node::Group const &Group,
+              std::vector<ModuleSettings> const &LinkSettingsList);
+void addLinkToNode(hdf5::node::Group const &Group,
+                   ModuleSettings const &LinkSettings);
 
 Shape determineArrayDimensions(nlohmann::json const &Values);
 

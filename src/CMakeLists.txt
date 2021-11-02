@@ -175,8 +175,8 @@ set(kafka_to_nexus_INC
         TimeUtility.h
         HDFOperations.h
         HDFVersionCheck.h
-        LinkAndStreamSettings.h
-        StreamHDFInfo.h
+        ModuleSettings.h
+        ModuleHDFInfo.h
         CommandSystem/CommandListener.h
         CommandSystem/FeedbackProducerBase.h
         CommandSystem/JobListener.h

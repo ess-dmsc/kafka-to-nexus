@@ -11,9 +11,8 @@
 
 #include <string>
 
-struct StreamHDFInfo {
+struct ModuleHDFInfo {
   std::string WriterModule;
   std::string HDFParentName;
   std::string ConfigStream;
-  bool isLink;
 };

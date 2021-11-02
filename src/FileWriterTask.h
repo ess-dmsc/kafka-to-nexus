@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "LinkAndStreamSettings.h"
 #include "MetaData/Tracker.h"
+#include "ModuleSettings.h"
 #include "Source.h"
 #include "json.h"
 #include <map>
@@ -50,7 +50,7 @@ public:
   /// \param HdfInfo The HDF information for the stream.
   /// \param UseSwmr Whether to use SWMR.
   void InitialiseHdf(std::string const &NexusStructure,
-                     std::vector<StreamHDFInfo> &HdfInfo);
+                     std::vector<ModuleHDFInfo> &HdfInfo);
 
   /// \brief  Set the `JobID`.
   ///
@@ -91,9 +91,9 @@ public:
   void switchToWriteMode();
 
   bool isInWriteMode();
-  
-  void writeLinks(std::vector<LinkSettings> const &LinkSettingsList);
-  
+
+  void writeLinks(std::vector<ModuleSettings> const &LinkSettingsList);
+
   void writeMetaData();
 
   void flushDataToFile();
