@@ -35,7 +35,7 @@ TEST_F(JobCreator, ExtractStreamSettingsEmptyModule) {
               "topic": "my_test_topic"})""};
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   EXPECT_THROW(
-      FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig),
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig),
       std::runtime_error);
 }
 
@@ -48,7 +48,7 @@ TEST_F(JobCreator, ExtractStreamSettings) {
   "topic": "my_test_topic"})""};
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
-      FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
   EXPECT_EQ(Result.Module, ModuleId);
   EXPECT_EQ(Result.Topic, "my_test_topic");
   EXPECT_EQ(Result.Source, "my_test_pv");
@@ -65,7 +65,7 @@ TEST_F(JobCreator, Generatef142Writer) {
   "topic": "my_test_topic"})""};
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
-      FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
   auto WriterInstance = FileWriter::generateWriterInstance(Result);
   EXPECT_TRUE(dynamic_cast<WriterModule::f142::f142_Writer *>(
                   WriterInstance.get()) != nullptr);
@@ -80,7 +80,7 @@ TEST_F(JobCreator, GenerateWriterFailWithBadId) {
   "topic": "my_test_topic"})""};
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
-      FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
   EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
 }
 
@@ -93,7 +93,7 @@ TEST_F(JobCreator, GenerateWriterFailWithMissingFields) {
   // Fields are missing in the JSON structure above for the hs00 module
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
-      FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
   EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
 }
 
@@ -108,7 +108,7 @@ TEST_F(JobCreator, SetWriterAttributes) {
   "topic": "my_test_topic"})""};
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto StreamInfo =
-      FileWriter::extractLinkAndStreamInformationFromJsonForSource(TestConfig);
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
   auto WriterModule = FileWriter::generateWriterInstance(StreamInfo);
   StreamInfo.WriterModule = std::move(WriterModule);
   auto RootGroup = TestFile->hdfGroup();

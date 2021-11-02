@@ -41,19 +41,19 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
 }
 
 ModuleSettings
-extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo const &StreamInfo) {
-  if (StreamInfo.WriterModule.empty()) {
+extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
+  if (ModuleInfo.WriterModule.empty()) {
     throw std::runtime_error("Empty writer module name encountered.");
   }
   ModuleSettings ModuleSettings;
-  ModuleSettings.ModuleHDFInfoObj = StreamInfo;
+  ModuleSettings.ModuleHDFInfoObj = ModuleInfo;
 
   json ConfigStream = json::parse(ModuleSettings.ModuleHDFInfoObj.ConfigStream);
 
   ModuleSettings.ConfigStreamJson = ConfigStream.dump();
   ModuleSettings.Source =
       Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
-  ModuleSettings.Module = StreamInfo.WriterModule;
+  ModuleSettings.Module = ModuleInfo.WriterModule;
   if(ModuleSettings.Module != "link") {
     ModuleSettings.Topic =
         Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
@@ -70,12 +70,12 @@ extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo const &StreamInfo
 }
 
 /// Helper to extract information about the provided links and streams.
-static std::vector<ModuleSettings> extractLinkAndStreamInformationFromJson(
+static std::vector<ModuleSettings> extractModuleInformationFromJson(
     std::vector<ModuleHDFInfo> &ModuleHDFInfoList) {
   std::vector<ModuleSettings> SettingsList;
   for (auto &ModuleHDFInfo : ModuleHDFInfoList) {
     try {
-      SettingsList.push_back(extractLinkAndStreamInformationFromJsonForSource(ModuleHDFInfo));
+      SettingsList.push_back(extractModuleInformationFromJsonForSource(ModuleHDFInfo));
     } catch (json::parse_error const &E) {
       LOG_WARN(
           "Invalid module configuration JSON encountered. The error was: {}",
@@ -102,7 +102,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
-  std::vector<ModuleSettings> SettingsList = extractLinkAndStreamInformationFromJson(ModuleHDFInfoList);
+  std::vector<ModuleSettings> SettingsList = extractModuleInformationFromJson(ModuleHDFInfoList);
   std::vector<ModuleSettings> StreamSettingsList;
   std::vector<ModuleSettings> LinkSettingsList;
   

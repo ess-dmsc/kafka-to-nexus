@@ -20,7 +20,7 @@ TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
+  ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
                std::runtime_error);
 }
 
@@ -34,7 +34,7 @@ TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
+  ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
                std::runtime_error);
 }
 
@@ -48,7 +48,7 @@ TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
   ModuleHDFInfo Info;
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info),
+  ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
                std::runtime_error);
 }
 
@@ -63,7 +63,7 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  auto Settings = FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info);
+  auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
 
   ASSERT_EQ("my_test_topic", Settings.Topic);
   ASSERT_EQ("f142", Settings.Module);
@@ -84,7 +84,7 @@ TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
   Info.WriterModule = "f142";
   Info.ConfigStream = Command;
 
-  auto Settings = FileWriter::extractLinkAndStreamInformationFromJsonForSource(Info);
+  auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
 
   ASSERT_EQ("{\"NX_class\":\"NXlog\"}", Settings.Attributes);
 }
