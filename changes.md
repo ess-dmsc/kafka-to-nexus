@@ -5,6 +5,7 @@
 - Each ev42 writer module instance will now publish the number of events written to file.
 - It is no longer possible to set a stop time if the previously set stop time has passed. Also added unit tests for this feature.
 - The application will now give you an approximate size of the file it is writing to, rounded up to the nearest 10 MB, in the status messages that it produces.
+- The f142 cue index functionality was unintentianlly disabled but has now been restored to working order. Unit tests were added to prevent future such regression in the code.
 
 ## Version 4.0.0: Many, many changes
 

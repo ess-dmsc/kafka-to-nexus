@@ -408,6 +408,64 @@ TEST_F(f142WriteData, WriteOneArray) {
   EXPECT_EQ(WrittenValues, ElementValues);
 }
 
+TEST_F(f142WriteData, WriteCueIndex) {
+  f142_WriterStandIn TestWriter;
+  TestWriter.parse_config(R"({
+              "cue_interval": 4
+  })");
+  TestWriter.init_hdf(RootGroup);
+  TestWriter.reopen(RootGroup);
+  std::vector<double> ElementValues{3.14, 1.234};
+  for (unsigned int i = 0; i < 10; ++i) {
+    auto FlatbufferData = generateFlatbufferArrayMessage(ElementValues, i + 10);
+    TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
+                                                   FlatbufferData.second));
+  }
+  ASSERT_EQ(TestWriter.CueIndex.size(), 2u);
+  ASSERT_EQ(TestWriter.CueTimestampZero.size(), 2u);
+  std::vector<uint32_t> WrittenCueIndices(2);
+  std::vector<uint64_t> WrittenCueTimestamps(2);
+  TestWriter.CueIndex.read(WrittenCueIndices);
+  TestWriter.CueTimestampZero.read(WrittenCueTimestamps);
+  std::vector<uint32_t> ExpectedIndices{3, 7};
+  std::vector<uint64_t> ExpectedTimestamps{13, 17};
+  EXPECT_EQ(WrittenCueIndices, ExpectedIndices);
+  EXPECT_EQ(WrittenCueTimestamps, ExpectedTimestamps);
+  std::vector<uint64_t> WrittenTimestamps(10);
+  TestWriter.Timestamp.read(WrittenTimestamps);
+  for (unsigned int j = 0; j < WrittenCueIndices.size(); j++) {
+    EXPECT_EQ(WrittenCueTimestamps[j], WrittenTimestamps[WrittenCueIndices[j]]);
+  }
+}
+
+TEST_F(f142WriteData, WriteNoCueIndex) {
+  f142_WriterStandIn TestWriter;
+  TestWriter.parse_config(R"({
+              "cue_interval": 11
+  })");
+  TestWriter.init_hdf(RootGroup);
+  TestWriter.reopen(RootGroup);
+  std::vector<double> ElementValues{3.14, 1.234};
+  for (unsigned int i = 0; i < 10; ++i) {
+    auto FlatbufferData = generateFlatbufferArrayMessage(ElementValues, i + 10);
+    TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
+                                                   FlatbufferData.second));
+  }
+  ASSERT_EQ(TestWriter.CueIndex.size(), 0u);
+  ASSERT_EQ(TestWriter.CueTimestampZero.size(), 0u);
+}
+
+TEST_F(f142WriteData, WriteNoCueIndexAlt) {
+  f142_WriterStandIn TestWriter;
+  TestWriter.parse_config(R"({
+              "cue_interval": 1
+  })");
+  TestWriter.init_hdf(RootGroup);
+  TestWriter.reopen(RootGroup);
+  ASSERT_EQ(TestWriter.CueIndex.size(), 0u);
+  ASSERT_EQ(TestWriter.CueTimestampZero.size(), 0u);
+}
+
 TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
