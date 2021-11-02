@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "ModuleSettings.h"
 #include "MetaData/Tracker.h"
 #include "ModuleHDFInfo.h"
+#include "ModuleSettings.h"
 #include "json.h"
 #include "logger.h"
 #include <H5Ipublic.h>

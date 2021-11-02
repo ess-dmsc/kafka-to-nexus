@@ -35,9 +35,7 @@ HDFFile::HDFFile(std::string const &FileName,
   StoredNexusStructure = NexusStructure;
 }
 
-HDFFile::~HDFFile(){
-  addMetaData();
-}
+HDFFile::~HDFFile() { addMetaData(); }
 
 void HDFFile::createFileInRegularMode() {
   hdfFile() = hdf5::file::create(H5FileName,
@@ -159,8 +157,7 @@ void HDFFile::addMetaData() {
     if (MetaDataTracker != nullptr) {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
     }
-  }
-  catch(std::exception const &E) {
+  } catch (std::exception const &E) {
     LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
               E.what());
   }

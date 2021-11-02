@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "ModuleSettings.h"
 #include "MetaData/Tracker.h"
+#include "ModuleSettings.h"
 #include "Source.h"
 #include "json.h"
 #include <map>
@@ -91,9 +91,9 @@ public:
   void switchToWriteMode();
 
   bool isInWriteMode();
-  
+
   void writeLinks(std::vector<ModuleSettings> const &LinkSettingsList);
-  
+
   void writeMetaData();
 
   void flushDataToFile();

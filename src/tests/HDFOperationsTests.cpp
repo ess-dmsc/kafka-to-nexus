@@ -269,7 +269,7 @@ TEST_F(HDFStaticDataTest, StringArray) {
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
 
-//TEST_F(HDFStaticDataTest, AddLinkToNode1) {
+// TEST_F(HDFStaticDataTest, AddLinkToNode1) {
 //  RootGroup.create_group("data_to_link");
 //  RootGroup.create_group("data_link");
 //  std::string JsonString = R""({
@@ -283,7 +283,7 @@ TEST_F(HDFStaticDataTest, StringArray) {
 //  ASSERT_TRUE(link.type() == hdf5::node::LinkType::HARD);
 //}
 //
-//TEST_F(HDFStaticDataTest, AddLinkToNode2) {
+// TEST_F(HDFStaticDataTest, AddLinkToNode2) {
 //  RootGroup.create_group("data_link");
 //  std::string JsonString = R""({
 //    "name": "data_link",
@@ -294,4 +294,3 @@ TEST_F(HDFStaticDataTest, StringArray) {
 //  auto link = RootGroup.links["data_link"];
 //  ASSERT_FALSE(link.is_resolvable());
 //}
-
