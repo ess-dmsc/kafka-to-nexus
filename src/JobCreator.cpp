@@ -54,12 +54,12 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   ModuleSettings.Source =
       Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
   ModuleSettings.Module = ModuleInfo.WriterModule;
-  if(ModuleSettings.Module != "link") {
+  if (ModuleSettings.Module != "link") {
     ModuleSettings.Topic =
         Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
-  }
-  else {
-    ModuleSettings.Name = Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
+  } else {
+    ModuleSettings.Name =
+        Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
     ModuleSettings.isLink = true;
   }
   ModuleSettings.Attributes =
@@ -75,7 +75,8 @@ static std::vector<ModuleSettings> extractModuleInformationFromJson(
   std::vector<ModuleSettings> SettingsList;
   for (auto &ModuleHDFInfo : ModuleHDFInfoList) {
     try {
-      SettingsList.push_back(extractModuleInformationFromJsonForSource(ModuleHDFInfo));
+      SettingsList.push_back(
+          extractModuleInformationFromJsonForSource(ModuleHDFInfo));
     } catch (json::parse_error const &E) {
       LOG_WARN(
           "Invalid module configuration JSON encountered. The error was: {}",
@@ -102,19 +103,19 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
-  std::vector<ModuleSettings> SettingsList = extractModuleInformationFromJson(ModuleHDFInfoList);
+  std::vector<ModuleSettings> SettingsList =
+      extractModuleInformationFromJson(ModuleHDFInfoList);
   std::vector<ModuleSettings> StreamSettingsList;
   std::vector<ModuleSettings> LinkSettingsList;
-  
+
   for (auto &Item : SettingsList) {
     if (Item.isLink) {
       LinkSettingsList.push_back(std::move(Item));
-    }
-    else {
+    } else {
       StreamSettingsList.push_back(std::move(Item));
     }
   }
-  
+
   for (auto &Item : StreamSettingsList) {
     auto StreamGroup = hdf5::node::get_group(
         Task->hdfGroup(), Item.ModuleHDFInfoObj.HDFParentName);

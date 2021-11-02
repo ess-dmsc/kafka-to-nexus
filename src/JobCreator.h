@@ -11,9 +11,9 @@
 
 #include "CommandSystem/Commands.h"
 #include "FileWriterTask.h"
-#include "ModuleSettings.h"
 #include "MainOpt.h"
 #include "Metrics/Registrar.h"
+#include "ModuleSettings.h"
 #include "StreamController.h"
 #include "json.h"
 #include <memory>
