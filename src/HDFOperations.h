@@ -60,7 +60,7 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               nlohmann::json const &Values);
 
 void addLinks(hdf5::node::Group const &Group,
-              std::vector<ModuleSettings> const &LinkSettingslist);
+              std::vector<ModuleSettings> const &LinkSettingsList);
 void addLinkToNode(hdf5::node::Group const &Group,
                    ModuleSettings const &LinkSettings);
 

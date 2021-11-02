@@ -427,7 +427,7 @@ void addLinkToNode(hdf5::node::Group const &Group,
   std::string TargetBase = LinkSettings.Source;
   std::string Name = LinkSettings.Name;
   auto GroupBase = Group;
-  while (TargetBase.find("../") == 0) {
+  while (TargetBase.find("../") != std::string::npos) {
     TargetBase = TargetBase.substr(3);
     GroupBase = GroupBase.link().parent();
   }
