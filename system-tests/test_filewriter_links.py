@@ -32,6 +32,7 @@ def test_static_data_reaches_file(writer_channel, worker_pool, kafka_address):
     with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
         assert file["entry/link_to_features"][0] == 10138143369737381149
+        assert file["entry//instrument/link_to_monitor1_det_id"][0] == 11
         assert np.allclose(
             file["entry/link_to_monitor1_transform/location"].attrs["vector"],
             np.array([0.0, 0.0, -1.0]),

@@ -50,6 +50,13 @@
           "type": "group",
           "name": "instrument",
           "children": [
+          {
+          "module": "link",
+          "config": {
+            "name": "link_to_monitor1_det_id",
+            "source": "/entry/instrument/monitor1/detector_id"
+              }
+          },
             {
               "type": "group",
               "name": "monitor1",
@@ -67,7 +74,7 @@
                   "config": {
                     "name": "detector_id",
                     "dtype": "int64",
-                    "values": 1
+                    "values": 11
                   }
                 },
                 {
