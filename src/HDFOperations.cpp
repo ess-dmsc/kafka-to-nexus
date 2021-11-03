@@ -431,8 +431,14 @@ void addLinkToNode(hdf5::node::Group const &Group,
     TargetBase = TargetBase.substr(3);
     GroupBase = GroupBase.link().parent();
   }
-  auto TargetID =
-      H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+  hid_t TargetID;
+  try {
+    TargetID = H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+  }
+  catch (const std::exception &e) {
+    LOG_ERROR("Failed to open HDF5 object for link creation.");
+    return;
+  }
   if (TargetID < 0) {
     LOG_WARN("Can not find target object for link target: {}  in group: {}",
              Name, std::string(Group.link().path()));
@@ -442,7 +448,12 @@ void addLinkToNode(hdf5::node::Group const &Group,
     LOG_WARN("can not create link name: {}  in group: {}  to target: {}", Name,
              std::string(Group.link().path()), TargetBase);
   }
-  H5Oclose(TargetID);
+  try {
+    H5Oclose(TargetID);
+  }
+  catch (const std::exception &e) {
+    LOG_ERROR("Could not close HDF5 object with target ID: {}", TargetID);
+  }
 }
 
 } // namespace HDFOperations

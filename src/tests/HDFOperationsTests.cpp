@@ -269,28 +269,24 @@ TEST_F(HDFStaticDataTest, StringArray) {
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
 
-// TEST_F(HDFStaticDataTest, AddLinkToNode1) {
-//  RootGroup.create_group("data_to_link");
-//  RootGroup.create_group("data_link");
-//  std::string JsonString = R""({
-//    "name": "data_link",
-//    "type": "link",
-//    "target": "/data_to_link"})"";
-//  auto Temp = nlohmann::json::parse(JsonString);
-//  HDFOperations::addLinkToNode(RootGroup, Temp);
-//  auto link = RootGroup.links["data_link"];
-//  ASSERT_TRUE(link.is_resolvable());
-//  ASSERT_TRUE(link.type() == hdf5::node::LinkType::HARD);
-//}
-//
-// TEST_F(HDFStaticDataTest, AddLinkToNode2) {
-//  RootGroup.create_group("data_link");
-//  std::string JsonString = R""({
-//    "name": "data_link",
-//    "type": "link",
-//    "target": "/data/data_to_link"})"";
-//  auto Temp = nlohmann::json::parse(JsonString);
-//  HDFOperations::addLinkToNode(RootGroup, Temp);
-//  auto link = RootGroup.links["data_link"];
-//  ASSERT_FALSE(link.is_resolvable());
-//}
+ TEST_F(HDFStaticDataTest, AddLinkToNode1) {
+  RootGroup.create_group("data_to_link");
+  ModuleSettings LinkSettings;
+  LinkSettings.Module = "link";
+  LinkSettings.Source = "/data_to_link";
+  LinkSettings.Name = "data_link";
+  HDFOperations::addLinkToNode(RootGroup, LinkSettings);
+  auto link = RootGroup.links["data_link"];
+  ASSERT_TRUE(link.is_resolvable());
+  ASSERT_TRUE(link.type() == hdf5::node::LinkType::HARD);
+}
+
+ TEST_F(HDFStaticDataTest, AddLinkToNode2) {
+  ModuleSettings LinkSettings;
+  LinkSettings.Module = "link";
+  LinkSettings.Source = "/data_to_link";
+  LinkSettings.Name = "data_link";
+  HDFOperations::addLinkToNode(RootGroup, LinkSettings);
+  auto link = RootGroup.links["data_link"];
+  ASSERT_FALSE(link.is_resolvable());
+}
