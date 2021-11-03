@@ -433,9 +433,9 @@ void addLinkToNode(hdf5::node::Group const &Group,
   }
   hid_t TargetID;
   try {
-    TargetID = H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
-  }
-  catch (const std::exception &e) {
+    TargetID =
+        H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+  } catch (const std::exception &e) {
     LOG_ERROR("Failed to open HDF5 object for link creation.");
     return;
   }
@@ -450,8 +450,7 @@ void addLinkToNode(hdf5::node::Group const &Group,
   }
   try {
     H5Oclose(TargetID);
-  }
-  catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     LOG_ERROR("Could not close HDF5 object with target ID: {}", TargetID);
   }
 }

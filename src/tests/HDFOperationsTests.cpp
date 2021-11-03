@@ -269,7 +269,7 @@ TEST_F(HDFStaticDataTest, StringArray) {
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
 
- TEST_F(HDFStaticDataTest, AddLinkToNode1) {
+TEST_F(HDFStaticDataTest, AddLinkToNode1) {
   RootGroup.create_group("data_to_link");
   ModuleSettings LinkSettings;
   LinkSettings.Module = "link";
@@ -281,7 +281,7 @@ TEST_F(HDFStaticDataTest, StringArray) {
   ASSERT_TRUE(link.type() == hdf5::node::LinkType::HARD);
 }
 
- TEST_F(HDFStaticDataTest, AddLinkToNode2) {
+TEST_F(HDFStaticDataTest, AddLinkToNode2) {
   ModuleSettings LinkSettings;
   LinkSettings.Module = "link";
   LinkSettings.Source = "/data_to_link";
