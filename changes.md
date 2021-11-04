@@ -1,5 +1,12 @@
 # Changes
 
+## Version 4.2.0:
+
+- Creating links should now work properly. The configuration of links has been changed
+and is now closer to how it is configured for datasets and streams, i.e. as a module configuration.
+Unit tests and system test added for link creation cases.
+([#607](https://github.com/ess-dmsc/kafka-to-nexus/pull/607))
+
 ## Version 4.1.0: Quality of life
 
 - Each ev42 writer module instance will now publish the number of events written to file.
