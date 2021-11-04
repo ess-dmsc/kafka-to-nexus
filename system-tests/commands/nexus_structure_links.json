@@ -50,13 +50,20 @@
           "type": "group",
           "name": "instrument",
           "children": [
-          {
-          "module": "link",
-          "config": {
-            "name": "link_to_monitor1_det_id",
-            "source": "/entry/instrument/monitor1/detector_id"
-              }
-          },
+            {
+            "module": "link",
+            "config": {
+              "name": "link_to_monitor1_det_id",
+              "source": "/entry/instrument/monitor1/detector_id"
+                }
+            },
+            {
+            "module": "link",
+            "config": {
+              "name": "link2_to_features",
+              "source": "../features"
+                }
+            },
             {
               "type": "group",
               "name": "monitor1",
