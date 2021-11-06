@@ -1,7 +1,6 @@
 set(writer_module_SRC
     NDAr_WriterTests.cpp
     tdct_WriterTests.cpp
-    hs00_WriterTests.cpp
     ev42_WriterTests.cpp
     senv_WriterTests.cpp
     ns10_WriterTests.cpp

@@ -1,18 +1,13 @@
 # Changes
 
-## Version 4.2.0:
-
-- Creating links should now work properly. The configuration of links has been changed
-and is now closer to how it is configured for datasets and streams, i.e. as a module configuration.
-Unit tests and system test added for link creation cases.
-([#607](https://github.com/ess-dmsc/kafka-to-nexus/pull/607))
-
 ## Version 4.1.0: Quality of life
 
 - Each ev42 writer module instance will now publish the number of events written to file.
 - It is no longer possible to set a stop time if the previously set stop time has passed. Also added unit tests for this feature.
 - The application will now give you an approximate size of the file it is writing to, rounded up to the nearest 10 MB, in the status messages that it produces.
 - The f142 cue index functionality was unintentianlly disabled but has now been restored to working order. Unit tests were added to prevent future such regression in the code.
+- Creating links should now work properly. The configuration of links has been changed and is now closer to how it is configured for datasets and streams, i.e. as a module configuration. Unit tests and system test added for link creation cases. ([#607](https://github.com/ess-dmsc/kafka-to-nexus/pull/607))
+- The hs00 writer module has been removed due to it was found that it was not being used. This change can be reverted if it is found to have been made in error.
 
 ## Version 4.0.0: Many, many changes
 

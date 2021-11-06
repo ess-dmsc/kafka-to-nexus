@@ -10,7 +10,6 @@
 #include "JobCreator.h"
 #include "ModuleHDFInfo.h"
 #include "WriterModule/f142/f142_Writer.h"
-#include "WriterModule/hs00/hs00_Writer.h"
 #include "WriterRegistrar.h"
 #include "helpers/HDFFileTestHelper.h"
 #include <gtest/gtest.h>
@@ -21,8 +20,6 @@ public:
     WriterModule::Registry::clear();
     WriterModule::Registry::Registrar<WriterModule::f142::f142_Writer>
         RegisterIt1("f142", "f142");
-    WriterModule::Registry::Registrar<WriterModule::hs00::hs00_Writer>
-        RegisterIt2("hs00", "hs00");
   }
 };
 
