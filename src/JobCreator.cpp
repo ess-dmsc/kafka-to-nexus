@@ -26,13 +26,13 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-std::vector<StreamHDFInfo>
+std::vector<ModuleHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
   try {
     json const NexusStructure = json::parse(NexusStructureString);
-    std::vector<StreamHDFInfo> StreamHDFInfoList;
-    Task.InitialiseHdf(NexusStructure.dump(), StreamHDFInfoList);
-    return StreamHDFInfoList;
+    std::vector<ModuleHDFInfo> ModuleHDFInfoList;
+    Task.InitialiseHdf(NexusStructure.dump(), ModuleHDFInfoList);
+    return ModuleHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
         fmt::format("Could not parse NeXus structure JSON. The error was: {}'",
@@ -40,51 +40,58 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
   }
 }
 
-StreamSettings
-extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
-  if (StreamInfo.WriterModule.empty()) {
+ModuleSettings
+extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
+  if (ModuleInfo.WriterModule.empty()) {
     throw std::runtime_error("Empty writer module name encountered.");
   }
-  StreamSettings StreamSettings;
-  StreamSettings.StreamHDFInfoObj = StreamInfo;
+  ModuleSettings ModuleSettings;
+  ModuleSettings.ModuleHDFInfoObj = ModuleInfo;
 
-  json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
+  json ConfigStream = json::parse(ModuleSettings.ModuleHDFInfoObj.ConfigStream);
 
-  StreamSettings.ConfigStreamJson = ConfigStream.dump();
-  StreamSettings.Topic =
-      Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
-  StreamSettings.Source =
+  ModuleSettings.ConfigStreamJson = ConfigStream.dump();
+  ModuleSettings.Source =
       Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
-  StreamSettings.Module = StreamInfo.WriterModule;
-  StreamSettings.Attributes =
+  ModuleSettings.Module = ModuleInfo.WriterModule;
+  if (ModuleSettings.Module != "link") {
+    ModuleSettings.Topic =
+        Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
+    ModuleSettings.isLink = false;
+  } else {
+    ModuleSettings.Name =
+        Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
+    ModuleSettings.isLink = true;
+  }
+  ModuleSettings.Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
 
-  return StreamSettings;
+  return ModuleSettings;
 }
 
-/// Helper to extract information about the provided streams.
-static vector<StreamSettings> extractStreamInformationFromJson(
-    std::vector<StreamHDFInfo> &StreamHDFInfoList) {
-  LOG_INFO("Command contains {} streams", StreamHDFInfoList.size());
-  std::vector<StreamSettings> StreamSettingsList;
-  for (auto &StreamHDFInfo : StreamHDFInfoList) {
+/// Helper to extract information about the provided links and streams.
+static std::vector<ModuleSettings> extractModuleInformationFromJson(
+    std::vector<ModuleHDFInfo> const &ModuleHDFInfoList) {
+  std::vector<ModuleSettings> SettingsList;
+  for (auto &ModuleHDFInfo : ModuleHDFInfoList) {
     try {
-      StreamSettingsList.push_back(
-          extractStreamInformationFromJsonForSource(StreamHDFInfo));
+      SettingsList.push_back(
+          extractModuleInformationFromJsonForSource(ModuleHDFInfo));
     } catch (json::parse_error const &E) {
       LOG_WARN(
-          "Invalid stream configuration JSON encountered. The error was: {}",
+          "Invalid module configuration JSON encountered. The error was: {}",
           E.what());
       continue;
     } catch (std::runtime_error const &E) {
-      LOG_WARN("Unknown exception encountered when extracting stream "
+      LOG_WARN("Unknown exception encountered when extracting module "
                "information. The error was: {}",
                E.what());
       continue;
     }
   }
-  return StreamSettingsList;
+  LOG_INFO("Command contains {} links and streams.", SettingsList.size());
+  return SettingsList;
 }
 
 std::unique_ptr<IStreamController>
@@ -95,15 +102,24 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   Task->setJobId(StartInfo.JobID);
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
-  std::vector<StreamHDFInfo> StreamHDFInfoList =
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
+  std::vector<ModuleSettings> SettingsList =
+      extractModuleInformationFromJson(ModuleHDFInfoList);
+  std::vector<ModuleSettings> StreamSettingsList;
+  std::vector<ModuleSettings> LinkSettingsList;
 
-  std::vector<StreamSettings> StreamSettingsList =
-      extractStreamInformationFromJson(StreamHDFInfoList);
+  for (auto &Item : SettingsList) {
+    if (Item.isLink) {
+      LinkSettingsList.push_back(std::move(Item));
+    } else {
+      StreamSettingsList.push_back(std::move(Item));
+    }
+  }
 
   for (auto &Item : StreamSettingsList) {
     auto StreamGroup = hdf5::node::get_group(
-        Task->hdfGroup(), Item.StreamHDFInfoObj.HDFParentName);
+        Task->hdfGroup(), Item.ModuleHDFInfoObj.HDFParentName);
     try {
       Item.WriterModule = generateWriterInstance(Item);
 
@@ -112,8 +128,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     } catch (std::runtime_error const &E) {
       auto ErrorMsg = fmt::format("Could not initialise stream at path \"{}\" "
                                   "with configuration JSON \"{}\".",
-                                  Item.StreamHDFInfoObj.HDFParentName,
-                                  Item.StreamHDFInfoObj.ConfigStream);
+                                  Item.ModuleHDFInfoObj.HDFParentName,
+                                  Item.ModuleHDFInfoObj.ConfigStream);
       if (Settings.AbortOnUninitialisedStream) {
         std::throw_with_nested(std::runtime_error(ErrorMsg));
       }
@@ -128,7 +144,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
           Item.Module, Item.Source, E.what())));
     }
   }
-
+  Task->writeLinks(LinkSettingsList);
   Task->switchToWriteMode();
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
@@ -143,7 +159,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);
 }
 
-void addStreamSourceToWriterModule(vector<StreamSettings> &StreamSettingsList,
+void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
                                    std::unique_ptr<FileWriterTask> &Task) {
 
   for (auto &StreamSettings : StreamSettingsList) {
@@ -151,11 +167,11 @@ void addStreamSourceToWriterModule(vector<StreamSettings> &StreamSettingsList,
       try {
         auto RootGroup = Task->hdfGroup();
         auto StreamGroup = hdf5::node::get_group(
-            RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
+            RootGroup, StreamSettings.ModuleHDFInfoObj.HDFParentName);
         auto Err = StreamSettings.WriterModule->reopen({StreamGroup});
         if (Err != WriterModule::InitResult::OK) {
           LOG_ERROR("Failed when reopening HDF datasets for stream {}",
-                    StreamSettings.StreamHDFInfoObj.HDFParentName);
+                    StreamSettings.ModuleHDFInfoObj.HDFParentName);
           continue;
         }
       } catch (std::runtime_error const &e) {
@@ -180,7 +196,7 @@ void addStreamSourceToWriterModule(vector<StreamSettings> &StreamSettingsList,
 }
 
 std::unique_ptr<WriterModule::Base>
-generateWriterInstance(StreamSettings const &StreamInfo) {
+generateWriterInstance(ModuleSettings const &StreamInfo) {
   WriterModule::Registry::FactoryAndID ModuleFactory;
   try {
     ModuleFactory = WriterModule::Registry::find(StreamInfo.Module);
@@ -211,9 +227,9 @@ generateWriterInstance(StreamSettings const &StreamInfo) {
 }
 
 void setWriterHDFAttributes(hdf5::node::Group &RootNode,
-                            StreamSettings const &StreamInfo) {
+                            ModuleSettings const &StreamInfo) {
   auto StreamGroup = hdf5::node::get_group(
-      RootNode, StreamInfo.StreamHDFInfoObj.HDFParentName);
+      RootNode, StreamInfo.ModuleHDFInfoObj.HDFParentName);
 
   auto writeAttributesList =
       [&StreamGroup, &StreamInfo](
@@ -223,7 +239,7 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
             StreamGroup.attributes.remove(Attribute.first);
             LOG_DEBUG(
                 "Replacing (existing) attribute with key \"{}\" at \"{}\".",
-                Attribute.first, StreamInfo.StreamHDFInfoObj.HDFParentName);
+                Attribute.first, StreamInfo.ModuleHDFInfoObj.HDFParentName);
           }
           auto HdfAttribute =
               StreamGroup.attributes.create<std::string>(Attribute.first);
