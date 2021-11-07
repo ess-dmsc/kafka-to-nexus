@@ -355,7 +355,7 @@ void createHDFStructures(
     uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
-    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
+    std::vector<ModuleHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
 
   try {
 
@@ -387,8 +387,6 @@ void createHDFStructures(
           LOG_ERROR("Failed to create group  Name: {}. Message was: {}",
                     CNode.Name.getValue(), e.what());
         }
-      } else if (CNode.Type.getUsedKey() == "link") {
-        // Do nothing for now
       } else {
         LOG_ERROR("Unknown hdf node of type {}. Ignoring.",
                   CNode.Type.getValue());
@@ -403,7 +401,7 @@ void createHDFStructures(
           // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
-        HDFStreamInfo.push_back(StreamHDFInfo{CNode.Type.getValue(), pathstr,
+        HDFStreamInfo.push_back(ModuleHDFInfo{CNode.Type.getValue(), pathstr,
                                               CNode.Config.getValue().dump()});
       }
     }
@@ -415,54 +413,45 @@ void createHDFStructures(
   }
 }
 
-void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json) {
-  if (auto ChildrenMaybe = find<nlohmann::json>("children", Json)) {
-    auto Children = *ChildrenMaybe;
-    if (Children.is_array()) {
-      for (auto &Child : Children) {
-        auto NodeGroup = Group.get_group(Child.at("name").get<std::string>());
-        addLinkToNode(NodeGroup, Child);
-      }
-    }
+void addLinks(hdf5::node::Group const &Group,
+              std::vector<ModuleSettings> const &LinkSettingsList) {
+  for (auto &LinkSettings : LinkSettingsList) {
+    auto NodeGroup =
+        Group.get_group(LinkSettings.ModuleHDFInfoObj.HDFParentName);
+    addLinkToNode(NodeGroup, LinkSettings);
   }
 }
 
-void addLinkToNode(hdf5::node::Group const &Group, nlohmann::json const &Json) {
-  JSONHdfNode CNode(Json);
-
-  if (not CNode.Children.hasDefaultValue() and
-      CNode.Children.getValue().is_array()) {
-    for (auto &Child : CNode.Children.getValue()) {
-      JSONHdfNode ChildNode(Child);
-      if (ChildNode.Type.getValue() == "group") {
-        auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
-        addLinkToNode(ChildGroup, Child);
-      } else if (ChildNode.Type.getValue() == "link" and
-                 not ChildNode.Target.hasDefaultValue()) {
-        auto GroupBase = Group;
-        auto TargetBase = ChildNode.Target.getValue();
-        while (TargetBase.find("../") == 0) {
-          TargetBase = TargetBase.substr(3);
-          GroupBase = GroupBase.link().parent();
-        }
-        auto TargetID = H5Oopen(static_cast<hid_t>(GroupBase),
-                                TargetBase.c_str(), H5P_DEFAULT);
-        if (TargetID < 0) {
-          LOG_WARN(
-              "Can not find target object for link target: {}  in group: {}",
-              ChildNode.Target.getValue(), std::string(Group.link().path()));
-          continue;
-        }
-        if (0 > H5Olink(TargetID, static_cast<hid_t>(Group),
-                        CNode.Name.getValue().c_str(), H5P_DEFAULT,
-                        H5P_DEFAULT)) {
-          LOG_WARN("can not create link name: {}  in group: {}  to target: {}",
-                   CNode.Name.getValue(), std::string(Group.link().path()),
-                   ChildNode.Target.getValue());
-          continue;
-        }
-      }
-    }
+void addLinkToNode(hdf5::node::Group const &Group,
+                   ModuleSettings const &LinkSettings) {
+  std::string TargetBase = LinkSettings.Source;
+  std::string Name = LinkSettings.Name;
+  auto GroupBase = Group;
+  while (TargetBase.find("../") != std::string::npos) {
+    TargetBase = TargetBase.substr(3);
+    GroupBase = GroupBase.link().parent();
+  }
+  hid_t TargetID;
+  try {
+    TargetID =
+        H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+  } catch (const std::exception &e) {
+    LOG_ERROR("Failed to open HDF5 object for link creation.");
+    return;
+  }
+  if (TargetID < 0) {
+    LOG_WARN("Can not find target object for link target: {}  in group: {}",
+             Name, std::string(Group.link().path()));
+  }
+  if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), Name.c_str(),
+                  H5P_DEFAULT, H5P_DEFAULT)) {
+    LOG_WARN("can not create link name: {}  in group: {}  to target: {}", Name,
+             std::string(Group.link().path()), TargetBase);
+  }
+  try {
+    H5Oclose(TargetID);
+  } catch (const std::exception &e) {
+    LOG_ERROR("Could not close HDF5 object with target ID: {}", TargetID);
   }
 }
 

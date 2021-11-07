@@ -48,7 +48,7 @@ void FileWriterTask::addSource(Source &&Source) {
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
-                                   std::vector<StreamHDFInfo> &HdfInfo) {
+                                   std::vector<ModuleHDFInfo> &HdfInfo) {
   auto NexusStructureJson = hdf_parse(NexusStructure);
   std::string ErrorString;
   std::filesystem::path FilePath(Filename);
@@ -100,6 +100,13 @@ bool FileWriterTask::isInWriteMode() { return File->isSWMRMode(); }
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 std::string FileWriterTask::filename() const { return Filename; }
+
+void FileWriterTask::writeLinks(
+    const std::vector<ModuleSettings> &LinkSettingsList) {
+  File->addLinks(LinkSettingsList);
+}
+
+void FileWriterTask::writeMetaData() { File->addMetaData(); }
 
 void FileWriterTask::flushDataToFile() {
   if (File != nullptr) {

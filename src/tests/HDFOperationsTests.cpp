@@ -268,3 +268,38 @@ TEST_F(HDFStaticDataTest, StringArray) {
   ExpectedDataset.at({1, 1}) = "d";
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
+
+TEST_F(HDFStaticDataTest, AddLinkToNode1) {
+  RootGroup.create_group("data_to_link");
+  ModuleSettings LinkSettings;
+  LinkSettings.Module = "link";
+  LinkSettings.Source = "/data_to_link";
+  LinkSettings.Name = "data_link";
+  HDFOperations::addLinkToNode(RootGroup, LinkSettings);
+  auto link = RootGroup.links["data_link"];
+  ASSERT_TRUE(link.is_resolvable());
+  ASSERT_TRUE(link.type() == hdf5::node::LinkType::HARD);
+}
+
+TEST_F(HDFStaticDataTest, AddLinkToNode2) {
+  ModuleSettings LinkSettings;
+  LinkSettings.Module = "link";
+  LinkSettings.Source = "/data_to_link";
+  LinkSettings.Name = "data_link";
+  HDFOperations::addLinkToNode(RootGroup, LinkSettings);
+  auto link = RootGroup.links["data_link"];
+  ASSERT_FALSE(link.is_resolvable());
+}
+
+TEST_F(HDFStaticDataTest, AddLinkToNode3) {
+  ModuleSettings LinkSettings;
+  RootGroup.create_group("link_group");
+  RootGroup.create_group("data_to_link");
+  LinkSettings.Module = "link";
+  LinkSettings.Source = "../data_to_link";
+  LinkSettings.Name = "data_link";
+  auto TmpGroup = RootGroup.get_group("link_group");
+  HDFOperations::addLinkToNode(TmpGroup, LinkSettings);
+  auto link = TmpGroup.links["data_link"];
+  ASSERT_TRUE(link.is_resolvable());
+}
