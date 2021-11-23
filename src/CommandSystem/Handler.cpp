@@ -56,11 +56,7 @@ void Handler::registerIsWritingFunction(IsWritingFuncType IsWritingFunction) {
   IsWritingNow = IsWritingFunction;
 }
 
-void Handler::sendHasStoppedMessage(std::string FileName,
-                                    std::string Metadata) {
-  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
-                                     Metadata);
-  PollForJob = true;
+void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
     LOG_INFO("Reverting to default command topic: {}",
              CommandTopicAddress.Topic);
@@ -69,6 +65,14 @@ void Handler::sendHasStoppedMessage(std::string FileName,
     std::swap(AltCommandResponse, CommandResponse);
     UsingAltTopic = false;
   }
+}
+
+void Handler::sendHasStoppedMessage(std::string FileName,
+                                    std::string Metadata) {
+  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
+                                     Metadata);
+  PollForJob = true;
+  revertCommandTopic();
 }
 
 void Handler::sendErrorEncounteredMessage(std::string FileName,
@@ -256,6 +260,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
       if (not Step.first()) {
         OutcomeValue = Step.second;
         SendResult = ActionResult::Failure;
+        revertCommandTopic();
         break;
       }
     }

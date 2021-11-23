@@ -82,6 +82,10 @@ private:
   IsWritingFuncType IsWritingNow{
       []() -> bool { throw std::runtime_error("Not implemented."); }};
 
+  /// \brief Revert to the default command topic if an alternative topic
+  /// has been configured.
+  void revertCommandTopic();
+
   bool PollForJob{true};
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
