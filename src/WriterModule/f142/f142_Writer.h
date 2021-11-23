@@ -43,8 +43,8 @@ public:
   void write(FlatbufferMessage const &Message) override;
 
   f142_Writer()
-  : WriterModule::Base(false, "NXlog"), MetaDataMin("", "minimum_value"),
-  MetaDataMax("", "maximum_value"), MetaDataMean("", "average_value") {}
+      : WriterModule::Base(false, "NXlog"), MetaDataMin("", "minimum_value"),
+        MetaDataMax("", "maximum_value"), MetaDataMean("", "average_value") {}
   ~f142_Writer() override = default;
 
   enum class Type {
