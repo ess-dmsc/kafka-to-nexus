@@ -229,7 +229,7 @@ def start_file_writer(request):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def writer_channel(request):
+def writer_channel(request) -> WorkerCommandChannel:
     """
     :type request: _pytest.python.FixtureRequest
     """
