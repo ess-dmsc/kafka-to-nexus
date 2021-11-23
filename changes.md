@@ -11,6 +11,7 @@
     Unit tests and system test added for link creation cases.
     ([#607](https://github.com/ess-dmsc/kafka-to-nexus/pull/607))
 - Fixed a bug where the file-writer will not abandon an alternative command topic if it fails to start a file-writing job.
+- The f142 value statistics written to file is now done so according to the NeXus format.
 
 
 ## Version 4.0.0: Many, many changes

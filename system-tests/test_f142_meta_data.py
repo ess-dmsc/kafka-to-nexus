@@ -95,12 +95,12 @@ def test_f142_meta_data(writer_channel, worker_pool, kafka_address):
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
     file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:
-        assert file["entry/meta_data_1/value"].attrs["min"] == Min
-        assert file["entry/meta_data_1/value"].attrs["max"] == Max
-        assert file["entry/meta_data_1/value"].attrs["mean"] == Mean
+        assert file["entry/meta_data_1/minimum_value"][0] == Min
+        assert file["entry/meta_data_1/maximum_value"][0] == Max
+        assert file["entry/meta_data_1/average_value"][0] == Mean
 
         FullArr = np.concatenate([Array1, Array2, Array3])
 
-        assert file["entry/meta_data_2/value"].attrs["min"] == FullArr.min()
-        assert file["entry/meta_data_2/value"].attrs["max"] == FullArr.max()
-        assert file["entry/meta_data_2/value"].attrs["mean"] == FullArr.mean()
+        assert file["entry/meta_data_2/minimum_value"][0] == FullArr.min()
+        assert file["entry/meta_data_2/maximum_value"][0] == FullArr.max()
+        assert file["entry/meta_data_2/average_value"][0] == FullArr.mean()
