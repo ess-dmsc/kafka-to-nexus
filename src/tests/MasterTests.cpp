@@ -24,7 +24,8 @@ public:
   MAKE_MOCK1(registerIsWritingFunction, void(Command::IsWritingFuncType),
              override);
 
-  MAKE_MOCK2(sendHasStoppedMessage, void(std::string, std::string), override);
+  MAKE_MOCK2(sendHasStoppedMessage, void(std::string, nlohmann::json),
+             override);
   MAKE_MOCK3(sendErrorEncounteredMessage,
              void(std::string, std::string, std::string), override);
 
