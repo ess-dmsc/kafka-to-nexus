@@ -30,7 +30,7 @@ Handler::Handler(std::string const &ServiceIdentifier,
 void Handler::loopFunction() {
   auto JobMsg = JobPool->pollForJob();
   if (JobMsg.first == Kafka::PollStatus::Message) {
-      handleCommand(std::move(JobMsg.second));
+    handleCommand(std::move(JobMsg.second));
   }
   auto CommandMsg = CommandSource->pollForCommand();
   if (CommandMsg.first == Kafka::PollStatus::Message) {
@@ -152,9 +152,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
           0}});
 
     CommandSteps.push_back(
-        {[&]() {
-           return StartJob.ServiceID != ServiceId;
-         },
+        {[&]() { return StartJob.ServiceID != ServiceId; },
          {LogLevel::Debug, false,
           [&]() {
             return fmt::format(
