@@ -12,6 +12,7 @@
     ([#607](https://github.com/ess-dmsc/kafka-to-nexus/pull/607))
 - Fixed a bug where the file-writer will not abandon an alternative command topic if it fails to start a file-writing job.
 - The f142 value statistics written to file is now done so according to the NeXus format.
+- Added the HDF5/NeXus file structure to the "writing finished"-message and a system test to check this.
 
 
 ## Version 4.0.0: Many, many changes

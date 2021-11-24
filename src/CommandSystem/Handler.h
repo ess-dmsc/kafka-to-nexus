@@ -38,7 +38,7 @@ public:
   registerIsWritingFunction(IsWritingFuncType IsWritingFunction) = 0;
 
   virtual void sendHasStoppedMessage(std::string FileName,
-                                     std::string Metadata) = 0;
+                                     nlohmann::json Metadata) = 0;
   virtual void sendErrorEncounteredMessage(std::string FileName,
                                            std::string Metadata,
                                            std::string ErrorMessage) = 0;
@@ -61,7 +61,7 @@ public:
   void registerIsWritingFunction(IsWritingFuncType IsWritingFunction) override;
 
   void sendHasStoppedMessage(std::string FileName,
-                             std::string Metadata) override;
+                             nlohmann::json Metadata) override;
   void sendErrorEncounteredMessage(std::string FileName, std::string Metadata,
                                    std::string ErrorMessage) override;
 
@@ -73,6 +73,7 @@ private:
   void handleStopCommand(FileWriter::Msg CommandMsg);
   std::string const ServiceId;
   std::string JobId;
+  std::string NexusStructure;
   StartFuncType DoStart{
       [](auto) { throw std::runtime_error("Not implemented."); }};
   StopTimeFuncType DoSetStopTime{

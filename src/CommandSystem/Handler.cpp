@@ -68,9 +68,10 @@ void Handler::revertCommandTopic() {
 }
 
 void Handler::sendHasStoppedMessage(std::string FileName,
-                                    std::string Metadata) {
+                                    nlohmann::json Metadata) {
+  Metadata["hdf_structure"] = NexusStructure;
   CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
-                                     Metadata);
+                                     Metadata.dump());
   PollForJob = true;
   revertCommandTopic();
 }
@@ -229,6 +230,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
              JobId = StartJob.JobID;
              PollForJob = false;
              JobPool->disconnectFromPool();
+             NexusStructure = StartJob.NexusStructure;
            } catch (std::exception const &E) {
              PollForJob = true;
              JobId = "not_currently_writing";
