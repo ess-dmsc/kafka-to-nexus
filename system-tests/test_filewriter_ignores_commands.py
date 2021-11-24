@@ -13,9 +13,9 @@ from helpers.writer import (
 
 
 def test_ignores_commands_with_incorrect_id(
-    writer_channel, worker_pool, kafka_address, multiple_writers
+    worker_pool, kafka_address, multiple_writers
 ):
-    wait_writers_available(writer_channel, nr_of=2, timeout=10)
+    wait_writers_available(worker_pool, nr_of=2, timeout=10)
     now = datetime.now()
     file_name = "output_file_stop_id.nxs"
     with open("commands/nexus_structure.json", "r") as f:
@@ -29,7 +29,7 @@ def test_ignores_commands_with_incorrect_id(
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    cmd_handler = writer_channel.try_send_stop_now(
+    cmd_handler = worker_pool.try_send_stop_now(
         "incorrect service id", write_job.job_id
     )
 
@@ -41,7 +41,7 @@ def test_ignores_commands_with_incorrect_id(
         cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
     ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
-    cmd_handler = writer_channel.try_send_stop_now(write_job.service_id, "wrong job id")
+    cmd_handler = worker_pool.try_send_stop_now(write_job.service_id, "wrong job id")
     cmd_handler.set_timeout(used_timeout)
 
     time.sleep(used_timeout.total_seconds() + 2)
@@ -49,16 +49,16 @@ def test_ignores_commands_with_incorrect_id(
         cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
     ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
-    stop_all_jobs(writer_channel)
-    wait_no_working_writers(writer_channel, timeout=0)
+    stop_all_jobs(worker_pool)
+    wait_no_working_writers(worker_pool, timeout=0)
     file_path = f"output-files/{file_name}"
     assert Path(file_path).is_file()
 
 
 def test_ignores_commands_with_incorrect_job_id(
-    writer_channel, worker_pool, kafka_address
+    worker_pool, kafka_address
 ):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     file_name = "output_file_job_id.nxs"
     with open("commands/nexus_structure.json", "r") as f:
@@ -73,6 +73,6 @@ def test_ignores_commands_with_incorrect_job_id(
     write_job.job_id = "invalid id"
     wait_fail_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(writer_channel, timeout=0)
+    wait_no_working_writers(worker_pool, timeout=0)
     file_path = f"output-files/{file_name}"
     assert not Path(file_path).is_file()

@@ -1,4 +1,4 @@
-from file_writer_control import WorkerJobPool, WorkerCommandChannel
+from file_writer_control import WorkerJobPool
 from file_writer_control.WorkerStatus import WorkerState
 from file_writer_control import JobState
 from file_writer_control import CommandState
@@ -11,24 +11,28 @@ SLEEP_TIME = 1.5
 
 
 def wait_writers_available(
-    worker_command: WorkerCommandChannel, timeout: float, nr_of: int
+    worker_pool: WorkerJobPool, timeout: float, nr_of: int
 ):
     start_time = datetime.now()
     time.sleep(SLEEP_TIME)
     while True:
-        workers = worker_command.get_idle_workers()
-        if len(workers) >= nr_of:
+        nbr_of_idle_workers = 0
+        known_workers = worker_pool.list_known_workers()
+        for worker in known_workers:
+            if worker.state == WorkerState.IDLE:
+                nbr_of_idle_workers += 1
+        if nbr_of_idle_workers >= nr_of:
             return
         time.sleep(1.0)
         if start_time + timedelta(seconds=timeout) < datetime.now():
             raise RuntimeError(f"Timed out when waiting for {nr_of} idle workers")
 
 
-def wait_no_working_writers(worker_command: WorkerCommandChannel, timeout: float):
+def wait_no_working_writers(worker_pool: WorkerJobPool, timeout: float):
     start_time = datetime.now()
     time.sleep(SLEEP_TIME)
     while True:
-        workers = worker_command.list_known_workers()
+        workers = worker_pool.list_known_workers()
         if len(workers) > 0:
             all_idle = True
             for worker in workers:
@@ -86,11 +90,11 @@ def wait_fail_start_job(
         time.sleep(0.5)
 
 
-def stop_all_jobs(worker_command: WorkerCommandChannel):
+def stop_all_jobs(worker_pool: WorkerJobPool):
     time.sleep(SLEEP_TIME)
-    jobs = worker_command.list_known_jobs()
+    jobs = worker_pool.list_known_jobs()
     for job in jobs:
-        job_handler = JobHandler(worker_command, job.job_id)
+        job_handler = JobHandler(worker_pool, job.job_id)
         if job_handler.get_state() == JobState.WRITING:
             job_handler.stop_now()
         else:

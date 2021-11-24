@@ -18,9 +18,9 @@ from helpers.writer import (
 
 
 def test_start_and_stop_time_are_in_the_past(
-    writer_channel, worker_pool, kafka_address
+    worker_pool, kafka_address
 ):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
     producer = create_producer()
 
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]
@@ -71,7 +71,7 @@ def test_start_and_stop_time_are_in_the_past(
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(writer_channel, timeout=30)
+    wait_no_working_writers(worker_pool, timeout=30)
 
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
