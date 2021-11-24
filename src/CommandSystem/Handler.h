@@ -68,8 +68,8 @@ public:
   void loopFunction() override;
 
 private:
-  void handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
-  void handleStartCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
+  void handleCommand(FileWriter::Msg CommandMsg);
+  void handleStartCommand(FileWriter::Msg CommandMsg);
   void handleStopCommand(FileWriter::Msg CommandMsg);
   std::string const ServiceId;
   std::string JobId;
