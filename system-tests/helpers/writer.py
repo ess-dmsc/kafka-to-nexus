@@ -10,9 +10,7 @@ import time
 SLEEP_TIME = 1.5
 
 
-def wait_writers_available(
-    worker_pool: WorkerJobPool, timeout: float, nr_of: int
-):
+def wait_writers_available(worker_pool: WorkerJobPool, timeout: float, nr_of: int):
     start_time = datetime.now()
     time.sleep(SLEEP_TIME)
     while True:

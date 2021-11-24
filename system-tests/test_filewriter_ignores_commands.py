@@ -55,9 +55,7 @@ def test_ignores_commands_with_incorrect_id(
     assert Path(file_path).is_file()
 
 
-def test_ignores_commands_with_incorrect_job_id(
-    worker_pool, kafka_address
-):
+def test_ignores_commands_with_incorrect_job_id(worker_pool, kafka_address):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     file_name = "output_file_job_id.nxs"

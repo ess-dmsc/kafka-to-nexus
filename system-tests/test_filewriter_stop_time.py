@@ -17,9 +17,7 @@ from helpers.writer import (
 )
 
 
-def test_start_and_stop_time_are_in_the_past(
-    worker_pool, kafka_address
-):
+def test_start_and_stop_time_are_in_the_past(worker_pool, kafka_address):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     producer = create_producer()
 
