@@ -30,11 +30,11 @@ Handler::Handler(std::string const &ServiceIdentifier,
 void Handler::loopFunction() {
   auto JobMsg = JobPool->pollForJob();
   if (JobMsg.first == Kafka::PollStatus::Message) {
-    handleCommand(std::move(JobMsg.second));
+    handleCommand(std::move(JobMsg.second), true);
   }
   auto CommandMsg = CommandSource->pollForCommand();
   if (CommandMsg.first == Kafka::PollStatus::Message) {
-    handleCommand(std::move(CommandMsg.second));
+    handleCommand(std::move(CommandMsg.second), false);
   }
 }
 
@@ -82,9 +82,9 @@ void Handler::sendErrorEncounteredMessage(std::string FileName,
   PollForJob = true;
 }
 
-void Handler::handleCommand(FileWriter::Msg CommandMsg) {
+void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
   if (Parser::isStartCommand(CommandMsg)) {
-    handleStartCommand(std::move(CommandMsg));
+    handleStartCommand(std::move(CommandMsg), IsJobPoolCommand);
   } else if (Parser::isStopCommand(CommandMsg)) {
     handleStopCommand(std::move(CommandMsg));
   } else {
@@ -132,7 +132,8 @@ bool isMsgTimeStampValid(time_point MsgTime) {
   return false;
 }
 
-void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
+void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
+                                 bool IsJobPoolCommand) {
   try {
     time_point StopTime{0ms};
     std::string ExceptionMessage;
@@ -152,7 +153,9 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
           0}});
 
     CommandSteps.push_back(
-        {[&]() { return StartJob.ServiceID != ServiceId; },
+        {[&]() {
+           return not(IsJobPoolCommand xor (StartJob.ServiceID != ServiceId));
+         },
          {LogLevel::Debug, false,
           [&]() {
             return fmt::format(
@@ -190,17 +193,21 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
     CommandSteps.push_back(
         {[&]() {
            if (not StartJob.ControlTopic.empty()) {
-             LOG_INFO("Connecting to an alternative command topic: \"{}\"",
-                      StartJob.ControlTopic);
-             CommandSource = std::make_unique<CommandListener>(
-                 uri::URI{CommandTopicAddress, StartJob.ControlTopic},
-                 KafkaSettings);
-             AltCommandResponse = std::make_unique<FeedbackProducer>(
-                 ServiceId,
-                 uri::URI{CommandTopicAddress, StartJob.ControlTopic},
-                 KafkaSettings);
-             std::swap(CommandResponse, AltCommandResponse);
-             UsingAltTopic = true;
+             if (IsJobPoolCommand) {
+               LOG_INFO("Connecting to an alternative command topic: \"{}\"",
+                        StartJob.ControlTopic);
+               CommandSource = std::make_unique<CommandListener>(
+                   uri::URI{CommandTopicAddress, StartJob.ControlTopic},
+                   KafkaSettings);
+               AltCommandResponse = std::make_unique<FeedbackProducer>(
+                   ServiceId,
+                   uri::URI{CommandTopicAddress, StartJob.ControlTopic},
+                   KafkaSettings);
+               std::swap(CommandResponse, AltCommandResponse);
+               UsingAltTopic = true;
+             } else {
+               return false;
+             }
            }
            return true;
          },
