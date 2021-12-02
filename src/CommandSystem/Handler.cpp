@@ -133,15 +133,13 @@ bool isValidUUID(std::string const &UUIDStr) {
 /// that an old file is being rewritten, for example.
 ///
 /// \param MsgTime
-/// \return
-bool checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
+void checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
   if (system_clock::now() > MsgTime + 15s) {
     LOG_WARN(fmt::format("Start command's timestamp may be bad (it was: {}, "
                          "current time: {}).",
                          toUTCDateTime(MsgTime),
                          toUTCDateTime(system_clock::now())));
   }
-  return true;
 }
 
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
