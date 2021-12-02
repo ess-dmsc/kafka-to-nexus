@@ -13,22 +13,12 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "Metrics/Registrar.h"
+#include "ModuleSettings.h"
 #include "StreamController.h"
 #include "json.h"
 #include <memory>
 
 namespace FileWriter {
-
-/// \brief Holder for the stream settings.
-struct StreamSettings {
-  StreamHDFInfo StreamHDFInfoObj;
-  std::string Topic;
-  std::string Module;
-  std::string Source;
-  std::string ConfigStreamJson;
-  std::string Attributes;
-  std::unique_ptr<WriterModule::Base> WriterModule;
-};
 
 std::unique_ptr<IStreamController>
 createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
@@ -38,23 +28,23 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 // Note: The functions below are "private" helper functions.
 
 void addStreamSourceToWriterModule(
-    std::vector<StreamSettings> &StreamSettingsList,
+    std::vector<ModuleSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task);
 
-std::vector<StreamHDFInfo>
+std::vector<ModuleHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 
-/// \brief Extract information about the stream.
+/// \brief Extract information about the module (stream or link).
 ///
 /// \param StreamInfo
-/// \return The stream information.
-StreamSettings
-extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
+/// \return The module nformation.
+ModuleSettings
+extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo);
 
 std::unique_ptr<WriterModule::Base>
-generateWriterInstance(StreamSettings const &StreamInfo);
+generateWriterInstance(ModuleSettings const &StreamInfo);
 
 void setWriterHDFAttributes(hdf5::node::Group &RootNode,
-                            StreamSettings const &StreamInfo);
+                            ModuleSettings const &StreamInfo);
 
 } // namespace FileWriter

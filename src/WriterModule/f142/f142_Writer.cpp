@@ -324,6 +324,12 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
         "Unknown data type in f142 flatbuffer.");
   }
 
+  ++NrOfWrites;
+  if ((NrOfWrites - LastIndexAtWrite) / ValueIndexInterval.getValue() > 0) {
+    LastIndexAtWrite = NrOfWrites;
+    CueIndex.appendElement(NrOfWrites - 1);
+    CueTimestampZero.appendElement(LogDataMessage->timestamp());
+  }
   if (MetaData.getValue()) {
     if (TotalNrOfElementsWritten == 0) {
       Min = CValuesInfo.Min;
@@ -365,17 +371,18 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
 
 void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
                                      const MetaData::TrackerPtr &Tracker) {
-  auto UsedAttributeWriter =
-      MetaData::getPathOffsetAttributeWriter<double>("value");
+
   if (MetaData.getValue()) {
-    MetaDataMin = MetaData::Value<double>(HDFGroup, "min", UsedAttributeWriter);
+    MetaDataMin = MetaData::Value<double>(HDFGroup, "minimum_value",
+                                          MetaData::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMin);
 
-    MetaDataMax = MetaData::Value<double>(HDFGroup, "max", UsedAttributeWriter);
+    MetaDataMax = MetaData::Value<double>(HDFGroup, "maximum_value",
+                                          MetaData::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMax);
 
-    MetaDataMean =
-        MetaData::Value<double>(HDFGroup, "mean", UsedAttributeWriter);
+    MetaDataMean = MetaData::Value<double>(
+        HDFGroup, "average_value", MetaData::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMean);
   }
 }

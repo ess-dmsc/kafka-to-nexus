@@ -112,7 +112,7 @@ void Master::setToIdle() {
     }
     CurrentJSONStatus.update(StaticMetaData);
     CommandAndControl->sendHasStoppedMessage(CurrentFileName,
-                                             CurrentJSONStatus.dump());
+                                             CurrentJSONStatus);
   }
   CurrentStreamController.reset(nullptr);
   CurrentState = WriterState::Idle;

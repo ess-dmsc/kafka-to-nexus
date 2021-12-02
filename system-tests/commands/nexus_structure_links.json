@@ -1,0 +1,276 @@
+{
+  "children": [
+    {
+      "type": "group",
+      "name": "entry",
+      "children": [
+        {
+          "module": "link",
+          "config": {
+            "name": "link_to_features",
+            "source": "/entry/features"
+          }
+        },
+        {
+          "module": "link",
+          "config": {
+            "name": "link_to_monitor1_transform",
+            "source": "/entry/instrument/monitor1/transformations"
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "name": "duration",
+            "dtype": "float",
+            "values": [
+              1817.0
+            ]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "dtype": "string",
+            "name": "end_time",
+            "values": "2016-04-12T03:29:11"
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "name": "features",
+            "dtype": "uint64",
+            "values": [
+              10138143369737381149
+            ]
+          }
+        },
+        {
+          "type": "group",
+          "name": "instrument",
+          "children": [
+            {
+            "module": "link",
+            "config": {
+              "name": "link_to_monitor1_det_id",
+              "source": "/entry/instrument/monitor1/detector_id"
+                }
+            },
+            {
+            "module": "link",
+            "config": {
+              "name": "link2_to_features",
+              "source": "../features"
+                }
+            },
+            {
+              "type": "group",
+              "name": "monitor1",
+              "children": [
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "dtype": "string",
+                    "values": "/entry/instrument/monitor1/transformations/location"
+                  }
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "detector_id",
+                    "dtype": "int64",
+                    "values": 11
+                  }
+                },
+                {
+                  "type": "group",
+                  "name": "transformations",
+                  "children": [
+                    {
+                      "module": "dataset",
+                      "config": {
+                        "name": "location",
+                        "dtype": "double",
+                        "values": 12.064
+                      },
+                      "attributes": [
+                        {
+                          "name": "units",
+                          "values": "m"
+                        },
+                        {
+                          "name": "transformation_type",
+                          "values": "translation"
+                        },
+                        {
+                          "name": "vector",
+                          "values": [
+                            0.0,
+                            0.0,
+                            -1.0
+                          ],
+                          "dtype": "double"
+                        },
+                        {
+                          "name": "depends_on",
+                          "values": "."
+                        },
+                        {
+                          "name": "NX_class",
+                          "values": "NXtransformation"
+                        }
+                      ]
+                    }
+                  ],
+                  "attributes": [
+                    {
+                      "name": "NX_class",
+                      "values": "NXtransformation"
+                    }
+                  ]
+                }
+              ],
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "values": "NXmonitor"
+                }
+              ]
+            },
+            {
+              "module": "dataset",
+              "config": {
+                "name": "name",
+                "dtype": "string",
+                "values": "SANS2D"
+              },
+              "attributes": [
+                {
+                  "name": "short_name",
+                  "values": "SAN"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "name": "source",
+              "children": [
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "dtype": "string",
+                    "values": "/entry/instrument/source/transformations/location"
+                  }
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "name",
+                    "dtype": "string",
+                    "values": "source"
+                  }
+                },
+                {
+                  "type": "group",
+                  "name": "transformations",
+                  "children": [
+                    {
+                      "module": "dataset",
+                      "config": {
+                        "name": "location",
+                        "dtype": "double",
+                        "values": 0.0
+                      },
+                      "attributes": [
+                        {
+                          "name": "units",
+                          "values": "m"
+                        },
+                        {
+                          "name": "transformation_type",
+                          "values": "translation"
+                        },
+                        {
+                          "name": "vector",
+                          "values": [
+                            0.0,
+                            0.0,
+                            0.0
+                          ],
+                          "dtype": "double"
+                        },
+                        {
+                          "name": "depends_on",
+                          "values": "."
+                        },
+                        {
+                          "name": "NX_class",
+                          "values": "NXtransformation"
+                        }
+                      ]
+                    }
+                  ],
+                  "attributes": [
+                    {
+                      "name": "NX_class",
+                      "values": "NXtransformations"
+                    }
+                  ]
+                }
+              ],
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "values": "NXsource"
+                }
+              ]
+            }
+          ],
+          "attributes": [
+            {
+              "name": "NX_class",
+              "values": "NXinstrument"
+            }
+          ]
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "name": "start_time",
+            "dtype": "string",
+            "values": "2016-04-12T02:58:52"
+          }
+        },
+        {
+          "type": "group",
+          "name": "user_1",
+          "children": [
+            {
+              "module": "dataset",
+              "config": {
+                "name": "affiliation",
+                "dtype": "string",
+                "values": "ISIS, STFC"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "NX_class",
+              "values": "NXuser"
+            }
+          ]
+        }
+      ],
+      "attributes": [
+        {
+          "name": "NX_class",
+          "values": "NXentry"
+        }
+      ]
+    }
+  ]
+}

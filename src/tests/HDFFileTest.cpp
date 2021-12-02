@@ -17,16 +17,16 @@ public:
     if (std::filesystem::exists(FileName)) {
       std::filesystem::remove(FileName);
     }
-    StreamHDFInfoList.clear();
+    ModuleHDFInfoList.clear();
   }
   std::string FileName{"someFileName.hdf"};
   nlohmann::json NexusStructure{};
-  std::vector<StreamHDFInfo> StreamHDFInfoList;
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList;
   MetaData::TrackerPtr Tracker{};
 };
 
 TEST_F(HDFFile, FileModes) {
-  FileWriter::HDFFile UnderTest{FileName, NexusStructure, StreamHDFInfoList,
+  FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
                                 Tracker};
   EXPECT_TRUE(UnderTest.isRegularMode());
   EXPECT_FALSE(UnderTest.isSWMRMode());
@@ -39,7 +39,7 @@ TEST_F(HDFFile, FileModes) {
 }
 
 TEST_F(HDFFile, DefaultFileAttributes) {
-  FileWriter::HDFFile UnderTest{FileName, NexusStructure, StreamHDFInfoList,
+  FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
                                 Tracker};
   auto RootGroup = UnderTest.hdfGroup();
   EXPECT_TRUE(RootGroup.attributes.exists("HDF5_Version"));
@@ -79,10 +79,10 @@ TEST_F(HDFFile, SimpleNexusStructure) {
         }
       ]
   })"";
-  EXPECT_TRUE(StreamHDFInfoList.empty());
+  EXPECT_TRUE(ModuleHDFInfoList.empty());
   FileWriter::HDFFile UnderTest{FileName,
                                 nlohmann::json::parse(SimpleNexusStructure),
-                                StreamHDFInfoList, Tracker};
+                                ModuleHDFInfoList, Tracker};
   EXPECT_TRUE(UnderTest.hdfGroup().has_group("entry"));
-  EXPECT_EQ(StreamHDFInfoList.size(), 1u);
+  EXPECT_EQ(ModuleHDFInfoList.size(), 1u);
 }
