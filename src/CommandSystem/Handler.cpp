@@ -125,11 +125,19 @@ bool isValidUUID(std::string const &UUIDStr) {
   return false;
 }
 
-bool isMsgTimeStampValid(time_point MsgTime) {
-  if (system_clock::now() < MsgTime + 15s) {
-    return true;
+/// Warn if the message time differs significantly to the current time.
+///
+/// It does not necessarily mean something is wrong, it could be
+/// that an old file is being rewritten, for example.
+///
+/// \param MsgTime
+void checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
+  if (system_clock::now() > MsgTime + 15s) {
+    LOG_WARN(fmt::format("Start command's timestamp may be bad (it was: {}, "
+                         "current time: {}).",
+                         toUTCDateTime(MsgTime),
+                         toUTCDateTime(system_clock::now())));
   }
-  return false;
 }
 
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
@@ -173,20 +181,6 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                 "Rejected start command as the job id was invalid (it "
                 "was: \"{}\").",
                 StartJob.JobID);
-          },
-          400}});
-
-    CommandSteps.push_back(
-        {[&]() {
-           return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());
-         },
-         {LogLevel::Warning, true,
-          [&]() {
-            return fmt::format(
-                "Rejected start command as its timestamp was bad (it was: {}, "
-                "current time: {}).",
-                toUTCDateTime(CommandMsg.getMetaData().timestamp()),
-                toUTCDateTime(system_clock::now()));
           },
           400}});
 
@@ -264,6 +258,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         break;
       }
     }
+
+    checkMsgTimeStampAgainstWallClock(CommandMsg.getMetaData().timestamp());
 
     Log::Msg(OutcomeValue.LogLevel, OutcomeValue.MessageString());
     if (OutcomeValue.SendResponse) {
@@ -346,20 +342,6 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
                 "Rejected stop command as the command id was invalid "
                 "(it was: {}).",
                 StopCmd.CommandID);
-          },
-          400}});
-
-    CommandSteps.push_back(
-        {[&]() {
-           return isMsgTimeStampValid(CommandMsg.getMetaData().timestamp());
-         },
-         {LogLevel::Warning, true,
-          [&]() {
-            return fmt::format(
-                "Rejected stop command as its timestamp was bad (it was: {}, "
-                "current time: {}).",
-                toUTCDateTime(CommandMsg.getMetaData().timestamp()),
-                toUTCDateTime(system_clock::now()));
           },
           400}});
 
