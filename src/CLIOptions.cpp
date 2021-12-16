@@ -136,7 +136,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
 
   addUriOption(App, "--job-pool-uri", MainOptions.JobPoolURI,
                "<host[:port][/topic]> Kafka broker/topic to listen for jobs")
-  ->required();
+      ->required();
 
   addUriOption(App, "--graylog-logger-address",
                MainOptions.GraylogLoggerAddress,
