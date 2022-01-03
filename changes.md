@@ -1,5 +1,9 @@
 # Changes
 
+## Next version
+
+- The filewriter will now only run in the job pool mode. This means that the user is required to supply a job pool topic in the filewriter .ini configuration flag using the --job-pool-uri option.
+
 ## Version 4.1.0: Quality of life
 
 - Each ev42 writer module instance will now publish the number of events written to file.

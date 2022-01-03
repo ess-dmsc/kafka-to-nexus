@@ -18,8 +18,8 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_f142_meta_data(writer_channel, worker_pool, kafka_address):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+def test_f142_meta_data(worker_pool, kafka_address):
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
     producer = create_producer()
 
     data_topic = "TEST_sampleEnv"
@@ -89,7 +89,7 @@ def test_f142_meta_data(writer_channel, worker_pool, kafka_address):
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(writer_channel, timeout=30)
+    wait_no_working_writers(worker_pool, timeout=30)
 
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
