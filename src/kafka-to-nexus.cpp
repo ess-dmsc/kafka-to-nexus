@@ -61,7 +61,8 @@ bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           "Unable to find job pool topic with name \"{}\".", PoolTopic);
-      LOG_WARN(MsgString);
+      LOG_ERROR(MsgString);
+      throw std::runtime_error(MsgString);
     }
     if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(

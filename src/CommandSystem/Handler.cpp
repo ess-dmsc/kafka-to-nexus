@@ -28,11 +28,9 @@ Handler::Handler(std::string const &ServiceIdentifier,
       CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
 
 void Handler::loopFunction() {
-  if (PollForJob and JobPool != nullptr) {
-    auto JobMsg = JobPool->pollForJob();
-    if (JobMsg.first == Kafka::PollStatus::Message) {
-      handleCommand(std::move(JobMsg.second), true);
-    }
+  auto JobMsg = JobPool->pollForJob();
+  if (JobMsg.first == Kafka::PollStatus::Message) {
+    handleCommand(std::move(JobMsg.second), true);
   }
   auto CommandMsg = CommandSource->pollForCommand();
   if (CommandMsg.first == Kafka::PollStatus::Message) {

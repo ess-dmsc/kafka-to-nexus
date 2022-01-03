@@ -9,8 +9,8 @@ from helpers.writer import (
 )
 
 
-def test_static_data_reaches_file(writer_channel, worker_pool, kafka_address):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+def test_static_data_reaches_file(worker_pool, kafka_address):
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now
@@ -26,7 +26,7 @@ def test_static_data_reaches_file(writer_channel, worker_pool, kafka_address):
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(writer_channel, timeout=30)
+    wait_no_working_writers(worker_pool, timeout=30)
 
     file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:

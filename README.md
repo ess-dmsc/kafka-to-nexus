@@ -14,7 +14,8 @@ Part of the ESS data streaming pipeline.
   --version                   Print application version and exit
   --command-status-uri URI REQUIRED
                               <host[:port][/topic]> Kafka broker/topic to listen for commands and to push status updates to.
-  --job-pool-uri URI          <host[:port][/topic]> Kafka broker/topic to listen for jobs
+  --job-pool-uri URI REQUIRED 
+  			      <host[:port][/topic]> Kafka broker/topic to listen for jobs
   --graylog-logger-address URI
                               <host:port> Log to Graylog via graylog_logger library
   --grafana-carbon-address URI
