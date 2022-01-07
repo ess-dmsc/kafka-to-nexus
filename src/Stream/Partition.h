@@ -120,7 +120,7 @@ protected:
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
       MsgFilters;
-  ThreadedExecutor Executor; // Must be last
+  ThreadedExecutor Executor{false, "partition"}; // Must be last
 };
 
 } // namespace Stream

@@ -115,7 +115,7 @@ private:
       "/entry/", "start_time", MetaData::basicStringDatasetWriter};
   MetaData::Value<std::string> EndTimeMetaData{
       "/entry/", "end_time", MetaData::basicStringDatasetWriter};
-  ThreadedExecutor Executor; // Must be last
+  ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
 
 } // namespace FileWriter

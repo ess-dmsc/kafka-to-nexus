@@ -107,6 +107,6 @@ protected:
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
-  ThreadedExecutor Executor; // Must be last
+  ThreadedExecutor Executor{false, "topic"}; // Must be last
 };
 } // namespace Stream

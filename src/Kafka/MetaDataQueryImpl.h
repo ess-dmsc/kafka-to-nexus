@@ -16,6 +16,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <fmt/format.h>
 
 namespace Kafka {
 
@@ -96,8 +97,7 @@ std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
       Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException(
-        "Failed to query broker for available partitions. Error code was: " +
-        std::to_string(ReturnCode));
+        fmt::format("Failed to query broker for available partitions on topic {}. Error code was: {}", Topic, ReturnCode));
   }
   auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
   auto ReturnVector = extractPartitinIDs(TopicMetaData);
@@ -114,9 +114,9 @@ std::set<std::string> getTopicListImpl(std::string const &Broker,
   RdKafka::Metadata *MetadataPtr{nullptr};
   auto ReturnCode = Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    throw MetadataException(
-        "Failed to query broker for available partitions. Error code was: " +
-        std::to_string(ReturnCode));
+    throw MetadataException(fmt::format(
+        "Failed to query broker for available partitions. Error code was: {}",
+        ReturnCode));
   }
   auto Topics = MetadataPtr->topics();
   std::set<std::string> TopicNames;
