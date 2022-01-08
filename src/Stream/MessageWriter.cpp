@@ -36,8 +36,7 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
   Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
   Registrar.registerMetric(WriteErrors,
                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  Registrar.registerMetric(ApproxQueuedWrites,
-                           {Metrics::LogTo::CARBON});
+  Registrar.registerMetric(ApproxQueuedWrites, {Metrics::LogTo::CARBON});
   ModuleErrorCounters[UnknownModuleHash] = std::make_unique<Metrics::Metric>(
       "error_unknown", "Unknown flatbuffer message.", Metrics::Severity::ERROR);
   Registrar.registerMetric(*ModuleErrorCounters[UnknownModuleHash],
