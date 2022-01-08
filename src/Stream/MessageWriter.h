@@ -77,7 +77,7 @@ protected:
   moodycamel::ConcurrentQueue<JobType> WriteJobs;
   std::atomic_bool RunThread{true};
   const duration SleepTime{10ms};
-  duration FlushInterval{3s};
+  duration FlushInterval{5s};
   const int MaxTimeCheckCounter{200};
   std::thread WriterThread; // Must be last
 };
