@@ -14,6 +14,7 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <string>
 #include <thread>
 
 using JobType = std::function<void()>;
@@ -34,8 +35,10 @@ public:
   ///
   /// \param LowPriorityThreadExit If set to true, will put the exit thread
   /// task (created by the destructor) in the low priority queue.
-  explicit ThreadedExecutor(bool LowPriorityThreadExit = false)
-      : LowPriorityExit(LowPriorityThreadExit), WorkerThread(ThreadFunction) {}
+  explicit ThreadedExecutor(bool LowPriorityThreadExit = false,
+                            std::string const &ThreadName = "executor")
+      : LowPriorityExit(LowPriorityThreadExit), ThreadName(ThreadName),
+        WorkerThread(ThreadFunction) {}
 
   /// \brief Destructor, see constructor for details on exiting the thread
   /// when calling the destructor.
@@ -66,7 +69,7 @@ public:
 private:
   bool RunThread{true};
   std::function<void()> ThreadFunction{[=]() {
-    setThreadName("executor");
+    setThreadName(ThreadName);
     while (RunThread) {
       JobType CurrentTask;
       if (TaskQueue.try_dequeue(CurrentTask)) {
@@ -82,5 +85,6 @@ private:
   moodycamel::ConcurrentQueue<JobType> TaskQueue;
   moodycamel::ConcurrentQueue<JobType> LowPriorityTaskQueue;
   bool const LowPriorityExit{false};
+  std::string const ThreadName;
   std::thread WorkerThread;
 };
