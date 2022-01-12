@@ -69,7 +69,7 @@ protected:
                               "Number of failed HDF file writes.",
                               Metrics::Severity::ERROR};
   Metrics::Metric ApproxQueuedWrites{"approx_queued_writes",
-                              "Approximate number of writes queued up."};
+                                     "Approximate number of writes queued up."};
   std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
   Metrics::Registrar Registrar;
 

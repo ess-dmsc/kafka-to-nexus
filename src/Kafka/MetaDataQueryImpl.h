@@ -12,11 +12,11 @@
 #include "Kafka/MetadataException.h"
 #include "TimeUtility.h"
 #include <chrono>
+#include <fmt/format.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <set>
 #include <string>
-#include <fmt/format.h>
 
 namespace Kafka {
 
@@ -97,7 +97,9 @@ std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
       Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException(
-        fmt::format("Failed to query broker for available partitions on topic {}. Error code was: {}", Topic, ReturnCode));
+        fmt::format("Failed to query broker for available partitions on topic "
+                    "{}. Error code was: {}",
+                    Topic, ReturnCode));
   }
   auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
   auto ReturnVector = extractPartitinIDs(TopicMetaData);
