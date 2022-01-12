@@ -1,6 +1,6 @@
 [requires]
 gtest/1.10.0
-fmt/6.1.2
+fmt/8.1.1
 h5cpp/0.4.0@ess-dmsc/stable
 zlib/1.2.11
 librdkafka/1.5.0@ess-dmsc/stable
@@ -8,7 +8,7 @@ nlohmann_json/3.9.1
 streaming-data-types/b6b7922@ess-dmsc/stable
 cli11/1.9.1
 trompeloeil/41
-graylog-logger/2.1.1-dm1
+graylog-logger/2.1.2-dm1
 date/3.0.1
 asio/1.13.0
 readerwriterqueue/07e22ec@ess-dmsc/stable
