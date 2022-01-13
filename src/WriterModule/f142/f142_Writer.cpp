@@ -211,11 +211,74 @@ std::unordered_map<AlarmSeverity, std::string> AlarmSeverityToString{
     {AlarmSeverity::INVALID, "INVALID"},
     {AlarmSeverity::NO_CHANGE, "NO_CHANGE"}};
 
+void msgTypeIsConfigType(f142_Writer::Type ConfigType, Value MsgType) {
+  std::unordered_map<Value, f142_Writer::Type> TypeComparison{
+      {Value::ArrayByte, f142_Writer::Type::int8},
+      {Value::Byte, f142_Writer::Type::int8},
+      {Value::ArrayUByte, f142_Writer::Type::uint8},
+      {Value::UByte, f142_Writer::Type::uint8},
+      {Value::ArrayShort, f142_Writer::Type::int16},
+      {Value::Short, f142_Writer::Type::int16},
+      {Value::ArrayUShort, f142_Writer::Type::uint16},
+      {Value::UShort, f142_Writer::Type::uint16},
+      {Value::ArrayInt, f142_Writer::Type::int32},
+      {Value::Int, f142_Writer::Type::int32},
+      {Value::ArrayUInt, f142_Writer::Type::uint32},
+      {Value::UInt, f142_Writer::Type::uint32},
+      {Value::ArrayLong, f142_Writer::Type::int64},
+      {Value::Long, f142_Writer::Type::int64},
+      {Value::ArrayULong, f142_Writer::Type::uint64},
+      {Value::ULong, f142_Writer::Type::uint64},
+      {Value::ArrayFloat, f142_Writer::Type::float32},
+      {Value::Float, f142_Writer::Type::float32},
+      {Value::ArrayDouble, f142_Writer::Type::float64},
+      {Value::Double, f142_Writer::Type::float64},
+  };
+  std::unordered_map<Value, std::string> MsgTypeString{
+      {Value::ArrayByte, "int8"},      {Value::Byte, "int8"},
+      {Value::ArrayUByte, "uint8"},    {Value::UByte, "uint8"},
+      {Value::ArrayShort, "int16"},    {Value::Short, "int16"},
+      {Value::ArrayUShort, "uint16"},  {Value::UShort, "uint16"},
+      {Value::ArrayInt, "int32"},      {Value::Int, "int32"},
+      {Value::ArrayUInt, "uint32"},    {Value::UInt, "uint32"},
+      {Value::ArrayLong, "int64"},     {Value::Long, "int64"},
+      {Value::ArrayULong, "uint64"},   {Value::ULong, "uint64"},
+      {Value::ArrayFloat, "float32"},  {Value::Float, "float32"},
+      {Value::ArrayDouble, "float64"}, {Value::Double, "float64"},
+  };
+  std::unordered_map<f142_Writer::Type, std::string> ConfigTypeString{
+      {f142_Writer::Type::int8, "int8"},
+      {f142_Writer::Type::uint8, "uint8"},
+      {f142_Writer::Type::int16, "int16"},
+      {f142_Writer::Type::uint16, "uint16"},
+      {f142_Writer::Type::int32, "int32"},
+      {f142_Writer::Type::uint32, "uint32"},
+      {f142_Writer::Type::int64, "int64"},
+      {f142_Writer::Type::uint64, "uint64"},
+      {f142_Writer::Type::float32, "float32"},
+      {f142_Writer::Type::float64, "float64"},
+  };
+  try {
+    if (TypeComparison.at(MsgType) != ConfigType) {
+      LOG_WARN("Configured data type ({}) is not the same as the f142 message "
+               "type ({}).",
+               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+    }
+  } catch (std::out_of_range const &) {
+    LOG_ERROR("Got out of range error when comparing types.");
+  }
+}
+
 void f142_Writer::write(FlatbufferMessage const &Message) {
   auto LogDataMessage = GetLogData(Message.data());
   size_t NrOfElements{1};
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();
+
+  if (not HasCheckedMessageType) {
+    msgTypeIsConfigType(ElementType, Type);
+    HasCheckedMessageType = true;
+  }
 
   // Note that we are using our knowledge about flatbuffers here to minimise
   // amount of code we have to write by using some pointer arithmetic.
