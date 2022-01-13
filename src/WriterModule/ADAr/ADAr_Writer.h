@@ -36,8 +36,6 @@ public:
 
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
-protected:
-  void initValueDataset(hdf5::node::Group const &Parent) const;
   enum class Type {
     int8,
     uint8,
@@ -50,7 +48,11 @@ protected:
     float32,
     float64,
     c_string,
-  } ElementType{Type::float64};
+  };
+
+protected:
+  void initValueDataset(hdf5::node::Group const &Parent) const;
+  Type ElementType{Type::float64};
   std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
   JsonConfig::Field<int> CueInterval{this, "cue_interval", 1000};
@@ -60,6 +62,7 @@ protected:
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
+  bool HasCheckedMessageType{false};
 };
 } // namespace ADAr
 } // namespace WriterModule
