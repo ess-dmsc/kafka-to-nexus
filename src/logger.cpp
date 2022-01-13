@@ -26,13 +26,9 @@ std::string consoleFormatter(Log::LogMessage const &Msg) {
 void setUpLogging(Log::Severity const &LoggingLevel,
                   const std::string &LogFileName, const uri::URI &GraylogURI) {
   Log::SetMinimumSeverity(LoggingLevel);
-  auto Handlers = Log::GetHandlers();
-  for (auto &Handler : Handlers) {
-    if (dynamic_cast<Log::ConsoleInterface *>(Handler.get()) != nullptr) {
-      dynamic_cast<Log::ConsoleInterface *>(Handler.get())
-          ->setMessageStringCreatorFunction(consoleFormatter);
-    }
-  }
+  auto CInterface = std::make_shared<Log::ConsoleInterface>();
+  CInterface->setMessageStringCreatorFunction(consoleFormatter);
+  Log::AddLogHandler(CInterface);
   if (!LogFileName.empty()) {
     Log::AddLogHandler(std::make_shared<Log::FileInterface>(LogFileName));
   }

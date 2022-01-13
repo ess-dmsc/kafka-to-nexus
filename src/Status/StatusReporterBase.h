@@ -77,6 +77,7 @@ public:
 
   virtual void
   setJSONMetaDataGenerator(JsonGeneratorFuncType GeneratorFunction) {
+    std::lock_guard Lock(StatusMutex);
     JSONGenerator = GeneratorFunction;
   }
 
