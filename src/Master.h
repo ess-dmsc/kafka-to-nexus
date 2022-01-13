@@ -46,6 +46,7 @@ public:
   void setStopTime(time_point StopTime);
   void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);
+  bool writingIsFinished();
 
 private:
   enum class WriterState { Idle, Writing };
@@ -58,7 +59,7 @@ private:
   std::string CurrentFileName;
   std::string CurrentMetadata;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
-  virtual bool hasWritingStopped();
   void setToIdle();
+  virtual bool hasWritingStopped();
 };
 } // namespace FileWriter
