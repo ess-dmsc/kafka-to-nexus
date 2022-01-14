@@ -44,8 +44,6 @@ public:
 
   void write(FlatbufferMessage const &Message) override;
 
-protected:
-  void initValueDataset(hdf5::node::Group const &Parent) const;
   enum class Type {
     int8,
     uint8,
@@ -55,13 +53,18 @@ protected:
     uint32,
     int64,
     uint64,
-  } ElementType{Type::int64};
+  };
+
+protected:
+  void initValueDataset(hdf5::node::Group const &Parent) const;
+  Type ElementType{Type::int64};
   NeXusDataset::ExtensibleDatasetBase Value;
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "int64"};
+  bool HasCheckedMessageType{false};
 };
 } // namespace senv
 } // namespace WriterModule
