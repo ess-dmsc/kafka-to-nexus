@@ -49,7 +49,7 @@ void signal_handler(int Signal) {
       LOG_INFO(CtrlCString);
       RunState = RunStates::SIGINT_Received;
     } else {
-      LOG_INFO("Got repeted Ctrl-C. Shutting down now;");
+      LOG_INFO("Got repeated Ctrl-c. Shutting down now;");
       RunState = RunStates::Stopping;
     }
     break;
