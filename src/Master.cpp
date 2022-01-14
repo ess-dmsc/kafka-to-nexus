@@ -90,8 +90,9 @@ bool Master::hasWritingStopped() {
 }
 
 bool Master::writingIsFinished() {
-  return CurrentStreamController == nullptr or (CurrentStreamController != nullptr and
-         CurrentStreamController->isDoneWriting());
+  return CurrentStreamController == nullptr or
+         (CurrentStreamController != nullptr and
+          CurrentStreamController->isDoneWriting());
 }
 
 void Master::run() {

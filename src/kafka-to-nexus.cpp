@@ -39,7 +39,8 @@ enum class RunStates {
 static std::atomic<RunStates> RunState{RunStates::Running};
 
 void signal_handler(int Signal) {
-  std::string CtrlCString{"Got SIGINT (Ctrl-C). Shutting down gracefully. Press Ctrl-C again to shutdown quickly."};
+  std::string CtrlCString{"Got SIGINT (Ctrl-C). Shutting down gracefully. "
+                          "Press Ctrl-C again to shutdown quickly."};
   std::string SIGTERMString{"Got SIGTERM. Shutting down."};
   std::string UnknownSignal{"Got unknown signal. Shutting down."};
   switch (Signal) {
@@ -60,7 +61,6 @@ void signal_handler(int Signal) {
     LOG_INFO(UnknownSignal);
     RunState = RunStates::Stopping;
   }
-
 }
 
 std::unique_ptr<Status::StatusReporter>
@@ -170,7 +170,6 @@ int main(int argc, char **argv) {
   std::signal(SIGTERM, signal_handler);
 
   std::unique_ptr<FileWriter::Master> MasterPtr;
-
 
   auto GenerateMaster = [&]() {
     return std::make_unique<FileWriter::Master>(
