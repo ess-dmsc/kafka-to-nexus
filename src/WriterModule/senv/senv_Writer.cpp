@@ -96,10 +96,53 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   return ReturnVector;
 }
 
+void msgTypeIsConfigType(senv_Writer::Type ConfigType, ValueUnion MsgType) {
+  std::unordered_map<ValueUnion, senv_Writer::Type> TypeComparison{
+      {ValueUnion::Int8Array, senv_Writer::Type::int8},
+      {ValueUnion::UInt8Array, senv_Writer::Type::uint8},
+      {ValueUnion::Int16Array, senv_Writer::Type::int16},
+      {ValueUnion::UInt16Array, senv_Writer::Type::uint16},
+      {ValueUnion::Int32Array, senv_Writer::Type::int32},
+      {ValueUnion::UInt32Array, senv_Writer::Type::uint32},
+      {ValueUnion::Int64Array, senv_Writer::Type::int64},
+      {ValueUnion::UInt64Array, senv_Writer::Type::uint64},
+  };
+  std::unordered_map<ValueUnion, std::string> MsgTypeString{
+      {ValueUnion::Int8Array, "int8"},   {ValueUnion::UInt8Array, "uint8"},
+      {ValueUnion::Int16Array, "int16"}, {ValueUnion::UInt16Array, "uint16"},
+      {ValueUnion::Int32Array, "int32"}, {ValueUnion::UInt32Array, "uint32"},
+      {ValueUnion::Int64Array, "int64"}, {ValueUnion::UInt64Array, "uint64"},
+  };
+  std::unordered_map<senv_Writer::Type, std::string> ConfigTypeString{
+      {senv_Writer::Type::int8, "int8"},
+      {senv_Writer::Type::uint8, "uint8"},
+      {senv_Writer::Type::int16, "int16"},
+      {senv_Writer::Type::uint16, "uint16"},
+      {senv_Writer::Type::int32, "int32"},
+      {senv_Writer::Type::uint32, "uint32"},
+      {senv_Writer::Type::int64, "int64"},
+      {senv_Writer::Type::uint64, "uint64"}};
+  try {
+    if (TypeComparison.at(MsgType) != ConfigType) {
+      LOG_WARN("Configured data type ({}) is not the same as the senv message "
+               "type ({}).",
+               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+    }
+  } catch (std::out_of_range const &) {
+    LOG_ERROR("Got out of range error when comparing types.");
+  }
+}
+
 void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto CueIndexValue = Value.dataspace().size();
   auto ValuesType = FbPointer->Values_type();
+
+  if (not HasCheckedMessageType) {
+    msgTypeIsConfigType(ElementType, ValuesType);
+    HasCheckedMessageType = true;
+  }
+
   size_t NrOfElements{0};
   switch (ValuesType) {
   case ValueUnion::Int8Array: {
