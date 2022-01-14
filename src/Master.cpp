@@ -90,10 +90,8 @@ bool Master::hasWritingStopped() {
 }
 
 bool Master::writingIsFinished() {
-  // cppcheck-suppress redundantCondition
   return CurrentStreamController == nullptr or
-         (CurrentStreamController != nullptr and
-          CurrentStreamController->isDoneWriting());
+         CurrentStreamController->isDoneWriting();
 }
 
 void Master::run() {
