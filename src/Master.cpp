@@ -65,7 +65,9 @@ void Master::stopNow() {
         "Unable to stop writing when not in \"Writing\" state.");
   }
   LOG_INFO("Attempting to stop file-writing (quickly).");
-  CurrentStreamController->stop();
+  if (CurrentStreamController != nullptr) {
+    CurrentStreamController->stop();
+  }
   Reporter->updateStopTime(time_point{0ms});
 }
 
@@ -84,6 +86,11 @@ void Master::setStopTime(time_point StopTime) {
 
 bool Master::hasWritingStopped() {
   return CurrentStreamController != nullptr and
+         CurrentStreamController->isDoneWriting();
+}
+
+bool Master::writingIsFinished() {
+  return CurrentStreamController == nullptr or
          CurrentStreamController->isDoneWriting();
 }
 
