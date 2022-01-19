@@ -161,7 +161,7 @@ builders = pipeline_builder.createBuilders { container ->
         }
       }
 
-    } else { // if (container.key != release_os)
+    } else if (container.key != release_os) { // if (container.key != release_os)
       def test_dir
       test_dir = 'bin'
 
@@ -300,6 +300,7 @@ builders = pipeline_builder.createBuilders { container ->
         rm -rf ${pipeline_builder.project}; mkdir ${pipeline_builder.project}
         mkdir ${pipeline_builder.project}/bin
         cp ./bin/kafka-to-nexus ${pipeline_builder.project}/bin/
+        cp ./bin/UnitTests ${pipeline_builder.project}/bin/
         cp -r ./lib ${pipeline_builder.project}/
         cp -r ./licenses ${pipeline_builder.project}/
 
