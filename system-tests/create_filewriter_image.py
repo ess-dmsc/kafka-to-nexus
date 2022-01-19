@@ -141,7 +141,7 @@ def run_conan(container):
 def rebuild_filewriter(container):
     print("Re-building the filewriter")
     execute_command(
-        'bash -c "bash activate_run.sh && cmake .. -GNinja -DCONAN=MANUAL-DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=False -DRUN_DOXYGEN=False && ninja kafka-to-nexus"',
+        'bash -c "bash activate_run.sh && cmake .. -GNinja -DCONAN=MANUAL-DCMAKE_BUILD_TYPE=Release -DRUN_DOXYGEN=False && ninja kafka-to-nexus"',
         "/home/jenkins/build",
         container,
     )

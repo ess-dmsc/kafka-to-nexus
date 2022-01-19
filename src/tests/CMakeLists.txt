@@ -65,7 +65,7 @@ set(UnitTests_INC
         helpers/SetExtractorModule.h
         helpers/StatusHelpers.h MetaData/TrackerTest.cpp MetaData/HDF5DataTest.cpp)
 
-add_executable(UnitTests
+add_executable(UnitTests EXCLUDE_FROM_ALL
         ${UnitTests_SRC}
         ${UnitTests_INC}
         $<TARGET_OBJECTS:NeXusDataset>
