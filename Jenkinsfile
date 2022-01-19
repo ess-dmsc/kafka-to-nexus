@@ -9,6 +9,7 @@ test_and_coverage_os = "ubuntu2004"
 release_os = "centos7-release"
 
 container_build_nodes = [
+  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'ubuntu2004': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
 ]
