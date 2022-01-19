@@ -12,13 +12,13 @@
 
 #pragma once
 
+#include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MetaData/HDF5DataWriter.h"
 #include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
-#include "FileWriterTask.h"
 #include <atomic>
 #include <set>
 #include <vector>
