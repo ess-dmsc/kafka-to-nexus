@@ -33,7 +33,7 @@ properties([[
     artifactDaysToKeepStr: '',
     artifactNumToKeepStr: num_artifacts_to_keep,
     daysToKeepStr: '',
-    numToKeepStr: num_artifacts_to_keep
+    numToKeepStr: ''
   ]
 ]]);
 
