@@ -18,12 +18,12 @@
 #include "Metrics/Registrar.h"
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
+#include "FileWriterTask.h"
 #include <atomic>
 #include <set>
 #include <vector>
 
 namespace FileWriter {
-class FileWriterTask;
 
 class IStreamController {
 public:

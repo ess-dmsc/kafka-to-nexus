@@ -104,7 +104,6 @@ builders = pipeline_builder.createBuilders { container ->
           -DCMAKE_SKIP_RPATH=FALSE \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
-          -DBUILD_TESTS=FALSE \
           ../${pipeline_builder.project}
       """
     }
@@ -114,7 +113,7 @@ builders = pipeline_builder.createBuilders { container ->
     container.sh """
     cd build
     . ./activate_run.sh
-    ninja all
+    ninja all UnitTests
     """
   }  // stage
 
