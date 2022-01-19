@@ -161,7 +161,7 @@ builders = pipeline_builder.createBuilders { container ->
         }
       }
 
-    } else if (container.key != release_os) {
+    } else { // if (container.key != release_os)
       def test_dir
       test_dir = 'bin'
 
