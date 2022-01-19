@@ -113,7 +113,7 @@ builders = pipeline_builder.createBuilders { container ->
     container.sh """
     cd build
     . ./activate_run.sh
-    ninja all
+    ninja all UnitTests
     """
   }  // stage
 
