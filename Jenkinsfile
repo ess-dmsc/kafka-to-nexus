@@ -9,6 +9,7 @@ test_and_coverage_os = "ubuntu2004"
 release_os = "centos7-release"
 
 container_build_nodes = [
+  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'ubuntu2004': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
 ]
@@ -32,7 +33,7 @@ properties([[
     artifactDaysToKeepStr: '',
     artifactNumToKeepStr: num_artifacts_to_keep,
     daysToKeepStr: '',
-    numToKeepStr: num_artifacts_to_keep
+    numToKeepStr: ''
   ]
 ]]);
 
@@ -103,7 +104,6 @@ builders = pipeline_builder.createBuilders { container ->
           -DCMAKE_SKIP_RPATH=FALSE \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
-          -DBUILD_TESTS=FALSE \
           ../${pipeline_builder.project}
       """
     }
@@ -113,7 +113,7 @@ builders = pipeline_builder.createBuilders { container ->
     container.sh """
     cd build
     . ./activate_run.sh
-    ninja all
+    ninja all UnitTests
     """
   }  // stage
 

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MetaData/HDF5DataWriter.h"
 #include "MetaData/Tracker.h"
@@ -23,7 +24,6 @@
 #include <vector>
 
 namespace FileWriter {
-class FileWriterTask;
 
 class IStreamController {
 public:

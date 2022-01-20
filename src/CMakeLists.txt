@@ -219,7 +219,4 @@ target_link_libraries(kafka-to-nexus ${libraries_common})
 target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
 target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11.0>>:c++fs>)
 
-option(BUILD_TESTS "Build unit tests" ON)
-if (BUILD_TESTS)
-  add_subdirectory(tests)
-endif()
+add_subdirectory(tests)
