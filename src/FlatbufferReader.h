@@ -28,13 +28,22 @@ public:
   virtual ~FlatbufferReader() = default;
   using ptr = std::unique_ptr<FlatbufferReader>;
 
-  /// Run the flatbuffer verification and return the result.
+  /// \brief Run the flatbuffer verification and return the result.
+  ///
+  /// \param Message The flatbuffer message to verify.
+  /// \return Returns true if Message is a valid flatbuffer. False otherwise.
   virtual bool verify(FlatbufferMessage const &Message) const = 0;
 
-  /// Extract the 'source_name' from the flatbuffer message.
+  /// \brief Extract the 'source name' from a flatbuffer message.
+  ///
+  /// \param Message The flatbuffer from which the source name should be extracted.
+  /// \return The source name of the flatbuffer.
   virtual std::string source_name(FlatbufferMessage const &Message) const = 0;
 
-  /// Extract the timestamp.
+  /// \brief Extract the timestamp from a flatbuffer.
+  ///
+  /// \param Message The message from which the timestamp should be extracted.
+  /// \return The timestamp of the flatbuffer message.
   virtual uint64_t timestamp(FlatbufferMessage const &Message) const = 0;
 };
 
@@ -46,12 +55,27 @@ namespace FlatbufferReaderRegistry {
 using ReaderPtr = FlatbufferReader::ptr;
 std::map<std::string, ReaderPtr> &getReaders();
 
+/// \brief Find a flatbuffer reader instance based on the flatbuffer identifier.
+///
+/// \param Key The 4 character flatbuffer identifier.
+/// \return A pointer to the corresponding FlatbufferReader.
+/// \throws std::out_of_range If the/identifier is not found.
 FlatbufferReader::ptr &find(std::string const &Key);
 
-void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&item);
+/// \brief Add a new flatbuffer reader/extractor.
+///
+/// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to be added.
+/// \param Item The flatbuffer reader/extractor to be added.
+void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item);
 
+/// \brief A class for facilitating the static registration of flabuffer readers/extractors.
+///
+/// \tparam T Must be a class that inherits from FileWriter::FlatbufferReader.
 template <typename T> class Registrar {
 public:
+  /// \brief Constructor.
+  ///
+  /// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to be added.
   explicit Registrar(std::string FlatbufferID) {
     FlatbufferReaderRegistry::addReader(FlatbufferID, std::make_unique<T>());
   }

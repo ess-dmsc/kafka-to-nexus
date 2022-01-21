@@ -20,7 +20,7 @@ namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
-/// See parent class for documentation.
+/// \brief For extracting info from tdct flatbuffer messages.
 class tdct_Extractor : public FBReaderBase {
 public:
   bool verify(FlatbufferMessage const &Message) const override;

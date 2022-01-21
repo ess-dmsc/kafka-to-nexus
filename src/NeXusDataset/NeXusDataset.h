@@ -23,7 +23,11 @@ class UInt16Value : public ExtensibleDataset<std::uint16_t> {
 public:
   UInt16Value() = default;
   /// \brief Create the raw_value dataset of NXLog.
-  /// \throw std::runtime_error if dataset already exists.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   UInt16Value(hdf5::node::Group const &Parent, Mode CMode,
               size_t ChunkSize = 1024);
 };
@@ -34,6 +38,11 @@ class DoubleValue : public NeXusDataset::ExtensibleDataset<double> {
 public:
   DoubleValue() = default;
   /// \brief Create the value dataset of NXLog.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   DoubleValue(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
               size_t ChunkSize = 1024);
 };
@@ -44,7 +53,11 @@ class Time : public ExtensibleDataset<std::uint64_t> {
 public:
   Time() = default;
   /// \brief Create the time dataset of NXLog.
-  /// \throw std::runtime_error if dataset already exists.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
@@ -54,7 +67,11 @@ class CueIndex : public ExtensibleDataset<std::uint32_t> {
 public:
   CueIndex() = default;
   /// \brief Create the cue_index dataset of NXLog and NXevent_data.
-  /// \throw std::runtime_error if dataset already exists.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   CueIndex(hdf5::node::Group const &Parent, Mode CMode,
            size_t ChunkSize = 1024);
 };
@@ -65,7 +82,11 @@ class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
 public:
   CueTimestampZero() = default;
   /// \brief Create the cue_timestamp_zero dataset of NXLog and NXevent_data.
-  /// \throw std::runtime_error if dataset already exists.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize = 1024);
 };
@@ -76,7 +97,11 @@ class EventId : public ExtensibleDataset<std::uint32_t> {
 public:
   EventId() = default;
   /// \brief Create the event_id dataset of NXevent_data.
-  /// \throw std::runtime_error if dataset already exists.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   EventId(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
@@ -86,7 +111,11 @@ class EventTimeOffset : public ExtensibleDataset<std::uint32_t> {
 public:
   EventTimeOffset() = default;
   /// \brief Create the event_time_offset dataset of NXevent_data.
-  /// \throw std::runtime_error if dataset already exists.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
                   size_t ChunkSize = 1024);
 };
@@ -97,7 +126,11 @@ class EventIndex : public ExtensibleDataset<std::uint32_t> {
 public:
   EventIndex() = default;
   /// \brief Create the event_index dataset of NXevent_data.
-  /// \throw std::runtime_error if dataset already exists.
+  ////
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   EventIndex(hdf5::node::Group const &Parent, Mode CMode,
              size_t ChunkSize = 1024);
 };
@@ -108,7 +141,11 @@ class EventTimeZero : public ExtensibleDataset<std::uint64_t> {
 public:
   EventTimeZero() = default;
   /// \brief Create the event_time_zero dataset of NXevent_data.
-  /// \throw std::runtime_error if dataset already exists.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be created.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
                 size_t ChunkSize = 1024);
 };
