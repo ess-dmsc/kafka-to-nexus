@@ -23,8 +23,8 @@ class CommandListener {
 public:
   /// \brief Constructor.
   ///
-  /// \param CommandTopicUri The URI/URL of the Kafka broker + topic to connect to for new commands.
-  /// \param Settings Kafka (consumer) settings.
+  /// \param CommandTopicUri The URI/URL of the Kafka broker + topic to connect
+  /// to for new commands. \param Settings Kafka (consumer) settings.
   CommandListener(uri::URI CommandTopicUri, Kafka::BrokerSettings Settings);
 
   /// \brief Destructor.
@@ -35,7 +35,8 @@ public:
   /// \note Will timeout on its first call. Will continue to timeout as long as
   /// it fails to retrieve metadata from the Kafka broker
   ///
-  /// \return Get a std::pair<> that contains the outcome of the message poll and the message if one was successfully received.
+  /// \return Get a std::pair<> that contains the outcome of the message poll
+  /// and the message if one was successfully received.
   virtual std::pair<Kafka::PollStatus, Msg> pollForCommand();
 
 protected:

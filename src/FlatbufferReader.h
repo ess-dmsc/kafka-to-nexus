@@ -36,8 +36,8 @@ public:
 
   /// \brief Extract the 'source name' from a flatbuffer message.
   ///
-  /// \param Message The flatbuffer from which the source name should be extracted.
-  /// \return The source name of the flatbuffer.
+  /// \param Message The flatbuffer from which the source name should be
+  /// extracted. \return The source name of the flatbuffer.
   virtual std::string source_name(FlatbufferMessage const &Message) const = 0;
 
   /// \brief Extract the timestamp from a flatbuffer.
@@ -64,18 +64,20 @@ FlatbufferReader::ptr &find(std::string const &Key);
 
 /// \brief Add a new flatbuffer reader/extractor.
 ///
-/// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to be added.
-/// \param Item The flatbuffer reader/extractor to be added.
+/// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to
+/// be added. \param Item The flatbuffer reader/extractor to be added.
 void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item);
 
-/// \brief A class for facilitating the static registration of flabuffer readers/extractors.
+/// \brief A class for facilitating the static registration of flabuffer
+/// readers/extractors.
 ///
 /// \tparam T Must be a class that inherits from FileWriter::FlatbufferReader.
 template <typename T> class Registrar {
 public:
   /// \brief Constructor.
   ///
-  /// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to be added.
+  /// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor
+  /// to be added.
   explicit Registrar(std::string FlatbufferID) {
     FlatbufferReaderRegistry::addReader(FlatbufferID, std::make_unique<T>());
   }

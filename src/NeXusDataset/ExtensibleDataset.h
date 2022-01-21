@@ -138,9 +138,11 @@ namespace NeXusDataset {
 
 enum class Mode { Create, Open };
 
-/// \brief The base class for representing an extensible (i.e. it can grow) HDF5 dataset.
+/// \brief The base class for representing an extensible (i.e. it can grow) HDF5
+/// dataset.
 ///
-/// This base class is used in order to have templated child classes that can override/inherit the member functions of this class.
+/// This base class is used in order to have templated child classes that can
+/// override/inherit the member functions of this class.
 class ExtensibleDatasetBase : public hdf5::node::ChunkedDataset {
 public:
   /// \brief Constructor.
@@ -150,8 +152,9 @@ public:
   ///
   /// \param Parent The group/node where the dataset to be opened is located.
   /// \param Name Tha name of the dataset in the HDF5 structure.
-  /// \param CMode If the dataset should be created or opened. Note that it is not possible to create a dataset with this class.
-  /// \throws std::runtime_error If creation of a dataset is attempted.
+  /// \param CMode If the dataset should be created or opened. Note that it is
+  /// not possible to create a dataset with this class. \throws
+  /// std::runtime_error If creation of a dataset is attempted.
   ExtensibleDatasetBase(const hdf5::node::Group &Parent, std::string Name,
                         Mode CMode)
       : hdf5::node::ChunkedDataset() {
@@ -284,8 +287,9 @@ public:
   ///
   /// \param Parent The group/node where the dataset to be opened is located.
   /// \param Name Tha name of the dataset in the HDF5 structure.
-  /// \param CMode If the dataset should be created or opened. Note that it is not possible to create a dataset with this class.
-  /// \throws std::runtime_error If creation of a dataset is attempted.
+  /// \param CMode If the dataset should be created or opened. Note that it is
+  /// not possible to create a dataset with this class. \throws
+  /// std::runtime_error If creation of a dataset is attempted.
   MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
@@ -301,7 +305,8 @@ public:
 
   /// \brief Get the dimensions of the dataset.
   ///
-  /// \return The dimensions of the dataset. The returned type is ≈std::vector<>.
+  /// \return The dimensions of the dataset. The returned type is
+  /// ≈std::vector<>.
   hdf5::Dimensions get_extent() {
     auto DataSpace = dataspace();
     return hdf5::dataspace::Simple(DataSpace).current_dimensions();
@@ -312,7 +317,9 @@ public:
   /// \tparam T The data type of the data to be added.
   /// \param NewData The new data.
   /// \param Shape The shape of the new data.
-  /// \throws std::runtime_error A basic check of the rank (number of dimensions) of the new data is done and an error is thrown if this is not correct for the current dataset.
+  /// \throws std::runtime_error A basic check of the rank (number of
+  /// dimensions) of the new data is done and an error is thrown if this is not
+  /// correct for the current dataset.
   template <typename T>
   void appendArray(T const &NewData, hdf5::Dimensions Shape) {
     auto CurrentExtent = get_extent();
