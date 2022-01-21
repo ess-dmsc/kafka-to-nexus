@@ -21,6 +21,8 @@
 
 namespace hdf5 {
 namespace datatype {
+
+/// \brief Required for h5cpp to save data of type std::int8_t const.
 template <> class TypeTrait<std::int8_t const> {
 public:
   using Type = std::int8_t;
@@ -30,6 +32,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint8_t const
 template <> class TypeTrait<std::uint8_t const> {
 public:
   using Type = std::uint8_t;
@@ -39,6 +42,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::int16_t const
 template <> class TypeTrait<std::int16_t const> {
 public:
   using Type = std::int16_t;
@@ -48,6 +52,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint16_t const
 template <> class TypeTrait<std::uint16_t const> {
 public:
   using Type = std::uint16_t;
@@ -57,6 +62,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::int32_t const
 template <> class TypeTrait<std::int32_t const> {
 public:
   using Type = std::int32_t;
@@ -66,6 +72,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint32_t const
 template <> class TypeTrait<std::uint32_t const> {
 public:
   using Type = std::uint32_t;
@@ -75,6 +82,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type float const
 template <> class TypeTrait<float const> {
 public:
   using Type = float;
@@ -84,6 +92,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type double const
 template <> class TypeTrait<double const> {
 public:
   using Type = double;
@@ -93,6 +102,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type char const
 template <> class TypeTrait<char const> {
 public:
   using Type = char;
@@ -102,6 +112,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::int64_t const
 template <> class TypeTrait<std::int64_t const> {
 public:
   using Type = std::int64_t;
@@ -111,6 +122,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint64_t const
 template <> class TypeTrait<std::uint64_t const> {
 public:
   using Type = std::uint64_t;
