@@ -13,6 +13,7 @@
 
 namespace NeXusDataset {
 
+/// \brief Represents a dataset with the name "alarm_status".
 class AlarmStatus : public FixedSizeString {
 public:
   AlarmStatus() = default;
@@ -21,6 +22,7 @@ public:
       : FixedSizeString(Parent, "alarm_status", CMode, StringSize, ChunkSize){};
 };
 
+/// \brief Represents a dataset with the name "alarm_severity".
 class AlarmSeverity : public FixedSizeString {
 public:
   AlarmSeverity() = default;
@@ -30,6 +32,7 @@ public:
                         ChunkSize){};
 };
 
+/// \brief Represents a timestamp dataset.
 class AlarmTime : public ExtensibleDataset<std::uint64_t> {
 public:
   AlarmTime() = default;

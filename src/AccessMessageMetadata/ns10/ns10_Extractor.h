@@ -18,6 +18,8 @@
 
 namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
+
+/// \brief For extracting info from ns10 flatbuffer messages.
 class ns10_Extractor : public FileWriter::FlatbufferReader {
 public:
   bool verify(FlatbufferMessage const &Message) const override;

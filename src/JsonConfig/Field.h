@@ -33,6 +33,8 @@ class FieldHandler;
 
 using namespace nlohmann;
 
+/// \brief The base class of JSON key/value pairs used for configuration
+/// purposes.
 class FieldBase {
 public:
   template <class FieldRegistrarType>
@@ -62,6 +64,11 @@ private:
   bool FieldRequired{false};
 };
 
+/// \brief Represents an obsolete JSON key/value pair in a dictionary.
+///
+/// If the key is found, a warning message is produced by the FieldHandler.
+/// \tparam FieldType The data type stored in the field. Need not be a primitive
+/// type.
 template <class FieldType> class ObsoleteField : public FieldBase {
 public:
   template <class FieldRegistrarType>
@@ -89,6 +96,10 @@ public:
   operator FieldType() const { return getValue(); }
 };
 
+/// \brief Represents a JSON key/value pair in a dictionary.
+///
+/// \tparam FieldType The data type stored in the field. Need not be a primitive
+/// type.
 template <class FieldType> class Field : public FieldBase {
 public:
   template <class FieldRegistrarType>
@@ -152,6 +163,11 @@ private:
   }
 };
 
+/// \brief Represents a required JSON key/value pair in a dictionary.
+///
+/// When processed by the FieldHandler, an exception will be thrown if this
+/// field (key) is not found. \tparam FieldType The data type stored in the
+/// field. Need not be a primitive type.
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
   template <class FieldRegistrarType>

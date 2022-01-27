@@ -11,6 +11,8 @@
 
 namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
+
+/// \brief For extracting info from ev42 flatbuffer messages.
 class ev42_Extractor : public FileWriter::FlatbufferReader {
 public:
   ev42_Extractor() = default;

@@ -21,6 +21,8 @@
 
 namespace hdf5 {
 namespace datatype {
+
+/// \brief Required for h5cpp to save data of type std::int8_t const.
 template <> class TypeTrait<std::int8_t const> {
 public:
   using Type = std::int8_t;
@@ -30,6 +32,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint8_t const
 template <> class TypeTrait<std::uint8_t const> {
 public:
   using Type = std::uint8_t;
@@ -39,6 +42,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::int16_t const
 template <> class TypeTrait<std::int16_t const> {
 public:
   using Type = std::int16_t;
@@ -48,6 +52,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint16_t const
 template <> class TypeTrait<std::uint16_t const> {
 public:
   using Type = std::uint16_t;
@@ -57,6 +62,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::int32_t const
 template <> class TypeTrait<std::int32_t const> {
 public:
   using Type = std::int32_t;
@@ -66,6 +72,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint32_t const
 template <> class TypeTrait<std::uint32_t const> {
 public:
   using Type = std::uint32_t;
@@ -75,6 +82,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type float const
 template <> class TypeTrait<float const> {
 public:
   using Type = float;
@@ -84,6 +92,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type double const
 template <> class TypeTrait<double const> {
 public:
   using Type = double;
@@ -93,6 +102,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type char const
 template <> class TypeTrait<char const> {
 public:
   using Type = char;
@@ -102,6 +112,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::int64_t const
 template <> class TypeTrait<std::int64_t const> {
 public:
   using Type = std::int64_t;
@@ -111,6 +122,7 @@ public:
   }
 };
 
+/// \brief Required for h5cpp to save data of type std::uint64_t const
 template <> class TypeTrait<std::uint64_t const> {
 public:
   using Type = std::uint64_t;
@@ -126,9 +138,23 @@ namespace NeXusDataset {
 
 enum class Mode { Create, Open };
 
+/// \brief The base class for representing an extensible (i.e. it can grow) HDF5
+/// dataset.
+///
+/// This base class is used in order to have templated child classes that can
+/// override/inherit the member functions of this class.
 class ExtensibleDatasetBase : public hdf5::node::ChunkedDataset {
 public:
+  /// \brief Constructor.
   ExtensibleDatasetBase() = default;
+
+  /// \brief Open a dataset.
+  ///
+  /// \param Parent The group/node where the dataset to be opened is located.
+  /// \param Name Tha name of the dataset in the HDF5 structure.
+  /// \param CMode If the dataset should be created or opened. Note that it is
+  /// not possible to create a dataset with this class. \throws
+  /// std::runtime_error If creation of a dataset is attempted.
   ExtensibleDatasetBase(const hdf5::node::Group &Parent, std::string Name,
                         Mode CMode)
       : hdf5::node::ChunkedDataset() {
@@ -223,6 +249,7 @@ public:
   }
 };
 
+/// \brief
 class FixedSizeString : public hdf5::node::ChunkedDataset {
 public:
   FixedSizeString() = default;
@@ -235,8 +262,15 @@ public:
   /// \param ChunkSize The number of strings in one chunk.
   FixedSizeString(const hdf5::node::Group &Parent, std::string Name, Mode CMode,
                   size_t StringSize = 300, size_t ChunkSize = 1024);
+
+  /// \brief Get max string size.
+  ///
+  /// \return The max string size.
   constexpr size_t getMaxStringSize() const { return MaxStringSize; };
-  /// Append a new string to the dataset array
+
+  /// \brief Append a new string to the dataset array
+  ///
+  /// \param InString The string that is to be appended to the dataset.
   void appendStringElement(std::string const &InString);
 
 private:
@@ -251,10 +285,11 @@ public:
 
   /// \brief Open a dataset.
   ///
-  /// Can only be used to open a dataset.
-  /// \param Parent The group/node of the dataset in.
-  /// \note This parameter is ignored when opening an existing dataset.
-  /// \param CMode Should the dataset be opened or created.
+  /// \param Parent The group/node where the dataset to be opened is located.
+  /// \param Name Tha name of the dataset in the HDF5 structure.
+  /// \param CMode If the dataset should be created or opened. Note that it is
+  /// not possible to create a dataset with this class. \throws
+  /// std::runtime_error If creation of a dataset is attempted.
   MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
@@ -268,12 +303,23 @@ public:
     }
   }
 
+  /// \brief Get the dimensions of the dataset.
+  ///
+  /// \return The dimensions of the dataset. The returned type is
+  /// ≈std::vector<>.
   hdf5::Dimensions get_extent() {
     auto DataSpace = dataspace();
     return hdf5::dataspace::Simple(DataSpace).current_dimensions();
   }
 
-  /// Append data to dataset that is contained in some sort of container.
+  /// \brief Append data to dataset that is contained in some sort of container.
+  ///
+  /// \tparam T The data type of the data to be added.
+  /// \param NewData The new data.
+  /// \param Shape The shape of the new data.
+  /// \throws std::runtime_error A basic check of the rank (number of
+  /// dimensions) of the new data is done and an error is thrown if this is not
+  /// correct for the current dataset.
   template <typename T>
   void appendArray(T const &NewData, hdf5::Dimensions Shape) {
     auto CurrentExtent = get_extent();
@@ -305,7 +351,9 @@ public:
   }
 };
 
-/// h5cpp dataset class that implements methods for appending data.
+/// \brief h5cpp dataset class that implements methods for appending data.
+///
+/// \tparam DataType The (primitive) type that is (to be) stored in the dataset.
 template <class DataType> class MultiDimDataset : public MultiDimDatasetBase {
 public:
   MultiDimDataset() = default;

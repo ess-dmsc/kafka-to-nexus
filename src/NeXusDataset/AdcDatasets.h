@@ -13,6 +13,7 @@
 
 namespace NeXusDataset {
 
+/// \brief Represents a NeXus dataset with the name "adc_pulse_amplitude".
 class Amplitude : public ExtensibleDataset<std::uint32_t> {
 public:
   Amplitude() = default;
@@ -22,6 +23,7 @@ public:
                                          ChunkSize){};
 };
 
+/// \brief Represents a NeXus dataset with the name "adc_pulse_peak_area".
 class PeakArea : public ExtensibleDataset<std::uint32_t> {
 public:
   PeakArea() = default;
@@ -30,6 +32,7 @@ public:
                                          ChunkSize){};
 };
 
+/// \brief Represents a NeXus dataset with the name "adc_pulse_background".
 class Background : public ExtensibleDataset<std::uint32_t> {
 public:
   Background() = default;
@@ -39,6 +42,7 @@ public:
                                          ChunkSize){};
 };
 
+/// \brief Represents a NeXus dataset with the name "adc_pulse_threshold_time".
 class ThresholdTime : public ExtensibleDataset<std::uint64_t> {
 public:
   ThresholdTime() = default;
@@ -46,6 +50,7 @@ public:
                 size_t ChunkSize = 1024);
 };
 
+/// \brief Represents a NeXus dataset with the name "adc_pulse_peak_time".
 class PeakTime : public ExtensibleDataset<std::uint64_t> {
 public:
   PeakTime() = default;
