@@ -272,11 +272,13 @@ builders = pipeline_builder.createBuilders { container ->
             }
         }
 
+        int acceptableFailedCases = 81
         int numFailedCases = failingCases.size()
-        if(numFailedCases) {
+        if(numFailedCases > acceptableFailedCases) {
             doxygenStepFailed = true
             println "Doxygen failed to generate HTML documentation due to issued warnings displayed below."
-            println "The total number of Doxygen warnings that needs to be corrected is $numFailedCases and are following:"
+            println "The total number of Doxygen warnings that needs to be corrected ( $numFailedCases ) is greater"
+            println "than the acceptable number of warnings ( $acceptableFailedCases ). The warnings are the following:"
             for(line in failingCases) {
                 println line
             }
@@ -286,8 +288,7 @@ builders = pipeline_builder.createBuilders { container ->
         }
         archiveArtifacts "${test_output}"
         if(doxygenStepFailed) {
-            // Error due to missing documentation is disabled for now.
-//          error("Doxygen step failed. See log output for further information.")
+         unstable("Code is missing documentation. See log output for further information.")
         }
     }  // stage
   }  // if

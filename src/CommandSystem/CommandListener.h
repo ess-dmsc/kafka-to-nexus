@@ -18,16 +18,25 @@ namespace Command {
 
 using FileWriter::Msg;
 
-/// \brief Check for new commands on the topic.
+/// \brief Check for new commands on a command listener topic.
 class CommandListener {
 public:
+  /// \brief Constructor.
+  ///
+  /// \param CommandTopicUri The URI/URL of the Kafka broker + topic to connect
+  /// to for new commands. \param Settings Kafka (consumer) settings.
   CommandListener(uri::URI CommandTopicUri, Kafka::BrokerSettings Settings);
 
+  /// \brief Destructor.
   virtual ~CommandListener() = default;
 
   /// \brief Poll the Kafka topic for a new command.
+  ///
   /// \note Will timeout on its first call. Will continue to timeout as long as
   /// it fails to retrieve metadata from the Kafka broker
+  ///
+  /// \return Get a std::pair<> that contains the outcome of the message poll
+  /// and the message if one was successfully received.
   virtual std::pair<Kafka::PollStatus, Msg> pollForCommand();
 
 protected:

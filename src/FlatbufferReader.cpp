@@ -29,7 +29,7 @@ FlatbufferReaderRegistry::ReaderPtr &find(std::string const &Key) {
   }
 }
 
-void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&item) {
+void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item) {
   auto &m = getReaders();
   if (FlatbufferID.size() != 4) {
     throw std::runtime_error(
@@ -40,7 +40,7 @@ void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&item) {
                          FlatbufferID);
     throw std::runtime_error(s);
   }
-  m[FlatbufferID] = std::move(item);
+  m[FlatbufferID] = std::move(Item);
 }
 } // namespace FlatbufferReaderRegistry
 } // namespace FileWriter
