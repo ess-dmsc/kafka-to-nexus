@@ -118,7 +118,7 @@ The (stream/writer) module definition instructs the file-writer that there is da
         ],
         "attributes": [
           {
-            "NXclass": "NXtransformation",
+            "NXclass": "NXtransformations",
             "unit": "mm"
           }
         ]

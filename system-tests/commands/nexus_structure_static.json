@@ -91,7 +91,7 @@
                         },
                         {
                           "name": "NX_class",
-                          "values": "NXtransformation"
+                          "values": "NXtransformations"
                         }
                       ]
                     }
@@ -99,7 +99,7 @@
                   "attributes": [
                     {
                       "name": "NX_class",
-                      "values": "NXtransformation"
+                      "values": "NXtransformations"
                     }
                   ]
                 }
@@ -180,7 +180,7 @@
                         },
                         {
                           "name": "NX_class",
-                          "values": "NXtransformation"
+                          "values": "NXtransformations"
                         }
                       ]
                     }
