@@ -55,7 +55,7 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "raw_value",
+    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "value",
                                                 NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
@@ -214,7 +214,7 @@ template <typename Type>
 std::unique_ptr<hdf5::node::ChunkedDataset>
 makeIt(hdf5::node::Group const &Parent, size_t const &ChunkSize) {
   return std::make_unique<NeXusDataset::ExtensibleDataset<Type>>(
-      Parent, "raw_value", NeXusDataset::Mode::Create, ChunkSize);
+      Parent, "value", NeXusDataset::Mode::Create, ChunkSize);
 }
 
 void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) const {

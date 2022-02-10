@@ -22,7 +22,7 @@ namespace NeXusDataset {
 class UInt16Value : public ExtensibleDataset<std::uint16_t> {
 public:
   UInt16Value() = default;
-  /// \brief Create the raw_value dataset of NXLog.
+  /// \brief Create the value dataset of NXLog.
   ///
   /// \param Parent The group/node where the dataset exists or should be
   /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
