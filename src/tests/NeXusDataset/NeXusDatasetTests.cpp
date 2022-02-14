@@ -111,7 +111,7 @@ template <class Dataset> void wrongModeOpen(hdf5::node::Group &RootGroup) {
 
 TEST_F(NeXusDatasetCreation, RawValueOpen) {
   using TypeUnderTest = NeXusDataset::UInt16Value;
-  std::string DatasetName{"raw_value"};
+  std::string DatasetName{"value"};
   defaultDatasetCreation<TypeUnderTest, std::uint16_t>(RootGroup, DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);

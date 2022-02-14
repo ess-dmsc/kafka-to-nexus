@@ -75,7 +75,7 @@ TEST_F(FastSampleEnvironmentWriter, InitFile) {
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
-  EXPECT_TRUE(TestGroup.has_dataset("raw_value"));
+  EXPECT_TRUE(TestGroup.has_dataset("value"));
   EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
   EXPECT_TRUE(TestGroup.has_dataset("time"));
   EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
@@ -106,7 +106,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
+  auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
@@ -149,7 +149,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
+  auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
@@ -187,7 +187,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
+  auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
@@ -206,7 +206,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
+  auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
