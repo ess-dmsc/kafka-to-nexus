@@ -216,9 +216,8 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
     auto Dims = Data.getDimensions();
     auto DataSpace =
         hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
-    auto DataType = hdf5::datatype::create<DT>();
     auto DCPL = hdf5::property::DatasetCreationList();
-    auto Dataset = Node.create_dataset(Name, DataType,
+    auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
                                        DataSpace, DCPL);
     try {
 
