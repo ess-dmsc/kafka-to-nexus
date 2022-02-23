@@ -27,19 +27,19 @@ TEST(JsonArrayDimensions, Array2) {
 TEST(JsonArrayDimensions, Array3) {
   auto JSonObj = nlohmann::json::parse("[[1, 2, 3], [1, 2, 3]]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
-  EXPECT_EQ(FoundDimensions, Shape({3, 2}));
+  EXPECT_EQ(FoundDimensions, Shape({2, 3}));
 }
 
 TEST(JsonArrayDimensions, Array4) {
   auto JSonObj = nlohmann::json::parse("[[3], [1, 2, 3]]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
-  EXPECT_EQ(FoundDimensions, Shape({3, 2}));
+  EXPECT_EQ(FoundDimensions, Shape({2, 3}));
 }
 
 TEST(JsonArrayDimensions, Array5) {
   auto JSonObj = nlohmann::json::parse("[[], [[1,2,3], [1,2,3]]]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
-  EXPECT_EQ(FoundDimensions, Shape({3, 2, 2}));
+  EXPECT_EQ(FoundDimensions, Shape({2, 2, 3}));
 }
 
 TEST(JsonArrayToMultiVector, Array1) {
@@ -61,7 +61,7 @@ TEST(JsonArrayToMultiVector, Array2) {
 TEST(JsonArrayToMultiVector, Array3) {
   auto JsonObj = nlohmann::json::parse("[[1, 2, 4], [1, 2, 4]]");
   std::vector<int> Data{1, 2, 4, 1, 2, 4};
-  MultiVector<int> ExpectedResult({3, 2});
+  MultiVector<int> ExpectedResult({2, 3});
   std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
@@ -70,7 +70,7 @@ TEST(JsonArrayToMultiVector, Array4) {
   auto JsonObj = nlohmann::json::parse(
       "[[[1, 2, 4], [1, 2, 4]], [[3, 6, 8], [10, 20, 40]]]");
   std::vector<int> Data{1, 2, 4, 1, 2, 4, 3, 6, 8, 10, 20, 40};
-  MultiVector<int> ExpectedResult({3, 2, 2});
+  MultiVector<int> ExpectedResult({2, 2, 3});
   std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
@@ -86,7 +86,7 @@ TEST(JsonArrayToMultiVector, Array5) {
 TEST(JsonArrayToMultiVector, Array6) {
   auto JsonObj = nlohmann::json::parse("[[1, 2, 4]]");
   std::vector<int> Data{1, 2, 4};
-  MultiVector<int> ExpectedResult({3, 1});
+  MultiVector<int> ExpectedResult({1, 3});
   std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
