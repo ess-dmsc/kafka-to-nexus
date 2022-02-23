@@ -37,7 +37,9 @@ def test_static_data_reaches_file(worker_pool, kafka_address):
         assert file["entry/start_time"][()][0].decode("utf-8") == "2016-04-12T02:58:52"
         assert file["entry/end_time"][()][0].decode("utf-8") == "2016-04-12T03:29:11"
         assert np.array_equal(file["entry/test_vector1"][:], np.array([1, 2, 3]))
-        assert np.array_equal(file["entry/test_vector2"][:], np.array([[1, 2, 3], [-1, -2, -3]]))
+        assert np.array_equal(
+            file["entry/test_vector2"][:], np.array([[1, 2, 3], [-1, -2, -3]])
+        )
         assert file["entry/duration"][()] == 1817.0
         assert file["entry/features"][0] == 10138143369737381149
         assert file["entry/user_1/affiliation"][()][0].decode("utf-8") == "ISIS, STFC"
