@@ -20,16 +20,13 @@ namespace HDFOperations {
 using nlohmann::json;
 
 void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions,
-                   size_t CurrentLevel);
-
-void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions,
                    size_t CurrentLevel) {
   if (JsonObj.is_array()) {
     if (Dimensions.size() < CurrentLevel + 1u) {
-      Dimensions.push_back(0);
+      Dimensions.insert(Dimensions.begin(), 0);
     }
-    if (JsonObj.size() > Dimensions.at(CurrentLevel)) {
-      Dimensions.at(CurrentLevel) = JsonObj.size();
+    if (JsonObj.size() > Dimensions.at(0)) {
+      Dimensions.at(0) = JsonObj.size();
     }
     for (auto const &Element : JsonObj) {
       findInnerSize(Element, Dimensions, CurrentLevel + 1);

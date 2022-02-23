@@ -77,12 +77,17 @@
                           "values": "translation"
                         },
                         {
-                          "name": "vector",
+                          "name": "vector1",
                           "values": [
                             0.0,
                             0.0,
                             -1.0
                           ],
+                          "dtype": "double"
+                        },
+                        {
+                          "name": "vector2",
+                          "values": [[3, 2, -1], [-1, -2, -3]],
                           "dtype": "double"
                         },
                         {

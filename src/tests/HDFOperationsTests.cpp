@@ -11,34 +11,34 @@
 #include "helpers/HDFFileTestHelper.h"
 #include <gtest/gtest.h>
 
-TEST(JSonArrayDimensions, Array1) {
+TEST(JsonArrayDimensions, Array1) {
   auto JSonObj = nlohmann::json::parse("[1]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
   EXPECT_EQ(FoundDimensions, Shape{1});
 }
 
-TEST(JSonArrayDimensions, Array2) {
+TEST(JsonArrayDimensions, Array2) {
   auto JSonObj = nlohmann::json::parse("[1, 2, 3]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
   EXPECT_EQ(FoundDimensions, Shape{3});
 }
 
-TEST(JSonArrayDimensions, Array3) {
+TEST(JsonArrayDimensions, Array3) {
   auto JSonObj = nlohmann::json::parse("[[1, 2, 3], [1, 2, 3]]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
-  EXPECT_EQ(FoundDimensions, Shape({2, 3}));
+  EXPECT_EQ(FoundDimensions, Shape({3, 2}));
 }
 
-TEST(JSonArrayDimensions, Array4) {
+TEST(JsonArrayDimensions, Array4) {
   auto JSonObj = nlohmann::json::parse("[[3], [1, 2, 3]]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
-  EXPECT_EQ(FoundDimensions, Shape({2, 3}));
+  EXPECT_EQ(FoundDimensions, Shape({3, 2}));
 }
 
-TEST(JSonArrayDimensions, Array5) {
+TEST(JsonArrayDimensions, Array5) {
   auto JSonObj = nlohmann::json::parse("[[], [[1,2,3], [1,2,3]]]");
   auto FoundDimensions = HDFOperations::determineArrayDimensions(JSonObj);
-  EXPECT_EQ(FoundDimensions, Shape({2, 2, 3}));
+  EXPECT_EQ(FoundDimensions, Shape({3, 2, 2}));
 }
 
 TEST(JsonArrayToMultiVector, Array1) {
@@ -59,8 +59,8 @@ TEST(JsonArrayToMultiVector, Array2) {
 
 TEST(JsonArrayToMultiVector, Array3) {
   auto JsonObj = nlohmann::json::parse("[[1, 2, 4], [1, 2, 4]]");
-  std::vector<int> Data{1, 1, 2, 2, 4, 4};
-  MultiVector<int> ExpectedResult({2, 3});
+  std::vector<int> Data{1, 2, 4, 1, 2, 4};
+  MultiVector<int> ExpectedResult({3, 2});
   std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
@@ -68,8 +68,8 @@ TEST(JsonArrayToMultiVector, Array3) {
 TEST(JsonArrayToMultiVector, Array4) {
   auto JsonObj = nlohmann::json::parse(
       "[[[1, 2, 4], [1, 2, 4]], [[3, 6, 8], [10, 20, 40]]]");
-  std::vector<int> Data{1, 3, 1, 10, 2, 6, 2, 20, 4, 8, 4, 40};
-  MultiVector<int> ExpectedResult({2, 2, 3});
+  std::vector<int> Data{1, 2, 4, 1, 2, 4, 3, 6, 8, 10, 20, 40};
+  MultiVector<int> ExpectedResult({3, 2, 2});
   std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
@@ -78,6 +78,14 @@ TEST(JsonArrayToMultiVector, Array5) {
   auto JsonObj = nlohmann::json::parse("42");
   std::vector<int> Data{42};
   MultiVector<int> ExpectedResult({1});
+  std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
+  EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
+}
+
+TEST(JsonArrayToMultiVector, Array6) {
+  auto JsonObj = nlohmann::json::parse("[[1, 2, 4]]");
+  std::vector<int> Data{1, 2, 4};
+  MultiVector<int> ExpectedResult({3, 1});
   std::copy(Data.begin(), Data.end(), ExpectedResult.Data.begin());
   EXPECT_EQ(ExpectedResult, HDFOperations::jsonArrayToMultiArray<int>(JsonObj));
 }
@@ -203,9 +211,9 @@ TEST_F(HDFStaticDataTest, IntArray2) {
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
   std::vector<uint64_t> DatasetValues(6);
   HDFDataset.read(DatasetValues);
-  std::vector<uint64_t> ExpectedDataset{1, 4, 2, 5, 3, 6};
+  std::vector<uint64_t> ExpectedDataset{1, 2, 3, 4, 5, 6};
   EXPECT_EQ(DatasetValues, ExpectedDataset);
-  hdf5::Dimensions ExpectedDimensions{2, 3};
+  hdf5::Dimensions ExpectedDimensions{3, 2};
 
   auto DataSpace = HDFDataset.dataspace();
   hdf5::dataspace::Simple SomeSpace(DataSpace);
@@ -263,8 +271,8 @@ TEST_F(HDFStaticDataTest, StringArray) {
   HDFDataset.read(DatasetValues.Data);
   MultiVector<std::string> ExpectedDataset({2, 2});
   ExpectedDataset.at({0, 0}) = "a";
-  ExpectedDataset.at({0, 1}) = "b";
-  ExpectedDataset.at({1, 0}) = "c";
+  ExpectedDataset.at({1, 0}) = "b";
+  ExpectedDataset.at({0, 1}) = "c";
   ExpectedDataset.at({1, 1}) = "d";
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }

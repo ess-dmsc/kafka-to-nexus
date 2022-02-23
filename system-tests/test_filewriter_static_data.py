@@ -40,8 +40,12 @@ def test_static_data_reaches_file(worker_pool, kafka_address):
         assert file["entry/features"][0] == 10138143369737381149
         assert file["entry/user_1/affiliation"][()][0].decode("utf-8") == "ISIS, STFC"
         assert np.allclose(
-            file["entry/instrument/monitor1/transformations/location"].attrs["vector"],
+            file["entry/instrument/monitor1/transformations/location"].attrs["vector1"],
             np.array([0.0, 0.0, -1.0]),
+        )
+        assert np.allclose(
+            file["entry/instrument/monitor1/transformations/location"].attrs["vector2"],
+            np.array([[3.0, 2.0, -1.0], [-1.0, -2.0, -3.0]]),
         )
         assert (
             file["entry/instrument/monitor1/transformations/location"].attrs[
