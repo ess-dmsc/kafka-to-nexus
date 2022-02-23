@@ -226,7 +226,8 @@ TEST_F(HDFStaticDataTest, IntArray2) {
   uint64_t StoredValue{0};
   for (size_t row = 0; row < 2; row++) {
     for (size_t col = 0; col < 3; col++) {
-      HDFDataset.read(StoredValue, hdf5::dataspace::Hyperslab({row, col}, {1, 1}));
+      HDFDataset.read(StoredValue,
+                      hdf5::dataspace::Hyperslab({row, col}, {1, 1}));
       EXPECT_EQ(ExpectedDataset.at(col + row * 3), StoredValue);
     }
   }
