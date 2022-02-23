@@ -80,7 +80,7 @@ void populateMultiVector(nlohmann::json const &JsonObj,
   for (auto const &Element : JsonObj) {
     if (Element.is_array()) {
       populateMultiVector(Element, TargetVector, CurrentPosition,
-                          CurrentLevel - 1);
+                          CurrentLevel + 1);
     } else {
       TargetVector.at(CurrentPosition) = jsonElementConverter<T>(Element);
     }
@@ -92,7 +92,7 @@ template <typename T>
 MultiVector<T> jsonArrayToMultiArray(nlohmann::json const &ValueJson) {
   auto ArraySize = determineArrayDimensions(ValueJson);
   MultiVector<T> ReturnVector(ArraySize);
-  populateMultiVector(ValueJson, ReturnVector, Shape(ArraySize.size()), ArraySize.size() - 1);
+  populateMultiVector(ValueJson, ReturnVector, Shape(ArraySize.size()), 0);
   return ReturnVector;
 }
 

@@ -23,10 +23,10 @@ void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions,
                    size_t CurrentLevel) {
   if (JsonObj.is_array()) {
     if (Dimensions.size() < CurrentLevel + 1u) {
-      Dimensions.insert(Dimensions.begin(), 0);
+      Dimensions.push_back(0);
     }
-    if (JsonObj.size() > Dimensions.at(0)) {
-      Dimensions.at(0) = JsonObj.size();
+    if (JsonObj.size() > Dimensions.at(CurrentLevel)) {
+      Dimensions.at(CurrentLevel) = JsonObj.size();
     }
     for (auto const &Element : JsonObj) {
       findInnerSize(Element, Dimensions, CurrentLevel + 1);
@@ -216,8 +216,9 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
     auto Dims = Data.getDimensions();
     auto DataSpace =
         hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
+    auto DataType = hdf5::datatype::create<DT>();
     auto DCPL = hdf5::property::DatasetCreationList();
-    auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
+    auto Dataset = Node.create_dataset(Name, DataType,
                                        DataSpace, DCPL);
     try {
 
@@ -281,6 +282,8 @@ void writeGenericDataset(const std::string &DataType,
          [&]() { writeNumericDataset<int16_t>(Parent, Name, Values); }},
         {"int32",
          [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
+         {"int",
+          [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
         {"int64",
          [&]() { writeNumericDataset<int64_t>(Parent, Name, Values); }},
         {"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},

@@ -10,6 +10,7 @@
 #include "HDFOperations.h"
 #include "helpers/HDFFileTestHelper.h"
 #include <gtest/gtest.h>
+#include <iostream>
 
 TEST(JsonArrayDimensions, Array1) {
   auto JSonObj = nlohmann::json::parse("[1]");
@@ -213,7 +214,7 @@ TEST_F(HDFStaticDataTest, IntArray2) {
   HDFDataset.read(DatasetValues);
   std::vector<uint64_t> ExpectedDataset{1, 2, 3, 4, 5, 6};
   EXPECT_EQ(DatasetValues, ExpectedDataset);
-  hdf5::Dimensions ExpectedDimensions{3, 2};
+  hdf5::Dimensions ExpectedDimensions{2, 3};
 
   auto DataSpace = HDFDataset.dataspace();
   hdf5::dataspace::Simple SomeSpace(DataSpace);
@@ -221,6 +222,14 @@ TEST_F(HDFStaticDataTest, IntArray2) {
 
   EXPECT_EQ(CDims, ExpectedDimensions);
   EXPECT_EQ(HDFDataset.dataspace().size(), 6);
+
+  uint64_t StoredValue{0};
+  for (size_t row = 0; row < 2; row++) {
+    for (size_t col = 0; col < 3; col++) {
+      HDFDataset.read(StoredValue, hdf5::dataspace::Hyperslab({row, col}, {1, 1}));
+      EXPECT_EQ(ExpectedDataset.at(col + row * 3), StoredValue);
+    }
+  }
 }
 
 TEST_F(HDFStaticDataTest, SingleString) {
@@ -233,11 +242,10 @@ TEST_F(HDFStaticDataTest, SingleString) {
   auto Temp = nlohmann::json::parse(JsonString);
   HDFOperations::writeDataset(RootGroup, Temp);
   auto HDFDataset = hdf5::node::get_dataset(TestFile->hdfGroup(), "/some_name");
-  MultiVector<std::string> DatasetValues({1});
-  HDFDataset.read(DatasetValues.Data);
-  MultiVector<std::string> ExpectedDataset({1});
-  ExpectedDataset.Data[0] = "some string";
-  EXPECT_EQ(DatasetValues, ExpectedDataset);
+  std::vector<std::string> DatasetValues(1);
+  HDFDataset.read(DatasetValues[0]);
+  std::string ValueString = "some string";
+  EXPECT_EQ(DatasetValues[0], ValueString);
 }
 
 TEST_F(HDFStaticDataTest, SingleStringAlt) {

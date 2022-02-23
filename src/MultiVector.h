@@ -23,6 +23,8 @@ inline size_t extentToSize(Shape S) {
 
 inline size_t posToIndex(Shape Dimensions, Shape Pos) {
   size_t ReturnIndex = 0;
+  std::reverse(Dimensions.begin(), Dimensions.end());
+  std::reverse(Pos.begin(), Pos.end());
   for (size_t i = 0; i < Pos.size(); i++) {
     ReturnIndex += std::accumulate(Dimensions.begin(), Dimensions.begin() + i,
                                    1, std::multiplies<size_t>()) *
