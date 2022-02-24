@@ -61,11 +61,12 @@ TEST(MultiVectorTest, SetValue1) {
 TEST(MultiVectorTest, SetValue2) {
   MultiVector<int> TestVector({2, 2, 2});
   TestVector.at({0, 0, 0}) = 33;
+  TestVector.at({1, 0, 0}) = 4;
   TestVector.at({1, 1, 0}) = 3;
   TestVector.at({0, 1, 1}) = 2;
   TestVector.at({1, 0, 1}) = 1;
   TestVector.at({1, 1, 1}) = 42;
-  EXPECT_EQ(TestVector.Data, std::vector<int>({33, 0, 0, 3, 0, 1, 2, 42}));
+  EXPECT_EQ(TestVector.Data, std::vector<int>({33, 0, 0, 2, 4, 1, 3, 42}));
 }
 
 TEST(MultiVectorTest, SetValue3) {
@@ -76,4 +77,10 @@ TEST(MultiVectorTest, SetValue3) {
   Comparison.at(0) = 11;
   *std::prev(Comparison.end()) = 44;
   EXPECT_EQ(TestVector.Data, Comparison);
+}
+
+TEST(MultiVectorTest, SetValue4) {
+  MultiVector<int> TestVector({2, 2});
+  TestVector.at({1, 0}) = 33;
+  EXPECT_EQ(TestVector.Data, std::vector<int>({0, 0, 33, 0}));
 }

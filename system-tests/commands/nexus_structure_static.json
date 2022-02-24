@@ -25,6 +25,22 @@
         {
           "module": "dataset",
           "config": {
+            "dtype": "int32",
+            "name": "test_vector1",
+            "values": [1, 2, 3]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "dtype": "int32",
+            "name": "test_vector2",
+            "values": [[1, 2, 3], [-1, -2, -3]]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
             "name": "features",
             "dtype": "uint64",
             "values": [
@@ -83,6 +99,11 @@
                             0.0,
                             -1.0
                           ],
+                          "dtype": "double"
+                        },
+                        {
+                          "name": "vector2",
+                          "values": [[3, 2, -1], [-1, -2, -3]],
                           "dtype": "double"
                         },
                         {
