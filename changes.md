@@ -7,6 +7,7 @@
 - Changed _fetch.message.max.bytes_ Kafka variable back to its default value as it was causing timeouts. 
 - Fix of bug in setting up the console logger interface.
 - Warning (log) messages will now be produced if the first message from a source has a data type different than that configured for the current writer module instance. This has been implemented for the `f142`, `senv` and `ADAr` modules.
+- The Grafana metrics prefix now has the form "kafka-to-nexus.*hostname*.*service_name*" if the service name is set. If not, it has the form "kafka-to-nexus.*hostname*.*service_id*".
 
 ## Version 4.1.0: Quality of life
 
