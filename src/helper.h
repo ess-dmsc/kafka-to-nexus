@@ -13,8 +13,20 @@
 #include <string>
 #include <vector>
 
+// \brief Get the current process ID.
+// \return Process ID.
 int getPID();
 
+// \brief Get the hostname.
+// \return The hostname.
 std::string getHostName();
 
+// \brief Get a hex string.
+// \return A string with characters in the range 0-f. No prefix or suffix.
 std::string randomHexString(size_t Length);
+
+// \brief Get the fully qualified domain name.
+//
+// \return The fully qualified domain name if possible or the hostname if this
+// was not possible.
+std::string getFQDN();

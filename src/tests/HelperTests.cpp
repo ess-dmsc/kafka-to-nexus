@@ -10,6 +10,7 @@
 #include "helper.h"
 #include <algorithm>
 #include <gtest/gtest.h>
+#include <iostream>
 
 TEST(HelperTests, RandomHexStringGeneration) {
   size_t StringLength{200};
@@ -33,3 +34,9 @@ TEST(HelperTests, RandomHexStringNotEqual) {
 TEST(HelperTests, PidIsNotZero) { EXPECT_NE(getPID(), 0); }
 
 TEST(HelperTests, HostNameIsNotEmpty) { EXPECT_FALSE(getHostName().empty()); }
+
+TEST(HelperTests, FQDNNotEmpty) {
+  auto const fqdn = getFQDN();
+  std::cout << "[          ] Got the hostname \"" << fqdn << "\".\n";
+  EXPECT_FALSE(fqdn.empty());
+}

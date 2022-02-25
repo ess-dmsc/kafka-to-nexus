@@ -160,10 +160,13 @@ int main(int argc, char **argv) {
   }
 
   Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
-  auto UsedServiceName = Options->ServiceName;
-  auto UsedRegistrar = MainRegistrar;
-  if (not Options->ServiceName.empty()) {
-    UsedRegistrar = MainRegistrar.getNewRegistrar(Options->getServiceId());
+  auto FQDN = getFQDN();
+  std::replace(FQDN.begin(), FQDN.end(), '.', '_');
+  auto UsedRegistrar = MainRegistrar.getNewRegistrar(FQDN);
+  if (Options->ServiceName.empty()) {
+    UsedRegistrar = UsedRegistrar.getNewRegistrar(Options->getServiceId());
+  } else {
+    UsedRegistrar = UsedRegistrar.getNewRegistrar(Options->ServiceName);
   }
 
   std::signal(SIGINT, signal_handler);

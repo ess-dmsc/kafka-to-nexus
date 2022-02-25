@@ -26,7 +26,7 @@ Part of the ESS data streaming pipeline.
   --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which gets prepended to the HDF output filenames in the file write commands
   --log-file TEXT             Specify file to log to
   --service-name TEXT
-                              Used to generate the service identifier and as an extra metrics ID string.Will make the metrics names take the form: "kafka-to-nexus.[service-name].*"
+                              Used to generate the service identifier and as an extra metrics ID string.Will make the metrics names take the form: "kafka-to-nexus.[host-name].[service-name].*"
   --list_modules              List registered read and writer parts of file-writing modules and then exit.
   --status-master-interval    Interval in milliseconds for status updates
   --streamer-ms-before-start  Streamer option - milliseconds before start time

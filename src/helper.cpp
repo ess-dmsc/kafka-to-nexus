@@ -8,10 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "helper.h"
-#include <unistd.h>
-
+#include "logger.h"
 #include <algorithm>
+#include <netdb.h>
 #include <random>
+#include <unistd.h>
 
 std::string randomHexString(size_t Length) {
   std::string const hexChars = "0123456789abcdef";
@@ -38,4 +39,40 @@ std::string getHostName() {
     return "";
   }
   return Buffer.data();
+}
+
+std::string getFQDN() {
+  auto const HostName = getHostName();
+
+  addrinfo hints, *info, *p;
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_CANONNAME;
+
+  int GetAddressResult{0};
+  if ((GetAddressResult = getaddrinfo(HostName.c_str(), NULL, &hints, &info)) !=
+      0) {
+    LOG_WARN(
+        "Unable to get FQDN due to error (\"{}\"), using hostname instead.",
+        gai_strerror(GetAddressResult));
+    return HostName;
+  }
+
+  std::vector<std::string> FoundHostnames;
+  for (p = info; p != NULL; p = p->ai_next) {
+    if (p->ai_canonname != nullptr) {
+      FoundHostnames.push_back(std::string(p->ai_canonname));
+    }
+  }
+  freeaddrinfo(info);
+
+  auto Longest = std::max_element(
+      FoundHostnames.cbegin(), FoundHostnames.cend(),
+      [](auto const &lhs, auto const &rhs) { return lhs.size() < rhs.size(); });
+  if (Longest == FoundHostnames.end()) {
+    LOG_WARN("No FQDN found, using hostname instead.");
+    return HostName;
+  }
+  return *Longest;
 }

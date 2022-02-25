@@ -169,7 +169,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
          "Used to generate the service identifier and as an extra metrics ID "
          "string."
          "Will make the metrics names take the form: "
-         "\"kafka-to-nexus.[service-name].*\"")
+         "\"kafka-to-nexus.[host-name].[service-name].*\"")
       ->default_str(MainOpt::getDefaultServiceId());
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
