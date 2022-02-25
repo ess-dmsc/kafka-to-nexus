@@ -20,9 +20,6 @@ namespace HDFOperations {
 using nlohmann::json;
 
 void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions,
-                   size_t CurrentLevel);
-
-void findInnerSize(nlohmann::json const &JsonObj, Shape &Dimensions,
                    size_t CurrentLevel) {
   if (JsonObj.is_array()) {
     if (Dimensions.size() < CurrentLevel + 1u) {
@@ -284,6 +281,7 @@ void writeGenericDataset(const std::string &DataType,
          [&]() { writeNumericDataset<int16_t>(Parent, Name, Values); }},
         {"int32",
          [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
+        {"int", [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
         {"int64",
          [&]() { writeNumericDataset<int64_t>(Parent, Name, Values); }},
         {"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},
