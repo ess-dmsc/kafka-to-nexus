@@ -21,25 +21,28 @@ namespace WriterModule {
 namespace Registry {
 using ModuleFactory = std::function<std::unique_ptr<WriterModule::Base>()>;
 using WriterModuleHash = size_t;
-using ModuleFlatbufferID = std::string;
+struct ModuleFlatbufferID {
+  std::string Id;
+  std::string Name;
+};
 using FactoryAndID = std::pair<ModuleFactory, ModuleFlatbufferID>;
 
-WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID,
-                                     std::string const &ModuleName);
+WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID);
 
 /// \brief Get all registered modules.
 ///
 /// \return A reference to the map of registered modules.
-std::vector<std::pair<ModuleFlatbufferID, std::string>> getFactoryIdsAndNames();
+std::vector<ModuleFlatbufferID> getFactoryIdsAndNames();
 
 /// \brief Registers a new writer module. Called by `Registrar`.
 ///
 /// \param key
 /// \param value
-void addWriterModule(ModuleFlatbufferID const &ID,
-                     std::string const &ModuleName, ModuleFactory Value);
+void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value);
 
-/// \brief Get module factory for a module name.
+/// \brief Get module factory for a module name or flatbuffer id.
+///
+/// Will attempt to find by module name first and flatbuffer id second.
 /// \param ModuleName Module name of module instantiated by
 /// factory function.
 /// \return A module factory and flatbuffer id that this module will accept.
@@ -59,10 +62,9 @@ public:
   /// identifier `FlatbufferID`.
   ///
   /// \param FlatbufferID The unique identifier for this writer module.
-  explicit Registrar(ModuleFlatbufferID const &ID,
-                     std::string const &ModuleName) {
+  explicit Registrar(std::string const &ID, std::string const &Name) {
     auto FactoryFunction = []() { return std::make_unique<Module>(); };
-    addWriterModule(ID, ModuleName, FactoryFunction);
+    addWriterModule({ID, Name}, FactoryFunction);
   };
 };
 } // namespace Registry

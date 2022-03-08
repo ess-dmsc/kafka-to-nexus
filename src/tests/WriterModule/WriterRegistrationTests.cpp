@@ -74,7 +74,7 @@ TEST_F(WriterRegistrationTest, HashKeyFound) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
   auto UsedHash =
-      WriterModule::Registry::getWriterModuleHash(UsedKey, UsedName);
+      WriterModule::Registry::getWriterModuleHash({UsedKey, UsedName});
   {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
@@ -87,7 +87,7 @@ TEST_F(WriterRegistrationTest, HashKeyNotFoundThrows) {
   std::string WrongKey("1234");
   std::string UsedName("some_module_name");
   auto UsedHash =
-      WriterModule::Registry::getWriterModuleHash(WrongKey, UsedName);
+      WriterModule::Registry::getWriterModuleHash({WrongKey, UsedName});
   {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
@@ -105,7 +105,7 @@ TEST_F(WriterRegistrationTest, FactoryIdsAndNamesRegisterCorrectly) {
   auto RegisterdModules = WriterModule::Registry::getFactoryIdsAndNames();
   EXPECT_EQ(RegisterdModules.size(), NamesAndIds.size());
   for (auto &CItm : RegisterdModules) {
-    EXPECT_EQ(CItm.second, NamesAndIds[CItm.first]);
+    EXPECT_EQ(CItm.Name, NamesAndIds[CItm.Id]);
   }
 }
 
@@ -115,9 +115,9 @@ TEST_F(WriterRegistrationTest, GeneratedHash) {
   auto Key2 = "tst2";
   auto Name1 = "Some name 1";
   auto Name2 = "Some name 2";
-  EXPECT_NE(getWriterModuleHash(Key1, Name1), getWriterModuleHash(Key1, Name2));
-  EXPECT_NE(getWriterModuleHash(Key1, Name1), getWriterModuleHash(Key2, Name1));
-  EXPECT_EQ(getWriterModuleHash(Key1, Name1), getWriterModuleHash(Key1, Name1));
+  EXPECT_NE(getWriterModuleHash({Key1, Name1}), getWriterModuleHash({Key1, Name2}));
+  EXPECT_NE(getWriterModuleHash({Key1, Name1}), getWriterModuleHash({Key2, Name1}));
+  EXPECT_EQ(getWriterModuleHash({Key1, Name1}), getWriterModuleHash({Key1, Name1}));
 }
 
 TEST_F(WriterRegistrationTest, FindModuleUsingName) {

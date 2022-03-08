@@ -8,9 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Metrics/Registrar.h"
+#include "WriterRegistrar.h"
 #include "Stream/MessageWriter.h"
 #include "WriterModuleBase.h"
 #include "helpers/SetExtractorModule.h"
+#include "WriterModule/ep00/ep00_Writer.h"
 #include <array>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
@@ -18,7 +20,7 @@
 class WriterModuleStandIn : public WriterModule::Base {
 public:
   MAKE_MOCK0(config_post_processing, void(), override);
-  WriterModuleStandIn() : WriterModule::Base(true, "test") {}
+  WriterModuleStandIn(std::vector<std::string> const &ExtraModules = {}) : WriterModule::Base(true, "test", ExtraModules) {}
   ~WriterModuleStandIn() = default;
   MAKE_CONST_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &),
                    override);
@@ -28,11 +30,46 @@ public:
 
 class DataMessageWriterTest : public ::testing::Test {
 public:
+  void SetUp() override {
+    WriterModule::Registry::clear();
+    WriterModule::Registry::Registrar<WriterModule::ep00::ep00_Writer>
+    RegisterIt1("ep00", "epics_con_status");
+  }
   WriterModuleStandIn WriterModule;
   Metrics::Registrar MetReg{"some_prefix", {}};
 };
 
 using trompeloeil::_;
+
+TEST_F(DataMessageWriterTest, NoExtraModules) {
+    EXPECT_EQ(WriterModule.getEnabledExtraModules().size(), 0u);
+}
+
+TEST_F(DataMessageWriterTest, InvalidExtraModule) {
+  WriterModuleStandIn TestWriterModule({"no_such_module"});
+  EXPECT_FALSE(TestWriterModule.hasExtraModules());
+  EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 0u);
+}
+
+TEST_F(DataMessageWriterTest, ValidExtraModule) {
+  WriterModuleStandIn TestWriterModule({"ep00"});
+  EXPECT_TRUE(TestWriterModule.hasExtraModules());
+  EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 1u);
+}
+
+TEST_F(DataMessageWriterTest, ValidExtraModuleByName) {
+  WriterModuleStandIn TestWriterModule({"epics_con_status"});
+  EXPECT_TRUE(TestWriterModule.hasExtraModules());
+  EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 1u);
+}
+
+TEST_F(DataMessageWriterTest, DisabledExtraModule) {
+  WriterModuleStandIn TestWriterModule({"epics_con_status"});
+  REQUIRE_CALL(TestWriterModule, config_post_processing()).TIMES(1);
+  TestWriterModule.parse_config("{\"enable_epics_con_status\": false}");
+  EXPECT_TRUE(TestWriterModule.hasExtraModules());
+  EXPECT_TRUE(TestWriterModule.getEnabledExtraModules().empty());
+}
 
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1);

@@ -39,7 +39,7 @@ public:
       std::string const &LocationPath, std::string const &Name,
       std::function<void(hdf5::node::Node, std::string, DataType)> HDF5Writer)
       : ValueBaseInternal(LocationPath, Name), WriteToFile(HDF5Writer) {}
-  void setValue(DataType NewValue) {
+  void setValue(DataType const &NewValue) {
     std::lock_guard Lock(ValueMutex);
     MetaDataValue = NewValue;
   }

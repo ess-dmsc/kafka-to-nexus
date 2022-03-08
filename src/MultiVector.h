@@ -57,7 +57,7 @@ public:
   }
   Shape getDimensions() const { return Dimensions; }
   T *data() { return Data.data(); }
-  size_t size() { return Data.size(); }
+  size_t size() const { return Data.size(); }
   std::vector<T> Data;
   Shape Dimensions;
 };

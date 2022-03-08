@@ -211,10 +211,5 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       App, "-X,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,
       "LibRDKafka options");
-  App.add_option("--abort-on-uninitialised-stream",
-                 MainOptions.AbortOnUninitialisedStream,
-                 "Writer aborts the whole job if one or more streams are "
-                 "misconfigured and fail to start",
-                 true);
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }

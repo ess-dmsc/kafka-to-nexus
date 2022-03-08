@@ -20,8 +20,21 @@ struct ModuleSettings {
   std::string Topic;
   std::string Module;
   std::string Source;
-  std::string ConfigStreamJson;
-  std::string Attributes;
+  std::string ConfigStreamJson{"{}"};
+  std::string Attributes{"{}"};
   std::unique_ptr<WriterModule::Base> WriterModule;
   bool isLink;
+
+  /// \brief Get a copy of the instance of this object but without some fields.
+  ///
+  /// For use when instantiating an "extra" writer module. Thus has some fields not being copied over.
+  ModuleSettings getCopyForExtraModule() const {
+    ModuleSettings ReturnCopy;
+    ReturnCopy.ModuleHDFInfoObj = ModuleHDFInfoObj;
+    ReturnCopy.Name = Name;
+    ReturnCopy.Topic = Topic;
+    ReturnCopy.Source = Source;
+    ReturnCopy.isLink = false;
+    return ReturnCopy;
+  }
 };

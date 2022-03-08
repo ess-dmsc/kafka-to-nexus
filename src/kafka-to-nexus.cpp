@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     }
     fmt::print("\n-- Known writer modules\n");
     for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
-      fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
+      fmt::print("---- {} : {}\n", WriterPair.Id, WriterPair.Name);
     }
     return EXIT_SUCCESS;
   }
