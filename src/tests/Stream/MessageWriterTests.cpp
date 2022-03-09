@@ -72,6 +72,14 @@ TEST_F(DataMessageWriterTest, DisabledExtraModule) {
   EXPECT_TRUE(TestWriterModule.getEnabledExtraModules().empty());
 }
 
+TEST_F(DataMessageWriterTest, EnableExtraModule) {
+  WriterModuleStandIn TestWriterModule({"epics_con_status"});
+  REQUIRE_CALL(TestWriterModule, config_post_processing()).TIMES(1);
+  TestWriterModule.parse_config("{\"enable_epics_con_status\": true}");
+  EXPECT_TRUE(TestWriterModule.hasExtraModules());
+  EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 1u);
+}
+
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1);
   FileWriter::FlatbufferMessage Msg;

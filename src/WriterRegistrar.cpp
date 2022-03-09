@@ -9,8 +9,7 @@
 
 #include "WriterRegistrar.h"
 
-namespace WriterModule {
-namespace Registry {
+namespace WriterModule::Registry {
 
 struct FactoryInfo {
   ModuleFactory FactoryPtr;
@@ -91,5 +90,4 @@ void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value) {
   }
   Factories[ModuleHash] = {std::move(Value), ID.Id, ID.Name};
 }
-} // namespace Registry
-} // namespace WriterModule
+} // namespace WriterModule::Registry
