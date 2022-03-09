@@ -48,9 +48,9 @@ void FlatbufferMessage::extractPacketInfo() {
   try {
     auto &Reader = FlatbufferReaderRegistry::find(FlatbufferID);
     if (not Reader->verify(*this)) {
-      throw NotValidFlatbuffer(
-          fmt::format(R"(Buffer which has flatbuffer ID "{}" is not a valid flatbuffer of this type.)",
-                      FlatbufferID));
+      throw NotValidFlatbuffer(fmt::format(
+          R"(Buffer which has flatbuffer ID "{}" is not a valid flatbuffer of this type.)",
+          FlatbufferID));
     }
     Sourcename = Reader->source_name(*this);
     Timestamp = Reader->timestamp(*this);

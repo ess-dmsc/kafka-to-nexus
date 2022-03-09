@@ -76,11 +76,12 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    LOG_WARN(R"(Meta data call for retrieving partition IDs for topic "{}" from the broker failed. The failure message was: "{}". Re-trying with a timeout of {} ms.)",
-             Topic, E.what(),
-             std::chrono::duration_cast<std::chrono::milliseconds>(
-                 CurrentMetadataTimeOut)
-                 .count());
+    LOG_WARN(
+        R"(Meta data call for retrieving partition IDs for topic "{}" from the broker failed. The failure message was: "{}". Re-trying with a timeout of {} ms.)",
+        Topic, E.what(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            CurrentMetadataTimeOut)
+            .count());
     Executor.sendLowPriorityWork(
         [=]() { getPartitionsForTopic(Settings, Topic); });
   }
@@ -134,11 +135,12 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    LOG_WARN(R"(Meta data call for retrieving offsets for topic "{}" from the broker failed. The failure message was: "{}". Re-trying with a timeout of {} ms.)",
-             Topic, E.what(),
-             std::chrono::duration_cast<std::chrono::milliseconds>(
-                 CurrentMetadataTimeOut)
-                 .count());
+    LOG_WARN(
+        R"(Meta data call for retrieving offsets for topic "{}" from the broker failed. The failure message was: "{}". Re-trying with a timeout of {} ms.)",
+        Topic, E.what(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            CurrentMetadataTimeOut)
+            .count());
     Executor.sendLowPriorityWork(
         [=]() { getOffsetsForPartitions(Settings, Topic, Partitions); });
   }

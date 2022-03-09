@@ -44,8 +44,9 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR(R"(Unable to initialise fast sample environment data tree in HDF file with error message: "{}")",
-              E.what());
+    LOG_ERROR(
+        R"(Unable to initialise fast sample environment data tree in HDF file with error message: "{}")",
+        E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;

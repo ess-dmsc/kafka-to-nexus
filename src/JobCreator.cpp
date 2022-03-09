@@ -124,7 +124,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     std::vector<ModuleSettings> TemporaryStreamSettings;
     try {
       Item.WriterModule = generateWriterInstance(Item);
-      for (auto const &ExtraModule : Item.WriterModule->getEnabledExtraModules()) {
+      for (auto const &ExtraModule :
+           Item.WriterModule->getEnabledExtraModules()) {
         auto ItemCopy = Item.getCopyForExtraModule();
         ItemCopy.Module = ExtraModule;
         TemporaryStreamSettings.push_back(std::move(ItemCopy));
@@ -132,10 +133,10 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       setWriterHDFAttributes(StreamGroup, Item);
       Item.WriterModule->init_hdf(StreamGroup);
     } catch (std::runtime_error const &E) {
-      auto ErrorMsg =
-          fmt::format(R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",
-                      Item.ModuleHDFInfoObj.HDFParentName,
-                      Item.ModuleHDFInfoObj.ConfigStream, E.what());
+      auto ErrorMsg = fmt::format(
+          R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",
+          Item.ModuleHDFInfoObj.HDFParentName,
+          Item.ModuleHDFInfoObj.ConfigStream, E.what());
       std::throw_with_nested(std::runtime_error(ErrorMsg));
     }
     try {
@@ -206,9 +207,9 @@ generateWriterInstance(ModuleSettings const &StreamInfo) {
   try {
     ModuleFactory = WriterModule::Registry::find(StreamInfo.Module);
   } catch (std::exception const &E) {
-    throw std::runtime_error(
-        fmt::format(R"(Error while getting module with name/id "{}" for source "{}". Message was: {})",
-                    StreamInfo.Module, StreamInfo.Source, E.what()));
+    throw std::runtime_error(fmt::format(
+        R"(Error while getting module with name/id "{}" for source "{}". Message was: {})",
+        StreamInfo.Module, StreamInfo.Source, E.what()));
   }
 
   auto HDFWriterModule = ModuleFactory.first();
@@ -221,9 +222,9 @@ generateWriterInstance(ModuleSettings const &StreamInfo) {
   try {
     HDFWriterModule->parse_config(StreamInfo.ConfigStreamJson);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format(R"(Exception encountered in WriterModule::Base::parse_config()  Module: "{}" Source: "{}"  Error message: {})",
-                    StreamInfo.Module, StreamInfo.Source, E.what())));
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        R"(Exception encountered in WriterModule::Base::parse_config()  Module: "{}" Source: "{}"  Error message: {})",
+        StreamInfo.Module, StreamInfo.Source, E.what())));
   }
   return HDFWriterModule;
 }

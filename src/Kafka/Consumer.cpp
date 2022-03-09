@@ -46,9 +46,9 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     LOG_ERROR("Could not assign to {}. Could not get current assignments.",
               Topic);
-    throw std::runtime_error(
-        fmt::format(R"(Could not assign topic-partition of topic {}. Could not get current assignments. RdKafka error: "{}")",
-                    Topic, err2str(ErrorCode)));
+    throw std::runtime_error(fmt::format(
+        R"(Could not assign topic-partition of topic {}. Could not get current assignments. RdKafka error: "{}")",
+        Topic, err2str(ErrorCode)));
   }
   Assignments.emplace_back(
       RdKafka::TopicPartition::create(Topic, PartitionId, Offset));
@@ -79,9 +79,9 @@ void Consumer::addTopic(std::string const &Topic) {
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     LOG_ERROR(R"(Unable to add topic "{}" to list of subscribed topics.)",
               Topic);
-    throw std::runtime_error(
-        fmt::format(R"(Unable to add topic "{}" to list of subscribed topics. RdKafka error: "{}")",
-                    Topic, err2str(ErrorCode)));
+    throw std::runtime_error(fmt::format(
+        R"(Unable to add topic "{}" to list of subscribed topics. RdKafka error: "{}")",
+        Topic, err2str(ErrorCode)));
   }
 }
 

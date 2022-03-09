@@ -66,8 +66,9 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
     std::throw_with_nested(std::runtime_error(ErrorString));
   } else if (FilePath.has_parent_path() and
              not std::filesystem::exists(FilePath.parent_path())) {
-    ErrorString = fmt::format(R"(Failed to initialize HDF file "{}". Error was: The parent directory does not exist.)",
-                              Filename);
+    ErrorString = fmt::format(
+        R"(Failed to initialize HDF file "{}". Error was: The parent directory does not exist.)",
+        Filename);
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 

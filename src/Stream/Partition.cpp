@@ -114,8 +114,9 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
                 PartitionID, Topic);
       break;
     case PartitionFilter::StopReason::END_OF_PARTITION:
-      LOG_INFO(R"(Done consuming data from partition {} of topic "{}" (reached the end of the partition).)",
-               PartitionID, Topic);
+      LOG_INFO(
+          R"(Done consuming data from partition {} of topic "{}" (reached the end of the partition).)",
+          PartitionID, Topic);
       break;
     case PartitionFilter::StopReason::NO_REASON:
     default:
@@ -154,14 +155,16 @@ void Partition::pollForMessage() {
   if (Msg.first == Kafka::PollStatus::Message) {
     processMessage(Msg.second);
     if (MsgFilters.empty()) {
-      LOG_INFO(R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
-               PartitionID, Topic);
+      LOG_INFO(
+          R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
+          PartitionID, Topic);
       HasFinished = true;
       return;
     } else if (Msg.second.getMetaData().timestamp() >
                StopTime + StopTimeLeeway) {
-      LOG_INFO(R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
-               PartitionID, Topic, Msg.second.getMetaData().timestamp());
+      LOG_INFO(
+          R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
+          PartitionID, Topic, Msg.second.getMetaData().timestamp());
       HasFinished = true;
       return;
     }

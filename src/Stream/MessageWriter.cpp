@@ -67,7 +67,9 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
     if (Msg.isValid()) {
       UsedHash = generateSrcHash(Msg.getSourceName(), Msg.getFlatbufferID());
       if (ModuleErrorCounters.find(UsedHash) == ModuleErrorCounters.end()) {
-        auto Description = fmt::format(R"(Error writing fb.-msg with source name "{}" and flatbuffer id: {})", Msg.getSourceName(), Msg.getFlatbufferID());
+        auto Description = fmt::format(
+            R"(Error writing fb.-msg with source name "{}" and flatbuffer id: {})",
+            Msg.getSourceName(), Msg.getFlatbufferID());
         auto Name =
             "error_" + Msg.getSourceName() + "_" + Msg.getFlatbufferID();
         ModuleErrorCounters[UsedHash] = std::make_unique<Metrics::Metric>(

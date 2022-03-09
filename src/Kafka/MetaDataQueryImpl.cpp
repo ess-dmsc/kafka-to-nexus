@@ -22,7 +22,8 @@ findKafkaTopic(const std::string &Topic,
                      return TopicMetadata->topic() == Topic;
                    });
   if (Iterator == Topics->end()) {
-    throw MetadataException(fmt::format(R"(Topic "{}" not listed by broker.)", Topic));
+    throw MetadataException(
+        fmt::format(R"(Topic "{}" not listed by broker.)", Topic));
   }
   return *Iterator;
 }

@@ -151,8 +151,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            return extractStartMessage(CommandMsg, StartJob, ExceptionMessage);
          },
-         {LogLevel::Warning, 0, false,
-          [&]() {
+         {LogLevel::Warning, 0, false, [&]() {
             return fmt::format(
                 "Failed to extract start command from flatbuffer. The "
                 "error was: {}",
@@ -163,8 +162,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            return not(IsJobPoolCommand xor (StartJob.ServiceID != ServiceId));
          },
-         {LogLevel::Debug, 0, false,
-          [&]() {
+         {LogLevel::Debug, 0, false, [&]() {
             return fmt::format(
                 R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
                 ServiceId, StartJob.ServiceID);
@@ -172,8 +170,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 
     CommandSteps.push_back(
         {[&]() { return isValidUUID(StartJob.JobID); },
-         {LogLevel::Warning, 400, true,
-          [&]() {
+         {LogLevel::Warning, 400, true, [&]() {
             return fmt::format(
                 R"(Rejected start command as the job id was invalid (it was: "{}").)",
                 StartJob.JobID);
@@ -200,8 +197,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
            }
            return true;
          },
-         {LogLevel::Error, 400, true,
-          [&]() {
+         {LogLevel::Error, 400, true, [&]() {
             return fmt::format(
                 R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
                 StartJob.ControlTopic);
@@ -224,8 +220,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
            }
            return true;
          },
-         {LogLevel::Error, 500, true,
-          [&]() {
+         {LogLevel::Error, 500, true, [&]() {
             return fmt::format(
                 "Failed to start filewriting job. The failure message was: {}",
                 ExceptionMessage);
@@ -233,8 +228,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 
     ActionResult SendResult{ActionResult::Success};
     CmdResponse OutcomeValue{
-      LogLevel::Info, 201, true,
-        [&]() {
+        LogLevel::Info, 201, true, [&]() {
           return fmt::format(
               "Started write job with start time {} and stop time {}.",
               toUTCDateTime(StartJob.StartTime),
@@ -286,8 +280,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
         {[&]() {
            return extractStopMessage(CommandMsg, StopCmd, ResponseMessage);
          },
-         {LogLevel::Warning, 0, false,
-          [&]() {
+         {LogLevel::Warning, 0, false, [&]() {
             return fmt::format(
                 "Failed to extract stop command from flatbuffer. The "
                 "error was: {}",
@@ -296,8 +289,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
 
     CommandSteps.push_back(
         {[&]() { return ServiceId == StopCmd.ServiceID; },
-         {LogLevel::Debug, 0, false,
-          [&]() {
+         {LogLevel::Debug, 0, false, [&]() {
             return fmt::format(
                 "Rejected stop command as the service id was wrong. It "
                 "should be {}, it was {}.",
@@ -305,8 +297,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           }}});
 
     CommandSteps.push_back({[&]() { return IsWritingNow(); },
-                            {LogLevel::Error, 400, true,
-                             [&]() {
+                            {LogLevel::Error, 400, true, [&]() {
                                return fmt::format(
                                    "Rejected stop command as there is "
                                    "currently no write job in progress.");
@@ -314,8 +305,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
 
     CommandSteps.push_back(
         {[&]() { return JobId == StopCmd.JobID; },
-         {LogLevel::Warning, 400, true,
-          [&]() {
+         {LogLevel::Warning, 400, true, [&]() {
             return fmt::format(
                 "Rejected stop command as the job id was invalid (It "
                 "should be {}, it was: {}).",
@@ -324,8 +314,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
 
     CommandSteps.push_back(
         {[&]() { return isValidUUID(StopCmd.CommandID); },
-         {LogLevel::Error, 400, true,
-          [&]() {
+         {LogLevel::Error, 400, true, [&]() {
             return fmt::format(
                 "Rejected stop command as the command id was invalid "
                 "(it was: {}).",
@@ -350,8 +339,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
            }
            return true;
          },
-         {LogLevel::Error, 500, true,
-          [&]() {
+         {LogLevel::Error, 500, true, [&]() {
             return fmt::format(
                 "Failed to execute stop command. The failure message was: {}",
                 ResponseMessage);

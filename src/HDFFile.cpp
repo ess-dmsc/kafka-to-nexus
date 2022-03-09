@@ -146,8 +146,8 @@ void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
   } catch (std::exception const &E) {
-    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})", H5FileName,
-              E.what());
+    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
+              H5FileName, E.what());
   }
 }
 
@@ -158,8 +158,8 @@ void HDFFile::addMetaData() {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
     }
   } catch (std::exception const &E) {
-    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})", H5FileName,
-              E.what());
+    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
+              H5FileName, E.what());
   }
 }
 

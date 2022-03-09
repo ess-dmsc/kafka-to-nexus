@@ -405,8 +405,9 @@ void createHDFStructures(
     }
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
-    LOG_ERROR(R"(Failed to create structure with path "{}" ({} levels deep). Message was: {})",
-              std::string(Parent.link().path()), Level, e.what());
+    LOG_ERROR(
+        R"(Failed to create structure with path "{}" ({} levels deep). Message was: {})",
+        std::string(Parent.link().path()), Level, e.what());
   }
 }
 
