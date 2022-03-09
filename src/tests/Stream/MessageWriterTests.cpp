@@ -43,13 +43,13 @@ public:
 using trompeloeil::_;
 
 TEST_F(DataMessageWriterTest, NoExtraModules) {
-  EXPECT_EQ(WriterModule.getEnabledExtraModules().size(), 0u);
+  EXPECT_TRUE(WriterModule.getEnabledExtraModules().empty());
 }
 
 TEST_F(DataMessageWriterTest, InvalidExtraModule) {
   WriterModuleStandIn TestWriterModule({"no_such_module"});
   EXPECT_FALSE(TestWriterModule.hasExtraModules());
-  EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 0u);
+  EXPECT_TRUE(TestWriterModule.getEnabledExtraModules().empty());
 }
 
 TEST_F(DataMessageWriterTest, ValidExtraModule) {
