@@ -6,7 +6,7 @@
 namespace Metrics {
 
 void Registrar::registerMetric(Metric &NewMetric,
-                               std::vector<LogTo> const &SinkTypes) {
+                               std::vector<LogTo> const &SinkTypes) const {
   if (NewMetric.getName().empty()) {
     throw std::runtime_error("Metrics cannot be registered with an empty name");
   }

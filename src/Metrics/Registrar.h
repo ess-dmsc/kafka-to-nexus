@@ -23,7 +23,7 @@ public:
     }
   };
 
-  void registerMetric(Metric &NewMetric, std::vector<LogTo> const &SinkTypes);
+  void registerMetric(Metric &NewMetric, std::vector<LogTo> const &SinkTypes) const;
 
   Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
 
