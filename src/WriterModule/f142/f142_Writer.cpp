@@ -16,8 +16,7 @@
 #include <cctype>
 #include <f142_logdata_generated.h>
 
-namespace WriterModule {
-namespace f142 {
+namespace WriterModule::f142 {
 
 using nlohmann::json;
 
@@ -454,5 +453,4 @@ void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
 static WriterModule::Registry::Registrar<f142_Writer> RegisterWriter("f142",
                                                                      "f142");
 
-} // namespace f142
-} // namespace WriterModule
+} // namespace WriterModule::f142

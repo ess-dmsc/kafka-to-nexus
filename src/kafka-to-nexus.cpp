@@ -87,13 +87,13 @@ bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
     auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut);
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
-          "Unable to find job pool topic with name \"{}\".", PoolTopic);
+          R"(Unable to find job pool topic with name "{}".)", PoolTopic);
       LOG_ERROR(MsgString);
       throw std::runtime_error(MsgString);
     }
     if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
-          "Unable to find command topic with name \"{}\".", CommandTopic);
+          R"(Unable to find command topic with name "{}".)", CommandTopic);
       LOG_ERROR(MsgString);
       throw std::runtime_error(MsgString);
     }

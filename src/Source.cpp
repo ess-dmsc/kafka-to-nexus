@@ -16,7 +16,7 @@ Source::Source(std::string Name, std::string FlatbufferID, std::string ModuleID,
     : SourceName(std::move(Name)), SchemaID(std::move(FlatbufferID)),
       WriterModuleID(std::move(ModuleID)), TopicName(std::move(Topic)),
       SrcHash(calcSourceHash(SchemaID, SourceName)),
-      ModuleHash(calcSourceHash(ModuleID, SourceName)),
+      ModuleHash(calcSourceHash(WriterModuleID, SourceName)),
       WriterModule(std::move(Writer)) {}
 
 std::string const &Source::topic() const { return TopicName; }

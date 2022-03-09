@@ -20,7 +20,7 @@ std::string H5VersionStringHeadersCompileTime() {
 
 /// Human readable version of the HDF5 libraries that we run with.
 std::string h5VersionStringLinked() {
-  unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
+  unsigned h5_vers_major{}, h5_vers_minor{}, h5_vers_release{};
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   return fmt::format("{}.{}.{}", h5_vers_major, h5_vers_minor, h5_vers_release);
 }
@@ -30,7 +30,7 @@ std::string h5VersionStringLinked() {
 /// kafka-to-nexus is linked against at runtime. Currently, a mismatch in the
 /// release number is logged but does not cause panic.
 bool versionOfHDF5IsOk() {
-  unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
+  unsigned h5_vers_major{}, h5_vers_minor{}, h5_vers_release{};
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   if (h5_vers_major != H5_VERS_MAJOR) {
     LOG_ERROR("HDF5 version mismatch.  compile time: {}  runtime: {}",

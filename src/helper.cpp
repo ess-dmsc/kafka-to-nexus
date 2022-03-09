@@ -51,7 +51,7 @@ std::string getFQDN() {
   hints.ai_flags = AI_CANONNAME;
 
   int GetAddressResult{0};
-  if ((GetAddressResult = getaddrinfo(HostName.c_str(), NULL, &hints, &info)) !=
+  if ((GetAddressResult = getaddrinfo(HostName.c_str(), nullptr, &hints, &info)) !=
       0) {
     LOG_WARN(
         "Unable to get FQDN due to error (\"{}\"), using hostname instead.",
@@ -60,7 +60,7 @@ std::string getFQDN() {
   }
 
   std::vector<std::string> FoundHostnames;
-  for (p = info; p != NULL; p = p->ai_next) {
+  for (p = info; p != nullptr; p = p->ai_next) {
     if (p->ai_canonname != nullptr) {
       FoundHostnames.push_back(std::string(p->ai_canonname));
     }

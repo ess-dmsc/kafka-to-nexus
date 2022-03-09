@@ -17,8 +17,8 @@
 #include <map>
 #include <string>
 
-namespace WriterModule {
-namespace Registry {
+namespace WriterModule::Registry {
+
 using ModuleFactory = std::function<std::unique_ptr<WriterModule::Base>()>;
 using WriterModuleHash = size_t;
 struct ModuleFlatbufferID {
@@ -67,5 +67,4 @@ public:
     addWriterModule({ID, Name}, FactoryFunction);
   };
 };
-} // namespace Registry
-} // namespace WriterModule
+} // namespace WriterModule::Registry
