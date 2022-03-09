@@ -27,6 +27,8 @@ struct ModuleFlatbufferID {
 };
 using FactoryAndID = std::pair<ModuleFactory, ModuleFlatbufferID>;
 
+/// \brief Generate a hash from a writer module id + name combination.
+/// \return The hash of a writer module id + name.
 WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID);
 
 /// \brief Get all registered modules.
@@ -49,8 +51,16 @@ void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value);
 /// \throw std::runtime_error if module name does not exist.
 FactoryAndID const find(std::string const &ModuleName);
 
+/// \brief Find a writer module factory function + identifiers
+///
+/// \param ModuleHash The hash of the writer module.
+/// \return A std::pair with the writer module factory function and the identifiers of that module.
+/// \throw std::out_of_range exception if the writer module was not found.
 FactoryAndID const find(WriterModuleHash ModuleHash);
 
+/// \brief Clear (remove) all registered writer modules.
+///
+/// Intended use is for unit testing.
 void clear();
 
 /// \brief  Registers the writer module at program start if instantiated in the
