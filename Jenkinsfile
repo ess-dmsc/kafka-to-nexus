@@ -272,7 +272,7 @@ builders = pipeline_builder.createBuilders { container ->
             }
         }
 
-        int acceptableFailedCases = 81
+        int acceptableFailedCases = 77
         int numFailedCases = failingCases.size()
         if(numFailedCases > acceptableFailedCases) {
             doxygenStepFailed = true

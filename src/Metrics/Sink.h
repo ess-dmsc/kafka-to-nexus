@@ -15,6 +15,9 @@ struct InternalMetric;
 
 enum struct LogTo { CARBON, LOG_MSG };
 
+/// \brief A metrics counter processor/sink.
+///
+/// Used as a base class for processors/sinks.
 class Sink {
 public:
   /// Note, access metric values with relaxed memory ordering

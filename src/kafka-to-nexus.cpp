@@ -87,13 +87,13 @@ bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
     auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut);
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
-          "Unable to find job pool topic with name \"{}\".", PoolTopic);
+          R"(Unable to find job pool topic with name "{}".)", PoolTopic);
       LOG_ERROR(MsgString);
       throw std::runtime_error(MsgString);
     }
     if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
-          "Unable to find command topic with name \"{}\".", CommandTopic);
+          R"(Unable to find command topic with name "{}".)", CommandTopic);
       LOG_ERROR(MsgString);
       throw std::runtime_error(MsgString);
     }
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     }
     fmt::print("\n-- Known writer modules\n");
     for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
-      fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
+      fmt::print("---- {} : {}\n", WriterPair.Id, WriterPair.Name);
     }
     return EXIT_SUCCESS;
   }

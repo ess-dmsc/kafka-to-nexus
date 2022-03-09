@@ -174,47 +174,37 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
-  addDurationOption(App, "--status-master-interval",
-                    MainOptions.StatusMasterInterval,
-                    "Interval between status updates.  Ex. \"10s\". Accepts "
-                    "\"h\", \"m\", \"s\" and \"ms\".",
-                    true);
-  addDurationOption(App, "--time-before-start",
-                    MainOptions.StreamerConfiguration.BeforeStartTime,
-                    "Pre-consume messages this amount of time.  Ex. \"10s\". "
-                    "Accepts \"h\", \"m\", \"s\" and \"ms\".",
-                    true);
+  addDurationOption(
+      App, "--status-master-interval", MainOptions.StatusMasterInterval,
+      R"(Interval between status updates.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
+      true);
+  addDurationOption(
+      App, "--time-before-start",
+      MainOptions.StreamerConfiguration.BeforeStartTime,
+      R"(Pre-consume messages this amount of time.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
+      true);
   addDurationOption(
       App, "--time-after-stop", MainOptions.StreamerConfiguration.AfterStopTime,
-      "Allow for this much leeway after stop time before stopping message "
-      "consumption.  Ex. \"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
+      R"(Allow for this much leeway after stop time before stopping message consumption.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
   addDurationOption(
       App, "--kafka-metadata-max-timeout",
       MainOptions.StreamerConfiguration.BrokerSettings.MaxMetadataTimeout,
-      "Max timeout for kafka metadata calls. Note: metadata calls block the "
-      "application. Ex. \"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
+      R"(Max timeout for kafka metadata calls. Note: metadata calls block the application. Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
   addDurationOption(
       App, "--kafka-error-timeout",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaErrorTimeout,
-      "Number of seconds to wait for recovery from kafka error before "
-      "abandoning stream. Ex. \"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
+      R"(Number of seconds to wait for recovery from kafka error before abandoning stream. Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
   addDurationOption(
       App, "--data-flush-interval",
       MainOptions.StreamerConfiguration.DataFlushInterval,
-      "(Max) amount of time between flushing of data to file, in seconds.  Ex. "
-      "\"10s\". Accepts \"h\", \"m\", \"s\" and \"ms\".",
+      R"((Max) amount of time between flushing of data to file, in seconds.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
   addKafkaOption(
       App, "-X,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,
       "LibRDKafka options");
-  App.add_option("--abort-on-uninitialised-stream",
-                 MainOptions.AbortOnUninitialisedStream,
-                 "Writer aborts the whole job if one or more streams are "
-                 "misconfigured and fail to start",
-                 true);
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }

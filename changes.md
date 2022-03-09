@@ -9,6 +9,10 @@
 - Warning (log) messages will now be produced if the first message from a source has a data type different than that configured for the current writer module instance. This has been implemented for the `f142`, `senv` and `ADAr` modules.
 - The Grafana metrics prefix now has the form "kafka-to-nexus.*hostname*.*service_name*" if the service name is set. If not, it has the form "kafka-to-nexus.*hostname*.*service_id*".
 - Fix ordering of elements in static data.
+- Added functionality for automatically instantiating extra writer modules.
+- The writer modules _f142_, _senv_ and _tdct_ will now automatically also instantiate _ep00_ writer modules at the same location. Disable this by setting the `enable_epics_con_status` config option to `false`.
+- The "--abort-on-uninitialised-stream" command line option has been removed. An error in the JSON code for initialising a stream will now always cause an error that will stop further initialisation.
+- Added documentation.
 
 
 ## Version 4.1.0: Quality of life

@@ -37,11 +37,11 @@ public:
   virtual void
   registerIsWritingFunction(IsWritingFuncType IsWritingFunction) = 0;
 
-  virtual void sendHasStoppedMessage(std::string FileName,
+  virtual void sendHasStoppedMessage(std::string const &FileName,
                                      nlohmann::json Metadata) = 0;
-  virtual void sendErrorEncounteredMessage(std::string FileName,
-                                           std::string Metadata,
-                                           std::string ErrorMessage) = 0;
+  virtual void sendErrorEncounteredMessage(std::string const &FileName,
+                                           std::string const &Metadata,
+                                           std::string const &ErrorMessage) = 0;
   virtual void loopFunction() {}
 };
 
@@ -60,10 +60,11 @@ public:
   void registerStopNowFunction(StopNowFuncType StopNowFunction) override;
   void registerIsWritingFunction(IsWritingFuncType IsWritingFunction) override;
 
-  void sendHasStoppedMessage(std::string FileName,
+  void sendHasStoppedMessage(std::string const &FileName,
                              nlohmann::json Metadata) override;
-  void sendErrorEncounteredMessage(std::string FileName, std::string Metadata,
-                                   std::string ErrorMessage) override;
+  void sendErrorEncounteredMessage(std::string const &FileName,
+                                   std::string const &Metadata,
+                                   std::string const &ErrorMessage) override;
 
   void loopFunction() override;
 

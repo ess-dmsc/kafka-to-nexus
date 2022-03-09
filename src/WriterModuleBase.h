@@ -19,7 +19,6 @@
 #include <string_view>
 
 namespace WriterModule {
-
 enum class InitResult { ERROR = -1, OK = 0 };
 
 /// \brief Writes a given flatbuffer to HDF.
@@ -34,8 +33,8 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class Base {
 public:
-  Base(bool AcceptRepeatedTimestamps, std::string_view NX_class)
-      : WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {}
+  Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class,
+       std::vector<std::string> ExtraModules = {});
   virtual ~Base() = default;
 
   bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
@@ -103,14 +102,31 @@ public:
     ConfigHandler.registerField(Ptr);
   }
 
+  /// \brief Get names of extra writer modules that are valid and enabled.
+  std::vector<std::string> getEnabledExtraModules() const {
+    std::vector<std::string> ReturnModules;
+    for (auto const &Item : FoundExtraModules) {
+      if (ExtraModuleEnabled.at(Item)->getValue()) {
+        ReturnModules.push_back(Item);
+      }
+    }
+    return ReturnModules;
+  }
+
+  /// \brief Determine if this writer module can spawn extra writer modules.
+  auto hasExtraModules() const { return not FoundExtraModules.empty(); }
+
 private:
   // Must appear before any config field object.
   JsonConfig::FieldHandler ConfigHandler;
+  std::vector<std::string> FoundExtraModules;
 
 protected:
   JsonConfig::Field<std::string> SourceName{this, "source", ""};
   JsonConfig::Field<std::string> Topic{this, "topic", ""};
   JsonConfig::Field<std::string> WriterModule{this, "writer_module", ""};
+  std::map<std::string, std::unique_ptr<JsonConfig::Field<bool>>>
+      ExtraModuleEnabled;
 
 private:
   bool WriteRepeatedTimestamps;

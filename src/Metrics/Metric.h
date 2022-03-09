@@ -14,6 +14,9 @@ enum struct Severity { DEBUG, INFO, WARNING, ERROR };
 
 using CounterType = std::atomic<int64_t>;
 
+/// \brief Metrics counter class.
+///
+/// The metric is stored as int64.
 class Metric {
 public:
   Metric(std::string Name, std::string Description,

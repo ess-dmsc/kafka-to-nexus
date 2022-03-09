@@ -19,8 +19,7 @@
 #include <h5cpp/hdf5.hpp>
 #include <h5cpp/utilities/array_adapter.hpp>
 
-namespace hdf5 {
-namespace datatype {
+namespace hdf5::datatype {
 
 /// \brief Required for h5cpp to save data of type std::int8_t const.
 template <> class TypeTrait<std::int8_t const> {
@@ -131,8 +130,7 @@ public:
     return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
   }
 };
-} // namespace datatype
-} // namespace hdf5
+} // namespace hdf5::datatype
 
 namespace NeXusDataset {
 

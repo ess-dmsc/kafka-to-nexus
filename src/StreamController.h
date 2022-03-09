@@ -93,7 +93,7 @@ private:
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
   void checkIfStreamsAreDone();
-  std::chrono::system_clock::duration CurrentMetadataTimeOut;
+  std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
   std::atomic<bool> HasError{false};
   std::mutex ErrorMsgMutex;

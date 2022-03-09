@@ -90,7 +90,6 @@ public:
     throw std::runtime_error("Unable to return a value for the field with the "
                              "key(s) \"{}\" as it has been made obsolete.",
                              getKeys());
-    return {};
   }
 
   operator FieldType() const { return getValue(); }
@@ -104,13 +103,13 @@ template <class FieldType> class Field : public FieldBase {
 public:
   template <class FieldRegistrarType>
   Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys,
-        FieldType DefaultValue)
+        FieldType const &DefaultValue)
       : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
 
   // cppcheck-suppress functionStatic
   template <class FieldRegistrarType>
   Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
-        FieldType DefaultValue)
+        FieldType const &DefaultValue)
       : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &Key,

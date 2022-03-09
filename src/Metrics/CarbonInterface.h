@@ -5,8 +5,9 @@
 #include <memory>
 #include <string>
 
-namespace Metrics {
-namespace Carbon {
+namespace Metrics::Carbon {
+
+/// \brief Used for sending updates to the Grafana (Carbon) service in use.
 class Connection {
 public:
   Connection(std::string Host, int Port);
@@ -20,5 +21,4 @@ private:
   class Impl;
   std::unique_ptr<Impl> Pimpl;
 };
-} // namespace Carbon
-} // namespace Metrics
+} // namespace Metrics::Carbon
