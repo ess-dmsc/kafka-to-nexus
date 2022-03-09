@@ -54,8 +54,9 @@ FactoryAndID const find(std::string const &ModuleName);
 /// \brief Find a writer module factory function + identifiers
 ///
 /// \param ModuleHash The hash of the writer module.
-/// \return A std::pair with the writer module factory function and the identifiers of that module.
-/// \throw std::out_of_range exception if the writer module was not found.
+/// \return A std::pair with the writer module factory function and the
+/// identifiers of that module. \throw std::out_of_range exception if the writer
+/// module was not found.
 FactoryAndID const find(WriterModuleHash ModuleHash);
 
 /// \brief Clear (remove) all registered writer modules.
