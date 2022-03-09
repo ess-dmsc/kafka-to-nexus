@@ -7,7 +7,7 @@ std::unordered_map<Metrics::Severity, Log::Severity> LogSeverityMap{
     {Metrics::Severity::INFO, Log::Severity::Info},
     {Metrics::Severity::WARNING, Log::Severity::Warning},
     {Metrics::Severity::ERROR, Log::Severity::Error}};
-}
+} // namespace
 
 namespace Metrics {
 
@@ -23,7 +23,7 @@ void LogSink::reportMetric(InternalMetric &MetricToBeReported) {
                         .count();
     Log::FmtMsg(
         LogSeverityMap[MetricToBeReported.ValueSeverity],
-        "In the past {} ms, {} events of type \"{}\" have occurred ({}).",
+        R"(In the past {} ms, {} events of type "{}" have occurred ({}).)",
         TimeDiff, ValueDiff, MetricToBeReported.FullName,
         MetricToBeReported.DescriptionString);
   }

@@ -136,13 +136,13 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
       LOG_TRACE("Failed to get latest dataset");
     }
     if (!found) {
-      LOG_TRACE("Dataset \"data\" not yet present");
+      LOG_TRACE(R"(Dataset "data" not yet present)");
       for (size_t I = 0; I < DimsOut.size(); ++I) {
         LOG_TRACE("I: {}: {}", I, DimsOut.at(I));
       }
       Dataset.link().parent().create_dataset("data", Type, SpaceOut, DCPL);
       Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
-      LOG_TRACE("Dataset \"data\" created");
+      LOG_TRACE(R"(Dataset "data" created)");
     }
     auto Latest = Dataset.link().parent().get_dataset("data");
     if (Dims.at(0) > 0) {

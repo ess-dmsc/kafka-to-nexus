@@ -229,13 +229,12 @@ int main(int argc, char **argv) {
             CMetaDataTimeout = Options->StreamerConfiguration.BrokerSettings
                                    .MaxMetadataTimeout;
           }
-          LOG_WARN("Meta data call for retrieving the command topic (\"{}\") "
-                   "from the broker failed. Re-trying with a "
-                   "timeout of {} ms.",
-                   CommandTopic,
-                   std::chrono::duration_cast<std::chrono::milliseconds>(
-                       CMetaDataTimeout)
-                       .count());
+          LOG_WARN(
+              R"(Meta data call for retrieving the command topic ("{}") from the broker failed. Re-trying with a timeout of {} ms.)",
+              CommandTopic,
+              std::chrono::duration_cast<std::chrono::milliseconds>(
+                  CMetaDataTimeout)
+                  .count());
         }
       } else {
         MasterPtr->run();

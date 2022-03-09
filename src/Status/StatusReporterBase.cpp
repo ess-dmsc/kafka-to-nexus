@@ -14,7 +14,7 @@
 
 namespace FlatBuffer {
 #include <x5f2_status_generated.h>
-}
+} // namespace FlatBuffer
 
 namespace Status {
 
@@ -100,10 +100,10 @@ void StatusReporterBase::useAlternativeStatusTopic(
         std::make_unique<Kafka::ProducerTopic>(Producer, AltTopicName);
     std::swap(StatusProducerTopic, AltStatusProducerTopic);
     UsingAlternativeStatusTopic = true;
-    LOG_DEBUG("Now using the alternative status topic \"{}\".", AltTopicName);
+    LOG_DEBUG(R"(Now using the alternative status topic "{}".)", AltTopicName);
   } else {
-    LOG_WARN("Unable to set new alternative status topic \"{}\" as the "
-             "alternative topic \"\" is already used.",
+    LOG_WARN(R"(Unable to set new alternative status topic "{}" as the "
+             "alternative topic "{}" is already used.)",
              AltTopicName, StatusProducerTopic->name());
   }
 }
@@ -112,7 +112,7 @@ void StatusReporterBase::revertToDefaultStatusTopic() {
   if (UsingAlternativeStatusTopic) {
     std::swap(StatusProducerTopic, AltStatusProducerTopic);
     UsingAlternativeStatusTopic = false;
-    LOG_DEBUG("Reverting to default status topic name \"{}\".",
+    LOG_DEBUG(R"(Reverting to default status topic name "{}".)",
               StatusProducerTopic->name());
   }
 }

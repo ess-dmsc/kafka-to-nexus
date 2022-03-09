@@ -16,7 +16,7 @@ namespace hs00 {
 template <typename EdgeType>
 Dimension<EdgeType> Dimension<EdgeType>::createFromJson(json const &Json) {
   if (!Json.is_object()) {
-    throw UnexpectedJsonInput("\"shape\" value is not an object.");
+    throw UnexpectedJsonInput(R"("shape" value is not an object.)");
   }
   Dimension Dim;
   try {
@@ -26,7 +26,7 @@ Dimension<EdgeType> Dimension<EdgeType>::createFromJson(json const &Json) {
     Dim.DatasetName = Json.at("dataset_name");
     auto const &JsonEdges = Json.at("edges");
     if (!JsonEdges.is_array()) {
-      throw UnexpectedJsonInput("\"edges\" is not an array.");
+      throw UnexpectedJsonInput(R"("edges" is not an array.)");
     }
     if (JsonEdges.size() == size_t(-1) || JsonEdges.size() != Dim.Size + 1) {
       throw UnexpectedJsonInput();

@@ -55,17 +55,14 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
 }
 } // namespace
 
-namespace Command {
-
-namespace Parser {
-
+namespace Command::Parser {
 using FileWriter::Msg;
 
 Command::StartMessage extractStartMessage(Msg const &CommandMessage,
                                           time_point DefaultStartTime) {
   Command::StartMessage Result;
 
-  auto const RunStartData = GetRunStart(CommandMessage.data());
+  const auto *const RunStartData = GetRunStart(CommandMessage.data());
 
   checkRequiredFieldsArePresent(RunStartData);
 
@@ -97,7 +94,7 @@ Command::StartMessage extractStartMessage(Msg const &CommandMessage,
 }
 
 Command::StopMessage extractStopMessage(Msg const &CommandMessage) {
-  auto const RunStopData = GetRunStop(CommandMessage.data());
+  const auto *const RunStopData = GetRunStop(CommandMessage.data());
 
   if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {
     throw std::runtime_error("Errors encountered parsing run stop message:\n"
@@ -132,5 +129,4 @@ bool isStopCommand(Msg const &CommandMessage) {
                                           RunStopIdentifier());
 }
 
-} // namespace Parser
-} // namespace Command
+} // namespace Command::Parser

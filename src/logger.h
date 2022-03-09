@@ -57,12 +57,12 @@ template <> struct fmt::formatter<nlohmann::json> {
   auto format(const nlohmann::json &Data, FormatContext &ctx) { // cppcheck-suppress functionStatic
     auto DataString = Data.dump();
     if (DataString.empty()) {
-      return fmt::format_to(ctx.out(), "\"\"");
+      return fmt::format_to(ctx.out(), R"("")");
     }
     if (DataString.size() > 30) {
       DataString = DataString.substr(0, 30) + "...";
     }
-    return fmt::format_to(ctx.out(), "\"{}\"", DataString);
+    return fmt::format_to(ctx.out(), R"("{}")", DataString);
   }
 //clang-format on
 };

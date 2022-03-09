@@ -81,7 +81,7 @@ void f142_Writer::config_post_processing() {
   try {
     ElementType = TypeMap.at(ToLower(DataType.getValue()));
   } catch (std::out_of_range &E) {
-    LOG_WARN("Unknown data type with name \"{}\". Using double.",
+    LOG_WARN(R"(Unknown data type with name "{}". Using double.)",
              DataType.getValue());
   }
 }
@@ -135,7 +135,7 @@ InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
     AlarmSeverity = NeXusDataset::AlarmSeverity(HDFGroup, Open);
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return InitResult::ERROR;
   }

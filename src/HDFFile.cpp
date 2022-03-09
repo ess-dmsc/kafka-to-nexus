@@ -97,7 +97,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
 void HDFFile::closeFile() {
   try {
     if (hdfFile().is_valid()) {
-      LOG_DEBUG("Closing file \"{}\".", hdfFile().id().file_name().string());
+      LOG_DEBUG(R"(Closing file "{}".)", hdfFile().id().file_name().string());
       hdfFile().close();
       hdfFile() = hdf5::file::File();
     } else {
@@ -105,7 +105,7 @@ void HDFFile::closeFile() {
     }
   } catch (const std::runtime_error &E) {
     auto Trace = hdf5::error::print_nested(E);
-    LOG_ERROR("Got error when closing file \"{}\". Failure was: {}",
+    LOG_ERROR(R"(Got error when closing file "{}". Failure was: {})",
               hdfFile().id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
@@ -115,7 +115,7 @@ void HDFFile::closeFile() {
 }
 
 void HDFFile::openFileInSWMRMode() {
-  LOG_DEBUG("Opening file \"{}\" in SWMR mode.", H5FileName);
+  LOG_DEBUG(R"(Opening file "{}" in SWMR mode.)", H5FileName);
   hdfFile() = hdf5::file::open(H5FileName,
                                hdf5::file::AccessFlags::READWRITE |
                                    hdf5::file::AccessFlags::SWMR_WRITE,
@@ -136,7 +136,7 @@ void HDFFileBase::flush() {
 }
 
 void HDFFile::openFileInRegularMode() {
-  LOG_DEBUG("Opening file \"{}\" in regular (non SWMR) mode.", H5FileName);
+  LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)", H5FileName);
   hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE,
                                FileAccessList);
 }
@@ -146,8 +146,8 @@ void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
   } catch (std::exception const &E) {
-    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
-              E.what());
+    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
+              H5FileName, E.what());
   }
 }
 
@@ -158,8 +158,8 @@ void HDFFile::addMetaData() {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
     }
   } catch (std::exception const &E) {
-    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
-              E.what());
+    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
+              H5FileName, E.what());
   }
 }
 

@@ -20,7 +20,7 @@ std::string consoleFormatter(Log::LogMessage const &Msg) {
                                                 "CRITICAL", "ERROR", "WARNING",
                                                 "Notice", "Info", "Debug"}};
   return fmt::format("{} [{}] {}", date::format("[%H:%M:%S] ", Msg.Timestamp),
-                     sevToStr[int(Msg.SeverityLevel)], Msg.MessageString);
+                     sevToStr.at(int(Msg.SeverityLevel)), Msg.MessageString);
 }
 
 void setUpLogging(Log::Severity const &LoggingLevel,

@@ -36,8 +36,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
 void Master::startWriting(Command::StartInfo const &StartInfo) {
   if (CurrentState == WriterState::Writing) {
     throw std::runtime_error(fmt::format(
-        "Unable to start new writing job (with id: \"{}\") when waiting for "
-        "the current one to finish.",
+        R"(Unable to start new writing job (with id: "{}") when waiting for the current one to finish.)",
         StartInfo.JobID));
   }
   try {
@@ -62,7 +61,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
 void Master::stopNow() {
   if (CurrentState != WriterState::Writing) {
     throw std::runtime_error(
-        "Unable to stop writing when not in \"Writing\" state.");
+        R"(Unable to stop writing when not in "Writing" state.)");
   }
   LOG_INFO("Attempting to stop file-writing (quickly).");
   if (CurrentStreamController != nullptr) {
@@ -74,7 +73,7 @@ void Master::stopNow() {
 void Master::setStopTime(time_point StopTime) {
   if (CurrentState != WriterState::Writing) {
     throw std::runtime_error(
-        "Unable to set stop time when not in \"Writing\" state.");
+        R"(Unable to set stop time when not in "Writing" state.)");
   }
   if (Reporter->getStopTime() < system_clock::now()) {
     throw std::runtime_error("Unable to set a new stop time as the stop time "

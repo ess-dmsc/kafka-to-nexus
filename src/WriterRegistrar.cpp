@@ -48,8 +48,8 @@ FactoryAndID const find(std::string const &ModuleName) {
                                return CItem.second.Id == ModuleName;
                              });
     if (FoundItem == Factories.end()) {
-      throw std::out_of_range("Unable to find module with name/id \"" +
-                              ModuleName + "\"");
+      throw std::out_of_range(
+          fmt::format(R"(Unable to find module with name/id "{})", ModuleName));
     }
   }
   return {FoundItem->second.FactoryPtr,
@@ -70,14 +70,14 @@ void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value) {
         "The number of characters in the Flatbuffer id string must be 4.");
   }
   if (ID.Name == "dataset") {
-    throw std::runtime_error("The writer module name \"dataset\" has been "
-                             "reserved and can not be used.");
+    throw std::runtime_error(
+        R"(The writer module name "dataset" has been reserved and can not be used.)");
   }
   auto ModuleHash = getWriterModuleHash(ID);
   if (Factories.find(ModuleHash) != Factories.end()) {
-    auto s = fmt::format("Writer module with name \"{}\" that processes \"{}\" "
-                         "flatbuffers already exists.",
-                         ID.Name, ID.Id);
+    auto s = fmt::format(
+        R"(Writer module with name "{}" that processes "{}" flatbuffers already exists.)",
+        ID.Name, ID.Id);
     throw std::runtime_error(s);
   }
   if (std::find_if(Factories.begin(), Factories.end(),
@@ -85,7 +85,7 @@ void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value) {
                      return CItem.second.Name == ID.Name;
                    }) != Factories.end()) {
     auto s =
-        fmt::format("Writer module with name \"{}\" already exists.", ID.Name);
+        fmt::format(R"(Writer module with name "{}" already exists.)", ID.Name);
     throw std::runtime_error(s);
   }
   Factories[ModuleHash] = {std::move(Value), ID.Id, ID.Name};

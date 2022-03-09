@@ -67,7 +67,7 @@ TEST_F(DataMessageWriterTest, ValidExtraModuleByName) {
 TEST_F(DataMessageWriterTest, DisabledExtraModule) {
   WriterModuleStandIn TestWriterModule({"epics_con_status"});
   REQUIRE_CALL(TestWriterModule, config_post_processing()).TIMES(1);
-  TestWriterModule.parse_config("{\"enable_epics_con_status\": false}");
+  TestWriterModule.parse_config(R"({"enable_epics_con_status": false})");
   EXPECT_TRUE(TestWriterModule.hasExtraModules());
   EXPECT_TRUE(TestWriterModule.getEnabledExtraModules().empty());
 }
@@ -75,7 +75,7 @@ TEST_F(DataMessageWriterTest, DisabledExtraModule) {
 TEST_F(DataMessageWriterTest, EnableExtraModule) {
   WriterModuleStandIn TestWriterModule({"epics_con_status"});
   REQUIRE_CALL(TestWriterModule, config_post_processing()).TIMES(1);
-  TestWriterModule.parse_config("{\"enable_epics_con_status\": true}");
+  TestWriterModule.parse_config(R"({"enable_epics_con_status": true})");
   EXPECT_TRUE(TestWriterModule.hasExtraModules());
   EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 1u);
 }

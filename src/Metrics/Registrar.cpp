@@ -6,11 +6,11 @@
 namespace Metrics {
 
 void Registrar::registerMetric(Metric &NewMetric,
-                               std::vector<LogTo> const &SinkTypes) {
+                               std::vector<LogTo> const &SinkTypes) const {
   if (NewMetric.getName().empty()) {
     throw std::runtime_error("Metrics cannot be registered with an empty name");
   }
-  for (auto &SinkTypeAndReporter : ReporterList) {
+  for (auto const &SinkTypeAndReporter : ReporterList) {
     if (std::find(SinkTypes.begin(), SinkTypes.end(),
                   SinkTypeAndReporter.first) != SinkTypes.end()) {
       std::string NewName = prependPrefix(NewMetric.getName());
@@ -28,7 +28,7 @@ Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
   std::vector<std::shared_ptr<Reporter>> Reporters;
   Reporters.reserve(ReporterList.size());
 
-  for (auto &SinkTypeAndReporter : ReporterList) {
+  for (auto const &SinkTypeAndReporter : ReporterList) {
     // cppcheck-suppress useStlAlgorithm
     Reporters.push_back(SinkTypeAndReporter.second);
   }

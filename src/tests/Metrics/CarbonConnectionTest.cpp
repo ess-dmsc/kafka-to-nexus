@@ -136,7 +136,7 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, LargeMessageTransmission) {
 }
 
 TEST_F(DISABLED_MetricsCarbonConnectionTest, MultipleMessages) {
-  std::vector<std::string> lines = {"This is a test.", "!\"#€%&/()=?*^_-.,:;",
+  std::vector<std::string> lines = {"This is a test.", R"(!"#€%&/()=?*^_-.,:;)",
                                     "Another line bites the dust."};
   {
     Metrics::Carbon::Connection con("localhost", UsedPort);

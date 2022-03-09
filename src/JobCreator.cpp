@@ -74,7 +74,7 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
 static std::vector<ModuleSettings> extractModuleInformationFromJson(
     std::vector<ModuleHDFInfo> const &ModuleHDFInfoList) {
   std::vector<ModuleSettings> SettingsList;
-  for (auto &ModuleHDFInfo : ModuleHDFInfoList) {
+  for (auto const &ModuleHDFInfo : ModuleHDFInfoList) {
     try {
       SettingsList.push_back(
           extractModuleInformationFromJsonForSource(ModuleHDFInfo));
@@ -124,7 +124,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     std::vector<ModuleSettings> TemporaryStreamSettings;
     try {
       Item.WriterModule = generateWriterInstance(Item);
-      for (auto &ExtraModule : Item.WriterModule->getEnabledExtraModules()) {
+      for (auto const &ExtraModule :
+           Item.WriterModule->getEnabledExtraModules()) {
         auto ItemCopy = Item.getCopyForExtraModule();
         ItemCopy.Module = ExtraModule;
         TemporaryStreamSettings.push_back(std::move(ItemCopy));
@@ -132,20 +133,17 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       setWriterHDFAttributes(StreamGroup, Item);
       Item.WriterModule->init_hdf(StreamGroup);
     } catch (std::runtime_error const &E) {
-      auto ErrorMsg =
-          fmt::format("Could not initialise stream at path \"{}\" "
-                      "with configuration JSON \"{}\". Error was: {}",
-                      Item.ModuleHDFInfoObj.HDFParentName,
-                      Item.ModuleHDFInfoObj.ConfigStream, E.what());
+      auto ErrorMsg = fmt::format(
+          R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",
+          Item.ModuleHDFInfoObj.HDFParentName,
+          Item.ModuleHDFInfoObj.ConfigStream, E.what());
       std::throw_with_nested(std::runtime_error(ErrorMsg));
     }
     try {
       Item.WriterModule->register_meta_data(StreamGroup, Tracker);
     } catch (std::exception const &E) {
       std::throw_with_nested(std::runtime_error(fmt::format(
-          "Exception encountered in WriterModule::Base::register_meta_data(). "
-          "Module: \"{}\" "
-          " Source: \"{}\"  Error message: {}",
+          R"(Exception encountered in WriterModule::Base::register_meta_data(). Module: "{}" Source: "{}"  Error message: {})",
           Item.Module, Item.Source, E.what())));
     }
     std::transform(TemporaryStreamSettings.begin(),
@@ -209,10 +207,9 @@ generateWriterInstance(ModuleSettings const &StreamInfo) {
   try {
     ModuleFactory = WriterModule::Registry::find(StreamInfo.Module);
   } catch (std::exception const &E) {
-    throw std::runtime_error(
-        fmt::format("Error while getting module with name/id \"{}\" for source "
-                    "\"{}\". Message was: {}",
-                    StreamInfo.Module, StreamInfo.Source, E.what()));
+    throw std::runtime_error(fmt::format(
+        R"(Error while getting module with name/id "{}" for source "{}". Message was: {})",
+        StreamInfo.Module, StreamInfo.Source, E.what()));
   }
 
   auto HDFWriterModule = ModuleFactory.first();
@@ -225,11 +222,9 @@ generateWriterInstance(ModuleSettings const &StreamInfo) {
   try {
     HDFWriterModule->parse_config(StreamInfo.ConfigStreamJson);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Exception encountered in "
-                    "WriterModule::Base::parse_config()  Module: \"{}\" "
-                    " Source: \"{}\"  Error message: {}",
-                    StreamInfo.Module, StreamInfo.Source, E.what())));
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        R"(Exception encountered in WriterModule::Base::parse_config()  Module: "{}" Source: "{}"  Error message: {})",
+        StreamInfo.Module, StreamInfo.Source, E.what())));
   }
   return HDFWriterModule;
 }
@@ -242,11 +237,11 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
   auto writeAttributesList =
       [&StreamGroup, &StreamInfo](
           std::vector<std::pair<std::string, std::string>> Attributes) {
-        for (auto Attribute : Attributes) {
+        for (auto const &Attribute : Attributes) {
           if (StreamGroup.attributes.exists(Attribute.first)) {
             StreamGroup.attributes.remove(Attribute.first);
             LOG_DEBUG(
-                "Replacing (existing) attribute with key \"{}\" at \"{}\".",
+                R"(Replacing (existing) attribute with key "{}" at "{}".)",
                 Attribute.first, StreamInfo.ModuleHDFInfoObj.HDFParentName);
           }
           auto HdfAttribute =
