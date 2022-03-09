@@ -2,7 +2,7 @@
 #include "InternalMetric.h"
 
 namespace {
-std::unordered_map<Metrics::Severity, Log::Severity> const LogSeverityMap{
+std::unordered_map<Metrics::Severity, Log::Severity> LogSeverityMap{
     {Metrics::Severity::DEBUG, Log::Severity::Debug},
     {Metrics::Severity::INFO, Log::Severity::Info},
     {Metrics::Severity::WARNING, Log::Severity::Warning},
