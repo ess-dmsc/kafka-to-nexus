@@ -61,8 +61,9 @@ public:
         WriteToFile(UsedNode, getName(), MetaDataValue);
       }
     } catch (std::exception &E) {
-      LOG_ERROR(R"(Failed to write the value "{}" to the path "{}" in HDF5-file. The message was: {})",
-                MetaDataValue, getPath(), E.what());
+      LOG_ERROR(
+          R"(Failed to write the value "{}" to the path "{}" in HDF5-file. The message was: {})",
+          MetaDataValue, getPath(), E.what());
       throw;
     }
   };

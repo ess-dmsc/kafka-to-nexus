@@ -31,7 +31,8 @@ std::unique_ptr<RdKafka::Handle> getKafkaHandle(std::string Broker) {
   std::string ErrorStr;
   if (Conf->set("metadata.broker.list", Broker, ErrorStr) !=
       RdKafka::Conf::CONF_OK) {
-    throw MetadataException(fmt::format(R"(Got error when configuring metadata brokers: "{}")", ErrorStr));
+    throw MetadataException(fmt::format(
+        R"(Got error when configuring metadata brokers: "{}")", ErrorStr));
   }
   auto KafkaConsumer = std::unique_ptr<RdKafka::Handle>(
       KafkaHandle::create(Conf.get(), ErrorStr));
