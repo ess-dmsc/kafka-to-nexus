@@ -33,7 +33,8 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class Base {
 public:
-  Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class, std::vector<std::string> ExtraModules = {});
+  Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class,
+       std::vector<std::string> ExtraModules = {});
   virtual ~Base() = default;
 
   bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
@@ -113,9 +114,7 @@ public:
   }
 
   /// \brief Determine if this writer module can spawn extra writer modules.
-  auto hasExtraModules() const {
-    return not FoundExtraModules.empty();
-  }
+  auto hasExtraModules() const { return not FoundExtraModules.empty(); }
 
 private:
   // Must appear before any config field object.
@@ -126,7 +125,8 @@ protected:
   JsonConfig::Field<std::string> SourceName{this, "source", ""};
   JsonConfig::Field<std::string> Topic{this, "topic", ""};
   JsonConfig::Field<std::string> WriterModule{this, "writer_module", ""};
-  std::map<std::string, std::unique_ptr<JsonConfig::Field<bool>>> ExtraModuleEnabled;
+  std::map<std::string, std::unique_ptr<JsonConfig::Field<bool>>>
+      ExtraModuleEnabled;
 
 private:
   bool WriteRepeatedTimestamps;

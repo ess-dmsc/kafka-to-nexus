@@ -20,4 +20,4 @@ bool Connection::messageQueueEmpty() { return Pimpl->messageQueueEmpty(); }
 
 size_t Connection::messageQueueSize() { return Pimpl->messageQueueSize(); }
 
-} // namespace Metrics
+} // namespace Metrics::Carbon

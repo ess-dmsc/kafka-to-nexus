@@ -115,9 +115,12 @@ TEST_F(WriterRegistrationTest, GeneratedHash) {
   auto Key2 = "tst2";
   auto Name1 = "Some name 1";
   auto Name2 = "Some name 2";
-  EXPECT_NE(getWriterModuleHash({Key1, Name1}), getWriterModuleHash({Key1, Name2}));
-  EXPECT_NE(getWriterModuleHash({Key1, Name1}), getWriterModuleHash({Key2, Name1}));
-  EXPECT_EQ(getWriterModuleHash({Key1, Name1}), getWriterModuleHash({Key1, Name1}));
+  EXPECT_NE(getWriterModuleHash({Key1, Name1}),
+            getWriterModuleHash({Key1, Name2}));
+  EXPECT_NE(getWriterModuleHash({Key1, Name1}),
+            getWriterModuleHash({Key2, Name1}));
+  EXPECT_EQ(getWriterModuleHash({Key1, Name1}),
+            getWriterModuleHash({Key1, Name1}));
 }
 
 TEST_F(WriterRegistrationTest, FindModuleUsingName) {

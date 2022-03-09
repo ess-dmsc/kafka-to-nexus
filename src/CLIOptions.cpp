@@ -174,14 +174,15 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
-  addDurationOption(App, "--status-master-interval",
-                    MainOptions.StatusMasterInterval,
-                    R"(Interval between status updates.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
-                    true);
-  addDurationOption(App, "--time-before-start",
-                    MainOptions.StreamerConfiguration.BeforeStartTime,
-                    R"(Pre-consume messages this amount of time.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
-                    true);
+  addDurationOption(
+      App, "--status-master-interval", MainOptions.StatusMasterInterval,
+      R"(Interval between status updates.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
+      true);
+  addDurationOption(
+      App, "--time-before-start",
+      MainOptions.StreamerConfiguration.BeforeStartTime,
+      R"(Pre-consume messages this amount of time.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
+      true);
   addDurationOption(
       App, "--time-after-stop", MainOptions.StreamerConfiguration.AfterStopTime,
       R"(Allow for this much leeway after stop time before stopping message consumption.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",

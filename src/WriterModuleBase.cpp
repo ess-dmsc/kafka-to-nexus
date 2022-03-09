@@ -11,16 +11,21 @@
 #include "WriterRegistrar.h"
 
 namespace WriterModule {
-Base::Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class, std::vector<std::string> ExtraModules)
-: WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {
+Base::Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class,
+           std::vector<std::string> ExtraModules)
+    : WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {
   for (auto &Module : ExtraModules) {
     try {
       auto FoundModule = WriterModule::Registry::find(Module);
       FoundExtraModules.push_back(FoundModule.second.Name);
-      ExtraModuleEnabled[FoundModule.second.Name] = std::make_unique<JsonConfig::Field<bool>>(this, fmt::format("enable_{}", FoundModule.second.Name), true);
+      ExtraModuleEnabled[FoundModule.second.Name] =
+          std::make_unique<JsonConfig::Field<bool>>(
+              this, fmt::format("enable_{}", FoundModule.second.Name), true);
     } catch (std::out_of_range const &) {
-      LOG_ERROR("Unable to add extra module \"{}\" to list (of extra modules) as it does not exist.", Module);
+      LOG_ERROR("Unable to add extra module \"{}\" to list (of extra modules) "
+                "as it does not exist.",
+                Module);
     }
   }
 }
-}
+} // namespace WriterModule

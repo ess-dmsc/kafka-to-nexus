@@ -62,7 +62,8 @@ public:
 
   void sendHasStoppedMessage(std::string const &FileName,
                              nlohmann::json Metadata) override;
-  void sendErrorEncounteredMessage(std::string const &FileName, std::string const &Metadata,
+  void sendErrorEncounteredMessage(std::string const &FileName,
+                                   std::string const &Metadata,
                                    std::string const &ErrorMessage) override;
 
   void loopFunction() override;

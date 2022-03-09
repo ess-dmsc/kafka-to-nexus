@@ -27,8 +27,7 @@ WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID) {
   return std::hash<std::string>{}(ID.Id + ID.Name);
 }
 
-std::vector<ModuleFlatbufferID>
-getFactoryIdsAndNames() {
+std::vector<ModuleFlatbufferID> getFactoryIdsAndNames() {
   std::vector<ModuleFlatbufferID> ReturnList;
   std::transform(getFactories().cbegin(), getFactories().cend(),
                  std::back_inserter(ReturnList),
@@ -47,14 +46,15 @@ FactoryAndID const find(std::string const &ModuleName) {
   if (FoundItem == Factories.end()) {
     FoundItem = std::find_if(std::cbegin(Factories), std::cend(Factories),
                              [&ModuleName](auto const &CItem) {
-      return CItem.second.Id == ModuleName;
-    });
+                               return CItem.second.Id == ModuleName;
+                             });
     if (FoundItem == Factories.end()) {
-      throw std::out_of_range("Unable to find module with name/id \"" + ModuleName +
-      "\"");
+      throw std::out_of_range("Unable to find module with name/id \"" +
+                              ModuleName + "\"");
     }
   }
-  return {FoundItem->second.FactoryPtr, {FoundItem->second.Id, FoundItem->second.Name}};
+  return {FoundItem->second.FactoryPtr,
+          {FoundItem->second.Id, FoundItem->second.Name}};
 }
 
 FactoryAndID const find(WriterModuleHash ModuleHash) {
@@ -85,8 +85,8 @@ void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value) {
                    [&ID](auto const &CItem) {
                      return CItem.second.Name == ID.Name;
                    }) != Factories.end()) {
-    auto s = fmt::format("Writer module with name \"{}\" already exists.",
-                         ID.Name);
+    auto s =
+        fmt::format("Writer module with name \"{}\" already exists.", ID.Name);
     throw std::runtime_error(s);
   }
   Factories[ModuleHash] = {std::move(Value), ID.Id, ID.Name};

@@ -8,11 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Metrics/Registrar.h"
-#include "WriterRegistrar.h"
 #include "Stream/MessageWriter.h"
-#include "WriterModuleBase.h"
-#include "helpers/SetExtractorModule.h"
 #include "WriterModule/ep00/ep00_Writer.h"
+#include "WriterModuleBase.h"
+#include "WriterRegistrar.h"
+#include "helpers/SetExtractorModule.h"
 #include <array>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
@@ -20,7 +20,8 @@
 class WriterModuleStandIn : public WriterModule::Base {
 public:
   MAKE_MOCK0(config_post_processing, void(), override);
-  WriterModuleStandIn(std::vector<std::string> const &ExtraModules = {}) : WriterModule::Base(true, "test", ExtraModules) {}
+  WriterModuleStandIn(std::vector<std::string> const &ExtraModules = {})
+      : WriterModule::Base(true, "test", ExtraModules) {}
   ~WriterModuleStandIn() = default;
   MAKE_CONST_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &),
                    override);
@@ -33,7 +34,7 @@ public:
   void SetUp() override {
     WriterModule::Registry::clear();
     WriterModule::Registry::Registrar<WriterModule::ep00::ep00_Writer>
-    RegisterIt1("ep00", "epics_con_status");
+        RegisterIt1("ep00", "epics_con_status");
   }
   WriterModuleStandIn WriterModule;
   Metrics::Registrar MetReg{"some_prefix", {}};
@@ -42,7 +43,7 @@ public:
 using trompeloeil::_;
 
 TEST_F(DataMessageWriterTest, NoExtraModules) {
-    EXPECT_EQ(WriterModule.getEnabledExtraModules().size(), 0u);
+  EXPECT_EQ(WriterModule.getEnabledExtraModules().size(), 0u);
 }
 
 TEST_F(DataMessageWriterTest, InvalidExtraModule) {

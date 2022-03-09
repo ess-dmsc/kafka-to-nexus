@@ -124,19 +124,19 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     std::vector<ModuleSettings> TemporaryStreamSettings;
     try {
       Item.WriterModule = generateWriterInstance(Item);
-       for (auto &ExtraModule : Item.WriterModule->getEnabledExtraModules()) {
-         auto ItemCopy = Item.getCopyForExtraModule();
-         ItemCopy.Module = ExtraModule;
-         TemporaryStreamSettings.push_back(std::move(ItemCopy));
-       }
+      for (auto &ExtraModule : Item.WriterModule->getEnabledExtraModules()) {
+        auto ItemCopy = Item.getCopyForExtraModule();
+        ItemCopy.Module = ExtraModule;
+        TemporaryStreamSettings.push_back(std::move(ItemCopy));
+      }
       setWriterHDFAttributes(StreamGroup, Item);
       Item.WriterModule->init_hdf(StreamGroup);
     } catch (std::runtime_error const &E) {
-      auto ErrorMsg = fmt::format("Could not initialise stream at path \"{}\" "
-                                  "with configuration JSON \"{}\". Error was: {}",
-                                  Item.ModuleHDFInfoObj.HDFParentName,
-                                  Item.ModuleHDFInfoObj.ConfigStream,
-                                  E.what());
+      auto ErrorMsg =
+          fmt::format("Could not initialise stream at path \"{}\" "
+                      "with configuration JSON \"{}\". Error was: {}",
+                      Item.ModuleHDFInfoObj.HDFParentName,
+                      Item.ModuleHDFInfoObj.ConfigStream, E.what());
       std::throw_with_nested(std::runtime_error(ErrorMsg));
     }
     try {
@@ -148,9 +148,10 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
           " Source: \"{}\"  Error message: {}",
           Item.Module, Item.Source, E.what())));
     }
-    std::transform(TemporaryStreamSettings.begin(), TemporaryStreamSettings.end(), std::back_inserter(StreamSettingsList), [](auto &Element){
-      return std::move(Element);
-    });
+    std::transform(TemporaryStreamSettings.begin(),
+                   TemporaryStreamSettings.end(),
+                   std::back_inserter(StreamSettingsList),
+                   [](auto &Element) { return std::move(Element); });
   }
   Task->writeLinks(LinkSettingsList);
   Task->switchToWriteMode();
@@ -189,11 +190,9 @@ void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
 
       // Create a Source instance for the stream and add to the task.
       auto FoundModule = WriterModule::Registry::find(StreamSettings.Module);
-      Source ThisSource(
-          StreamSettings.Source,
-          FoundModule.second.Id,
-          FoundModule.second.Name, StreamSettings.Topic,
-          move(StreamSettings.WriterModule));
+      Source ThisSource(StreamSettings.Source, FoundModule.second.Id,
+                        FoundModule.second.Name, StreamSettings.Topic,
+                        move(StreamSettings.WriterModule));
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
       LOG_WARN(
@@ -218,9 +217,9 @@ generateWriterInstance(ModuleSettings const &StreamInfo) {
 
   auto HDFWriterModule = ModuleFactory.first();
   if (!HDFWriterModule) {
-    throw std::runtime_error(
-        fmt::format("Can not instantiate a writer module for module name/id '{}'",
-                    StreamInfo.Module));
+    throw std::runtime_error(fmt::format(
+        "Can not instantiate a writer module for module name/id '{}'",
+        StreamInfo.Module));
   }
 
   try {
