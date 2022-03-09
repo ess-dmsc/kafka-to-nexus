@@ -15,6 +15,7 @@
 
 namespace Metrics {
 
+/// \brief Metrics Grafana (Carbon) reporter/sink.
 class CarbonSink : public Sink {
 public:
   CarbonSink(std::string Host, uint16_t const Port)
