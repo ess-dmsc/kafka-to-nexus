@@ -14,7 +14,7 @@
 namespace Kafka {
 struct ProducerMessage {
   virtual ~ProducerMessage() = default;
-  unsigned char *data{nullptr};
   uint32_t size{0};
+  unsigned char *data{nullptr};
 };
 } // namespace Kafka

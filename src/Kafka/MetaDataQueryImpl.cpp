@@ -9,19 +9,20 @@
 
 #include "Kafka/MetaDataQueryImpl.h"
 #include <algorithm>
+#include <fmt/format.h>
 
 namespace Kafka {
 const RdKafka::TopicMetadata *
 findKafkaTopic(const std::string &Topic,
                const RdKafka::Metadata *KafkaMetadata) {
-  auto Topics = KafkaMetadata->topics();
+  const auto *Topics = KafkaMetadata->topics();
   auto Iterator =
       std::find_if(Topics->cbegin(), Topics->cend(),
                    [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
                      return TopicMetadata->topic() == Topic;
                    });
   if (Iterator == Topics->end()) {
-    throw MetadataException("Topic \"" + Topic + "\" not listed by broker.");
+    throw MetadataException(fmt::format(R"(Topic "{}" not listed by broker.)", Topic));
   }
   return *Iterator;
 }

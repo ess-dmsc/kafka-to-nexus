@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <fmt/format.h>
 
 TEST(HelperTests, RandomHexStringGeneration) {
   size_t StringLength{200};
@@ -37,6 +38,6 @@ TEST(HelperTests, HostNameIsNotEmpty) { EXPECT_FALSE(getHostName().empty()); }
 
 TEST(HelperTests, FQDNNotEmpty) {
   auto const fqdn = getFQDN();
-  std::cout << "[          ] Got the hostname \"" << fqdn << "\".\n";
+  std::cout << fmt::format(R"([          ] Got the hostname "{}".)", fqdn) << std::endl;
   EXPECT_FALSE(fqdn.empty());
 }

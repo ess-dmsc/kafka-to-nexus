@@ -13,8 +13,6 @@
 
 namespace Kafka {
 
-static std::atomic<int> ProducerInstanceCount;
-
 Producer::~Producer() {
   LOG_DEBUG("~Producer");
   if (ProducerPtr != nullptr) {
@@ -50,6 +48,7 @@ void Producer::setConf(std::string &ErrorString) {
 
 Producer::Producer(BrokerSettings const &Settings)
     : ProducerBrokerSettings(Settings) {
+  static std::atomic<int> ProducerInstanceCount;
   ProducerID = ProducerInstanceCount++;
 
   std::string ErrorString;

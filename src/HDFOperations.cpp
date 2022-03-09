@@ -109,7 +109,7 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
       JSONAttribute CurrentAttribute(Attribute);
       if (Node.attributes.exists(CurrentAttribute.Name)) {
         Node.attributes.remove(CurrentAttribute.Name);
-        LOG_DEBUG("Replacing (existing) attribute with key \"{}\".",
+        LOG_DEBUG(R"(Replacing (existing) attribute with key "{}".)",
                   CurrentAttribute.Name.getValue());
       }
       if (CurrentAttribute.Type.hasDefaultValue() and
@@ -175,7 +175,7 @@ void writeObjectOfAttributes(hdf5::node::Node const &Node,
     auto const Name = It.key();
     if (Node.attributes.exists(Name)) {
       Node.attributes.remove(Name);
-      LOG_DEBUG("Replacing (existing) attribute with key \"{}\".", Name);
+      LOG_DEBUG(R"(Replacing (existing) attribute with key "{}".)", Name);
     }
     writeScalarAttribute(Node, Name, It.value());
   }
@@ -405,8 +405,7 @@ void createHDFStructures(
     }
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
-    LOG_ERROR("Failed to create structure with path \"{}\" ({} levels "
-              "deep). Message was: {}",
+    LOG_ERROR(R"(Failed to create structure with path "{}" ({} levels deep). Message was: {})",
               std::string(Parent.link().path()), Level, e.what());
   }
 }

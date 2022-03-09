@@ -86,5 +86,5 @@ TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
 
   auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
 
-  ASSERT_EQ("{\"NX_class\":\"NXlog\"}", Settings.Attributes);
+  ASSERT_EQ(R"({"NX_class":"NXlog"})", Settings.Attributes);
 }

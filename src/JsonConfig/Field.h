@@ -81,14 +81,12 @@ public:
       : FieldBase(RegistrarPtr, Key) {}
 
   void setValue(std::string const &, std::string const &) override {
-    LOG_WARN("The field with the key(s) \"{}\" is obsolete. Any value set will "
-             "be ignored.",
+    LOG_WARN(R"(The field with the key(s) "{}" is obsolete. Any value set will be ignored.)",
              getKeys());
   }
 
   FieldType getValue() const {
-    throw std::runtime_error("Unable to return a value for the field with the "
-                             "key(s) \"{}\" as it has been made obsolete.",
+    throw std::runtime_error(R"(Unable to return a value for the field with the key(s) "{}" as it has been made obsolete.)",
                              getKeys());
   }
 
@@ -152,8 +150,7 @@ private:
       auto AllKeys =
           std::accumulate(std::next(Keys.begin()), Keys.end(), Keys[0],
                           [](auto a, auto b) { return a + ", " + b; });
-      LOG_WARN("Replacing the previously given value of \"{}\" with \"{}\" in "
-               "json config field with key(s): ",
+      LOG_WARN(R"(Replacing the previously given value of "{}" with "{}" in json config field with key(s): )",
                FieldValue, NewValue, AllKeys);
     }
     UsedKey = Key;

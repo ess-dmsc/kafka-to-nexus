@@ -89,8 +89,8 @@ public:
   time_point StartTime{system_clock::now()};
   Command::StartInfo StartCmd{"job_id",
                               "file_name",
-                              "{\"nexus_structure\":5}",
-                              "{\"meta_data\":54}",
+                              R"({"nexus_structure":5})",
+                              R"({"meta_data":54})",
                               uri::URI{"localhost:9092"},
                               StartTime,
                               StartTime + 50s,

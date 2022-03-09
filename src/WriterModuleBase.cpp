@@ -22,8 +22,7 @@ Base::Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class,
           std::make_unique<JsonConfig::Field<bool>>(
               this, fmt::format("enable_{}", FoundModule.second.Name), true);
     } catch (std::out_of_range const &) {
-      LOG_ERROR("Unable to add extra module \"{}\" to list (of extra modules) "
-                "as it does not exist.",
+      LOG_ERROR(R"(Unable to add extra module "{}" to list (of extra modules) as it does not exist.)",
                 Module);
     }
   }

@@ -182,7 +182,7 @@ TEST_F(
   {
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}");
+    Writer.parse_config(R"({"adc_pulse_debug": true})");
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
   }
   ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
@@ -352,7 +352,7 @@ TEST_F(EventWriterTests,
   {
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}");
+    Writer.parse_config(R"({"adc_pulse_debug": true})");
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
@@ -390,7 +390,7 @@ TEST_F(EventWriterTests,
   {
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}");
+    Writer.parse_config(R"({"adc_pulse_debug": true})");
     Writer.register_meta_data(TestGroup, Tracker);
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
@@ -449,7 +449,7 @@ TEST_F(EventWriterTests,
   {
     WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}");
+    Writer.parse_config(R"({"adc_pulse_debug": true})");
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));       // First message

@@ -124,7 +124,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     std::vector<ModuleSettings> TemporaryStreamSettings;
     try {
       Item.WriterModule = generateWriterInstance(Item);
-      for (auto &ExtraModule : Item.WriterModule->getEnabledExtraModules()) {
+      for (auto const &ExtraModule : Item.WriterModule->getEnabledExtraModules()) {
         auto ItemCopy = Item.getCopyForExtraModule();
         ItemCopy.Module = ExtraModule;
         TemporaryStreamSettings.push_back(std::move(ItemCopy));
@@ -236,7 +236,7 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
   auto writeAttributesList =
       [&StreamGroup, &StreamInfo](
           std::vector<std::pair<std::string, std::string>> Attributes) {
-        for (auto Attribute : Attributes) {
+        for (auto const &Attribute : Attributes) {
           if (StreamGroup.attributes.exists(Attribute.first)) {
             StreamGroup.attributes.remove(Attribute.first);
             LOG_DEBUG(

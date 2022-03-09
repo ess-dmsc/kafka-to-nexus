@@ -13,7 +13,7 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
     StatusDataset = NeXusDataset::ConnectionStatus(HDFGroup, Open);
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return InitResult::ERROR;
   }
