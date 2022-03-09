@@ -413,7 +413,7 @@ void createHDFStructures(
 
 void addLinks(hdf5::node::Group const &Group,
               std::vector<ModuleSettings> const &LinkSettingsList) {
-  for (auto &LinkSettings : LinkSettingsList) {
+  for (auto const &LinkSettings : LinkSettingsList) {
     auto NodeGroup =
         Group.get_group(LinkSettings.ModuleHDFInfoObj.HDFParentName);
     addLinkToNode(NodeGroup, LinkSettings);
@@ -429,7 +429,7 @@ void addLinkToNode(hdf5::node::Group const &Group,
     TargetBase = TargetBase.substr(3);
     GroupBase = GroupBase.link().parent();
   }
-  hid_t TargetID;
+  hid_t TargetID{};
   try {
     TargetID =
         H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);

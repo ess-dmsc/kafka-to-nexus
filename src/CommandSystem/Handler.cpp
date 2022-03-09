@@ -167,8 +167,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
          {LogLevel::Debug, false,
           [&]() {
             return fmt::format(
-                "Rejected start command as the service id was wrong. It "
-                "should be \"{}\", it was \"{}\".",
+                R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
                 ServiceId, StartJob.ServiceID);
           },
           0}});
@@ -178,8 +177,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
          {LogLevel::Warning, true,
           [&]() {
             return fmt::format(
-                "Rejected start command as the job id was invalid (it "
-                "was: \"{}\").",
+                R"(Rejected start command as the job id was invalid (it was: "{}").)",
                 StartJob.JobID);
           },
           400}});
@@ -188,7 +186,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            if (not StartJob.ControlTopic.empty()) {
              if (IsJobPoolCommand) {
-               LOG_INFO("Connecting to an alternative command topic: \"{}\"",
+               LOG_INFO(R"(Connecting to an alternative command topic: "{}")",
                         StartJob.ControlTopic);
                CommandSource = std::make_unique<CommandListener>(
                    uri::URI{CommandTopicAddress, StartJob.ControlTopic},
@@ -208,8 +206,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
          {LogLevel::Error, true,
           [&]() {
             return fmt::format(
-                "Rejected new/alternative command topic (\"{}\") as the job "
-                "was not received from job pool.",
+                R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
                 StartJob.ControlTopic);
           },
           400}});

@@ -32,7 +32,7 @@ TEST_F(FieldHandlerFixture, SingleFieldSingleKey) {
   Field<int> TestField(Handler.get(), TestKey, DefaultValue);
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField);
-  auto TestStr = fmt::format("{{\"{}\":{}}}", TestKey, NewValue);
+  auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey, NewValue);
   UnderTest.processConfigData(TestStr);
   EXPECT_EQ(TestField.getValue(), NewValue);
 }
@@ -45,7 +45,7 @@ TEST_F(FieldHandlerFixture, SingleFieldMultipleKeys) {
   Field<int> TestField(Handler.get(), {TestKey1, TestKey2}, DefaultValue);
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField);
-  auto TestStr = fmt::format("{{\"{}\":{}}}", TestKey2, NewValue);
+  auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey2, NewValue);
   UnderTest.processConfigData(TestStr);
   EXPECT_EQ(TestField.getValue(), NewValue);
 }
@@ -62,7 +62,7 @@ TEST_F(FieldHandlerFixture, MultipleFieldsMultipleKeys) {
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField1);
   UnderTest.registerField(&TestField2);
-  auto TestStr = fmt::format("{{\"{}\":{}}}", TestKey21, NewValue);
+  auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey21, NewValue);
   UnderTest.processConfigData(TestStr);
   EXPECT_EQ(TestField2.getValue(), NewValue);
   EXPECT_EQ(TestField1.getValue(), DefaultValue1);
@@ -75,7 +75,7 @@ TEST_F(FieldHandlerFixture, WrongKey) {
   Field<int> TestField(Handler.get(), TestKey, DefaultValue);
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField);
-  auto TestStr = fmt::format("{{\"{}\":{}}}", "wrong_key", NewValue);
+  auto TestStr = fmt::format(R"({{"{}":{}}})", "wrong_key", NewValue);
   UnderTest.processConfigData(TestStr);
   EXPECT_EQ(TestField.getValue(), DefaultValue);
 }
@@ -85,7 +85,7 @@ TEST_F(FieldHandlerFixture, WrongKeyButFieldRequired) {
   RequiredField<int> TestField(Handler.get(), TestKey);
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField);
-  auto TestStr = fmt::format("{{\"{}\":{}}}", "wrong_key", 4564);
+  auto TestStr = fmt::format(R"({{"{}":{}}})", "wrong_key", 4564);
   EXPECT_THROW(UnderTest.processConfigData(TestStr), std::runtime_error);
 }
 
@@ -95,7 +95,7 @@ TEST_F(FieldHandlerFixture, CorrectKeyButWrongType) {
   Field<int> TestField(Handler.get(), TestKey, DefaultValue);
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField);
-  auto TestStr = fmt::format("{{\"{}\":\"{}\"}}", TestKey, "some_string");
+  auto TestStr = fmt::format(R"({{"{}":"{}"}})", TestKey, "some_string");
   UnderTest.processConfigData(TestStr);
   EXPECT_EQ(TestField.getValue(), DefaultValue);
 }
@@ -105,7 +105,7 @@ TEST_F(FieldHandlerFixture, CorrectKeyAndWrongTypeAndRequriedField) {
   RequiredField<int> TestField(Handler.get(), TestKey);
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField);
-  auto TestStr = fmt::format("{{\"{}\":\"{}\"}}", TestKey, "some_string");
+  auto TestStr = fmt::format(R"({{"{}":"{}"}})", TestKey, "some_string");
   EXPECT_THROW(UnderTest.processConfigData(TestStr), std::runtime_error);
 }
 
@@ -116,7 +116,7 @@ TEST_F(FieldHandlerFixture, IdenticalKeys) {
   FieldHandler UnderTest;
   UnderTest.registerField(&TestField1);
   UnderTest.registerField(&TestField2);
-  auto TestStr = fmt::format("{{\"{}\":{}}}", TestKey, 3);
+  auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey, 3);
   UnderTest.processConfigData(TestStr);
   EXPECT_EQ(TestField1.getValue(), 1);
   EXPECT_EQ(TestField2.getValue(), 3);

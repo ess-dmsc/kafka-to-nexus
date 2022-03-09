@@ -19,7 +19,7 @@
 
 namespace flatbuffers {
 class DetachedBuffer;
-}
+} // namespace flatbuffers
 
 namespace Status {
 

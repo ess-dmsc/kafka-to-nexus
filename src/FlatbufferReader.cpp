@@ -10,9 +10,7 @@
 #include "FlatbufferReader.h"
 #include <stdexcept>
 
-namespace FileWriter {
-
-namespace FlatbufferReaderRegistry {
+namespace FileWriter::FlatbufferReaderRegistry {
 
 std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &getReaders() {
   static std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> _items;
@@ -24,7 +22,7 @@ FlatbufferReaderRegistry::ReaderPtr &find(std::string const &Key) {
   try {
     return _items.at(Key);
   } catch (std::out_of_range &E) {
-    auto s = fmt::format("No such Reader in registry: \"{}\"", E.what());
+    auto s = fmt::format(R"(No such Reader in registry: "{}")", E.what());
     std::throw_with_nested(std::out_of_range(s));
   }
 }
@@ -42,5 +40,4 @@ void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item) {
   }
   m[FlatbufferID] = std::move(Item);
 }
-} // namespace FlatbufferReaderRegistry
-} // namespace FileWriter
+} // namespace FileWriter::FlatbufferReaderRegistry

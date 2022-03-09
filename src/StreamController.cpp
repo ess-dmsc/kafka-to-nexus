@@ -62,7 +62,7 @@ bool StreamController::isDoneWriting() {
        Now > KafkaSettings.StopTimestamp);
   if (not IsDoneWriting) {
     auto TimeDiffPeriods = (Now - LastFileSizeCalcTime) / FileSizeCalcInterval;
-    if (TimeDiffPeriods >= 1.0) {
+    if (TimeDiffPeriods >= 1) {
       WriterTask->updateApproximateFileSize();
       LastFileSizeCalcTime +=
           FileSizeCalcInterval * int(std::round(TimeDiffPeriods));

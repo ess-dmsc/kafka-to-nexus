@@ -30,7 +30,7 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
   std::map<FileWriter::FlatbufferMessage::SrcHash,
            FileWriter::FlatbufferMessage::SrcHash>
       WriterToSourceHashMap;
-  for (auto &SrcDestInfo : Map) {
+  for (auto const &SrcDestInfo : Map) {
     // Note that the cppcheck warning we are suppressing here is an actual
     // false positive due to side effects of instantiating the SourceFilter
     if (TempFilterMap.find(SrcDestInfo.WriteHash) == TempFilterMap.end()) {
@@ -114,13 +114,12 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
                 PartitionID, Topic);
       break;
     case PartitionFilter::StopReason::END_OF_PARTITION:
-      LOG_INFO("Done consuming data from partition {} of topic \"{}\" (reached "
-               "the end of the partition).",
+      LOG_INFO(R"(Done consuming data from partition {} of topic "{}" (reached the end of the partition).)",
                PartitionID, Topic);
       break;
     case PartitionFilter::StopReason::NO_REASON:
     default:
-      LOG_INFO("Done consuming data from partition {} of topic \"{}\".",
+      LOG_INFO(R"(Done consuming data from partition {} of topic "{}".)",
                PartitionID, Topic);
     }
     return true;
@@ -155,16 +154,13 @@ void Partition::pollForMessage() {
   if (Msg.first == Kafka::PollStatus::Message) {
     processMessage(Msg.second);
     if (MsgFilters.empty()) {
-      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as there "
-               "are no remaining filters.",
+      LOG_INFO(R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
                PartitionID, Topic);
       HasFinished = true;
       return;
     } else if (Msg.second.getMetaData().timestamp() >
                StopTime + StopTimeLeeway) {
-      LOG_INFO("Done consuming data from partition {} of topic \"{}\" as we "
-               "have reached the stop time. The timestamp of the last message "
-               "was: {}",
+      LOG_INFO(R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
                PartitionID, Topic, Msg.second.getMetaData().timestamp());
       HasFinished = true;
       return;

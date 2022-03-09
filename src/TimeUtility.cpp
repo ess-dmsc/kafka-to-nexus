@@ -32,7 +32,7 @@ std::string toUTCDateTime(time_point TimeStamp) {
 }
 
 std::string toLocalDateTime(time_point TimeStamp) {
-  const date::time_zone *CurrentTimeZone;
+  const date::time_zone *CurrentTimeZone{nullptr};
   try {
     CurrentTimeZone = date::current_zone();
   } catch (const std::runtime_error &e) {
