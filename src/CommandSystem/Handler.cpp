@@ -87,6 +87,12 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
     handleStartCommand(std::move(CommandMsg), IsJobPoolCommand);
   } else if (Parser::isStopCommand(CommandMsg)) {
     handleStopCommand(std::move(CommandMsg));
+  } else if (Parser::isStatusMessage(CommandMsg) or
+             Parser::isAnswerMessage(CommandMsg)) {
+    // Do nothing
+  } else if (CommandMsg.size() < 8) {
+    LOG_TRACE("Unable to handle message as it was too short ({} bytes).",
+              CommandMsg.size());
   } else {
     std::string SchemaId(reinterpret_cast<char const *>(CommandMsg.data()) + 4,
                          4);
