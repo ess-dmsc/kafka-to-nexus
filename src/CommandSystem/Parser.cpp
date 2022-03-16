@@ -11,8 +11,10 @@
 /// some utility methods that can be used to test the more common situations.
 
 #include <6s4t_run_stop_generated.h>
+#include <answ_action_response_generated.h>
 #include <pl72_run_start_generated.h>
 #include <sstream>
+#include <x5f2_status_generated.h>
 
 #include "Msg.h"
 #include "Parser.h"
@@ -127,6 +129,22 @@ bool isStopCommand(Msg const &CommandMessage) {
   return VerifyRunStopBuffer(Verifier) and
          flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           RunStopIdentifier());
+}
+
+bool isStatusMessage(Msg const &CommandMessage) {
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyStatusBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          StatusIdentifier());
+}
+
+bool isAnswerMessage(Msg const &CommandMessage) {
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyActionResponseBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          ActionResponseIdentifier());
 }
 
 } // namespace Command::Parser
