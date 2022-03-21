@@ -31,7 +31,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   LOG_INFO("file-writer service id: {}", Config.getServiceId());
   this->Reporter->setJSONMetaDataGenerator(
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
-  this->Reporter->setStatusGetter([&]() {return getCurrentStatus();});
+  this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {
@@ -44,13 +44,14 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     MetaDataTracker->clearMetaData();
     CurrentStreamController = createFileWritingJob(
         StartInfo, MainConfig, MasterMetricsRegistrar, MetaDataTracker);
-    CurrentMetadata = StartInfo.Metadata;;
+    CurrentMetadata = StartInfo.Metadata;
+    ;
     if (not StartInfo.ControlTopic.empty()) {
       Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);
     }
-    setCurrentStatus({Status::WorkerState::Writing,
-                                StartInfo.JobID, StartInfo.Filename,
-                                StartInfo.StartTime, StartInfo.StopTime});
+    setCurrentStatus({Status::WorkerState::Writing, StartInfo.JobID,
+                      StartInfo.Filename, StartInfo.StartTime,
+                      StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
     LOG_ERROR("{}", Error.what());
     throw;
@@ -121,7 +122,7 @@ void Master::setToIdle() {
   }
   CurrentStreamController.reset(nullptr);
   MetaDataTracker->clearMetaData();
-  resetStatusInfo(); //CurrentStatus.State = Status::WorkerState::Idle;
+  resetStatusInfo(); // CurrentStatus.State = Status::WorkerState::Idle;
   Reporter->revertToDefaultStatusTopic();
 }
 

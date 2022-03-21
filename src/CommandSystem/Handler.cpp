@@ -72,8 +72,8 @@ void Handler::revertCommandTopic() {
 void Handler::sendHasStoppedMessage(std::string const &FileName,
                                     nlohmann::json Metadata) {
   Metadata["hdf_structure"] = NexusStructure;
-  CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "", FileName,
-                                     Metadata.dump());
+  CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
+                                     FileName, Metadata.dump());
   PollForJob = true;
   revertCommandTopic();
 }
@@ -81,8 +81,8 @@ void Handler::sendHasStoppedMessage(std::string const &FileName,
 void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                           std::string const &Metadata,
                                           std::string const &ErrorMessage) {
-  CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(), ErrorMessage,
-                                     FileName, Metadata);
+  CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(),
+                                     ErrorMessage, FileName, Metadata);
   PollForJob = true;
 }
 

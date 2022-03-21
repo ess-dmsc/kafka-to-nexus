@@ -18,9 +18,7 @@ namespace FlatBuffer {
 
 namespace Status {
 
-time_point StatusReporterBase::getStopTime() {
-  return StatusGetter().StopTime;
-}
+time_point StatusReporterBase::getStopTime() { return StatusGetter().StopTime; }
 
 flatbuffers::DetachedBuffer
 StatusReporterBase::createReport(std::string const &JSONReport) const {

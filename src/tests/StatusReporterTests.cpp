@@ -56,8 +56,8 @@ public:
 };
 
 TEST_F(StatusReporterTests, OnInitialisationValues) {
-  ReporterPtr->setStatusGetter([=]() -> Status::JobStatusInfo {return {};});
-  ReporterPtr->setJSONMetaDataGenerator([](auto&){});
+  ReporterPtr->setStatusGetter([=]() -> Status::JobStatusInfo { return {}; });
+  ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
   auto JSONReport = ReporterPtr->createJSONReport();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
@@ -68,11 +68,11 @@ TEST_F(StatusReporterTests, OnInitialisationValues) {
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
-  Status::JobStatusInfo const Info{
-      Status::WorkerState::Writing, "1234", "file1.nxs",
-      time_point(1234567890ms), time_point(19876543210ms)};
-  ReporterPtr->setStatusGetter([=](){return Info;});
-  ReporterPtr->setJSONMetaDataGenerator([](auto&){});
+  Status::JobStatusInfo const Info{Status::WorkerState::Writing, "1234",
+                                   "file1.nxs", time_point(1234567890ms),
+                                   time_point(19876543210ms)};
+  ReporterPtr->setStatusGetter([=]() { return Info; });
+  ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
 
   auto JSONReport = ReporterPtr->createJSONReport();
   auto Report = ReporterPtr->createReport(JSONReport);

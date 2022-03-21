@@ -23,7 +23,8 @@ public:
   MAKE_MOCK1(registerStopNowFunction, void(Command::StopNowFuncType), override);
   MAKE_MOCK1(registerIsWritingFunction, void(Command::IsWritingFuncType),
              override);
-  MAKE_MOCK1(registerGetJobIdFunction, void(Command::GetJobIdFuncType), override);
+  MAKE_MOCK1(registerGetJobIdFunction, void(Command::GetJobIdFuncType),
+             override);
 
   MAKE_MOCK2(sendHasStoppedMessage, void(const std::string &, nlohmann::json),
              override);
@@ -172,7 +173,7 @@ TEST_F(MasterTest, StopNowSuccessWhenStopTimePassed) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  
+
   UnderTest->startWriting(StartCmd);
   auto NewStopTime1 = StartTime - 5s;
 
