@@ -54,6 +54,10 @@ void Handler::registerIsWritingFunction(IsWritingFuncType IsWritingFunction) {
   IsWritingNow = IsWritingFunction;
 }
 
+void Handler::registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) {
+  GetJobId = GetJobIdFunction;
+}
+
 void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
     LOG_INFO("Reverting to default command topic: {}",
@@ -68,7 +72,7 @@ void Handler::revertCommandTopic() {
 void Handler::sendHasStoppedMessage(std::string const &FileName,
                                     nlohmann::json Metadata) {
   Metadata["hdf_structure"] = NexusStructure;
-  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
+  CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "", FileName,
                                      Metadata.dump());
   PollForJob = true;
   revertCommandTopic();
@@ -77,7 +81,7 @@ void Handler::sendHasStoppedMessage(std::string const &FileName,
 void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                           std::string const &Metadata,
                                           std::string const &ErrorMessage) {
-  CommandResponse->publishStoppedMsg(ActionResult::Failure, JobId, ErrorMessage,
+  CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(), ErrorMessage,
                                      FileName, Metadata);
   PollForJob = true;
 }
@@ -148,6 +152,7 @@ void checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
 
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IsJobPoolCommand) {
+  std::string NewJobId;
   try {
     time_point StopTime{0ms};
     std::string ExceptionMessage;
@@ -225,13 +230,11 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
            try {
              DoStart(StartJob);
              StopTime = StartJob.StopTime;
-             JobId = StartJob.JobID;
              PollForJob = false;
              JobPool->disconnectFromPool();
              NexusStructure = StartJob.NexusStructure;
            } catch (std::exception const &E) {
              PollForJob = true;
-             JobId = "not_currently_writing";
              ExceptionMessage = E.what();
              return false;
            }
@@ -321,12 +324,12 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
                              }}});
 
     CommandSteps.push_back(
-        {[&]() { return JobId == StopCmd.JobID; },
+        {[&]() { return GetJobId() == StopCmd.JobID; },
          {LogLevel::Warning, 400, true, [&]() {
             return fmt::format(
                 "Rejected stop command as the job id was invalid (It "
                 "should be {}, it was: {}).",
-                JobId, StopCmd.JobID);
+                GetJobId(), StopCmd.JobID);
           }}});
 
     CommandSteps.push_back(

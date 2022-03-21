@@ -24,6 +24,7 @@ class DetachedBuffer;
 namespace Status {
 
 using JsonGeneratorFuncType = std::function<void(nlohmann::json &)>;
+using StatusGetterFuncType = std::function<Status::JobStatusInfo()>;
 
 class StatusReporterBase {
 public:
@@ -44,27 +45,13 @@ public:
 
   virtual ~StatusReporterBase() = default;
 
-  /// \brief Set the slow changing information to report.
-  ///
-  /// \param NewInfo The new information to report
-  virtual void updateStatusInfo(JobStatusInfo const &NewInfo);
-
   virtual void useAlternativeStatusTopic(std::string const &AltTopicName);
 
   virtual void revertToDefaultStatusTopic();
 
-  /// \brief Update the stop time to be reported.
-  ///
-  /// \param StopTime The new stop time.
-  virtual void updateStopTime(time_point StopTime);
-
   /// \brief Get the currently reported stop time.
   virtual time_point getStopTime();
 
-  /// \brief Clear out the current information.
-  ///
-  /// Used when a file has finished writing.
-  virtual void resetStatusInfo();
 
   /// \brief Generate a FlatBuffer serialised report.
   ///
@@ -81,20 +68,24 @@ public:
     JSONGenerator = GeneratorFunction;
   }
 
+  void setStatusGetter(StatusGetterFuncType NewStatusGetter) {
+    StatusGetter = NewStatusGetter;
+  }
+
 protected:
   duration const Period;
   void reportStatus();
 
 private:
   virtual void postReportStatusActions(){};
-  JobStatusInfo Status{};
   mutable std::mutex StatusMutex;
   std::shared_ptr<Kafka::Producer> Producer;
   std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic;
   std::unique_ptr<Kafka::ProducerTopic> AltStatusProducerTopic;
   bool UsingAlternativeStatusTopic{false};
   ApplicationStatusInfo const StaticStatusInformation;
-  std::function<void(nlohmann::json &JSONNode)> JSONGenerator;
+  JsonGeneratorFuncType JSONGenerator{[](auto) { throw std::runtime_error("JSONGenerator(): Not set/implemented."); }};
+  StatusGetterFuncType StatusGetter{[]() -> Status::JobStatusInfo { throw std::runtime_error("StatusGetter(): Not set/implemented."); }};
 };
 
 } // namespace Status

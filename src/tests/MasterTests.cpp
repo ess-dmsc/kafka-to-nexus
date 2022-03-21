@@ -23,6 +23,7 @@ public:
   MAKE_MOCK1(registerStopNowFunction, void(Command::StopNowFuncType), override);
   MAKE_MOCK1(registerIsWritingFunction, void(Command::IsWritingFuncType),
              override);
+  MAKE_MOCK1(registerGetJobIdFunction, void(Command::GetJobIdFuncType), override);
 
   MAKE_MOCK2(sendHasStoppedMessage, void(const std::string &, nlohmann::json),
              override);
@@ -39,12 +40,9 @@ public:
   StatusReporterStandIn()
       : Status::StatusReporterBase(std::shared_ptr<Kafka::Producer>{}, {}, {}) {
   }
-  MAKE_MOCK1(updateStatusInfo, void(Status::JobStatusInfo const &), override);
   MAKE_MOCK1(useAlternativeStatusTopic, void(std::string const &), override);
   MAKE_MOCK0(revertToDefaultStatusTopic, void(), override);
-  MAKE_MOCK1(updateStopTime, void(time_point), override);
   MAKE_MOCK0(getStopTime, time_point(), override);
-  MAKE_MOCK0(resetStatusInfo, void(), override);
   MAKE_CONST_MOCK1(createReport,
                    flatbuffers::DetachedBuffer(std::string const &), override);
   MAKE_CONST_MOCK0(createJSONReport, std::string(), override);
@@ -105,17 +103,16 @@ TEST_F(MasterTest, StartWritingSuccess) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  REQUIRE_CALL(*StatusReporter, updateStatusInfo(_)).TIMES(1);
   UnderTest->startWriting(StartCmd);
+  EXPECT_EQ(UnderTest->getCurrentState(), Status::WorkerState::Writing);
 }
 
 TEST_F(MasterTest, StartWritingFailureWhenWriting) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  REQUIRE_CALL(*StatusReporter, updateStatusInfo(_)).TIMES(1);
   UnderTest->startWriting(StartCmd);
-
+  ASSERT_EQ(UnderTest->getCurrentState(), Status::WorkerState::Writing);
   EXPECT_THROW(UnderTest->startWriting(StartCmd), std::runtime_error);
 }
 
@@ -127,40 +124,35 @@ TEST_F(MasterTest, SetStopTimeSuccess) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  REQUIRE_CALL(*StatusReporter, updateStatusInfo(_)).TIMES(1);
   UnderTest->startWriting(StartCmd);
   auto NewStopTime = StartTime + 5s;
-  REQUIRE_CALL(*StatusReporter, updateStopTime(NewStopTime)).TIMES(1);
   ALLOW_CALL(*StatusReporter, getStopTime()).RETURN(StartCmd.StopTime);
   UnderTest->setStopTime(NewStopTime);
+  EXPECT_EQ(UnderTest->getStopTime(), NewStopTime);
 }
 
 TEST_F(MasterTest, SetStopTimeInThePastSuccess) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  REQUIRE_CALL(*StatusReporter, updateStatusInfo(_)).TIMES(1);
   UnderTest->startWriting(StartCmd);
   auto NewStopTime = StartTime - 5s;
-  REQUIRE_CALL(*StatusReporter, updateStopTime(NewStopTime)).TIMES(1);
   ALLOW_CALL(*StatusReporter, getStopTime()).RETURN(StartCmd.StopTime);
   UnderTest->setStopTime(NewStopTime);
+  EXPECT_EQ(UnderTest->getStopTime(), NewStopTime);
 }
 
 TEST_F(MasterTest, SetStopTimeFailureDueToStopTimePassed) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  REQUIRE_CALL(*StatusReporter, updateStatusInfo(_)).TIMES(1);
   UnderTest->startWriting(StartCmd);
   auto NewStopTime1 = StartTime - 5s;
-  REQUIRE_CALL(*StatusReporter, updateStopTime(NewStopTime1)).TIMES(1);
   ALLOW_CALL(*StatusReporter, getStopTime()).RETURN(StartCmd.StopTime);
   UnderTest->setStopTime(NewStopTime1);
 
   auto NewStopTime2 = StartTime + 20s;
   ALLOW_CALL(*StatusReporter, getStopTime()).RETURN(NewStopTime1);
-  FORBID_CALL(*StatusReporter, updateStopTime(_));
   EXPECT_THROW(UnderTest->setStopTime(NewStopTime2), std::runtime_error);
 }
 
@@ -172,23 +164,20 @@ TEST_F(MasterTest, StopNowSuccess) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  REQUIRE_CALL(*StatusReporter, updateStatusInfo(_)).TIMES(1);
   UnderTest->startWriting(StartCmd);
-  REQUIRE_CALL(*StatusReporter, updateStopTime(_)).TIMES(1);
-  UnderTest->stopNow();
+  EXPECT_NO_THROW(UnderTest->stopNow());
 }
 
 TEST_F(MasterTest, StopNowSuccessWhenStopTimePassed) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic))
       .TIMES(1);
-  REQUIRE_CALL(*StatusReporter, updateStatusInfo(_)).TIMES(1);
+  
   UnderTest->startWriting(StartCmd);
   auto NewStopTime1 = StartTime - 5s;
-  REQUIRE_CALL(*StatusReporter, updateStopTime(NewStopTime1)).TIMES(1);
+
   ALLOW_CALL(*StatusReporter, getStopTime()).RETURN(StartCmd.StopTime);
   UnderTest->setStopTime(NewStopTime1);
 
-  REQUIRE_CALL(*StatusReporter, updateStopTime(_)).TIMES(1);
   UnderTest->stopNow();
 }

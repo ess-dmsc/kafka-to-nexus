@@ -27,14 +27,15 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
       [this](auto StopTime) { this->setStopTime(StopTime); });
   CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
   CommandAndControl->registerIsWritingFunction(
-      [this]() { return WriterState::Writing == CurrentState; });
+      [this]() { return Status::WorkerState::Writing == getCurrentState(); });
   LOG_INFO("file-writer service id: {}", Config.getServiceId());
   this->Reporter->setJSONMetaDataGenerator(
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
+  this->Reporter->setStatusGetter([&]() {return getCurrentStatus();});
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {
-  if (CurrentState == WriterState::Writing) {
+  if (getCurrentState() == Status::WorkerState::Writing) {
     throw std::runtime_error(fmt::format(
         R"(Unable to start new writing job (with id: "{}") when waiting for the current one to finish.)",
         StartInfo.JobID));
@@ -43,13 +44,11 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     MetaDataTracker->clearMetaData();
     CurrentStreamController = createFileWritingJob(
         StartInfo, MainConfig, MasterMetricsRegistrar, MetaDataTracker);
-    CurrentFileName = StartInfo.Filename;
-    CurrentMetadata = StartInfo.Metadata;
-    CurrentState = WriterState::Writing;
+    CurrentMetadata = StartInfo.Metadata;;
     if (not StartInfo.ControlTopic.empty()) {
       Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);
     }
-    Reporter->updateStatusInfo({Status::JobStatusInfo::WorkerState::Writing,
+    setCurrentStatus({Status::WorkerState::Writing,
                                 StartInfo.JobID, StartInfo.Filename,
                                 StartInfo.StartTime, StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
@@ -59,7 +58,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
 }
 
 void Master::stopNow() {
-  if (CurrentState != WriterState::Writing) {
+  if (getCurrentState() != Status::WorkerState::Writing) {
     throw std::runtime_error(
         R"(Unable to stop writing when not in "Writing" state.)");
   }
@@ -67,11 +66,11 @@ void Master::stopNow() {
   if (CurrentStreamController != nullptr) {
     CurrentStreamController->stop();
   }
-  Reporter->updateStopTime(time_point{0ms});
+  setStopTimeInternal(time_point{0ms});
 }
 
 void Master::setStopTime(time_point StopTime) {
-  if (CurrentState != WriterState::Writing) {
+  if (getCurrentState() != Status::WorkerState::Writing) {
     throw std::runtime_error(
         R"(Unable to set stop time when not in "Writing" state.)");
   }
@@ -80,7 +79,7 @@ void Master::setStopTime(time_point StopTime) {
                              "has already been passed.");
   }
   CurrentStreamController->setStopTime(StopTime);
-  Reporter->updateStopTime(StopTime);
+  setStopTimeInternal(StopTime);
 }
 
 bool Master::hasWritingStopped() {
@@ -104,7 +103,7 @@ void Master::run() {
 void Master::setToIdle() {
   if (CurrentStreamController->hasErrorState()) {
     CommandAndControl->sendErrorEncounteredMessage(
-        CurrentFileName, CurrentMetadata,
+        getCurrentFileName(), CurrentMetadata,
         CurrentStreamController->errorMessage());
   } else {
     auto CurrentJSONStatus =
@@ -117,14 +116,48 @@ void Master::setToIdle() {
           "Failed to parse JSON metadata string from start message. Skipping.");
     }
     CurrentJSONStatus.update(StaticMetaData);
-    CommandAndControl->sendHasStoppedMessage(CurrentFileName,
+    CommandAndControl->sendHasStoppedMessage(getCurrentFileName(),
                                              CurrentJSONStatus);
   }
   CurrentStreamController.reset(nullptr);
-  CurrentState = WriterState::Idle;
   MetaDataTracker->clearMetaData();
-  Reporter->resetStatusInfo();
+  resetStatusInfo(); //CurrentStatus.State = Status::WorkerState::Idle;
   Reporter->revertToDefaultStatusTopic();
+}
+
+time_point Master::getStopTime() {
+  std::lock_guard LockGuard(StatusMutex);
+  return CurrentStatus.StopTime;
+}
+
+Status::JobStatusInfo Master::getCurrentStatus() {
+  std::lock_guard LockGuard(StatusMutex);
+  return CurrentStatus;
+}
+
+Status::WorkerState Master::getCurrentState() {
+  std::lock_guard LockGuard(StatusMutex);
+  return CurrentStatus.State;
+}
+
+std::string Master::getCurrentFileName() {
+  std::lock_guard LockGuard(StatusMutex);
+  return CurrentStatus.Filename;
+}
+
+void Master::setStopTimeInternal(time_point NewStopTime) {
+  std::lock_guard LockGuard(StatusMutex);
+  CurrentStatus.StopTime = NewStopTime;
+}
+
+void Master::setCurrentStatus(Status::JobStatusInfo NewStatus) {
+  std::lock_guard LockGuard(StatusMutex);
+  CurrentStatus = NewStatus;
+}
+
+void Master::resetStatusInfo() {
+  std::lock_guard LockGuard(StatusMutex);
+  CurrentStatus = {};
 }
 
 } // namespace FileWriter

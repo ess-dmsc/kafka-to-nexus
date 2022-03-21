@@ -21,7 +21,7 @@ public:
   StatusReporter(Kafka::BrokerSettings const &Settings,
                  std::string const &StatusTopic,
                  ApplicationStatusInfo const &StatusInformation)
-      : StatusReporterBase(Settings, StatusTopic, StatusInformation), IO(),
+                 : StatusReporterBase(Settings, StatusTopic, StatusInformation), IO(),
         AsioTimer(IO, StatusInformation.UpdateInterval) {
     this->start();
   }

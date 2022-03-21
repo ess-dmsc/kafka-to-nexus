@@ -15,10 +15,12 @@
 #include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
 #include "Msg.h"
+#include "Status/StatusInfo.h"
 #include <atomic>
 #include <memory>
 #include <string>
 #include <vector>
+#include <mutex>
 
 namespace Status {
 class StatusReporterBase;
@@ -43,20 +45,26 @@ public:
   /// Continues running until stop requested.
   void run();
 
-  void setStopTime(time_point StopTime);
+  void setStopTime(time_point NewStopTime);
+  time_point getStopTime();
+  Status::JobStatusInfo getCurrentStatus();
+  Status::WorkerState getCurrentState();
+  std::string getCurrentFileName();
   void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);
   bool writingIsFinished();
 
 private:
-  enum class WriterState { Idle, Writing };
+  void setStopTimeInternal(time_point NewStopTime);
+  void setCurrentStatus(Status::JobStatusInfo NewStatus);
+  void resetStatusInfo();
   MainOpt &MainConfig;
   std::unique_ptr<Command::HandlerBase> CommandAndControl;
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporterBase> Reporter;
   Metrics::Registrar MasterMetricsRegistrar;
-  WriterState CurrentState{WriterState::Idle};
-  std::string CurrentFileName;
+  std::mutex StatusMutex;
+  Status::JobStatusInfo CurrentStatus;
   std::string CurrentMetadata;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();
