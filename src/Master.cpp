@@ -21,6 +21,8 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
                Metrics::Registrar const &Registrar)
     : MainConfig(Config), CommandAndControl(std::move(Listener)),
       Reporter(std::move(Reporter)), MasterMetricsRegistrar(Registrar) {
+  CommandAndControl->registerGetJobIdFunction(
+      [&]() { return this->getCurrentStatus().JobId; });
   CommandAndControl->registerStartFunction(
       [this](auto StartInfo) { this->startWriting(StartInfo); });
   CommandAndControl->registerSetStopTimeFunction(
