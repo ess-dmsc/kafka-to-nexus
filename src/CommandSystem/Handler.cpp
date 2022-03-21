@@ -174,6 +174,17 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                 ServiceId, StartJob.ServiceID);
           }}});
 
+    /// \note This test should never return false as consumption of new jobs
+    /// should only be possible when the current one is finished. However, there
+    /// is an indication that in some cases jobs will be consumed regardless.
+    /// This statement is made 2022-03-21
+    CommandSteps.push_back({[&]() { return not IsWritingNow(); },
+                            {LogLevel::Error, 400, true, [&]() {
+                               return fmt::format(
+                                   "Rejected start command as there is "
+                                   "currently a write job in progress.");
+                             }}});
+
     CommandSteps.push_back(
         {[&]() { return isValidUUID(StartJob.JobID); },
          {LogLevel::Warning, 400, true, [&]() {
