@@ -69,9 +69,8 @@ public:
 
     std::unique_ptr<Status::StatusReporterBase> TmpStatusReporter =
         std::make_unique<StatusReporterStandIn>();
-    StatusReporter =
+    StatusReporter = // cppcheck-suppress danglingLifetime
         dynamic_cast<StatusReporterStandIn *>(TmpStatusReporter.get());
-    // cppcheck-suppress danglingLifetime
 
     REQUIRE_CALL(*StatusReporter, setJSONMetaDataGenerator(_)).TIMES(1);
 
