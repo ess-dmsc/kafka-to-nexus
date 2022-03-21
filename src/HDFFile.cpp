@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFFile.h"
-#include "Filesystem.h"
 #include "HDFAttributes.h"
 #include "HDFOperations.h"
 #include "HDFVersionCheck.h"

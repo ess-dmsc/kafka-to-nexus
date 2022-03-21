@@ -59,7 +59,8 @@ public:
   void SetUp() override {
     std::unique_ptr<Command::HandlerBase> TmpCmdHandler =
         std::make_unique<CommandHandlerStandIn>();
-    CmdHandler = dynamic_cast<CommandHandlerStandIn *>(TmpCmdHandler.get());
+    auto CmdHandler =
+        dynamic_cast<CommandHandlerStandIn *>(TmpCmdHandler.get());
 
     REQUIRE_CALL(*CmdHandler, registerStartFunction(_)).TIMES(1);
     REQUIRE_CALL(*CmdHandler, registerSetStopTimeFunction(_)).TIMES(1);
@@ -70,6 +71,7 @@ public:
         std::make_unique<StatusReporterStandIn>();
     StatusReporter =
         dynamic_cast<StatusReporterStandIn *>(TmpStatusReporter.get());
+    // cppcheck-suppress danglingLifetime
 
     REQUIRE_CALL(*StatusReporter, setJSONMetaDataGenerator(_)).TIMES(1);
 
@@ -83,7 +85,6 @@ public:
   MainOpt Config;
   Metrics::Registrar Registrar{"no_prefix", {}};
   void TearDown() override { UnderTest.reset(); }
-  CommandHandlerStandIn *CmdHandler;
   StatusReporterStandIn *StatusReporter;
   std::unique_ptr<FileWriter::Master> UnderTest;
   time_point StartTime{system_clock::now()};
