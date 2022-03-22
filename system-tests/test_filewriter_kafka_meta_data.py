@@ -13,7 +13,7 @@ from helpers.writer import (
 
 
 def test_end_message_metadata(worker_pool, kafka_address, file_name = "output_file_kafka_meta_data.nxs"):
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now

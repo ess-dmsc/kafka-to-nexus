@@ -14,7 +14,7 @@ import numpy as np
 
 
 def test_repeated_messages(worker_pool, kafka_address, file_name = "output_file_repeated_messages.nxs"):
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
 
     data_topic = "TEST_repeatedMessages"

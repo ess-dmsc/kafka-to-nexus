@@ -16,7 +16,7 @@ from helpers.writer import (
 
 
 def test_ep00(worker_pool, kafka_address, file_name = "output_file_ep00.nxs"):
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
     producer = create_producer()
     topic = "TEST_epicsConnectionStatus"

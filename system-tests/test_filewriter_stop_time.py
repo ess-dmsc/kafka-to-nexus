@@ -18,7 +18,7 @@ from helpers.writer import (
 
 
 def test_start_and_stop_time_are_in_the_past(worker_pool, kafka_address, file_name = "output_file_of_historical_data.nxs"):
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
 
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]

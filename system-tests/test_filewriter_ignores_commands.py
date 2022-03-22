@@ -15,7 +15,7 @@ from helpers.writer import (
 def test_ignores_commands_with_incorrect_id(
     worker_pool, kafka_address, multiple_writers, file_name = "output_file_stop_id.nxs"
 ):
-    wait_writers_available(worker_pool, nr_of=2, timeout=10)
+    wait_writers_available(worker_pool, nr_of=2, timeout=20)
     now = datetime.now()
     
     with open("commands/nexus_structure.json", "r") as f:

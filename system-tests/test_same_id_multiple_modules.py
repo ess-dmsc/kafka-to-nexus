@@ -17,7 +17,7 @@ from helpers.writer import (
 def test_two_different_writer_modules_with_same_flatbuffer_id(
     worker_pool, kafka_address, file_name = "output_file_multiple_modules.nxs"
 ):
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
