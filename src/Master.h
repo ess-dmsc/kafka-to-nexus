@@ -46,10 +46,10 @@ public:
   void run();
 
   void setStopTime(time_point NewStopTime);
-  time_point getStopTime();
-  Status::JobStatusInfo getCurrentStatus();
-  Status::WorkerState getCurrentState();
-  std::string getCurrentFileName();
+  time_point getStopTime() const;
+  Status::JobStatusInfo getCurrentStatus() const;
+  Status::WorkerState getCurrentState() const;
+  std::string getCurrentFileName() const;
   void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);
   bool writingIsFinished();
@@ -63,7 +63,7 @@ private:
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporterBase> Reporter;
   Metrics::Registrar MasterMetricsRegistrar;
-  std::mutex StatusMutex;
+  mutable std::mutex StatusMutex;
   Status::JobStatusInfo CurrentStatus;
   std::string CurrentMetadata;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};

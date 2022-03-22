@@ -31,7 +31,7 @@ public:
   void reportMetrics();
   virtual bool addMetric(Metric &NewMetric, std::string const &NewName);
   virtual bool tryRemoveMetric(std::string const &MetricName);
-  LogTo getSinkType();
+  LogTo getSinkType() const;
 
 private:
   void run() {
@@ -42,7 +42,7 @@ private:
   void waitForStop();
 
   std::unique_ptr<Sink> MetricSink;
-  std::mutex MetricsMapMutex; // lock when accessing MetricToReportOn
+  mutable std::mutex MetricsMapMutex; // lock when accessing MetricToReportOn
   std::map<std::string, InternalMetric> MetricsToReportOn; // MetricName: Metric
   asio::io_context IO;
   std::chrono::milliseconds Period;

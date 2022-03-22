@@ -28,9 +28,13 @@ Handler::Handler(std::string const &ServiceIdentifier,
       CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
 
 void Handler::loopFunction() {
-  auto JobMsg = JobPool->pollForJob();
-  if (JobMsg.first == Kafka::PollStatus::Message) {
-    handleCommand(std::move(JobMsg.second), true);
+  if (not IsWritingNow()) {
+    auto JobMsg = JobPool->pollForJob();
+    if (JobMsg.first == Kafka::PollStatus::Message) {
+      handleCommand(std::move(JobMsg.second), true);
+    }
+  } else if (JobPool->isConnected()) {
+    JobPool->disconnectFromPool();
   }
   auto CommandMsg = CommandSource->pollForCommand();
   if (CommandMsg.first == Kafka::PollStatus::Message) {
@@ -74,7 +78,6 @@ void Handler::sendHasStoppedMessage(std::string const &FileName,
   Metadata["hdf_structure"] = NexusStructure;
   CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
                                      FileName, Metadata.dump());
-  PollForJob = true;
   revertCommandTopic();
 }
 
@@ -83,7 +86,6 @@ void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                           std::string const &ErrorMessage) {
   CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(),
                                      ErrorMessage, FileName, Metadata);
-  PollForJob = true;
 }
 
 void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
@@ -152,9 +154,7 @@ void checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
 
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IsJobPoolCommand) {
-  std::string NewJobId;
   try {
-    time_point StopTime{0ms};
     std::string ExceptionMessage;
     StartMessage StartJob;
     std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
@@ -229,12 +229,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            try {
              DoStart(StartJob);
-             StopTime = StartJob.StopTime;
-             PollForJob = false;
-             JobPool->disconnectFromPool();
              NexusStructure = StartJob.NexusStructure;
            } catch (std::exception const &E) {
-             PollForJob = true;
              ExceptionMessage = E.what();
              return false;
            }
@@ -271,7 +267,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     if (OutcomeValue.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
-          StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString());
+          StartJob.StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString());
     }
   } catch (std::exception &E) {
     LOG_ERROR("Unable to process start command, error was: {}", E.what());

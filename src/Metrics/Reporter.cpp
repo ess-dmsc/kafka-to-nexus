@@ -38,7 +38,7 @@ bool Reporter::tryRemoveMetric(std::string const &MetricName) {
   return static_cast<bool>(MetricsToReportOn.erase(MetricName));
 }
 
-LogTo Reporter::getSinkType() { return MetricSink->getType(); }
+LogTo Reporter::getSinkType() const { return MetricSink->getType(); }
 
 void Reporter::start() {
   AsioTimer.async_wait([this](std::error_code const &Error) {

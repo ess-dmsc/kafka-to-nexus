@@ -92,7 +92,6 @@ private:
   /// has been configured.
   void revertCommandTopic();
 
-  bool PollForJob{true};
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
   std::unique_ptr<FeedbackProducerBase> CommandResponse;

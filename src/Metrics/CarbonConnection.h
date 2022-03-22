@@ -25,8 +25,8 @@ public:
     return Messages.try_enqueue(Msg);
   };
   Status getConnectionStatus() const;
-  bool messageQueueEmpty() { return Messages.size_approx() == 0; }
-  size_t messageQueueSize() { return Messages.size_approx(); }
+  bool messageQueueEmpty() const { return Messages.size_approx() == 0; }
+  size_t messageQueueSize() const { return Messages.size_approx(); }
 
 protected:
   enum struct ReconnectDelay { LONG, SHORT };

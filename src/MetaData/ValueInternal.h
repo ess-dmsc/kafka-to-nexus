@@ -23,8 +23,8 @@ public:
                     std::string const &ValueName)
       : Path(LocationPath), Name(ValueName) {}
   virtual ~ValueBaseInternal() = default;
-  virtual nlohmann::json getAsJSON() = 0;
-  virtual void writeToHDF5File(hdf5::node::Node) = 0;
+  virtual nlohmann::json getAsJSON() const = 0;
+  virtual void writeToHDF5File(hdf5::node::Node) const = 0;
   std::string getName() const { return Name; }
   std::string getPath() const { return Path; }
 
@@ -47,13 +47,13 @@ public:
     std::lock_guard Lock(ValueMutex);
     return MetaDataValue;
   }
-  virtual nlohmann::json getAsJSON() override {
+  virtual nlohmann::json getAsJSON() const override {
     std::lock_guard Lock(ValueMutex);
     nlohmann::json RetObj;
     RetObj[getPath() + ":" + getName()] = MetaDataValue;
     return RetObj;
   }
-  virtual void writeToHDF5File(hdf5::node::Node RootNode) override {
+  virtual void writeToHDF5File(hdf5::node::Node RootNode) const override {
     std::lock_guard Lock(ValueMutex);
     try {
       if (WriteToFile) {
@@ -69,7 +69,7 @@ public:
   };
 
 private:
-  std::mutex ValueMutex;
+  mutable std::mutex ValueMutex;
   DataType MetaDataValue{};
   std::function<void(hdf5::node::Node, std::string, DataType)> WriteToFile;
 };

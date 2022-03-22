@@ -18,11 +18,14 @@ namespace FlatBuffer {
 
 namespace Status {
 
-time_point StatusReporterBase::getStopTime() { return StatusGetter().StopTime; }
+time_point StatusReporterBase::getStopTime() const {
+  std::shared_lock const lock(StatusMutex);
+  return StatusGetter().StopTime;
+}
 
 flatbuffers::DetachedBuffer
 StatusReporterBase::createReport(std::string const &JSONReport) const {
-  std::lock_guard<std::mutex> const lock(StatusMutex);
+  std::shared_lock const lock(StatusMutex);
 
   flatbuffers::FlatBufferBuilder Builder;
 
@@ -45,6 +48,7 @@ StatusReporterBase::createReport(std::string const &JSONReport) const {
 
 // Create the JSON part of the status message
 std::string StatusReporterBase::createJSONReport() const {
+  std::shared_lock const lock(StatusMutex);
   auto Info = nlohmann::json::object();
   auto CurrentStatus = StatusGetter();
   std::map<Status::WorkerState, std::string> StateMap{
@@ -64,6 +68,7 @@ std::string StatusReporterBase::createJSONReport() const {
 }
 
 void StatusReporterBase::reportStatus() {
+  std::shared_lock const Lock{StatusMutex};
   if (!StatusProducerTopic) {
     return;
   }

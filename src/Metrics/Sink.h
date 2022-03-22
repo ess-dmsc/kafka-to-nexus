@@ -26,9 +26,9 @@ public:
 
   /// So that the caller of reportMetric can decide not to give the Sink more to
   /// report on
-  virtual bool isHealthy() = 0;
+  virtual bool isHealthy() const = 0;
 
-  virtual LogTo getType() = 0;
+  virtual LogTo getType() const = 0;
   virtual ~Sink() = default;
 };
 

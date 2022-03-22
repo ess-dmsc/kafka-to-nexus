@@ -16,8 +16,8 @@ Status Connection::getConnectionStatus() const {
   return Pimpl->getConnectionStatus();
 }
 
-bool Connection::messageQueueEmpty() { return Pimpl->messageQueueEmpty(); }
+bool Connection::messageQueueEmpty() const { return Pimpl->messageQueueEmpty(); }
 
-size_t Connection::messageQueueSize() { return Pimpl->messageQueueSize(); }
+size_t Connection::messageQueueSize() const { return Pimpl->messageQueueSize(); }
 
 } // namespace Metrics::Carbon

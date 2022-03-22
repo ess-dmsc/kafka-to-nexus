@@ -124,26 +124,26 @@ void Master::setToIdle() {
   }
   CurrentStreamController.reset(nullptr);
   MetaDataTracker->clearMetaData();
-  resetStatusInfo(); // CurrentStatus.State = Status::WorkerState::Idle;
+  resetStatusInfo();
   Reporter->revertToDefaultStatusTopic();
 }
 
-time_point Master::getStopTime() {
+time_point Master::getStopTime() const {
   std::lock_guard LockGuard(StatusMutex);
   return CurrentStatus.StopTime;
 }
 
-Status::JobStatusInfo Master::getCurrentStatus() {
+Status::JobStatusInfo Master::getCurrentStatus() const {
   std::lock_guard LockGuard(StatusMutex);
   return CurrentStatus;
 }
 
-Status::WorkerState Master::getCurrentState() {
+Status::WorkerState Master::getCurrentState() const {
   std::lock_guard LockGuard(StatusMutex);
   return CurrentStatus.State;
 }
 
-std::string Master::getCurrentFileName() {
+std::string Master::getCurrentFileName() const {
   std::lock_guard LockGuard(StatusMutex);
   return CurrentStatus.Filename;
 }

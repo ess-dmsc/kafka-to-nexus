@@ -15,7 +15,7 @@
 #include "logger.h"
 #include <asio.hpp>
 #include <chrono>
-#include <mutex>
+#include <shared_mutex>
 
 namespace flatbuffers {
 class DetachedBuffer;
@@ -50,7 +50,7 @@ public:
   virtual void revertToDefaultStatusTopic();
 
   /// \brief Get the currently reported stop time.
-  virtual time_point getStopTime();
+  virtual time_point getStopTime() const;
 
 
   /// \brief Generate a FlatBuffer serialised report.
@@ -64,11 +64,12 @@ public:
 
   virtual void
   setJSONMetaDataGenerator(JsonGeneratorFuncType GeneratorFunction) {
-    std::lock_guard Lock(StatusMutex);
+    std::unique_lock const Lock(StatusMutex);
     JSONGenerator = GeneratorFunction;
   }
 
   void setStatusGetter(StatusGetterFuncType NewStatusGetter) {
+    std::unique_lock const Lock(StatusMutex);
     StatusGetter = NewStatusGetter;
   }
 
@@ -77,8 +78,8 @@ protected:
   void reportStatus();
 
 private:
-  virtual void postReportStatusActions(){};
-  mutable std::mutex StatusMutex;
+  virtual void postReportStatusActions() {};
+  mutable std::shared_mutex StatusMutex;
   std::shared_ptr<Kafka::Producer> Producer;
   std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic;
   std::unique_ptr<Kafka::ProducerTopic> AltStatusProducerTopic;
