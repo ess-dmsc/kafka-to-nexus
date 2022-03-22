@@ -12,13 +12,18 @@
 namespace MetaData {
 
 void Tracker::registerMetaData(MetaData::ValueBase NewMetaData) {
+  std::lock_guard LockGuard(MetaDataMutex);
   if (NewMetaData.getValuePtr() != nullptr) {
     KnownMetaData.emplace_back(NewMetaData.getValuePtr());
   }
 }
-void Tracker::clearMetaData() { KnownMetaData.clear(); }
+void Tracker::clearMetaData() {
+  std::lock_guard LockGuard(MetaDataMutex);
+  KnownMetaData.clear();
+}
 
 void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
+  std::lock_guard LockGuard(MetaDataMutex);
   for (auto const &MetaData : KnownMetaData) {
     auto JSONObj = MetaData->getAsJSON();
     JSONNode.insert(JSONObj.cbegin(), JSONObj.cend());
@@ -26,6 +31,7 @@ void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
 }
 
 void Tracker::writeToHDF5File(hdf5::node::Group RootNode) const {
+  std::lock_guard LockGuard(MetaDataMutex);
   int ErrorCounter{0};
   for (auto const &MetaData : KnownMetaData) {
     try {

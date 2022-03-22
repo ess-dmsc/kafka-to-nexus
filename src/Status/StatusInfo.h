@@ -14,10 +14,9 @@
 #include <string>
 
 namespace Status {
-
+enum class WorkerState { Idle, Writing };
 // This info changes each write job
 struct JobStatusInfo {
-  enum class WorkerState { Idle, Writing };
   WorkerState State{WorkerState::Idle};
   std::string JobId{"not_currently_writing"};
   std::string Filename{""};

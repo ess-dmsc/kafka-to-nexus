@@ -14,8 +14,8 @@ public:
   virtual ~Connection();
   virtual void sendMessage(std::string const &Msg);
   virtual Status getConnectionStatus() const;
-  virtual bool messageQueueEmpty();
-  virtual size_t messageQueueSize();
+  virtual bool messageQueueEmpty() const;
+  virtual size_t messageQueueSize() const;
 
 private:
   class Impl;

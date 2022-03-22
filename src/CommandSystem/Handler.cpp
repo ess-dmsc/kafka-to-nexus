@@ -28,9 +28,13 @@ Handler::Handler(std::string const &ServiceIdentifier,
       CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
 
 void Handler::loopFunction() {
-  auto JobMsg = JobPool->pollForJob();
-  if (JobMsg.first == Kafka::PollStatus::Message) {
-    handleCommand(std::move(JobMsg.second), true);
+  if (not IsWritingNow()) {
+    auto JobMsg = JobPool->pollForJob();
+    if (JobMsg.first == Kafka::PollStatus::Message) {
+      handleCommand(std::move(JobMsg.second), true);
+    }
+  } else if (JobPool->isConnected()) {
+    JobPool->disconnectFromPool();
   }
   auto CommandMsg = CommandSource->pollForCommand();
   if (CommandMsg.first == Kafka::PollStatus::Message) {
@@ -54,6 +58,10 @@ void Handler::registerIsWritingFunction(IsWritingFuncType IsWritingFunction) {
   IsWritingNow = IsWritingFunction;
 }
 
+void Handler::registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) {
+  GetJobId = GetJobIdFunction;
+}
+
 void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
     LOG_INFO("Reverting to default command topic: {}",
@@ -68,18 +76,16 @@ void Handler::revertCommandTopic() {
 void Handler::sendHasStoppedMessage(std::string const &FileName,
                                     nlohmann::json Metadata) {
   Metadata["hdf_structure"] = NexusStructure;
-  CommandResponse->publishStoppedMsg(ActionResult::Success, JobId, "", FileName,
-                                     Metadata.dump());
-  PollForJob = true;
+  CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
+                                     FileName, Metadata.dump());
   revertCommandTopic();
 }
 
 void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                           std::string const &Metadata,
                                           std::string const &ErrorMessage) {
-  CommandResponse->publishStoppedMsg(ActionResult::Failure, JobId, ErrorMessage,
-                                     FileName, Metadata);
-  PollForJob = true;
+  CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(),
+                                     ErrorMessage, FileName, Metadata);
 }
 
 void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
@@ -149,7 +155,6 @@ void checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IsJobPoolCommand) {
   try {
-    time_point StopTime{0ms};
     std::string ExceptionMessage;
     StartMessage StartJob;
     std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
@@ -173,6 +178,17 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                 R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
                 ServiceId, StartJob.ServiceID);
           }}});
+
+    /// \note This test should never return false as consumption of new jobs
+    /// should only be possible when the current one is finished. However, there
+    /// is an indication that in some cases jobs will be consumed regardless.
+    /// This statement is made 2022-03-21
+    CommandSteps.push_back({[&]() { return not IsWritingNow(); },
+                            {LogLevel::Error, 400, true, [&]() {
+                               return fmt::format(
+                                   "Rejected start command as there is "
+                                   "currently a write job in progress.");
+                             }}});
 
     CommandSteps.push_back(
         {[&]() { return isValidUUID(StartJob.JobID); },
@@ -213,14 +229,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            try {
              DoStart(StartJob);
-             StopTime = StartJob.StopTime;
-             JobId = StartJob.JobID;
-             PollForJob = false;
-             JobPool->disconnectFromPool();
              NexusStructure = StartJob.NexusStructure;
            } catch (std::exception const &E) {
-             PollForJob = true;
-             JobId = "not_currently_writing";
              ExceptionMessage = E.what();
              return false;
            }
@@ -257,7 +267,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     if (OutcomeValue.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
-          StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString());
+          StartJob.StopTime, OutcomeValue.StatusCode,
+          OutcomeValue.MessageString());
     }
   } catch (std::exception &E) {
     LOG_ERROR("Unable to process start command, error was: {}", E.what());
@@ -310,12 +321,12 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
                              }}});
 
     CommandSteps.push_back(
-        {[&]() { return JobId == StopCmd.JobID; },
+        {[&]() { return GetJobId() == StopCmd.JobID; },
          {LogLevel::Warning, 400, true, [&]() {
             return fmt::format(
                 "Rejected stop command as the job id was invalid (It "
                 "should be {}, it was: {}).",
-                JobId, StopCmd.JobID);
+                GetJobId(), StopCmd.JobID);
           }}});
 
     CommandSteps.push_back(

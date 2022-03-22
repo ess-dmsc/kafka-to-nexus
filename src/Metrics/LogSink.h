@@ -23,12 +23,12 @@ public:
 
   /// \brief The type of metrics converter that an instance of this class
   /// represents.
-  LogTo getType() override { return LogTo::LOG_MSG; };
+  LogTo getType() const override { return LogTo::LOG_MSG; };
 
   /// \brief Check if it the converter is healthy.
   ///
   /// Will always return yes as the this converter can never get into a bad
   /// state.
-  bool isHealthy() override { return true; };
+  bool isHealthy() const override { return true; };
 };
 } // namespace Metrics

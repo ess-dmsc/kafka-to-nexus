@@ -30,7 +30,6 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   REQUIRE_CALL(*Message, err())
       .TIMES(1)
       .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
-  // cppcheck-suppress knownArgument
   REQUIRE_CALL(*Message, len()).TIMES(1).RETURN(TestPayload.size());
   RdKafka::MessageTimestamp TimeStamp;
   TimeStamp.timestamp = 1;

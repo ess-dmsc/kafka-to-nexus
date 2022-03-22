@@ -142,7 +142,6 @@ set(kafka_to_nexus_INC
         Master.h
         Msg.h
         FlatbufferMessage.h
-        Filesystem.h
         Source.h
         StreamerOptions.h
         StreamController.h

@@ -11,6 +11,7 @@
 #include "Value.h"
 #include <h5cpp/hdf5.hpp>
 #include <memory>
+#include <mutex>
 
 namespace MetaData {
 
@@ -25,6 +26,7 @@ public:
   void writeToHDF5File(hdf5::node::Group RootNode) const;
 
 private:
+  mutable std::mutex MetaDataMutex;
   std::vector<std::shared_ptr<MetaDataInternal::ValueBaseInternal>>
       KnownMetaData;
 };
