@@ -10,6 +10,7 @@ from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 from file_writer_control import WorkerJobPool
+from datetime import datetime
 
 from helpers.writer import stop_all_jobs
 
@@ -227,6 +228,9 @@ def start_file_writer(request):
         request.config.getoption(WAIT_FOR_DEBUGGER_ATTACH),
     )
 
+@pytest.fixture(scope="function", autouse=True)
+def print_start_time(request):
+    print(f"Starting test at time: {datetime.now()}")
 
 @pytest.fixture(scope="function", autouse=True)
 def worker_pool(request):
