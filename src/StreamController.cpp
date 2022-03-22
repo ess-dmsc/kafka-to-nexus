@@ -18,10 +18,6 @@ StreamController::StreamController(
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
       KafkaSettings(Settings), MetaDataTracker(Tracker) {
-  StartTimeMetaData.setValue(toUTCDateTime(Settings.StartTimestamp));
-  EndTimeMetaData.setValue(toUTCDateTime(Settings.StopTimestamp));
-  MetaDataTracker->registerMetaData(StartTimeMetaData);
-  MetaDataTracker->registerMetaData(EndTimeMetaData);
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -35,7 +31,6 @@ StreamController::~StreamController() {
 }
 
 void StreamController::setStopTime(time_point const &StopTime) {
-  EndTimeMetaData.setValue(toUTCDateTime(StopTime));
   Executor.sendWork([=]() {
     KafkaSettings.StopTimestamp = StopTime;
     for (auto &s : Streamers) {

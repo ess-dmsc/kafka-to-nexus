@@ -14,6 +14,7 @@
 - The "--abort-on-uninitialised-stream" command line option has been removed. An error in the JSON code for initialising a stream will now always cause an error that will stop further initialisation.
 - Added documentation.
 - Potentially fixed a bug where the file-writer gets into a bad state.
+- Removed automatic "start_time" and "end_time" metadata fields.
 
 
 ## Version 4.1.0: Quality of life
