@@ -9,12 +9,12 @@ from helpers.writer import (
 )
 
 
-def test_links(worker_pool, kafka_address, file_name = "output_file_links.nxs"):
+def test_links(worker_pool, kafka_address, file_name="output_file_links.nxs"):
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now
-    
+
     with open("commands/nexus_structure_links.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(

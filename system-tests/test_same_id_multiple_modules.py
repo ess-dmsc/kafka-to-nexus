@@ -15,7 +15,7 @@ from helpers.writer import (
 
 
 def test_two_different_writer_modules_with_same_flatbuffer_id(
-    worker_pool, kafka_address, file_name = "output_file_multiple_modules.nxs"
+    worker_pool, kafka_address, file_name="output_file_multiple_modules.nxs"
 ):
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
@@ -36,7 +36,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(
             current_time,
             source_name="test_source_2",
         )
-    
+
     with open("commands/nexus_structure_multiple_modules.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
