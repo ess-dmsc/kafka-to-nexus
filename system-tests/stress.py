@@ -15,14 +15,14 @@ def main():
       job_topic_url=f"{kafka_host}/TEST_writer_jobs",
       command_topic_url=f"{kafka_host}/TEST_writer_commands")
   list_of_tests = [
-    # test_static_data_reaches_file,
-    # test_ep00,
-    # test_repeated_messages,
-    # test_links,
-    # test_end_message_metadata,
-    # test_two_different_writer_modules_with_same_flatbuffer_id,
-    # test_start_and_stop_time_are_in_the_past,
-    # test_ignores_commands_with_incorrect_job_id,
+    test_static_data_reaches_file,
+    test_ep00,
+    test_repeated_messages,
+    test_links,
+    test_end_message_metadata,
+    test_two_different_writer_modules_with_same_flatbuffer_id,
+    test_start_and_stop_time_are_in_the_past,
+    test_ignores_commands_with_incorrect_job_id,
     test_f142_meta_data,
   ]
   for func in list_of_tests:
