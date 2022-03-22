@@ -267,7 +267,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     if (OutcomeValue.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
-          StartJob.StopTime, OutcomeValue.StatusCode, OutcomeValue.MessageString());
+          StartJob.StopTime, OutcomeValue.StatusCode,
+          OutcomeValue.MessageString());
     }
   } catch (std::exception &E) {
     LOG_ERROR("Unable to process start command, error was: {}", E.what());
