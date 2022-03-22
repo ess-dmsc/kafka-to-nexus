@@ -77,16 +77,20 @@ private:
   void handleStopCommand(FileWriter::Msg CommandMsg);
   std::string const ServiceId;
   std::string NexusStructure;
-  StartFuncType DoStart{
-      [](auto) { throw std::runtime_error("DoStart(): Not set/implemented."); }};
-  StopTimeFuncType DoSetStopTime{
-      [](auto) { throw std::runtime_error("DosetStopTime(): Not set/implemented."); }};
+  StartFuncType DoStart{[](auto) {
+    throw std::runtime_error("DoStart(): Not set/implemented.");
+  }};
+  StopTimeFuncType DoSetStopTime{[](auto) {
+    throw std::runtime_error("DosetStopTime(): Not set/implemented.");
+  }};
   StopNowFuncType DoStopNow{
       []() { throw std::runtime_error("DoStopNow(): Not set/implemented."); }};
-  IsWritingFuncType IsWritingNow{
-      []() -> bool { throw std::runtime_error("IsWritingNow(): Not set/implemented."); }};
-  GetJobIdFuncType  GetJobId{
-    []() -> std::string { throw std::runtime_error("GetJobId(): Not set/implemented."); }};
+  IsWritingFuncType IsWritingNow{[]() -> bool {
+    throw std::runtime_error("IsWritingNow(): Not set/implemented.");
+  }};
+  GetJobIdFuncType GetJobId{[]() -> std::string {
+    throw std::runtime_error("GetJobId(): Not set/implemented.");
+  }};
 
   /// \brief Revert to the default command topic if an alternative topic
   /// has been configured.

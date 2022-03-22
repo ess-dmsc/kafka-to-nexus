@@ -18,9 +18,9 @@
 #include "Status/StatusInfo.h"
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <mutex>
 
 namespace Status {
 class StatusReporterBase;

@@ -22,7 +22,7 @@ public:
   Tracker() = default;
   void registerMetaData(MetaData::ValueBase NewMetaData);
   void clearMetaData();
-  void writeToJSONDict(nlohmann::json &JSONNode) const ;
+  void writeToJSONDict(nlohmann::json &JSONNode) const;
   void writeToHDF5File(hdf5::node::Group RootNode) const;
 
 private:

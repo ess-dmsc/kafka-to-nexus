@@ -52,7 +52,6 @@ public:
   /// \brief Get the currently reported stop time.
   virtual time_point getStopTime() const;
 
-
   /// \brief Generate a FlatBuffer serialised report.
   ///
   /// \return The report message buffer.
@@ -78,15 +77,19 @@ protected:
   void reportStatus();
 
 private:
-  virtual void postReportStatusActions() {};
+  virtual void postReportStatusActions(){};
   mutable std::shared_mutex StatusMutex;
   std::shared_ptr<Kafka::Producer> Producer;
   std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic;
   std::unique_ptr<Kafka::ProducerTopic> AltStatusProducerTopic;
   bool UsingAlternativeStatusTopic{false};
   ApplicationStatusInfo const StaticStatusInformation;
-  JsonGeneratorFuncType JSONGenerator{[](auto) { throw std::runtime_error("JSONGenerator(): Not set/implemented."); }};
-  StatusGetterFuncType StatusGetter{[]() -> Status::JobStatusInfo { throw std::runtime_error("StatusGetter(): Not set/implemented."); }};
+  JsonGeneratorFuncType JSONGenerator{[](auto) {
+    throw std::runtime_error("JSONGenerator(): Not set/implemented.");
+  }};
+  StatusGetterFuncType StatusGetter{[]() -> Status::JobStatusInfo {
+    throw std::runtime_error("StatusGetter(): Not set/implemented.");
+  }};
 };
 
 } // namespace Status

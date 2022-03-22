@@ -43,7 +43,7 @@ public:
   }
   MAKE_MOCK1(useAlternativeStatusTopic, void(std::string const &), override);
   MAKE_MOCK0(revertToDefaultStatusTopic, void(), override);
-  MAKE_MOCK0(getStopTime, time_point(), override);
+  MAKE_CONST_MOCK0(getStopTime, time_point(), override);
   MAKE_CONST_MOCK1(createReport,
                    flatbuffers::DetachedBuffer(std::string const &), override);
   MAKE_CONST_MOCK0(createJSONReport, std::string(), override);
@@ -65,6 +65,7 @@ public:
     REQUIRE_CALL(*CmdHandler, registerSetStopTimeFunction(_)).TIMES(1);
     REQUIRE_CALL(*CmdHandler, registerStopNowFunction(_)).TIMES(1);
     REQUIRE_CALL(*CmdHandler, registerIsWritingFunction(_)).TIMES(1);
+    REQUIRE_CALL(*CmdHandler, registerGetJobIdFunction(_)).TIMES(1);
 
     std::unique_ptr<Status::StatusReporterBase> TmpStatusReporter =
         std::make_unique<StatusReporterStandIn>();
