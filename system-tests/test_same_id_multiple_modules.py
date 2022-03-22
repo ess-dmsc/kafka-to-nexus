@@ -15,11 +15,13 @@ from helpers.writer import (
 
 
 def test_two_different_writer_modules_with_same_flatbuffer_id(
-    worker_pool, kafka_address
+    worker_pool, kafka_address, file_name = "output_file_multiple_modules.nxs"
 ):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     producer = create_producer()
-    start_time = datetime.now() - timedelta(seconds=10)
+    now = datetime.now()
+    start_time = now - timedelta(seconds=10)
+    stop_time = now
     for i in range(10):
         current_time = start_time + timedelta(seconds=1) * i
         publish_f142_message(
@@ -34,7 +36,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(
             current_time,
             source_name="test_source_2",
         )
-    file_name = "output_file_multiple_modules.nxs"
+    
     with open("commands/nexus_structure_multiple_modules.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
@@ -42,10 +44,10 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(
         file_name=file_name,
         broker=kafka_address,
         start_time=start_time,
-        stop_time=datetime.now(),
+        stop_time=stop_time,
     )
     wait_start_job(worker_pool, write_job, timeout=20)
-    wait_no_working_writers(worker_pool, timeout=30)
+    wait_no_working_writers(worker_pool, timeout=35)
 
     file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:

@@ -12,12 +12,11 @@ from helpers.writer import (
 )
 
 
-def test_static_data_reaches_file(worker_pool, kafka_address):
+def test_static_data_reaches_file(worker_pool, kafka_address, file_name="output_file_static.nxs"):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now
-    file_name = "output_file_static.nxs"
     with open("commands/nexus_structure_static.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(

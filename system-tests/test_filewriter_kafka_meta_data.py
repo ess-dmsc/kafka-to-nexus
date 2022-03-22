@@ -12,12 +12,12 @@ from helpers.writer import (
 )
 
 
-def test_static_data_reaches_file(worker_pool, kafka_address):
+def test_end_message_metadata(worker_pool, kafka_address, file_name = "output_file_kafka_meta_data.nxs"):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now
-    file_name = "output_file_kafka_meta_data.nxs"
+    
     with open("commands/nexus_structure_static.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
@@ -34,7 +34,7 @@ def test_static_data_reaches_file(worker_pool, kafka_address):
     for c_job in current_jobs:
         if c_job.job_id == write_job.job_id:
             assert "extra" in c_job.metadata
-            assert "hdf_structure" in c_job.metadata
+            assert "hdf_structure" in c_job.metadata, f"Assert failed, got the metadata: {c_job.metadata}"
             assert c_job.metadata["hdf_structure"] == structure
             return
 
