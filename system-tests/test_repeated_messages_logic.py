@@ -13,7 +13,9 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_repeated_messages(worker_pool, kafka_address, file_name = "output_file_repeated_messages.nxs"):
+def test_repeated_messages(
+    worker_pool, kafka_address, file_name="output_file_repeated_messages.nxs"
+):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     producer = create_producer()
 
@@ -42,7 +44,6 @@ def test_repeated_messages(worker_pool, kafka_address, file_name = "output_file_
         publish_f142_message(producer, data_topic, stop_time + step_time, value=30 + i)
     publish_f142_message(producer, data_topic, stop_time + step_time * 2, value=40)
 
-    
     with open("commands/nexus_structure_repeated_messages.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(

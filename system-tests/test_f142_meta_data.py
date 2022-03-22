@@ -18,7 +18,9 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_f142_meta_data(worker_pool, kafka_address, file_name = "output_file_with_meta_data.nxs"):
+def test_f142_meta_data(
+    worker_pool, kafka_address, file_name="output_file_with_meta_data.nxs"
+):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     producer = create_producer()
 

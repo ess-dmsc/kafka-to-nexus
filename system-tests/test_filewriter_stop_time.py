@@ -17,7 +17,9 @@ from helpers.writer import (
 )
 
 
-def test_start_and_stop_time_are_in_the_past(worker_pool, kafka_address, file_name = "output_file_of_historical_data.nxs"):
+def test_start_and_stop_time_are_in_the_past(
+    worker_pool, kafka_address, file_name="output_file_of_historical_data.nxs"
+):
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     producer = create_producer()
 
@@ -55,7 +57,6 @@ def test_start_and_stop_time_are_in_the_past(worker_pool, kafka_address, file_na
                 publish_f142_message(producer, data_topic, current_time)
             current_time += step_time
 
-    
     file_start_time = start_time + timedelta(seconds=2)
     file_stop_time = start_time + timedelta(seconds=148)
     with open("commands/nexus_structure_historical.json", "r") as f:
