@@ -72,7 +72,7 @@ void Master::stopNow() {
   setStopTimeInternal(time_point{0ms});
 }
 
-void Master::setStopTime(time_point StopTime) {
+void Master::setStopTime(time_point NewStopTime) {
   if (getCurrentState() != Status::WorkerState::Writing) {
     throw std::runtime_error(
         R"(Unable to set stop time when not in "Writing" state.)");
@@ -81,8 +81,8 @@ void Master::setStopTime(time_point StopTime) {
     throw std::runtime_error("Unable to set a new stop time as the stop time "
                              "has already been passed.");
   }
-  CurrentStreamController->setStopTime(StopTime);
-  setStopTimeInternal(StopTime);
+  CurrentStreamController->setStopTime(NewStopTime);
+  setStopTimeInternal(NewStopTime);
 }
 
 bool Master::hasWritingStopped() {
@@ -153,7 +153,7 @@ void Master::setStopTimeInternal(time_point NewStopTime) {
   CurrentStatus.StopTime = NewStopTime;
 }
 
-void Master::setCurrentStatus(Status::JobStatusInfo NewStatus) {
+void Master::setCurrentStatus(Status::JobStatusInfo const &NewStatus) {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = NewStatus;
 }

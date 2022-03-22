@@ -56,7 +56,7 @@ public:
 
 private:
   void setStopTimeInternal(time_point NewStopTime);
-  void setCurrentStatus(Status::JobStatusInfo NewStatus);
+  void setCurrentStatus(Status::JobStatusInfo const &NewStatus);
   void resetStatusInfo();
   MainOpt &MainConfig;
   std::unique_ptr<Command::HandlerBase> CommandAndControl;

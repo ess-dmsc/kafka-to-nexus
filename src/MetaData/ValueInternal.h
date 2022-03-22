@@ -43,7 +43,7 @@ public:
     std::lock_guard Lock(ValueMutex);
     MetaDataValue = NewValue;
   }
-  DataType getValue() {
+  DataType getValue() const {
     std::lock_guard Lock(ValueMutex);
     return MetaDataValue;
   }
