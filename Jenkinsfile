@@ -4,7 +4,7 @@ import ecdcpipeline.PipelineBuilder
 
 project = "kafka-to-nexus"
 
-clangformat_os = "ubuntu2004"
+static_checks_os = "ubuntu2004"
 test_and_coverage_os = "ubuntu2004"
 release_os = "centos7-release"
 
@@ -37,277 +37,300 @@ properties([[
   ]
 ]]);
 
+def checkout(builder, container) {
+    builder.stage("${container.key}: Checkout") {
+        dir(builder.project) {
+          scm_vars = checkout scm
+        }
+        container.copyTo(builder.project, builder.project)
+      }
+}
+
+def cpp_dependencies(builder, container) {
+    builder.stage("${container.key}: Dependencies") {
+
+        def conan_remote = "ess-dmsc-local"
+        container.sh """
+          mkdir build
+          cd build
+          conan remote add \
+            --insert 0 \
+            ${conan_remote} ${local_conan_server}
+          conan install --build=outdated ../${builder.project}/conanfile.txt
+        """
+    }
+}
+
+def build(builder, container) {
+    builder.stage("${container.key}: Build") {
+        container.sh """
+        cd build
+        . ./activate_run.sh
+        ninja all UnitTests
+        """
+    }
+}
+
+def unit_tests(builder, container) {
+    builder.stage("${container.key}: Test") {
+        // env.CHANGE_ID is set for pull request builds.
+        if (container.key == test_and_coverage_os) {
+          def test_output = "TestResults.xml"
+          container.sh """
+            cd build
+            . ./activate_run.sh
+            ./bin/UnitTests -- --gtest_output=xml:${test_output}
+            ninja coverage
+          """
+
+          container.copyFrom('build', '.')
+          junit "build/${test_output}"
+
+          step([
+              $class: 'CoberturaPublisher',
+              autoUpdateHealth: true,
+              autoUpdateStability: true,
+              coberturaReportFile: 'build/coverage.xml',
+              failUnhealthy: false,
+              failUnstable: false,
+              maxNumberOfBuilds: 0,
+              onlyStable: false,
+              sourceEncoding: 'ASCII',
+              zoomCoverageChart: true
+          ])
+
+          if (env.CHANGE_ID) {
+            coverage_summary = sh (
+                script: "sed -n -e '/^TOTAL/p' build/coverage.txt",
+                returnStdout: true
+            ).trim()
+
+            def repository_url = scm.userRemoteConfigs[0].url
+            def repository_name = repository_url.replace("git@github.com:","").replace(".git","").replace("https://github.com/","")
+            def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
+
+            withCredentials([usernamePassword(credentialsId: 'cow-bot-username-with-token', usernameVariable: 'UNUSED_VARIABLE', passwordVariable: 'GITHUB_TOKEN')]) {
+              withEnv(["comment_text=${comment_text}", "repository_name=${repository_name}"]) {
+                sh 'curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\\"body\\": \\"$comment_text\\"}" "https://api.github.com/repos/$repository_name/issues/$CHANGE_ID/comments"'
+              }
+            }
+          }
+
+        } else if (container.key != release_os) {
+          def test_dir
+          test_dir = 'bin'
+
+          container.sh """
+            cd build
+            . ./activate_run.sh
+            ./${test_dir}/UnitTests
+          """
+        }
+      }  // stage
+}
+
+def configure(builder, container) {
+    builder.stage("${container.key}: Configure") {
+        if (container.key != release_os) {
+          def extra_flags = ''
+          if (container.key == test_and_coverage_os) {
+            extra_flags += ' -DCOV=ON'
+          } else if (container.key == static_checks_os) {
+            extra_flags += ' -DRUN_DOXYGEN=ON'
+          }
+          container.sh """
+            cd build
+            . ./activate_run.sh
+            cmake ${extra_flags} -GNinja ../${builder.project}
+          """
+        } else {
+
+          container.sh """
+            cd build
+            . ./activate_run.sh
+            cmake \
+              -GNinja \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCONAN=MANUAL \
+              -DCMAKE_SKIP_RPATH=FALSE \
+              -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
+              -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
+              ../${builder.project}
+          """
+        }
+    }
+}
+
+def static_checks(builder, container) {
+    builder.stage("${container.key}: Formatting") {
+          if (!env.CHANGE_ID) {
+            // Ignore non-PRs
+            return
+          }
+
+          container.setupLocalGitUser(builder.project)
+
+          try {
+            // Do clang-format of C++ files
+            container.sh """
+              clang-format -version
+              cd ${project}
+              find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
+              -exec clang-format -i {} +
+              git status -s
+              git add -u
+              git commit -m 'GO FORMAT YOURSELF (clang-format)'
+            """
+          } catch (e) {
+           // Okay to fail as there could be no badly formatted files to commit
+          } finally {
+            // Clean up
+          }
+
+          try {
+            // Do black format of python scripts
+            container.sh """
+              /home/jenkins/.local/bin/black --version
+              cd ${project}
+              /home/jenkins/.local/bin/black system-tests
+              git status -s
+              git add -u
+              git commit -m 'GO FORMAT YOURSELF (black)'
+            """
+          } catch (e) {
+           // Okay to fail as there could be no badly formatted files to commit
+          } finally {
+            // Clean up
+          }
+
+          // Push any changes resulting from formatting
+          try {
+            withCredentials([
+              usernamePassword(
+              credentialsId: 'cow-bot-username-with-token',
+              usernameVariable: 'USERNAME',
+              passwordVariable: 'PASSWORD'
+              )
+            ]) {
+              withEnv(["PROJECT=${builder.project}"]) {
+                container.sh '''
+                  cd $PROJECT
+                  git push https://$USERNAME:$PASSWORD@github.com/ess-dmsc/$PROJECT.git HEAD:$CHANGE_BRANCH
+                '''
+              }  // withEnv
+            }  // withCredentials
+          } catch (e) {
+            // Okay to fail; there may be nothing to push
+          } finally {
+            // Clean up
+          }
+        }  // stage
+
+        builder.stage("${container.key}: Cppcheck") {
+          def test_output = "cppcheck.xml"
+            container.sh """
+              cd ${builder.project}
+              cppcheck --xml --inline-suppr --suppress=unusedFunction --suppress=missingInclude --enable=all --inconclusive src/ 2> ${test_output}
+            """
+            container.copyFrom("${builder.project}/${test_output}", '.')
+            recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
+        }  // stage
+
+        builder.stage("${container.key}: Doxygen") {
+          def test_output = "doxygen_results.txt"
+            container.sh """
+              cd build
+              pwd
+              ninja docs 2>&1 > ${test_output}
+            """
+            container.copyFrom("build/${test_output}", '.')
+
+            String regexMissingDocsMemberConsumer = /.* warning: Member Consumer .* of class .* is not documented .*/
+            String regexInvalidArg = /.* warning: argument: .* is not found in the argument list of .*/
+            String regexMissingCompoundDocs = /.*warning: Compound .* is not documented./
+            boolean doxygenStepFailed = false
+            def failingCases = []
+            def doxygenResultContent = readFile test_output
+            def doxygenResultLines = doxygenResultContent.readLines()
+
+            for(line in doxygenResultLines) {
+                if(line ==~ regexMissingDocsMemberConsumer || line ==~ regexInvalidArg ||
+                    line ==~ regexMissingCompoundDocs) {
+                    failingCases.add(line)
+                }
+            }
+
+            int acceptableFailedCases = 77
+            int numFailedCases = failingCases.size()
+            if(numFailedCases > acceptableFailedCases) {
+                doxygenStepFailed = true
+                println "Doxygen failed to generate HTML documentation due to issued warnings displayed below."
+                println "The total number of Doxygen warnings that needs to be corrected ( $numFailedCases ) is greater"
+                println "than the acceptable number of warnings ( $acceptableFailedCases ). The warnings are the following:"
+                for(line in failingCases) {
+                    println line
+                }
+            }
+            else{
+                println "Doxygen successfully generated all the FileWriter HTML documentation without warnings."
+            }
+            archiveArtifacts "${test_output}"
+            if(doxygenStepFailed) {
+             unstable("Code is missing documentation. See log output for further information.")
+            }
+        }  // stage
+}
+
+def archive(builder, container) {
+    builder.stage("${container.key}: Archiving") {
+              def archive_output = "${builder.project}-${container.key}.tar.gz"
+              container.sh """
+                cd build
+                rm -rf ${builder.project}; mkdir ${builder.project}
+                mkdir ${builder.project}/bin
+                cp ./bin/kafka-to-nexus ${builder.project}/bin/
+                cp -r ./lib ${builder.project}/
+                cp -r ./licenses ${builder.project}/
+
+                # Create file with build information
+                touch ${builder.project}/BUILD_INFO
+                echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
+                echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
+                echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
+
+                tar czf ${archive_output} ${builder.project}
+              """
+
+              container.copyFrom("build/${archive_output}", '.')
+              container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
+              archiveArtifacts "${archive_output},BUILD_INFO"
+            }
+}
+
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
-  pipeline_builder.stage("${container.key}: Checkout") {
-    dir(pipeline_builder.project) {
-      scm_vars = checkout scm
-    }
-    container.copyTo(pipeline_builder.project, pipeline_builder.project)
-  }  // stage
+  checkout(pipeline_builder, container)
 
-  pipeline_builder.stage("${container.key}: Dependencies") {
-    def conan_remote = "ess-dmsc-local"
-    container.sh """
-      mkdir build
-      cd build
-      conan remote add \
-        --insert 0 \
-        ${conan_remote} ${local_conan_server}
-      conan install --build=outdated ../${pipeline_builder.project}/conanfile.txt
-    """
-  }  // stage
+  cpp_dependencies(pipeline_builder, container)
 
-  pipeline_builder.stage("${container.key}: Configure") {
-    if (container.key != release_os) {
-      def coverage_on
-      if (container.key == test_and_coverage_os) {
-        coverage_on = '-DCOV=ON'
-      } else {
-        coverage_on = ''
-      }
+  configure(pipeline_builder, container)
 
-      def doxygen_on
-      if (container.key == clangformat_os) {
-        doxygen_on = '-DRUN_DOXYGEN=ON'
-      } else {
-        doxygen_on = ''
-      }
+  build(pipeline_builder, container)
 
-      container.sh """
-        cd build
-        . ./activate_run.sh
-        cmake ${coverage_on} ${doxygen_on} -GNinja ../${pipeline_builder.project}
-      """
-    } else {
+  if (container.key != release_os) {
+      unit_tests(pipeline_builder, container)
+  }
 
-      container.sh """
-        cd build
-        . ./activate_run.sh
-        cmake \
-          -GNinja \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCONAN=MANUAL \
-          -DCMAKE_SKIP_RPATH=FALSE \
-          -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
-          -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
-          ../${pipeline_builder.project}
-      """
-    }
-  }  // stage
-
-  pipeline_builder.stage("${container.key}: Build") {
-    container.sh """
-    cd build
-    . ./activate_run.sh
-    ninja all UnitTests
-    """
-  }  // stage
-
-  pipeline_builder.stage("${container.key}: Test") {
-    // env.CHANGE_ID is set for pull request builds.
-    if (container.key == test_and_coverage_os) {
-      def test_output = "TestResults.xml"
-      container.sh """
-        cd build
-        . ./activate_run.sh
-        ./bin/UnitTests -- --gtest_output=xml:${test_output}
-        ninja coverage
-      """
-
-      container.copyFrom('build', '.')
-      junit "build/${test_output}"
-
-      step([
-          $class: 'CoberturaPublisher',
-          autoUpdateHealth: true,
-          autoUpdateStability: true,
-          coberturaReportFile: 'build/coverage.xml',
-          failUnhealthy: false,
-          failUnstable: false,
-          maxNumberOfBuilds: 0,
-          onlyStable: false,
-          sourceEncoding: 'ASCII',
-          zoomCoverageChart: true
-      ])
-
-      if (env.CHANGE_ID) {
-        coverage_summary = sh (
-            script: "sed -n -e '/^TOTAL/p' build/coverage.txt",
-            returnStdout: true
-        ).trim()
-
-        def repository_url = scm.userRemoteConfigs[0].url
-        def repository_name = repository_url.replace("git@github.com:","").replace(".git","").replace("https://github.com/","")
-        def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
-
-        withCredentials([usernamePassword(credentialsId: 'cow-bot-username-with-token', usernameVariable: 'UNUSED_VARIABLE', passwordVariable: 'GITHUB_TOKEN')]) {
-          withEnv(["comment_text=${comment_text}", "repository_name=${repository_name}"]) {
-            sh 'curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\\"body\\": \\"$comment_text\\"}" "https://api.github.com/repos/$repository_name/issues/$CHANGE_ID/comments"'
-          }
-        }
-      }
-
-    } else if (container.key != release_os) {
-      def test_dir
-      test_dir = 'bin'
-
-      container.sh """
-        cd build
-        . ./activate_run.sh
-        ./${test_dir}/UnitTests
-      """
-    }
-  }  // stage
-
-  if (container.key == clangformat_os) {
-    pipeline_builder.stage("${container.key}: Formatting") {
-      if (!env.CHANGE_ID) {
-        // Ignore non-PRs
-        return
-      }
-
-      container.setupLocalGitUser(pipeline_builder.project)
-
-      try {
-        // Do clang-format of C++ files
-        container.sh """
-          clang-format -version
-          cd ${project}
-          find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
-          -exec clang-format -i {} +
-          git status -s
-          git add -u
-          git commit -m 'GO FORMAT YOURSELF (clang-format)'
-        """
-      } catch (e) {
-       // Okay to fail as there could be no badly formatted files to commit
-      } finally {
-        // Clean up
-      }
-
-      try {
-        // Do black format of python scripts
-        container.sh """
-          /home/jenkins/.local/bin/black --version
-          cd ${project}
-          /home/jenkins/.local/bin/black system-tests
-          git status -s
-          git add -u
-          git commit -m 'GO FORMAT YOURSELF (black)'
-        """
-      } catch (e) {
-       // Okay to fail as there could be no badly formatted files to commit
-      } finally {
-        // Clean up
-      }
-
-      // Push any changes resulting from formatting
-      try {
-        withCredentials([
-          usernamePassword(
-          credentialsId: 'cow-bot-username-with-token',
-          usernameVariable: 'USERNAME',
-          passwordVariable: 'PASSWORD'
-          )
-        ]) {
-          withEnv(["PROJECT=${pipeline_builder.project}"]) {
-            container.sh '''
-              cd $PROJECT
-              git push https://$USERNAME:$PASSWORD@github.com/ess-dmsc/$PROJECT.git HEAD:$CHANGE_BRANCH
-            '''
-          }  // withEnv
-        }  // withCredentials
-      } catch (e) {
-        // Okay to fail; there may be nothing to push
-      } finally {
-        // Clean up
-      }
-    }  // stage
-
-    pipeline_builder.stage("${container.key}: Cppcheck") {
-      def test_output = "cppcheck.xml"
-        container.sh """
-          cd ${pipeline_builder.project}
-          cppcheck --xml --inline-suppr --suppress=unusedFunction --suppress=missingInclude --enable=all --inconclusive src/ 2> ${test_output}
-        """
-        container.copyFrom("${pipeline_builder.project}/${test_output}", '.')
-        recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
-    }  // stage
-
-    pipeline_builder.stage("${container.key}: Doxygen") {
-      def test_output = "doxygen_results.txt"
-        container.sh """
-          cd build
-          pwd
-          ninja docs 2>&1 > ${test_output}
-        """
-        container.copyFrom("build/${test_output}", '.')
-
-        String regexMissingDocsMemberConsumer = /.* warning: Member Consumer .* of class .* is not documented .*/
-        String regexInvalidArg = /.* warning: argument: .* is not found in the argument list of .*/
-        String regexMissingCompoundDocs = /.*warning: Compound .* is not documented./
-        boolean doxygenStepFailed = false
-        def failingCases = []
-        def doxygenResultContent = readFile test_output
-        def doxygenResultLines = doxygenResultContent.readLines()
-
-        for(line in doxygenResultLines) {
-            if(line ==~ regexMissingDocsMemberConsumer || line ==~ regexInvalidArg ||
-                line ==~ regexMissingCompoundDocs) {
-                failingCases.add(line)
-            }
-        }
-
-        int acceptableFailedCases = 77
-        int numFailedCases = failingCases.size()
-        if(numFailedCases > acceptableFailedCases) {
-            doxygenStepFailed = true
-            println "Doxygen failed to generate HTML documentation due to issued warnings displayed below."
-            println "The total number of Doxygen warnings that needs to be corrected ( $numFailedCases ) is greater"
-            println "than the acceptable number of warnings ( $acceptableFailedCases ). The warnings are the following:"
-            for(line in failingCases) {
-                println line
-            }
-        }
-        else{
-            println "Doxygen successfully generated all the FileWriter HTML documentation without warnings."
-        }
-        archiveArtifacts "${test_output}"
-        if(doxygenStepFailed) {
-         unstable("Code is missing documentation. See log output for further information.")
-        }
-    }  // stage
+  if (container.key == static_checks_os) {
+    static_checks(pipeline_builder, container)
   }  // if
 
   if (container.key == release_os) {
-    pipeline_builder.stage("${container.key}: Archiving") {
-      def archive_output = "${pipeline_builder.project}-${container.key}.tar.gz"
-      container.sh """
-        cd build
-        rm -rf ${pipeline_builder.project}; mkdir ${pipeline_builder.project}
-        mkdir ${pipeline_builder.project}/bin
-        cp ./bin/kafka-to-nexus ${pipeline_builder.project}/bin/
-        cp -r ./lib ${pipeline_builder.project}/
-        cp -r ./licenses ${pipeline_builder.project}/
-
-        # Create file with build information
-        touch ${pipeline_builder.project}/BUILD_INFO
-        echo 'Repository: ${pipeline_builder.project}/${env.BRANCH_NAME}' >> ${pipeline_builder.project}/BUILD_INFO
-        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${pipeline_builder.project}/BUILD_INFO
-        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${pipeline_builder.project}/BUILD_INFO
-
-        tar czf ${archive_output} ${pipeline_builder.project}
-      """
-
-      container.copyFrom("build/${archive_output}", '.')
-      container.copyFrom("build/${pipeline_builder.project}/BUILD_INFO", '.')
-      archiveArtifacts "${archive_output},BUILD_INFO"
-    }  // stage
-  }  // if
+    archive(pipeline_builder, container)
+  }
 }  // createBuilders
 
 node {
