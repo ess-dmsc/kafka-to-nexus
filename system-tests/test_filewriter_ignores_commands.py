@@ -14,7 +14,10 @@ from helpers.writer import (
 
 
 def test_ignores_commands_with_incorrect_id(
-    worker_pool, kafka_address, multiple_writers, hdf_file_name="output_file_stop_id.nxs"
+    worker_pool,
+    kafka_address,
+    multiple_writers,
+    hdf_file_name="output_file_stop_id.nxs",
 ):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=2, timeout=20)

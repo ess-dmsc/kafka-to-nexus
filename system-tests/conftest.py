@@ -120,7 +120,9 @@ common_options = {
     "--tail": "all",
     "--detach": True,
     "--build": False,
-    "--file": [SYSTEM_TEST_DOCKER, ],
+    "--file": [
+        SYSTEM_TEST_DOCKER,
+    ],
 }
 
 
@@ -131,7 +133,7 @@ def run_containers(cmd, options):
     wait_until_kafka_ready(cmd, options)
 
 
-def build_and_run(options, request, binary_path: Optional[str] =None):
+def build_and_run(options, request, binary_path: Optional[str] = None):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     run_containers(cmd, options)
@@ -143,9 +145,16 @@ def build_and_run(options, request, binary_path: Optional[str] =None):
         c_path = os.path.abspath(".")
         for i in range(START_NR_OF_WRITERS):
             log_file = open(f"logs/file-writer_{i}.txt", "w")
-            proc = Popen([file_writer_path, "-c", f"{c_path}/config-files/file_writer_config.ini",
-                          "--service-name", f"filewriter_{i}",
-                          ], stdout=log_file,)
+            proc = Popen(
+                [
+                    file_writer_path,
+                    "-c",
+                    f"{c_path}/config-files/file_writer_config.ini",
+                    "--service-name",
+                    f"filewriter_{i}",
+                ],
+                stdout=log_file,
+            )
             list_of_writers.append(proc)
 
     def fin():
@@ -185,17 +194,17 @@ def start_file_writer(request):
     """
     :type request: _pytest.python.FixtureRequest
     """
-    if request.config.getoption(BINARY_PATH) is None and not request.config.getoption(START_NO_FW):
-        raise RuntimeError(f"You must set either a path to a file-writer executable (\"{BINARY_PATH}\") or the \"{START_NO_FW}=true\" flag.")
+    if request.config.getoption(BINARY_PATH) is None and not request.config.getoption(
+        START_NO_FW
+    ):
+        raise RuntimeError(
+            f'You must set either a path to a file-writer executable ("{BINARY_PATH}") or the "{START_NO_FW}=true" flag.'
+        )
     file_writer_path = None
     if not request.config.getoption(START_NO_FW):
         print("Starting the file-writer", flush=True)
         file_writer_path = request.config.getoption(BINARY_PATH)
-    return build_and_run(
-        common_options,
-        request,
-        file_writer_path
-    )
+    return build_and_run(common_options, request, file_writer_path)
 
 
 @pytest.fixture(scope="function", autouse=True)
