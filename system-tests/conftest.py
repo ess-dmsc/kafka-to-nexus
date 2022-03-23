@@ -150,6 +150,7 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     run_containers(cmd, options)
+    time.sleep(10)
 
     if local_path is not None:
         # Launch local build of file writer

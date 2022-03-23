@@ -18,8 +18,10 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_f142_meta_data(worker_pool, kafka_address):
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+def test_f142_meta_data(
+    worker_pool, kafka_address, file_name="output_file_with_meta_data.nxs"
+):
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
 
     data_topic = "TEST_sampleEnv"
@@ -75,7 +77,6 @@ def test_f142_meta_data(worker_pool, kafka_address):
         producer, data_topic, stop_time, value=Array3, source_name=source_name2
     )
 
-    file_name = "output_file_with_meta_data.nxs"
     file_start_time = start_time
     file_stop_time = start_time + timedelta(seconds=148)
     with open("commands/nexus_structure_meta_data.json", "r") as f:

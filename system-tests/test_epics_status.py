@@ -15,12 +15,14 @@ from helpers.writer import (
 )
 
 
-def test_ep00(worker_pool, kafka_address):
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+def test_ep00(worker_pool, kafka_address, file_name="output_file_ep00.nxs"):
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
     producer = create_producer()
     topic = "TEST_epicsConnectionStatus"
-    start_time = datetime.now() - timedelta(seconds=60)
+    now = datetime.now()
+    start_time = now - timedelta(seconds=5)
+    stop_time = now
     publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, start_time)
     publish_ep00_message(
         producer,
@@ -28,8 +30,13 @@ def test_ep00(worker_pool, kafka_address):
         EventType.CONNECTED,
         timestamp=start_time + timedelta(seconds=0.01),
     )
+    publish_ep00_message(
+        producer,
+        topic,
+        EventType.CONNECTED,
+        timestamp=stop_time + timedelta(seconds=1),
+    )
 
-    file_name = "output_file_ep00.nxs"
     with open("commands/nexus_structure_epics_status.json", "r") as f:
         structure = f.read()
 
@@ -38,11 +45,11 @@ def test_ep00(worker_pool, kafka_address):
         file_name=file_name,
         broker=kafka_address,
         start_time=start_time,
-        stop_time=datetime.now(),
+        stop_time=stop_time,
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(worker_pool, timeout=30)
+    wait_no_working_writers(worker_pool, timeout=35)
 
     file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:

@@ -14,6 +14,7 @@
 #include <answ_action_response_generated.h>
 #include <pl72_run_start_generated.h>
 #include <sstream>
+#include <wrdn_finished_writing_generated.h>
 #include <x5f2_status_generated.h>
 
 #include "Msg.h"
@@ -145,6 +146,14 @@ bool isAnswerMessage(Msg const &CommandMessage) {
   return VerifyActionResponseBuffer(Verifier) and
          flatbuffers::BufferHasIdentifier(CommandMessage.data(),
                                           ActionResponseIdentifier());
+}
+
+bool isWritingDoneMessage(Msg const &CommandMessage) {
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyFinishedWritingBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          FinishedWritingIdentifier());
 }
 
 } // namespace Command::Parser
