@@ -5,6 +5,7 @@ from helpers.kafkahelpers import (
 )
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -14,8 +15,9 @@ import numpy as np
 
 
 def test_repeated_messages(
-    worker_pool, kafka_address, file_name="output_file_repeated_messages.nxs"
+    worker_pool, kafka_address, hdf_file_name="output_file_repeated_messages.nxs"
 ):
+    file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
 
@@ -48,7 +50,7 @@ def test_repeated_messages(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
@@ -57,7 +59,6 @@ def test_repeated_messages(
 
     wait_no_working_writers(worker_pool, timeout=30)
 
-    file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:
         expected_elements = 3
         assert file["entry/repeated_messages/time"].len() == (

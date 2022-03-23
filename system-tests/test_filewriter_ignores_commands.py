@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from file_writer_control.CommandStatus import CommandState
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -13,8 +14,9 @@ from helpers.writer import (
 
 
 def test_ignores_commands_with_incorrect_id(
-    worker_pool, kafka_address, multiple_writers, file_name="output_file_stop_id.nxs"
+    worker_pool, kafka_address, multiple_writers, hdf_file_name="output_file_stop_id.nxs"
 ):
+    file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=2, timeout=20)
     now = datetime.now()
 
@@ -22,7 +24,7 @@ def test_ignores_commands_with_incorrect_id(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
@@ -51,20 +53,20 @@ def test_ignores_commands_with_incorrect_id(
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=0)
-    file_path = f"output-files/{file_name}"
     assert Path(file_path).is_file()
 
 
 def test_ignores_commands_with_incorrect_job_id(
-    worker_pool, kafka_address, file_name="output_file_job_id.nxs"
+    worker_pool, kafka_address, hdf_file_name="output_file_job_id.nxs"
 ):
+    file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     with open("commands/nexus_structure.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
@@ -73,5 +75,4 @@ def test_ignores_commands_with_incorrect_job_id(
     wait_fail_start_job(worker_pool, write_job, timeout=20)
 
     wait_no_working_writers(worker_pool, timeout=0)
-    file_path = f"output-files/{file_name}"
     assert not Path(file_path).is_file()
