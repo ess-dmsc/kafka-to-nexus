@@ -384,7 +384,7 @@ node {
     }
   }
 
-//   builders['macOS'] = get_macos_pipeline()
+   builders['macOS'] = get_macos_pipeline()
 
   try {
     parallel builders
@@ -405,11 +405,11 @@ def failure_function(exception_obj, failureMessage) {
 
 def get_macos_pipeline() {
   return {
-    stage("macOS") {
+
       node ("macos") {
         // Delete workspace when build is done
         cleanWs()
-
+        stage("macOS: Checkout") {
         dir("${project}/code") {
           try {
           // temporary conan remove until all projects move to new package version
@@ -420,19 +420,30 @@ def get_macos_pipeline() {
             failure_function(e, 'MacOSX / Checkout failed')
           }
         }
+        }
 
         dir("${project}/build") {
+        stage("macOS: Configure") {
           try {
             sh "cmake ../code"
           } catch (e) {
             failure_function(e, 'MacOSX / CMake failed')
           }
+        }
 
+          stage("macOS: Build") {
+              try {
+                sh "make -j4 UnitTests"
+              } catch (e) {
+                failure_function(e, 'MacOSX / build failed')
+              }
+          }
+
+          stage("macOS: Unit tests") {
           try {
-            sh "make -j4 all UnitTests"
-            sh ". ./activate_run.sh && ./bin/UnitTests"
+               sh ". ./activate_run.sh && ./bin/UnitTests"
           } catch (e) {
-            failure_function(e, 'MacOSX / build+test failed')
+            failure_function(e, 'MacOSX / unit tests failed')
           }
         }
       }
