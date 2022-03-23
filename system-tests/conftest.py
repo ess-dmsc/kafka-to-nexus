@@ -10,7 +10,6 @@ from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 from file_writer_control import WorkerJobPool
-from datetime import datetime
 
 from helpers.writer import stop_all_jobs
 
@@ -151,6 +150,7 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     run_containers(cmd, options)
+    time.sleep(10)
 
     if local_path is not None:
         # Launch local build of file writer
@@ -228,9 +228,6 @@ def start_file_writer(request):
         request.config.getoption(WAIT_FOR_DEBUGGER_ATTACH),
     )
 
-@pytest.fixture(scope="function", autouse=True)
-def print_start_time(request):
-    print(f"Starting test at time: {datetime.now()}")
 
 @pytest.fixture(scope="function", autouse=True)
 def worker_pool(request):
