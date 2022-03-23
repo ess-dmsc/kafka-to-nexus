@@ -296,7 +296,7 @@ def archive(builder, container) {
 }
 
 String ubuntu_key = "ubuntu2004"
-String centos_key = "centos7-release"
+String centos_key = "centos7"
 String release_key = "centos7-release"
 String system_test_key = "system-test"
 
