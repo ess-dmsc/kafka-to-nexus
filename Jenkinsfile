@@ -119,15 +119,9 @@ def unit_tests(builder, container) {
       }  // stage
 }
 
-def configure(builder, container) {
+def configure(builder, container, extra_flags, release_build) {
     builder.stage("${container.key}: Configure") {
-        if (container.key != release_os) {
-          def extra_flags = ''
-          if (container.key == test_and_coverage_os) {
-            extra_flags += ' -DCOV=ON'
-          } else if (container.key == static_checks_os) {
-            extra_flags += ' -DRUN_DOXYGEN=ON'
-          }
+        if (!release_build) {
           container.sh """
             cd build
             . ./activate_run.sh
@@ -309,10 +303,10 @@ container_build_nodes = [
 ]
 
 container_build_node_steps = [
-    centos_key: [{b,c -> checkout(b, c)}, ],
-    release_key: [{b,c -> checkout(b, c)}, ],
-    ubuntu_key: [{b,c -> checkout(b, c)}, ],
-    system_test_key: [{b,c -> checkout(b, c)}, ]
+    centos_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}],
+    release_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}],
+    ubuntu_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}],
+    system_test_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}]
 ]
 
 // if ( env.CHANGE_ID ) {
