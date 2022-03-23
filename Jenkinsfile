@@ -304,6 +304,8 @@ def archive(builder, container) {
 def system_test(builder, container) {
     try {
       stage("${container.key}: Sys.-test requirements") {
+        sh "ls"
+        sh "pwd"
         sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh """cd kafka-to-nexus
        python3.6 -m pip install --user --upgrade pip
