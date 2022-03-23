@@ -301,16 +301,16 @@ String release_key = "centos7-release"
 String system_test_key = "system-test"
 
 container_build_nodes = [
-  "$centos_key": ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  "$release_key": ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  "$ubuntu_key": ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
+  centos_key: ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  release_key: ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  ubuntu_key: ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
 ]
 
 container_build_node_steps = [
-    "$centos_key": [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, unit_tests=true)}],
-    "$release_key": [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, unit_tests=false)}],
-    "$ubuntu_key": [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, unit_tests=true)}],
-    "$system_test_key": [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, unit_tests=false)}]
+    centos_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, unit_tests=true)}],
+    release_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, unit_tests=false)}],
+    ubuntu_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, unit_tests=true)}],
+    system_test_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, unit_tests=false)}]
 ]
 
 // if ( env.CHANGE_ID ) {
