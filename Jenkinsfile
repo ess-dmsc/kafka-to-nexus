@@ -37,39 +37,38 @@ properties([[
   ]
 ]]);
 
+def checkout(builder, container) {
+    builder.stage("${container.key}: Checkout") {
+        dir(pipeline_builder.project) {
+          scm_vars = checkout scm
+        }
+        container.copyTo(pipeline_builder.project, pipeline_builder.project)
+      }
+}
+
+def cpp_dependencies(builder, container) {
+    builder.stage("${container.key}: Dependencies") {
+
+        def conan_remote = "ess-dmsc-local"
+        container.sh """
+          mkdir build
+          cd build
+          conan remote add \
+            --insert 0 \
+            ${conan_remote} ${local_conan_server}
+          conan install --build=outdated ../${pipeline_builder.project}/conanfile.txt
+        """
+      }  // stage
+}
+
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
-  pipeline_builder.stage("${container.key}: Checkout") {
-    dir(pipeline_builder.project) {
-      scm_vars = checkout scm
-    }
-    container.copyTo(pipeline_builder.project, pipeline_builder.project)
-  }  // stage
+  checkout(builder, container)
 
-  pipeline_builder.stage("${container.key}: Dependencies") {
-    if (container.key == "alpine") {
-      // Dirty hack to override flatbuffers/1.11.0 with 1.10 as a bug means 1.11 doesn't build on alpine
-      // Fixed at HEAD, so can be removed when flatbuffers 1.12 is released
-      // Explicit build of boost_build required because otherwise we get a version of b2 built against glibc (alpine instead has musl)
-      container.sh """
-        sed -i '10iflatbuffers/1.10.0@google/stable' ${pipeline_builder.project}/conanfile.txt
-        conan install "boost_build/1.69.0@bincrafters/stable" --build
-      """
-    }
-
-    def conan_remote = "ess-dmsc-local"
-    container.sh """
-      mkdir build
-      cd build
-      conan remote add \
-        --insert 0 \
-        ${conan_remote} ${local_conan_server}
-      conan install --build=outdated ../${pipeline_builder.project}/conanfile.txt
-    """
-  }  // stage
+  cpp_dependencies(pipeline_builder, container)
 
   pipeline_builder.stage("${container.key}: Configure") {
     if (container.key != release_os) {
