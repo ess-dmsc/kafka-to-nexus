@@ -342,24 +342,27 @@ String ubuntu_key = "ubuntu2004"
 String centos_key = "centos7"
 String release_key = "centos7-release"
 String system_test_key = "system-test"
+String static_checks_key = "static-checks"
 
 container_build_nodes = [
   (centos_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   (release_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  (ubuntu_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
+  (ubuntu_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004'),
+  (static_checks_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
 ]
+
+base_steps = [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}]
 
 container_build_node_steps = [
-    (centos_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
-    (release_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
-    (ubuntu_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, , {b,c -> unit_tests(b, c, true)}, {b,c -> static_checks(b, c)}],
-    (system_test_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> system_test(b, c)}]
+    (centos_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
+    (release_key): base_steps + [{b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
+    (ubuntu_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, true)}],
+    (static_checks_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON", false)}, {b,c -> static_checks(b, c)}],
 ]
 
-// if ( env.CHANGE_ID ) {
-//   container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
-// }
-container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
+if ( env.CHANGE_ID ) {
+  container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
+}
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
