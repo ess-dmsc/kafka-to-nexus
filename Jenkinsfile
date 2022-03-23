@@ -65,10 +65,10 @@ def build(builder, container, unit_tests=false) {
     }
 }
 
-def unit_tests(builder, container) {
+def unit_tests(builder, container, coverage) {
     builder.stage("${container.key}: Test") {
         // env.CHANGE_ID is set for pull request builds.
-        if (container.key == test_and_coverage_os) {
+        if (coverage) {
           def test_output = "TestResults.xml"
           container.sh """
             cd build
@@ -110,7 +110,7 @@ def unit_tests(builder, container) {
             }
           }
 
-        } else if (container.key != release_os) {
+        } else {
           def test_dir
           test_dir = 'bin'
 
@@ -307,9 +307,9 @@ container_build_nodes = [
 ]
 
 container_build_node_steps = [
-    centos_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}],
-    release_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}],
-    ubuntu_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}],
+    centos_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
+    release_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> archive(b, c, false)}],
+    ubuntu_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, , {b,c -> unit_tests(b, c, true)}, {b,c -> static_checks(b, c)}],
     system_test_key: [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}]
 ]
 
