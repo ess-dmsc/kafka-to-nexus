@@ -39,10 +39,10 @@ properties([[
 
 def checkout(builder, container) {
     builder.stage("${container.key}: Checkout") {
-        dir(pipeline_builder.project) {
+        dir(builder.project) {
           scm_vars = checkout scm
         }
-        container.copyTo(pipeline_builder.project, pipeline_builder.project)
+        container.copyTo(builder.project, builder.project)
       }
 }
 
@@ -56,7 +56,7 @@ def cpp_dependencies(builder, container) {
           conan remote add \
             --insert 0 \
             ${conan_remote} ${local_conan_server}
-          conan install --build=outdated ../${pipeline_builder.project}/conanfile.txt
+          conan install --build=outdated ../${builder.project}/conanfile.txt
         """
     }
 }
