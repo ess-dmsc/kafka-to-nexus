@@ -333,7 +333,7 @@ def system_test(builder, container) {
       }  // stage
       stage("${container.key}: System test archive") {
         junit "kafka-to-nexus/system-tests/SystemTestsOutput.xml"
-        archiveArtifacts "kafka-to-nexus/system-tests/logs/*.log"
+        archiveArtifacts "kafka-to-nexus/system-tests/logs/*.txt"
       }
     }
 }
