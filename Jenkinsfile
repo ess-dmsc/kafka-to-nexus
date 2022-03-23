@@ -304,6 +304,7 @@ def archive(builder, container) {
 def system_test(builder, container) {
     try {
       stage("${container.key}: Sys.-test requirements") {
+        sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh """cd kafka-to-nexus
        python3.6 -m pip install --user --upgrade pip
        python3.6 -m pip install --user -r system-tests/requirements.txt
@@ -312,7 +313,6 @@ def system_test(builder, container) {
       stage("${container.key}: System test run") {
         // Stop and remove any containers that may have been from the job before,
         // i.e. if a Jenkins job has been aborted.
-        sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
         timeout(time: 30, activity: true){
           sh """cd kafka-to-nexus/system-tests/
