@@ -296,6 +296,7 @@ def copy_binaries(builder, container) {
 
 def archive(builder, container) {
     builder.stage("${container.key}: Archiving") {
+      def archive_output = "${builder.project}-${container.key}.tar.gz"
       archiveArtifacts "${archive_output},BUILD_INFO"
     }
 }
@@ -303,7 +304,8 @@ def archive(builder, container) {
 def system_test(builder, container) {
     try {
       stage("${container.key}: Sys.-test requirements") {
-        sh """python3.6 -m pip install --user --upgrade pip
+        sh """cd kafka-to-nexus
+       python3.6 -m pip install --user --upgrade pip
        python3.6 -m pip install --user -r system-tests/requirements.txt
         """
       }  // stage
@@ -313,9 +315,9 @@ def system_test(builder, container) {
         sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
         timeout(time: 30, activity: true){
-          sh """cd system-tests/
+          sh """cd kafka-to-nexus/system-tests/
           chmod go+w logs output-files
-          python3.6 -m pytest -s --writer-binary="kafka-to-nexus" --junitxml=./SystemTestsOutput.xml .
+          python3.6 -m pytest -s --writer-binary="../" --junitxml=./SystemTestsOutput.xml .
           """
         }
       }  // stage
