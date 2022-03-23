@@ -52,7 +52,7 @@ def cpp_dependencies(builder, container) {
 }
 
 def build(builder, container, unit_tests=false) {
-    def Target = "kafka-to-nexus"
+    String Target = "kafka-to-nexus"
     if (unit_tests) {
         Target = "UnitTests"
     }
