@@ -135,7 +135,7 @@ def configure(builder, container) {
           def extra_flags = ''
           if (container.key == test_and_coverage_os) {
             extra_flags += ' -DCOV=ON'
-          } else if (container.key == clangformat_os) {
+          } else if (container.key == static_checks_os) {
             extra_flags += ' -DRUN_DOXYGEN=ON'
           }
           container.sh """
