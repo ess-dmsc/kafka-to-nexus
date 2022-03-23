@@ -305,6 +305,9 @@ def system_test(builder, container) {
     try {
       stage("${container.key}: Sys.-test requirements") {
         sh "ls"
+        sh "ls kafka-to-nexus"
+        sh "ls .."
+        sh "ls kafka-to-nexus@tmp"
         sh "pwd"
         sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh """cd kafka-to-nexus
