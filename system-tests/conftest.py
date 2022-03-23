@@ -151,10 +151,12 @@ def build_and_run(options, request, binary_path: Optional[str] =None):
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
-        for fw in list_of_writers:
-            fw.kill()
         options["--timeout"] = 30
         cmd.down(options)
+        for fw in list_of_writers:
+            fw.terminate()
+        for fw in list_of_writers:
+            fw.wait()
         print("containers stopped", flush=True)
 
     # Using a finalizer rather than yield in the fixture means
@@ -174,7 +176,7 @@ def remove_logs_from_previous_run(request):
     log_dir_name = os.path.join(os.getcwd(), "logs")
     dirlist = os.listdir(log_dir_name)
     for filename in dirlist:
-        if filename.endswith(".log"):
+        if filename.endswith(".log") or filename.endswith(".txt"):
             os.remove(os.path.join(log_dir_name, filename))
 
 
