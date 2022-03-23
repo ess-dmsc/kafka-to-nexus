@@ -137,7 +137,6 @@ def build_and_run(options, request, binary_path: Optional[str] = None):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     run_containers(cmd, options)
-    time.sleep(10)
     list_of_writers = []
 
     if binary_path is not None:
@@ -156,6 +155,7 @@ def build_and_run(options, request, binary_path: Optional[str] = None):
                 stdout=log_file,
             )
             list_of_writers.append(proc)
+        time.sleep(10)
 
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
