@@ -269,30 +269,71 @@ def static_checks(builder, container) {
         }  // stage
 }
 
+def copy_binaries(builder, container) {
+    builder.stage("${container.key}: Archiving") {
+      def archive_output = "${builder.project}-${container.key}.tar.gz"
+      container.sh """
+        cd build
+        rm -rf ${builder.project}; mkdir ${builder.project}
+        mkdir ${builder.project}/bin
+        cp ./bin/kafka-to-nexus ${builder.project}/bin/
+        cp -r ./lib ${builder.project}/
+        cp -r ./licenses ${builder.project}/
+
+        # Create file with build information
+        touch ${builder.project}/BUILD_INFO
+        echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
+        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
+        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
+
+        tar czf ${archive_output} ${builder.project}
+      """
+
+      container.copyFrom("build/${archive_output}", '.')
+      container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
+    }
+}
+
 def archive(builder, container) {
     builder.stage("${container.key}: Archiving") {
-              def archive_output = "${builder.project}-${container.key}.tar.gz"
-              container.sh """
-                cd build
-                rm -rf ${builder.project}; mkdir ${builder.project}
-                mkdir ${builder.project}/bin
-                cp ./bin/kafka-to-nexus ${builder.project}/bin/
-                cp -r ./lib ${builder.project}/
-                cp -r ./licenses ${builder.project}/
+      archiveArtifacts "${archive_output},BUILD_INFO"
+    }
+}
 
-                # Create file with build information
-                touch ${builder.project}/BUILD_INFO
-                echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
-                echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
-                echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
-
-                tar czf ${archive_output} ${builder.project}
-              """
-
-              container.copyFrom("build/${archive_output}", '.')
-              container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
-              archiveArtifacts "${archive_output},BUILD_INFO"
-            }
+def system_test(builder, container) {
+    try {
+      stage("${container.key}: Sys.-test requirements") {
+        sh """python3.6 -m pip install --user --upgrade pip
+       python3.6 -m pip install --user -r system-tests/requirements.txt
+        """
+      }  // stage
+      stage("${container.key}: System test run") {
+        // Stop and remove any containers that may have been from the job before,
+        // i.e. if a Jenkins job has been aborted.
+        sh "tar xvf ${builder.project}-${container.key}.tar.gz"
+        sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
+        timeout(time: 30, activity: true){
+          sh """cd system-tests/
+          chmod go+w logs output-files
+          python3.6 -m pytest -s --writer-binary="kafka-to-nexus" --junitxml=./SystemTestsOutput.xml .
+          """
+        }
+      }  // stage
+    } finally {
+      stage ("${container.key}: System test clean-up") {
+        // The statements below return true because the build should pass
+        // even if there are no docker containers or output files to be
+        // removed.
+        sh """rm -rf system-tests/output-files/* || true
+        docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
+        """
+          sh "cd system-tests && chmod go-w logs output-files"
+      }  // stage
+      stage("${container.key}: System test archive") {
+        junit "system-tests/SystemTestsOutput.xml"
+        archiveArtifacts "system-tests/logs/*.log"
+      }
+    }
 }
 
 String ubuntu_key = "ubuntu2004"
@@ -308,15 +349,15 @@ container_build_nodes = [
 
 container_build_node_steps = [
     (centos_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
-    (release_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> archive(b, c)}],
+    (release_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
     (ubuntu_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, , {b,c -> unit_tests(b, c, true)}, {b,c -> static_checks(b, c)}],
-    (system_test_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}]
+    (system_test_key): [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}, {b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}]
 ]
 
-if ( env.CHANGE_ID ) {
-  container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
-}
-
+// if ( env.CHANGE_ID ) {
+//   container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
+// }
+container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
@@ -326,20 +367,6 @@ builders = pipeline_builder.createBuilders { container ->
     for (step in current_steps_list) {
         step(pipeline_builder, container)
     }
-//
-//   build(pipeline_builder, container)
-//
-//   if (container.key != release_os) {
-//       unit_tests(pipeline_builder, container)
-//   }
-//
-//   if (container.key == static_checks_os) {
-//     static_checks(pipeline_builder, container)
-//   }  // if
-//
-//   if (container.key == release_os) {
-//     archive(pipeline_builder, container)
-//   }
 }  // createBuilders
 
 node {
@@ -402,53 +429,7 @@ def get_macos_pipeline() {
             failure_function(e, 'MacOSX / build+test failed')
           }
         }
-
       }
     }
   }
 }
-
-// def get_system_tests_pipeline() {
-//   return {
-//     node('system-test') {
-//       cleanWs()
-//       dir("${project}") {
-//         try {
-//           stage("System tests: Checkout") {
-//             checkout scm
-//           }  // stage
-//           stage("System tests: Install requirements") {
-//             sh """python3.6 -m pip install --user --upgrade pip
-//            python3.6 -m pip install --user -r system-tests/requirements.txt
-//             """
-//           }  // stage
-//           stage("System tests: Run") {
-//             // Stop and remove any containers that may have been from the job before,
-//             // i.e. if a Jenkins job has been aborted.
-//             sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
-//             timeout(time: 30, activity: true){
-//               sh """cd system-tests/
-//               chmod go+w logs output-files
-//               python3.6 -m pytest -s --junitxml=./SystemTestsOutput.xml .
-//               """
-//             }
-//           }  // stage
-//         } finally {
-//           stage ("System tests: Clean Up") {
-//             // The statements below return true because the build should pass
-//             // even if there are no docker containers or output files to be
-//             // removed.
-//             sh """rm -rf system-tests/output-files/* || true
-//             docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
-//             """
-//               sh "cd system-tests && chmod go-w logs output-files"
-//           }  // stage
-//           stage("System tests: Archive") {
-//             junit "system-tests/SystemTestsOutput.xml"
-//             archiveArtifacts "system-tests/logs/*.log"
-//           }
-//         }  // try/finally
-//       } // dir
-//     }  // node
-//   }  // return
-// } // def
