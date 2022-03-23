@@ -304,11 +304,6 @@ def archive(builder, container) {
 def system_test(builder, container) {
     try {
       stage("${container.key}: Sys.-test requirements") {
-        sh "ls"
-        sh "ls kafka-to-nexus"
-        sh "ls .."
-        sh "ls kafka-to-nexus@tmp"
-        sh "pwd"
         sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh """cd kafka-to-nexus
        python3.6 -m pip install --user --upgrade pip
@@ -322,7 +317,7 @@ def system_test(builder, container) {
         timeout(time: 30, activity: true){
           sh """cd kafka-to-nexus/system-tests/
           chmod go+w logs output-files
-          python3.6 -m pytest -s --writer-binary="../" --junitxml=./SystemTestsOutput.xml .
+          LD_LIBRARY_PATH=../lib python3.6 -m pytest -s --writer-binary="../" --junitxml=./SystemTestsOutput.xml .
           """
         }
       }  // stage
