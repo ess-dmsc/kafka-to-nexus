@@ -332,8 +332,8 @@ def system_test(builder, container) {
         sh "cd kafka-to-nexus/system-tests && chmod go-w logs output-files"
       }  // stage
       stage("${container.key}: System test archive") {
-        junit "system-tests/SystemTestsOutput.xml"
-        archiveArtifacts "system-tests/logs/*.log"
+        junit "kafka-to-nexus/system-tests/SystemTestsOutput.xml"
+        archiveArtifacts "kafka-to-nexus/system-tests/logs/*.log"
       }
     }
 }
