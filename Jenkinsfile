@@ -309,10 +309,10 @@ container_build_nodes = [
 ]
 
 container_build_node_steps = [
-    centos_key: [checkout, ],
-    release_key: [checkout, ],
-    ubuntu_key: [checkout, ],
-    system_test_key: [checkout, ]
+    centos_key: [{b,c -> checkout(b, c)}, ],
+    release_key: [{b,c -> checkout(b, c)}, ],
+    ubuntu_key: [{b,c -> checkout(b, c)}, ],
+    system_test_key: [{b,c -> checkout(b, c)}, ]
 ]
 
 // if ( env.CHANGE_ID ) {
