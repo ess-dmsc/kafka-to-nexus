@@ -146,7 +146,7 @@ def build_and_run(options, request, binary_path: Optional[str] =None):
             proc = Popen([file_writer_path, "-c", f"{c_path}/config-files/file_writer_config.ini",
                           "--service-name", f"filewriter_{i}",
                           ], stdout=log_file,)
-        list_of_writers.append(proc)
+            list_of_writers.append(proc)
 
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
