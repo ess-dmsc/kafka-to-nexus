@@ -329,7 +329,7 @@ def system_test(builder, container) {
         sh """rm -rf system-tests/output-files/* || true
         docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
         """
-        sh "cd kafka-to-nexus/system_test && chmod go-w logs output-files"
+        sh "cd kafka-to-nexus/system-tests && chmod go-w logs output-files"
       }  // stage
       stage("${container.key}: System test archive") {
         junit "system-tests/SystemTestsOutput.xml"
