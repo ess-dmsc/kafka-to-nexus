@@ -66,7 +66,7 @@ pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
-  checkout(builder, container)
+  checkout(pipeline_builder, container)
 
   cpp_dependencies(pipeline_builder, container)
 
