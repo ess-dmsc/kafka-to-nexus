@@ -4,16 +4,6 @@ import ecdcpipeline.PipelineBuilder
 
 project = "kafka-to-nexus"
 
-static_checks_os = "ubuntu2004"
-test_and_coverage_os = "ubuntu2004"
-release_os = "centos7-release"
-
-container_build_nodes = [
-  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'ubuntu2004': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
-]
-
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
 // but based on the fact that for the master branch we want to have a certain
 // number of old builds available, while for the other branches we want to be
@@ -307,30 +297,56 @@ def archive(builder, container) {
             }
 }
 
+ubuntu_key = "ubuntu2004"
+centos_key = "centos7-release"
+release_key = "centos7-release"
+system_test_key = "system-test"
+
+container_build_nodes = [
+  centos_key: ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  release_key: ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  ubuntu_key: ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
+]
+
+container_build_node_steps = [
+    centos_key: [checkout, ],
+    release_key: [checkout, ],
+    ubuntu_key: [checkout, ],
+    system_test_key: [checkout, ]
+]
+
+// if ( env.CHANGE_ID ) {
+//   container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
+// }
+
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
-  checkout(pipeline_builder, container)
-
-  cpp_dependencies(pipeline_builder, container)
-
-  configure(pipeline_builder, container)
-
-  build(pipeline_builder, container)
-
-  if (container.key != release_os) {
-      unit_tests(pipeline_builder, container)
-  }
-
-  if (container.key == static_checks_os) {
-    static_checks(pipeline_builder, container)
-  }  // if
-
-  if (container.key == release_os) {
-    archive(pipeline_builder, container)
-  }
+    current_steps_list = container_build_node_steps[container.key]
+    for (step in current_steps_list) {
+        step(pipeline_builder, container)
+    }
+//   checkout(pipeline_builder, container)
+//
+//   cpp_dependencies(pipeline_builder, container)
+//
+//   configure(pipeline_builder, container)
+//
+//   build(pipeline_builder, container)
+//
+//   if (container.key != release_os) {
+//       unit_tests(pipeline_builder, container)
+//   }
+//
+//   if (container.key == static_checks_os) {
+//     static_checks(pipeline_builder, container)
+//   }  // if
+//
+//   if (container.key == release_os) {
+//     archive(pipeline_builder, container)
+//   }
 }  // createBuilders
 
 node {
@@ -343,10 +359,6 @@ node {
   }
 
   builders['macOS'] = get_macos_pipeline()
-
-  if ( env.CHANGE_ID ) {
-      builders['system tests'] = get_system_tests_pipeline()
-  }
 
   try {
     parallel builders
@@ -403,47 +415,47 @@ def get_macos_pipeline() {
   }
 }
 
-def get_system_tests_pipeline() {
-  return {
-    node('system-test') {
-      cleanWs()
-      dir("${project}") {
-        try {
-          stage("System tests: Checkout") {
-            checkout scm
-          }  // stage
-          stage("System tests: Install requirements") {
-            sh """python3.6 -m pip install --user --upgrade pip
-           python3.6 -m pip install --user -r system-tests/requirements.txt
-            """
-          }  // stage
-          stage("System tests: Run") {
-            // Stop and remove any containers that may have been from the job before,
-            // i.e. if a Jenkins job has been aborted.
-            sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
-            timeout(time: 30, activity: true){
-              sh """cd system-tests/
-              chmod go+w logs output-files
-              python3.6 -m pytest -s --junitxml=./SystemTestsOutput.xml .
-              """
-            }
-          }  // stage
-        } finally {
-          stage ("System tests: Clean Up") {
-            // The statements below return true because the build should pass
-            // even if there are no docker containers or output files to be
-            // removed.
-            sh """rm -rf system-tests/output-files/* || true
-            docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
-            """
-              sh "cd system-tests && chmod go-w logs output-files"
-          }  // stage
-          stage("System tests: Archive") {
-            junit "system-tests/SystemTestsOutput.xml"
-            archiveArtifacts "system-tests/logs/*.log"
-          }
-        }  // try/finally
-      } // dir
-    }  // node
-  }  // return
-} // def
+// def get_system_tests_pipeline() {
+//   return {
+//     node('system-test') {
+//       cleanWs()
+//       dir("${project}") {
+//         try {
+//           stage("System tests: Checkout") {
+//             checkout scm
+//           }  // stage
+//           stage("System tests: Install requirements") {
+//             sh """python3.6 -m pip install --user --upgrade pip
+//            python3.6 -m pip install --user -r system-tests/requirements.txt
+//             """
+//           }  // stage
+//           stage("System tests: Run") {
+//             // Stop and remove any containers that may have been from the job before,
+//             // i.e. if a Jenkins job has been aborted.
+//             sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
+//             timeout(time: 30, activity: true){
+//               sh """cd system-tests/
+//               chmod go+w logs output-files
+//               python3.6 -m pytest -s --junitxml=./SystemTestsOutput.xml .
+//               """
+//             }
+//           }  // stage
+//         } finally {
+//           stage ("System tests: Clean Up") {
+//             // The statements below return true because the build should pass
+//             // even if there are no docker containers or output files to be
+//             // removed.
+//             sh """rm -rf system-tests/output-files/* || true
+//             docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
+//             """
+//               sh "cd system-tests && chmod go-w logs output-files"
+//           }  // stage
+//           stage("System tests: Archive") {
+//             junit "system-tests/SystemTestsOutput.xml"
+//             archiveArtifacts "system-tests/logs/*.log"
+//           }
+//         }  // try/finally
+//       } // dir
+//     }  // node
+//   }  // return
+// } // def
