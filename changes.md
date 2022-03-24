@@ -11,10 +11,11 @@
 - Fix ordering of elements in static data.
 - Added functionality for automatically instantiating extra writer modules.
 - The writer modules _f142_, _senv_ and _tdct_ will now automatically also instantiate _ep00_ writer modules at the same location. Disable this by setting the `enable_epics_con_status` config option to `false`.
-- The "--abort-on-uninitialised-stream" command line option has been removed. An error in the JSON code for initialising a stream will now always cause an error that will stop further initialisation.
+- The `--abort-on-uninitialised-stream` command line option has been removed. An error in the JSON code for initialising a stream will now always cause an error that will stop further initialisation.
 - Added documentation.
 - Potentially fixed a bug where the file-writer gets into a bad state.
 - Removed automatic "start_time" and "end_time" metadata fields.
+- Simplified system test code.
 
 
 ## Version 4.1.0: Quality of life
