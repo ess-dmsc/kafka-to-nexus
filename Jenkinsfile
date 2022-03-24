@@ -33,7 +33,7 @@ def checkout(builder, container) {
           scm_vars = checkout scm
         }
         container.copyTo(builder.project, builder.project)
-      }
+    }
 }
 
 def cpp_dependencies(builder, container) {
@@ -170,9 +170,9 @@ def static_checks(builder, container) {
               git commit -m 'GO FORMAT YOURSELF (clang-format)'
             """
           } catch (e) {
-           // Okay to fail as there could be no badly formatted files to commit
+          // Okay to fail as there could be no badly formatted files to commit
           } finally {
-            // Clean up
+          // Clean up
           }
 
           try {
@@ -186,9 +186,9 @@ def static_checks(builder, container) {
               git commit -m 'GO FORMAT YOURSELF (black)'
             """
           } catch (e) {
-           // Okay to fail as there could be no badly formatted files to commit
+          // Okay to fail as there could be no badly formatted files to commit
           } finally {
-            // Clean up
+          // Clean up
           }
 
           // Push any changes resulting from formatting
@@ -208,9 +208,9 @@ def static_checks(builder, container) {
               }  // withEnv
             }  // withCredentials
           } catch (e) {
-            // Okay to fail; there may be nothing to push
+          // Okay to fail; there may be nothing to push
           } finally {
-            // Clean up
+          // Clean up
           }
         }  // stage
 
@@ -245,7 +245,7 @@ def static_checks(builder, container) {
                 if(line ==~ regexMissingDocsMemberConsumer || line ==~ regexInvalidArg ||
                     line ==~ regexMissingCompoundDocs) {
                     failingCases.add(line)
-                }
+                    }
             }
 
             int acceptableFailedCases = 77
@@ -445,8 +445,8 @@ def get_macos_pipeline() {
           } catch (e) {
             failure_function(e, 'MacOSX / unit tests failed')
           }
+          }
         }
       }
-    }
   }
 }
