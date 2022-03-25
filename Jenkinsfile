@@ -313,7 +313,7 @@ def system_test(builder, container) {
       stage("${container.key}: System test run") {
         // Stop and remove any containers that may have been from the job before,
         // i.e. if a Jenkins job has been aborted.
-        sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
+        sh "cd kafka-to-nexus/system-tests && docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true"
         timeout(time: 30, activity: true){
           sh """cd kafka-to-nexus/system-tests/
           chmod go+w logs output-files
@@ -327,7 +327,8 @@ def system_test(builder, container) {
         // even if there are no docker containers or output files to be
         // removed.
         sh """rm -rf system-tests/output-files/* || true
-        docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
+        cd kafka-to-nexus/system-tests &&
+        docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true
         """
         sh "cd kafka-to-nexus/system-tests && chmod go-w logs output-files"
       }  // stage
