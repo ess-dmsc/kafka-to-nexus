@@ -310,31 +310,33 @@ def system_test(builder, container) {
        python3.6 -m pip install --user -r system-tests/requirements.txt
         """
       }  // stage
+      dir("kafka-to-nexus/system-tests") {
       stage("${container.key}: System test run") {
         // Stop and remove any containers that may have been from the job before,
         // i.e. if a Jenkins job has been aborted.
-        sh "cd kafka-to-nexus/system-tests && docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true"
+        sh "docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true"
         timeout(time: 30, activity: true){
-          sh """cd kafka-to-nexus/system-tests/
-          chmod go+w logs output-files
+          sh """chmod go+w logs output-files
           LD_LIBRARY_PATH=../lib python3.6 -m pytest -s --writer-binary="../" --junitxml=./SystemTestsOutput.xml .
           """
         }
       }  // stage
+      }
     } finally {
       stage ("${container.key}: System test clean-up") {
+      dir("kafka-to-nexus/system-tests") {
         // The statements below return true because the build should pass
         // even if there are no docker containers or output files to be
         // removed.
-        sh """rm -rf system-tests/output-files/* || true
-        cd kafka-to-nexus/system-tests &&
+        sh """rm -rf output-files/* || true
         docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true
         """
-        sh "cd kafka-to-nexus/system-tests && chmod go-w logs output-files"
+        sh "chmod go-w logs output-files"
       }  // stage
       stage("${container.key}: System test archive") {
-        junit "kafka-to-nexus/system-tests/SystemTestsOutput.xml"
-        archiveArtifacts "kafka-to-nexus/system-tests/logs/*.txt"
+        junit "SystemTestsOutput.xml"
+        archiveArtifacts "logs/*.txt"
+      }
       }
     }
 }
