@@ -4,16 +4,6 @@ import ecdcpipeline.PipelineBuilder
 
 project = "kafka-to-nexus"
 
-static_checks_os = "ubuntu2004"
-test_and_coverage_os = "ubuntu2004"
-release_os = "centos7-release"
-
-container_build_nodes = [
-  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'ubuntu2004': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
-]
-
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
 // but based on the fact that for the master branch we want to have a certain
 // number of old builds available, while for the other branches we want to be
@@ -43,7 +33,7 @@ def checkout(builder, container) {
           scm_vars = checkout scm
         }
         container.copyTo(builder.project, builder.project)
-      }
+    }
 }
 
 def cpp_dependencies(builder, container) {
@@ -61,20 +51,24 @@ def cpp_dependencies(builder, container) {
     }
 }
 
-def build(builder, container) {
+def build(builder, container, unit_tests=false) {
+    String Target = "kafka-to-nexus"
+    if (unit_tests) {
+        Target = "UnitTests"
+    }
     builder.stage("${container.key}: Build") {
         container.sh """
         cd build
         . ./activate_run.sh
-        ninja all UnitTests
+        ninja ${Target}
         """
     }
 }
 
-def unit_tests(builder, container) {
+def unit_tests(builder, container, coverage) {
     builder.stage("${container.key}: Test") {
         // env.CHANGE_ID is set for pull request builds.
-        if (container.key == test_and_coverage_os) {
+        if (coverage) {
           def test_output = "TestResults.xml"
           container.sh """
             cd build
@@ -116,7 +110,7 @@ def unit_tests(builder, container) {
             }
           }
 
-        } else if (container.key != release_os) {
+        } else {
           def test_dir
           test_dir = 'bin'
 
@@ -129,15 +123,9 @@ def unit_tests(builder, container) {
       }  // stage
 }
 
-def configure(builder, container) {
+def configure(builder, container, extra_flags, release_build) {
     builder.stage("${container.key}: Configure") {
-        if (container.key != release_os) {
-          def extra_flags = ''
-          if (container.key == test_and_coverage_os) {
-            extra_flags += ' -DCOV=ON'
-          } else if (container.key == static_checks_os) {
-            extra_flags += ' -DRUN_DOXYGEN=ON'
-          }
+        if (!release_build) {
           container.sh """
             cd build
             . ./activate_run.sh
@@ -182,9 +170,9 @@ def static_checks(builder, container) {
               git commit -m 'GO FORMAT YOURSELF (clang-format)'
             """
           } catch (e) {
-           // Okay to fail as there could be no badly formatted files to commit
+          // Okay to fail as there could be no badly formatted files to commit
           } finally {
-            // Clean up
+          // Clean up
           }
 
           try {
@@ -198,9 +186,9 @@ def static_checks(builder, container) {
               git commit -m 'GO FORMAT YOURSELF (black)'
             """
           } catch (e) {
-           // Okay to fail as there could be no badly formatted files to commit
+          // Okay to fail as there could be no badly formatted files to commit
           } finally {
-            // Clean up
+          // Clean up
           }
 
           // Push any changes resulting from formatting
@@ -220,9 +208,9 @@ def static_checks(builder, container) {
               }  // withEnv
             }  // withCredentials
           } catch (e) {
-            // Okay to fail; there may be nothing to push
+          // Okay to fail; there may be nothing to push
           } finally {
-            // Clean up
+          // Clean up
           }
         }  // stage
 
@@ -257,7 +245,7 @@ def static_checks(builder, container) {
                 if(line ==~ regexMissingDocsMemberConsumer || line ==~ regexInvalidArg ||
                     line ==~ regexMissingCompoundDocs) {
                     failingCases.add(line)
-                }
+                    }
             }
 
             int acceptableFailedCases = 77
@@ -281,56 +269,113 @@ def static_checks(builder, container) {
         }  // stage
 }
 
-def archive(builder, container) {
-    builder.stage("${container.key}: Archiving") {
-              def archive_output = "${builder.project}-${container.key}.tar.gz"
-              container.sh """
-                cd build
-                rm -rf ${builder.project}; mkdir ${builder.project}
-                mkdir ${builder.project}/bin
-                cp ./bin/kafka-to-nexus ${builder.project}/bin/
-                cp -r ./lib ${builder.project}/
-                cp -r ./licenses ${builder.project}/
+def copy_binaries(builder, container) {
+    builder.stage("${container.key}: Copying binaries") {
+      def archive_output = "${builder.project}-${container.key}.tar.gz"
+      container.sh """
+        cd build
+        rm -rf ${builder.project}; mkdir ${builder.project}
+        mkdir ${builder.project}/bin
+        cp ./bin/kafka-to-nexus ${builder.project}/bin/
+        cp -r ./lib ${builder.project}/
+        cp -r ./licenses ${builder.project}/
 
-                # Create file with build information
-                touch ${builder.project}/BUILD_INFO
-                echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
-                echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
-                echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
+        # Create file with build information
+        touch ${builder.project}/BUILD_INFO
+        echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
+        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
+        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
 
-                tar czf ${archive_output} ${builder.project}
-              """
+        tar czf ${archive_output} ${builder.project}
+      """
 
-              container.copyFrom("build/${archive_output}", '.')
-              container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
-              archiveArtifacts "${archive_output},BUILD_INFO"
-            }
+      container.copyFrom("build/${archive_output}", '.')
+      container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
+    }
 }
 
+def archive(builder, container) {
+    builder.stage("${container.key}: Archiving") {
+      def archive_output = "${builder.project}-${container.key}.tar.gz"
+      archiveArtifacts "${archive_output},BUILD_INFO"
+    }
+}
+
+def system_test(builder, container) {
+    try {
+      stage("${container.key}: Sys.-test requirements") {
+        sh "tar xvf ${builder.project}-${container.key}.tar.gz"
+        sh """cd kafka-to-nexus
+       python3.6 -m pip install --user --upgrade pip
+       python3.6 -m pip install --user -r system-tests/requirements.txt
+        """
+      }  // stage
+      dir("kafka-to-nexus/system-tests") {
+      stage("${container.key}: System test run") {
+        // Stop and remove any containers that may have been from the job before,
+        // i.e. if a Jenkins job has been aborted.
+        sh "docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true"
+        timeout(time: 30, activity: true){
+          sh """chmod go+w logs output-files
+          LD_LIBRARY_PATH=../lib python3.6 -m pytest -s --writer-binary="../" --junitxml=./SystemTestsOutput.xml .
+          """
+        }
+      }  // stage
+      }
+    } finally {
+      stage ("${container.key}: System test clean-up") {
+        dir("kafka-to-nexus/system-tests") {
+            // The statements below return true because the build should pass
+            // even if there are no docker containers or output files to be
+            // removed.
+            sh """rm -rf output-files/* || true
+            docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true
+            """
+            sh "chmod go-w logs output-files"
+        }
+      }  // stage
+      stage("${container.key}: System test archive") {
+        junit "kafka-to-nexus/system-tests/SystemTestsOutput.xml"
+        archiveArtifacts "kafka-to-nexus/system-tests/logs/*.txt"
+      }
+    }
+}
+
+String ubuntu_key = "ubuntu2004"
+String centos_key = "centos7"
+String release_key = "centos7-release"
+String system_test_key = "system-test"
+String static_checks_key = "static-checks"
+
+container_build_nodes = [
+  (centos_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  (release_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  (ubuntu_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004'),
+  (static_checks_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2004')
+]
+
+base_steps = [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}]
+
+container_build_node_steps = [
+    (centos_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
+    (release_key): base_steps + [{b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
+    (ubuntu_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, true)}],
+    (static_checks_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON", false)}, {b,c -> static_checks(b, c)}],
+    (system_test_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> system_test(b, c)}]
+]
+
+if ( env.CHANGE_ID ) {
+  container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
+}
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
-  checkout(pipeline_builder, container)
-
-  cpp_dependencies(pipeline_builder, container)
-
-  configure(pipeline_builder, container)
-
-  build(pipeline_builder, container)
-
-  if (container.key != release_os) {
-      unit_tests(pipeline_builder, container)
-  }
-
-  if (container.key == static_checks_os) {
-    static_checks(pipeline_builder, container)
-  }  // if
-
-  if (container.key == release_os) {
-    archive(pipeline_builder, container)
-  }
+    current_steps_list = container_build_node_steps[container.key]
+    for (step in current_steps_list) {
+        step(pipeline_builder, container)
+    }
 }  // createBuilders
 
 node {
@@ -342,11 +387,7 @@ node {
     }
   }
 
-  builders['macOS'] = get_macos_pipeline()
-
-  if ( env.CHANGE_ID ) {
-      builders['system tests'] = get_system_tests_pipeline()
-  }
+   builders['macOS'] = get_macos_pipeline()
 
   try {
     parallel builders
@@ -367,11 +408,11 @@ def failure_function(exception_obj, failureMessage) {
 
 def get_macos_pipeline() {
   return {
-    stage("macOS") {
+
       node ("macos") {
         // Delete workspace when build is done
         cleanWs()
-
+        stage("macOS: Checkout") {
         dir("${project}/code") {
           try {
           // temporary conan remove until all projects move to new package version
@@ -382,68 +423,33 @@ def get_macos_pipeline() {
             failure_function(e, 'MacOSX / Checkout failed')
           }
         }
+        }
 
         dir("${project}/build") {
+        stage("macOS: Configure") {
           try {
             sh "cmake ../code"
           } catch (e) {
             failure_function(e, 'MacOSX / CMake failed')
           }
-
-          try {
-            sh "make -j4 all UnitTests"
-            sh ". ./activate_run.sh && ./bin/UnitTests"
-          } catch (e) {
-            failure_function(e, 'MacOSX / build+test failed')
-          }
         }
 
+          stage("macOS: Build") {
+              try {
+                sh "make -j4 UnitTests"
+              } catch (e) {
+                failure_function(e, 'MacOSX / build failed')
+              }
+          }
+
+          stage("macOS: Unit tests") {
+          try {
+               sh ". ./activate_run.sh && ./bin/UnitTests"
+          } catch (e) {
+            failure_function(e, 'MacOSX / unit tests failed')
+          }
+          }
+        }
       }
-    }
   }
 }
-
-def get_system_tests_pipeline() {
-  return {
-    node('system-test') {
-      cleanWs()
-      dir("${project}") {
-        try {
-          stage("System tests: Checkout") {
-            checkout scm
-          }  // stage
-          stage("System tests: Install requirements") {
-            sh """python3.6 -m pip install --user --upgrade pip
-           python3.6 -m pip install --user -r system-tests/requirements.txt
-            """
-          }  // stage
-          stage("System tests: Run") {
-            // Stop and remove any containers that may have been from the job before,
-            // i.e. if a Jenkins job has been aborted.
-            sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
-            timeout(time: 30, activity: true){
-              sh """cd system-tests/
-              chmod go+w logs output-files
-              python3.6 -m pytest -s --junitxml=./SystemTestsOutput.xml .
-              """
-            }
-          }  // stage
-        } finally {
-          stage ("System tests: Clean Up") {
-            // The statements below return true because the build should pass
-            // even if there are no docker containers or output files to be
-            // removed.
-            sh """rm -rf system-tests/output-files/* || true
-            docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
-            """
-              sh "cd system-tests && chmod go-w logs output-files"
-          }  // stage
-          stage("System tests: Archive") {
-            junit "system-tests/SystemTestsOutput.xml"
-            archiveArtifacts "system-tests/logs/*.log"
-          }
-        }  // try/finally
-      } // dir
-    }  // node
-  }  // return
-} // def

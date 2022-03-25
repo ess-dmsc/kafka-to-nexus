@@ -8,6 +8,7 @@ from streaming_data_types.fbschemas.epics_connection_info_ep00.EventType import 
     EventType,
 )
 from file_writer_control import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -15,7 +16,8 @@ from helpers.writer import (
 )
 
 
-def test_ep00(worker_pool, kafka_address, file_name="output_file_ep00.nxs"):
+def test_ep00(worker_pool, kafka_address, hdf_file_name="output_file_ep00.nxs"):
+    file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
     producer = create_producer()
@@ -42,7 +44,7 @@ def test_ep00(worker_pool, kafka_address, file_name="output_file_ep00.nxs"):
 
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
@@ -51,7 +53,6 @@ def test_ep00(worker_pool, kafka_address, file_name="output_file_ep00.nxs"):
 
     wait_no_working_writers(worker_pool, timeout=35)
 
-    file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:
         assert file["EpicsConnectionStatus/connection_status_time"][0] == int(
             start_time.timestamp() * 1e9

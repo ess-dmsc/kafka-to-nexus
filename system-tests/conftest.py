@@ -10,29 +10,30 @@ from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 from file_writer_control import WorkerJobPool
+from typing import Optional
 
 from helpers.writer import stop_all_jobs
 
-LOCAL_BUILD = "--local-build"
-LOCAL_BUILD_DOCKER = "docker-local-writer.yml"
-SYSTEM_TEST_DOCKER = "docker-system-test.yml"
-WAIT_FOR_DEBUGGER_ATTACH = "--wait-to-attach-debugger"
+BINARY_PATH = "--writer-binary"
+START_NO_FW = "--start-no-filewriter"
+SYSTEM_TEST_DOCKER = "docker-compose.yml"
+KAFKA_HOST = "localhost:9093"
+START_NR_OF_WRITERS = 2
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        LOCAL_BUILD,
+        BINARY_PATH,
         action="store",
         default=None,
-        help="Directory of local build to run tests against instead of rebuilding in a container",
+        help="Path to filewriter binary (executable)",
     )
     parser.addoption(
-        WAIT_FOR_DEBUGGER_ATTACH,
+        START_NO_FW,
         type=bool,
         action="store",
         default=False,
-        help=f"Use this flag when using the {LOCAL_BUILD} option to cause the system "
-        f"tests to prompt you to attach a debugger to the file writer process",
+        help="Use this flag prevent the starting of a filewriter instance. Used for debugging.",
     )
 
 
@@ -41,7 +42,7 @@ def pytest_collection_modifyitems(items, config):
     If we are running against a local build then don't try to run the tests
     involving multiple instances of the file writer
     """
-    if config.option.local_build is not None:
+    if config.option.start_no_filewriter is True:
         avoid_fixture_name = "multiple_writers"
         selected_items = []
         deselected_items = []
@@ -54,13 +55,13 @@ def pytest_collection_modifyitems(items, config):
         config.hook.pytest_deselected(items=deselected_items)
         items[:] = selected_items
         print(
-            f"\nRunning against local build. Only currently supported by a subset of the system tests."
+            f"\nRunning system tests without starting (multiple) file-writers. De-selecting tests requiring multiple filewriters."
         )
 
 
 def wait_until_kafka_ready(docker_cmd, docker_options):
     print("Waiting for Kafka broker to be ready for system tests...")
-    conf = {"bootstrap.servers": "localhost:9093"}
+    conf = {"bootstrap.servers": KAFKA_HOST}
     producer = Producer(conf)
 
     kafka_ready = False
@@ -119,18 +120,10 @@ common_options = {
     "--tail": "all",
     "--detach": True,
     "--build": False,
+    "--file": [
+        SYSTEM_TEST_DOCKER,
+    ],
 }
-
-
-def build_filewriter_image(request):
-    print("Build filewriter image")
-    # Only build image if we are not running against a local build
-    if request.config.getoption(LOCAL_BUILD) is None:
-        client = docker.from_env()
-        print("Building filewriter image", flush=True)
-        from create_filewriter_image import create_filewriter_image
-
-        create_filewriter_image()
 
 
 def run_containers(cmd, options):
@@ -140,51 +133,39 @@ def run_containers(cmd, options):
     wait_until_kafka_ready(cmd, options)
 
 
-def build_and_run(options, request, local_path=None, wait_for_debugger=False):
-    if wait_for_debugger and local_path is None:
-        warnings.warn(
-            "Option specified to wait for debugger to attach, but this "
-            "can only be used if a local build path is provided"
-        )
-
+def build_and_run(options, request, binary_path: Optional[str] = None):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     run_containers(cmd, options)
-    time.sleep(10)
+    list_of_writers = []
 
-    if local_path is not None:
-        # Launch local build of file writer
-        full_path_of_file_writer_exe = os.path.join(local_path, "bin", "kafka-to-nexus")
-        log_file = open("logs/file-writer-logs.txt", "w")
-        proc = Popen(
-            [
-                full_path_of_file_writer_exe,
-                "-c",
-                "./config-files/local_file_writer_config.ini",
-            ],
-            stdout=log_file,
-        )
-        if wait_for_debugger:
-            proc.send_signal(
-                signal.SIGSTOP
-            )  # Pause the file writer until we've had chance to attach a debugger
-            input(
-                f"\n"
-                f"Attach a debugger to process id {proc.pid} now if you wish, then press enter to continue: "
+    if binary_path is not None:
+        file_writer_path = os.path.join(binary_path, "bin", "kafka-to-nexus")
+        c_path = os.path.abspath(".")
+        for i in range(START_NR_OF_WRITERS):
+            log_file = open(f"logs/file-writer_{i}.txt", "w")
+            proc = Popen(
+                [
+                    file_writer_path,
+                    "-c",
+                    f"{c_path}/config-files/file_writer_config.ini",
+                    "--service-name",
+                    f"filewriter_{i}",
+                ],
+                stdout=log_file,
             )
-            print(
-                "You'll need to tell the debugger to continue after it has attached, "
-                'for example type "continue" if using gdb.'
-            )
-            proc.send_signal(signal.SIGCONT)
+            list_of_writers.append(proc)
+        time.sleep(10)
 
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
-        if local_path is not None:
-            proc.kill()
         options["--timeout"] = 30
         cmd.down(options)
+        for fw in list_of_writers:
+            fw.terminate()
+        for fw in list_of_writers:
+            fw.wait()
         print("containers stopped", flush=True)
 
     # Using a finalizer rather than yield in the fixture means
@@ -204,7 +185,7 @@ def remove_logs_from_previous_run(request):
     log_dir_name = os.path.join(os.getcwd(), "logs")
     dirlist = os.listdir(log_dir_name)
     for filename in dirlist:
-        if filename.endswith(".log"):
+        if filename.endswith(".log") or filename.endswith(".txt"):
             os.remove(os.path.join(log_dir_name, filename))
 
 
@@ -213,31 +194,24 @@ def start_file_writer(request):
     """
     :type request: _pytest.python.FixtureRequest
     """
-    print("Starting the file-writer", flush=True)
-    # Options must be given as long form
-    options = common_options
-    if request.config.getoption(LOCAL_BUILD) is None:
-        build_filewriter_image(request)
-        options["--file"] = [SYSTEM_TEST_DOCKER]
-    else:
-        options["--file"] = [LOCAL_BUILD_DOCKER]
-    return build_and_run(
-        options,
-        request,
-        request.config.getoption(LOCAL_BUILD),
-        request.config.getoption(WAIT_FOR_DEBUGGER_ATTACH),
-    )
+    if request.config.getoption(BINARY_PATH) is None and not request.config.getoption(
+        START_NO_FW
+    ):
+        raise RuntimeError(
+            f'You must set either a path to a file-writer executable ("{BINARY_PATH}") or the "{START_NO_FW}=true" flag.'
+        )
+    file_writer_path = None
+    if not request.config.getoption(START_NO_FW):
+        print("Starting the file-writer", flush=True)
+        file_writer_path = request.config.getoption(BINARY_PATH)
+    return build_and_run(common_options, request, file_writer_path)
 
 
 @pytest.fixture(scope="function", autouse=True)
 def worker_pool(request):
-    """
-    :type request: _pytest.python.FixtureRequest
-    """
-    kafka_host = "localhost:9093"
     worker = WorkerJobPool(
-        job_topic_url=f"{kafka_host}/TEST_writer_jobs",
-        command_topic_url=f"{kafka_host}/TEST_writer_commands",
+        job_topic_url=f"{KAFKA_HOST}/TEST_writer_jobs",
+        command_topic_url=f"{KAFKA_HOST}/TEST_writer_commands",
     )
 
     def stop_current_jobs():
@@ -249,9 +223,7 @@ def worker_pool(request):
 
 @pytest.fixture(scope="session", autouse=True)
 def kafka_address(request):
-    if request.config.getoption(LOCAL_BUILD) is None:
-        return "kafka:9092"
-    return "localhost:9093"
+    return KAFKA_HOST
 
 
 @pytest.fixture(scope="session", autouse=False)

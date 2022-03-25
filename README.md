@@ -38,7 +38,6 @@ Part of the ESS data streaming pipeline.
   --data-flush-interval       (Max) amount of time between flushing of data to file, in seconds.
   -X,--kafka-config KEY VALUE ...
                               LibRDKafka options
-  --abort-on-uninitialised-stream BOOLEAN=0
                               Writer aborts the whole job if one or more streams are misconfigured and fail to start
   -c,--config-file            Read configuration from an ini file
  

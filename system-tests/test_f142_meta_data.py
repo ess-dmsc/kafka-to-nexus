@@ -10,6 +10,7 @@ from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 import pytest
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -19,8 +20,9 @@ import numpy as np
 
 
 def test_f142_meta_data(
-    worker_pool, kafka_address, file_name="output_file_with_meta_data.nxs"
+    worker_pool, kafka_address, hdf_file_name="output_file_with_meta_data.nxs"
 ):
+    file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
 
@@ -83,7 +85,7 @@ def test_f142_meta_data(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=file_start_time,
         stop_time=file_stop_time,
@@ -94,7 +96,6 @@ def test_f142_meta_data(
 
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
-    file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:
         assert file["entry/meta_data_1/minimum_value"][0] == Min
         assert file["entry/meta_data_1/maximum_value"][0] == Max

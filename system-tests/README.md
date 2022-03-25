@@ -18,40 +18,23 @@ Requires Python 3.6+.
 
 * If you have a local conan server then set environment variable `local_conan_server=<ADDRESS OF SERVER>`, if there are binaries for conan packages on the server this makes a huge difference in time taken to build the file writer docker image.
 
-* Run `python -m pytest -s .` from the `system-tests/` directory
-
-* Optionally use `--local-build <PATH_TO_BUILD_DIR>` to run against a local build of the file writer rather than rebuilding in a docker container. Note that the build directory is the one containing the `bin` directory.
+* Run `python -m pytest -s . --writer-binary=<PATH_TO_BUILD_DOR>` from the `system-tests/` directory. The system tests will spawn instances of the filewriter running on the host and will thus need to know the location of a binary that you want to test. Note that the `<PATH_TO_BUILD_DOR>` is the path to the directory containing the `bin` directory that contains the `kafka-to-nexus` executable.
 
 * To run a single test, use the `-k` argument (e.g.) `python -m pytest -s . -k 'test_two_different_writer_modules_with_same_flatbuffer_id'`.
 
-* Can also use `--wait-to-attach-debugger true` to cause the system tests to display the process ID of the file writer and give opportunity for you to attach a debugger before continuing.
-
-Note: these tests may take up to 30 minutes to run.
+* If you want to manually instantiate/run a version of the file-writer (with e.g. debug symbols), use the command line argument `--start-no-filewriter=true`. This argument is mutually exclusive with the `--writer-binary` argument. If you wait for too long before manually starting a file-writer instance, the system test will fail.
 
 
 ### General Architecture
-The system tests use pytest for the test runner, and use separate fixtures for different configurations of the file-writer. 
-
-Firstly, the system tests attempt to build and tag the latest file-writer image. This can take a lot of time especially if something in conan has changed, as it has to reinstall all of the conan packages. The image build is layer-cached with three main layers - pulling the base image, dependency gathering (from apt, pip and conan) and building the file-writer. This strikes a balance between time taken to rebuild the image when something changes, and the disk space used by the cached layers.
+The system tests use pytest for the test runner, and use separate fixtures for different configurations of the file-writer.
 
 The Kafka and Zookeeper containers are started with `docker-compose` and persist throughout all of the tests, and when finished will be stopped and removed.
 
-Each fixture starts the file-writer with an `ini` config file (found in `/config-files`). In some cases the fixtures use a JSON command at startup and in others the command is sent over Kafka as part of the test. Some fixtures start the file-writer multiple times or use the NeXus-streamer image as a source of streamed data.
-
-In some tests, command messages in `JSON` form are sent to Kafka to change the configuration of the file-writer during testing. 
+The first test starts the file-writer with an `ini` config file found in `/config-files`. Each test uses a seperate JSON config/command file found in `commands`.
 
 Most tests check the NeXus file created by the file-writer contains the correct static and streamed data, however, some tests instead test that the status of the file writer matches expectation, by consuming status messages from Kafka.
 
 Log files are placed in the `logs` folder in `system-tests` provided that the `ini` file is using the `--log-file` flag and the docker-compose file mounts the `logs` directory.
-
-#### *kafka-to-nexus* docker image
-For performance reasons the docker image containing the filewriter is generated using a Python script (*create\_filewriter\_image.py*) rather than a Dockerfile. By default, this script will leave behind a container which can be re-used by the script for, relatively speaking, quickly generating a new image. If you for whatever reason want a smaller docker image, you can run the script for generating the image like this:
-
-```
-python create_filewriter_image.py --do-cleanup
-```
-
-Note that this will delete the container when it is done and thus require more time next time it is executed.
 
 ### Creating tests
 

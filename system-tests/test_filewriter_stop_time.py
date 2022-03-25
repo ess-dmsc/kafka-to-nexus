@@ -10,6 +10,7 @@ from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 import pytest
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -18,8 +19,9 @@ from helpers.writer import (
 
 
 def test_start_and_stop_time_are_in_the_past(
-    worker_pool, kafka_address, file_name="output_file_of_historical_data.nxs"
+    worker_pool, kafka_address, hdf_file_name="output_file_of_historical_data.nxs"
 ):
+    file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer()
 
@@ -63,7 +65,7 @@ def test_start_and_stop_time_are_in_the_past(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=file_start_time,
         stop_time=file_stop_time,
@@ -74,7 +76,6 @@ def test_start_and_stop_time_are_in_the_past(
 
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
-    file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:
         # Expect to have recorded one value per ms between the start and stop time
         # +3 due to writing one message before start and one message after stop

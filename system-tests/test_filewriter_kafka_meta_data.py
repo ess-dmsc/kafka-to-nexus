@@ -5,6 +5,7 @@ from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
 import numpy as np
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -13,8 +14,9 @@ from helpers.writer import (
 
 
 def test_end_message_metadata(
-    worker_pool, kafka_address, file_name="output_file_kafka_meta_data.nxs"
+    worker_pool, kafka_address, hdf_file_name="output_file_kafka_meta_data.nxs"
 ):
+    file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
@@ -24,7 +26,7 @@ def test_end_message_metadata(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
