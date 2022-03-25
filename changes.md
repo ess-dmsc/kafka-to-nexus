@@ -2,6 +2,8 @@
 
 ## Next version
 
+## Version 5.0.0: Usage and opinion 
+
 - The filewriter will now only run in the job pool mode. This means that the user is required to supply a job pool topic in the filewriter .ini configuration flag using the --job-pool-uri option.
 - Improved log messages and thread names. Done to aid debugging.
 - Changed _fetch.message.max.bytes_ Kafka variable back to its default value as it was causing timeouts. 
