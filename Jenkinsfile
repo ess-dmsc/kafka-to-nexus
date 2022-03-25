@@ -324,19 +324,19 @@ def system_test(builder, container) {
       }
     } finally {
       stage ("${container.key}: System test clean-up") {
-      dir("kafka-to-nexus/system-tests") {
-        // The statements below return true because the build should pass
-        // even if there are no docker containers or output files to be
-        // removed.
-        sh """rm -rf output-files/* || true
-        docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true
-        """
-        sh "chmod go-w logs output-files"
+        dir("kafka-to-nexus/system-tests") {
+            // The statements below return true because the build should pass
+            // even if there are no docker containers or output files to be
+            // removed.
+            sh """rm -rf output-files/* || true
+            docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true
+            """
+            sh "chmod go-w logs output-files"
+        }
       }  // stage
       stage("${container.key}: System test archive") {
-        junit "SystemTestsOutput.xml"
-        archiveArtifacts "logs/*.txt"
-      }
+        junit "kafka-to-nexus/system-tests/SystemTestsOutput.xml"
+        archiveArtifacts "kafka-to-nexus/system-tests/logs/*.txt"
       }
     }
 }
