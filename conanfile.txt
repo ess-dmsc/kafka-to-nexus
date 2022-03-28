@@ -34,4 +34,4 @@ date:use_system_tz_db=True
 ., LICENSE* -> ./licenses @ folder=True, ignore_case=True
 ., *.dll -> ./bin @ keep_path=False
 ., *.a* -> ./lib @ keep_path=False
-., *.lib -> -> ./bin @ keep_path=False
+., *.lib -> ./bin @ keep_path=False
