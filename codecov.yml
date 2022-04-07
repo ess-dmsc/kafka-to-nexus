@@ -3,7 +3,7 @@ fixes:
 
 ignore:
   - "src/tests"
-  - "system-tests/"
+  - "integration-tests/"
 
 comment:
   layout: "header, diff, tree, changes, sunburst"

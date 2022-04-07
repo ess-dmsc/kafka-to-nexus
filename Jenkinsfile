@@ -180,7 +180,7 @@ def static_checks(builder, container) {
             container.sh """
               /home/jenkins/.local/bin/black --version
               cd ${project}
-              /home/jenkins/.local/bin/black system-tests
+              /home/jenkins/.local/bin/black integration-tests
               git status -s
               git add -u
               git commit -m 'GO FORMAT YOURSELF (black)'
@@ -301,30 +301,30 @@ def archive(builder, container) {
     }
 }
 
-def system_test(builder, container) {
+def integration_test(builder, container) {
     try {
       stage("${container.key}: Sys.-test requirements") {
         sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh """cd kafka-to-nexus
        python3.6 -m pip install --user --upgrade pip
-       python3.6 -m pip install --user -r system-tests/requirements.txt
+       python3.6 -m pip install --user -r integration-tests/requirements.txt
         """
       }  // stage
-      dir("kafka-to-nexus/system-tests") {
-      stage("${container.key}: System test run") {
+      dir("kafka-to-nexus/integration-tests") {
+      stage("${container.key}: integration test run") {
         // Stop and remove any containers that may have been from the job before,
         // i.e. if a Jenkins job has been aborted.
         sh "docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true"
         timeout(time: 30, activity: true){
           sh """chmod go+w logs output-files
-          LD_LIBRARY_PATH=../lib python3.6 -m pytest -s --writer-binary="../" --junitxml=./SystemTestsOutput.xml .
+          LD_LIBRARY_PATH=../lib python3.6 -m pytest -s --writer-binary="../" --junitxml=./IntegrationTestsOutput.xml .
           """
         }
       }  // stage
       }
     } finally {
-      stage ("${container.key}: System test clean-up") {
-        dir("kafka-to-nexus/system-tests") {
+      stage ("${container.key}: Integration test clean-up") {
+        dir("kafka-to-nexus/integration-tests") {
             // The statements below return true because the build should pass
             // even if there are no docker containers or output files to be
             // removed.
@@ -334,9 +334,9 @@ def system_test(builder, container) {
             sh "chmod go-w logs output-files"
         }
       }  // stage
-      stage("${container.key}: System test archive") {
-        junit "kafka-to-nexus/system-tests/SystemTestsOutput.xml"
-        archiveArtifacts "kafka-to-nexus/system-tests/logs/*.txt"
+      stage("${container.key}: Integration test archive") {
+        junit "kafka-to-nexus/integration-tests/IntegrationTestsOutput.xml"
+        archiveArtifacts "kafka-to-nexus/integration-tests/logs/*.txt"
       }
     }
 }
@@ -344,7 +344,7 @@ def system_test(builder, container) {
 String ubuntu_key = "ubuntu2004"
 String centos_key = "centos7"
 String release_key = "centos7-release"
-String system_test_key = "system-test"
+String integration_test_key = "integration-test"
 String static_checks_key = "static-checks"
 
 container_build_nodes = [
@@ -361,11 +361,11 @@ container_build_node_steps = [
     (release_key): base_steps + [{b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
     (ubuntu_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, true)}],
     (static_checks_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON", false)}, {b,c -> static_checks(b, c)}],
-    (system_test_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> system_test(b, c)}]
+    (integration_test_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> integration_test(b, c)}]
 ]
 
 if ( env.CHANGE_ID ) {
-  container_build_nodes[system_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
+  container_build_nodes[integration_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
 }
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)

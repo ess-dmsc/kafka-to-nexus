@@ -2,6 +2,9 @@
 
 ## Next version
 
+- Renamed system tests to integration tests.
+
+
 ## Version 5.0.0: Usage and opinion 
 
 - The filewriter will now only run in the job pool mode. This means that the user is required to supply a job pool topic in the filewriter .ini configuration flag using the --job-pool-uri option.
