@@ -16,7 +16,7 @@ from helpers.writer import stop_all_jobs
 
 BINARY_PATH = "--writer-binary"
 START_NO_FW = "--start-no-filewriter"
-SYSTEM_TEST_DOCKER = "docker-compose.yml"
+INTEGRATION_TEST_DOCKER = "docker-compose.yml"
 KAFKA_HOST = "localhost:9093"
 START_NR_OF_WRITERS = 2
 
@@ -121,7 +121,7 @@ common_options = {
     "--detach": True,
     "--build": False,
     "--file": [
-        SYSTEM_TEST_DOCKER,
+        INTEGRATION_TEST_DOCKER,
     ],
 }
 

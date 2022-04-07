@@ -118,12 +118,12 @@ When using Conan on OSX, due to the way paths to dependencies are handled,
 the `activate_run.sh` file may need to be sourced before running the application. The
 `deactivate_run.sh` can be sourced to undo the changes afterwards.
 
-### System tests
+### Integration tests
 
-The system tests consist of a series of automated tests for this repository that test it in ways similar to how it would 
+The integration tests consist of a series of automated tests for this repository that test it in ways similar to how it would 
 be used in production.
 
-See [System Tests page](system-tests/README.md) for more information.
+See [Integration Tests page](integration-tests/README.md) for more information.
 
 ## Documentation
 
