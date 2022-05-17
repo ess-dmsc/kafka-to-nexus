@@ -3,7 +3,7 @@
 ## Next version
 
 - Renamed system tests to integration tests.
-
+- Added system test to verify proper handling of bad "start writing" messages.
 
 ## Version 5.0.0: Usage and opinion 
 
