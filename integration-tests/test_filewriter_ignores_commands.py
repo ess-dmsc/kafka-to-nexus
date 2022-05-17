@@ -79,3 +79,26 @@ def test_ignores_commands_with_incorrect_job_id(
 
     wait_no_working_writers(worker_pool, timeout=0)
     assert not Path(file_path).is_file()
+
+
+def test_reject_bad_json(
+    worker_pool, kafka_address, hdf_file_name="rejected_start_command.nxs"
+):
+    file_path = full_file_path(hdf_file_name)
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    now = datetime.now()
+    start_time = now - timedelta(seconds=10)
+    stop_time = now
+    with open("commands/nexus_structure_bad_json.json", "r") as f:
+        structure = f.read()
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_path,
+        broker=kafka_address,
+        start_time=start_time,
+        stop_time=stop_time,
+    )
+    fail_message = wait_fail_start_job(worker_pool, write_job, timeout=20)
+    assert "NeXus structure JSON" in fail_message, (
+        'Unexpected content in "fail to start" message. Message was: ' + fail_message
+    )
