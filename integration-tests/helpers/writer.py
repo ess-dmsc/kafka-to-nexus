@@ -78,7 +78,7 @@ def wait_set_stop_now(job: JobHandler, timeout: float):
 
 def wait_fail_start_job(
     worker_pool: WorkerJobPool, write_job: WriteJob, timeout: float
-):
+) -> str:
     job_handler = JobHandler(worker_finder=worker_pool)
     start_handler = job_handler.start_job(write_job)
     start_time = datetime.now()
@@ -86,6 +86,7 @@ def wait_fail_start_job(
         if start_time + timedelta(seconds=timeout) < datetime.now():
             raise RuntimeError("Timed out when waiting for write job to FAIL to start")
         time.sleep(0.5)
+    return start_handler.get_message()
 
 
 def stop_all_jobs(worker_pool: WorkerJobPool):
