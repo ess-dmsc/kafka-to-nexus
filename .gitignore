@@ -8,6 +8,6 @@ pipeline.gdsl
 *.j2~
 *.h~
 *.cxx~
-/system-tests/output-files/*.nxs
+/integration-tests/output-files/*.nxs
 venv
 *.log
