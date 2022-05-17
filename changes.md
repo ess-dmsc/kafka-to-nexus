@@ -3,6 +3,8 @@
 ## Next version
 
 - Renamed system tests to integration tests.
+- Writer module attributes will now be ignored. If you want to set attributes of a parent group, do so directly.
+- Prioritisation has changed such that the *NX_class* of a parent group to a file-writer module will only be set if no such attribute is already set.
 
 
 ## Version 5.0.0: Usage and opinion 

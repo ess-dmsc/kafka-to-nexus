@@ -63,9 +63,16 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
         Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
     ModuleSettings.isLink = true;
   }
-  ModuleSettings.Attributes =
+  auto Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
+  if (not Attributes.empty()) {
+    LOG_WARN("Writing of writer module attributes to parent group has been "
+             "removed. Attributes should be assigned directly to group. The "
+             "(unused) attributes belongs to dataset with source name \"{}\" "
+             "from topic \"{}\".",
+             ModuleSettings.Source, ModuleSettings.Topic);
+  }
 
   return ModuleSettings;
 }
@@ -234,28 +241,33 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
   auto StreamGroup = hdf5::node::get_group(
       RootNode, StreamInfo.ModuleHDFInfoObj.HDFParentName);
 
-  auto writeAttributesList =
-      [&StreamGroup, &StreamInfo](
-          std::vector<std::pair<std::string, std::string>> Attributes) {
-        for (auto const &Attribute : Attributes) {
-          if (StreamGroup.attributes.exists(Attribute.first)) {
-            StreamGroup.attributes.remove(Attribute.first);
-            LOG_DEBUG(
-                R"(Replacing (existing) attribute with key "{}" at "{}".)",
-                Attribute.first, StreamInfo.ModuleHDFInfoObj.HDFParentName);
-          }
-          auto HdfAttribute =
-              StreamGroup.attributes.create<std::string>(Attribute.first);
-          HdfAttribute.write(Attribute.second);
-        }
-      };
+  auto writeAttributesList = [&StreamGroup,
+                              &StreamInfo](std::vector<
+                                           std::pair<std::string, std::string>>
+                                               Attributes) {
+    for (auto const &Attribute : Attributes) {
+      if (StreamGroup.attributes.exists(Attribute.first)) {
+        LOG_DEBUG(
+            R"(Will not write attribute with key "{}" at "{}" as it already exists.)",
+            Attribute.first, StreamInfo.ModuleHDFInfoObj.HDFParentName);
+        continue;
+      }
+      auto HdfAttribute =
+          StreamGroup.attributes.create<std::string>(Attribute.first);
+      HdfAttribute.write(Attribute.second);
+    }
+  };
   writeAttributesList(
       {{"NX_class", std::string(StreamInfo.WriterModule->defaultNeXusClass())},
        {"topic", StreamInfo.Topic},
        {"source", StreamInfo.Source}});
-
-  auto AttributesJson = nlohmann::json::parse(StreamInfo.Attributes);
-  HDFOperations::writeAttributes(StreamGroup, AttributesJson);
+  if (not StreamInfo.Attributes.empty()) {
+    LOG_WARN("Writing of writer module attributes to parent group has been "
+             "removed. Attributes should be assigned directly to group. The "
+             "(unused) attributes belongs to dataset with source name \"{}\" "
+             "on topic \"{}\".",
+             StreamInfo.Source, StreamInfo.Topic);
+  }
 }
 
 } // namespace FileWriter
