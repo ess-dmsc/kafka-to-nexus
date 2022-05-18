@@ -44,7 +44,7 @@ set(libraries_common
         ${CURL_LIBRARIES}
         date::date
         fmt::fmt
-        librdkafka::librdkafka
+        RdKafka::rdkafka++
         hdf5::hdf5
         h5cpp::h5cpp
         asio::asio
