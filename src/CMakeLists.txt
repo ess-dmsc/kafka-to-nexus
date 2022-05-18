@@ -6,7 +6,7 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 find_package(concurrentqueue)
 find_package(readerwriterqueue)
-find_package(librdkafka REQUIRED)
+find_package(RdKafka REQUIRED)
 find_package(hdf5 REQUIRED)
 find_package(flatbuffers)
 if (NOT flatbuffers_FOUND)
