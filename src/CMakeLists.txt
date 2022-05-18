@@ -4,6 +4,8 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
+find_package(concurrentqueue)
+find_package(readerwriterqueue)
 find_package(librdkafka REQUIRED)
 find_package(hdf5 REQUIRED)
 find_package(flatbuffers)
@@ -49,6 +51,8 @@ set(libraries_common
         pthread
         z
         graylog-logger::graylog-logger
+        readerwriterqueue::readerwriterqueue
+        concurrentqueue::concurrentqueue
         )
 
 if (APPLE)
