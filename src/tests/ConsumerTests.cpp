@@ -37,6 +37,8 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   REQUIRE_CALL(*Message, timestamp()).TIMES(2).RETURN(TimeStamp);
   REQUIRE_CALL(*Message, offset()).TIMES(1).RETURN(1);
   ALLOW_CALL(*Message, partition()).RETURN(0);
+  ALLOW_CALL(*RdConsumer, unassign()).RETURN(RdKafka::ERR_NO_ERROR);
+  ALLOW_CALL(*RdConsumer, unsubscribe()).RETURN(RdKafka::ERR_NO_ERROR);
 
   REQUIRE_CALL(*Message, payload())
       .TIMES(1)
@@ -68,6 +70,8 @@ TEST_F(ConsumerTests,
       .RETURN(RdKafka::ErrorCode::ERR__PARTITION_EOF);
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
+  ALLOW_CALL(*RdConsumer, unassign()).RETURN(RdKafka::ERR_NO_ERROR);
+  ALLOW_CALL(*RdConsumer, unsubscribe()).RETURN(RdKafka::ERR_NO_ERROR);
   REQUIRE_CALL(*RdConsumer, subscription(_))
       .TIMES(1)
       .RETURN(RdKafka::ERR_NO_ERROR);
@@ -92,6 +96,8 @@ TEST_F(ConsumerTests,
       .RETURN(RdKafka::ErrorCode::ERR__BAD_MSG);
 
   REQUIRE_CALL(*RdConsumer, consume(_)).TIMES(1).RETURN(Message);
+  ALLOW_CALL(*RdConsumer, unassign()).RETURN(RdKafka::ERR_NO_ERROR);
+  ALLOW_CALL(*RdConsumer, unsubscribe()).RETURN(RdKafka::ERR_NO_ERROR);
   REQUIRE_CALL(*RdConsumer, subscription(_))
       .TIMES(1)
       .RETURN(RdKafka::ERR_NO_ERROR);

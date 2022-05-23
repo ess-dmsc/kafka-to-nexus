@@ -29,10 +29,12 @@ Consumer::~Consumer() {
   if (KafkaConsumer != nullptr) {
     std::vector<std::string> Topics;
     auto ErrorCode = KafkaConsumer->subscription(Topics);
-    KafkaConsumer->close();
     if (ErrorCode == RdKafka::ERR_NO_ERROR) {
       LOG_DEBUG("Consumer consuming from topic(s) {} closed.", Topics);
     }
+    KafkaConsumer->unassign();
+    KafkaConsumer->unsubscribe();
+    KafkaConsumer->close();
   }
 }
 
