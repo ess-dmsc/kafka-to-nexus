@@ -43,9 +43,11 @@ inline void writeAttribute(hdf5::node::Node const &Node,
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   string_type.padding(hdf5::datatype::StringPad::NullTerm);
   auto Dims = Values.getDimensions();
-Node.attributes.create(
-    Name, string_type,
-    hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()))).write(Values.Data, string_type);
+  Node.attributes
+      .create(
+          Name, string_type,
+          hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end())))
+      .write(Values.Data, string_type);
 }
 
 template <typename T>

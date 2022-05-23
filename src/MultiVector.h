@@ -73,7 +73,7 @@ public:
     return TypeTrait<typename std::remove_const<T>::type>::create();
   }
   const static TypeClass &get(const Type & = Type()) {
-    const static TypeClass & cref_ = create();
+    const static TypeClass &cref_ = create();
     return cref_;
   }
 };
@@ -102,7 +102,8 @@ public:
                   Dimensions(Dims.begin(), Dims.end()));
   }
 
-  static const Dataspace & get(const MultiVector<T> & value, DataspacePool & pool) {
+  static const Dataspace &get(const MultiVector<T> &value,
+                              DataspacePool &pool) {
     auto Dims = value.getDimensions();
     return pool.getSimple(Dimensions(Dims.begin(), Dims.end()),
                           Dimensions(Dims.begin(), Dims.end()));
