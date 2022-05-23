@@ -21,6 +21,7 @@
 
 namespace hdf5::datatype {
 
+
 /// \brief Required for h5cpp to save data of type std::int8_t const.
 template <> class TypeTrait<std::int8_t const> {
 public:
@@ -198,7 +199,7 @@ public:
 
     ArrayDataSpace.dimensions({NewData.size()}, {NewData.size()});
     hdf5::dataspace::Dataspace FileSpace = dataspace();
-    FileSpace.selection(hdf5::dataspace::SelectionOperation::SET,
+    FileSpace.selection(hdf5::dataspace::SelectionOperation::Set,
                         ArraySelection);
     hdf5::datatype::Datatype ArrayValueType{hdf5::datatype::create(DataType())};
     write(NewData, ArrayValueType, ArrayDataSpace, FileSpace, Dtpl);
@@ -233,7 +234,7 @@ public:
     if (Mode::Create == CMode) {
       Dataset::operator=(hdf5::node::ChunkedDataset(
           Parent, Name, hdf5::datatype::create<DataType>(),
-          hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::UNLIMITED}),
+          hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::unlimited}),
           {
               static_cast<unsigned long long>(ChunkSize),
           }));
@@ -372,7 +373,7 @@ public:
     if (Mode::Create == CMode) {
       Shape.insert(Shape.begin(), 0);
       hdf5::Dimensions MaxSize(Shape.size(),
-                               hdf5::dataspace::Simple::UNLIMITED);
+                               hdf5::dataspace::Simple::unlimited);
       std::vector<hsize_t> VectorChunkSize;
       if (ChunkSize.empty()) {
         LOG_WARN("No chunk size given. Using the default value 1024.");

@@ -19,7 +19,7 @@ inline void writeAttribute(hdf5::node::Node const &Node,
                            const std::string &Name, std::string const &Value) {
   auto string_type = hdf5::datatype::String::variable();
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  string_type.padding(hdf5::datatype::StringPad::NULLTERM);
+  string_type.padding(hdf5::datatype::StringPad::NullTerm);
   Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar())
       .write(Value, string_type);
 }
@@ -41,13 +41,11 @@ inline void writeAttribute(hdf5::node::Node const &Node,
                            MultiVector<std::string> Values) {
   auto string_type = hdf5::datatype::String::variable();
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  string_type.padding(hdf5::datatype::StringPad::NULLTERM);
+  string_type.padding(hdf5::datatype::StringPad::NullTerm);
   auto Dims = Values.getDimensions();
-  Node.attributes
-      .create(
-          Name, string_type,
-          hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end())))
-      .write(Values.Data);
+Node.attributes.create(
+    Name, string_type,
+    hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()))).write(Values.Data, string_type);
 }
 
 template <typename T>

@@ -295,7 +295,7 @@ TEST_F(HDFStaticDataTest, AddLinkToNode1) {
   HDFOperations::addLinkToNode(RootGroup, LinkSettings);
   auto link = RootGroup.links["data_link"];
   ASSERT_TRUE(link.is_resolvable());
-  ASSERT_TRUE(link.type() == hdf5::node::LinkType::HARD);
+  ASSERT_TRUE(link.type() == hdf5::node::LinkType::Hard);
 }
 
 TEST_F(HDFStaticDataTest, AddLinkToNode2) {

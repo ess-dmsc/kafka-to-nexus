@@ -245,7 +245,7 @@ void writeStringDataset(hdf5::node::Group const &Parent,
   try {
     auto DataType = hdf5::datatype::String::variable();
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-    DataType.padding(hdf5::datatype::StringPad::NULLTERM);
+    DataType.padding(hdf5::datatype::StringPad::NullTerm);
     auto StringArray = jsonArrayToMultiArray<std::string>(Values);
     auto Dims = StringArray.getDimensions();
 

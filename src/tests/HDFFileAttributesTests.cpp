@@ -67,7 +67,7 @@ TEST_F(HDFFileAttributesTest,
   auto StringAttr = hdf5::node::get_group(TestFile->hdfGroup(),
                                           "/group_with_scalar_string_attr")
                         .attributes["hello"];
-  ASSERT_EQ(StringAttr.datatype().get_class(), hdf5::datatype::Class::STRING);
+  ASSERT_EQ(StringAttr.datatype().get_class(), hdf5::datatype::Class::String);
   std::string StringValue;
   StringAttr.read(StringValue, StringAttr.datatype());
   ASSERT_EQ(StringValue, "world");

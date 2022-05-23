@@ -41,7 +41,7 @@ class Schema_ep00 : public ::testing::Test {
 public:
   void SetUp() override {
     setExtractorModule<AccessMessageMetadata::ep00_Extractor>("ep00");
-    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
+    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::Truncate);
     RootGroup = File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
   }

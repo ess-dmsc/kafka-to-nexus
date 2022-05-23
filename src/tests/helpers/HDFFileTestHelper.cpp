@@ -28,12 +28,12 @@ InMemoryHDFFile::InMemoryHDFFile() {
   hdf5::property::FileAccessList Fapl;
   Fapl.driver(hdf5::file::MemoryDriver());
   hdfFile() =
-      hdf5::file::create("unused", hdf5::file::AccessFlags::TRUNCATE, {}, Fapl);
+      hdf5::file::create("unused", hdf5::file::AccessFlags::Truncate, {}, Fapl);
 }
 
 DiskHDFFile::DiskHDFFile(std::string const &FileName) {
   hdfFile() =
-      hdf5::file::create(FileName, hdf5::file::AccessFlags::TRUNCATE, {}, {});
+      hdf5::file::create(FileName, hdf5::file::AccessFlags::Truncate, {}, {});
 }
 
 } // namespace HDFFileTestHelper

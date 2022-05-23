@@ -1,7 +1,7 @@
 [requires]
 gtest/1.11.0
 fmt/8.1.1
-h5cpp/0.4.0@ess-dmsc/stable
+h5cpp/0.5.1
 zlib/1.2.12
 librdkafka/1.8.2
 nlohmann_json/3.10.5
