@@ -21,7 +21,6 @@
 
 namespace hdf5::datatype {
 
-
 /// \brief Required for h5cpp to save data of type std::int8_t const.
 template <> class TypeTrait<std::int8_t const> {
 public:

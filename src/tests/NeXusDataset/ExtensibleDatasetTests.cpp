@@ -9,10 +9,10 @@
 
 #include "NeXusDataset/ExtensibleDataset.h"
 #include <gtest/gtest.h>
+#include <h5cpp/contrib/stl/array.hpp>
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/datatype/type_trait.hpp>
 #include <h5cpp/hdf5.hpp>
-#include <h5cpp/contrib/stl/array.hpp>
 
 class DatasetCreation : public ::testing::Test {
 public:
