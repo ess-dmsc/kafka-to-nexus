@@ -54,16 +54,15 @@ public:
   BrokerSettings const ProducerBrokerSettings;
   std::atomic<uint64_t> TotalMessagesProduced{0};
   ProducerStats Stats;
-
 protected:
   int ProducerID = 0;
-  std::unique_ptr<RdKafka::Producer> ProducerPtr = nullptr;
-
 private:
   void setConf(std::string &ErrorString);
   std::unique_ptr<RdKafka::Conf> Conf = std::unique_ptr<RdKafka::Conf>(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
   ProducerDeliveryCb DeliveryCb{Stats};
   KafkaEventCb EventCb;
+protected:
+  std::unique_ptr<RdKafka::Producer> ProducerPtr;
 };
 } // namespace Kafka
