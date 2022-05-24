@@ -62,6 +62,7 @@ public:
   /// \note Is a blocking call with a timeout that is hard coded in the broker
   /// settings. \return Any new messages consumed.
   std::pair<PollStatus, FileWriter::Msg> poll() override;
+
 private:
   std::unique_ptr<RdKafka::Conf> Conf;
   BrokerSettings const ConsumerBrokerSettings;

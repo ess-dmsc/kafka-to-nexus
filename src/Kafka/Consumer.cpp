@@ -19,8 +19,8 @@ namespace Kafka {
 Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
                    std::unique_ptr<RdKafka::Conf> RdConf,
                    std::unique_ptr<KafkaEventCb> EventCb)
-    : Conf(std::move(RdConf)),
-      EventCallback(std::move(EventCb)), KafkaConsumer(std::move(RdConsumer)) {
+    : Conf(std::move(RdConf)), EventCallback(std::move(EventCb)),
+      KafkaConsumer(std::move(RdConsumer)) {
   static std::atomic<int> ConsumerInstanceCount;
   id = ConsumerInstanceCount++;
 }
