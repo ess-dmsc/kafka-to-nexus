@@ -28,7 +28,7 @@ void CommandListener::start() {
 }
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::poll() {
-  return Consumer->poll();
+   return Consumer->poll();
 }
 
 } // namespace FileWriter
