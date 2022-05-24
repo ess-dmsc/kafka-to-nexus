@@ -23,7 +23,7 @@ def test_start_and_stop_time_are_in_the_past(
 ):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
-    producer = create_producer()
+    producer = create_producer(kafka_address)
 
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]
 

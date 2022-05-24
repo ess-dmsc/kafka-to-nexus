@@ -20,7 +20,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(
 ):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
-    producer = create_producer()
+    producer = create_producer(kafka_address)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now

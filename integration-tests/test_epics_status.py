@@ -20,7 +20,7 @@ def test_ep00(worker_pool, kafka_address, hdf_file_name="output_file_ep00.nxs"):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
-    producer = create_producer()
+    producer = create_producer(kafka_address)
     topic = "TEST_epicsConnectionStatus"
     now = datetime.now()
     start_time = now - timedelta(seconds=5)

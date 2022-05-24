@@ -9,16 +9,16 @@ from streaming_data_types.logdata_f142 import serialise_f142
 import numpy as np
 
 
-def create_producer() -> Producer:
+def create_producer(kafka_address) -> Producer:
     conf = {
-        "bootstrap.servers": "localhost:9093",
+        "bootstrap.servers": kafka_address,
     }
     return Producer(conf)
 
 
-def create_consumer() -> Consumer:
+def create_consumer(kafka_address) -> Consumer:
     conf = {
-        "bootstrap.servers": "localhost:9093",
+        "bootstrap.servers": kafka_address,
         "group_id": uuid.uuid4(),
         "auto.offset.reset": "latest",
     }

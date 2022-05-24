@@ -1,10 +1,7 @@
 import os.path
-import signal
 import time
-import warnings
 from subprocess import Popen
 
-import docker
 import pytest
 from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
@@ -16,8 +13,9 @@ from helpers.writer import stop_all_jobs
 
 BINARY_PATH = "--writer-binary"
 START_NO_FW = "--start-no-filewriter"
+KAFKA_BROKER = "--kafka-broker"
 INTEGRATION_TEST_DOCKER = "docker-compose.yml"
-KAFKA_HOST = "localhost:9093"
+DEFAULT_KAFKA_BROKER = "localhost:9093"
 START_NR_OF_WRITERS = 2
 
 
@@ -26,6 +24,13 @@ def pytest_addoption(parser):
         BINARY_PATH,
         action="store",
         default=None,
+        help="Path to filewriter binary (executable)",
+    )
+    parser.addoption(
+        KAFKA_BROKER,
+        type=str,
+        action="store",
+        default=DEFAULT_KAFKA_BROKER,
         help="Path to filewriter binary (executable)",
     )
     parser.addoption(
@@ -59,9 +64,9 @@ def pytest_collection_modifyitems(items, config):
         )
 
 
-def wait_until_kafka_ready(docker_cmd, docker_options):
+def wait_until_kafka_ready(docker_cmd, docker_options, kafka_address):
     print("Waiting for Kafka broker to be ready for system tests...")
-    conf = {"bootstrap.servers": KAFKA_HOST}
+    conf = {"bootstrap.servers": kafka_address}
     producer = Producer(conf)
 
     kafka_ready = False
@@ -126,17 +131,17 @@ common_options = {
 }
 
 
-def run_containers(cmd, options):
+def run_containers(cmd, options, kafka_address):
     print("Running docker-compose up", flush=True)
     cmd.up(options)
     print("\nFinished docker-compose up\n", flush=True)
-    wait_until_kafka_ready(cmd, options)
+    wait_until_kafka_ready(cmd, options, kafka_address)
 
 
-def build_and_run(options, request, binary_path: Optional[str] = None):
+def build_and_run(options, request, kafka_address, binary_path: Optional[str] = None):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
-    run_containers(cmd, options)
+    run_containers(cmd, options, kafka_address)
     list_of_writers = []
 
     if binary_path is not None:
@@ -147,10 +152,10 @@ def build_and_run(options, request, binary_path: Optional[str] = None):
             proc = Popen(
                 [
                     file_writer_path,
-                    "-c",
-                    f"{c_path}/config-files/file_writer_config.ini",
-                    "--service-name",
-                    f"filewriter_{i}",
+                    f"--config-file={c_path}/config-files/file_writer_config.ini",
+                    f"--job-pool-uri={kafka_address}/TEST_writer_jobs",
+                    f"--command-status-uri={kafka_address}/TEST_writer_commands",
+                    f"--service-name=filewriter_{i}",
                 ],
                 stdout=log_file,
             )
@@ -190,7 +195,7 @@ def remove_logs_from_previous_run(request):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def start_file_writer(request):
+def start_file_writer(request, kafka_address):
     """
     :type request: _pytest.python.FixtureRequest
     """
@@ -204,14 +209,14 @@ def start_file_writer(request):
     if not request.config.getoption(START_NO_FW):
         print("Starting the file-writer", flush=True)
         file_writer_path = request.config.getoption(BINARY_PATH)
-    return build_and_run(common_options, request, file_writer_path)
+    return build_and_run(common_options, request, kafka_address, file_writer_path)
 
 
 @pytest.fixture(scope="function", autouse=True)
-def worker_pool(request):
+def worker_pool(kafka_address, request):
     worker = WorkerJobPool(
-        job_topic_url=f"{KAFKA_HOST}/TEST_writer_jobs",
-        command_topic_url=f"{KAFKA_HOST}/TEST_writer_commands",
+        job_topic_url=f"{kafka_address}/TEST_writer_jobs",
+        command_topic_url=f"{kafka_address}/TEST_writer_commands",
     )
 
     def stop_current_jobs():
@@ -223,7 +228,7 @@ def worker_pool(request):
 
 @pytest.fixture(scope="session", autouse=True)
 def kafka_address(request):
-    return KAFKA_HOST
+    return request.config.getoption(KAFKA_BROKER)
 
 
 @pytest.fixture(scope="session", autouse=False)

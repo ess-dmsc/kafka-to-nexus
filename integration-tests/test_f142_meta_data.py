@@ -24,7 +24,7 @@ def test_f142_meta_data(
 ):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
-    producer = create_producer()
+    producer = create_producer(kafka_address)
 
     data_topic = "TEST_sampleEnv"
     source_name1 = "someSource1"
