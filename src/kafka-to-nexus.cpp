@@ -39,7 +39,7 @@ enum class RunStates {
 static std::atomic<RunStates> RunState{RunStates::Running};
 
 void signal_handler(int Signal) {
-  std::string CtrlCString{"Got SIGINT (Ctrl-C). Shutting down gracefully. "
+     std::string CtrlCString{"Got SIGINT (Ctrl-C). Shutting down gracefully. "
                           "Press Ctrl-C again to shutdown quickly."};
   std::string SIGTERMString{"Got SIGTERM. Shutting down."};
   std::string UnknownSignal{"Got unknown signal. Shutting down."};
