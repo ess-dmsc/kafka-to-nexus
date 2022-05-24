@@ -40,8 +40,7 @@ public:
                   Event.type(), RdKafka::err2str(Event.err()), Event.str());
       break;
     }
-  };
-
+  }
 private:
   std::map<RdKafka::Event::Severity, Log::Severity> LogLevels{
       {RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG, Log::Severity::Debug},
