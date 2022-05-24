@@ -25,7 +25,7 @@ void basicStringDatasetWriter(hdf5::node::Node Node, std::string Name,
   }
   auto string_type = hdf5::datatype::String::variable();
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  string_type.padding(hdf5::datatype::StringPad::NULLTERM);
+  string_type.padding(hdf5::datatype::StringPad::NullTerm);
   auto string_dataspace = hdf5::dataspace::Scalar();
   auto TempDataset = hdf5::node::Group(Node).create_dataset(Name, string_type,
                                                             string_dataspace);

@@ -19,8 +19,8 @@ namespace Kafka {
 Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
                    std::unique_ptr<RdKafka::Conf> RdConf,
                    std::unique_ptr<KafkaEventCb> EventCb)
-    : KafkaConsumer(std::move(RdConsumer)), Conf(std::move(RdConf)),
-      EventCallback(std::move(EventCb)) {
+    : Conf(std::move(RdConf)), EventCallback(std::move(EventCb)),
+      KafkaConsumer(std::move(RdConsumer)) {
   static std::atomic<int> ConsumerInstanceCount;
   id = ConsumerInstanceCount++;
 }
@@ -29,10 +29,12 @@ Consumer::~Consumer() {
   if (KafkaConsumer != nullptr) {
     std::vector<std::string> Topics;
     auto ErrorCode = KafkaConsumer->subscription(Topics);
-    KafkaConsumer->close();
     if (ErrorCode == RdKafka::ERR_NO_ERROR) {
       LOG_DEBUG("Consumer consuming from topic(s) {} closed.", Topics);
     }
+    KafkaConsumer->unassign();
+    KafkaConsumer->unsubscribe();
+    KafkaConsumer->close();
   }
 }
 
@@ -59,9 +61,7 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
         R"(Could not assign topic-partition of topic {}, RdKafka error: "{}")",
         Topic, err2str(ReturnCode)));
   }
-  for (auto *Ptr : Assignments) {
-    delete Ptr;
-  }
+  RdKafka::TopicPartition::destroy(Assignments);
 }
 
 void Consumer::addTopic(std::string const &Topic) {

@@ -27,8 +27,8 @@ HDFFile::HDFFile(std::string const &FileName,
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
   }
-  FileAccessList.library_version_bounds(hdf5::property::LibVersion::LATEST,
-                                        hdf5::property::LibVersion::LATEST);
+  FileAccessList.library_version_bounds(hdf5::property::LibVersion::Latest,
+                                        hdf5::property::LibVersion::Latest);
   createFileInRegularMode();
   init(NexusStructure, ModuleHDFInfo);
   StoredNexusStructure = NexusStructure;
@@ -38,8 +38,8 @@ HDFFile::~HDFFile() { addMetaData(); }
 
 void HDFFile::createFileInRegularMode() {
   hdfFile() = hdf5::file::create(H5FileName,
-                                 hdf5::file::AccessFlags::EXCLUSIVE |
-                                     hdf5::file::AccessFlags::SWMR_WRITE,
+                                 hdf5::file::AccessFlags::Exclusive |
+                                     hdf5::file::AccessFlags::SWMRWrite,
                                  FileCreationList, FileAccessList);
 }
 
@@ -116,15 +116,15 @@ void HDFFile::closeFile() {
 void HDFFile::openFileInSWMRMode() {
   LOG_DEBUG(R"(Opening file "{}" in SWMR mode.)", H5FileName);
   hdfFile() = hdf5::file::open(H5FileName,
-                               hdf5::file::AccessFlags::READWRITE |
-                                   hdf5::file::AccessFlags::SWMR_WRITE,
+                               hdf5::file::AccessFlags::ReadWrite |
+                                   hdf5::file::AccessFlags::SWMRWrite,
                                FileAccessList);
 }
 
 void HDFFileBase::flush() {
   try {
     if (H5File.is_valid()) {
-      H5File.flush(hdf5::file::Scope::GLOBAL);
+      H5File.flush(hdf5::file::Scope::Global);
     } else {
       LOG_ERROR("Unable to flush file due to it being invalid.");
     }
@@ -136,7 +136,7 @@ void HDFFileBase::flush() {
 
 void HDFFile::openFileInRegularMode() {
   LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)", H5FileName);
-  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE,
+  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::ReadWrite,
                                FileAccessList);
 }
 

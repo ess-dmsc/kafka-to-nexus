@@ -129,10 +129,10 @@ bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
 
 bool isValidUUID(std::string const &UUIDStr) {
   try {
-    uuids::uuid const Id = uuids::uuid::from_string(UUIDStr);
-    return not Id.is_nil() and Id.version() != uuids::uuid_version::none and
-           Id.variant() == uuids::uuid_variant::rfc;
-  } catch (uuids::uuid_error const &) {
+    auto const Id = uuids::uuid::from_string(UUIDStr);
+    return not Id->is_nil() and Id->version() != uuids::uuid_version::none and
+           Id->variant() == uuids::uuid_variant::rfc;
+  } catch (std::system_error const &) {
     return false;
   }
   return false;

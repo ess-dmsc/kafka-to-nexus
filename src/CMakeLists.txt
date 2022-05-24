@@ -4,7 +4,9 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-find_package(librdkafka REQUIRED)
+find_package(concurrentqueue)
+find_package(readerwriterqueue)
+find_package(RdKafka REQUIRED)
 find_package(hdf5 REQUIRED)
 find_package(flatbuffers)
 if (NOT flatbuffers_FOUND)
@@ -42,13 +44,15 @@ set(libraries_common
         ${CURL_LIBRARIES}
         date::date
         fmt::fmt
-        librdkafka::librdkafka
+        RdKafka::rdkafka++
         hdf5::hdf5
         h5cpp::h5cpp
         asio::asio
         pthread
         z
         graylog-logger::graylog-logger
+        readerwriterqueue::readerwriterqueue
+        concurrentqueue::concurrentqueue
         )
 
 if (APPLE)

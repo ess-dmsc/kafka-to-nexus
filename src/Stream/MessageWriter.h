@@ -17,8 +17,8 @@
 #include "Metrics/Registrar.h"
 #include "TimeUtility.h"
 #include "logger.h"
-#include <concurrentqueue/concurrentqueue.h>
 #include <map>
+#include <moodycamel/concurrentqueue.h>
 #include <thread>
 
 namespace WriterModule {

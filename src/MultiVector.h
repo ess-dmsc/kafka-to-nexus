@@ -72,6 +72,10 @@ public:
   static TypeClass create(const Type & = Type()) {
     return TypeTrait<typename std::remove_const<T>::type>::create();
   }
+  const static TypeClass &get(const Type & = Type()) {
+    const static TypeClass &cref_ = create();
+    return cref_;
+  }
 };
 
 template <> class TypeTrait<MultiVector<std::string>> {
@@ -81,7 +85,7 @@ public:
   static TypeClass create(const Type & = Type()) {
     auto string_type = hdf5::datatype::String::variable();
     string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-    string_type.padding(hdf5::datatype::StringPad::NULLTERM);
+    string_type.padding(hdf5::datatype::StringPad::NullTerm);
     return string_type;
   }
 };
@@ -96,6 +100,13 @@ public:
     auto Dims = value.getDimensions();
     return Simple(Dimensions(Dims.begin(), Dims.end()),
                   Dimensions(Dims.begin(), Dims.end()));
+  }
+
+  static const Dataspace &get(const MultiVector<T> &value,
+                              DataspacePool &pool) {
+    auto Dims = value.getDimensions();
+    return pool.getSimple(Dimensions(Dims.begin(), Dims.end()),
+                          Dimensions(Dims.begin(), Dims.end()));
   }
 
   static void *ptr(MultiVector<T> &data) {

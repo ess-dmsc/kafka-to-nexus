@@ -15,7 +15,7 @@
 class NeXusDatasetCreation : public ::testing::Test {
 public:
   void SetUp() override {
-    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
+    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::Truncate);
     RootGroup = File.root();
   };
 

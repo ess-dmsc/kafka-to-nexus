@@ -145,6 +145,16 @@ public:
   MAKE_MOCK1(oauthbearer_set_token_failure,
              RdKafka::ErrorCode(const std::string &), override);
   MAKE_MOCK0(groupMetadata, RdKafka::ConsumerGroupMetadata *(), override);
+  MAKE_MOCK1(incremental_unassign,
+             RdKafka::Error *(const std::vector<RdKafka::TopicPartition *> &),
+             override);
+  MAKE_MOCK1(incremental_assign,
+             RdKafka::Error *(const std::vector<RdKafka::TopicPartition *> &),
+             override);
+  MAKE_MOCK0(rebalance_protocol, std::string(), override);
+  MAKE_MOCK0(assignment_lost, bool(), override);
+  MAKE_MOCK1(mem_free, void(void *), override);
+  MAKE_MOCK1(mem_malloc, void *(size_t), override);
 
 private:
   int metadataCallCounter = 0;
@@ -230,6 +240,8 @@ public:
   IMPLEMENT_MOCK3(send_offsets_to_transaction);
   IMPLEMENT_MOCK1(commit_transaction);
   IMPLEMENT_MOCK1(abort_transaction);
+  MAKE_MOCK1(mem_free, void(void *), override);
+  MAKE_MOCK1(mem_malloc, void *(size_t), override);
 };
 
 class MockConf : public RdKafka::Conf {
@@ -312,4 +324,6 @@ public:
                               RdKafka::CertificateEncoding, const void *,
                               size_t, std::string &),
              override);
+  MAKE_MOCK2(set_engine_callback_data,
+             RdKafka::Conf::ConfResult(void *, std::string &), override);
 };

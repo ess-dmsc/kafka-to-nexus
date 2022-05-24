@@ -10,10 +10,10 @@
 #pragma once
 
 #include "SetThreadName.h"
-#include <concurrentqueue/concurrentqueue.h>
 #include <functional>
 #include <future>
 #include <memory>
+#include <moodycamel/concurrentqueue.h>
 #include <string>
 #include <thread>
 
