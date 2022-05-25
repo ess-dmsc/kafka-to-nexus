@@ -141,7 +141,13 @@ def run_containers(cmd, options, kafka_address, custom_kafka_broker):
     wait_until_kafka_ready(cmd, options, kafka_address)
 
 
-def build_and_run(options, request, kafka_address, custom_kafka_broker, binary_path: Optional[str] = None):
+def build_and_run(
+    options,
+    request,
+    kafka_address,
+    custom_kafka_broker,
+    binary_path: Optional[str] = None,
+):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     run_containers(cmd, options, kafka_address, custom_kafka_broker)
@@ -179,7 +185,6 @@ def build_and_run(options, request, kafka_address, custom_kafka_broker, binary_p
             fw.wait()
         print("File-writers stopped")
 
-
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
     request.addfinalizer(fin)
@@ -216,7 +221,9 @@ def start_file_writer(request, kafka_address, custom_kafka_broker):
     if not request.config.getoption(START_NO_FW):
         print("Starting the file-writer", flush=True)
         file_writer_path = request.config.getoption(BINARY_PATH)
-    return build_and_run(common_options, request, kafka_address, custom_kafka_broker, file_writer_path)
+    return build_and_run(
+        common_options, request, kafka_address, custom_kafka_broker, file_writer_path
+    )
 
 
 @pytest.fixture(scope="function", autouse=True)
