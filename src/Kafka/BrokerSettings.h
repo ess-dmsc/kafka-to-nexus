@@ -37,9 +37,11 @@ struct BrokerSettings {
       {"socket.timeout.ms", "10000"},
       {"message.max.bytes", std::to_string(message_max_bytes)},
       {"fetch.max.bytes",
-       std::to_string(fetch_max_bytes)}, // this is the default value, here as documentation
+       std::to_string(fetch_max_bytes)}, // this is the default value, here as
+                                         // documentation
       {"receive.message.max.bytes",
-       std::to_string(receive_max_bytes)}, // must be at least fetch.max.bytes + 512
+       std::to_string(
+           receive_max_bytes)}, // must be at least fetch.max.bytes + 512
       {"queue.buffering.max.messages", "100000"},
       {"queue.buffering.max.ms", "50"},
       {"queue.buffering.max.kbytes", "819200"}, // 819.2 Mib
