@@ -2,6 +2,8 @@
 
 ## Next version
 
+- Increased kafka message buffer sizes and added integration tests for this.
+
 ## Version 5.1.0: Attributes and dependencies
 
 - Renamed system tests to integration tests.
