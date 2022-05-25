@@ -30,7 +30,7 @@ def pytest_addoption(parser):
         KAFKA_BROKER,
         type=str,
         action="store",
-        default=DEFAULT_KAFKA_BROKER,
+        default="",
         help="Path to filewriter binary (executable)",
     )
     parser.addoption(
@@ -131,17 +131,20 @@ common_options = {
 }
 
 
-def run_containers(cmd, options, kafka_address):
+def run_containers(cmd, options, kafka_address, custom_kafka_broker):
+    if custom_kafka_broker:
+        print("Custom kafka broker configured, skipping Docker images.")
+        return
     print("Running docker-compose up", flush=True)
     cmd.up(options)
     print("\nFinished docker-compose up\n", flush=True)
     wait_until_kafka_ready(cmd, options, kafka_address)
 
 
-def build_and_run(options, request, kafka_address, binary_path: Optional[str] = None):
+def build_and_run(options, request, kafka_address, custom_kafka_broker, binary_path: Optional[str] = None):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
-    run_containers(cmd, options, kafka_address)
+    run_containers(cmd, options, kafka_address, custom_kafka_broker)
     list_of_writers = []
 
     if binary_path is not None:
@@ -164,14 +167,18 @@ def build_and_run(options, request, kafka_address, binary_path: Optional[str] = 
 
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
-        print("containers stopping", flush=True)
-        options["--timeout"] = 30
-        cmd.down(options)
+        if not custom_kafka_broker:
+            print("Stopping docker containers", flush=True)
+            options["--timeout"] = 30
+            cmd.down(options)
+            print("Containers stopped", flush=True)
+        print("Stopping file-writers")
         for fw in list_of_writers:
             fw.terminate()
         for fw in list_of_writers:
             fw.wait()
-        print("containers stopped", flush=True)
+        print("File-writers stopped")
+
 
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
@@ -195,7 +202,7 @@ def remove_logs_from_previous_run(request):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def start_file_writer(request, kafka_address):
+def start_file_writer(request, kafka_address, custom_kafka_broker):
     """
     :type request: _pytest.python.FixtureRequest
     """
@@ -209,7 +216,7 @@ def start_file_writer(request, kafka_address):
     if not request.config.getoption(START_NO_FW):
         print("Starting the file-writer", flush=True)
         file_writer_path = request.config.getoption(BINARY_PATH)
-    return build_and_run(common_options, request, kafka_address, file_writer_path)
+    return build_and_run(common_options, request, kafka_address, custom_kafka_broker, file_writer_path)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -228,7 +235,15 @@ def worker_pool(kafka_address, request):
 
 @pytest.fixture(scope="session", autouse=True)
 def kafka_address(request):
-    return request.config.getoption(KAFKA_BROKER)
+    addr = request.config.getoption(KAFKA_BROKER)
+    if addr == "":
+        return DEFAULT_KAFKA_BROKER
+    return addr
+
+
+@pytest.fixture(scope="session", autouse=True)
+def custom_kafka_broker(request) -> bool:
+    return request.config.getoption(KAFKA_BROKER) != ""
 
 
 @pytest.fixture(scope="session", autouse=False)
