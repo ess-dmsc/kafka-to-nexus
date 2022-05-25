@@ -24,14 +24,14 @@ def pytest_addoption(parser):
         BINARY_PATH,
         action="store",
         default=None,
-        help="Path to filewriter binary (executable)",
+        help="Path to filewriter binary (executable).",
     )
     parser.addoption(
         KAFKA_BROKER,
         type=str,
         action="store",
         default="",
-        help="Path to filewriter binary (executable)",
+        help="Use existing Kafka broker instead of instantiating one with Docker.",
     )
     parser.addoption(
         START_NO_FW,
@@ -224,6 +224,7 @@ def worker_pool(kafka_address, request):
     worker = WorkerJobPool(
         job_topic_url=f"{kafka_address}/TEST_writer_jobs",
         command_topic_url=f"{kafka_address}/TEST_writer_commands",
+        max_message_size=1048576 * 500
     )
 
     def stop_current_jobs():

@@ -12,6 +12,7 @@ import numpy as np
 def create_producer(kafka_address) -> Producer:
     conf = {
         "bootstrap.servers": kafka_address,
+        "queue.buffering.max.messages": 1000000,
     }
     return Producer(conf)
 
@@ -41,6 +42,7 @@ def publish_f142_message(
     source_name: Optional[str] = None,
     alarm_status: Optional[int] = None,
     alarm_severity: Optional[int] = None,
+    flush: bool = True
 ):
     """
     Publish an f142 message to a given topic.
@@ -64,7 +66,8 @@ def publish_f142_message(
     producer.produce(
         topic=topic, value=f142_message, timestamp=datetime_to_ms(timestamp)
     )
-    producer.flush()
+    if flush:
+        producer.flush()
 
 
 def publish_ep00_message(

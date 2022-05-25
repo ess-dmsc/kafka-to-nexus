@@ -1,6 +1,3 @@
-from helpers.kafkahelpers import (
-    create_producer,
-)
 from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
 import numpy as np

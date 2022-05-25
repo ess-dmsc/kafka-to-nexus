@@ -1,0 +1,24 @@
+{
+  "children": [
+    {
+      "type": "group",
+      "name" : "entry",
+      "children": [
+        {
+          "type": "group",
+          "name": "write_from_mass_messages",
+          "children": [
+            {
+              "module": "f142",
+              "config": {
+                "type": "int32",
+                "topic": "TEST_massAmountOfMessages",
+                "source": "fw-test-helpers"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
