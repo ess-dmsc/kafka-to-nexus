@@ -231,7 +231,7 @@ def worker_pool(kafka_address, request):
     worker = WorkerJobPool(
         job_topic_url=f"{kafka_address}/TEST_writer_jobs",
         command_topic_url=f"{kafka_address}/TEST_writer_commands",
-        max_message_size=1048576 * 500
+        max_message_size=1048576 * 500,
     )
 
     def stop_current_jobs():

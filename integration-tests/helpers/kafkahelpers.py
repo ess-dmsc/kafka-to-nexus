@@ -42,7 +42,7 @@ def publish_f142_message(
     source_name: Optional[str] = None,
     alarm_status: Optional[int] = None,
     alarm_severity: Optional[int] = None,
-    flush: bool = True
+    flush: bool = True,
 ):
     """
     Publish an f142 message to a given topic.

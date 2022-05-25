@@ -13,6 +13,7 @@ from helpers.writer import (
     wait_no_working_writers,
 )
 
+
 @pytest.mark.skip(reason="This test needs refinement before it is activated.")
 def test_mass_message_handling(
     worker_pool, kafka_address, hdf_file_name="write_from_mass_message_topic.nxs"
@@ -24,7 +25,7 @@ def test_mass_message_handling(
     data_topic = "TEST_massAmountOfMessages"
 
     start_time = datetime(year=2019, month=6, day=12, hour=11, minute=1, second=35)
-    stop_time = start_time + timedelta(days=365*2)
+    stop_time = start_time + timedelta(days=365 * 2)
     step_time = timedelta(seconds=1)
 
     current_time = start_time
@@ -68,4 +69,3 @@ def test_mass_message_handling(
         assert file["entry/write_from_mass_messages/time"].len() == (
             expected_elements
         ), "Expected there to be one message per second recorded between specified start and stop time"
-
