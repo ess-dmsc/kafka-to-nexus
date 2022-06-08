@@ -6,27 +6,41 @@ from confluent_kafka import Consumer, Producer
 
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 import streaming_data_types.logdata_f142
+
 try:
     from fast_f142_serialiser import f142_serialiser
-    def serialise_f142(value: Any, source_name: str,
-    timestamp: datetime,
-    alarm_status: Union[int, None] = None,
-    alarm_severity: Union[int, None] = None,
-):
+
+    def serialise_f142(
+        value: Any,
+        source_name: str,
+        timestamp: datetime,
+        alarm_status: Union[int, None] = None,
+        alarm_severity: Union[int, None] = None,
+    ):
         if alarm_status is None and alarm_severity is None:
-            return serialise_f142.serialiser.serialise_message(source_name, value, timestamp)
-        return streaming_data_types.logdata_f142.serialise_f142(value, source_name, datetime_to_ns(timestamp), alarm_status, alarm_severity)
+            return serialise_f142.serialiser.serialise_message(
+                source_name, value, timestamp
+            )
+        return streaming_data_types.logdata_f142.serialise_f142(
+            value, source_name, datetime_to_ns(timestamp), alarm_status, alarm_severity
+        )
+
     serialise_f142.serialiser = f142_serialiser()
 except ImportError:
-    def serialise_f142(value: Any, source_name: str,
-                       timestamp: datetime,
-                       alarm_status: Union[int, None] = None,
-                       alarm_severity: Union[int, None] = None,
-                       ):
-        return streaming_data_types.logdata_f142.serialise_f142(value, source_name, datetime_to_ns(timestamp),
-                                                                alarm_status, alarm_severity)
-import numpy as np
 
+    def serialise_f142(
+        value: Any,
+        source_name: str,
+        timestamp: datetime,
+        alarm_status: Union[int, None] = None,
+        alarm_severity: Union[int, None] = None,
+    ):
+        return streaming_data_types.logdata_f142.serialise_f142(
+            value, source_name, datetime_to_ns(timestamp), alarm_status, alarm_severity
+        )
+
+
+import numpy as np
 
 
 def create_producer(kafka_address) -> Producer:

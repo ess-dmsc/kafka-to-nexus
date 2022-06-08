@@ -20,20 +20,10 @@ def create_messages(kafka_address, start_time, stop_time, step_time):
     current_time = start_time
     while current_time < stop_time:
         try:
-            publish_f142_message(
-                producer,
-                data_topic,
-                current_time,
-                flush=False
-            )
+            publish_f142_message(producer, data_topic, current_time, flush=False)
         except BufferError:
             producer.flush()
-            publish_f142_message(
-                producer,
-                data_topic,
-                current_time,
-                flush=False
-            )
+            publish_f142_message(producer, data_topic, current_time, flush=False)
         current_time += step_time
     producer.flush()
 
