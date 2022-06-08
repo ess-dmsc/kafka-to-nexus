@@ -12,21 +12,30 @@ from helpers.writer import (
     wait_no_working_writers,
 )
 
+
 def datetime_to_ms(time: datetime) -> int:
     return int(time.timestamp() * 1000)
 
+
 def create_messages(kafka_address, start_time, stop_time, step_time):
     from fast_f142_serialiser import f142_serialiser
+
     serialiser = f142_serialiser()
     producer = create_producer(kafka_address)
     data_topic = "TEST_massAmountOfMessages"
     current_time = start_time
     while current_time < stop_time:
         try:
-            producer.produce(topic=data_topic, value=serialiser.serialise_message("fw-test-helpers", 42, current_time))
+            producer.produce(
+                topic=data_topic,
+                value=serialiser.serialise_message("fw-test-helpers", 42, current_time),
+            )
         except BufferError:
             producer.flush()
-            producer.produce(topic=data_topic, value=serialiser.serialise_message("fw-test-helpers", 42, current_time))
+            producer.produce(
+                topic=data_topic,
+                value=serialiser.serialise_message("fw-test-helpers", 42, current_time),
+            )
         current_time += step_time
     producer.flush()
 
