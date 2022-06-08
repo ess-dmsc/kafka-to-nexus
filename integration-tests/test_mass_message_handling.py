@@ -12,11 +12,14 @@ from helpers.writer import (
     wait_no_working_writers,
 )
 
+
 def datetime_to_ms(time: datetime) -> int:
     return int(time.timestamp() * 1000)
 
+
 def create_messages(kafka_address, start_time, stop_time, step_time):
     from fast_f142_serialiser import f142_serialiser
+
     serialiser = f142_serialiser()
     producer = create_producer(kafka_address)
     data_topic = "TEST_massAmountOfMessages"
