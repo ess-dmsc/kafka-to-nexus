@@ -25,8 +25,13 @@ def create_messages(kafka_address, start_time, stop_time, step_time):
     data_topic = "TEST_massAmountOfMessages"
     current_time = start_time
     extra_sources = 10
-    extra_source_info = ((timedelta(milliseconds=int(t)), f"extra_source_{i}") for i, t in enumerate(np.random.randint(-1000, 1000, extra_sources)))
-    extra_source_info = tuple(extra_source_info) + ((timedelta(seconds=0), "fw-test-helpers"), )
+    extra_source_info = (
+        (timedelta(milliseconds=int(t)), f"extra_source_{i}")
+        for i, t in enumerate(np.random.randint(-1000, 1000, extra_sources))
+    )
+    extra_source_info = tuple(extra_source_info) + (
+        (timedelta(seconds=0), "fw-test-helpers"),
+    )
     used_value = 42
     while current_time < stop_time:
         for t_offset, src_name in extra_source_info:
