@@ -24,20 +24,26 @@ def create_messages(kafka_address, start_time, stop_time, step_time):
     producer = create_producer(kafka_address)
     data_topic = "TEST_massAmountOfMessages"
     current_time = start_time
+    extra_sources = 10
+    extra_source_info = ((timedelta(milliseconds=int(t)), f"extra_source_{i}") for i, t in enumerate(np.random.randint(-1000, 1000, extra_sources)))
+    extra_source_info = tuple(extra_source_info) + ((timedelta(seconds=0), "fw-test-helpers"), )
+    used_value = 42
     while current_time < stop_time:
-        try:
-            producer.produce(
-                topic=data_topic,
-                value=serialiser.serialise_message("fw-test-helpers", 42, current_time),
-                timestamp=datetime_to_ms(current_time),
-            )
-        except BufferError:
-            producer.flush()
-            producer.produce(
-                topic=data_topic,
-                value=serialiser.serialise_message("fw-test-helpers", 42, current_time),
-                timestamp=datetime_to_ms(current_time),
-            )
+        for t_offset, src_name in extra_source_info:
+            used_time = current_time + t_offset
+            try:
+                producer.produce(
+                    topic=data_topic,
+                    value=serialiser.serialise_message(src_name, used_value, used_time),
+                    timestamp=datetime_to_ms(used_time),
+                )
+            except BufferError:
+                producer.flush()
+                producer.produce(
+                    topic=data_topic,
+                    value=serialiser.serialise_message(src_name, used_value, used_time),
+                    timestamp=datetime_to_ms(used_time),
+                )
         current_time += step_time
     producer.flush()
 
