@@ -33,6 +33,7 @@ def create_producer(kafka_address) -> Producer:
     conf = {
         "bootstrap.servers": kafka_address,
         "queue.buffering.max.messages": 1000000,
+        "linger.ms": 500
     }
     return Producer(conf)
 

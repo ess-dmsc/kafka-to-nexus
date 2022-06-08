@@ -1,7 +1,6 @@
 from helpers.nexushelpers import OpenNexusFile
 from helpers.kafkahelpers import (
     create_producer,
-    publish_f142_message,
 )
 import pytest
 from datetime import datetime, timedelta
@@ -13,27 +12,21 @@ from helpers.writer import (
     wait_no_working_writers,
 )
 
+def datetime_to_ms(time: datetime) -> int:
+    return int(time.timestamp() * 1000)
 
 def create_messages(kafka_address, start_time, stop_time, step_time):
+    from fast_f142_serialiser import f142_serialiser
+    serialiser = f142_serialiser()
     producer = create_producer(kafka_address)
     data_topic = "TEST_massAmountOfMessages"
     current_time = start_time
     while current_time < stop_time:
         try:
-            publish_f142_message(
-                producer,
-                data_topic,
-                current_time,
-                flush=False
-            )
+            producer.produce(topic=data_topic, value=serialiser.serialise_message("fw-test-helpers", 42, current_time))
         except BufferError:
             producer.flush()
-            publish_f142_message(
-                producer,
-                data_topic,
-                current_time,
-                flush=False
-            )
+            producer.produce(topic=data_topic, value=serialiser.serialise_message("fw-test-helpers", 42, current_time))
         current_time += step_time
     producer.flush()
 
