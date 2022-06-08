@@ -26,10 +26,18 @@ def create_messages(kafka_address, start_time, stop_time, step_time):
     current_time = start_time
     while current_time < stop_time:
         try:
-            producer.produce(topic=data_topic, value=serialiser.serialise_message("fw-test-helpers", 42, current_time), timestamp=datetime_to_ms(current_time))
+            producer.produce(
+                topic=data_topic,
+                value=serialiser.serialise_message("fw-test-helpers", 42, current_time),
+                timestamp=datetime_to_ms(current_time),
+            )
         except BufferError:
             producer.flush()
-            producer.produce(topic=data_topic, value=serialiser.serialise_message("fw-test-helpers", 42, current_time), timestamp=datetime_to_ms(current_time))
+            producer.produce(
+                topic=data_topic,
+                value=serialiser.serialise_message("fw-test-helpers", 42, current_time),
+                timestamp=datetime_to_ms(current_time),
+            )
         current_time += step_time
     producer.flush()
 
