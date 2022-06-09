@@ -164,7 +164,7 @@ def static_checks(builder, container) {
               credentialsId: 'jenkins-notification-email',
               variable: 'NOTIFICATION_EMAIL'
             )]) {
-              sh '''
+              container.sh '''
                 git config --global user.email $NOTIFICATION_EMAIL
                 git config --global user.name cow-bot
               '''
