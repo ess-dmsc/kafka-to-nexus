@@ -182,6 +182,7 @@ def static_checks(builder, container) {
               git add -u
               git commit -m 'GO FORMAT YOURSELF (clang-format)'
 
+              git config --list
               git log -n 1
             """
           } catch (e) {
