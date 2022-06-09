@@ -18,8 +18,8 @@ Source::Source(std::string Name, std::string FlatbufferID, std::string ModuleID,
       SrcHash(calcSourceHash(SchemaID, SourceName)),
       ModuleHash(calcSourceHash(WriterModuleID, SourceName)),
       WriterModule(std::move(Writer)) {}
-
-std::string const &Source::topic() const { return TopicName; }
+   
+      std::string const &Source::topic() const { return TopicName; }
 
 std::string const &Source::sourcename() const { return SourceName; }
 
