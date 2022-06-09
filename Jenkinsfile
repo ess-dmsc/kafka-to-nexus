@@ -160,15 +160,18 @@ def static_checks(builder, container) {
 
           try {
             // Configure git user and email
-            withCredentials([string(
-              credentialsId: 'jenkins-notification-email',
-              variable: 'NOTIFICATION_EMAIL'
-            )]) {
-              container.sh '''
-                git config --global user.email $NOTIFICATION_EMAIL
-                git config --global user.name cow-bot
-              '''
-            }  // withCredentials
+            withEnv(["PROJECT_DIR=${project}"]) {
+              withCredentials([string(
+                credentialsId: 'jenkins-notification-email',
+                variable: 'NOTIFICATION_EMAIL'
+              )]) {
+                container.sh '''
+                  cd $PROJECT_DIR
+                  git config user.email $NOTIFICATION_EMAIL
+                  git config user.name cow-bot
+                '''
+              }  // withCredentials
+            }  // withEnv
             // Do clang-format of C++ files
             container.sh """
               clang-format -version
