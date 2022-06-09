@@ -159,19 +159,6 @@ def static_checks(builder, container) {
           container.setupLocalGitUser(builder.project)
 
           try {
-            // Configure git user and email
-            withEnv(["PROJECT_DIR=${project}"]) {
-              withCredentials([string(
-                credentialsId: 'jenkins-notification-email',
-                variable: 'NOTIFICATION_EMAIL'
-              )]) {
-                container.sh '''
-                  cd $PROJECT_DIR
-                  git config user.email $NOTIFICATION_EMAIL
-                  git config user.name cow-bot
-                '''
-              }  // withCredentials
-            }  // withEnv
             // Do clang-format of C++ files
             container.sh """
               clang-format -version
