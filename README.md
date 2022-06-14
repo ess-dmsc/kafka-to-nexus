@@ -13,34 +13,56 @@ Part of the ESS data streaming pipeline.
   -h,--help                   Print this help message and exit
   --version                   Print application version and exit
   --command-status-uri URI REQUIRED
-                              <host[:port][/topic]> Kafka broker/topic to listen for commands and to push status updates to.
-  --job-pool-uri URI REQUIRED 
-  			      <host[:port][/topic]> Kafka broker/topic to listen for jobs
+                              <host[:port][/topic]> Kafka broker/topic to
+                              listen for commands and to push status updates
+                              to.
+  --job-pool-uri URI REQUIRED <host[:port][/topic]> Kafka broker/topic to
+                              listen for jobs
   --graylog-logger-address URI
-                              <host:port> Log to Graylog via graylog_logger library
+                              <host:port> Log to Graylog via graylog_logger
+                              library
   --grafana-carbon-address URI
-                              <host:port> Address to the Grafana (Carbon) metrics service.
+                              <host:port> Address to the Grafana (Carbon)
+                              metrics service.
   -v,--verbosity              Set log message level. Set to 0 - 5 or one of
-                                `Trace`, `Debug`, `Info`, `Warning`, `Error`
+                                `Debug`, `Info`, `Warning`, `Error`
                                 or `Critical`. Ex: "-v Debug". Default: `Error`
-  --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which gets prepended to the HDF output filenames in the file write commands
+  --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which
+                              gets prepended to the HDF output filenames in
+                              the file write commands
   --log-file TEXT             Specify file to log to
-  --service-name TEXT
-                              Used to generate the service identifier and as an extra metrics ID string.Will make the metrics names take the form: "kafka-to-nexus.[host-name].[service-name].*"
-  --list_modules              List registered read and writer parts of file-writing modules and then exit.
-  --status-master-interval    Interval in milliseconds for status updates
-  --streamer-ms-before-start  Streamer option - milliseconds before start time
-  --streamer-ms-after-stop    Streamer option - milliseconds after stop time
-  --kafka-metadata-max-timeout-seconds
-                              Max timeout for kafka metadata calls. Note: metadata calls block the application.
-  --kafka-error-timeout-seconds
-                              Number of seconds to wait for recovery from kafka error before abandoning stream.
-  --data-flush-interval       (Max) amount of time between flushing of data to file, in seconds.
+  --service-name [kafka-to-nexus:CI0021385-pid:18632-940b] 
+                              Used to generate the service identifier and as an
+                              extra metrics ID string.Will make the metrics
+                              names take the form:
+                              "kafka-to-nexus.[host-name].[service-name].*"
+  --list_modules              List registered read and writer parts of
+                              file-writing modules and then exit.
+  --status-master-interval    Interval between status updates.  Ex. "10s".
+                              Accepts "h", "m", "s" and "ms".
+  --time-before-start         Pre-consume messages this amount of time.  Ex.
+                              "10s". Accepts "h", "m", "s" and "ms".
+  --time-after-stop           Allow for this much leeway after stop time before
+                              stopping message consumption.  Ex. "10s".
+                              Accepts "h", "m", "s" and "ms".
+  --kafka-metadata-max-timeout
+                              Max timeout for kafka metadata calls. Note:
+                              metadata calls block the application. Ex. "10s".
+                              Accepts "h", "m", "s" and "ms".
+  --kafka-error-timeout       Amount of time to wait for recovery from kafka
+                              error before abandoning stream. Ex. "10s".
+                              Accepts "h", "m", "s" and "ms".
+  --kafka-poll-timeout        Amount of time to wait for new kafka message.
+                              *WARNING* Should generally not be changed from
+                              the default. Increase the
+                              "--kafka-error-timeout" instead.  Ex. "10s".
+                              Accepts "h", "m", "s" and "ms".
+  --data-flush-interval       (Max) amount of time between flushing of data to
+                              file, in seconds.  Ex. "10s". Accepts "h", "m",
+                              "s" and "ms".
   -X,--kafka-config KEY VALUE ...
                               LibRDKafka options
-                              Writer aborts the whole job if one or more streams are misconfigured and fail to start
   -c,--config-file            Read configuration from an ini file
- 
 ```
 
 ### Configuration Files
