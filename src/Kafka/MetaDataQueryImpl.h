@@ -68,6 +68,13 @@ getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
   }
   std::vector<std::pair<int, int64_t>> ReturnSet;
   for (const auto &CTopicPartition : TopicPartitions) {
+    if (CTopicPartition->err() != RdKafka::ERR_NO_ERROR) {
+      throw MetadataException(
+          "Error for partition " +
+          std::to_string(CTopicPartition->partition()) +
+          " when retrieving offset for timestamp. Error code was: " +
+          std::to_string(CTopicPartition->err()));
+    }
     ReturnSet.emplace_back(std::make_pair(CTopicPartition->partition(),
                                           CTopicPartition->offset()));
   }

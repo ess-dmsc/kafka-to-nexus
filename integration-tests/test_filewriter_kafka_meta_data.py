@@ -1,9 +1,4 @@
-from helpers.kafkahelpers import (
-    create_producer,
-)
-from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
-import numpy as np
 from file_writer_control.WriteJob import WriteJob
 from helpers import full_file_path
 from helpers.writer import (

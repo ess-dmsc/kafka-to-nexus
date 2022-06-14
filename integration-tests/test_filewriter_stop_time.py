@@ -3,12 +3,9 @@ from helpers.kafkahelpers import (
     create_producer,
     publish_f142_message,
 )
-from time import sleep
 from datetime import datetime, timedelta
-import json
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
-import pytest
 from file_writer_control.WriteJob import WriteJob
 from helpers import full_file_path
 from helpers.writer import (
@@ -23,7 +20,7 @@ def test_start_and_stop_time_are_in_the_past(
 ):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
-    producer = create_producer()
+    producer = create_producer(kafka_address)
 
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]
 
