@@ -86,8 +86,8 @@ void Consumer::addTopic(std::string const &Topic) {
 }
 
 std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
-  auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
-      KafkaConsumer->consume(toMilliSeconds(ConsumerBrokerSettings.PollTimeout)));
+  auto KafkaMsg = std::unique_ptr<RdKafka::Message>(KafkaConsumer->consume(
+      toMilliSeconds(ConsumerBrokerSettings.PollTimeout)));
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR: {
     auto MetaData = FileWriter::MessageMetaData{

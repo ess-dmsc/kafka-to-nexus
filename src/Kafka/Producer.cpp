@@ -65,7 +65,8 @@ Producer::Producer(BrokerSettings const &Settings)
 }
 
 void Producer::poll() {
-  auto EventsHandled = ProducerPtr->poll(toMilliSeconds(ProducerBrokerSettings.PollTimeout));
+  auto EventsHandled =
+      ProducerPtr->poll(toMilliSeconds(ProducerBrokerSettings.PollTimeout));
   auto OutputQueueLength = outputQueueLength();
   LOG_DEBUG("IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
             ProducerID, ProducerBrokerSettings.Address, EventsHandled,

@@ -51,7 +51,7 @@ public:
     return Reason == StopReason::ERROR or Reason == StopReason::TIMEOUT;
   }
 
-  time_point getErrorTime() const {return ErrorTime;}
+  time_point getErrorTime() const { return ErrorTime; }
 
 protected:
   bool ForceStop{false};

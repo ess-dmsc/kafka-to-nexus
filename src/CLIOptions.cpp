@@ -29,8 +29,8 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name,
                        CLI::callback_t Fun, const std::string &Description,
                        bool Defaulted) {
 
-  CLI::Option *Opt =
-      App.add_option(Name, std::move(Fun), addLineBreaks(Description), Defaulted);
+  CLI::Option *Opt = App.add_option(Name, std::move(Fun),
+                                    addLineBreaks(Description), Defaulted);
   Opt->type_name("URI");
   Opt->type_size(1);
   return Opt;
@@ -83,7 +83,8 @@ void addDurationOption(CLI::App &App, const std::string &Name, duration &MSArg,
 CLI::Option *SetKeyValueOptions(CLI::App &App, const std::string &Name,
                                 const std::string &Description, bool Defaulted,
                                 const CLI::callback_t &Fun) {
-  CLI::Option *Opt = App.add_option(Name, Fun, addLineBreaks(Description), Defaulted);
+  CLI::Option *Opt =
+      App.add_option(Name, Fun, addLineBreaks(Description), Defaulted);
   const auto RequireEvenNumberOfPairs = -2;
   Opt->type_name("KEY VALUE");
   Opt->type_size(RequireEvenNumberOfPairs);
@@ -100,7 +101,8 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
     }
     return true;
   };
-  return SetKeyValueOptions(App, Name, addLineBreaks(Description), Defaulted, Fun);
+  return SetKeyValueOptions(App, Name, addLineBreaks(Description), Defaulted,
+                            Fun);
 }
 
 bool parseLogLevel(std::vector<std::string> LogLevelString,
@@ -166,10 +168,11 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
         return parseLogLevel(Input, MainOptions.LoggingLevel);
       },
       LogLevelInfoStr, true);
-  App.add_option("--hdf-output-prefix", MainOptions.HDFOutputPrefix,
-                 addLineBreaks("<absolute/or/relative/directory> Directory which gets "
-                 "prepended to the HDF output filenames in the file write "
-                 "commands"));
+  App.add_option(
+      "--hdf-output-prefix", MainOptions.HDFOutputPrefix,
+      addLineBreaks("<absolute/or/relative/directory> Directory which gets "
+                    "prepended to the HDF output filenames in the file write "
+                    "commands"));
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option(
@@ -178,14 +181,17 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
            MainOptions.setServiceName(ServiceNames.back());
            return true;
          },
-         addLineBreaks("Used to generate the service identifier and as an extra metrics ID "
-         "string."
-         "Will make the metrics names take the form: "
-         "\"kafka-to-nexus.[host-name].[service-name].*\""))
+         addLineBreaks("Used to generate the service identifier and as an "
+                       "extra metrics ID "
+                       "string."
+                       "Will make the metrics names take the form: "
+                       "\"kafka-to-nexus.[host-name].[service-name].*\""))
       ->default_str(MainOpt::getDefaultServiceId());
-  App.add_flag("--list_modules", MainOptions.ListWriterModules,
-               addLineBreaks("List registered read and writer parts of file-writing modules"
-               " and then exit."));
+  App.add_flag(
+      "--list_modules", MainOptions.ListWriterModules,
+      addLineBreaks(
+          "List registered read and writer parts of file-writing modules"
+          " and then exit."));
   addDurationOption(
       App, "--status-master-interval", MainOptions.StatusMasterInterval,
       R"(Interval between status updates.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
