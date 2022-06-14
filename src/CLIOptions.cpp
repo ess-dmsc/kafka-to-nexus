@@ -13,12 +13,24 @@
 #include <CLI/CLI.hpp>
 #include <regex>
 
+std::string addLineBreaks(std::string Input) {
+  const unsigned int MaxCharacters{50};
+  unsigned int Beginning{0};
+  while (Beginning + MaxCharacters < Input.size()) {
+    auto CString = Input.substr(Beginning, MaxCharacters);
+    auto ModifyLoc = Beginning + CString.find_last_of(' ');
+    Input[ModifyLoc] = '\n';
+    Beginning = ModifyLoc;
+  }
+  return Input;
+}
+
 CLI::Option *uriOption(CLI::App &App, const std::string &Name,
                        CLI::callback_t Fun, const std::string &Description,
                        bool Defaulted) {
 
   CLI::Option *Opt =
-      App.add_option(Name, std::move(Fun), Description, Defaulted);
+      App.add_option(Name, std::move(Fun), addLineBreaks(Description), Defaulted);
   Opt->type_name("URI");
   Opt->type_size(1);
   return Opt;
@@ -65,13 +77,13 @@ void addDurationOption(CLI::App &App, const std::string &Name, duration &MSArg,
     MSArg = std::chrono::milliseconds(TotalMilliseconds);
     return true;
   };
-  App.add_option(Name, Fun, Description, Defaulted);
+  App.add_option(Name, Fun, addLineBreaks(Description), Defaulted);
 }
 
 CLI::Option *SetKeyValueOptions(CLI::App &App, const std::string &Name,
                                 const std::string &Description, bool Defaulted,
                                 const CLI::callback_t &Fun) {
-  CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
+  CLI::Option *Opt = App.add_option(Name, Fun, addLineBreaks(Description), Defaulted);
   const auto RequireEvenNumberOfPairs = -2;
   Opt->type_name("KEY VALUE");
   Opt->type_size(RequireEvenNumberOfPairs);
@@ -88,7 +100,7 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
     }
     return true;
   };
-  return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
+  return SetKeyValueOptions(App, Name, addLineBreaks(Description), Defaulted, Fun);
 }
 
 bool parseLogLevel(std::vector<std::string> LogLevelString,
@@ -155,9 +167,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       },
       LogLevelInfoStr, true);
   App.add_option("--hdf-output-prefix", MainOptions.HDFOutputPrefix,
-                 "<absolute/or/relative/directory> Directory which gets "
+                 addLineBreaks("<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "
-                 "commands");
+                 "commands"));
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option(
@@ -166,14 +178,14 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
            MainOptions.setServiceName(ServiceNames.back());
            return true;
          },
-         "Used to generate the service identifier and as an extra metrics ID "
+         addLineBreaks("Used to generate the service identifier and as an extra metrics ID "
          "string."
          "Will make the metrics names take the form: "
-         "\"kafka-to-nexus.[host-name].[service-name].*\"")
+         "\"kafka-to-nexus.[host-name].[service-name].*\""))
       ->default_str(MainOpt::getDefaultServiceId());
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
-               "List registered read and writer parts of file-writing modules"
-               " and then exit.");
+               addLineBreaks("List registered read and writer parts of file-writing modules"
+               " and then exit."));
   addDurationOption(
       App, "--status-master-interval", MainOptions.StatusMasterInterval,
       R"(Interval between status updates.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
@@ -195,7 +207,12 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addDurationOption(
       App, "--kafka-error-timeout",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaErrorTimeout,
-      R"(Number of seconds to wait for recovery from kafka error before abandoning stream. Ex. "10s". Accepts "h", "m", "s" and "ms".)",
+      R"(Amount of time to wait for recovery from kafka error before abandoning stream. Ex. "10s". Accepts "h", "m", "s" and "ms".)",
+      true);
+  addDurationOption(
+      App, "--kafka-poll-timeout",
+      MainOptions.StreamerConfiguration.BrokerSettings.PollTimeout,
+      R"(Amount of time to wait for new kafka message. *WARNING* Should generally not be changed from the default. Increase the "--kafka-error-timeout" instead.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
   addDurationOption(
       App, "--data-flush-interval",

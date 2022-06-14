@@ -3,6 +3,9 @@
 ## Next version
 
 - Increased kafka message buffer sizes and added integration tests for this.
+- Improved help text formatting.
+- Added code for running Kafka tests. This code is disabled by default.
+- It is now possible to set the Kafka poll timeout from the command line. This option should rarely (if ever) be used.
 
 ## Version 5.1.0: Attributes and dependencies
 

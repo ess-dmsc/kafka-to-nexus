@@ -11,6 +11,7 @@ from helpers.writer import (
     wait_writers_available,
     wait_no_working_writers,
 )
+import numpy as np
 
 
 def datetime_to_ms(time: datetime) -> int:
@@ -48,20 +49,20 @@ def create_messages(kafka_address, start_time, stop_time, step_time):
     producer.flush()
 
 
-# @pytest.mark.skip(reason="This test needs refinement before it is activated.")
+@pytest.mark.skip(reason="This test needs refinement before it is activated.")
 def test_mass_message_handling(
     worker_pool, kafka_address, hdf_file_name="write_from_mass_message_topic.nxs"
 ):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
-    start_time = datetime(year=2019, month=6, day=12, hour=11, minute=1, second=35)
-    stop_time = start_time + timedelta(days=365 * 2)
+    start_time = datetime(year=2014, month=7, day=15, hour=11, minute=1, second=35)
+    stop_time = start_time + timedelta(seconds=365 * 2)
     step_time = timedelta(seconds=1)
 
     create_messages(kafka_address, start_time, stop_time, step_time)
 
-    file_start_time = start_time + timedelta(days=365)
+    file_start_time = start_time + timedelta(seconds=100)
     file_stop_time = file_start_time + timedelta(seconds=148)
     with open("commands/nexus_structure_mass_messages.json", "r") as f:
         structure = f.read()
