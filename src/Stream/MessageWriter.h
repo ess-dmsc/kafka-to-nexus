@@ -17,8 +17,8 @@
 #include "Metrics/Registrar.h"
 #include "TimeUtility.h"
 #include "logger.h"
-#include <concurrentqueue/concurrentqueue.h>
 #include <map>
+#include <moodycamel/concurrentqueue.h>
 #include <thread>
 
 namespace WriterModule {
@@ -68,6 +68,8 @@ protected:
   Metrics::Metric WriteErrors{"write_errors",
                               "Number of failed HDF file writes.",
                               Metrics::Severity::ERROR};
+  Metrics::Metric ApproxQueuedWrites{"approx_queued_writes",
+                                     "Approximate number of writes queued up."};
   std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
   Metrics::Registrar Registrar;
 
@@ -75,7 +77,7 @@ protected:
   moodycamel::ConcurrentQueue<JobType> WriteJobs;
   std::atomic_bool RunThread{true};
   const duration SleepTime{10ms};
-  duration FlushInterval{10s};
+  duration FlushInterval{5s};
   const int MaxTimeCheckCounter{200};
   std::thread WriterThread; // Must be last
 };

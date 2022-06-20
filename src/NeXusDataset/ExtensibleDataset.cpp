@@ -19,11 +19,11 @@ FixedSizeString::FixedSizeString(const hdf5::node::Group &Parent,
       StringType(hdf5::datatype::String::fixed(StringSize)),
       MaxStringSize(StringSize) {
   StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  StringType.padding(hdf5::datatype::StringPad::NULLTERM);
+  StringType.padding(hdf5::datatype::StringPad::NullTerm);
   if (Mode::Create == CMode) {
     Dataset::operator=(hdf5::node::ChunkedDataset(
         Parent, Name, StringType,
-        hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::UNLIMITED}),
+        hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::unlimited}),
         {
             static_cast<unsigned long long>(ChunkSize),
         }));
@@ -43,7 +43,7 @@ void FixedSizeString::appendStringElement(std::string const &InString) {
   hdf5::dataspace::Hyperslab Selection{{NrOfStrings}, {1}};
   hdf5::dataspace::Scalar ScalarSpace;
   hdf5::dataspace::Dataspace FileSpace = dataspace();
-  FileSpace.selection(hdf5::dataspace::SelectionOperation::SET, Selection);
+  FileSpace.selection(hdf5::dataspace::SelectionOperation::Set, Selection);
   write(InString, StringType, ScalarSpace, FileSpace);
   NrOfStrings += 1;
 }

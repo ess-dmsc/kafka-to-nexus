@@ -35,6 +35,6 @@ Please refer to [LLVM documentation](https://llvm.org/docs/CodingStandards.html)
 ### Unit tests
 Unit tests should be written/modified for any code added or changed (within reason, of course).
 
-### System tests
-System tests should be written/modified for any changes that affect the "public" API of the application, i.e. anything 
+### Integration tests
+Integration tests should be written/modified for any changes that affect the "public" API of the application, i.e. anything 
 that affects another component of the data streaming pipeline.

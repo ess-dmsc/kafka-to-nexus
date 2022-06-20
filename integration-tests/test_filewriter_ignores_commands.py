@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from file_writer_control.CommandStatus import CommandState
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -13,23 +14,27 @@ from helpers.writer import (
 
 
 def test_ignores_commands_with_incorrect_id(
-    writer_channel, worker_pool, kafka_address, multiple_writers
+    worker_pool,
+    kafka_address,
+    multiple_writers,
+    hdf_file_name="output_file_stop_id.nxs",
 ):
-    wait_writers_available(writer_channel, nr_of=2, timeout=10)
+    file_path = full_file_path(hdf_file_name)
+    wait_writers_available(worker_pool, nr_of=2, timeout=20)
     now = datetime.now()
-    file_name = "output_file_stop_id.nxs"
+
     with open("commands/nexus_structure.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    cmd_handler = writer_channel.try_send_stop_now(
+    cmd_handler = worker_pool.try_send_stop_now(
         "incorrect service id", write_job.job_id
     )
 
@@ -41,7 +46,7 @@ def test_ignores_commands_with_incorrect_id(
         cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
     ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
-    cmd_handler = writer_channel.try_send_stop_now(write_job.service_id, "wrong job id")
+    cmd_handler = worker_pool.try_send_stop_now(write_job.service_id, "wrong job id")
     cmd_handler.set_timeout(used_timeout)
 
     time.sleep(used_timeout.total_seconds() + 2)
@@ -49,23 +54,22 @@ def test_ignores_commands_with_incorrect_id(
         cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
     ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
 
-    stop_all_jobs(writer_channel)
-    wait_no_working_writers(writer_channel, timeout=0)
-    file_path = f"output-files/{file_name}"
+    stop_all_jobs(worker_pool)
+    wait_no_working_writers(worker_pool, timeout=0)
     assert Path(file_path).is_file()
 
 
 def test_ignores_commands_with_incorrect_job_id(
-    writer_channel, worker_pool, kafka_address
+    worker_pool, kafka_address, hdf_file_name="output_file_job_id.nxs"
 ):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
+    file_path = full_file_path(hdf_file_name)
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
-    file_name = "output_file_job_id.nxs"
     with open("commands/nexus_structure.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
@@ -73,6 +77,28 @@ def test_ignores_commands_with_incorrect_job_id(
     write_job.job_id = "invalid id"
     wait_fail_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(writer_channel, timeout=0)
-    file_path = f"output-files/{file_name}"
+    wait_no_working_writers(worker_pool, timeout=0)
     assert not Path(file_path).is_file()
+
+
+def test_reject_bad_json(
+    worker_pool, kafka_address, hdf_file_name="rejected_start_command.nxs"
+):
+    file_path = full_file_path(hdf_file_name)
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    now = datetime.now()
+    start_time = now - timedelta(seconds=10)
+    stop_time = now
+    with open("commands/nexus_structure_bad_json.json", "r") as f:
+        structure = f.read()
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_path,
+        broker=kafka_address,
+        start_time=start_time,
+        stop_time=stop_time,
+    )
+    fail_message = wait_fail_start_job(worker_pool, write_job, timeout=20)
+    assert "NeXus structure JSON" in fail_message, (
+        'Unexpected content in "fail to start" message. Message was: ' + fail_message
+    )

@@ -14,32 +14,18 @@
 
 namespace FlatBuffer {
 #include <x5f2_status_generated.h>
-}
+} // namespace FlatBuffer
 
 namespace Status {
 
-void StatusReporterBase::updateStatusInfo(JobStatusInfo const &NewInfo) {
-  const std::lock_guard<std::mutex> lock(StatusMutex);
-  Status = NewInfo;
-}
-
-void StatusReporterBase::updateStopTime(time_point StopTime) {
-  const std::lock_guard<std::mutex> lock(StatusMutex);
-  Status.StopTime = StopTime;
-}
-
-time_point StatusReporterBase::getStopTime() {
-  const std::lock_guard<std::mutex> lock(StatusMutex);
-  return Status.StopTime;
-}
-
-void StatusReporterBase::resetStatusInfo() {
-  updateStatusInfo({JobStatusInfo::WorkerState::Idle, "", "", time_point{0ms}});
+time_point StatusReporterBase::getStopTime() const {
+  std::shared_lock const lock(StatusMutex);
+  return StatusGetter().StopTime;
 }
 
 flatbuffers::DetachedBuffer
 StatusReporterBase::createReport(std::string const &JSONReport) const {
-  std::lock_guard<std::mutex> const lock(StatusMutex);
+  std::shared_lock const lock(StatusMutex);
 
   flatbuffers::FlatBufferBuilder Builder;
 
@@ -62,16 +48,17 @@ StatusReporterBase::createReport(std::string const &JSONReport) const {
 
 // Create the JSON part of the status message
 std::string StatusReporterBase::createJSONReport() const {
+  std::shared_lock const lock(StatusMutex);
   auto Info = nlohmann::json::object();
-  std::lock_guard<std::mutex> const lock(StatusMutex);
-  std::map<JobStatusInfo::WorkerState, std::string> StateMap{
-      {JobStatusInfo::WorkerState::Idle, "idle"},
-      {JobStatusInfo::WorkerState::Writing, "writing"}};
-  Info["state"] = StateMap[Status.State];
-  Info["job_id"] = Status.JobId;
-  Info["file_being_written"] = Status.Filename;
-  Info["start_time"] = toMilliSeconds(Status.StartTime);
-  Info["stop_time"] = toMilliSeconds(Status.StopTime);
+  auto CurrentStatus = StatusGetter();
+  std::map<Status::WorkerState, std::string> StateMap{
+      {Status::WorkerState::Idle, "idle"},
+      {Status::WorkerState::Writing, "writing"}};
+  Info["state"] = StateMap[CurrentStatus.State];
+  Info["job_id"] = CurrentStatus.JobId;
+  Info["file_being_written"] = CurrentStatus.Filename;
+  Info["start_time"] = toMilliSeconds(CurrentStatus.StartTime);
+  Info["stop_time"] = toMilliSeconds(CurrentStatus.StopTime);
   auto TempObject = nlohmann::json::object();
   if (JSONGenerator != nullptr) {
     JSONGenerator(TempObject);
@@ -81,15 +68,19 @@ std::string StatusReporterBase::createJSONReport() const {
 }
 
 void StatusReporterBase::reportStatus() {
+  std::shared_lock const Lock{StatusMutex};
   if (!StatusProducerTopic) {
     return;
   }
+  try {
+    auto const StatusJSONReport = createJSONReport();
+    LOG_DEBUG("status: {}", StatusJSONReport);
 
-  auto const StatusJSONReport = createJSONReport();
-  LOG_DEBUG("status: {}", StatusJSONReport);
-
-  StatusProducerTopic->produce(createReport(StatusJSONReport));
-  postReportStatusActions();
+    StatusProducerTopic->produce(createReport(StatusJSONReport));
+    postReportStatusActions();
+  } catch (std::runtime_error &E) {
+    LOG_WARN("Unable to create a status report. The error was: {}", E.what());
+  }
 }
 
 void StatusReporterBase::useAlternativeStatusTopic(
@@ -100,10 +91,10 @@ void StatusReporterBase::useAlternativeStatusTopic(
         std::make_unique<Kafka::ProducerTopic>(Producer, AltTopicName);
     std::swap(StatusProducerTopic, AltStatusProducerTopic);
     UsingAlternativeStatusTopic = true;
-    LOG_DEBUG("Now using the alternative status topic \"{}\".", AltTopicName);
+    LOG_DEBUG(R"(Now using the alternative status topic "{}".)", AltTopicName);
   } else {
-    LOG_WARN("Unable to set new alternative status topic \"{}\" as the "
-             "alternative topic \"\" is already used.",
+    LOG_WARN(R"(Unable to set new alternative status topic "{}" as the "
+             "alternative topic "{}" is already used.)",
              AltTopicName, StatusProducerTopic->name());
   }
 }
@@ -112,7 +103,7 @@ void StatusReporterBase::revertToDefaultStatusTopic() {
   if (UsingAlternativeStatusTopic) {
     std::swap(StatusProducerTopic, AltStatusProducerTopic);
     UsingAlternativeStatusTopic = false;
-    LOG_DEBUG("Reverting to default status topic name \"{}\".",
+    LOG_DEBUG(R"(Reverting to default status topic name "{}".)",
               StatusProducerTopic->name());
   }
 }

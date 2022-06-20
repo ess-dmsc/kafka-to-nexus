@@ -33,12 +33,12 @@ deserialiseStatusMessage(flatbuffers::DetachedBuffer const &Message) {
   auto const StartTime = find<uint64_t>("start_time", StatusJSON);
   auto const StopTime = find<uint64_t>("stop_time", StatusJSON);
 
-  return {Status::JobStatusInfo{
-              Status::JobStatusInfo::WorkerState::Idle, JobId.value_or(""),
-              Filename.value_or(""),
-              time_point{std::chrono::milliseconds{StartTime.value_or(0)}},
-              time_point{std::chrono::milliseconds{StopTime.value_or(0)}}},
-          Status::ApplicationStatusInfo{
-              UpdateInterval, SoftwareName, SoftwareVersion, HostName,
-              "No service name", ServiceId, ProcessId}};
+  return {
+      Status::JobStatusInfo{
+          Status::WorkerState::Idle, JobId.value_or(""), Filename.value_or(""),
+          time_point{std::chrono::milliseconds{StartTime.value_or(0)}},
+          time_point{std::chrono::milliseconds{StopTime.value_or(0)}}},
+      Status::ApplicationStatusInfo{UpdateInterval, SoftwareName,
+                                    SoftwareVersion, HostName,
+                                    "No service name", ServiceId, ProcessId}};
 }

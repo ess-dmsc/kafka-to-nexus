@@ -38,8 +38,20 @@ extractStartMessage(Msg const &CommandMessage,
 /// \return The stop information.
 StopMessage extractStopMessage(Msg const &CommandMessage);
 
+/// \brief Is the provided command a start command?
 bool isStartCommand(Msg const &CommandMessage);
+
+/// \brief Is the provided command a stop command?
 bool isStopCommand(Msg const &CommandMessage);
+
+/// \brief Is the provided message a status message?
+bool isStatusMessage(Msg const &CommandMessage);
+
+/// \brief Is the provided message an answer?
+bool isAnswerMessage(Msg const &CommandMessage);
+
+/// \brief Is the provided message a "writing is finished" broadcast?
+bool isWritingDoneMessage(Msg const &CommandMessage);
 
 /// \brief Extract the specified value.
 ///

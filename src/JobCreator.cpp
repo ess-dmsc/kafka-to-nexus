@@ -63,9 +63,16 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
         Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
     ModuleSettings.isLink = true;
   }
-  ModuleSettings.Attributes =
+  auto Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
+  if (not Attributes.empty()) {
+    LOG_WARN("Writing of writer module attributes to parent group has been "
+             "removed. Attributes should be assigned directly to group. The "
+             "(unused) attributes belongs to dataset with source name \"{}\" "
+             "from topic \"{}\".",
+             ModuleSettings.Source, ModuleSettings.Topic);
+  }
 
   return ModuleSettings;
 }
@@ -74,7 +81,7 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
 static std::vector<ModuleSettings> extractModuleInformationFromJson(
     std::vector<ModuleHDFInfo> const &ModuleHDFInfoList) {
   std::vector<ModuleSettings> SettingsList;
-  for (auto &ModuleHDFInfo : ModuleHDFInfoList) {
+  for (auto const &ModuleHDFInfo : ModuleHDFInfoList) {
     try {
       SettingsList.push_back(
           extractModuleInformationFromJsonForSource(ModuleHDFInfo));
@@ -117,32 +124,39 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     }
   }
 
-  for (auto &Item : StreamSettingsList) {
+  for (size_t i = 0; i < StreamSettingsList.size(); ++i) {
+    auto &Item = StreamSettingsList[i];
     auto StreamGroup = hdf5::node::get_group(
         Task->hdfGroup(), Item.ModuleHDFInfoObj.HDFParentName);
+    std::vector<ModuleSettings> TemporaryStreamSettings;
     try {
       Item.WriterModule = generateWriterInstance(Item);
-
+      for (auto const &ExtraModule :
+           Item.WriterModule->getEnabledExtraModules()) {
+        auto ItemCopy = Item.getCopyForExtraModule();
+        ItemCopy.Module = ExtraModule;
+        TemporaryStreamSettings.push_back(std::move(ItemCopy));
+      }
       setWriterHDFAttributes(StreamGroup, Item);
       Item.WriterModule->init_hdf(StreamGroup);
     } catch (std::runtime_error const &E) {
-      auto ErrorMsg = fmt::format("Could not initialise stream at path \"{}\" "
-                                  "with configuration JSON \"{}\".",
-                                  Item.ModuleHDFInfoObj.HDFParentName,
-                                  Item.ModuleHDFInfoObj.ConfigStream);
-      if (Settings.AbortOnUninitialisedStream) {
-        std::throw_with_nested(std::runtime_error(ErrorMsg));
-      }
+      auto ErrorMsg = fmt::format(
+          R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",
+          Item.ModuleHDFInfoObj.HDFParentName,
+          Item.ModuleHDFInfoObj.ConfigStream, E.what());
+      std::throw_with_nested(std::runtime_error(ErrorMsg));
     }
     try {
       Item.WriterModule->register_meta_data(StreamGroup, Tracker);
     } catch (std::exception const &E) {
       std::throw_with_nested(std::runtime_error(fmt::format(
-          "Exception encountered in WriterModule::Base::register_meta_data(). "
-          "Module: \"{}\" "
-          " Source: \"{}\"  Error message: {}",
+          R"(Exception encountered in WriterModule::Base::register_meta_data(). Module: "{}" Source: "{}"  Error message: {})",
           Item.Module, Item.Source, E.what())));
     }
+    std::transform(TemporaryStreamSettings.begin(),
+                   TemporaryStreamSettings.end(),
+                   std::back_inserter(StreamSettingsList),
+                   [](auto &Element) { return std::move(Element); });
   }
   Task->writeLinks(LinkSettingsList);
   Task->switchToWriteMode();
@@ -180,11 +194,10 @@ void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
       }
 
       // Create a Source instance for the stream and add to the task.
-      Source ThisSource(
-          StreamSettings.Source,
-          WriterModule::Registry::find(StreamSettings.Module).second,
-          StreamSettings.Module, StreamSettings.Topic,
-          move(StreamSettings.WriterModule));
+      auto FoundModule = WriterModule::Registry::find(StreamSettings.Module);
+      Source ThisSource(StreamSettings.Source, FoundModule.second.Id,
+                        FoundModule.second.Name, StreamSettings.Topic,
+                        move(StreamSettings.WriterModule));
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
       LOG_WARN(
@@ -201,27 +214,24 @@ generateWriterInstance(ModuleSettings const &StreamInfo) {
   try {
     ModuleFactory = WriterModule::Registry::find(StreamInfo.Module);
   } catch (std::exception const &E) {
-    throw std::runtime_error(
-        fmt::format("Error while getting module with name \"{}\" for source "
-                    "\"{}\". Message was: {}",
-                    StreamInfo.Module, StreamInfo.Source, E.what()));
+    throw std::runtime_error(fmt::format(
+        R"(Error while getting module with name/id "{}" for source "{}". Message was: {})",
+        StreamInfo.Module, StreamInfo.Source, E.what()));
   }
 
   auto HDFWriterModule = ModuleFactory.first();
   if (!HDFWriterModule) {
-    throw std::runtime_error(
-        fmt::format("Can not instantiate a writer module for module name '{}'",
-                    StreamInfo.Module));
+    throw std::runtime_error(fmt::format(
+        "Can not instantiate a writer module for module name/id '{}'",
+        StreamInfo.Module));
   }
 
   try {
     HDFWriterModule->parse_config(StreamInfo.ConfigStreamJson);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Exception encountered in "
-                    "WriterModule::Base::parse_config()  Module: \"{}\" "
-                    " Source: \"{}\"  Error message: {}",
-                    StreamInfo.Module, StreamInfo.Source, E.what())));
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        R"(Exception encountered in WriterModule::Base::parse_config()  Module: "{}" Source: "{}"  Error message: {})",
+        StreamInfo.Module, StreamInfo.Source, E.what())));
   }
   return HDFWriterModule;
 }
@@ -231,28 +241,33 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
   auto StreamGroup = hdf5::node::get_group(
       RootNode, StreamInfo.ModuleHDFInfoObj.HDFParentName);
 
-  auto writeAttributesList =
-      [&StreamGroup, &StreamInfo](
-          std::vector<std::pair<std::string, std::string>> Attributes) {
-        for (auto Attribute : Attributes) {
-          if (StreamGroup.attributes.exists(Attribute.first)) {
-            StreamGroup.attributes.remove(Attribute.first);
-            LOG_DEBUG(
-                "Replacing (existing) attribute with key \"{}\" at \"{}\".",
-                Attribute.first, StreamInfo.ModuleHDFInfoObj.HDFParentName);
-          }
-          auto HdfAttribute =
-              StreamGroup.attributes.create<std::string>(Attribute.first);
-          HdfAttribute.write(Attribute.second);
-        }
-      };
+  auto writeAttributesList = [&StreamGroup,
+                              &StreamInfo](std::vector<
+                                           std::pair<std::string, std::string>>
+                                               Attributes) {
+    for (auto const &Attribute : Attributes) {
+      if (StreamGroup.attributes.exists(Attribute.first)) {
+        LOG_DEBUG(
+            R"(Will not write attribute with key "{}" at "{}" as it already exists.)",
+            Attribute.first, StreamInfo.ModuleHDFInfoObj.HDFParentName);
+        continue;
+      }
+      auto HdfAttribute =
+          StreamGroup.attributes.create<std::string>(Attribute.first);
+      HdfAttribute.write(Attribute.second);
+    }
+  };
   writeAttributesList(
       {{"NX_class", std::string(StreamInfo.WriterModule->defaultNeXusClass())},
        {"topic", StreamInfo.Topic},
        {"source", StreamInfo.Source}});
-
-  auto AttributesJson = nlohmann::json::parse(StreamInfo.Attributes);
-  HDFOperations::writeAttributes(StreamGroup, AttributesJson);
+  if (not StreamInfo.Attributes.empty()) {
+    LOG_WARN("Writing of writer module attributes to parent group has been "
+             "removed. Attributes should be assigned directly to group. The "
+             "(unused) attributes belongs to dataset with source name \"{}\" "
+             "on topic \"{}\".",
+             StreamInfo.Source, StreamInfo.Topic);
+  }
 }
 
 } // namespace FileWriter

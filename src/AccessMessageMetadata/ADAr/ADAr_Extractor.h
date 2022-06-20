@@ -20,7 +20,7 @@ namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
-/// See parent class for documentation.
+/// \brief For extracting info from ADAr flatbuffer messages.
 class ADAr_Extractor : public FBReaderBase {
 public:
   [[nodiscard]] bool verify(FlatbufferMessage const &Message) const override;

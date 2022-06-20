@@ -22,10 +22,6 @@
 // POD
 struct MainOpt {
   static std::string getDefaultServiceId();
-  /// If true the filewriter aborts the whole job if one or more streams are
-  /// misconfigured and fail to start
-  bool AbortOnUninitialisedStream = false;
-
   /// \brief Each running filewriter is identifiable by an id.
   ///
   /// This `service_id` is announced in the status updates.
@@ -57,7 +53,7 @@ struct MainOpt {
   uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
 
   /// Kafka broker and topic where file writer jobs are published.
-  uri::URI JobPoolURI{""};
+  uri::URI JobPoolURI{"localhost:9092/kafka-to-nexus.jobpool"};
 
   /// \brief Path for HDF output.
   ///

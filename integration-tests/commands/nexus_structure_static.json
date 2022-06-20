@@ -25,6 +25,22 @@
         {
           "module": "dataset",
           "config": {
+            "dtype": "int32",
+            "name": "test_vector1",
+            "values": [1, 2, 3]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "dtype": "int32",
+            "name": "test_vector2",
+            "values": [[1, 2, 3], [-1, -2, -3]]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
             "name": "features",
             "dtype": "uint64",
             "values": [
@@ -86,12 +102,17 @@
                           "dtype": "double"
                         },
                         {
+                          "name": "vector2",
+                          "values": [[3, 2, -1], [-1, -2, -3]],
+                          "dtype": "double"
+                        },
+                        {
                           "name": "depends_on",
                           "values": "."
                         },
                         {
                           "name": "NX_class",
-                          "values": "NXtransformation"
+                          "values": "NXtransformations"
                         }
                       ]
                     }
@@ -99,7 +120,7 @@
                   "attributes": [
                     {
                       "name": "NX_class",
-                      "values": "NXtransformation"
+                      "values": "NXtransformations"
                     }
                   ]
                 }
@@ -180,7 +201,7 @@
                         },
                         {
                           "name": "NX_class",
-                          "values": "NXtransformation"
+                          "values": "NXtransformations"
                         }
                       ]
                     }

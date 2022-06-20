@@ -108,7 +108,7 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
       Offset.at(I) = 0;
     }
     Block.at(0) = 1;
-    SpaceIn.selection(hdf5::dataspace::SelectionOperation::SET,
+    SpaceIn.selection(hdf5::dataspace::SelectionOperation::Set,
                       hdf5::dataspace::Hyperslab(Offset, Block));
     hdf5::Dimensions DimsMem;
     DimsMem.resize(Dims.size());
@@ -136,13 +136,13 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
       LOG_TRACE("Failed to get latest dataset");
     }
     if (!found) {
-      LOG_TRACE("Dataset \"data\" not yet present");
+      LOG_TRACE(R"(Dataset "data" not yet present)");
       for (size_t I = 0; I < DimsOut.size(); ++I) {
         LOG_TRACE("I: {}: {}", I, DimsOut.at(I));
       }
       Dataset.link().parent().create_dataset("data", Type, SpaceOut, DCPL);
-      Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
-      LOG_TRACE("Dataset \"data\" created");
+      Dataset.link().file().flush(hdf5::file::Scope::Global);
+      LOG_TRACE(R"(Dataset "data" created)");
     }
     auto Latest = Dataset.link().parent().get_dataset("data");
     if (Dims.at(0) > 0) {
@@ -416,7 +416,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
       Offset.at(i) = TheOffsets.at(i - 1);
       Block.at(i) = MsgShape->data()[i - 1];
     }
-    DSPFile.selection(hdf5::dataspace::SelectionOperation::SET,
+    DSPFile.selection(hdf5::dataspace::SelectionOperation::Set,
                       hdf5::dataspace::Hyperslab(Offset, Block, Count, Stride));
     DSPMem = hdf5::dataspace::Simple(Block, Block);
   }
@@ -455,7 +455,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
       DatasetInfo.extent(CurrentDims);
       SimpleDSPFile = hdf5::dataspace::Simple(DatasetInfo.dataspace());
       SimpleDSPFile.selection(
-          hdf5::dataspace::SelectionOperation::SET,
+          hdf5::dataspace::SelectionOperation::Set,
           hdf5::dataspace::Hyperslab({CurrentDims.at(0) - 1}, {1}, {1}, {1}));
       DSPMem = hdf5::dataspace::Simple({1}, {1});
       DatasetInfo.write(std::vector<std::string>({EvMsg->info()->str()}),
@@ -469,7 +469,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
       DatasetInfoTimestamp.extent(CurrentDims);
       CurrentDSPFile = hdf5::dataspace::Simple(DatasetInfo.dataspace());
       CurrentDSPFile.selection(
-          hdf5::dataspace::SelectionOperation::SET,
+          hdf5::dataspace::SelectionOperation::Set,
           hdf5::dataspace::Hyperslab({CurrentDims.at(0) - 1}, {1}, {1}, {1}));
       auto CurrentDSPMem = hdf5::dataspace::Simple({1}, {1});
       auto TypeMem = hdf5::datatype::create<uint64_t>().native_type();

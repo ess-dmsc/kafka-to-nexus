@@ -92,7 +92,6 @@ template <typename T>
 MultiVector<T> jsonArrayToMultiArray(nlohmann::json const &ValueJson) {
   auto ArraySize = determineArrayDimensions(ValueJson);
   MultiVector<T> ReturnVector(ArraySize);
-  Shape WorkingIndex(ArraySize.size());
   populateMultiVector(ValueJson, ReturnVector, Shape(ArraySize.size()), 0);
   return ReturnVector;
 }

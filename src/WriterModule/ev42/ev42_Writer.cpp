@@ -115,7 +115,7 @@ WriterModule::InitResult ev42_Writer::reopen(hdf5::node::Group &HDFGroup) {
     }
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
   }

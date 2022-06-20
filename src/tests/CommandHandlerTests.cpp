@@ -70,7 +70,7 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
   ASSERT_EQ("my_test_pv", Settings.Source);
 }
 
-TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
+TEST(ExtractStreamSettings, NoAttributesExtracted) {
   std::string Command{R"""({
         "dtype": "double",
         "source": "my_test_pv",
@@ -86,5 +86,5 @@ TEST(ExtractStreamSettings, IfAttributesDefinedThenExtracted) {
 
   auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
 
-  ASSERT_EQ("{\"NX_class\":\"NXlog\"}", Settings.Attributes);
+  ASSERT_EQ("", Settings.Attributes);
 }

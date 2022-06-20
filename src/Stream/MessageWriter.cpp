@@ -36,6 +36,7 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
   Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
   Registrar.registerMetric(WriteErrors,
                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  Registrar.registerMetric(ApproxQueuedWrites, {Metrics::LogTo::CARBON});
   ModuleErrorCounters[UnknownModuleHash] = std::make_unique<Metrics::Metric>(
       "error_unknown", "Unknown flatbuffer message.", Metrics::Severity::ERROR);
   Registrar.registerMetric(*ModuleErrorCounters[UnknownModuleHash],
@@ -66,14 +67,14 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
     if (Msg.isValid()) {
       UsedHash = generateSrcHash(Msg.getSourceName(), Msg.getFlatbufferID());
       if (ModuleErrorCounters.find(UsedHash) == ModuleErrorCounters.end()) {
-        auto Description = "Error writing fb.-msg with source name \"" +
-                           Msg.getSourceName() +
-                           "\" and flatbuffer id: " + Msg.getFlatbufferID();
+        auto Description = fmt::format(
+            R"(Error writing fb.-msg with source name "{}" and flatbuffer id: {})",
+            Msg.getSourceName(), Msg.getFlatbufferID());
         auto Name =
             "error_" + Msg.getSourceName() + "_" + Msg.getFlatbufferID();
         ModuleErrorCounters[UsedHash] = std::make_unique<Metrics::Metric>(
             Name, Description, Metrics::Severity::ERROR);
-        Registrar.registerMetric(*ModuleErrorCounters[UnknownModuleHash],
+        Registrar.registerMetric(*ModuleErrorCounters[UsedHash],
                                  {Metrics::LogTo::LOG_MSG});
       }
     }
@@ -92,6 +93,7 @@ void MessageWriter::threadFunction() {
   auto FlushOperation = [&]() {
     auto Now = system_clock::now();
     if (Now >= NextFlushTime) {
+      ApproxQueuedWrites = WriteJobs.size_approx();
       flushData();
       auto FlushPeriods = int((Now - NextFlushTime) / FlushInterval) + 1;
       NextFlushTime += FlushPeriods * FlushInterval;

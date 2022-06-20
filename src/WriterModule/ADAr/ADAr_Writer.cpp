@@ -63,9 +63,9 @@ InitResult ADAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR("Unable to initialise areaDetector data tree in "
-              "HDF file with error message: \"{}\"",
-              E.what());
+    LOG_ERROR(
+        R"(Unable to initialise areaDetector data tree in HDF file with error message: "{}")",
+        E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
@@ -82,7 +82,7 @@ WriterModule::InitResult ADAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
         NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
   }
@@ -96,12 +96,60 @@ void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
       Shape);
 }
 
+void msgTypeIsConfigType(ADAr_Writer::Type ConfigType, DType MsgType) {
+  std::unordered_map<DType, ADAr_Writer::Type> TypeComparison{
+      {DType::int8, ADAr_Writer::Type::int8},
+      {DType::uint8, ADAr_Writer::Type::uint8},
+      {DType::int16, ADAr_Writer::Type::int16},
+      {DType::uint16, ADAr_Writer::Type::uint16},
+      {DType::int32, ADAr_Writer::Type::int32},
+      {DType::uint32, ADAr_Writer::Type::uint32},
+      {DType::int64, ADAr_Writer::Type::int64},
+      {DType::uint64, ADAr_Writer::Type::uint64},
+      {DType::float32, ADAr_Writer::Type::float32},
+      {DType::float64, ADAr_Writer::Type::float64},
+  };
+  std::unordered_map<DType, std::string> MsgTypeString{
+      {DType::int8, "int8"},       {DType::uint8, "uint8"},
+      {DType::int16, "int16"},     {DType::uint16, "uint16"},
+      {DType::int32, "int32"},     {DType::uint32, "uint32"},
+      {DType::int64, "int64"},     {DType::uint64, "uint64"},
+      {DType::float32, "float32"}, {DType::float64, "float64"},
+  };
+  std::unordered_map<ADAr_Writer::Type, std::string> ConfigTypeString{
+      {ADAr_Writer::Type::int8, "int8"},
+      {ADAr_Writer::Type::uint8, "uint8"},
+      {ADAr_Writer::Type::int16, "int16"},
+      {ADAr_Writer::Type::uint16, "uint16"},
+      {ADAr_Writer::Type::int32, "int32"},
+      {ADAr_Writer::Type::uint32, "uint32"},
+      {ADAr_Writer::Type::int64, "int64"},
+      {ADAr_Writer::Type::uint64, "uint64"},
+      {ADAr_Writer::Type::float32, "float32"},
+      {ADAr_Writer::Type::float64, "float64"}};
+  try {
+    if (TypeComparison.at(MsgType) != ConfigType) {
+      LOG_WARN("Configured data type ({}) is not the same as the ADAr message "
+               "type ({}).",
+               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+    }
+  } catch (std::out_of_range const &) {
+    LOG_ERROR("Got out of range error when comparing types.");
+  }
+}
+
 void ADAr_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto ADAr = GetADArray(Message.data());
   auto DataShape =
       hdf5::Dimensions(ADAr->dimensions()->begin(), ADAr->dimensions()->end());
   auto CurrentTimestamp = ADAr->timestamp();
   DType Type = ADAr->data_type();
+
+  if (not HasCheckedMessageType) {
+    msgTypeIsConfigType(ElementType, Type);
+    HasCheckedMessageType = true;
+  }
+
   auto DataPtr = ADAr->data()->Data();
   auto NrOfElements =
       std::accumulate(std::cbegin(DataShape), std::cend(DataShape), size_t(1),

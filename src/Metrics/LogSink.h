@@ -14,10 +14,21 @@
 
 namespace Metrics {
 
+/// \brief Convert metrics counters into log messages.
 class LogSink : public Sink {
 public:
+  /// \brief The function that does the actual conversion into a log message
+  /// string.
   void reportMetric(InternalMetric &MetricToBeReported) override;
-  LogTo getType() override { return LogTo::LOG_MSG; };
-  bool isHealthy() override { return true; };
+
+  /// \brief The type of metrics converter that an instance of this class
+  /// represents.
+  LogTo getType() const override { return LogTo::LOG_MSG; };
+
+  /// \brief Check if it the converter is healthy.
+  ///
+  /// Will always return yes as the this converter can never get into a bad
+  /// state.
+  bool isHealthy() const override { return true; };
 };
 } // namespace Metrics

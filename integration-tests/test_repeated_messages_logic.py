@@ -5,6 +5,7 @@ from helpers.kafkahelpers import (
 )
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -13,11 +14,12 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_start_and_stop_time_are_in_the_past(
-    writer_channel, worker_pool, kafka_address
+def test_repeated_messages(
+    worker_pool, kafka_address, hdf_file_name="output_file_repeated_messages.nxs"
 ):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
-    producer = create_producer()
+    file_path = full_file_path(hdf_file_name)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
+    producer = create_producer(kafka_address)
 
     data_topic = "TEST_repeatedMessages"
 
@@ -44,21 +46,19 @@ def test_start_and_stop_time_are_in_the_past(
         publish_f142_message(producer, data_topic, stop_time + step_time, value=30 + i)
     publish_f142_message(producer, data_topic, stop_time + step_time * 2, value=40)
 
-    file_name = "output_file_repeated_messages.nxs"
     with open("commands/nexus_structure_repeated_messages.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(writer_channel, timeout=30)
+    wait_no_working_writers(worker_pool, timeout=30)
 
-    file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:
         expected_elements = 3
         assert file["entry/repeated_messages/time"].len() == (

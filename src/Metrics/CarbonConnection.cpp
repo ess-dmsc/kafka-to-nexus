@@ -8,8 +8,7 @@ namespace {
 #define UNUSED_ARG(x) (void)x;
 } // namespace
 
-namespace Metrics {
-namespace Carbon {
+namespace Metrics::Carbon {
 
 using namespace std::chrono_literals;
 
@@ -196,5 +195,4 @@ void Connection::Impl::threadFunction() {
 
 void Connection::Impl::setState(Status NewState) { ConnectionState = NewState; }
 
-} // namespace Carbon
-} // namespace Metrics
+} // namespace Metrics::Carbon

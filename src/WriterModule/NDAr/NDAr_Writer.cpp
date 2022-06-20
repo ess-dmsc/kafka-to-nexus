@@ -70,9 +70,9 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR("Unable to initialise areaDetector data tree in "
-              "HDF file with error message: \"{}\"",
-              E.what());
+    LOG_ERROR(
+        R"(Unable to initialise areaDetector data tree in HDF file with error message: "{}")",
+        E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
@@ -89,7 +89,7 @@ WriterModule::InitResult NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
         NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
   }

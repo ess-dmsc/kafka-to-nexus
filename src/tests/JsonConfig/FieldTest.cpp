@@ -27,7 +27,7 @@ TEST_F(JsonConfigField, SetWithCorrectType) {
 TEST_F(JsonConfigField, SetWithWrongType) {
   JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
   EXPECT_EQ(UnderTest.getValue(), 33);
-  EXPECT_THROW(UnderTest.setValue("", "\"hello\""), json::type_error);
+  EXPECT_THROW(UnderTest.setValue("", R"("hello")"), json::type_error);
 }
 
 TEST_F(JsonConfigField, SetWithBadJson) {
@@ -40,7 +40,7 @@ TEST_F(JsonConfigField, SetWithRegularString) {
   JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
                                            "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
-  UnderTest.setValue("", "\"some_string\"");
+  UnderTest.setValue("", R"("some_string")");
   EXPECT_EQ(UnderTest.getValue(), "some_string");
 }
 

@@ -13,7 +13,7 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
     StatusDataset = NeXusDataset::ConnectionStatus(HDFGroup, Open);
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return InitResult::ERROR;
   }
@@ -44,8 +44,8 @@ void ep00_Writer::write(FileWriter::FlatbufferMessage const &Message) {
   TimestampDataset.appendElement(FBTimestamp);
 }
 
-static WriterModule::Registry::Registrar<ep00_Writer> RegisterWriter("ep00",
-                                                                     "ep00");
+static WriterModule::Registry::Registrar<ep00_Writer>
+    RegisterWriter("ep00", "epics_con_status");
 
 } // namespace ep00
 } // namespace WriterModule

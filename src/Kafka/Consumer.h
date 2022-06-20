@@ -63,14 +63,12 @@ public:
   /// settings. \return Any new messages consumed.
   std::pair<PollStatus, FileWriter::Msg> poll() override;
 
-protected:
-  std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
-
 private:
   std::unique_ptr<RdKafka::Conf> Conf;
   BrokerSettings const ConsumerBrokerSettings;
   int id = 0;
   std::unique_ptr<KafkaEventCb> EventCallback;
+  std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 };
 
 class StubConsumer : public ConsumerInterface {

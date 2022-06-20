@@ -3,13 +3,9 @@ from helpers.kafkahelpers import (
     create_producer,
     publish_f142_message,
 )
-from time import sleep
 from datetime import datetime, timedelta
-import json
-from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
-from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
-import pytest
 from file_writer_control.WriteJob import WriteJob
+from helpers import full_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -18,9 +14,12 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_f142_meta_data(writer_channel, worker_pool, kafka_address):
-    wait_writers_available(writer_channel, nr_of=1, timeout=10)
-    producer = create_producer()
+def test_f142_meta_data(
+    worker_pool, kafka_address, hdf_file_name="output_file_with_meta_data.nxs"
+):
+    file_path = full_file_path(hdf_file_name)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
+    producer = create_producer(kafka_address)
 
     data_topic = "TEST_sampleEnv"
     source_name1 = "someSource1"
@@ -75,32 +74,30 @@ def test_f142_meta_data(writer_channel, worker_pool, kafka_address):
         producer, data_topic, stop_time, value=Array3, source_name=source_name2
     )
 
-    file_name = "output_file_with_meta_data.nxs"
     file_start_time = start_time
     file_stop_time = start_time + timedelta(seconds=148)
     with open("commands/nexus_structure_meta_data.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_name,
+        file_name=file_path,
         broker=kafka_address,
         start_time=file_start_time,
         stop_time=file_stop_time,
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(writer_channel, timeout=30)
+    wait_no_working_writers(worker_pool, timeout=30)
 
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
-    file_path = f"output-files/{file_name}"
     with OpenNexusFile(file_path) as file:
-        assert file["entry/meta_data_1/value"].attrs["min"] == Min
-        assert file["entry/meta_data_1/value"].attrs["max"] == Max
-        assert file["entry/meta_data_1/value"].attrs["mean"] == Mean
+        assert file["entry/meta_data_1/minimum_value"][0] == Min
+        assert file["entry/meta_data_1/maximum_value"][0] == Max
+        assert file["entry/meta_data_1/average_value"][0] == Mean
 
         FullArr = np.concatenate([Array1, Array2, Array3])
 
-        assert file["entry/meta_data_2/value"].attrs["min"] == FullArr.min()
-        assert file["entry/meta_data_2/value"].attrs["max"] == FullArr.max()
-        assert file["entry/meta_data_2/value"].attrs["mean"] == FullArr.mean()
+        assert file["entry/meta_data_2/minimum_value"][0] == FullArr.min()
+        assert file["entry/meta_data_2/maximum_value"][0] == FullArr.max()
+        assert file["entry/meta_data_2/average_value"][0] == FullArr.mean()

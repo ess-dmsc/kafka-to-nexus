@@ -16,13 +16,12 @@
 
 namespace Kafka {
 
-static std::atomic<int> ConsumerInstanceCount;
-
 Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
                    std::unique_ptr<RdKafka::Conf> RdConf,
                    std::unique_ptr<KafkaEventCb> EventCb)
-    : KafkaConsumer(std::move(RdConsumer)), Conf(std::move(RdConf)),
-      EventCallback(std::move(EventCb)) {
+    : Conf(std::move(RdConf)), EventCallback(std::move(EventCb)),
+      KafkaConsumer(std::move(RdConsumer)) {
+  static std::atomic<int> ConsumerInstanceCount;
   id = ConsumerInstanceCount++;
 }
 
@@ -30,10 +29,12 @@ Consumer::~Consumer() {
   if (KafkaConsumer != nullptr) {
     std::vector<std::string> Topics;
     auto ErrorCode = KafkaConsumer->subscription(Topics);
-    KafkaConsumer->close();
     if (ErrorCode == RdKafka::ERR_NO_ERROR) {
       LOG_DEBUG("Consumer consuming from topic(s) {} closed.", Topics);
     }
+    KafkaConsumer->unassign();
+    KafkaConsumer->unsubscribe();
+    KafkaConsumer->close();
   }
 }
 
@@ -47,10 +48,9 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     LOG_ERROR("Could not assign to {}. Could not get current assignments.",
               Topic);
-    throw std::runtime_error(
-        fmt::format("Could not assign topic-partition of topic {}. Could not "
-                    "get current assignments. RdKafka error: \"{}\"",
-                    Topic, err2str(ErrorCode)));
+    throw std::runtime_error(fmt::format(
+        R"(Could not assign topic-partition of topic {}. Could not get current assignments. RdKafka error: "{}")",
+        Topic, err2str(ErrorCode)));
   }
   Assignments.emplace_back(
       RdKafka::TopicPartition::create(Topic, PartitionId, Offset));
@@ -58,12 +58,10 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     LOG_ERROR("Could not assign to {}", Topic);
     throw std::runtime_error(fmt::format(
-        "Could not assign topic-partition of topic {}, RdKafka error: \"{}\"",
+        R"(Could not assign topic-partition of topic {}, RdKafka error: "{}")",
         Topic, err2str(ReturnCode)));
   }
-  for (auto Ptr : Assignments) {
-    delete Ptr;
-  }
+  RdKafka::TopicPartition::destroy(Assignments);
 }
 
 void Consumer::addTopic(std::string const &Topic) {
@@ -73,24 +71,23 @@ void Consumer::addTopic(std::string const &Topic) {
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     LOG_ERROR("Could not get current topic subscriptions.");
     throw std::runtime_error(fmt::format(
-        "Could not get current topic subscriptions. RdKafka error: \"{}\"",
+        R"(Could not get current topic subscriptions. RdKafka error: "{}")",
         err2str(ErrorCode)));
   }
   Topics.emplace_back(Topic);
   ErrorCode = KafkaConsumer->subscribe(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    LOG_ERROR("Unable to add topic \"{}\" to list of subscribed topics.",
+    LOG_ERROR(R"(Unable to add topic "{}" to list of subscribed topics.)",
               Topic);
-    throw std::runtime_error(
-        fmt::format("Unable to add topic \"{}\" to list of subscribed topics. "
-                    "RdKafka error: \"{}\"",
-                    Topic, err2str(ErrorCode)));
+    throw std::runtime_error(fmt::format(
+        R"(Unable to add topic "{}" to list of subscribed topics. RdKafka error: "{}")",
+        Topic, err2str(ErrorCode)));
   }
 }
 
 std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
-  auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
-      KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
+  auto KafkaMsg = std::unique_ptr<RdKafka::Message>(KafkaConsumer->consume(
+      toMilliSeconds(ConsumerBrokerSettings.PollTimeout)));
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR: {
     auto MetaData = FileWriter::MessageMetaData{

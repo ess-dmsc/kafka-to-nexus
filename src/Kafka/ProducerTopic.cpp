@@ -37,7 +37,7 @@ struct Msg_ : public ProducerMessage {
 };
 
 int ProducerTopic::produce(flatbuffers::DetachedBuffer const &MsgData) {
-  auto MsgPtr = new Msg_;
+  auto *MsgPtr = new Msg_;
   std::copy(MsgData.data(), MsgData.data() + MsgData.size(),
             std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();
@@ -80,7 +80,7 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
 
   default:
     ++ProducerStats.produce_fail;
-    LOG_ERROR("Publishing message on topic \"{}\" failed",
+    LOG_ERROR(R"(Publishing message on topic "{}" failed)",
               RdKafkaTopic->name());
     break;
   }

@@ -25,6 +25,7 @@ using StartFuncType = std::function<void(StartInfo)>;
 using StopTimeFuncType = std::function<void(time_point)>;
 using StopNowFuncType = std::function<void()>;
 using IsWritingFuncType = std::function<bool()>;
+using GetJobIdFuncType = std::function<std::string()>;
 
 class HandlerBase {
 public:
@@ -36,12 +37,13 @@ public:
   virtual void registerStopNowFunction(StopNowFuncType StopNowFunction) = 0;
   virtual void
   registerIsWritingFunction(IsWritingFuncType IsWritingFunction) = 0;
+  virtual void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) = 0;
 
-  virtual void sendHasStoppedMessage(std::string FileName,
-                                     std::string Metadata) = 0;
-  virtual void sendErrorEncounteredMessage(std::string FileName,
-                                           std::string Metadata,
-                                           std::string ErrorMessage) = 0;
+  virtual void sendHasStoppedMessage(std::string const &FileName,
+                                     nlohmann::json Metadata) = 0;
+  virtual void sendErrorEncounteredMessage(std::string const &FileName,
+                                           std::string const &Metadata,
+                                           std::string const &ErrorMessage) = 0;
   virtual void loopFunction() {}
 };
 
@@ -59,11 +61,13 @@ public:
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) override;
   void registerStopNowFunction(StopNowFuncType StopNowFunction) override;
   void registerIsWritingFunction(IsWritingFuncType IsWritingFunction) override;
+  void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) override;
 
-  void sendHasStoppedMessage(std::string FileName,
-                             std::string Metadata) override;
-  void sendErrorEncounteredMessage(std::string FileName, std::string Metadata,
-                                   std::string ErrorMessage) override;
+  void sendHasStoppedMessage(std::string const &FileName,
+                             nlohmann::json Metadata) override;
+  void sendErrorEncounteredMessage(std::string const &FileName,
+                                   std::string const &Metadata,
+                                   std::string const &ErrorMessage) override;
 
   void loopFunction() override;
 
@@ -72,17 +76,26 @@ private:
   void handleStartCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
   void handleStopCommand(FileWriter::Msg CommandMsg);
   std::string const ServiceId;
-  std::string JobId;
-  StartFuncType DoStart{
-      [](auto) { throw std::runtime_error("Not implemented."); }};
-  StopTimeFuncType DoSetStopTime{
-      [](auto) { throw std::runtime_error("Not implemented."); }};
+  std::string NexusStructure;
+  StartFuncType DoStart{[](auto) {
+    throw std::runtime_error("DoStart(): Not set/implemented.");
+  }};
+  StopTimeFuncType DoSetStopTime{[](auto) {
+    throw std::runtime_error("DosetStopTime(): Not set/implemented.");
+  }};
   StopNowFuncType DoStopNow{
-      []() { throw std::runtime_error("Not implemented."); }};
-  IsWritingFuncType IsWritingNow{
-      []() -> bool { throw std::runtime_error("Not implemented."); }};
+      []() { throw std::runtime_error("DoStopNow(): Not set/implemented."); }};
+  IsWritingFuncType IsWritingNow{[]() -> bool {
+    throw std::runtime_error("IsWritingNow(): Not set/implemented.");
+  }};
+  GetJobIdFuncType GetJobId{[]() -> std::string {
+    throw std::runtime_error("GetJobId(): Not set/implemented.");
+  }};
 
-  bool PollForJob{true};
+  /// \brief Revert to the default command topic if an alternative topic
+  /// has been configured.
+  void revertCommandTopic();
+
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
   std::unique_ptr<FeedbackProducerBase> CommandResponse;

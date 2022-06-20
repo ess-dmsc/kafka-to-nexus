@@ -9,8 +9,7 @@
 
 #include "WriterRegistrar.h"
 
-namespace WriterModule {
-namespace Registry {
+namespace WriterModule::Registry {
 
 struct FactoryInfo {
   ModuleFactory FactoryPtr;
@@ -23,17 +22,15 @@ std::map<WriterModuleHash, FactoryInfo> &getFactories() {
   return Factories;
 }
 
-WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID,
-                                     std::string const &ModuleName) {
-  return std::hash<std::string>{}(ID + ModuleName);
+WriterModuleHash getWriterModuleHash(ModuleFlatbufferID const &ID) {
+  return std::hash<std::string>{}(ID.Id + ID.Name);
 }
 
-std::vector<std::pair<ModuleFlatbufferID, std::string>>
-getFactoryIdsAndNames() {
-  std::vector<std::pair<std::string, std::string>> ReturnList;
+std::vector<ModuleFlatbufferID> getFactoryIdsAndNames() {
+  std::vector<ModuleFlatbufferID> ReturnList;
   std::transform(getFactories().cbegin(), getFactories().cend(),
                  std::back_inserter(ReturnList),
-                 [](auto &Item) -> std::pair<std::string, std::string> {
+                 [](auto &Item) -> ModuleFlatbufferID {
                    return {Item.second.Id, Item.second.Name};
                  });
   return ReturnList;
@@ -46,46 +43,51 @@ FactoryAndID const find(std::string const &ModuleName) {
                                   return CItem.second.Name == ModuleName;
                                 });
   if (FoundItem == Factories.end()) {
-    throw std::out_of_range("Unable to find module with name \"" + ModuleName +
-                            "\"");
+    FoundItem = std::find_if(std::cbegin(Factories), std::cend(Factories),
+                             [&ModuleName](auto const &CItem) {
+                               return CItem.second.Id == ModuleName;
+                             });
+    if (FoundItem == Factories.end()) {
+      throw std::out_of_range(
+          fmt::format(R"(Unable to find module with name/id "{})", ModuleName));
+    }
   }
-  return {FoundItem->second.FactoryPtr, FoundItem->second.Id};
+  return {FoundItem->second.FactoryPtr,
+          {FoundItem->second.Id, FoundItem->second.Name}};
 }
 
 FactoryAndID const find(WriterModuleHash ModuleHash) {
   auto FoundModule = getFactories().at(ModuleHash);
-  return {FoundModule.FactoryPtr, FoundModule.Id};
+  return {FoundModule.FactoryPtr, {FoundModule.Id, FoundModule.Name}};
 }
 
 void clear() { getFactories().clear(); }
 
-void addWriterModule(ModuleFlatbufferID const &ID,
-                     std::string const &ModuleName, ModuleFactory Value) {
+void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value) {
   auto &Factories = getFactories();
-  if (ID.size() != 4) {
+  if (ID.Id.size() != 4) {
     throw std::runtime_error(
         "The number of characters in the Flatbuffer id string must be 4.");
   }
-  if (ModuleName == "dataset") {
-    throw std::runtime_error("The writer module name \"dataset\" has been "
-                             "reserved and can not be used.");
+  if (ID.Name == "dataset") {
+    throw std::runtime_error(
+        R"(The writer module name "dataset" has been reserved and can not be used.)");
   }
-  auto ModuleHash = getWriterModuleHash(ID, ModuleName);
+  auto ModuleHash = getWriterModuleHash(ID);
   if (Factories.find(ModuleHash) != Factories.end()) {
-    auto s = fmt::format("Writer module with name \"{}\" that processes \"{}\" "
-                         "flatbuffers already exists.",
-                         ModuleName, ID);
+    auto s = fmt::format(
+        R"(Writer module with name "{}" that processes "{}" flatbuffers already exists.)",
+        ID.Name, ID.Id);
     throw std::runtime_error(s);
   }
   if (std::find_if(Factories.begin(), Factories.end(),
-                   [&ModuleName](auto const &CItem) {
-                     return CItem.second.Name == ModuleName;
+                   [&ID](auto const &CItem) {
+                     return CItem.second.Name == ID.Name;
                    }) != Factories.end()) {
-    auto s = fmt::format("Writer module with name \"{}\" already exists.",
-                         ModuleName, ID);
+    auto s =
+        fmt::format(R"(Writer module with name "{}" already exists.)", ID.Name);
     throw std::runtime_error(s);
   }
-  Factories[ModuleHash] = {std::move(Value), ID, ModuleName};
+  Factories[ModuleHash] = {std::move(Value), ID.Id, ID.Name};
 }
-} // namespace Registry
-} // namespace WriterModule
+} // namespace WriterModule::Registry

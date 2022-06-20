@@ -11,8 +11,11 @@
 /// some utility methods that can be used to test the more common situations.
 
 #include <6s4t_run_stop_generated.h>
+#include <answ_action_response_generated.h>
 #include <pl72_run_start_generated.h>
 #include <sstream>
+#include <wrdn_finished_writing_generated.h>
+#include <x5f2_status_generated.h>
 
 #include "Msg.h"
 #include "Parser.h"
@@ -55,17 +58,14 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
 }
 } // namespace
 
-namespace Command {
-
-namespace Parser {
-
+namespace Command::Parser {
 using FileWriter::Msg;
 
 Command::StartMessage extractStartMessage(Msg const &CommandMessage,
                                           time_point DefaultStartTime) {
   Command::StartMessage Result;
 
-  auto const RunStartData = GetRunStart(CommandMessage.data());
+  const auto *const RunStartData = GetRunStart(CommandMessage.data());
 
   checkRequiredFieldsArePresent(RunStartData);
 
@@ -97,7 +97,7 @@ Command::StartMessage extractStartMessage(Msg const &CommandMessage,
 }
 
 Command::StopMessage extractStopMessage(Msg const &CommandMessage) {
-  auto const RunStopData = GetRunStop(CommandMessage.data());
+  const auto *const RunStopData = GetRunStop(CommandMessage.data());
 
   if (RunStopData->job_id() == nullptr || RunStopData->job_id()->size() == 0) {
     throw std::runtime_error("Errors encountered parsing run stop message:\n"
@@ -132,5 +132,28 @@ bool isStopCommand(Msg const &CommandMessage) {
                                           RunStopIdentifier());
 }
 
-} // namespace Parser
-} // namespace Command
+bool isStatusMessage(Msg const &CommandMessage) {
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyStatusBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          StatusIdentifier());
+}
+
+bool isAnswerMessage(Msg const &CommandMessage) {
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyActionResponseBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          ActionResponseIdentifier());
+}
+
+bool isWritingDoneMessage(Msg const &CommandMessage) {
+  auto Verifier =
+      flatbuffers::Verifier(CommandMessage.data(), CommandMessage.size());
+  return VerifyFinishedWritingBuffer(Verifier) and
+         flatbuffers::BufferHasIdentifier(CommandMessage.data(),
+                                          FinishedWritingIdentifier());
+}
+
+} // namespace Command::Parser

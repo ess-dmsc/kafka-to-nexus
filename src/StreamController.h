@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MetaData/HDF5DataWriter.h"
 #include "MetaData/Tracker.h"
@@ -23,7 +24,6 @@
 #include <vector>
 
 namespace FileWriter {
-class FileWriterTask;
 
 class IStreamController {
 public:
@@ -93,7 +93,7 @@ private:
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
   void checkIfStreamsAreDone();
-  std::chrono::system_clock::duration CurrentMetadataTimeOut;
+  std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
   std::atomic<bool> HasError{false};
   std::mutex ErrorMsgMutex;
@@ -111,11 +111,7 @@ private:
   Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions KafkaSettings;
   MetaData::TrackerPtr MetaDataTracker;
-  MetaData::Value<std::string> StartTimeMetaData{
-      "/entry/", "start_time", MetaData::basicStringDatasetWriter};
-  MetaData::Value<std::string> EndTimeMetaData{
-      "/entry/", "end_time", MetaData::basicStringDatasetWriter};
-  ThreadedExecutor Executor; // Must be last
+  ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
 
 } // namespace FileWriter

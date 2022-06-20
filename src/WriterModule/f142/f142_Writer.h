@@ -43,8 +43,9 @@ public:
   void write(FlatbufferMessage const &Message) override;
 
   f142_Writer()
-      : WriterModule::Base(false, "NXlog"), MetaDataMin("", "min"),
-        MetaDataMax("", "max"), MetaDataMean("", "mean") {}
+      : WriterModule::Base(false, "NXlog", {"epics_con_status"}),
+        MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
+        MetaDataMean("", "average_value") {}
   ~f142_Writer() override = default;
 
   enum class Type {
@@ -98,6 +99,7 @@ protected:
   uint64_t LastIndexAtWrite{0};
   uint64_t NrOfWrites{0};
   uint64_t TotalNrOfElementsWritten{0};
+  bool HasCheckedMessageType{false};
 };
 
 } // namespace f142

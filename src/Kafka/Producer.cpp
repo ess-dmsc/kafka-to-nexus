@@ -13,8 +13,6 @@
 
 namespace Kafka {
 
-static std::atomic<int> ProducerInstanceCount;
-
 Producer::~Producer() {
   LOG_DEBUG("~Producer");
   if (ProducerPtr != nullptr) {
@@ -50,6 +48,7 @@ void Producer::setConf(std::string &ErrorString) {
 
 Producer::Producer(BrokerSettings const &Settings)
     : ProducerBrokerSettings(Settings) {
+  static std::atomic<int> ProducerInstanceCount;
   ProducerID = ProducerInstanceCount++;
 
   std::string ErrorString;
@@ -66,7 +65,8 @@ Producer::Producer(BrokerSettings const &Settings)
 }
 
 void Producer::poll() {
-  auto EventsHandled = ProducerPtr->poll(ProducerBrokerSettings.PollTimeoutMS);
+  auto EventsHandled =
+      ProducerPtr->poll(toMilliSeconds(ProducerBrokerSettings.PollTimeout));
   auto OutputQueueLength = outputQueueLength();
   LOG_DEBUG("IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
             ProducerID, ProducerBrokerSettings.Address, EventsHandled,

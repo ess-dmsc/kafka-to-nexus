@@ -222,7 +222,7 @@ hdf5::file::File createFile(std::string Name, FileCreationLocation Location) {
   if (Location == FileCreationLocation::Memory) {
     FAPL.driver(hdf5::file::MemoryDriver());
   }
-  return hdf5::file::create(Name, hdf5::file::AccessFlags::TRUNCATE,
+  return hdf5::file::create(Name, hdf5::file::AccessFlags::Truncate,
                             hdf5::property::FileCreationList(), FAPL);
 }
 
@@ -483,7 +483,7 @@ TEST_F(EventHistogramWriter, WriteManyHistograms) {
 
   std::vector<uint64_t> Buffer(DimLengths.at(0) * DimLengths.at(1) *
                                DimLengths.at(2));
-  Dataspace.selection(hdf5::dataspace::SelectionOperation::SET,
+  Dataspace.selection(hdf5::dataspace::SelectionOperation::Set,
                       hdf5::dataspace::Hyperslab({1, 0, 0, 0}, {1, 4, 2, 2}));
   hdf5::dataspace::Simple SpaceMem({4, 2, 2});
   Histograms.read(Buffer, Histograms.datatype(), SpaceMem, Dataspace);

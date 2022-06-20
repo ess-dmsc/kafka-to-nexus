@@ -14,7 +14,7 @@
 namespace NeXusDataset {
 UInt16Value::UInt16Value(hdf5::node::Group const &Parent, Mode CMode,
                          size_t ChunkSize)
-    : ExtensibleDataset<std::uint16_t>(Parent, "raw_value", CMode, ChunkSize) {}
+    : ExtensibleDataset<std::uint16_t>(Parent, "value", CMode, ChunkSize) {}
 
 Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::uint64_t>(Parent, "time", CMode, ChunkSize) {

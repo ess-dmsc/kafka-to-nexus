@@ -48,10 +48,9 @@ void FlatbufferMessage::extractPacketInfo() {
   try {
     auto &Reader = FlatbufferReaderRegistry::find(FlatbufferID);
     if (not Reader->verify(*this)) {
-      throw NotValidFlatbuffer(
-          fmt::format("Buffer which has flatbuffer ID \"{}\" is not a valid "
-                      "flatbuffer of this type.",
-                      FlatbufferID));
+      throw NotValidFlatbuffer(fmt::format(
+          R"(Buffer which has flatbuffer ID "{}" is not a valid flatbuffer of this type.)",
+          FlatbufferID));
     }
     Sourcename = Reader->source_name(*this);
     Timestamp = Reader->timestamp(*this);
@@ -63,7 +62,7 @@ void FlatbufferMessage::extractPacketInfo() {
   } catch (std::out_of_range &E) {
     Valid = false;
     throw UnknownFlatbufferID(fmt::format(
-        "Unable to locate reader with the ID \"{}\" in the registry.",
+        R"(Unable to locate reader with the ID "{}" in the registry.)",
         FlatbufferID));
   }
   Valid = true;

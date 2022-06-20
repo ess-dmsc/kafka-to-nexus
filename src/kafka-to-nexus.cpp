@@ -28,12 +28,39 @@
 #include <csignal>
 #include <string>
 
+enum class RunStates {
+  Running,
+  Stopping,
+  SIGINT_Received,
+  SIGINT_Waiting,
+  SIGINT_KafkaWait
+};
 // These should only be visible in this translation unit
-static std::atomic_bool Running{true};
+static std::atomic<RunStates> RunState{RunStates::Running};
 
 void signal_handler(int Signal) {
-  Running = false;
-  LOG_DEBUG("Got SIGNAL {}", Signal);
+  std::string CtrlCString{"Got SIGINT (Ctrl-C). Shutting down gracefully. "
+                          "Press Ctrl-C again to shutdown quickly."};
+  std::string SIGTERMString{"Got SIGTERM. Shutting down."};
+  std::string UnknownSignal{"Got unknown signal. Shutting down."};
+  switch (Signal) {
+  case SIGINT:
+    if (RunState == RunStates::Running) {
+      LOG_INFO(CtrlCString);
+      RunState = RunStates::SIGINT_Received;
+    } else {
+      LOG_INFO("Got repeated Ctrl-c. Shutting down now;");
+      RunState = RunStates::Stopping;
+    }
+    break;
+  case SIGTERM:
+    LOG_INFO(SIGTERMString);
+    RunState = RunStates::Stopping;
+    break;
+  default:
+    LOG_INFO(UnknownSignal);
+    RunState = RunStates::Stopping;
+  }
 }
 
 std::unique_ptr<Status::StatusReporter>
@@ -60,12 +87,13 @@ bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
     auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut);
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
-          "Unable to find job pool topic with name \"{}\".", PoolTopic);
-      LOG_WARN(MsgString);
+          R"(Unable to find job pool topic with name "{}".)", PoolTopic);
+      LOG_ERROR(MsgString);
+      throw std::runtime_error(MsgString);
     }
     if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
-          "Unable to find command topic with name \"{}\".", CommandTopic);
+          R"(Unable to find command topic with name "{}".)", CommandTopic);
       LOG_ERROR(MsgString);
       throw std::runtime_error(MsgString);
     }
@@ -115,7 +143,7 @@ int main(int argc, char **argv) {
     }
     fmt::print("\n-- Known writer modules\n");
     for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
-      fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
+      fmt::print("---- {} : {}\n", WriterPair.Id, WriterPair.Name);
     }
     return EXIT_SUCCESS;
   }
@@ -132,10 +160,13 @@ int main(int argc, char **argv) {
   }
 
   Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
-  auto UsedServiceName = Options->ServiceName;
-  auto UsedRegistrar = MainRegistrar;
-  if (not Options->ServiceName.empty()) {
-    UsedRegistrar = MainRegistrar.getNewRegistrar(Options->getServiceId());
+  auto FQDN = getFQDN();
+  std::replace(FQDN.begin(), FQDN.end(), '.', '_');
+  auto UsedRegistrar = MainRegistrar.getNewRegistrar(FQDN);
+  if (Options->ServiceName.empty()) {
+    UsedRegistrar = UsedRegistrar.getNewRegistrar(Options->getServiceId());
+  } else {
+    UsedRegistrar = UsedRegistrar.getNewRegistrar(Options->ServiceName);
   }
 
   std::signal(SIGINT, signal_handler);
@@ -161,7 +192,28 @@ int main(int argc, char **argv) {
   auto CommandTopic = Options->CommandBrokerURI.Topic;
   LOG_DEBUG("Starting run loop.");
   LOG_DEBUG("Retrieving topic names from broker.");
-  while (Running) {
+  time_point SIGINTStart;
+  duration WaitForStop{5s};
+  while (RunState != RunStates::Stopping) {
+    if (RunState == RunStates::SIGINT_Received) {
+      if (FindTopicMode) {
+        break;
+      } else if (not MasterPtr->writingIsFinished()) {
+        MasterPtr->stopNow();
+        RunState = RunStates::SIGINT_Waiting;
+        SIGINTStart = system_clock::now();
+      } else {
+        break;
+      }
+    } else if (RunState == RunStates::SIGINT_Waiting) {
+      if (system_clock::now() > SIGINTStart + WaitForStop) {
+        LOG_INFO("Failed to shut down gracefully. Stopping now.");
+        break;
+      } else if (MasterPtr->writingIsFinished()) {
+        RunState = RunStates::SIGINT_KafkaWait;
+        break;
+      }
+    }
     try {
       if (FindTopicMode) {
         if (tryToFindTopics(PoolTopic, CommandTopic,
@@ -177,13 +229,12 @@ int main(int argc, char **argv) {
             CMetaDataTimeout = Options->StreamerConfiguration.BrokerSettings
                                    .MaxMetadataTimeout;
           }
-          LOG_WARN("Meta data call for retrieving the command topic (\"{}\") "
-                   "from the broker failed. Re-trying with a "
-                   "timeout of {} ms.",
-                   CommandTopic,
-                   std::chrono::duration_cast<std::chrono::milliseconds>(
-                       CMetaDataTimeout)
-                       .count());
+          LOG_WARN(
+              R"(Meta data call for retrieving the command topic ("{}") from the broker failed. Re-trying with a timeout of {} ms.)",
+              CommandTopic,
+              std::chrono::duration_cast<std::chrono::milliseconds>(
+                  CMetaDataTimeout)
+                  .count());
         }
       } else {
         MasterPtr->run();
@@ -202,7 +253,11 @@ int main(int argc, char **argv) {
       break;
     }
   }
-  LOG_DEBUG("Exiting.");
+  if (RunState == RunStates::SIGINT_KafkaWait) {
+    LOG_DEBUG("Giving a grace period to Kafka.");
+    std::this_thread::sleep_for(3s);
+  }
+  LOG_INFO("Exiting.");
   Log::Flush();
   return EXIT_SUCCESS;
 }

@@ -12,6 +12,7 @@
 #include "Kafka/MetadataException.h"
 #include "TimeUtility.h"
 #include <chrono>
+#include <fmt/format.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <set>
@@ -30,8 +31,8 @@ std::unique_ptr<RdKafka::Handle> getKafkaHandle(std::string Broker) {
   std::string ErrorStr;
   if (Conf->set("metadata.broker.list", Broker, ErrorStr) !=
       RdKafka::Conf::CONF_OK) {
-    throw MetadataException("Got error when configuring metadata brokers: \"" +
-                            ErrorStr + "\"");
+    throw MetadataException(fmt::format(
+        R"(Got error when configuring metadata brokers: "{}")", ErrorStr));
   }
   auto KafkaConsumer = std::unique_ptr<RdKafka::Handle>(
       KafkaHandle::create(Conf.get(), ErrorStr));
@@ -67,6 +68,13 @@ getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
   }
   std::vector<std::pair<int, int64_t>> ReturnSet;
   for (const auto &CTopicPartition : TopicPartitions) {
+    if (CTopicPartition->err() != RdKafka::ERR_NO_ERROR) {
+      throw MetadataException(
+          "Error for partition " +
+          std::to_string(CTopicPartition->partition()) +
+          " when retrieving offset for timestamp. Error code was: " +
+          std::to_string(CTopicPartition->err()));
+    }
     ReturnSet.emplace_back(std::make_pair(CTopicPartition->partition(),
                                           CTopicPartition->offset()));
   }
@@ -96,8 +104,9 @@ std::vector<int> getPartitionsForTopicImpl(std::string const &Broker,
       Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException(
-        "Failed to query broker for available partitions. Error code was: " +
-        std::to_string(ReturnCode));
+        fmt::format("Failed to query broker for available partitions on topic "
+                    "{}. Error code was: {}",
+                    Topic, ReturnCode));
   }
   auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
   auto ReturnVector = extractPartitinIDs(TopicMetaData);
@@ -114,9 +123,9 @@ std::set<std::string> getTopicListImpl(std::string const &Broker,
   RdKafka::Metadata *MetadataPtr{nullptr};
   auto ReturnCode = Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    throw MetadataException(
-        "Failed to query broker for available partitions. Error code was: " +
-        std::to_string(ReturnCode));
+    throw MetadataException(fmt::format(
+        "Failed to query broker for available partitions. Error code was: {}",
+        ReturnCode));
   }
   auto Topics = MetadataPtr->topics();
   std::set<std::string> TopicNames;

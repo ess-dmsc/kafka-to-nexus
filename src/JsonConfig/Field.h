@@ -33,6 +33,8 @@ class FieldHandler;
 
 using namespace nlohmann;
 
+/// \brief The base class of JSON key/value pairs used for configuration
+/// purposes.
 class FieldBase {
 public:
   template <class FieldRegistrarType>
@@ -62,6 +64,11 @@ private:
   bool FieldRequired{false};
 };
 
+/// \brief Represents an obsolete JSON key/value pair in a dictionary.
+///
+/// If the key is found, a warning message is produced by the FieldHandler.
+/// \tparam FieldType The data type stored in the field. Need not be a primitive
+/// type.
 template <class FieldType> class ObsoleteField : public FieldBase {
 public:
   template <class FieldRegistrarType>
@@ -74,32 +81,35 @@ public:
       : FieldBase(RegistrarPtr, Key) {}
 
   void setValue(std::string const &, std::string const &) override {
-    LOG_WARN("The field with the key(s) \"{}\" is obsolete. Any value set will "
-             "be ignored.",
-             getKeys());
+    LOG_WARN(
+        R"(The field with the key(s) "{}" is obsolete. Any value set will be ignored.)",
+        getKeys());
   }
 
   FieldType getValue() const {
-    throw std::runtime_error("Unable to return a value for the field with the "
-                             "key(s) \"{}\" as it has been made obsolete.",
-                             getKeys());
-    return {};
+    throw std::runtime_error(
+        R"(Unable to return a value for the field with the key(s) "{}" as it has been made obsolete.)",
+        getKeys());
   }
 
   operator FieldType() const { return getValue(); }
 };
 
+/// \brief Represents a JSON key/value pair in a dictionary.
+///
+/// \tparam FieldType The data type stored in the field. Need not be a primitive
+/// type.
 template <class FieldType> class Field : public FieldBase {
 public:
   template <class FieldRegistrarType>
   Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys,
-        FieldType DefaultValue)
+        FieldType const &DefaultValue)
       : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
 
   // cppcheck-suppress functionStatic
   template <class FieldRegistrarType>
   Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
-        FieldType DefaultValue)
+        FieldType const &DefaultValue)
       : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
   void setValue(std::string const &Key,
@@ -142,9 +152,9 @@ private:
       auto AllKeys =
           std::accumulate(std::next(Keys.begin()), Keys.end(), Keys[0],
                           [](auto a, auto b) { return a + ", " + b; });
-      LOG_WARN("Replacing the previously given value of \"{}\" with \"{}\" in "
-               "json config field with key(s): ",
-               FieldValue, NewValue, AllKeys);
+      LOG_WARN(
+          R"(Replacing the previously given value of "{}" with "{}" in json config field with key(s): )",
+          FieldValue, NewValue, AllKeys);
     }
     UsedKey = Key;
     GotDefault = false;
@@ -152,6 +162,11 @@ private:
   }
 };
 
+/// \brief Represents a required JSON key/value pair in a dictionary.
+///
+/// When processed by the FieldHandler, an exception will be thrown if this
+/// field (key) is not found. \tparam FieldType The data type stored in the
+/// field. Need not be a primitive type.
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
   template <class FieldRegistrarType>

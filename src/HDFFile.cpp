@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFFile.h"
-#include "Filesystem.h"
 #include "HDFAttributes.h"
 #include "HDFOperations.h"
 #include "HDFVersionCheck.h"
@@ -28,8 +27,8 @@ HDFFile::HDFFile(std::string const &FileName,
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
   }
-  FileAccessList.library_version_bounds(hdf5::property::LibVersion::LATEST,
-                                        hdf5::property::LibVersion::LATEST);
+  FileAccessList.library_version_bounds(hdf5::property::LibVersion::Latest,
+                                        hdf5::property::LibVersion::Latest);
   createFileInRegularMode();
   init(NexusStructure, ModuleHDFInfo);
   StoredNexusStructure = NexusStructure;
@@ -39,8 +38,8 @@ HDFFile::~HDFFile() { addMetaData(); }
 
 void HDFFile::createFileInRegularMode() {
   hdfFile() = hdf5::file::create(H5FileName,
-                                 hdf5::file::AccessFlags::EXCLUSIVE |
-                                     hdf5::file::AccessFlags::SWMR_WRITE,
+                                 hdf5::file::AccessFlags::Exclusive |
+                                     hdf5::file::AccessFlags::SWMRWrite,
                                  FileCreationList, FileAccessList);
 }
 
@@ -97,7 +96,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
 void HDFFile::closeFile() {
   try {
     if (hdfFile().is_valid()) {
-      LOG_DEBUG("Closing file \"{}\".", hdfFile().id().file_name().string());
+      LOG_DEBUG(R"(Closing file "{}".)", hdfFile().id().file_name().string());
       hdfFile().close();
       hdfFile() = hdf5::file::File();
     } else {
@@ -105,7 +104,7 @@ void HDFFile::closeFile() {
     }
   } catch (const std::runtime_error &E) {
     auto Trace = hdf5::error::print_nested(E);
-    LOG_ERROR("Got error when closing file \"{}\". Failure was: {}",
+    LOG_ERROR(R"(Got error when closing file "{}". Failure was: {})",
               hdfFile().id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
@@ -115,17 +114,17 @@ void HDFFile::closeFile() {
 }
 
 void HDFFile::openFileInSWMRMode() {
-  LOG_DEBUG("Opening file \"{}\" in SWMR mode.", H5FileName);
+  LOG_DEBUG(R"(Opening file "{}" in SWMR mode.)", H5FileName);
   hdfFile() = hdf5::file::open(H5FileName,
-                               hdf5::file::AccessFlags::READWRITE |
-                                   hdf5::file::AccessFlags::SWMR_WRITE,
+                               hdf5::file::AccessFlags::ReadWrite |
+                                   hdf5::file::AccessFlags::SWMRWrite,
                                FileAccessList);
 }
 
 void HDFFileBase::flush() {
   try {
     if (H5File.is_valid()) {
-      H5File.flush(hdf5::file::Scope::GLOBAL);
+      H5File.flush(hdf5::file::Scope::Global);
     } else {
       LOG_ERROR("Unable to flush file due to it being invalid.");
     }
@@ -136,8 +135,8 @@ void HDFFileBase::flush() {
 }
 
 void HDFFile::openFileInRegularMode() {
-  LOG_DEBUG("Opening file \"{}\" in regular (non SWMR) mode.", H5FileName);
-  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::READWRITE,
+  LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)", H5FileName);
+  hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::ReadWrite,
                                FileAccessList);
 }
 
@@ -146,8 +145,8 @@ void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
   } catch (std::exception const &E) {
-    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
-              E.what());
+    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
+              H5FileName, E.what());
   }
 }
 
@@ -158,8 +157,8 @@ void HDFFile::addMetaData() {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
     }
   } catch (std::exception const &E) {
-    LOG_ERROR("Unable to finish file \"{}\". Error message was: {}", H5FileName,
-              E.what());
+    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
+              H5FileName, E.what());
   }
 }
 

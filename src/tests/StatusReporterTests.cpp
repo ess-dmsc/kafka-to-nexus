@@ -56,6 +56,8 @@ public:
 };
 
 TEST_F(StatusReporterTests, OnInitialisationValues) {
+  ReporterPtr->setStatusGetter([=]() -> Status::JobStatusInfo { return {}; });
+  ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
   auto JSONReport = ReporterPtr->createJSONReport();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
@@ -66,10 +68,11 @@ TEST_F(StatusReporterTests, OnInitialisationValues) {
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
-  Status::JobStatusInfo const Info{
-      Status::JobStatusInfo::WorkerState::Writing, "1234", "file1.nxs",
-      time_point(1234567890ms), time_point(19876543210ms)};
-  ReporterPtr->updateStatusInfo(Info);
+  Status::JobStatusInfo const Info{Status::WorkerState::Writing, "1234",
+                                   "file1.nxs", time_point(1234567890ms),
+                                   time_point(19876543210ms)};
+  ReporterPtr->setStatusGetter([=]() { return Info; });
+  ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
 
   auto JSONReport = ReporterPtr->createJSONReport();
   auto Report = ReporterPtr->createReport(JSONReport);
@@ -91,32 +94,4 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
   ASSERT_EQ(StatusMsg.second.ServiceID, TestStatusInformation.ServiceID);
   ASSERT_EQ(StatusMsg.second.HostName, TestStatusInformation.HostName);
   ASSERT_EQ(StatusMsg.second.ProcessID, TestStatusInformation.ProcessID);
-}
-
-TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
-  auto const StopTime = time_point(1234567890ms);
-  ReporterPtr->updateStopTime(StopTime);
-
-  auto JSONReport = ReporterPtr->createJSONReport();
-  auto Report = ReporterPtr->createReport(JSONReport);
-  auto StatusMsg = deserialiseStatusMessage(Report);
-
-  ASSERT_EQ(StatusMsg.first.StopTime, StopTime);
-}
-
-TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
-  Status::JobStatusInfo const Info{
-      Status::JobStatusInfo::WorkerState::Writing, "1234", "file1.nxs",
-      time_point(1234567890ms), time_point(19876543210ms)};
-  ReporterPtr->updateStatusInfo(Info);
-
-  ReporterPtr->resetStatusInfo();
-  auto JSONReport = ReporterPtr->createJSONReport();
-  auto Report = ReporterPtr->createReport(JSONReport);
-  auto StatusMsg = deserialiseStatusMessage(Report);
-
-  ASSERT_EQ(StatusMsg.first.JobId, "");
-  ASSERT_EQ(StatusMsg.first.Filename, "");
-  ASSERT_EQ(StatusMsg.first.StartTime, time_point(0ms));
-  ASSERT_EQ(toMilliSeconds(StatusMsg.first.StopTime), 0);
 }

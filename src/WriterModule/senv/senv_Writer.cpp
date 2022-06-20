@@ -44,9 +44,9 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR("Unable to initialise fast sample environment data tree in "
-              "HDF file with error message: \"{}\"",
-              E.what());
+    LOG_ERROR(
+        R"(Unable to initialise fast sample environment data tree in HDF file with error message: "{}")",
+        E.what());
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
@@ -55,7 +55,7 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "raw_value",
+    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "value",
                                                 NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
@@ -64,7 +64,7 @@ WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
   }
@@ -96,10 +96,53 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   return ReturnVector;
 }
 
+void msgTypeIsConfigType(senv_Writer::Type ConfigType, ValueUnion MsgType) {
+  std::unordered_map<ValueUnion, senv_Writer::Type> TypeComparison{
+      {ValueUnion::Int8Array, senv_Writer::Type::int8},
+      {ValueUnion::UInt8Array, senv_Writer::Type::uint8},
+      {ValueUnion::Int16Array, senv_Writer::Type::int16},
+      {ValueUnion::UInt16Array, senv_Writer::Type::uint16},
+      {ValueUnion::Int32Array, senv_Writer::Type::int32},
+      {ValueUnion::UInt32Array, senv_Writer::Type::uint32},
+      {ValueUnion::Int64Array, senv_Writer::Type::int64},
+      {ValueUnion::UInt64Array, senv_Writer::Type::uint64},
+  };
+  std::unordered_map<ValueUnion, std::string> MsgTypeString{
+      {ValueUnion::Int8Array, "int8"},   {ValueUnion::UInt8Array, "uint8"},
+      {ValueUnion::Int16Array, "int16"}, {ValueUnion::UInt16Array, "uint16"},
+      {ValueUnion::Int32Array, "int32"}, {ValueUnion::UInt32Array, "uint32"},
+      {ValueUnion::Int64Array, "int64"}, {ValueUnion::UInt64Array, "uint64"},
+  };
+  std::unordered_map<senv_Writer::Type, std::string> ConfigTypeString{
+      {senv_Writer::Type::int8, "int8"},
+      {senv_Writer::Type::uint8, "uint8"},
+      {senv_Writer::Type::int16, "int16"},
+      {senv_Writer::Type::uint16, "uint16"},
+      {senv_Writer::Type::int32, "int32"},
+      {senv_Writer::Type::uint32, "uint32"},
+      {senv_Writer::Type::int64, "int64"},
+      {senv_Writer::Type::uint64, "uint64"}};
+  try {
+    if (TypeComparison.at(MsgType) != ConfigType) {
+      LOG_WARN("Configured data type ({}) is not the same as the senv message "
+               "type ({}).",
+               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+    }
+  } catch (std::out_of_range const &) {
+    LOG_ERROR("Got out of range error when comparing types.");
+  }
+}
+
 void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto CueIndexValue = Value.dataspace().size();
   auto ValuesType = FbPointer->Values_type();
+
+  if (not HasCheckedMessageType) {
+    msgTypeIsConfigType(ElementType, ValuesType);
+    HasCheckedMessageType = true;
+  }
+
   size_t NrOfElements{0};
   switch (ValuesType) {
   case ValueUnion::Int8Array: {
@@ -171,7 +214,7 @@ template <typename Type>
 std::unique_ptr<hdf5::node::ChunkedDataset>
 makeIt(hdf5::node::Group const &Parent, size_t const &ChunkSize) {
   return std::make_unique<NeXusDataset::ExtensibleDataset<Type>>(
-      Parent, "raw_value", NeXusDataset::Mode::Create, ChunkSize);
+      Parent, "value", NeXusDataset::Mode::Create, ChunkSize);
 }
 
 void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) const {

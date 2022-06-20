@@ -23,6 +23,9 @@ using FileWriter::Msg;
 class JobListener : public CommandListener {
 public:
   /// \brief The constructor will not automatically connect to the Kafka broker.
+  ///
+  /// \param JobPoolUri The URI/URL of the Kafka broker + topic to connect to
+  /// for new jobs. \param Settings Kafka (consumer) settings.
   JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings);
 
   /// \brief Poll the Kafka topic for a new job.
@@ -30,6 +33,9 @@ public:
   /// If we are currently not connected to the Kafka broker (for whatever
   /// reason), this function will try to connect. This will always result in a
   /// timeout regardless of if the connection attempt was successfull.
+  ///
+  /// \return Get a std::pair<> that contains the outcome of the message poll
+  /// and the message if one was successfully received.
   virtual std::pair<Kafka::PollStatus, Msg> pollForJob();
 
   /// \brief Disconnect from the Kafka broker (topic) to prevent the consumer
@@ -38,6 +44,8 @@ public:
   /// This function should (probably) be called after a successfull call to
   /// pollForJob().
   virtual void disconnectFromPool();
+
+  virtual bool isConnected() const;
 
 private:
   // Do not change the ConsumerGroupId variable, it is vital to the workings of

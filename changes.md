@@ -1,11 +1,38 @@
 # Changes
 
-## Version 4.2.0:
+## Next version
 
-- Creating links should now work properly. The configuration of links has been changed
-and is now closer to how it is configured for datasets and streams, i.e. as a module configuration.
-Unit tests and system test added for link creation cases.
-([#607](https://github.com/ess-dmsc/kafka-to-nexus/pull/607))
+- Increased kafka message buffer sizes and added integration tests for this.
+- Improved help text formatting.
+- Added code for running Kafka tests. This code is disabled by default.
+- It is now possible to set the Kafka poll timeout from the command line. This option should rarely (if ever) be used.
+
+## Version 5.1.0: Attributes and dependencies
+
+- Renamed system tests to integration tests.
+- Added system test to verify proper handling of bad "start writing" messages.
+- Writer module attributes will now be ignored. If you want to set attributes of a parent group, do so directly.
+- Prioritisation has changed such that the *NX_class* of a parent group to a file-writer module will only be set if no such attribute is already set.
+- All the dependencies have been updated to their latest (conan) version as of 2022-05-23. This has required some changes and bug fixes in the application.
+
+
+## Version 5.0.0: Usage and opinion 
+
+- The filewriter will now only run in the job pool mode. This means that the user is required to supply a job pool topic in the filewriter .ini configuration flag using the --job-pool-uri option.
+- Improved log messages and thread names. Done to aid debugging.
+- Changed _fetch.message.max.bytes_ Kafka variable back to its default value as it was causing timeouts. 
+- Fix of bug in setting up the console logger interface.
+- Warning (log) messages will now be produced if the first message from a source has a data type different than that configured for the current writer module instance. This has been implemented for the `f142`, `senv` and `ADAr` modules.
+- The Grafana metrics prefix now has the form "kafka-to-nexus.*hostname*.*service_name*" if the service name is set. If not, it has the form "kafka-to-nexus.*hostname*.*service_id*".
+- Fix ordering of elements in static data.
+- Added functionality for automatically instantiating extra writer modules.
+- The writer modules _f142_, _senv_ and _tdct_ will now automatically also instantiate _ep00_ writer modules at the same location. Disable this by setting the `enable_epics_con_status` config option to `false`.
+- The `--abort-on-uninitialised-stream` command line option has been removed. An error in the JSON code for initialising a stream will now always cause an error that will stop further initialisation.
+- Added documentation.
+- Potentially fixed a bug where the file-writer gets into a bad state.
+- Removed automatic "start_time" and "end_time" metadata fields.
+- Simplified system test code.
+
 
 ## Version 4.1.0: Quality of life
 
@@ -13,6 +40,14 @@ Unit tests and system test added for link creation cases.
 - It is no longer possible to set a stop time if the previously set stop time has passed. Also added unit tests for this feature.
 - The application will now give you an approximate size of the file it is writing to, rounded up to the nearest 10 MB, in the status messages that it produces.
 - The f142 cue index functionality was unintentianlly disabled but has now been restored to working order. Unit tests were added to prevent future such regression in the code.
+- Creating links should now work properly. The configuration of links has been changed
+    and is now closer to how it is configured for datasets and streams, i.e. as a module configuration.
+    Unit tests and system test added for link creation cases.
+    ([#607](https://github.com/ess-dmsc/kafka-to-nexus/pull/607))
+- Fixed a bug where the file-writer will not abandon an alternative command topic if it fails to start a file-writing job.
+- The f142 value statistics written to file is now done so according to the NeXus format.
+- Added the HDF5/NeXus file structure to the "writing finished"-message and a system test to check this.
+
 
 ## Version 4.0.0: Many, many changes
 

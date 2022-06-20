@@ -1,0 +1,20 @@
+{
+  "children": [
+    {
+      "type": "group",
+      "name": "entry",
+      "children": [
+        {
+          "module": "dataset",
+          "config": {
+            "name": "duration",
+            "dtype": "bad_json_here"
+            "values": [
+              1817.0
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -9,6 +9,7 @@
 
 #include "NeXusDataset/ExtensibleDataset.h"
 #include <gtest/gtest.h>
+#include <h5cpp/contrib/stl/array.hpp>
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/datatype/type_trait.hpp>
 #include <h5cpp/hdf5.hpp>
@@ -16,7 +17,7 @@
 class DatasetCreation : public ::testing::Test {
 public:
   void SetUp() override {
-    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
+    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::Truncate);
     RootGroup = File.root();
   };
 
@@ -329,7 +330,7 @@ TEST_F(DatasetCreation, StringDatasetDefaultCreation) {
   hdf5::datatype::String StringType(
       hdf5::datatype::String::fixed(StringLength));
   StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  StringType.padding(hdf5::datatype::StringPad::NULLTERM);
+  StringType.padding(hdf5::datatype::StringPad::NullTerm);
   EXPECT_EQ(StringType, TestDataset.datatype());
 }
 

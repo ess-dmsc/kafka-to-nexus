@@ -1,6 +1,11 @@
 import h5py
 from datetime import datetime, timedelta
 import time
+import os
+
+
+def full_file_path(file_name: str) -> str:
+    return os.path.abspath("output-files") + "/" + file_name
 
 
 class OpenNexusFile:

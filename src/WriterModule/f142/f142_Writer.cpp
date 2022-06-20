@@ -16,8 +16,7 @@
 #include <cctype>
 #include <f142_logdata_generated.h>
 
-namespace WriterModule {
-namespace f142 {
+namespace WriterModule::f142 {
 
 using nlohmann::json;
 
@@ -82,7 +81,7 @@ void f142_Writer::config_post_processing() {
   try {
     ElementType = TypeMap.at(ToLower(DataType.getValue()));
   } catch (std::out_of_range &E) {
-    LOG_WARN("Unknown data type with name \"{}\". Using double.",
+    LOG_WARN(R"(Unknown data type with name "{}". Using double.)",
              DataType.getValue());
   }
 }
@@ -136,7 +135,7 @@ InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
     AlarmSeverity = NeXusDataset::AlarmSeverity(HDFGroup, Open);
   } catch (std::exception &E) {
     LOG_ERROR(
-        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return InitResult::ERROR;
   }
@@ -211,11 +210,74 @@ std::unordered_map<AlarmSeverity, std::string> AlarmSeverityToString{
     {AlarmSeverity::INVALID, "INVALID"},
     {AlarmSeverity::NO_CHANGE, "NO_CHANGE"}};
 
+void msgTypeIsConfigType(f142_Writer::Type ConfigType, Value MsgType) {
+  std::unordered_map<Value, f142_Writer::Type> TypeComparison{
+      {Value::ArrayByte, f142_Writer::Type::int8},
+      {Value::Byte, f142_Writer::Type::int8},
+      {Value::ArrayUByte, f142_Writer::Type::uint8},
+      {Value::UByte, f142_Writer::Type::uint8},
+      {Value::ArrayShort, f142_Writer::Type::int16},
+      {Value::Short, f142_Writer::Type::int16},
+      {Value::ArrayUShort, f142_Writer::Type::uint16},
+      {Value::UShort, f142_Writer::Type::uint16},
+      {Value::ArrayInt, f142_Writer::Type::int32},
+      {Value::Int, f142_Writer::Type::int32},
+      {Value::ArrayUInt, f142_Writer::Type::uint32},
+      {Value::UInt, f142_Writer::Type::uint32},
+      {Value::ArrayLong, f142_Writer::Type::int64},
+      {Value::Long, f142_Writer::Type::int64},
+      {Value::ArrayULong, f142_Writer::Type::uint64},
+      {Value::ULong, f142_Writer::Type::uint64},
+      {Value::ArrayFloat, f142_Writer::Type::float32},
+      {Value::Float, f142_Writer::Type::float32},
+      {Value::ArrayDouble, f142_Writer::Type::float64},
+      {Value::Double, f142_Writer::Type::float64},
+  };
+  std::unordered_map<Value, std::string> MsgTypeString{
+      {Value::ArrayByte, "int8"},      {Value::Byte, "int8"},
+      {Value::ArrayUByte, "uint8"},    {Value::UByte, "uint8"},
+      {Value::ArrayShort, "int16"},    {Value::Short, "int16"},
+      {Value::ArrayUShort, "uint16"},  {Value::UShort, "uint16"},
+      {Value::ArrayInt, "int32"},      {Value::Int, "int32"},
+      {Value::ArrayUInt, "uint32"},    {Value::UInt, "uint32"},
+      {Value::ArrayLong, "int64"},     {Value::Long, "int64"},
+      {Value::ArrayULong, "uint64"},   {Value::ULong, "uint64"},
+      {Value::ArrayFloat, "float32"},  {Value::Float, "float32"},
+      {Value::ArrayDouble, "float64"}, {Value::Double, "float64"},
+  };
+  std::unordered_map<f142_Writer::Type, std::string> ConfigTypeString{
+      {f142_Writer::Type::int8, "int8"},
+      {f142_Writer::Type::uint8, "uint8"},
+      {f142_Writer::Type::int16, "int16"},
+      {f142_Writer::Type::uint16, "uint16"},
+      {f142_Writer::Type::int32, "int32"},
+      {f142_Writer::Type::uint32, "uint32"},
+      {f142_Writer::Type::int64, "int64"},
+      {f142_Writer::Type::uint64, "uint64"},
+      {f142_Writer::Type::float32, "float32"},
+      {f142_Writer::Type::float64, "float64"},
+  };
+  try {
+    if (TypeComparison.at(MsgType) != ConfigType) {
+      LOG_WARN("Configured data type ({}) is not the same as the f142 message "
+               "type ({}).",
+               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+    }
+  } catch (std::out_of_range const &) {
+    LOG_ERROR("Got out of range error when comparing types.");
+  }
+}
+
 void f142_Writer::write(FlatbufferMessage const &Message) {
   auto LogDataMessage = GetLogData(Message.data());
   size_t NrOfElements{1};
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();
+
+  if (not HasCheckedMessageType) {
+    msgTypeIsConfigType(ElementType, Type);
+    HasCheckedMessageType = true;
+  }
 
   // Note that we are using our knowledge about flatbuffers here to minimise
   // amount of code we have to write by using some pointer arithmetic.
@@ -371,17 +433,18 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
 
 void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
                                      const MetaData::TrackerPtr &Tracker) {
-  auto UsedAttributeWriter =
-      MetaData::getPathOffsetAttributeWriter<double>("value");
+
   if (MetaData.getValue()) {
-    MetaDataMin = MetaData::Value<double>(HDFGroup, "min", UsedAttributeWriter);
+    MetaDataMin = MetaData::Value<double>(HDFGroup, "minimum_value",
+                                          MetaData::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMin);
 
-    MetaDataMax = MetaData::Value<double>(HDFGroup, "max", UsedAttributeWriter);
+    MetaDataMax = MetaData::Value<double>(HDFGroup, "maximum_value",
+                                          MetaData::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMax);
 
-    MetaDataMean =
-        MetaData::Value<double>(HDFGroup, "mean", UsedAttributeWriter);
+    MetaDataMean = MetaData::Value<double>(
+        HDFGroup, "average_value", MetaData::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMean);
   }
 }
@@ -390,5 +453,4 @@ void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
 static WriterModule::Registry::Registrar<f142_Writer> RegisterWriter("f142",
                                                                      "f142");
 
-} // namespace f142
-} // namespace WriterModule
+} // namespace WriterModule::f142
