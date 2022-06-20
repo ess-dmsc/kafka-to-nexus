@@ -48,7 +48,6 @@ public:
   ///
   /// \param NexusStructure The structure of the NeXus file.
   /// \param HdfInfo The HDF information for the stream.
-  /// \param UseSwmr Whether to use SWMR.
   void InitialiseHdf(std::string const &NexusStructure,
                      std::vector<ModuleHDFInfo> &HdfInfo);
 
