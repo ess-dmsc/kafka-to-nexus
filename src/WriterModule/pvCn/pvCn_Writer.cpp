@@ -1,12 +1,12 @@
-#include "ep00_Writer.h"
+#include "pvCn_Writer.h"
 #include "FlatbufferMessage.h"
 #include "WriterRegistrar.h"
-#include <ep00_epics_connection_info_generated.h>
+#include <pvCn_epics_connection_generated.h>
 
 namespace WriterModule {
-namespace ep00 {
+namespace pvCn {
 
-InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
+InitResult pvCn_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     TimestampDataset = NeXusDataset::ConnectionStatusTime(HDFGroup, Open);
@@ -20,32 +20,34 @@ InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult pvCn_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::ConnectionStatusTime(
-        HDFGroup, Create, ChunkSize); // NOLINT(bugprone-unused-raii)
-    NeXusDataset::ConnectionStatus(HDFGroup, Create,
-                                   ChunkSize); // NOLINT(bugprone-unused-raii)
+        HDFGroup, Create); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::ConnectionStatus(HDFGroup, Create); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("ep00 could not init_hdf HDFGroup: {}  trace: {}",
+    LOG_ERROR("pvCn could not init_hdf HDFGroup: {}  trace: {}",
               static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
   return InitResult::OK;
 }
 
-void ep00_Writer::write(FileWriter::FlatbufferMessage const &Message) {
-  auto FlatBuffer = GetEpicsConnectionInfo(Message.data());
-  std::string const Status = EnumNameEventType(FlatBuffer->type());
+void pvCn_Writer::write(FileWriter::FlatbufferMessage const &Message) {
+  auto FlatBuffer = GetEpicsPVConnectionInfo(Message.data());
+  std::string Status = EnumNameConnectionInfo(FlatBuffer->status());
+  if (Status.empty()) {
+    Status = "UNRECOGNISED_STATUS";
+  }
   StatusDataset.appendStringElement(Status);
   auto FBTimestamp = FlatBuffer->timestamp();
   TimestampDataset.appendElement(FBTimestamp);
 }
 
-static WriterModule::Registry::Registrar<ep00_Writer>
-    RegisterWriter("ep00", "ep00");
+static WriterModule::Registry::Registrar<pvCn_Writer>
+RegisterWriter("pvCn", "epics_con_status");
 
-} // namespace ep00
+} // namespace pvCn
 } // namespace WriterModule

@@ -1,6 +1,6 @@
 # *NDAr* EPICS area detector data
 
-__Note: This writer module is deprecated and has been replaced by the ADAr writer module.__
+__Note: This writer module is deprecated and has been replaced by the *ADAr* writer module.__
 
 ## Stream configuration fields
 
