@@ -27,5 +27,5 @@ scal_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
 }
 
 static FileWriter::FlatbufferReaderRegistry::Registrar<scal_Extractor>
-RegisterReader("scal");
+    RegisterReader("scal");
 } // namespace AccessMessageMetadata

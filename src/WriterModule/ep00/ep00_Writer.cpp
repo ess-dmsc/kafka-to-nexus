@@ -44,8 +44,8 @@ void ep00_Writer::write(FileWriter::FlatbufferMessage const &Message) {
   TimestampDataset.appendElement(FBTimestamp);
 }
 
-static WriterModule::Registry::Registrar<ep00_Writer>
-    RegisterWriter("ep00", "ep00");
+static WriterModule::Registry::Registrar<ep00_Writer> RegisterWriter("ep00",
+                                                                     "ep00");
 
 } // namespace ep00
 } // namespace WriterModule

@@ -173,37 +173,37 @@ ValuesInformation appendScalarData(DatasetType &Dataset,
 
 void msgTypeIsConfigType(scal_Writer::Type ConfigType, Value MsgType) {
   std::unordered_map<Value, scal_Writer::Type> TypeComparison{
-    {Value::ArrayInt8, scal_Writer::Type::int8},
-    {Value::Int8, scal_Writer::Type::int8},
-    {Value::ArrayUInt8, scal_Writer::Type::uint8},
-    {Value::UInt8, scal_Writer::Type::uint8},
-    {Value::ArrayInt16, scal_Writer::Type::int16},
-    {Value::Int16, scal_Writer::Type::int16},
-    {Value::ArrayUInt16, scal_Writer::Type::uint16},
-    {Value::UInt16, scal_Writer::Type::uint16},
-    {Value::ArrayInt32, scal_Writer::Type::int32},
-    {Value::Int32, scal_Writer::Type::int32},
-    {Value::ArrayUInt32, scal_Writer::Type::uint32},
-    {Value::UInt32, scal_Writer::Type::uint32},
-    {Value::ArrayInt64, scal_Writer::Type::int64},
-    {Value::Int64, scal_Writer::Type::int64},
-    {Value::ArrayUInt64, scal_Writer::Type::uint64},
-    {Value::UInt64, scal_Writer::Type::uint64},
-    {Value::ArrayFloat32, scal_Writer::Type::float32},
-    {Value::Float32, scal_Writer::Type::float32},
-    {Value::ArrayFloat64, scal_Writer::Type::float64},
-    {Value::Float64, scal_Writer::Type::float64},
+      {Value::ArrayInt8, scal_Writer::Type::int8},
+      {Value::Int8, scal_Writer::Type::int8},
+      {Value::ArrayUInt8, scal_Writer::Type::uint8},
+      {Value::UInt8, scal_Writer::Type::uint8},
+      {Value::ArrayInt16, scal_Writer::Type::int16},
+      {Value::Int16, scal_Writer::Type::int16},
+      {Value::ArrayUInt16, scal_Writer::Type::uint16},
+      {Value::UInt16, scal_Writer::Type::uint16},
+      {Value::ArrayInt32, scal_Writer::Type::int32},
+      {Value::Int32, scal_Writer::Type::int32},
+      {Value::ArrayUInt32, scal_Writer::Type::uint32},
+      {Value::UInt32, scal_Writer::Type::uint32},
+      {Value::ArrayInt64, scal_Writer::Type::int64},
+      {Value::Int64, scal_Writer::Type::int64},
+      {Value::ArrayUInt64, scal_Writer::Type::uint64},
+      {Value::UInt64, scal_Writer::Type::uint64},
+      {Value::ArrayFloat32, scal_Writer::Type::float32},
+      {Value::Float32, scal_Writer::Type::float32},
+      {Value::ArrayFloat64, scal_Writer::Type::float64},
+      {Value::Float64, scal_Writer::Type::float64},
   };
   std::unordered_map<Value, std::string> MsgTypeString{
-      {Value::ArrayInt8, "int8"},      {Value::Int8, "int8"},
-      {Value::ArrayUInt8, "uint8"},    {Value::UInt8, "uint8"},
-      {Value::ArrayInt16, "int16"},    {Value::Int16, "int16"},
-      {Value::ArrayUInt16, "uint16"},  {Value::UInt16, "uint16"},
-      {Value::ArrayInt32, "int32"},      {Value::Int32, "int32"},
-      {Value::ArrayUInt32, "uint32"},    {Value::UInt32, "uint32"},
+      {Value::ArrayInt8, "int8"},       {Value::Int8, "int8"},
+      {Value::ArrayUInt8, "uint8"},     {Value::UInt8, "uint8"},
+      {Value::ArrayInt16, "int16"},     {Value::Int16, "int16"},
+      {Value::ArrayUInt16, "uint16"},   {Value::UInt16, "uint16"},
+      {Value::ArrayInt32, "int32"},     {Value::Int32, "int32"},
+      {Value::ArrayUInt32, "uint32"},   {Value::UInt32, "uint32"},
       {Value::ArrayInt64, "int64"},     {Value::UInt64, "int64"},
       {Value::ArrayUInt64, "uint64"},   {Value::UInt64, "uint64"},
-      {Value::ArrayFloat32, "float32"},  {Value::Float32, "float32"},
+      {Value::ArrayFloat32, "float32"}, {Value::Float32, "float32"},
       {Value::ArrayFloat64, "float64"}, {Value::Float64, "float64"},
   };
   std::unordered_map<scal_Writer::Type, std::string> ConfigTypeString{
@@ -304,8 +304,8 @@ void scal_Writer::write(FlatbufferMessage const &Message) {
                                                   MetaData.getValue());
     break;
   case Value::UInt32:
-    CValuesInfo =
-        appendScalarData<const std::uint32_t, UInt32>(Values, ScalarDataMessage);
+    CValuesInfo = appendScalarData<const std::uint32_t, UInt32>(
+        Values, ScalarDataMessage);
     break;
   case Value::ArrayInt64:
     extractArrayInfo();
@@ -322,8 +322,8 @@ void scal_Writer::write(FlatbufferMessage const &Message) {
                                                   MetaData.getValue());
     break;
   case Value::UInt64:
-    CValuesInfo =
-        appendScalarData<const std::uint64_t, UInt64>(Values, ScalarDataMessage);
+    CValuesInfo = appendScalarData<const std::uint64_t, UInt64>(
+        Values, ScalarDataMessage);
     break;
   case Value::ArrayFloat32:
     extractArrayInfo();
@@ -331,7 +331,8 @@ void scal_Writer::write(FlatbufferMessage const &Message) {
                                           MetaData.getValue());
     break;
   case Value::Float32:
-    CValuesInfo = appendScalarData<const float, Float32>(Values, ScalarDataMessage);
+    CValuesInfo =
+        appendScalarData<const float, Float32>(Values, ScalarDataMessage);
     break;
   case Value::ArrayFloat64:
     extractArrayInfo();

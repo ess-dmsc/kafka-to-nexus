@@ -27,5 +27,5 @@ pvCn_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
 }
 
 static FileWriter::FlatbufferReaderRegistry::Registrar<pvCn_Extractor>
-RegisterReader("pvCn");
+    RegisterReader("pvCn");
 } // namespace AccessMessageMetadata

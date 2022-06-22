@@ -31,7 +31,7 @@ GenerateConStatusFlatbufferData(size_t &BufferSize) {
   return RawBuffer;
 }
 
-//using FBMsg = FileWriter::FlatbufferMessage;
+// using FBMsg = FileWriter::FlatbufferMessage;
 using namespace WriterModule;
 
 class EPICS_ConStatusWriter : public ::testing::Test {
@@ -99,6 +99,6 @@ TEST_F(EPICS_ConStatusWriter, WriteDataOnce) {
   std::vector<std::string> ConStatus(1);
   EXPECT_NO_THROW(ConStatusDataset.read(ConStatus));
   ConStatus[0].erase(ConStatus[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameConnectionInfo(FbPointer->status())), ConStatus[0]);
+  EXPECT_EQ(std::string(EnumNameConnectionInfo(FbPointer->status())),
+            ConStatus[0]);
 }
-

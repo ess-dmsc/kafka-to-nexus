@@ -36,9 +36,8 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  pvAl_Writer()
-      : WriterModule::Base(false, "NXlog") {}
-        ~pvAl_Writer() override = default;
+  pvAl_Writer() : WriterModule::Base(false, "NXlog") {}
+  ~pvAl_Writer() override = default;
 
 protected:
   /// Timestamps of changes in EPICS alarm status

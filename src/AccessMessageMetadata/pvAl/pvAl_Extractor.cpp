@@ -27,5 +27,5 @@ pvAl_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
 }
 
 static FileWriter::FlatbufferReaderRegistry::Registrar<pvAl_Extractor>
-RegisterReader("pvAl");
+    RegisterReader("pvAl");
 } // namespace AccessMessageMetadata

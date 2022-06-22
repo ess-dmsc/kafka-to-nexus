@@ -32,7 +32,7 @@ GenerateAlarmFlatbufferData(size_t &BufferSize) {
   return RawBuffer;
 }
 
-//using FBMsg = FileWriter::FlatbufferMessage;
+// using FBMsg = FileWriter::FlatbufferMessage;
 using namespace WriterModule;
 
 class EPICS_AlarmWriter : public ::testing::Test {
@@ -102,11 +102,12 @@ TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   std::vector<std::string> AlarmSeverity(1);
   EXPECT_NO_THROW(AlarmSeverityDataset.read(AlarmSeverity));
   AlarmSeverity[0].erase(AlarmSeverity[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameAlarmSeverity(FbPointer->severity())), AlarmSeverity[0]);
+  EXPECT_EQ(std::string(EnumNameAlarmSeverity(FbPointer->severity())),
+            AlarmSeverity[0]);
 
   std::vector<std::string> AlarmsStatus(1);
   EXPECT_NO_THROW(AlarmStatusDataset.read(AlarmsStatus));
   AlarmsStatus[0].erase(AlarmsStatus[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameAlarmState(FbPointer->state())), AlarmsStatus[0]);
+  EXPECT_EQ(std::string(EnumNameAlarmState(FbPointer->state())),
+            AlarmsStatus[0]);
 }
-

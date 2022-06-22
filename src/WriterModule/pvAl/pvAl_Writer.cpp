@@ -59,13 +59,15 @@ void pvAl_Writer::write(FlatbufferMessage const &Message) {
 
   AlarmTime.appendElement(AlarmMessage->timestamp());
 
-  auto AlarmStateString = std::string(EnumNameAlarmState(AlarmMessage->state()));
+  auto AlarmStateString =
+      std::string(EnumNameAlarmState(AlarmMessage->state()));
   if (AlarmStateString.empty()) {
     AlarmStateString = "UNRECOGNISED_STATE";
   }
   AlarmStatus.appendStringElement(AlarmStateString);
 
-  auto AlarmSeverityString = std::string(EnumNameAlarmSeverity(AlarmMessage->severity()));
+  auto AlarmSeverityString =
+      std::string(EnumNameAlarmSeverity(AlarmMessage->severity()));
   if (AlarmSeverityString.empty()) {
     AlarmSeverityString = "UNRECOGNISED_SEVERITY";
   }
@@ -73,7 +75,7 @@ void pvAl_Writer::write(FlatbufferMessage const &Message) {
 }
 
 /// Register the writer module.
-static WriterModule::Registry::Registrar<pvAl_Writer> RegisterWriter("pvAl",
-                                                                     "epics_alarm_status");
+static WriterModule::Registry::Registrar<pvAl_Writer>
+    RegisterWriter("pvAl", "epics_alarm_status");
 
 } // namespace WriterModule::pvAl

@@ -23,9 +23,10 @@ InitResult pvCn_Writer::reopen(hdf5::node::Group &HDFGroup) {
 InitResult pvCn_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
-    NeXusDataset::ConnectionStatusTime(
-        HDFGroup, Create); // NOLINT(bugprone-unused-raii)
-    NeXusDataset::ConnectionStatus(HDFGroup, Create); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::ConnectionStatusTime(HDFGroup,
+                                       Create); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::ConnectionStatus(HDFGroup,
+                                   Create); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("pvCn could not init_hdf HDFGroup: {}  trace: {}",
@@ -47,7 +48,7 @@ void pvCn_Writer::write(FileWriter::FlatbufferMessage const &Message) {
 }
 
 static WriterModule::Registry::Registrar<pvCn_Writer>
-RegisterWriter("pvCn", "epics_con_status");
+    RegisterWriter("pvCn", "epics_con_status");
 
 } // namespace pvCn
 } // namespace WriterModule

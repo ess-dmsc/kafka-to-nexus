@@ -43,7 +43,8 @@ public:
   void write(FlatbufferMessage const &Message) override;
 
   scal_Writer()
-  : WriterModule::Base(false, "NXlog", {"epics_con_status", "epics_alarm_status"}),
+      : WriterModule::Base(false, "NXlog",
+                           {"epics_con_status", "epics_alarm_status"}),
         MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
         MetaDataMean("", "average_value") {}
   ~scal_Writer() override = default;
@@ -74,7 +75,6 @@ protected:
 
   /// Index into the scal values.
   NeXusDataset::CueIndex CueIndex;
-
 
   JsonConfig::Field<uint32_t> ValueIndexInterval{
       this, "cue_interval", std::numeric_limits<uint32_t>::max()};
