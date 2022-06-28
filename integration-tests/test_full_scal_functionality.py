@@ -6,7 +6,7 @@ from helpers.kafkahelpers import (
     AlarmState,
     AlarmSeverity,
     publish_pvCn_message,
-    ConnectionInfo
+    ConnectionInfo,
 )
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
@@ -19,9 +19,7 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_scal(
-    worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"
-):
+def test_scal(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer(kafka_address)

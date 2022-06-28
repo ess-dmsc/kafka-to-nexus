@@ -7,8 +7,16 @@ from confluent_kafka import Consumer, Producer
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 import streaming_data_types.logdata_f142
 from streaming_data_types.epics_pv_scalar_data_scal import serialise_scal
-from streaming_data_types.epics_pv_conn_status_pvCn import serialise_pvCn, ConnectionInfo
-from streaming_data_types.epics_pv_alarm_status_pvAl import serialise_pvAl, AlarmState, AlarmSeverity, CAAlarmState
+from streaming_data_types.epics_pv_conn_status_pvCn import (
+    serialise_pvCn,
+    ConnectionInfo,
+)
+from streaming_data_types.epics_pv_alarm_status_pvAl import (
+    serialise_pvAl,
+    AlarmState,
+    AlarmSeverity,
+    CAAlarmState,
+)
 
 try:
     from fast_f142_serialiser import f142_serialiser
@@ -72,10 +80,10 @@ def datetime_to_ns(time: datetime):
     return int(time.timestamp() * 1e9)
 
 
-def publish_message(producer: Producer, data: bytes, topic: str,  timestamp: datetime, flush: bool = True):
-    producer.produce(
-        topic=topic, value=data, timestamp=datetime_to_ms(timestamp)
-    )
+def publish_message(
+    producer: Producer, data: bytes, topic: str, timestamp: datetime, flush: bool = True
+):
+    producer.produce(topic=topic, value=data, timestamp=datetime_to_ms(timestamp))
     if flush:
         producer.flush()
 
