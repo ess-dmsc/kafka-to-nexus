@@ -6,6 +6,9 @@ from confluent_kafka import Consumer, Producer
 
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 import streaming_data_types.logdata_f142
+from streaming_data_types.epics_pv_scalar_data_scal import serialise_scal
+from streaming_data_types.epics_pv_conn_status_pvCn import serialise_pvCn, ConnectionInfo
+from streaming_data_types.epics_pv_alarm_status_pvAl import serialise_pvAl, AlarmState, AlarmSeverity, CAAlarmState
 
 try:
     from fast_f142_serialiser import f142_serialiser
@@ -69,28 +72,24 @@ def datetime_to_ns(time: datetime):
     return int(time.timestamp() * 1e9)
 
 
+def publish_message(producer: Producer, data: bytes, topic: str,  timestamp: datetime, flush: bool = True):
+    producer.produce(
+        topic=topic, value=data, timestamp=datetime_to_ms(timestamp)
+    )
+    if flush:
+        producer.flush()
+
+
 def publish_f142_message(
     producer: Producer,
     topic: str,
     timestamp: datetime,
     value: Union[float, np.ndarray] = 42,
-    source_name: Optional[str] = None,
+    source_name: str = "fw-test-helpers",
     alarm_status: Optional[int] = None,
     alarm_severity: Optional[int] = None,
     flush: bool = True,
 ):
-    """
-    Publish an f142 message to a given topic.
-    Optionally set the timestamp in the kafka header to allow, for example, fake "historical" data.
-    :param producer: Producer to publish the message with
-    :param topic: Name of topic to publish to
-    :param timestamp: Timestamp of message
-    :param source_name: Name of the source in the f142 message
-    :param alarm_status: EPICS alarm status, use enum-like class from streaming_data_types.fbschemas.logdata_f142.AlarmStatus
-    :param alarm_severity: EPICS alarm severity, use enum-like class from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity
-    """
-    if source_name is None:
-        source_name = "fw-test-helpers"
     f142_message = serialise_f142(
         value,
         source_name,
@@ -98,11 +97,55 @@ def publish_f142_message(
         alarm_status,
         alarm_severity,
     )
-    producer.produce(
-        topic=topic, value=f142_message, timestamp=datetime_to_ms(timestamp)
+    publish_message(producer, f142_message, topic, timestamp, flush)
+
+
+def publish_scal_message(
+    producer: Producer,
+    topic: str,
+    timestamp: datetime,
+    value: Union[float, np.ndarray] = 42,
+    source_name: str = "fw-test-helpers",
+):
+    message = serialise_scal(
+        value=value,
+        source_name=source_name,
+        timestamp=timestamp,
     )
-    if flush:
-        producer.flush()
+    publish_message(producer, message, topic, timestamp)
+
+
+def publish_pvCn_message(
+    producer: Producer,
+    topic: str,
+    timestamp: datetime,
+    status: ConnectionInfo,
+    source_name: str = "fw-test-helpers",
+):
+    message = serialise_pvCn(
+        status=status,
+        source_name=source_name,
+        timestamp=timestamp,
+    )
+    publish_message(producer, message, topic, timestamp)
+
+
+def publish_pvAl_message(
+    producer: Producer,
+    topic: str,
+    timestamp: datetime,
+    state: AlarmState,
+    severity: AlarmSeverity,
+    source_name: str = "fw-test-helpers",
+):
+    message = serialise_pvAl(
+        ca_state=CAAlarmState.NO_ALARM,
+        state=state,
+        severity=severity,
+        source_name=source_name,
+        timestamp=timestamp,
+    )
+    publish_message(producer, message, topic, timestamp)
 
 
 def publish_ep00_message(
@@ -111,7 +154,4 @@ def publish_ep00_message(
     if source_name is None:
         source_name = "SIMPLE:DOUBLE"
     ep00_message = serialise_ep00(datetime_to_ns(timestamp), status, source_name)
-    producer.produce(
-        topic=topic, value=ep00_message, timestamp=datetime_to_ms(timestamp)
-    )
-    producer.flush()
+    publish_message(producer, ep00_message, topic, timestamp)

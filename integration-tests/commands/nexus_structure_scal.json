@@ -1,0 +1,31 @@
+{
+  "children": [
+    {
+      "type": "group",
+      "name" : "entry",
+      "children": [
+        {
+          "type": "group",
+          "name": "scal_data",
+          "children": [
+            {
+              "module": "scal",
+              "config": {
+                "type": "int32",
+                "topic": "TEST_scalData",
+                "source": "someSource",
+                "meta_data": true
+              }
+            }
+          ]
+        }
+      ],
+      "attributes": [
+        {
+          "name": "NX_class",
+          "values": "NXentry"
+        }
+      ]
+    }
+  ]
+}
