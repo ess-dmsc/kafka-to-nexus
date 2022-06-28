@@ -5,7 +5,7 @@
       "name": "EpicsConnectionStatus",
       "children": [
         {
-          "module": "f142",
+          "module": "ep00",
           "config": {
             "topic": "TEST_epicsConnectionStatus",
             "source": "SIMPLE:DOUBLE"

@@ -33,9 +33,9 @@ def test_scal(
     step_time = timedelta(seconds=10)
     alarm_state = AlarmState.DEVICE
     alarm_severity = AlarmSeverity.MAJOR
-    publish_pvAl_message(producer, topic=data_topic, timestamp=start_time + step_time, state=alarm_state, severity=alarm_severity)
+    publish_pvAl_message(producer, topic=data_topic, timestamp=start_time + step_time, state=alarm_state, severity=alarm_severity, source_name=source_name)
     connection_status = ConnectionInfo.REMOTE_ERROR
-    publish_pvCn_message(producer, topic=data_topic, timestamp=start_time + step_time, status=connection_status)
+    publish_pvCn_message(producer, topic=data_topic, timestamp=start_time + step_time, status=connection_status, source_name=source_name)
     Min = 5
     Mean = 10
     Max = 15
@@ -63,12 +63,17 @@ def test_scal(
 
     wait_no_working_writers(worker_pool, timeout=30)
 
+    connection_map = {getattr(ConnectionInfo, a): a for a in dir(ConnectionInfo) if a[0:2] != "__"}
+    alarm_map = {getattr(AlarmState, a): a for a in dir(AlarmState) if a[0:2] != "__"}
+    severity_map = {getattr(AlarmSeverity, a): a for a in dir(AlarmSeverity) if a[0:2] != "__"}
+
     with OpenNexusFile(file_path) as file:
         assert file["entry/scal_data/minimum_value"][0] == Min
         assert file["entry/scal_data/maximum_value"][0] == Max
         assert file["entry/scal_data/average_value"][0] == Mean
         assert (file["entry/scal_data/value"][:].flatten() == np.array(values)).all()
-        assert file["entry/scal_data/alarm_status"][0] == str(alarm_state)
-        assert file["entry/scal_data/alarm_severity"][0] == str(alarm_severity)
+        assert file["entry/scal_data/alarm_status"][0].decode() == alarm_map[alarm_state]
+        assert file["entry/scal_data/alarm_severity"][0].decode() == severity_map[alarm_severity]
+        assert file["entry/scal_data/connection_status"][0].decode() == connection_map[connection_status]
         assert file["entry/scal_data/connection_status_time"][0] == file["entry/scal_data/alarm_time"][0]
         assert file["entry/scal_data/time"][0] == file["entry/scal_data/alarm_time"][0]
