@@ -17,6 +17,10 @@ namespace MetaData {
 
 using TrackerPtr = std::shared_ptr<Tracker>;
 
+/// \brief Used to store the pointers to metadata variables.
+///
+/// The (almost) sole for this class to exist is so that we can automatically
+/// write (or do whatever) to the metadata when its destructor is called.
 class Tracker {
 public:
   Tracker() = default;

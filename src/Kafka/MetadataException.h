@@ -12,6 +12,11 @@
 #include <exception>
 #include <string>
 
+/// \brief Class for representing Kafka metadata errors.
+///
+/// This class was created so that we can more easily determine if we have a
+/// metadata error as we want to handle those kinds of errors/exceptions
+/// differently to most others.
 class MetadataException : public std::exception {
 public:
   explicit MetadataException(std::string const &Message) : Message(Message) {}

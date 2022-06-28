@@ -24,7 +24,11 @@ struct JobStatusInfo {
   time_point StopTime{0ms};
 };
 
-// This info is constant for this instance of the software
+/// \brief Store information about the currently running instance of the
+/// file-writer.
+///
+/// As the application information does not change during its runtime, all the
+/// members are constant.
 struct ApplicationStatusInfo {
   // Time interval between publishing status messages
   duration const UpdateInterval;

@@ -33,6 +33,7 @@ inline size_t posToIndex(Shape Dimensions, Shape Pos) {
   return ReturnIndex;
 }
 
+/// \brief Template for representing multi dimensional arrays of data.
 template <typename T> class MultiVector {
 public:
   MultiVector() = default;
