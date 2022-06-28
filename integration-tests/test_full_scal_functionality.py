@@ -6,7 +6,7 @@ from helpers.kafkahelpers import (
     AlarmState,
     AlarmSeverity,
     publish_pvCn_message,
-    ConnectionInfo
+    ConnectionInfo,
 )
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
@@ -19,9 +19,7 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_scal(
-    worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"
-):
+def test_scal(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer(kafka_address)
@@ -33,9 +31,20 @@ def test_scal(
     step_time = timedelta(seconds=10)
     alarm_state = AlarmState.DEVICE
     alarm_severity = AlarmSeverity.MAJOR
-    publish_pvAl_message(producer, topic=data_topic, timestamp=start_time + step_time, state=alarm_state, severity=alarm_severity)
+    publish_pvAl_message(
+        producer,
+        topic=data_topic,
+        timestamp=start_time + step_time,
+        state=alarm_state,
+        severity=alarm_severity,
+    )
     connection_status = ConnectionInfo.REMOTE_ERROR
-    publish_pvCn_message(producer, topic=data_topic, timestamp=start_time + step_time, status=connection_status)
+    publish_pvCn_message(
+        producer,
+        topic=data_topic,
+        timestamp=start_time + step_time,
+        status=connection_status,
+    )
     Min = 5
     Mean = 10
     Max = 15
@@ -70,5 +79,8 @@ def test_scal(
         assert (file["entry/scal_data/value"][:].flatten() == np.array(values)).all()
         assert file["entry/scal_data/alarm_status"][0] == str(alarm_state)
         assert file["entry/scal_data/alarm_severity"][0] == str(alarm_severity)
-        assert file["entry/scal_data/connection_status_time"][0] == file["entry/scal_data/alarm_time"][0]
+        assert (
+            file["entry/scal_data/connection_status_time"][0]
+            == file["entry/scal_data/alarm_time"][0]
+        )
         assert file["entry/scal_data/time"][0] == file["entry/scal_data/alarm_time"][0]
