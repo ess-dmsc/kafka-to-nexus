@@ -159,5 +159,7 @@ def publish_pvAl_message(
 def publish_ep00_message(
     producer, topic, status, timestamp: datetime, source_name: str = "SIMPLE:DOUBLE"
 ):
-    ep00_message = serialise_ep00(datetime_to_ns(timestamp), status, source_name=source_name)
+    ep00_message = serialise_ep00(
+        datetime_to_ns(timestamp), status, source_name=source_name
+    )
     publish_message(producer, ep00_message, topic, timestamp)
