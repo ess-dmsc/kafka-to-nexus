@@ -85,8 +85,6 @@ def test_start_and_stop_time_are_in_the_past(
         ), "Expected there to be one message per millisecond recorded between specified start and stop time"
 
         # EPICS alarms
-        assert file["entry/historical_data_1/alarm_status"].len() == expected_elements
-        assert file["entry/historical_data_1/alarm_severity"].len() == expected_elements
         assert file["entry/historical_data_1/alarm_status"][0] == b"NO_ALARM"
         assert file["entry/historical_data_1/alarm_severity"][0] == b"NO_ALARM"
         assert file["entry/historical_data_1/alarm_time"][0] == int(
