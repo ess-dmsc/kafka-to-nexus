@@ -18,7 +18,7 @@ class AlarmStatus : public FixedSizeString {
 public:
   AlarmStatus() = default;
   AlarmStatus(hdf5::node::Group const &Parent, Mode CMode,
-              size_t StringSize = 20, size_t ChunkSize = 1024)
+              size_t StringSize = 32, size_t ChunkSize = 1024)
       : FixedSizeString(Parent, "alarm_status", CMode, StringSize, ChunkSize){};
 };
 
@@ -27,7 +27,7 @@ class AlarmSeverity : public FixedSizeString {
 public:
   AlarmSeverity() = default;
   AlarmSeverity(hdf5::node::Group const &Parent, Mode CMode,
-                size_t StringSize = 20, size_t ChunkSize = 1024)
+                size_t StringSize = 32, size_t ChunkSize = 1024)
       : FixedSizeString(Parent, "alarm_severity", CMode, StringSize,
                         ChunkSize){};
 };

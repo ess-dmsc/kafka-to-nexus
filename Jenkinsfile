@@ -248,7 +248,7 @@ def static_checks(builder, container) {
                     }
             }
 
-            int acceptableFailedCases = 77
+            int acceptableFailedCases = 75
             int numFailedCases = failingCases.size()
             if(numFailedCases > acceptableFailedCases) {
                 doxygenStepFailed = true

@@ -26,7 +26,9 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 /// See parent class for documentation.
 class tdct_Writer : public WriterModule::Base {
 public:
-  tdct_Writer() : WriterModule::Base(false, "NXlog", {"epics_con_status"}) {}
+  tdct_Writer()
+      : WriterModule::Base(false, "NXlog",
+                           {"epics_con_status", "epics_alarm_status"}) {}
   ~tdct_Writer() override = default;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;

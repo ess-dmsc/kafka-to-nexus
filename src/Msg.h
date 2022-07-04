@@ -16,6 +16,7 @@
 
 namespace FileWriter {
 
+/// \brief Structure for storing Kafka broker meta data.
 struct MessageMetaData {
   std::chrono::milliseconds Timestamp{0};
   auto timestamp() const {
@@ -28,6 +29,8 @@ struct MessageMetaData {
   int32_t Partition{0};
 };
 
+/// \brief A helper struct/class for storing Kafka messages that uses a unique
+/// pointer for the data of the message.
 struct Msg {
   Msg() = default;
   Msg(Msg &&Other) noexcept

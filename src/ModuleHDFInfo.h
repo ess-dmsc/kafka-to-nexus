@@ -11,6 +11,8 @@
 
 #include <string>
 
+/// \brief Simple struct for temporarily storing "module" information while
+/// instantiating the HDF file.
 struct ModuleHDFInfo {
   std::string WriterModule;
   std::string HDFParentName;

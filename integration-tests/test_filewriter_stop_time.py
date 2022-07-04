@@ -53,7 +53,13 @@ def test_start_and_stop_time_are_in_the_past(
                     alarm_severity=AlarmSeverity.NO_ALARM,
                 )
             else:
-                publish_f142_message(producer, data_topic, current_time)
+                publish_f142_message(
+                    producer,
+                    data_topic,
+                    current_time,
+                    alarm_status=AlarmStatus.NO_ALARM,
+                    alarm_severity=AlarmSeverity.NO_ALARM,
+                )
             current_time += step_time
 
     file_start_time = start_time + timedelta(seconds=2)
@@ -85,21 +91,10 @@ def test_start_and_stop_time_are_in_the_past(
         ), "Expected there to be one message per millisecond recorded between specified start and stop time"
 
         # EPICS alarms
-        assert (
-            file["entry/historical_data_1/alarm_status"].len() == 2
-        ), "Expected there to have record two changes in EPICS alarm status"
-        assert (
-            file["entry/historical_data_1/alarm_severity"].len() == 2
-        ), "Expected there to have record two changes in EPICS alarm status"
-        # First alarm change
-        assert file["entry/historical_data_1/alarm_status"][0] == b"HIGH"
-        assert file["entry/historical_data_1/alarm_severity"][0] == b"MAJOR"
+        assert file["entry/historical_data_1/alarm_status"].len() == expected_elements
+        assert file["entry/historical_data_1/alarm_severity"].len() == expected_elements
+        assert file["entry/historical_data_1/alarm_status"][0] == b"NO_ALARM"
+        assert file["entry/historical_data_1/alarm_severity"][0] == b"NO_ALARM"
         assert file["entry/historical_data_1/alarm_time"][0] == int(
-            alarm_change_time_1.timestamp() * 1e9
-        )  # ns
-        # Second alarm change
-        assert file["entry/historical_data_1/alarm_status"][1] == b"NO_ALARM"
-        assert file["entry/historical_data_1/alarm_severity"][1] == b"NO_ALARM"
-        assert file["entry/historical_data_1/alarm_time"][1] == int(
-            alarm_change_time_2.timestamp() * 1e9
+            (start_time + step_time).timestamp() * 1e9
         )  # ns

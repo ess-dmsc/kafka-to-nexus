@@ -1,6 +1,6 @@
-# ep00 EPICS connection status writer module
+# pvAl EPICS connection status writer module
 
-__Note: This writer module is deprecated and has been replaced by the *pvCn* writer module.__
+__Note: This writer module will by default be initialised by several other (EPICS data) writer modules. It is therefore unlikely that you will ever need to instantiate this module manually.__
 
 ## Stream configuration fields
 
@@ -8,8 +8,7 @@ __Note: This writer module is deprecated and has been replaced by the *pvCn* wri
 ---|---|---|---|
 topic|string|Yes|The kafka topic to listen to for data.|
 source|string|Yes|The source (name) of the data to be written.|
-writer_module|string|Yes|The identifier of this writer module (i.e. "ep00").|
-chunk_size|int|No|The HDF5 chunk size in nr of elements. Defaults to 1024.|
+writer_module|string|Yes|The identifier of this writer module (i.e. "pvAl").|
 
 ## Example
 
@@ -21,10 +20,10 @@ Example `nexus_structure` to write status messages from `ExampleTopic`:
    "children": [
         {
             "type": "group",
-            "name": "EpicsConnectionStatus",
+            "name": "EpicsAlarmStatus",
             "children": [
               {
-                "module": "ep00",
+                "module": "pvAl",
                 "config": {
                   "topic": "ExampleTopic",
                   "source": "SIMPLE:DOUBLE"

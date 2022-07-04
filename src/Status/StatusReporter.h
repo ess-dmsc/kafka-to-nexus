@@ -16,6 +16,8 @@
 
 namespace Status {
 
+/// \brief Implements the thread for reporting the filewriter status to log and
+/// Kafka.
 class StatusReporter : public StatusReporterBase {
 public:
   StatusReporter(Kafka::BrokerSettings const &Settings,
