@@ -8,21 +8,22 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FileWriterTask.h"
-#include "Source.h"
 #include "Metrics/MockSink.h"
+#include "Source.h"
 #include <gtest/gtest.h>
 
 class FileWriterTask : public ::testing::Test {
 public:
   std::unique_ptr<Metrics::Sink> TestSink{new Metrics::MockSink()};
-  std::shared_ptr<Metrics::Reporter> TestReporter{new Metrics::Reporter(std::move(TestSink), 10ms)};
+  std::shared_ptr<Metrics::Reporter> TestReporter{
+      new Metrics::Reporter(std::move(TestSink), 10ms)};
   std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
   Metrics::Registrar TestRegistrar{"Test", TestReporters};
 };
 
-
 TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
+  FileWriter::FileWriterTask Task(TestRegistrar,
+                                  std::make_shared<MetaData::Tracker>());
 
   Task.setFilename("SomePrefix", "File.hdf");
 
@@ -30,7 +31,8 @@ TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
 }
 
 TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
+  FileWriter::FileWriterTask Task(TestRegistrar,
+                                  std::make_shared<MetaData::Tracker>());
 
   Task.setFilename("", "File.hdf");
 
@@ -38,7 +40,8 @@ TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
 }
 
 TEST_F(FileWriterTask, AddingSourceAddsToDemuxers) {
-  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
+  FileWriter::FileWriterTask Task(TestRegistrar,
+                                  std::make_shared<MetaData::Tracker>());
   FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);
 
   Task.addSource(std::move(Src));
@@ -47,7 +50,8 @@ TEST_F(FileWriterTask, AddingSourceAddsToDemuxers) {
 }
 
 TEST_F(FileWriterTask, SettingJobIdSetsID) {
-  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
+  FileWriter::FileWriterTask Task(TestRegistrar,
+                                  std::make_shared<MetaData::Tracker>());
   std::string NewId = "NewID";
 
   Task.setJobId(NewId);
