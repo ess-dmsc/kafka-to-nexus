@@ -10,6 +10,7 @@
 #pragma once
 
 #include "MetaData/Tracker.h"
+#include "Metrics/Registrar.h"
 #include "ModuleSettings.h"
 #include "Source.h"
 #include "json.h"
@@ -37,8 +38,10 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  explicit FileWriterTask(MetaData::TrackerPtr const &Tracker)
+  explicit FileWriterTask(Metrics::Registrar const &Registrar,
+                          MetaData::TrackerPtr const &Tracker)
       : MetaDataTracker(Tracker), FileSizeMB("", "approx_file_size_mb") {
+    Registrar.registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
     MetaDataTracker->registerMetaData(FileSizeMB);
   }
 
@@ -106,6 +109,8 @@ private:
   std::string Filename;
   MetaData::TrackerPtr MetaDataTracker;
   MetaData::Value<uint32_t> FileSizeMB;
+  Metrics::Metric FileSizeMBMetric{"approx_file_size_mb",
+                                   "Approximate size of file in MB."};
 
   /// \brief The HDF5 file object
   /// \note Must be located before the "source to module map" to guarantee that
