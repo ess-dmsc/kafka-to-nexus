@@ -123,7 +123,9 @@ void FileWriterTask::updateApproximateFileSize() {
         Filename, ErrorCode.message());
     return;
   }
-  FileSizeMB.setValue(int(std::ceil(size / 10'000'000.0) * 10));
+  auto SizeValue = int(std::ceil(size / 10'000'000.0) * 10);
+  FileSizeMB.setValue(SizeValue);
+  FileSizeMBMetric = SizeValue;
 }
 
 } // namespace FileWriter
