@@ -10,6 +10,7 @@
 #include "FileWriterTask.h"
 #include "Kafka/Producer.h"
 #include "StreamController.h"
+#include "Metrics/MockSink.h"
 #include <gtest/gtest.h>
 
 class ProducerStandIn : public Kafka::Producer {
@@ -23,7 +24,7 @@ public:
 class StreamControllerTests : public ::testing::Test {
 public:
   void SetUp() override {
-    FileWriterTask = std::make_unique<FileWriter::FileWriterTask>(
+    FileWriterTask = std::make_unique<FileWriter::FileWriterTask>(TestRegistrar,
         std::make_shared<MetaData::Tracker>());
     FileWriterTask->setJobId(JobId);
     StreamController = std::make_unique<FileWriter::StreamController>(
@@ -34,6 +35,11 @@ public:
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;
   std::unique_ptr<FileWriter::StreamController> StreamController;
+
+  std::unique_ptr<Metrics::Sink> TestSink{new Metrics::MockSink()};
+  std::shared_ptr<Metrics::Reporter> TestReporter{new Metrics::Reporter(std::move(TestSink), 10ms)};
+  std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
+  Metrics::Registrar TestRegistrar{"Test", TestReporters};
 };
 
 TEST_F(StreamControllerTests, getJobIdReturnsCorrectValue) {

@@ -9,26 +9,36 @@
 
 #include "FileWriterTask.h"
 #include "Source.h"
+#include "Metrics/MockSink.h"
 #include <gtest/gtest.h>
 
-TEST(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
+class FileWriterTask : public ::testing::Test {
+public:
+  std::unique_ptr<Metrics::Sink> TestSink{new Metrics::MockSink()};
+  std::shared_ptr<Metrics::Reporter> TestReporter{new Metrics::Reporter(std::move(TestSink), 10ms)};
+  std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
+  Metrics::Registrar TestRegistrar{"Test", TestReporters};
+};
+
+
+TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
+  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
 
   Task.setFilename("SomePrefix", "File.hdf");
 
   ASSERT_EQ("SomePrefix/File.hdf", Task.filename());
 }
 
-TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
+TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
+  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
 
   Task.setFilename("", "File.hdf");
 
   ASSERT_EQ("File.hdf", Task.filename());
 }
 
-TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
-  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
+TEST_F(FileWriterTask, AddingSourceAddsToDemuxers) {
+  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
   FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);
 
   Task.addSource(std::move(Src));
@@ -36,8 +46,8 @@ TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
   ASSERT_EQ(1u, Task.sources().size());
 }
 
-TEST(FileWriterTask, SettingJobIdSetsID) {
-  FileWriter::FileWriterTask Task(std::make_shared<MetaData::Tracker>());
+TEST_F(FileWriterTask, SettingJobIdSetsID) {
+  FileWriter::FileWriterTask Task(TestRegistrar, std::make_shared<MetaData::Tracker>());
   std::string NewId = "NewID";
 
   Task.setJobId(NewId);
