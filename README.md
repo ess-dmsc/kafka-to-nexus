@@ -97,6 +97,7 @@ The supported method for installation is via Conan.
 
 The following minimum software is required to get started:
 
+- Linux or MacOS
 - Conan
 - CMake >= 3.1.0
 - Git
