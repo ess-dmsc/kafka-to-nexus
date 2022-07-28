@@ -142,8 +142,8 @@ TEST(ConsumerAssignmentTest, Test1) {
   TestConsumer->addPartitionAtOffset("some_topic2", 1, 0);
   ConsumerPtr->assignment(Assignments);
 
-  std::cout << "Size of assignemnts: " << Assignments.size() << std::endl;
+  std::cout << "Size of assignments: " << Assignments.size() << std::endl;
   for (auto const &Ass : Assignments) {
-    std::cout << "Name of assignemnt: " << Ass->topic() << std::endl;
+    std::cout << "Name of assignment: " << Ass->topic() << std::endl;
   }
 }
