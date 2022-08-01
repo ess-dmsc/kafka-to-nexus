@@ -48,12 +48,6 @@ public:
   };
 };
 
-TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
-  Kafka::BrokerSettings Settings{};
-  EXPECT_EQ(1, std::abs(ProducerStandIn(Settings).ProducerID -
-                        ProducerStandIn(Settings).ProducerID));
-}
-
 TEST_F(ProducerTests, callPollTest) {
   Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
