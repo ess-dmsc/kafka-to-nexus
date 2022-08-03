@@ -48,27 +48,6 @@ public:
   };
 };
 
-TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
-  Kafka::BrokerSettings Settings{};
-  auto TempProducerPtr = std::make_unique<MockProducer>();
-  REQUIRE_CALL(*TempProducerPtr, produce(_, _, _, _, _, _, _, _))
-      .TIMES(1)
-      .RETURN(RdKafka::ERR_NO_ERROR);
-
-  REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(1).RETURN(0);
-  ALLOW_CALL(*TempProducerPtr, poll(_)).RETURN(1);
-
-  // Needs to be put in a scope here so we can check that outq_len is called on
-  // destruction
-  {
-    ProducerStandIn Producer(Settings);
-    Producer.ProducerPtr = std::move(TempProducerPtr);
-    ASSERT_EQ(
-        Producer.produce(new FakeTopic, 0, 0, nullptr, 0, nullptr, 0, nullptr),
-        RdKafka::ErrorCode::ERR_NO_ERROR);
-  }
-}
-
 TEST_F(ProducerTests, produceReturnsErrorCodeIfMessageNotProduced) {
   Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
