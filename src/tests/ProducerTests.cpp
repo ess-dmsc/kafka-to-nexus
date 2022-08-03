@@ -48,21 +48,6 @@ public:
   };
 };
 
-TEST_F(ProducerTests, callPollTest) {
-  Kafka::BrokerSettings Settings{};
-  auto TempProducerPtr = std::make_unique<MockProducer>();
-  REQUIRE_CALL(*TempProducerPtr, poll(_)).TIMES(1).RETURN(0);
-
-  REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(2).RETURN(0);
-  // Needs to be put in a scope here so we can check that outq_len is called on
-  // destruction
-  {
-    ProducerStandIn Producer(Settings);
-    Producer.ProducerPtr = std::move(TempProducerPtr);
-    Producer.poll();
-  }
-}
-
 TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
   Kafka::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
