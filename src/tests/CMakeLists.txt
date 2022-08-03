@@ -20,7 +20,6 @@ set(UnitTests_SRC
         MessageTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
-        ProducerTests.cpp
         ProducerDeliveryTests.cpp
         ConsumerTests.cpp
         StreamControllerTests.cpp
