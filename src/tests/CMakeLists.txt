@@ -21,7 +21,6 @@ set(UnitTests_SRC
         FileWriterTaskTests.cpp
         SourceTests.cpp
         ProducerDeliveryTests.cpp
-        StreamControllerTests.cpp
         Metrics/MetricsRegistrarTest.cpp
         Metrics/MetricTest.cpp
         Metrics/CarbonConnectionTest.cpp
