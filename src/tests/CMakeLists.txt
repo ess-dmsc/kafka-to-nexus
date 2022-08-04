@@ -35,7 +35,6 @@ set(UnitTests_SRC
         $<TARGET_OBJECTS:fb_metadata>
         ThreadedExecutorTests.cpp
         $<TARGET_OBJECTS:NeXusDatasetTests>
-        StatusReporterTests.cpp
         helpers/StatusHelpers.cpp
         HelperTests.cpp
         CommandSystem/CommandParserTests.cpp
