@@ -10,6 +10,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
 namespace FileWriter {
 struct Msg;
