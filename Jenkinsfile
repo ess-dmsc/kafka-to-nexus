@@ -413,6 +413,7 @@ def get_macos_pipeline() {
           try {
           // temporary conan remove until all projects move to new package version
           sh "conan remove -f FlatBuffers/*"
+          sh "conan remove -f OpenSSL/*"
           sh "conan remove -f cli11/*"
             checkout scm
           } catch (e) {
