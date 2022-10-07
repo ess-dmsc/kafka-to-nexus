@@ -8,6 +8,7 @@
 - It is now possible to set the Kafka poll timeout from the command line. This option should rarely (if ever) be used.
 - The following dependencies have been updated:
   - graylog-logger ([#650](https://github.com/ess-dmsc/kafka-to-nexus/pull/650))
+- Enabled SSL and SASL in librdkafka to support Kafka authentication.
 
 ## Version 5.1.0: Attributes and dependencies
 
