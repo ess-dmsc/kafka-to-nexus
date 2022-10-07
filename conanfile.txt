@@ -26,6 +26,8 @@ gtest:shared=False
 hdf5:shared=True
 h5cpp:with_boost=False
 librdkafka:shared=True
+librdkafka:ssl=True
+librdkafka:sasl=True
 date:use_system_tz_db=True
 
 [imports]
