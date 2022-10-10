@@ -361,7 +361,7 @@ container_build_node_steps = [
 ]
 
 if ( env.CHANGE_ID ) {
-  container_build_nodes[integration_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8')
+  container_build_nodes[integration_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11')
 }
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
