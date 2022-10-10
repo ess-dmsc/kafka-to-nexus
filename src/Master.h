@@ -50,6 +50,7 @@ public:
   Status::JobStatusInfo getCurrentStatus() const;
   Status::WorkerState getCurrentState() const;
   std::string getCurrentFileName() const;
+  std::string getCurrentFilePath() const;
   void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);
   bool writingIsFinished();

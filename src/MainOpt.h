@@ -31,6 +31,8 @@ struct MainOpt {
   void setServiceName(std::string NewServiceName);
 
   std::string getServiceId() const;
+  
+  std::string getHDFOutputPrefix() const;
 
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamController.
