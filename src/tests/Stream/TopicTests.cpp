@@ -49,7 +49,8 @@ public:
                    override);
   MAKE_CONST_MOCK4(getPartitionsForTopicInternal,
                    std::vector<int>(std::string const &, std::string const &,
-                                    duration, Kafka::BrokerSettings BrokerSettings),
+                                    duration,
+                                    Kafka::BrokerSettings BrokerSettings),
                    override);
   MAKE_MOCK2(getPartitionsForTopic,
              void(Kafka::BrokerSettings const &, std::string const &),
@@ -135,7 +136,8 @@ TEST_F(TopicTest, IfGetPartitionsForTopicExceptionThenReExecute) {
   // unsuccessful
   REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(false);
   REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _, _))
+  REQUIRE_CALL(*UnderTest,
+               getPartitionsForTopicInternal(_, UsedTopicName, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
@@ -150,7 +152,8 @@ TEST_F(TopicTest, GetPartitionsForTopicTimeOut) {
   // unsuccessful
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
   REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(true);
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _, _))
+  REQUIRE_CALL(*UnderTest,
+               getPartitionsForTopicInternal(_, UsedTopicName, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
@@ -163,7 +166,8 @@ TEST_F(TopicTest, IfGetPartitionsForTopicSuccessThenNotReExecuted) {
   std::vector<int> ReturnPartitions{2, 3};
 
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
-    REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _, _))
+  REQUIRE_CALL(*UnderTest,
+               getPartitionsForTopicInternal(_, UsedTopicName, _, _))
       .TIMES(1)
       .RETURN(ReturnPartitions);
   REQUIRE_CALL(*UnderTest,

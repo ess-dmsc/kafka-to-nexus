@@ -49,14 +49,16 @@ class CreateKafkaHandleTest : public ::testing::Test {
 
 TEST_F(CreateKafkaHandleTest, OnSuccess) {
   Kafka::BrokerSettings BrokerSettings = {};
-  auto Result =
-      Kafka::getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>("some_broker", BrokerSettings);
+  auto Result = Kafka::getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>(
+      "some_broker", BrokerSettings);
   EXPECT_FALSE(Result == nullptr);
 }
 
 TEST_F(CreateKafkaHandleTest, FailureToCreateHandleThrows) {
-  auto testFunc = [](auto Adr, auto BrokerSettings) { // Work around for GTest limitation
-    return Kafka::getKafkaHandle<UsedProducerMock, RdKafka::Conf>(Adr, BrokerSettings);
+  auto testFunc = [](auto Adr,
+                     auto BrokerSettings) { // Work around for GTest limitation
+    return Kafka::getKafkaHandle<UsedProducerMock, RdKafka::Conf>(
+        Adr, BrokerSettings);
   };
   Kafka::BrokerSettings BrokerSettings = {};
   EXPECT_THROW(testFunc("some_broker", BrokerSettings), MetadataException);
@@ -64,8 +66,10 @@ TEST_F(CreateKafkaHandleTest, FailureToCreateHandleThrows) {
 }
 
 TEST_F(CreateKafkaHandleTest, FailureToSetBrokerThrows) {
-  auto testFunc = [](auto Adr, auto BrokerSettings) { // Work around for GTest limitation
-    return Kafka::getKafkaHandle<UsedProducerMock, UsedConfMock>(Adr, BrokerSettings);
+  auto testFunc = [](auto Adr,
+                     auto BrokerSettings) { // Work around for GTest limitation
+    return Kafka::getKafkaHandle<UsedProducerMock, UsedConfMock>(
+        Adr, BrokerSettings);
   };
   Kafka::BrokerSettings BrokerSettings = {};
   EXPECT_THROW(testFunc("some_broker", BrokerSettings), MetadataException);
@@ -201,17 +205,15 @@ TEST_F(GetTopicNamesTest, OnSuccess) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   auto ExpectedTopics = std::set<std::string>{"some_topic", "some_other_topic"};
   Kafka::BrokerSettings BrokerSettings;
-  auto ReceivedTopics =
-      Kafka::getTopicListImpl<UsedProducerMockAlt>("Some_broker", 10ms,
-        BrokerSettings);
+  auto ReceivedTopics = Kafka::getTopicListImpl<UsedProducerMockAlt>(
+      "Some_broker", 10ms, BrokerSettings);
   EXPECT_EQ(ReceivedTopics, ExpectedTopics);
 }
 
 TEST_F(GetTopicNamesTest, MetadataFailure) {
   UsedProducerMockAlt::ReturnErrorCode = RdKafka::ErrorCode::ERR__TIMED_OUT;
   Kafka::BrokerSettings BrokerSettings;
-  EXPECT_THROW(
-      Kafka::getTopicListImpl<UsedProducerMockAlt>("Some_broker", 10ms,
-        BrokerSettings),
-      MetadataException);
+  EXPECT_THROW(Kafka::getTopicListImpl<UsedProducerMockAlt>("Some_broker", 10ms,
+                                                            BrokerSettings),
+               MetadataException);
 }

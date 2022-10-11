@@ -67,7 +67,8 @@ std::unique_ptr<Status::StatusReporter>
 createStatusReporter(MainOpt const &MainConfig,
                      std::string const &ApplicationName,
                      std::string const &ApplicationVersion) {
-  Kafka::BrokerSettings BrokerSettings = MainConfig.StreamerConfiguration.BrokerSettings;
+  Kafka::BrokerSettings BrokerSettings =
+      MainConfig.StreamerConfiguration.BrokerSettings;
   BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
   auto const StatusInformation =
       Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,

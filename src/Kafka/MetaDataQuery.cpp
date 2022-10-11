@@ -29,8 +29,8 @@ std::vector<int> getPartitionsForTopic(std::string const &Broker,
       Broker, Topic, TimeOut, BrokerSettings);
 }
 
-std::set<std::string> getTopicList(std::string const &Broker,
-                                   duration TimeOut, BrokerSettings BrokerSettings) {
+std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut,
+                                   BrokerSettings BrokerSettings) {
   return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut, BrokerSettings);
 }
 
