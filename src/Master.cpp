@@ -148,14 +148,11 @@ std::string Master::getCurrentFileName() const {
   return CurrentStatus.Filename;
 }
 
-std::string Master::getCurrentFilePath() const {
+std::filesystem::path Master::getCurrentFilePath() const {
   std::lock_guard LockGuard(StatusMutex);
-  std::string fullFilePath = MainConfig.getHDFOutputPrefix();
-  if (fullFilePath.empty()) {
-    fullFilePath = CurrentStatus.Filename;
-  } else {
-    fullFilePath = fullFilePath + "/" + CurrentStatus.Filename;
-  }
+  std::filesystem::path fullFilePath = MainConfig.getHDFOutputPrefix();
+  fullFilePath.append(CurrentStatus.Filename);
+  LOG_INFO("Full path of file written: {}", fullFilePath.string());
   return fullFilePath;
 }
 

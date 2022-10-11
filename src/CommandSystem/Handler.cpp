@@ -73,11 +73,11 @@ void Handler::revertCommandTopic() {
   }
 }
 
-void Handler::sendHasStoppedMessage(std::string const &FileName,
+void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
                                     nlohmann::json Metadata) {
   Metadata["hdf_structure"] = NexusStructure;
   CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
-                                     FileName, Metadata.dump());
+                                     FilePath, Metadata.dump());
   revertCommandTopic();
 }
 
