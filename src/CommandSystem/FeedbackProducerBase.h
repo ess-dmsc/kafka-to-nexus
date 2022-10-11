@@ -32,7 +32,8 @@ public:
                                time_point StopTime, int StatusCode,
                                std::string Description) = 0;
   virtual void publishStoppedMsg(ActionResult Result, std::string JobId,
-                                 std::string Description, std::filesystem::path FilePath,
+                                 std::string Description,
+                                 std::filesystem::path FilePath,
                                  std::string Metadata) = 0;
 };
 

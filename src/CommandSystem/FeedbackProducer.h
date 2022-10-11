@@ -29,7 +29,8 @@ public:
                        time_point StopTime, int StatusCode,
                        std::string Description) override;
   void publishStoppedMsg(ActionResult Result, std::string JobId,
-                         std::string Description, std::filesystem::path FilePath,
+                         std::string Description,
+                         std::filesystem::path FilePath,
                          std::string Metadata) override;
 
 private:
