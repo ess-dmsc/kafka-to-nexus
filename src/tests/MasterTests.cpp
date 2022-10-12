@@ -26,8 +26,8 @@ public:
   MAKE_MOCK1(registerGetJobIdFunction, void(Command::GetJobIdFuncType),
              override);
 
-  MAKE_MOCK2(sendHasStoppedMessage, void(const std::string &, nlohmann::json),
-             override);
+  MAKE_MOCK2(sendHasStoppedMessage,
+             void(const std::filesystem::path &, nlohmann::json), override);
   MAKE_MOCK3(sendErrorEncounteredMessage,
              void(const std::string &, const std::string &,
                   const std::string &),

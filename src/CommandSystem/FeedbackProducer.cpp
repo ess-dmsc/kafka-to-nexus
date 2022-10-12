@@ -59,19 +59,19 @@ void FeedbackProducer::publishResponse(ActionResponse Command,
 
 void FeedbackProducer::publishStoppedMsg(ActionResult Result, std::string JobId,
                                          std::string Description,
-                                         std::string FileName,
+                                         std::filesystem::path FilePath,
                                          std::string Metadata) {
   flatbuffers::FlatBufferBuilder Builder;
   std::map<ActionResult, bool> OutcomeMap{{ActionResult::Success, false},
                                           {ActionResult::Failure, true}};
   auto ServiceIdStr = Builder.CreateString(ServiceId);
   auto JobIdStr = Builder.CreateString(JobId);
-  auto FileNameStr = Builder.CreateString(FileName);
+  auto FilePathStr = Builder.CreateString(FilePath.string());
   auto MetadataStr = Builder.CreateString(Metadata);
   auto ErrorMsgString = Builder.CreateString(Description);
   auto StoppedFlatbuffer =
       CreateFinishedWriting(Builder, ServiceIdStr, JobIdStr, OutcomeMap[Result],
-                            FileNameStr, MetadataStr, ErrorMsgString);
+                            FilePathStr, MetadataStr, ErrorMsgString);
   FinishFinishedWritingBuffer(Builder, StoppedFlatbuffer);
   Producer->produce(Builder.Release());
 }

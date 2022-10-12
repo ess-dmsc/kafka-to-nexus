@@ -39,7 +39,7 @@ public:
   registerIsWritingFunction(IsWritingFuncType IsWritingFunction) = 0;
   virtual void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) = 0;
 
-  virtual void sendHasStoppedMessage(std::string const &FileName,
+  virtual void sendHasStoppedMessage(std::filesystem::path const &FilePath,
                                      nlohmann::json Metadata) = 0;
   virtual void sendErrorEncounteredMessage(std::string const &FileName,
                                            std::string const &Metadata,
@@ -63,7 +63,7 @@ public:
   void registerIsWritingFunction(IsWritingFuncType IsWritingFunction) override;
   void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) override;
 
-  void sendHasStoppedMessage(std::string const &FileName,
+  void sendHasStoppedMessage(std::filesystem::path const &FilePath,
                              nlohmann::json Metadata) override;
   void sendErrorEncounteredMessage(std::string const &FileName,
                                    std::string const &Metadata,
