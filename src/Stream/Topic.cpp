@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Topic.h"
+#include "Kafka/BrokerSettings.h"
 #include "Kafka/ConsumerFactory.h"
 #include "Kafka/MetaDataQuery.h"
 #include "logger.h"
@@ -60,7 +61,7 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
                                   std::string const &Topic) {
   try {
     auto FoundPartitions = getPartitionsForTopicInternal(
-        Settings.Address, Topic, CurrentMetadataTimeOut);
+        Settings.Address, Topic, CurrentMetadataTimeOut, Settings);
     Executor.sendWork([=]() {
       CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
       getOffsetsForPartitions(Settings, Topic, FoundPartitions);
@@ -99,18 +100,18 @@ void Topic::setErrorState(const std::string &Msg) {
   return;
 }
 
-std::vector<std::pair<int, int64_t>>
-Topic::getOffsetForTimeInternal(std::string const &Broker,
-                                std::string const &Topic,
-                                std::vector<int> const &Partitions,
-                                time_point Time, duration TimeOut) const {
-  return Kafka::getOffsetForTime(Broker, Topic, Partitions, Time, TimeOut);
+std::vector<std::pair<int, int64_t>> Topic::getOffsetForTimeInternal(
+    std::string const &Broker, std::string const &Topic,
+    std::vector<int> const &Partitions, time_point Time, duration TimeOut,
+    Kafka::BrokerSettings BrokerSettings) const {
+  return Kafka::getOffsetForTime(Broker, Topic, Partitions, Time, TimeOut,
+                                 BrokerSettings);
 }
 
-std::vector<int> Topic::getPartitionsForTopicInternal(std::string const &Broker,
-                                                      std::string const &Topic,
-                                                      duration TimeOut) const {
-  return Kafka::getPartitionsForTopic(Broker, Topic, TimeOut);
+std::vector<int> Topic::getPartitionsForTopicInternal(
+    std::string const &Broker, std::string const &Topic, duration TimeOut,
+    Kafka::BrokerSettings BrokerSettings) const {
+  return Kafka::getPartitionsForTopic(Broker, Topic, TimeOut, BrokerSettings);
 }
 
 void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
@@ -119,7 +120,7 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
   try {
     auto PartitionOffsetList = getOffsetForTimeInternal(
         Settings.Address, Topic, Partitions, StartConsumeTime - StartLeeway,
-        CurrentMetadataTimeOut);
+        CurrentMetadataTimeOut, Settings);
     Executor.sendWork([=]() {
       CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
       createStreams(Settings, Topic, PartitionOffsetList);

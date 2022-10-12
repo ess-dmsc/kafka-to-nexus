@@ -90,12 +90,13 @@ protected:
   virtual std::vector<std::pair<int, int64_t>>
   getOffsetForTimeInternal(std::string const &Broker, std::string const &Topic,
                            std::vector<int> const &Partitions, time_point Time,
-                           duration TimeOut) const;
+                           duration TimeOut,
+                           Kafka::BrokerSettings BrokerSettings) const;
 
   virtual std::vector<int>
   getPartitionsForTopicInternal(std::string const &Broker,
-                                std::string const &Topic,
-                                duration TimeOut) const;
+                                std::string const &Topic, duration TimeOut,
+                                Kafka::BrokerSettings BrokerSettings) const;
 
   void checkIfDone();
   virtual void checkIfDoneTask();
