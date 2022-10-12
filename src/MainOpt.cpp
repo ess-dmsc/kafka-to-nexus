@@ -37,3 +37,5 @@ std::string MainOpt::getServiceId() const {
   }
   return ServiceId;
 }
+
+std::string MainOpt::getHDFOutputPrefix() const { return HDFOutputPrefix; }
