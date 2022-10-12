@@ -71,7 +71,8 @@ std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 void StreamController::getTopicNames() {
   try {
     auto TopicNames = Kafka::getTopicList(KafkaSettings.BrokerSettings.Address,
-                                          CurrentMetadataTimeOut);
+                                          CurrentMetadataTimeOut,
+                                          KafkaSettings.BrokerSettings);
     Executor.sendLowPriorityWork([=]() { initStreams(TopicNames); });
   } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;

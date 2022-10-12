@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "Kafka/BrokerSettings.h"
 #include "Kafka/Consumer.h"
 #include "Kafka/MetadataException.h"
 #include "Metrics/Registrar.h"
@@ -41,13 +42,15 @@ public:
   using Topic::CurrentMetadataTimeOut;
   using Topic::Executor;
   using offset_list = std::vector<std::pair<int, int64_t>>;
-  MAKE_CONST_MOCK5(getOffsetForTimeInternal,
+  MAKE_CONST_MOCK6(getOffsetForTimeInternal,
                    offset_list(std::string const &, std::string const &,
-                               std::vector<int> const &, time_point, duration),
+                               std::vector<int> const &, time_point, duration,
+                               Kafka::BrokerSettings BrokerSettings),
                    override);
-  MAKE_CONST_MOCK3(getPartitionsForTopicInternal,
+  MAKE_CONST_MOCK4(getPartitionsForTopicInternal,
                    std::vector<int>(std::string const &, std::string const &,
-                                    duration),
+                                    duration,
+                                    Kafka::BrokerSettings BrokerSettings),
                    override);
   MAKE_MOCK2(getPartitionsForTopic,
              void(Kafka::BrokerSettings const &, std::string const &),
@@ -133,7 +136,8 @@ TEST_F(TopicTest, IfGetPartitionsForTopicExceptionThenReExecute) {
   // unsuccessful
   REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(false);
   REQUIRE_CALL(*UnderTest, getPartitionsForTopic(_, UsedTopicName)).TIMES(1);
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
+  REQUIRE_CALL(*UnderTest,
+               getPartitionsForTopicInternal(_, UsedTopicName, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
@@ -148,7 +152,8 @@ TEST_F(TopicTest, GetPartitionsForTopicTimeOut) {
   // unsuccessful
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
   REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(true);
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
+  REQUIRE_CALL(*UnderTest,
+               getPartitionsForTopicInternal(_, UsedTopicName, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
   UnderTest->getPartitionsForTopicBase(KafkaSettings, UsedTopicName);
@@ -161,7 +166,8 @@ TEST_F(TopicTest, IfGetPartitionsForTopicSuccessThenNotReExecuted) {
   std::vector<int> ReturnPartitions{2, 3};
 
   FORBID_CALL(*UnderTest, getPartitionsForTopic(_, _));
-  REQUIRE_CALL(*UnderTest, getPartitionsForTopicInternal(_, UsedTopicName, _))
+  REQUIRE_CALL(*UnderTest,
+               getPartitionsForTopicInternal(_, UsedTopicName, _, _))
       .TIMES(1)
       .RETURN(ReturnPartitions);
   REQUIRE_CALL(*UnderTest,
@@ -183,7 +189,7 @@ TEST_F(TopicTest, IfGetOffsetsForPartitionsExceptionThenReExecute) {
                getOffsetsForPartitions(_, UsedTopicName, Partitions))
       .TIMES(1);
   REQUIRE_CALL(*UnderTest,
-               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
+               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
   UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
@@ -201,7 +207,7 @@ TEST_F(TopicTest, GetOffsetsForPartitionsTimeOut) {
   FORBID_CALL(*UnderTest, getOffsetsForPartitions(_, _, _));
   REQUIRE_CALL(*UnderTest, shouldGiveUp()).TIMES(1).RETURN(true);
   REQUIRE_CALL(*UnderTest,
-               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
+               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _, _))
       .TIMES(1)
       .THROW(MetadataException("Test"));
   UnderTest->getOffsetsForPartitionsBase(KafkaSettings, UsedTopicName,
@@ -217,7 +223,7 @@ TEST_F(TopicTest, IfGetOffsetsForPartitionsSuccessThenNotReExecuted) {
 
   FORBID_CALL(*UnderTest, getOffsetsForPartitions(_, _, _));
   REQUIRE_CALL(*UnderTest,
-               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _))
+               getOffsetForTimeInternal(_, UsedTopicName, Partitions, _, _, _))
       .TIMES(1)
       .RETURN(ReturnOffsets);
   REQUIRE_CALL(*UnderTest, createStreams(_, UsedTopicName, ReturnOffsets))

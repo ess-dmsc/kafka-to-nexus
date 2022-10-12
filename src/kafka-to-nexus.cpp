@@ -67,7 +67,8 @@ std::unique_ptr<Status::StatusReporter>
 createStatusReporter(MainOpt const &MainConfig,
                      std::string const &ApplicationName,
                      std::string const &ApplicationVersion) {
-  Kafka::BrokerSettings BrokerSettings;
+  Kafka::BrokerSettings BrokerSettings =
+      MainConfig.StreamerConfiguration.BrokerSettings;
   BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
   auto const StatusInformation =
       Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,
@@ -82,9 +83,10 @@ createStatusReporter(MainOpt const &MainConfig,
 }
 
 bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
-                     std::string Broker, duration TimeOut) {
+                     std::string Broker, duration TimeOut,
+                     Kafka::BrokerSettings BrokerSettings) {
   try {
-    auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut);
+    auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut, BrokerSettings);
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           R"(Unable to find job pool topic with name "{}".)", PoolTopic);
@@ -218,7 +220,8 @@ int main(int argc, char **argv) {
       if (FindTopicMode) {
         if (tryToFindTopics(PoolTopic, CommandTopic,
                             Options->CommandBrokerURI.HostPort,
-                            CMetaDataTimeout)) {
+                            CMetaDataTimeout,
+                            Options->StreamerConfiguration.BrokerSettings)) {
           LOG_DEBUG("Command and status topics found, starting master.");
           MasterPtr = GenerateMaster();
           FindTopicMode = false;

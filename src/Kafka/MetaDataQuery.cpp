@@ -16,21 +16,22 @@ namespace Kafka {
 std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> const &Partitions, time_point Time,
-                 duration TimeOut) {
+                 duration TimeOut, BrokerSettings BrokerSettings) {
   return getOffsetForTimeImpl<RdKafka::Consumer>(Broker, Topic, Partitions,
-                                                 Time, TimeOut);
+                                                 Time, TimeOut, BrokerSettings);
 }
 
 std::vector<int> getPartitionsForTopic(std::string const &Broker,
                                        std::string const &Topic,
-                                       duration TimeOut) {
+                                       duration TimeOut,
+                                       BrokerSettings BrokerSettings) {
   return getPartitionsForTopicImpl<RdKafka::Consumer, RdKafka::Topic>(
-      Broker, Topic, TimeOut);
+      Broker, Topic, TimeOut, BrokerSettings);
 }
 
-std::set<std::string> getTopicList(std::string const &Broker,
-                                   duration TimeOut) {
-  return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut);
+std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut,
+                                   BrokerSettings BrokerSettings) {
+  return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut, BrokerSettings);
 }
 
 } // namespace Kafka

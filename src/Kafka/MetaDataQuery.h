@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "Kafka/BrokerSettings.h"
 #include "TimeUtility.h"
 #include <chrono>
 #include <librdkafka/rdkafkacpp.h>
@@ -20,12 +21,14 @@ namespace Kafka {
 std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> const &Partitions, time_point Time,
-                 duration TimeOut);
+                 duration TimeOut, BrokerSettings BrokerSettings);
 
 std::vector<int> getPartitionsForTopic(std::string const &Broker,
                                        std::string const &Topic,
-                                       duration TimeOut);
+                                       duration TimeOut,
+                                       BrokerSettings BrokerSettings);
 
-std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut);
+std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut,
+                                   BrokerSettings BrokerSettings);
 
 } // namespace Kafka
