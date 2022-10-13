@@ -48,7 +48,7 @@ struct BrokerSettings {
       {"batch.num.messages", "100000"},
       {"coordinator.query.interval.ms", "5000"},
       {"heartbeat.interval.ms", "500"},     // 0.5 Secs
-      {"statistics.interval.ms", "600000"}, // 1 Min
+      {"statistics.interval.ms", "600000"}, // 10 Minutes
       {"api.version.request", "true"},
       {"enable.auto.commit", "false"},
       {"enable.partition.eof", "true"}};
