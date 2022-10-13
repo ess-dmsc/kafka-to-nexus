@@ -53,6 +53,9 @@ bool isAnswerMessage(Msg const &CommandMessage);
 /// \brief Is the provided message a "writing is finished" broadcast?
 bool isWritingDoneMessage(Msg const &CommandMessage);
 
+/// \brief Is the provided message a file writer hearbeat message?
+bool isFileWriterHeartbeatMessage(Msg const &CommandMessage);
+
 /// \brief Extract the specified value.
 ///
 /// Throws if the key is not present

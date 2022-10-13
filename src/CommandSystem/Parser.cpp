@@ -156,4 +156,8 @@ bool isWritingDoneMessage(Msg const &CommandMessage) {
                                           FinishedWritingIdentifier());
 }
 
+bool isFileWriterHeartbeatMessage(Msg const &CommandMessage) {
+  std::string SchemaId(reinterpret_cast<char const *>(CommandMessage.data()) + 4, 4);
+  return SchemaId == "x5f2";
+}
 } // namespace Command::Parser
