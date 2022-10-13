@@ -75,7 +75,7 @@ void StatusReporterBase::reportStatus() {
   try {
     auto const StatusJSONReport = createJSONReport();
     auto const StatusReportString = StatusJSONReport.dump();
-    if (StatusJSONReport["job_id"] != "not_currently_writing") {
+    if (StatusJSONReport["file_being_written"] != "") {
       LOG_DEBUG("status: {}", StatusReportString);
     }
 
