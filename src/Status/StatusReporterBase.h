@@ -59,7 +59,7 @@ public:
   createReport(std::string const &JSONReport) const;
 
   /// Create the JSON part of the status report.
-  virtual std::string createJSONReport() const;
+  virtual nlohmann::json createJSONReport() const;
 
   virtual void
   setJSONMetaDataGenerator(JsonGeneratorFuncType GeneratorFunction) {

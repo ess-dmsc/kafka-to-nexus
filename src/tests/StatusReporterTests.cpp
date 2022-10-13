@@ -58,7 +58,7 @@ public:
 TEST_F(StatusReporterTests, OnInitialisationValues) {
   ReporterPtr->setStatusGetter([=]() -> Status::JobStatusInfo { return {}; });
   ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
-  auto JSONReport = ReporterPtr->createJSONReport();
+  auto JSONReport = ReporterPtr->createJSONReport().dump();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 
@@ -74,7 +74,7 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
   ReporterPtr->setStatusGetter([=]() { return Info; });
   ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
 
-  auto JSONReport = ReporterPtr->createJSONReport();
+  auto JSONReport = ReporterPtr->createJSONReport().dump();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
 

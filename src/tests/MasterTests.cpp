@@ -46,7 +46,7 @@ public:
   MAKE_CONST_MOCK0(getStopTime, time_point(), override);
   MAKE_CONST_MOCK1(createReport,
                    flatbuffers::DetachedBuffer(std::string const &), override);
-  MAKE_CONST_MOCK0(createJSONReport, std::string(), override);
+  MAKE_CONST_MOCK0(createJSONReport, nlohmann::json(), override);
   MAKE_MOCK1(setJSONMetaDataGenerator, void(Status::JsonGeneratorFuncType),
              override);
 };

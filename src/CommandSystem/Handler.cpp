@@ -103,7 +103,9 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
   } else {
     std::string SchemaId(reinterpret_cast<char const *>(CommandMsg.data()) + 4,
                          4);
-    LOG_TRACE("Unable to handle (command) message of type: {}", SchemaId);
+    if (SchemaId != "x5f2") {
+      LOG_TRACE("Unable to handle (command) message of type: {}", SchemaId);
+    }
   }
 }
 
