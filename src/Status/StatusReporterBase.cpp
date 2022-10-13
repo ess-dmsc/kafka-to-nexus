@@ -47,7 +47,7 @@ StatusReporterBase::createReport(std::string const &JSONReport) const {
 }
 
 // Create the JSON part of the status message
-std::string StatusReporterBase::createJSONReport() const {
+nlohmann::json StatusReporterBase::createJSONReport() const {
   std::shared_lock const lock(StatusMutex);
   auto Info = nlohmann::json::object();
   auto CurrentStatus = StatusGetter();
@@ -64,7 +64,7 @@ std::string StatusReporterBase::createJSONReport() const {
     JSONGenerator(TempObject);
   }
   Info["extra"] = TempObject;
-  return Info.dump();
+  return Info;
 }
 
 void StatusReporterBase::reportStatus() {
@@ -74,9 +74,12 @@ void StatusReporterBase::reportStatus() {
   }
   try {
     auto const StatusJSONReport = createJSONReport();
-    LOG_DEBUG("status: {}", StatusJSONReport);
+    auto const StatusReportString = StatusJSONReport.dump();
+    if (StatusJSONReport["file_being_written"] != "") {
+      LOG_DEBUG("status: {}", StatusReportString);
+    }
 
-    StatusProducerTopic->produce(createReport(StatusJSONReport));
+    StatusProducerTopic->produce(createReport(StatusReportString));
     postReportStatusActions();
   } catch (std::runtime_error &E) {
     LOG_WARN("Unable to create a status report. The error was: {}", E.what());

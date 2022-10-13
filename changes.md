@@ -10,6 +10,7 @@
   - graylog-logger ([#650](https://github.com/ess-dmsc/kafka-to-nexus/pull/650))
 - Enabled SSL and SASL in librdkafka to support Kafka authentication.
 - Fix to make all Kafka connections honour the provided librdkafka parameters.
+- Silencing x5f2 schema message and file writer not currently writing status message.
 
 ## Version 5.1.0: Attributes and dependencies
 

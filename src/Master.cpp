@@ -110,7 +110,7 @@ void Master::setToIdle() {
         CurrentStreamController->errorMessage());
   } else {
     auto CurrentJSONStatus =
-        nlohmann::json::parse(Reporter->createJSONReport());
+        nlohmann::json::parse(Reporter->createJSONReport().dump());
     auto StaticMetaData = nlohmann::json::object();
     try {
       StaticMetaData = nlohmann::json::parse(CurrentMetadata);
