@@ -127,11 +127,12 @@ There are additional CMake flags for adjusting the build:
 * `-DRUN_DOXYGEN=ON` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
 * `-DHTML_COVERAGE_REPORT=ON` to generate a html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
 
-### Running the unit tests
+### Building and running the unit tests
 
 From the build directory:
 
 ```bash
+make UnitTests
 ./bin/UnitTests
 ```
 
