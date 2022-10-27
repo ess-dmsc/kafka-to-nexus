@@ -9,6 +9,7 @@
 
 #include "PartitionFilter.h"
 #include "Kafka/PollStatus.h"
+#include "Msg.h"
 
 namespace Stream {
 
@@ -22,32 +23,40 @@ PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
   }
 }
 
+bool PartitionFilter::hasExceededErrorTimeOut() {
+  return std::chrono::system_clock::now() > ErrorTime + ErrorTimeOut;
+}
+
+bool PartitionFilter::hasTopicTimedOut() {
+  return hasExceededErrorTimeOut() and State == PartitionState::TIMEOUT;
+}
+
+void PartitionFilter::updateErrorTime(PartitionState ComparisonState) {
+  if (State != ComparisonState) {
+    State = ComparisonState;
+    ErrorTime = std::chrono::system_clock::now();
+  }
+}
+
 void PartitionFilter::forceStop() { ForceStop = true; }
 
 bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
-  auto StopFunc = [&](auto ComparisonReason) {
-    if (Reason != ComparisonReason) {
-      Reason = ComparisonReason;
-      ErrorTime = std::chrono::system_clock::now();
-    } else if (std::chrono::system_clock::now() > ErrorTime + ErrorTimeOut) {
-      return true;
-    }
-    return false;
-  };
   if (ForceStop) {
     return true;
   }
   switch (CurrentPollStatus) {
   case Kafka::PollStatus::Message:
-    Reason = StopReason::NO_REASON;
+    State = PartitionState::DEFAULT;
     return false;
   case Kafka::PollStatus::EndOfPartition:
-    Reason = StopReason::END_OF_PARTITION;
+    State = PartitionState::END_OF_PARTITION;
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case Kafka::PollStatus::TimedOut:
-    return StopFunc(StopReason::TIMEOUT);
+    updateErrorTime(PartitionState::TIMEOUT);
+    return false;
   case Kafka::PollStatus::Error:
-    return StopFunc(StopReason::ERROR);
+    updateErrorTime(PartitionState::ERROR);
+    return hasExceededErrorTimeOut();
   }
   return false;
 }
