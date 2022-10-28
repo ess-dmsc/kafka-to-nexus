@@ -57,8 +57,9 @@ public:
   /// Non blocking. Will tell the consumer thread to stop as soon as possible.
   /// There are no guarantees for when the consumer is actually stopped.
   void stop();
-  
-  /// \brief Checks for occurrence for time out and logs it once for each time out occurence.
+
+  /// \brief Checks for occurrence for time out and logs it once for each time
+  /// out occurence.
   void checkAndLogPartitionTimeOut();
 
   void setStopTime(time_point Stop);

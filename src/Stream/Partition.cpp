@@ -102,7 +102,7 @@ void Partition::addPollTask() {
 
 void Partition::checkAndLogPartitionTimeOut() {
   if (StopTester.hasTopicTimedOut()) {
-      if (not PartitionTimeOutLogged) {
+    if (not PartitionTimeOutLogged) {
       LOG_WARN(
           "No new messages were received from Kafka in partition {} of "
           "topic {} ({:.1f}s passed) when polling for new data.",
@@ -113,8 +113,7 @@ void Partition::checkAndLogPartitionTimeOut() {
               1000.0);
       PartitionTimeOutLogged = true;
     }
-  }
-  else {
+  } else {
     PartitionTimeOutLogged = false;
   }
 }

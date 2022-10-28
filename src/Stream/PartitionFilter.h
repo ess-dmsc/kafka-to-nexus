@@ -27,7 +27,7 @@ namespace Stream {
 /// kafka-to-nexus/documentation/PartitionFilter_logic.png
 class PartitionFilter {
 public:
-  enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT};
+  enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT };
   PartitionFilter() = default;
   PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
                   duration TimeLimit);
@@ -47,16 +47,14 @@ public:
   PartitionState currentPartitionState() const { return State; }
 
   /// \brief Check if we currently have an error state.
-  bool hasErrorState() const {
-    return State == PartitionState::ERROR;
-  }
-  
+  bool hasErrorState() const { return State == PartitionState::ERROR; }
+
   /// \brief Check if time limit has been exceeded.
   bool hasExceededTimeLimit();
-  
+
   /// \brief Check if topic has timed out.
   bool hasTopicTimedOut();
-  
+
   /// \brief Update status occurence time.
   void updateStatusOccurrenceTime(PartitionState ComparisonState);
 

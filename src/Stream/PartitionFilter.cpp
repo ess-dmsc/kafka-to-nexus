@@ -15,8 +15,7 @@ namespace Stream {
 
 PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
                                  duration TimeLimit)
-    : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
-    TimeLimit(TimeLimit) {
+    : StopTime(StopAtTime), StopLeeway(StopTimeLeeway), TimeLimit(TimeLimit) {
   // Deal with potential overflow problem
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
@@ -31,7 +30,8 @@ bool PartitionFilter::hasTopicTimedOut() {
   return hasExceededTimeLimit() and State == PartitionState::TIMEOUT;
 }
 
-void PartitionFilter::updateStatusOccurrenceTime(PartitionState ComparisonState) {
+void PartitionFilter::updateStatusOccurrenceTime(
+    PartitionState ComparisonState) {
   if (State != ComparisonState) {
     State = ComparisonState;
     StatusOccurrenceTime = std::chrono::system_clock::now();
