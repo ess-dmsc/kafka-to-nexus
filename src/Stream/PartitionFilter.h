@@ -50,10 +50,10 @@ public:
   bool hasErrorState() const { return State == PartitionState::ERROR; }
 
   /// \brief Check if time limit has been exceeded.
-  bool hasExceededTimeLimit();
+  bool hasExceededTimeLimit() const;
 
   /// \brief Check if topic has timed out.
-  bool hasTopicTimedOut();
+  bool hasTopicTimedOut() const;
 
   /// \brief Update status occurence time.
   void updateStatusOccurrenceTime(PartitionState ComparisonState);

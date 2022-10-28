@@ -22,11 +22,11 @@ PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
   }
 }
 
-bool PartitionFilter::hasExceededTimeLimit() {
+bool PartitionFilter::hasExceededTimeLimit() const {
   return std::chrono::system_clock::now() > StatusOccurrenceTime + TimeLimit;
 }
 
-bool PartitionFilter::hasTopicTimedOut() {
+bool PartitionFilter::hasTopicTimedOut() const {
   return hasExceededTimeLimit() and State == PartitionState::TIMEOUT;
 }
 
