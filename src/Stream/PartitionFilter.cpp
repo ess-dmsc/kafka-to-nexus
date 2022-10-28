@@ -14,27 +14,27 @@
 namespace Stream {
 
 PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
-                                 duration ErrorTimeOut)
+                                 duration TimeLimit)
     : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
-      ErrorTimeOut(ErrorTimeOut) {
+    TimeLimit(TimeLimit) {
   // Deal with potential overflow problem
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
   }
 }
 
-bool PartitionFilter::hasExceededErrorTimeOut() {
-  return std::chrono::system_clock::now() > ErrorTime + ErrorTimeOut;
+bool PartitionFilter::hasExceededTimeLimit() {
+  return std::chrono::system_clock::now() > StatusOccurrenceTime + TimeLimit;
 }
 
 bool PartitionFilter::hasTopicTimedOut() {
-  return hasExceededErrorTimeOut() and State == PartitionState::TIMEOUT;
+  return hasExceededTimeLimit() and State == PartitionState::TIMEOUT;
 }
 
-void PartitionFilter::updateErrorTime(PartitionState ComparisonState) {
+void PartitionFilter::updateStatusOccurrenceTime(PartitionState ComparisonState) {
   if (State != ComparisonState) {
     State = ComparisonState;
-    ErrorTime = std::chrono::system_clock::now();
+    StatusOccurrenceTime = std::chrono::system_clock::now();
   }
 }
 
@@ -52,11 +52,11 @@ bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
     State = PartitionState::END_OF_PARTITION;
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case Kafka::PollStatus::TimedOut:
-    updateErrorTime(PartitionState::TIMEOUT);
+    updateStatusOccurrenceTime(PartitionState::TIMEOUT);
     return false;
   case Kafka::PollStatus::Error:
-    updateErrorTime(PartitionState::ERROR);
-    return hasExceededErrorTimeOut();
+    updateStatusOccurrenceTime(PartitionState::ERROR);
+    return hasExceededTimeLimit();
   }
   return false;
 }

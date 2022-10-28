@@ -108,7 +108,7 @@ void Partition::checkAndLogPartitionTimeOut() {
           "topic {} ({:.1f}s passed) when polling for new data.",
           PartitionID, Topic,
           double(std::chrono::duration_cast<std::chrono::milliseconds>(
-                     system_clock::now() - StopTester.getErrorTime())
+                     system_clock::now() - StopTester.getStatusOccurrenceTime())
                      .count()) /
               1000.0);
       PartitionTimeOutLogged = true;

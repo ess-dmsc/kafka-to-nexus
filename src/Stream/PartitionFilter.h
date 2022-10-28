@@ -30,7 +30,7 @@ public:
   enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT};
   PartitionFilter() = default;
   PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
-                  duration ErrorTimeOut);
+                  duration TimeLimit);
 
   /// \brief Update the stop time.
   void setStopTime(time_point Stop) { StopTime = Stop; }
@@ -51,24 +51,24 @@ public:
     return State == PartitionState::ERROR;
   }
   
-  /// \brief Check if error time out has been exceeded.
-  bool hasExceededErrorTimeOut();
+  /// \brief Check if time limit has been exceeded.
+  bool hasExceededTimeLimit();
   
   /// \brief Check if topic has timed out.
   bool hasTopicTimedOut();
   
-  /// \brief Update error time.
-  void updateErrorTime(PartitionState ComparisonState);
+  /// \brief Update status occurence time.
+  void updateStatusOccurrenceTime(PartitionState ComparisonState);
 
-  time_point getErrorTime() const { return ErrorTime; }
+  time_point getStatusOccurrenceTime() const { return StatusOccurrenceTime; }
 
 protected:
   bool ForceStop{false};
   PartitionState State{PartitionState::DEFAULT};
-  time_point ErrorTime;
+  time_point StatusOccurrenceTime;
   time_point StopTime{time_point::max()};
   duration StopLeeway{10s};
-  duration ErrorTimeOut{10s};
+  duration TimeLimit{10s};
 };
 
 } // namespace Stream
