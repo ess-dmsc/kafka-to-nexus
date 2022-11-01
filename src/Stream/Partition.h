@@ -58,6 +58,10 @@ public:
   /// There are no guarantees for when the consumer is actually stopped.
   void stop();
 
+  /// \brief Checks for occurrence for time out and logs it once for each time
+  /// out occurence.
+  void checkAndLogPartitionTimeOut();
+
   void setStopTime(time_point Stop);
 
   virtual bool hasFinished() const;
@@ -111,6 +115,7 @@ protected:
   virtual void processMessage(FileWriter::Msg const &Message);
   std::unique_ptr<Kafka::ConsumerInterface> ConsumerPtr;
   int PartitionID{-1};
+  bool PartitionTimeOutLogged{false};
   std::string Topic{"not_initialized"};
   std::atomic_bool HasFinished{false};
   std::int64_t CurrentOffset{0};
