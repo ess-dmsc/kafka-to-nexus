@@ -50,7 +50,7 @@ TEST_F(PartitionFilterTest, ErrorStateNoStopAlt) {
 
 TEST_F(PartitionFilterTest, OnTimeoutHasErrorState) {
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
-  EXPECT_TRUE(UnderTest.hasErrorState());
+  EXPECT_FALSE(UnderTest.hasErrorState());
 }
 
 TEST_F(PartitionFilterTest, AfterErrorRecoversOnValidMessage) {
@@ -82,15 +82,15 @@ TEST_F(PartitionFilterTest, AfterErrorRecoversOnEOPWithDelay) {
 }
 
 TEST_F(PartitionFilterTest, AfterErrorStateNoRecoveryOnTimeOut) {
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
+  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
   EXPECT_TRUE(UnderTest.hasErrorState());
 }
 
 TEST_F(PartitionFilterTest, AfterErrorStateRecoverOnTimeOutWithDelay) {
-  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
-  std::this_thread::sleep_for(40ms);
   EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::TimedOut));
+  std::this_thread::sleep_for(40ms);
+  EXPECT_FALSE(UnderTest.shouldStopPartition(Kafka::PollStatus::Error));
   EXPECT_TRUE(UnderTest.hasErrorState());
 }
 
