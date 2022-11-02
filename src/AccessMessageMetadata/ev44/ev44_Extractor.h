@@ -13,7 +13,7 @@ namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 /// \brief For extracting info from ev44 flatbuffer messages.
-class ev44_Extractor : public FileWriter::FlatbufferReader {
+class ev44_Extractor : public FileWriter::FlatBufferSignedIntegersReader {
 public:
   ev44_Extractor() = default;
   ~ev44_Extractor() = default;
