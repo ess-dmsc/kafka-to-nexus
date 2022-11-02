@@ -17,8 +17,11 @@ std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &getReaders() {
   return _items;
 }
 
-std::map<std::string, FlatbufferReaderRegistry::SignedIntegersReaderPtr> &getSignedIntegersReaders() {
-  static std::map<std::string, FlatbufferReaderRegistry::SignedIntegersReaderPtr> _items;
+std::map<std::string, FlatbufferReaderRegistry::SignedIntegersReaderPtr> &
+getSignedIntegersReaders() {
+  static std::map<std::string,
+                  FlatbufferReaderRegistry::SignedIntegersReaderPtr>
+      _items;
   return _items;
 }
 
@@ -46,7 +49,8 @@ void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item) {
   m[FlatbufferID] = std::move(Item);
 }
 
-void addReader(std::string const &FlatbufferID, FlatbufferSignedIntegersReader::ptr &&Item) {
+void addReader(std::string const &FlatbufferID,
+               FlatbufferSignedIntegersReader::ptr &&Item) {
   auto &m = getSignedIntegersReaders();
   if (FlatbufferID.size() != 4) {
     throw std::runtime_error(

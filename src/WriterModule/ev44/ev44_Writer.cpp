@@ -61,7 +61,7 @@ InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         HDFGroup,                   // NOLINT(bugprone-unused-raii)
         Create,                     // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
-    
+
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("ev44 could not init_hdf hdf_parent: {}  trace: {}",

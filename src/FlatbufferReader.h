@@ -45,7 +45,7 @@ public:
 /// is needed for example to extract timing information and name of the source.
 ///
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
-class FlatbufferReader: public FlatbufferReaderBase {
+class FlatbufferReader : public FlatbufferReaderBase {
 public:
   using ptr = std::unique_ptr<FlatbufferReader>;
   /// \brief Extract the timestamp from a flatbuffer.
@@ -93,7 +93,8 @@ void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item);
 ///
 /// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to
 /// be added. \param Item The flatbuffer reader/extractor to be added.
-void addReader(std::string const &FlatbufferID, FlatbufferSignedIntegersReader::ptr &&Item);
+void addReader(std::string const &FlatbufferID,
+               FlatbufferSignedIntegersReader::ptr &&Item);
 
 /// \brief A class for facilitating the static registration of flabuffer
 /// readers/extractors.
