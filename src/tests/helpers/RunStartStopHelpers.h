@@ -20,8 +20,8 @@ namespace RunStartStopHelpers {
 FileWriter::Msg buildRunStartMessage(
     std::string const &InstrumentName, std::string const &RunName,
     std::string const &NexusStructure, std::string const &JobID,
-    std::optional<std::string> const &ServiceID, std::string const &Broker,
-    std::string const &Filename, uint64_t StartTime, uint64_t StopTime);
+    std::optional<std::string> const &ServiceID, std::string const &Filename,
+    uint64_t StartTime, uint64_t StopTime);
 
 FileWriter::Msg
 buildRunStopMessage(uint64_t StopTime, std::string const &RunName,

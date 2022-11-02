@@ -165,8 +165,10 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
+  // Ignore broker addresses sent in StartInfo message and use known broker
+  // instead. Temporarily we reuse the broker from JobPoolURI. See ECDC-3118.
   Settings.StreamerConfiguration.BrokerSettings.Address =
-      StartInfo.BrokerInfo.HostPort;
+      Settings.JobPoolURI.HostPort;
 
   LOG_INFO("Write file with job_id: {}", Task->jobID());
   return std::make_unique<StreamController>(
