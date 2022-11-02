@@ -24,10 +24,9 @@ namespace FileWriter {
 /// is needed for example to extract timing information and name of the source.
 ///
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
-class FlatbufferReader {
+class FlatbufferReaderBase {
 public:
-  virtual ~FlatbufferReader() = default;
-  using ptr = std::unique_ptr<FlatbufferReader>;
+  virtual ~FlatbufferReaderBase() = default;
 
   /// \brief Run the flatbuffer verification and return the result.
   ///
@@ -40,7 +39,15 @@ public:
   /// \param Message The flatbuffer from which the source name should be
   /// extracted. \return The source name of the flatbuffer.
   virtual std::string source_name(FlatbufferMessage const &Message) const = 0;
+};
 
+/// \brief Interface for reading essential information from the flatbuffer which
+/// is needed for example to extract timing information and name of the source.
+///
+/// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
+class FlatbufferReader: public FlatbufferReaderBase {
+public:
+  using ptr = std::unique_ptr<FlatbufferReader>;
   /// \brief Extract the timestamp from a flatbuffer.
   ///
   /// \param Message The message from which the timestamp should be extracted.
@@ -48,14 +55,15 @@ public:
   virtual uint64_t timestamp(FlatbufferMessage const &Message) const = 0;
 };
 
-class FlatBufferSignedIntegersReader : public FlatbufferReader {
+class FlatbufferSignedIntegersReader : public FlatbufferReaderBase {
+public:
+  using ptr = std::unique_ptr<FlatbufferSignedIntegersReader>;
   /// \brief Extract the timestamp from a flatbuffer.
   ///
   /// \param Message The message from which the timestamp should be extracted.
   /// \return The timestamp of the flatbuffer message.
-public:
   virtual const flatbuffers::Vector<int64_t> *
-  timestamp_signed(FlatbufferMessage const &Message) const = 0;
+  timestamp(FlatbufferMessage const &Message) const = 0;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.
@@ -64,7 +72,9 @@ public:
 /// FlatbufferReaderRegistry.
 namespace FlatbufferReaderRegistry {
 using ReaderPtr = FlatbufferReader::ptr;
+using SignedIntegersReaderPtr = FlatbufferSignedIntegersReader::ptr;
 std::map<std::string, ReaderPtr> &getReaders();
+std::map<std::string, SignedIntegersReaderPtr> &getSignedIntegersReaders();
 
 /// \brief Find a flatbuffer reader instance based on the flatbuffer identifier.
 ///
@@ -78,6 +88,12 @@ FlatbufferReader::ptr &find(std::string const &Key);
 /// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to
 /// be added. \param Item The flatbuffer reader/extractor to be added.
 void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item);
+
+/// \brief Add a new flatbuffer reader/extractor.
+///
+/// \param FlatbufferID The flatbuffer-id that is to be tied to the extractor to
+/// be added. \param Item The flatbuffer reader/extractor to be added.
+void addReader(std::string const &FlatbufferID, FlatbufferSignedIntegersReader::ptr &&Item);
 
 /// \brief A class for facilitating the static registration of flabuffer
 /// readers/extractors.

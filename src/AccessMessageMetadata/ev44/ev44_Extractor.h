@@ -13,14 +13,14 @@ namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 /// \brief For extracting info from ev44 flatbuffer messages.
-class ev44_Extractor : public FileWriter::FlatBufferSignedIntegersReader {
+class ev44_Extractor : public FileWriter::FlatbufferSignedIntegersReader {
 public:
   ev44_Extractor() = default;
   ~ev44_Extractor() = default;
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;
   const flatbuffers::Vector<int64_t> *
-  timestamp_signed(FlatbufferMessage const &Message) const override;
+  timestamp(FlatbufferMessage const &Message) const override;
 };
 
 } // namespace AccessMessageMetadata

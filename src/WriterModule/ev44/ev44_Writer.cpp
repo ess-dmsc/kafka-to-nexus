@@ -28,33 +28,6 @@ namespace ev44 {
 
 using nlohmann::json;
 
-void ev44_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
-  NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)
-      HDFGroup,                   // NOLINT(bugprone-unused-raii)
-      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSize);                 // NOLINT(bugprone-unused-raii)
-
-  NeXusDataset::PeakArea(         // NOLINT(bugprone-unused-raii)
-      HDFGroup,                   // NOLINT(bugprone-unused-raii)
-      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSize);                 // NOLINT(bugprone-unused-raii)
-
-  NeXusDataset::Background(       // NOLINT(bugprone-unused-raii)
-      HDFGroup,                   // NOLINT(bugprone-unused-raii)
-      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSize);                 // NOLINT(bugprone-unused-raii)
-
-  NeXusDataset::ThresholdTime(    // NOLINT(bugprone-unused-raii)
-      HDFGroup,                   // NOLINT(bugprone-unused-raii)
-      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSize);                 // NOLINT(bugprone-unused-raii)
-
-  NeXusDataset::PeakTime(         // NOLINT(bugprone-unused-raii)
-      HDFGroup,                   // NOLINT(bugprone-unused-raii)
-      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      ChunkSize);                 // NOLINT(bugprone-unused-raii)
-}
-
 InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
@@ -88,10 +61,7 @@ InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         HDFGroup,                   // NOLINT(bugprone-unused-raii)
         Create,                     // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
-
-    if (RecordAdcPulseDebugData) {
-      createAdcDatasets(HDFGroup);
-    }
+    
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("ev44 could not init_hdf hdf_parent: {}  trace: {}",
@@ -110,9 +80,6 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
     EventIndex = NeXusDataset::EventIndex(HDFGroup, Open);
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
-    if (RecordAdcPulseDebugData) {
-      reopenAdcDatasets(HDFGroup);
-    }
   } catch (std::exception &E) {
     LOG_ERROR(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
@@ -120,16 +87,6 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
-}
-void ev44_Writer::reopenAdcDatasets(const hdf5::node::Group &HDFGroup) {
-  AmplitudeDataset =
-      NeXusDataset::Amplitude(HDFGroup, NeXusDataset::Mode::Open);
-  PeakAreaDataset = NeXusDataset::PeakArea(HDFGroup, NeXusDataset::Mode::Open);
-  BackgroundDataset =
-      NeXusDataset::Background(HDFGroup, NeXusDataset::Mode::Open);
-  ThresholdTimeDataset =
-      NeXusDataset::ThresholdTime(HDFGroup, NeXusDataset::Mode::Open);
-  PeakTimeDataset = NeXusDataset::PeakTime(HDFGroup, NeXusDataset::Mode::Open);
 }
 
 void ev44_Writer::write(FlatbufferMessage const &Message) {
@@ -153,10 +110,6 @@ void ev44_Writer::write(FlatbufferMessage const &Message) {
     CueTimestampZero.appendElement(CurrentRefTime + LastRefTimeOffset);
     CueIndex.appendElement(EventsWritten - 1);
     LastEventIndex = EventsWritten - 1;
-  }
-
-  if (RecordAdcPulseDebugData) {
-    writeAdcPulseData(Message);
   }
   EventsWrittenMetadataField.setValue(EventsWritten);
 }

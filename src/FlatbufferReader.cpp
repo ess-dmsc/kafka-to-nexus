@@ -17,6 +17,11 @@ std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &getReaders() {
   return _items;
 }
 
+std::map<std::string, FlatbufferReaderRegistry::SignedIntegersReaderPtr> &getSignedIntegersReaders() {
+  static std::map<std::string, FlatbufferReaderRegistry::SignedIntegersReaderPtr> _items;
+  return _items;
+}
+
 FlatbufferReaderRegistry::ReaderPtr &find(std::string const &Key) {
   auto &_items = getReaders();
   try {
@@ -40,4 +45,19 @@ void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&Item) {
   }
   m[FlatbufferID] = std::move(Item);
 }
+
+void addReader(std::string const &FlatbufferID, FlatbufferSignedIntegersReader::ptr &&Item) {
+  auto &m = getSignedIntegersReaders();
+  if (FlatbufferID.size() != 4) {
+    throw std::runtime_error(
+        "FlatbufferReader ID must be a 4 character string.");
+  }
+  if (m.find(FlatbufferID) != m.end()) {
+    auto s = fmt::format("ERROR FlatbufferReader for ID [{}] exists already",
+                         FlatbufferID);
+    throw std::runtime_error(s);
+  }
+  m[FlatbufferID] = std::move(Item);
+}
+
 } // namespace FileWriter::FlatbufferReaderRegistry

@@ -9,7 +9,6 @@
 
 #include "FlatbufferMessage.h"
 #include "MetaData/Value.h"
-#include "NeXusDataset/AdcDatasets.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
@@ -38,23 +37,12 @@ public:
                           MetaData::TrackerPtr const &Tracker) override;
 
 private:
-  void createAdcDatasets(hdf5::node::Group &HDFGroup) const;
-  NeXusDataset::Amplitude AmplitudeDataset;
-  NeXusDataset::PeakArea PeakAreaDataset;
-  NeXusDataset::Background BackgroundDataset;
-  NeXusDataset::ThresholdTime ThresholdTimeDataset;
-  NeXusDataset::PeakTime PeakTimeDataset;
-  void reopenAdcDatasets(const hdf5::node::Group &HDFGroup);
-  void writeAdcPulseData(FlatbufferMessage const &Message);
   void
   padDatasetsWithZeroesEqualToNumberOfEvents(FlatbufferMessage const &Message);
-  void writeAdcPulseDataFromMessageToFile(FlatbufferMessage const &Message);
 
   JsonConfig::Field<uint64_t> EventIndexInterval{
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
-  JsonConfig::Field<bool> RecordAdcPulseDebugData{this, "adc_pulse_debug",
-                                                  false};
   uint64_t EventsWritten{0};
   uint64_t LastEventIndex{0};
   MetaData::Value<uint64_t> EventsWrittenMetadataField;
