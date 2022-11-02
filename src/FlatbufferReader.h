@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "flatbuffers/flatbuffers.h"
 #include "FlatbufferMessage.h"
+#include "flatbuffers/flatbuffers.h"
 #include "logger.h"
 #include <array>
 #include <map>
@@ -53,9 +53,14 @@ class FlatBufferSignedIntegersReader: public FlatbufferReader {
   ///
   /// \param Message The message from which the timestamp should be extracted.
   /// \return The timestamp of the flatbuffer message.
+<<<<<<< HEAD
   public:
     virtual const flatbuffers::Vector<int64_t>* timestamp_signed(FlatbufferMessage const &Message) const = 0;
   
+=======
+  virtual const flatbuffers::Vector<int64_t> *
+  timestamp_signed(FlatbufferMessage const &Message) const = 0;
+>>>>>>> 34fa55f8f0fdc44d3be3d1f3ede3e3c078a547e9
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.
