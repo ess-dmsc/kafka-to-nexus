@@ -133,17 +133,17 @@ void ev44_Writer::reopenAdcDatasets(const hdf5::node::Group &HDFGroup) {
 }
 
 void ev44_Writer::write(FlatbufferMessage const &Message) {
-  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
+  auto EventMsgFlatbuffer = GetEvent44Message(Message.data());
   EventTimeOffset.appendArray(
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));
   EventId.appendArray(
-      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->detector_id()));
+      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->pixel_id()));
   if (EventMsgFlatbuffer->time_of_flight()->size() !=
-      EventMsgFlatbuffer->detector_id()->size()) {
+      EventMsgFlatbuffer->pixel_id()->size()) {
     LOG_WARN("written data lengths differ");
   }
-  auto CurrentRefTime = EventMsgFlatbuffer->pulse_time();
-  auto CurrentNumberOfEvents = EventMsgFlatbuffer->detector_id()->size();
+  auto CurrentRefTime = EventMsgFlatbuffer->reference_time();
+  auto CurrentNumberOfEvents = EventMsgFlatbuffer->pixel_id()->size();
   EventTimeZero.appendElement(CurrentRefTime);
   EventIndex.appendElement(EventsWritten);
   EventsWritten += CurrentNumberOfEvents;
@@ -159,64 +159,6 @@ void ev44_Writer::write(FlatbufferMessage const &Message) {
     writeAdcPulseData(Message);
   }
   EventsWrittenMetadataField.setValue(EventsWritten);
-}
-
-void ev44_Writer::writeAdcPulseData(FlatbufferMessage const &Message) {
-  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
-  if (EventMsgFlatbuffer->facility_specific_data_type() !=
-      FacilityData::AdcPulseDebug) {
-    padDatasetsWithZeroesEqualToNumberOfEvents(Message);
-  } else {
-    writeAdcPulseDataFromMessageToFile(Message);
-  }
-}
-
-void ev44_Writer::writeAdcPulseDataFromMessageToFile(
-    FlatbufferMessage const &Message) {
-  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
-  auto AdcPulseDebugMsgFlatbuffer =
-      EventMsgFlatbuffer->facility_specific_data_as_AdcPulseDebug();
-
-  hdf5::ArrayAdapter<const uint32_t> AmplitudeArray =
-      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->amplitude());
-  AmplitudeDataset.appendArray(AmplitudeArray);
-
-  hdf5::ArrayAdapter<const uint32_t> PeakAreaArray =
-      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->peak_area());
-  PeakAreaDataset.appendArray(PeakAreaArray);
-
-  hdf5::ArrayAdapter<const uint32_t> BackgroundArray =
-      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->background());
-  BackgroundDataset.appendArray(BackgroundArray);
-
-  hdf5::ArrayAdapter<const uint64_t> ThresholdTimeArray =
-      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->threshold_time());
-  ThresholdTimeDataset.appendArray(ThresholdTimeArray);
-
-  hdf5::ArrayAdapter<const uint64_t> PeakTimeArray =
-      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->peak_time());
-  PeakTimeDataset.appendArray(PeakTimeArray);
-}
-
-/// If ADC pulse data is missing from message then pad the datasets so that
-/// event_index and event_time_zero datasets will still be consistent with ADC
-/// datasets
-void ev44_Writer::padDatasetsWithZeroesEqualToNumberOfEvents(
-    FlatbufferMessage const &Message) {
-  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
-  size_t NumberOfEventsInMessage = EventMsgFlatbuffer->time_of_flight()->size();
-  std::vector<uint32_t> ZeroesUInt32(NumberOfEventsInMessage, 0);
-  hdf5::ArrayAdapter<const uint32_t> ZeroesUInt32ArrayAdapter(
-      ZeroesUInt32.data(), ZeroesUInt32.size());
-  std::vector<uint64_t> ZeroesUInt64(NumberOfEventsInMessage, 0);
-  hdf5::ArrayAdapter<const uint64_t> ZeroesUInt64ArrayAdapter(
-      ZeroesUInt64.data(), ZeroesUInt64.size());
-
-  AmplitudeDataset.appendArray(ZeroesUInt32ArrayAdapter);
-  PeakAreaDataset.appendArray(ZeroesUInt32ArrayAdapter);
-  BackgroundDataset.appendArray(ZeroesUInt32ArrayAdapter);
-  ThresholdTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
-  PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
 }
 
 void ev44_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,

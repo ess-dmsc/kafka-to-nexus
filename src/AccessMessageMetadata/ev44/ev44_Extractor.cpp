@@ -15,12 +15,12 @@ namespace AccessMessageMetadata {
 bool ev44_Extractor::verify(FlatbufferMessage const &Message) const {
   flatbuffers::Verifier VerifierInstance(
       reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
-  return VerifyEventMessageBuffer(VerifierInstance);
+  return VerifyEvent44MessageBuffer(VerifierInstance);
 }
 
 std::string
 ev44_Extractor::source_name(FlatbufferMessage const &Message) const {
-  auto fbuf = GetEventMessage(Message.data());
+  auto fbuf = GetEvent44Message(Message.data());
   auto NamePtr = fbuf->source_name();
   if (NamePtr == nullptr) {
     LOG_INFO("message has no source_name");
@@ -29,9 +29,9 @@ ev44_Extractor::source_name(FlatbufferMessage const &Message) const {
   return NamePtr->str();
 }
 
-uint64_t ev44_Extractor::timestamp(FlatbufferMessage const &Message) const {
-  auto fbuf = GetEventMessage(Message.data());
-  return fbuf->pulse_time();
+const flatbuffers::Vector<int64_t>* ev44_Extractor::timestamp_signed(FlatbufferMessage const &Message) const {
+  auto fbuf = GetEvent44Message(Message.data());
+  return fbuf->reference_time();
 }
 
 static FileWriter::FlatbufferReaderRegistry::Registrar<ev44_Extractor>
