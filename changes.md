@@ -11,6 +11,7 @@
 - Enabled SSL and SASL in librdkafka to support Kafka authentication.
 - Fix to make all Kafka connections honour the provided librdkafka parameters.
 - Silencing x5f2 schema message and file writer not currently writing status message.
+- The case when messages are not received from a specific Kafka topic does not make the file writer unsubscribe from the topic anymore. Instead a warning is provided in the file writer log.
 
 ## Version 5.1.0: Attributes and dependencies
 

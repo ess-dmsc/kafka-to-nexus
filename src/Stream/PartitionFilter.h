@@ -27,10 +27,10 @@ namespace Stream {
 /// kafka-to-nexus/documentation/PartitionFilter_logic.png
 class PartitionFilter {
 public:
-  enum class StopReason { NO_REASON, ERROR, TIMEOUT, END_OF_PARTITION };
+  enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT };
   PartitionFilter() = default;
   PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
-                  duration ErrorTimeOut);
+                  duration TimeLimit);
 
   /// \brief Update the stop time.
   void setStopTime(time_point Stop) { StopTime = Stop; }
@@ -44,22 +44,29 @@ public:
   /// be halted.
   bool shouldStopPartition(Kafka::PollStatus CurrentPollStatus);
 
-  StopReason reasonForStopping() const { return Reason; }
+  PartitionState currentPartitionState() const { return State; }
 
   /// \brief Check if we currently have an error state.
-  bool hasErrorState() const {
-    return Reason == StopReason::ERROR or Reason == StopReason::TIMEOUT;
-  }
+  bool hasErrorState() const { return State == PartitionState::ERROR; }
 
-  time_point getErrorTime() const { return ErrorTime; }
+  /// \brief Check if time limit has been exceeded.
+  bool hasExceededTimeLimit() const;
+
+  /// \brief Check if topic has timed out.
+  bool hasTopicTimedOut() const;
+
+  /// \brief Update status occurence time.
+  void updateStatusOccurrenceTime(PartitionState ComparisonState);
+
+  time_point getStatusOccurrenceTime() const { return StatusOccurrenceTime; }
 
 protected:
   bool ForceStop{false};
-  StopReason Reason{StopReason::NO_REASON};
-  time_point ErrorTime;
+  PartitionState State{PartitionState::DEFAULT};
+  time_point StatusOccurrenceTime;
   time_point StopTime{time_point::max()};
   duration StopLeeway{10s};
-  duration ErrorTimeOut{10s};
+  duration TimeLimit{10s};
 };
 
 } // namespace Stream

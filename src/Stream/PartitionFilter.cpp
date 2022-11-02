@@ -9,45 +9,54 @@
 
 #include "PartitionFilter.h"
 #include "Kafka/PollStatus.h"
+#include "Msg.h"
 
 namespace Stream {
 
 PartitionFilter::PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
-                                 duration ErrorTimeOut)
-    : StopTime(StopAtTime), StopLeeway(StopTimeLeeway),
-      ErrorTimeOut(ErrorTimeOut) {
+                                 duration TimeLimit)
+    : StopTime(StopAtTime), StopLeeway(StopTimeLeeway), TimeLimit(TimeLimit) {
   // Deal with potential overflow problem
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
   }
 }
 
+bool PartitionFilter::hasExceededTimeLimit() const {
+  return std::chrono::system_clock::now() > StatusOccurrenceTime + TimeLimit;
+}
+
+bool PartitionFilter::hasTopicTimedOut() const {
+  return hasExceededTimeLimit() and State == PartitionState::TIMEOUT;
+}
+
+void PartitionFilter::updateStatusOccurrenceTime(
+    PartitionState ComparisonState) {
+  if (State != ComparisonState) {
+    State = ComparisonState;
+    StatusOccurrenceTime = std::chrono::system_clock::now();
+  }
+}
+
 void PartitionFilter::forceStop() { ForceStop = true; }
 
 bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
-  auto StopFunc = [&](auto ComparisonReason) {
-    if (Reason != ComparisonReason) {
-      Reason = ComparisonReason;
-      ErrorTime = std::chrono::system_clock::now();
-    } else if (std::chrono::system_clock::now() > ErrorTime + ErrorTimeOut) {
-      return true;
-    }
-    return false;
-  };
   if (ForceStop) {
     return true;
   }
   switch (CurrentPollStatus) {
   case Kafka::PollStatus::Message:
-    Reason = StopReason::NO_REASON;
+    State = PartitionState::DEFAULT;
     return false;
   case Kafka::PollStatus::EndOfPartition:
-    Reason = StopReason::END_OF_PARTITION;
+    State = PartitionState::END_OF_PARTITION;
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case Kafka::PollStatus::TimedOut:
-    return StopFunc(StopReason::TIMEOUT);
+    updateStatusOccurrenceTime(PartitionState::TIMEOUT);
+    return false;
   case Kafka::PollStatus::Error:
-    return StopFunc(StopReason::ERROR);
+    updateStatusOccurrenceTime(PartitionState::ERROR);
+    return hasExceededTimeLimit();
   }
   return false;
 }

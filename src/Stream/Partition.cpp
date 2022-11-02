@@ -100,30 +100,40 @@ void Partition::addPollTask() {
   Executor.sendLowPriorityWork([=]() { pollForMessage(); });
 }
 
+void Partition::checkAndLogPartitionTimeOut() {
+  if (StopTester.hasTopicTimedOut()) {
+    if (not PartitionTimeOutLogged) {
+      LOG_WARN(
+          "No new messages were received from Kafka in partition {} of "
+          "topic {} ({:.1f}s passed) when polling for new data.",
+          PartitionID, Topic,
+          double(std::chrono::duration_cast<std::chrono::milliseconds>(
+                     system_clock::now() - StopTester.getStatusOccurrenceTime())
+                     .count()) /
+              1000.0);
+      PartitionTimeOutLogged = true;
+    }
+  } else {
+    PartitionTimeOutLogged = false;
+  }
+}
+
 bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
+  checkAndLogPartitionTimeOut();
   if (StopTester.shouldStopPartition(CStatus)) {
-    switch (StopTester.reasonForStopping()) {
-    case PartitionFilter::StopReason::ERROR:
+    switch (StopTester.currentPartitionState()) {
+    case PartitionFilter::PartitionState::ERROR:
       LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
                 "topic {} due to poll error.",
                 PartitionID, Topic);
       break;
-    case PartitionFilter::StopReason::TIMEOUT:
-      LOG_ERROR(
-          "Stopping consumption of data from Kafka in partition {} of "
-          "topic {} due to timeout ({:.1f}s passed) when polling for new data.",
-          PartitionID, Topic,
-          double(std::chrono::duration_cast<std::chrono::milliseconds>(
-                     system_clock::now() - StopTester.getErrorTime())
-                     .count()) /
-              1000.0);
-      break;
-    case PartitionFilter::StopReason::END_OF_PARTITION:
+    case PartitionFilter::PartitionState::END_OF_PARTITION:
       LOG_INFO(
           R"(Done consuming data from partition {} of topic "{}" (reached the end of the partition).)",
           PartitionID, Topic);
       break;
-    case PartitionFilter::StopReason::NO_REASON:
+    case PartitionFilter::PartitionState::TIMEOUT:
+    case PartitionFilter::PartitionState::DEFAULT:
     default:
       LOG_INFO(R"(Done consuming data from partition {} of topic "{}".)",
                PartitionID, Topic);
