@@ -39,17 +39,6 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
     Errors << "Filename missing, this field is required\n";
   }
 
-  if (RunStartData->broker() == nullptr ||
-      RunStartData->broker()->size() == 0) {
-    Errors << "Broker missing, this field is required\n";
-  } else {
-    try {
-      uri::URI(RunStartData->broker()->str());
-    } catch (const std::runtime_error &URIError) {
-      Errors << "Unable to parse broker address\n";
-    }
-  }
-
   std::string const ErrorsString = Errors.str();
   if (!ErrorsString.empty()) {
     throw std::runtime_error(fmt::format(
