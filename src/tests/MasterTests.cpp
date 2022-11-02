@@ -91,7 +91,6 @@ public:
                               "file_name",
                               R"({"nexus_structure":5})",
                               R"({"meta_data":54})",
-                              uri::URI{"localhost:9092"},
                               StartTime,
                               StartTime + 50s,
                               "control_topic"};

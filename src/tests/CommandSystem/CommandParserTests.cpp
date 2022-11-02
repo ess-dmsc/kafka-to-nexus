@@ -25,7 +25,6 @@ std::string const NexusStructureInput = "{}";
 std::string const JobIDInput = "qw3rty";
 std::string const CommandIDInput = "some command id";
 std::optional<std::string> const ServiceIDInput = "filewriter1";
-std::string const BrokerInput = "somehost:1234";
 std::string const FilenameInput = "a-dummy-name-01.h5";
 uint64_t const StartTimeInput = 123456789000;
 uint64_t const StopTimeInput = 123456790000;
@@ -37,8 +36,7 @@ public:
   void SetUp() override {
     auto MessageBuffer = buildRunStartMessage(
         InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-        ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
-        StopTimeInput);
+        ServiceIDInput, FilenameInput, StartTimeInput, StopTimeInput);
 
     StartInfo = Command::Parser::extractStartMessage(MessageBuffer);
   }
@@ -75,8 +73,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
   std::string const EmptyJobID;
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, EmptyJobID,
-      ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
-      StopTimeInput);
+      ServiceIDInput, FilenameInput, StartTimeInput, StopTimeInput);
 
   ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
@@ -86,8 +83,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
   std::string const EmptyFilename;
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-      ServiceIDInput, BrokerInput, EmptyFilename, StartTimeInput,
-      StopTimeInput);
+      ServiceIDInput, EmptyFilename, StartTimeInput, StopTimeInput);
 
   ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
@@ -97,30 +93,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
   std::string const EmptyNexusStructure;
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, EmptyNexusStructure, JobIDInput,
-      ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
-      StopTimeInput);
-
-  ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
-               std::runtime_error);
-}
-
-TEST(CommandParserSadStartTests, IfNoBrokerThenThrows) {
-  std::string const EmptyBroker;
-  auto MessageBuffer = buildRunStartMessage(
-      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-      ServiceIDInput, EmptyBroker, FilenameInput, StartTimeInput,
-      StopTimeInput);
-
-  ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
-               std::runtime_error);
-}
-
-TEST(CommandParserSadStartTests, IfBrokerIsWrongFormThenThrows) {
-  std::string const BrokerInvalidFormat = "1234:somehost";
-  auto MessageBuffer = buildRunStartMessage(
-      InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-      ServiceIDInput, BrokerInvalidFormat, FilenameInput, StartTimeInput,
-      StopTimeInput);
+      ServiceIDInput, FilenameInput, StartTimeInput, StopTimeInput);
 
   ASSERT_THROW(Command::Parser::extractStartMessage(MessageBuffer),
                std::runtime_error);
@@ -131,7 +104,7 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
   uint64_t const NoStartTime = 0;
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-      ServiceIDInput, BrokerInput, FilenameInput, NoStartTime, StopTimeInput);
+      ServiceIDInput, FilenameInput, NoStartTime, StopTimeInput);
 
   auto FakeCurrentTime = time_point{987654321ms};
 
@@ -145,8 +118,7 @@ TEST(CommandParserStartTests, IfBlankServiceIdThenIsBlank) {
   std::optional<std::string> const EmptyServiceID = "";
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-      EmptyServiceID, BrokerInput, FilenameInput, StartTimeInput,
-      StopTimeInput);
+      EmptyServiceID, FilenameInput, StartTimeInput, StopTimeInput);
 
   auto StartInfo = Command::Parser::extractStartMessage(MessageBuffer);
 
@@ -157,7 +129,7 @@ TEST(CommandParserStartTests, IfMissingServiceIdThenIsBlank) {
   std::optional<std::string> const NoServiceID = std::nullopt;
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-      NoServiceID, BrokerInput, FilenameInput, StartTimeInput, StopTimeInput);
+      NoServiceID, FilenameInput, StartTimeInput, StopTimeInput);
 
   auto StartInfo = Command::Parser::extractStartMessage(MessageBuffer);
 
@@ -253,8 +225,7 @@ TEST(CommandParserStartTests,
      DISABLED_MessageIsStartCommandIfValidRunStartFlatbuffer) {
   auto MessageBuffer = buildRunStartMessage(
       InstrumentNameInput, RunNameInput, NexusStructureInput, JobIDInput,
-      ServiceIDInput, BrokerInput, FilenameInput, StartTimeInput,
-      StopTimeInput);
+      ServiceIDInput, FilenameInput, StartTimeInput, StopTimeInput);
   FileWriter::Msg const TestMessage{MessageBuffer.data(), MessageBuffer.size()};
   ASSERT_TRUE(Command::Parser::isStartCommand(TestMessage));
 }
