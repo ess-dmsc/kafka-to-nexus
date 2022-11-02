@@ -19,7 +19,8 @@ public:
   ~ev44_Extractor() = default;
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;
-  const flatbuffers::Vector<int64_t>* timestamp_signed(FlatbufferMessage const &Message) const override;
+  const flatbuffers::Vector<int64_t> *
+  timestamp_signed(FlatbufferMessage const &Message) const override;
 };
 
 } // namespace AccessMessageMetadata
