@@ -52,11 +52,6 @@ TEST_F(CommandParserHappyStartTests, IfFilenamePresentThenExtractedCorrectly) {
   ASSERT_EQ(FilenameInput, StartInfo.Filename);
 }
 
-TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
-  ASSERT_EQ(BrokerInput, StartInfo.BrokerInfo.HostPort);
-  ASSERT_EQ(1234u, StartInfo.BrokerInfo.Port);
-}
-
 TEST_F(CommandParserHappyStartTests,
        IfNexusStructurePresentThenExtractedCorrectly) {
   ASSERT_EQ(NexusStructureInput, StartInfo.NexusStructure);
