@@ -151,3 +151,141 @@ public:
 };
 
 } // namespace NeXusDataset
+
+//// NAMESPACE
+//// NEXUSDATASETSIGNEDINTEGERS
+////NAMESPACE
+namespace NeXusDatasetSignedIntegers {
+
+/// \brief Class for representing a int16 NeXus dataset.
+class Int16Value : public NeXusDataset::ExtensibleDataset<std::int16_t> {
+public:
+  Int16Value() = default;
+  /// \brief Create the value dataset of NXLog.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  Int16Value(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+              size_t ChunkSize = 1024);
+};
+
+/// \brief Class for representing a int16 NeXus dataset.
+class Int32Value : public NeXusDataset::ExtensibleDataset<std::int32_t> {
+public:
+  Int32Value() = default;
+  /// \brief Create the value dataset of NXLog.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  Int32Value(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+              size_t ChunkSize = 1024);
+};
+
+/// \brief Represents the index register for searching a large NXlog
+/// (relatively) quickly based on timestamp.
+class CueIndex : public NeXusDataset::ExtensibleDataset<std::int32_t> {
+public:
+  CueIndex() = default;
+  /// \brief Create the cue_index dataset of NXLog and NXevent_data.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  CueIndex(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+           size_t ChunkSize = 1024);
+};
+
+/// \brief Class for representing a timestamp (NeXus) dataset where the
+/// timestamps are in ns since UNIX epoch.
+class Time : public NeXusDataset::ExtensibleDataset<std::int64_t> {
+public:
+  Time() = default;
+  /// \brief Create the time dataset of NXLog.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  Time(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize = 1024);
+};
+
+/// \brief Represents the timestamp register for searching a large NXlog
+/// (relatively) quickly.
+class CueTimestampZero : public NeXusDataset::ExtensibleDataset<std::int64_t> {
+public:
+  CueTimestampZero() = default;
+  /// \brief Create the cue_timestamp_zero dataset of NXLog and NXevent_data.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  CueTimestampZero(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                   size_t ChunkSize = 1024);
+};
+
+/// \brief Represents the (radiation) detector event id dataset in a
+/// NXevent_data.
+class EventId : public NeXusDataset::ExtensibleDataset<std::int32_t> {
+public:
+  EventId() = default;
+  /// \brief Create the event_id dataset of NXevent_data.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  EventId(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize = 1024);
+};
+
+/// \brief Represents the (radiation) detector event timestamp offset from zero
+/// time in a NXevent_data.
+class EventTimeOffset : public NeXusDataset::ExtensibleDataset<std::int32_t> {
+public:
+  EventTimeOffset() = default;
+  /// \brief Create the event_time_offset dataset of NXevent_data.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  EventTimeOffset(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                  size_t ChunkSize = 1024);
+};
+
+/// \brief Represents the (radiation) detector event index that ties
+/// EventTimeZero to event id and offset in a NXevent_data.
+class EventIndex : public NeXusDataset::ExtensibleDataset<std::int32_t> {
+public:
+  EventIndex() = default;
+  /// \brief Create the event_index dataset of NXevent_data.
+  ////
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  EventIndex(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+             size_t ChunkSize = 1024);
+};
+
+/// \brief Represents the (radiation) detector event reference timestamp dataset
+/// in a NXevent_data.
+class EventTimeZero : public NeXusDataset::ExtensibleDataset<std::int64_t> {
+public:
+  EventTimeZero() = default;
+  /// \brief Create the event_time_zero dataset of NXevent_data.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  EventTimeZero(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                size_t ChunkSize = 1024);
+};
+
+} // namespace NeXusDataset

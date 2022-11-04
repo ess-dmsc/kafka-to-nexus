@@ -78,3 +78,67 @@ EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
 }
 
 } // namespace NeXusDataset
+
+
+namespace NeXusDatasetSignedIntegers {
+Int16Value::Int16Value(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                         size_t ChunkSize)
+    : ExtensibleDataset<std::int16_t>(Parent, "value", CMode, ChunkSize) {}
+
+Time::Time(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize)
+    : ExtensibleDataset<std::int64_t>(Parent, "time", CMode, ChunkSize) {
+  if (NeXusDataset::Mode::Create == CMode) {
+    auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
+    StartAttr.write("1970-01-01T00:00:00Z");
+    auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
+    UnitAttr.write("ns");
+  }
+}
+
+EventId::EventId(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize)
+    : ExtensibleDataset<std::int32_t>(Parent, "event_id", CMode, ChunkSize) {}
+
+EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                                 size_t ChunkSize)
+    : ExtensibleDataset<std::int32_t>(Parent, "event_time_offset", CMode,
+                                       ChunkSize) {
+  if (NeXusDataset::Mode::Create == CMode) {
+    auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
+    UnitAttr.write("ns");
+  }
+}
+
+EventIndex::EventIndex(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                       size_t ChunkSize)
+    : ExtensibleDataset<std::int32_t>(Parent, "event_index", CMode,
+                                       ChunkSize) {}
+
+EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                             size_t ChunkSize)
+    : ExtensibleDataset<std::int64_t>(Parent, "event_time_zero", CMode,
+                                       ChunkSize) {
+  if (NeXusDataset::Mode::Create == CMode) {
+    auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
+    StartAttr.write("1970-01-01T00:00:00Z");
+    auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
+    UnitAttr.write("ns");
+  }
+}
+
+CueIndex::CueIndex(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                   size_t ChunkSize)
+    : ExtensibleDataset<std::int32_t>(Parent, "cue_index", CMode, ChunkSize) {}
+
+CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                                   size_t ChunkSize)
+    : ExtensibleDataset<std::int64_t>(Parent, "cue_timestamp_zero", CMode,
+                                       ChunkSize) {
+  if (NeXusDataset::Mode::Create == CMode) {
+    auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
+    StartAttr.write("1970-01-01T00:00:00Z");
+    auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
+    UnitAttr.write("ns");
+  }
+}
+
+} // namespace NeXusDataset
