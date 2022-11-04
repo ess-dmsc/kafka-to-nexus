@@ -57,10 +57,11 @@ InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         Create,                           // NOLINT(bugprone-unused-raii)
         ChunkSize);                       // NOLINT(bugprone-unused-raii)
 
-    NeXusDatasetSignedIntegers::CueTimestampZero( // NOLINT(bugprone-unused-raii)
-        HDFGroup,                                 // NOLINT(bugprone-unused-raii)
-        Create,                                   // NOLINT(bugprone-unused-raii)
-        ChunkSize);                               // NOLINT(bugprone-unused-raii)
+    NeXusDatasetSignedIntegers::
+        CueTimestampZero( // NOLINT(bugprone-unused-raii)
+            HDFGroup,     // NOLINT(bugprone-unused-raii)
+            Create,       // NOLINT(bugprone-unused-raii)
+            ChunkSize);   // NOLINT(bugprone-unused-raii)
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
@@ -99,8 +100,9 @@ void ev44_Writer::write(FlatbufferMessage const &Message) {
       EventMsgFlatbuffer->pixel_id()->size()) {
     LOG_WARN("written data lengths differ");
   }
-  const flatbuffers::Vector<int64_t>* CurrentRefTime = EventMsgFlatbuffer->reference_time();
-    
+  const flatbuffers::Vector<int64_t> *CurrentRefTime =
+      EventMsgFlatbuffer->reference_time();
+
   auto CurrentNumberOfEvents = EventMsgFlatbuffer->pixel_id()->size();
   EventTimeZero.appendElement(*CurrentRefTime->begin());
   EventIndex.appendElement(EventsWritten);
@@ -108,7 +110,8 @@ void ev44_Writer::write(FlatbufferMessage const &Message) {
   if (EventsWritten > LastEventIndex + EventIndexInterval) {
     auto LastRefTimeOffset = EventMsgFlatbuffer->time_of_flight()->operator[](
         CurrentNumberOfEvents - 1);
-    CueTimestampZero.appendElement(*CurrentRefTime->begin() + LastRefTimeOffset);
+    CueTimestampZero.appendElement(*CurrentRefTime->begin() +
+                                   LastRefTimeOffset);
     CueIndex.appendElement(EventsWritten - 1);
     LastEventIndex = EventsWritten - 1;
   }

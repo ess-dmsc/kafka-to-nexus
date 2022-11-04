@@ -79,13 +79,13 @@ EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
 
 } // namespace NeXusDataset
 
-
 namespace NeXusDatasetSignedIntegers {
-Int16Value::Int16Value(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-                         size_t ChunkSize)
+Int16Value::Int16Value(hdf5::node::Group const &Parent,
+                       NeXusDataset::Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::int16_t>(Parent, "value", CMode, ChunkSize) {}
 
-Time::Time(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize)
+Time::Time(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+           size_t ChunkSize)
     : ExtensibleDataset<std::int64_t>(Parent, "time", CMode, ChunkSize) {
   if (NeXusDataset::Mode::Create == CMode) {
     auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
@@ -95,28 +95,29 @@ Time::Time(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t Chu
   }
 }
 
-EventId::EventId(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize)
+EventId::EventId(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+                 size_t ChunkSize)
     : ExtensibleDataset<std::int32_t>(Parent, "event_id", CMode, ChunkSize) {}
 
-EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-                                 size_t ChunkSize)
+EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent,
+                                 NeXusDataset::Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::int32_t>(Parent, "event_time_offset", CMode,
-                                       ChunkSize) {
+                                      ChunkSize) {
   if (NeXusDataset::Mode::Create == CMode) {
     auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
 }
 
-EventIndex::EventIndex(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-                       size_t ChunkSize)
-    : ExtensibleDataset<std::int32_t>(Parent, "event_index", CMode,
-                                       ChunkSize) {}
+EventIndex::EventIndex(hdf5::node::Group const &Parent,
+                       NeXusDataset::Mode CMode, size_t ChunkSize)
+    : ExtensibleDataset<std::int32_t>(Parent, "event_index", CMode, ChunkSize) {
+}
 
-EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-                             size_t ChunkSize)
+EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent,
+                             NeXusDataset::Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::int64_t>(Parent, "event_time_zero", CMode,
-                                       ChunkSize) {
+                                      ChunkSize) {
   if (NeXusDataset::Mode::Create == CMode) {
     auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
     StartAttr.write("1970-01-01T00:00:00Z");
@@ -129,10 +130,10 @@ CueIndex::CueIndex(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
                    size_t ChunkSize)
     : ExtensibleDataset<std::int32_t>(Parent, "cue_index", CMode, ChunkSize) {}
 
-CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-                                   size_t ChunkSize)
+CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent,
+                                   NeXusDataset::Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::int64_t>(Parent, "cue_timestamp_zero", CMode,
-                                       ChunkSize) {
+                                      ChunkSize) {
   if (NeXusDataset::Mode::Create == CMode) {
     auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
     StartAttr.write("1970-01-01T00:00:00Z");
@@ -141,4 +142,4 @@ CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, NeXusDataset
   }
 }
 
-} // namespace NeXusDataset
+} // namespace NeXusDatasetSignedIntegers

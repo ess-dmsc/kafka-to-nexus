@@ -168,7 +168,7 @@ public:
   /// size in number of elements for this dataset (if/when creating it). \throws
   /// std::runtime_error if dataset already exists.
   Int16Value(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-              size_t ChunkSize = 1024);
+             size_t ChunkSize = 1024);
 };
 
 /// \brief Class for representing a int16 NeXus dataset.
@@ -182,7 +182,7 @@ public:
   /// size in number of elements for this dataset (if/when creating it). \throws
   /// std::runtime_error if dataset already exists.
   Int32Value(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-              size_t ChunkSize = 1024);
+             size_t ChunkSize = 1024);
 };
 
 /// \brief Represents the index register for searching a large NXlog
@@ -211,7 +211,8 @@ public:
   /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
   /// size in number of elements for this dataset (if/when creating it). \throws
   /// std::runtime_error if dataset already exists.
-  Time(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize = 1024);
+  Time(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+       size_t ChunkSize = 1024);
 };
 
 /// \brief Represents the timestamp register for searching a large NXlog
@@ -240,7 +241,8 @@ public:
   /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
   /// size in number of elements for this dataset (if/when creating it). \throws
   /// std::runtime_error if dataset already exists.
-  EventId(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode, size_t ChunkSize = 1024);
+  EventId(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+          size_t ChunkSize = 1024);
 };
 
 /// \brief Represents the (radiation) detector event timestamp offset from zero
@@ -288,4 +290,4 @@ public:
                 size_t ChunkSize = 1024);
 };
 
-} // namespace NeXusDataset
+} // namespace NeXusDatasetSignedIntegers
