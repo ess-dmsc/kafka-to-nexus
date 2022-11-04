@@ -22,7 +22,6 @@ struct StartInfo {
   std::string Filename;
   std::string NexusStructure;
   std::string Metadata;
-  uri::URI BrokerInfo{"localhost:9092"};
   time_point StartTime{0ms};
   time_point StopTime{time_point::max()};
   std::string ControlTopic;

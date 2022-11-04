@@ -2,6 +2,8 @@
 
 ## Next version
 
+- Breaking: Ignore Kafka IP addresses sent in `StartJob` messages, experiment
+  data is now fetched from the broker configured in `job-pool-uri`.
 - Increased kafka message buffer sizes and added integration tests for this.
 - Improved help text formatting.
 - Added code for running Kafka tests. This code is disabled by default.

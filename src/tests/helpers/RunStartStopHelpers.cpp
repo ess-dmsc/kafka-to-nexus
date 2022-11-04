@@ -9,8 +9,8 @@ namespace RunStartStopHelpers {
 FileWriter::Msg buildRunStartMessage(
     std::string const &InstrumentName, std::string const &RunName,
     std::string const &NexusStructure, std::string const &JobID,
-    std::optional<std::string> const &ServiceID, std::string const &Broker,
-    std::string const &Filename, uint64_t StartTime, uint64_t StopTime) {
+    std::optional<std::string> const &ServiceID, std::string const &Filename,
+    uint64_t StartTime, uint64_t StopTime) {
   flatbuffers::FlatBufferBuilder Builder;
 
   const auto InstrumentNameOffset = Builder.CreateString(InstrumentName);
@@ -21,7 +21,6 @@ FileWriter::Msg buildRunStartMessage(
   if (ServiceID) {
     ServiceIDOffset = Builder.CreateString(*ServiceID);
   }
-  const auto BrokerOffset = Builder.CreateString(Broker);
   const auto FilenameOffset = Builder.CreateString(Filename);
 
   RunStartBuilder StartBuilder{Builder};
@@ -31,7 +30,6 @@ FileWriter::Msg buildRunStartMessage(
   StartBuilder.add_instrument_name(InstrumentNameOffset);
   StartBuilder.add_nexus_structure(NexusStructureOffset);
   StartBuilder.add_job_id(JobIDOffset);
-  StartBuilder.add_broker(BrokerOffset);
   if (ServiceID) {
     StartBuilder.add_service_id(ServiceIDOffset);
   }
