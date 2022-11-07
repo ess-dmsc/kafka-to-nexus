@@ -83,9 +83,16 @@ def datetime_to_ns(time: datetime):
 def publish_message(
     producer: Producer, data: bytes, topic: str, timestamp: datetime, flush: bool = True
 ):
-    producer.produce(topic=topic, value=data, timestamp=datetime_to_ms(timestamp))
-    if flush:
-        producer.flush()
+    delivered = False
+    def callback(err, msg):
+        if err is not None:
+            raise RuntimeError(f"Could not deliver message: {err}")
+        nonlocal delivered
+        delivered = True
+
+    producer.produce(topic=topic, value=data, timestamp=datetime_to_ms(timestamp), callback=callback)
+    while not delivered:
+        producer.poll(0.1)
 
 
 def publish_f142_message(
