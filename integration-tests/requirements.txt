@@ -1,5 +1,5 @@
 pytest>=6.2.2
-confluent_kafka == 1.7.0
+confluent_kafka == 1.9.2
 docker-compose==1.29.2
 docker==5.0.2
 h5py>=3.1.0
