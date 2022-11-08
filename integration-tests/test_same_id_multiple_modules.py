@@ -23,7 +23,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now
-    for i in range(10):
+    for i in range(12):
         current_time = start_time + timedelta(seconds=1) * i
         publish_f142_message(
             producer,
