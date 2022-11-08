@@ -53,7 +53,7 @@ bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case Kafka::PollStatus::TimedOut:
     updateStatusOccurrenceTime(PartitionState::TIMEOUT);
-    return false;
+    return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case Kafka::PollStatus::Error:
     updateStatusOccurrenceTime(PartitionState::ERROR);
     return hasExceededTimeLimit();
