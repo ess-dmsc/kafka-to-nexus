@@ -6,7 +6,7 @@
   data is now fetched from the broker configured in `job-pool-uri`.
 - The case when messages are not received from a specific Kafka topic does not make the file writer unsubscribe from the topic anymore. Instead a warning is provided in the file writer log.
 
-## Version 5.2.0: Various fixes and some Kafka improvements
+## Version 5.2.0: Kafka improvements and other fixes
 
 - Increased kafka message buffer sizes and added integration tests for this.
 - Improved help text formatting.
