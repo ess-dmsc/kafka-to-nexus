@@ -35,7 +35,7 @@ json hdf_parse(std::string const &Structure) {
 std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 void FileWriterTask::setFullFilePath(std::string const &Prefix,
-                                 std::string const &Name) {
+                                     std::string const &Name) {
   FullFilePath = Prefix;
   FullFilePath.append(Name);
 }
@@ -51,7 +51,8 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
 
   if (std::filesystem::exists(FullFilePath)) {
     ErrorString = fmt::format(
-        R"(Failed to initialize HDF file "{}". Error was: "{}".)", FullFilePath.string(),
+        R"(Failed to initialize HDF file "{}". Error was: "{}".)",
+        FullFilePath.string(),
         "a file with that filename already exists in that directory. Delete "
         "the existing file or provide another filename");
     std::throw_with_nested(std::runtime_error(ErrorString));
@@ -63,7 +64,8 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
   } else if (FullFilePath.has_parent_path() and
              not std::filesystem::exists(FullFilePath.parent_path())) {
     ErrorString = fmt::format(
-        R"(Failed to initialize HDF file "{}". Error was: The parent directory does not exist.)", FullFilePath.string());
+        R"(Failed to initialize HDF file "{}". Error was: The parent directory does not exist.)",
+        FullFilePath.string());
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 
