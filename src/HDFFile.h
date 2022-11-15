@@ -45,7 +45,7 @@ private:
 
 class HDFFile : public HDFFileBase {
 public:
-  HDFFile(std::string const &FileName, nlohmann::json const &NexusStructure,
+  HDFFile(std::filesystem::path const &FileName, nlohmann::json const &NexusStructure,
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
           MetaData::TrackerPtr &TrackerPtr);
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
@@ -66,7 +66,7 @@ private:
   hdf5::property::FileAccessList FileAccessList;
   hdf5::property::FileCreationList FileCreationList;
 
-  std::string H5FileName;
+  std::filesystem::path H5FileName;
   nlohmann::json StoredNexusStructure;
   MetaData::TrackerPtr const MetaDataTracker;
 };
