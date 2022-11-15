@@ -135,7 +135,8 @@ void HDFFileBase::flush() {
 }
 
 void HDFFile::openFileInRegularMode() {
-  LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)", H5FileName.string());
+  LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)",
+            H5FileName.string());
   hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::ReadWrite,
                                FileAccessList);
 }

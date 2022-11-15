@@ -45,7 +45,8 @@ private:
 
 class HDFFile : public HDFFileBase {
 public:
-  HDFFile(std::filesystem::path const &FileName, nlohmann::json const &NexusStructure,
+  HDFFile(std::filesystem::path const &FileName,
+          nlohmann::json const &NexusStructure,
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
           MetaData::TrackerPtr &TrackerPtr);
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
