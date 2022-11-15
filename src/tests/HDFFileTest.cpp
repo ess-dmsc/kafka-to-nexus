@@ -19,7 +19,7 @@ public:
     }
     ModuleHDFInfoList.clear();
   }
-  std::string FileName{"someFileName.hdf"};
+  std::filesystem::path FileName{"someFileName.hdf"};
   nlohmann::json NexusStructure{};
   std::vector<ModuleHDFInfo> ModuleHDFInfoList;
   MetaData::TrackerPtr Tracker{};

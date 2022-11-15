@@ -87,8 +87,10 @@ public:
   StatusReporterStandIn *StatusReporter;
   std::unique_ptr<FileWriter::Master> UnderTest;
   time_point StartTime{system_clock::now()};
+  std::filesystem::path FilePath =
+      std::filesystem::current_path().append("file_name");
   Command::StartInfo StartCmd{"job_id",
-                              "file_name",
+                              FilePath,
                               R"({"nexus_structure":5})",
                               R"({"meta_data":54})",
                               StartTime,

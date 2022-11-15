@@ -25,7 +25,7 @@ TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
   FileWriter::FileWriterTask Task(TestRegistrar,
                                   std::make_shared<MetaData::Tracker>());
 
-  Task.setFilename("SomePrefix", "File.hdf");
+  Task.setFullFilePath("SomePrefix", "File.hdf");
 
   ASSERT_EQ("SomePrefix/File.hdf", Task.filename());
 }
@@ -34,9 +34,9 @@ TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
   FileWriter::FileWriterTask Task(TestRegistrar,
                                   std::make_shared<MetaData::Tracker>());
 
-  Task.setFilename("", "File.hdf");
+  Task.setFullFilePath("/", "File.hdf");
 
-  ASSERT_EQ("File.hdf", Task.filename());
+  ASSERT_EQ("/File.hdf", Task.filename());
 }
 
 TEST_F(FileWriterTask, AddingSourceAddsToDemuxers) {

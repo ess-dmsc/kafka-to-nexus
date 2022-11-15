@@ -107,7 +107,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                      MetaData::TrackerPtr const &Tracker) {
   auto Task = std::make_unique<FileWriterTask>(Registrar, Tracker);
   Task->setJobId(StartInfo.JobID);
-  Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
+  Task->setFullFilePath(Settings.HDFOutputPrefix, StartInfo.Filename);
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);

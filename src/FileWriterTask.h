@@ -68,7 +68,7 @@ public:
   ///
   /// \param Prefix The path prefix.
   /// \param Name The filename (can include path).
-  void setFilename(std::string const &Prefix, std::string const &Name);
+  void setFullFilePath(std::string const &Prefix, std::string const &Name);
 
   /// \brief Get the list of demuxers.
   ///
@@ -106,7 +106,7 @@ public:
   void updateApproximateFileSize();
 
 private:
-  std::string Filename;
+  std::filesystem::path FullFilePath;
   MetaData::TrackerPtr MetaDataTracker;
   MetaData::Value<uint32_t> FileSizeMB;
   Metrics::Metric FileSizeMBMetric{"approx_file_size_mb",
