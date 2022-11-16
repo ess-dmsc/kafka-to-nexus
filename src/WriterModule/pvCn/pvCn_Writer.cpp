@@ -1,12 +1,12 @@
 #include "pvCn_Writer.h"
 #include "FlatbufferMessage.h"
 #include "WriterRegistrar.h"
-#include <pvCn_epics_connection_generated.h>
+#include <ep01_epics_connection_generated.h>
 
 namespace WriterModule {
-namespace pvCn {
+namespace ep01 {
 
-InitResult pvCn_Writer::reopen(hdf5::node::Group &HDFGroup) {
+InitResult ep01_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     TimestampDataset = NeXusDataset::ConnectionStatusTime(HDFGroup, Open);
@@ -20,7 +20,7 @@ InitResult pvCn_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-InitResult pvCn_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult ep01_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::ConnectionStatusTime(HDFGroup,
@@ -29,14 +29,14 @@ InitResult pvCn_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
                                    Create); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("pvCn could not init_hdf HDFGroup: {}  trace: {}",
+    LOG_ERROR("ep01 could not init_hdf HDFGroup: {}  trace: {}",
               static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
   return InitResult::OK;
 }
 
-void pvCn_Writer::write(FileWriter::FlatbufferMessage const &Message) {
+void ep01_Writer::write(FileWriter::FlatbufferMessage const &Message) {
   auto FlatBuffer = GetEpicsPVConnectionInfo(Message.data());
   std::string Status = EnumNameConnectionInfo(FlatBuffer->status());
   if (Status.empty()) {
@@ -47,8 +47,8 @@ void pvCn_Writer::write(FileWriter::FlatbufferMessage const &Message) {
   TimestampDataset.appendElement(FBTimestamp);
 }
 
-static WriterModule::Registry::Registrar<pvCn_Writer>
-    RegisterWriter("pvCn", "epics_con_status");
+static WriterModule::Registry::Registrar<ep01_Writer>
+    RegisterWriter("ep01", "epics_con_status");
 
 } // namespace pvCn
 } // namespace WriterModule

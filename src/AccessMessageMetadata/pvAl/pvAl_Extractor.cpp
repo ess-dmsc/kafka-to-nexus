@@ -1,17 +1,17 @@
 #include "pvAl_Extractor.h"
-#include <pvAl_epics_pv_alarm_state_generated.h>
+#include <al00_alarm_generated.h>
 
 namespace AccessMessageMetadata {
 
-bool pvAl_Extractor::verify(
+bool al00_Extractor::verify(
     FileWriter::FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(Message.data(), Message.size());
-  return VerifyPV_AlarmStateBuffer(Verifier);
+  return VerifyAlarmBuffer(Verifier);
 }
 
-std::string pvAl_Extractor::source_name(
+std::string al00_Extractor::source_name(
     FileWriter::FlatbufferMessage const &Message) const {
-  auto FBuffer = GetPV_AlarmState(Message.data());
+  auto FBuffer = GetAlarm(Message.data());
   auto SourceName = FBuffer->source_name();
   if (SourceName == nullptr) {
     LOG_WARN("Message has no source name.");
@@ -21,11 +21,11 @@ std::string pvAl_Extractor::source_name(
 }
 
 uint64_t
-pvAl_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
-  auto FBuffer = GetPV_AlarmState(Message.data());
+al00_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
+  auto FBuffer = GetAlarm(Message.data());
   return FBuffer->timestamp();
 }
 
-static FileWriter::FlatbufferReaderRegistry::Registrar<pvAl_Extractor>
-    RegisterReader("pvAl");
+static FileWriter::FlatbufferReaderRegistry::Registrar<al00_Extractor>
+    RegisterReader("al00");
 } // namespace AccessMessageMetadata

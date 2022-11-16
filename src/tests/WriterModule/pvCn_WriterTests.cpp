@@ -9,7 +9,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include <pvCn_epics_connection_generated.h>
+#include <ep01_epics_connection_generated.h>
 
 #include "AccessMessageMetadata/pvCn/pvCn_Extractor.h"
 #include "WriterModule/pvCn/pvCn_Writer.h"
@@ -40,7 +40,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File->hdfGroup();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    setExtractorModule<AccessMessageMetadata::pvCn_Extractor>("pvCn");
+    setExtractorModule<AccessMessageMetadata::ep01_Extractor>("ep01");
   };
 
   std::string TestFileName{"SomeTestFile.hdf5"};
@@ -54,7 +54,7 @@ using WriterModule::InitResult;
 
 TEST_F(EPICS_ConStatusWriter, InitFile) {
   {
-    pvCn::pvCn_Writer Writer;
+    ep01::ep01_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
@@ -64,18 +64,18 @@ TEST_F(EPICS_ConStatusWriter, InitFile) {
 }
 
 TEST_F(EPICS_ConStatusWriter, ReopenFileFailure) {
-  pvCn::pvCn_Writer Writer;
+  ep01::ep01_Writer Writer;
   EXPECT_FALSE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(EPICS_ConStatusWriter, InitFileFail) {
-  pvCn::pvCn_Writer Writer;
+  ep01::ep01_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_FALSE(Writer.init_hdf(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(EPICS_ConStatusWriter, ReopenFileSuccess) {
-  pvCn::pvCn_Writer Writer;
+  ep01::ep01_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
@@ -83,7 +83,7 @@ TEST_F(EPICS_ConStatusWriter, ReopenFileSuccess) {
 TEST_F(EPICS_ConStatusWriter, WriteDataOnce) {
   size_t BufferSize{0};
   auto Buffer = GenerateConStatusFlatbufferData(BufferSize);
-  pvCn::pvCn_Writer Writer;
+  ep01::ep01_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
