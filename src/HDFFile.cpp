@@ -19,7 +19,7 @@ using HDFOperations::createHDFStructures;
 using HDFOperations::writeAttributesIfPresent;
 using HDFOperations::writeHDFISO8601AttributeCurrentTime;
 
-HDFFile::HDFFile(std::string const &FileName,
+HDFFile::HDFFile(std::filesystem::path const &FileName,
                  nlohmann::json const &NexusStructure,
                  std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                  MetaData::TrackerPtr &TrackerPtr)
@@ -114,7 +114,7 @@ void HDFFile::closeFile() {
 }
 
 void HDFFile::openFileInSWMRMode() {
-  LOG_DEBUG(R"(Opening file "{}" in SWMR mode.)", H5FileName);
+  LOG_DEBUG(R"(Opening file "{}" in SWMR mode.)", H5FileName.string());
   hdfFile() = hdf5::file::open(H5FileName,
                                hdf5::file::AccessFlags::ReadWrite |
                                    hdf5::file::AccessFlags::SWMRWrite,
@@ -135,7 +135,8 @@ void HDFFileBase::flush() {
 }
 
 void HDFFile::openFileInRegularMode() {
-  LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)", H5FileName);
+  LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)",
+            H5FileName.string());
   hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::ReadWrite,
                                FileAccessList);
 }
@@ -146,7 +147,7 @@ void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
   } catch (std::exception const &E) {
     LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
-              H5FileName, E.what());
+              H5FileName.string(), E.what());
   }
 }
 
@@ -158,7 +159,7 @@ void HDFFile::addMetaData() {
     }
   } catch (std::exception const &E) {
     LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
-              H5FileName, E.what());
+              H5FileName.string(), E.what());
   }
 }
 
