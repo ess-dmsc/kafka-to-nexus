@@ -1,17 +1,17 @@
 #include "scal_Extractor.h"
-#include <scal_epics_scalar_data_generated.h>
+#include <f144_logdata_generated.h>
 
 namespace AccessMessageMetadata {
 
-bool scal_Extractor::verify(
+bool f144_Extractor::verify(
     FileWriter::FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(Message.data(), Message.size());
-  return VerifyScalarDataBuffer(Verifier);
+  return VerifyLogDataBuffer(Verifier);
 }
 
-std::string scal_Extractor::source_name(
+std::string f144_Extractor::source_name(
     FileWriter::FlatbufferMessage const &Message) const {
-  auto FBuffer = GetScalarData(Message.data());
+  auto FBuffer = GetLogData(Message.data());
   auto SourceName = FBuffer->source_name();
   if (SourceName == nullptr) {
     LOG_WARN("Message has no source name.");
@@ -21,11 +21,11 @@ std::string scal_Extractor::source_name(
 }
 
 uint64_t
-scal_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
-  auto FBuffer = GetScalarData(Message.data());
+f144_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
+  auto FBuffer = GetLogData(Message.data());
   return FBuffer->timestamp();
 }
 
-static FileWriter::FlatbufferReaderRegistry::Registrar<scal_Extractor>
-    RegisterReader("scal");
+static FileWriter::FlatbufferReaderRegistry::Registrar<f144_Extractor>
+    RegisterReader("f144");
 } // namespace AccessMessageMetadata

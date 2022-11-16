@@ -14,13 +14,13 @@
 #include "logger.h"
 #include <algorithm>
 #include <cctype>
-#include <scal_epics_scalar_data_generated.h>
+#include <f144_logdata_generated.h>
 
-namespace WriterModule::scal {
+namespace WriterModule::f144_logdata {
 
 using nlohmann::json;
 
-using Type = scal_Writer::Type;
+using Type = f144_Writer::Type;
 
 struct ValuesInformation {
   double Min{0};
@@ -62,7 +62,7 @@ void initValueDataset(hdf5::node::Group const &Parent, Type ElementType,
 }
 
 /// Parse the configuration for this stream.
-void scal_Writer::config_post_processing() {
+void f144_Writer::config_post_processing() {
   auto ToLower = [](auto InString) {
     std::transform(InString.begin(), InString.end(), InString.begin(),
                    [](auto C) { return std::tolower(C); });
@@ -89,7 +89,7 @@ void scal_Writer::config_post_processing() {
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
-InitResult scal_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -119,7 +119,7 @@ InitResult scal_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 
 /// \brief Implement the writer module interface, forward to the OPEN case of
 /// `init_hdf`.
-InitResult scal_Writer::reopen(hdf5::node::Group &HDFGroup) {
+InitResult f144_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     Timestamp = NeXusDataset::Time(HDFGroup, Open);
@@ -158,65 +158,65 @@ ValuesInformation appendData(DatasetType &Dataset, const void *Pointer,
 }
 
 template <typename FBValueType, typename ReturnType>
-ReturnType extractScalarValue(const ScalarData *ScalarDataMessage) {
-  auto ScalarValue = ScalarDataMessage->value_as<FBValueType>();
-  return ScalarValue->value();
+ReturnType extractScalarValue(const LogData *LogDataMessage) {
+  auto LogValue = LogDataMessage->value_as<FBValueType>();
+  return LogValue->value();
 }
 
 template <typename DataType, typename ValueType, class DatasetType>
 ValuesInformation appendScalarData(DatasetType &Dataset,
-                                   const ScalarData *ScalarDataMessage) {
-  auto ScalarValue = extractScalarValue<ValueType, DataType>(ScalarDataMessage);
+                                   const LogData *LogDataMessage) {
+  auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
   Dataset.appendArray(hdf5::ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
   return {double(ScalarValue), double(ScalarValue), double(ScalarValue), 1};
 }
 
-void msgTypeIsConfigType(scal_Writer::Type ConfigType, Value MsgType) {
-  std::unordered_map<Value, scal_Writer::Type> TypeComparison{
-      {Value::ArrayInt8, scal_Writer::Type::int8},
-      {Value::Int8, scal_Writer::Type::int8},
-      {Value::ArrayUInt8, scal_Writer::Type::uint8},
-      {Value::UInt8, scal_Writer::Type::uint8},
-      {Value::ArrayInt16, scal_Writer::Type::int16},
-      {Value::Int16, scal_Writer::Type::int16},
-      {Value::ArrayUInt16, scal_Writer::Type::uint16},
-      {Value::UInt16, scal_Writer::Type::uint16},
-      {Value::ArrayInt32, scal_Writer::Type::int32},
-      {Value::Int32, scal_Writer::Type::int32},
-      {Value::ArrayUInt32, scal_Writer::Type::uint32},
-      {Value::UInt32, scal_Writer::Type::uint32},
-      {Value::ArrayInt64, scal_Writer::Type::int64},
-      {Value::Int64, scal_Writer::Type::int64},
-      {Value::ArrayUInt64, scal_Writer::Type::uint64},
-      {Value::UInt64, scal_Writer::Type::uint64},
-      {Value::ArrayFloat32, scal_Writer::Type::float32},
-      {Value::Float32, scal_Writer::Type::float32},
-      {Value::ArrayFloat64, scal_Writer::Type::float64},
-      {Value::Float64, scal_Writer::Type::float64},
+void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
+  std::unordered_map<Value, f144_Writer::Type> TypeComparison{
+      {Value::ArrayByte, f144_Writer::Type::int8},
+      {Value::Byte, f144_Writer::Type::int8},
+      {Value::ArrayUByte, f144_Writer::Type::uint8},
+      {Value::ArrayByte, f144_Writer::Type::uint8},
+      {Value::ArrayShort, f144_Writer::Type::int16},
+      {Value::Short, f144_Writer::Type::int16},
+      {Value::ArrayUShort, f144_Writer::Type::uint16},
+      {Value::UShort, f144_Writer::Type::uint16},
+      {Value::ArrayInt, f144_Writer::Type::int32},
+      {Value::Int, f144_Writer::Type::int32},
+      {Value::ArrayUInt, f144_Writer::Type::uint32},
+      {Value::UInt, f144_Writer::Type::uint32},
+      {Value::ArrayLong, f144_Writer::Type::int64},
+      {Value::Long, f144_Writer::Type::int64},
+      {Value::ArrayULong, f144_Writer::Type::uint64},
+      {Value::ULong, f144_Writer::Type::uint64},
+      {Value::ArrayFloat, f144_Writer::Type::float32},
+      {Value::Float, f144_Writer::Type::float32},
+      {Value::ArrayDouble, f144_Writer::Type::float64},
+      {Value::Double, f144_Writer::Type::float64},
   };
   std::unordered_map<Value, std::string> MsgTypeString{
-      {Value::ArrayInt8, "int8"},       {Value::Int8, "int8"},
-      {Value::ArrayUInt8, "uint8"},     {Value::UInt8, "uint8"},
-      {Value::ArrayInt16, "int16"},     {Value::Int16, "int16"},
-      {Value::ArrayUInt16, "uint16"},   {Value::UInt16, "uint16"},
-      {Value::ArrayInt32, "int32"},     {Value::Int32, "int32"},
-      {Value::ArrayUInt32, "uint32"},   {Value::UInt32, "uint32"},
-      {Value::ArrayInt64, "int64"},     {Value::UInt64, "int64"},
-      {Value::ArrayUInt64, "uint64"},   {Value::UInt64, "uint64"},
-      {Value::ArrayFloat32, "float32"}, {Value::Float32, "float32"},
-      {Value::ArrayFloat64, "float64"}, {Value::Float64, "float64"},
+      {Value::ArrayByte, "int8"},       {Value::Byte, "int8"},
+      {Value::ArrayUByte, "uint8"},     {Value::UByte, "uint8"},
+      {Value::ArrayShort, "int16"},     {Value::Short, "int16"},
+      {Value::ArrayUShort, "uint16"},   {Value::UShort, "uint16"},
+      {Value::ArrayInt, "int32"},       {Value::Int, "int32"},
+      {Value::ArrayUInt, "uint32"},     {Value::UInt, "uint32"},
+      {Value::ArrayLong, "int64"},      {Value::Long, "int64"},
+      {Value::ArrayULong, "uint64"},    {Value::ULong, "uint64"},
+      {Value::ArrayFloat, "float32"},   {Value::Float, "float32"},
+      {Value::ArrayDouble, "float64"},  {Value::Double, "float64"},
   };
-  std::unordered_map<scal_Writer::Type, std::string> ConfigTypeString{
-      {scal_Writer::Type::int8, "int8"},
-      {scal_Writer::Type::uint8, "uint8"},
-      {scal_Writer::Type::int16, "int16"},
-      {scal_Writer::Type::uint16, "uint16"},
-      {scal_Writer::Type::int32, "int32"},
-      {scal_Writer::Type::uint32, "uint32"},
-      {scal_Writer::Type::int64, "int64"},
-      {scal_Writer::Type::uint64, "uint64"},
-      {scal_Writer::Type::float32, "float32"},
-      {scal_Writer::Type::float64, "float64"},
+  std::unordered_map<f144_Writer::Type, std::string> ConfigTypeString{
+      {f144_Writer::Type::int8, "int8"},
+      {f144_Writer::Type::uint8, "uint8"},
+      {f144_Writer::Type::int16, "int16"},
+      {f144_Writer::Type::uint16, "uint16"},
+      {f144_Writer::Type::int32, "int32"},
+      {f144_Writer::Type::uint32, "uint32"},
+      {f144_Writer::Type::int64, "int64"},
+      {f144_Writer::Type::uint64, "uint64"},
+      {f144_Writer::Type::float32, "float32"},
+      {f144_Writer::Type::float64, "float64"},
   };
   try {
     if (TypeComparison.at(MsgType) != ConfigType) {
@@ -229,11 +229,11 @@ void msgTypeIsConfigType(scal_Writer::Type ConfigType, Value MsgType) {
   }
 }
 
-void scal_Writer::write(FlatbufferMessage const &Message) {
-  auto ScalarDataMessage = GetScalarData(Message.data());
+void f144_Writer::write(FlatbufferMessage const &Message) {
+  auto LogDataMessage = GetLogData(Message.data());
   size_t NrOfElements{1};
-  Timestamp.appendElement(ScalarDataMessage->timestamp());
-  auto Type = ScalarDataMessage->value_type();
+  Timestamp.appendElement(LogDataMessage->timestamp());
+  auto Type = LogDataMessage->value_type();
 
   if (not HasCheckedMessageType) {
     msgTypeIsConfigType(ElementType, Type);
@@ -243,7 +243,7 @@ void scal_Writer::write(FlatbufferMessage const &Message) {
   // Note that we are using our knowledge about flatbuffers here to minimise
   // amount of code we have to write by using some pointer arithmetic.
   auto DataPtr = reinterpret_cast<void const *>(
-      reinterpret_cast<uint8_t const *>(ScalarDataMessage->value()) + 4);
+      reinterpret_cast<uint8_t const *>(LogDataMessage->value()) + 4);
 
   auto extractArrayInfo = [&NrOfElements, &DataPtr]() {
     NrOfElements = *(reinterpret_cast<int const *>(DataPtr) + 1);
@@ -253,95 +253,95 @@ void scal_Writer::write(FlatbufferMessage const &Message) {
 
   ValuesInformation CValuesInfo;
   switch (Type) {
-  case Value::ArrayInt8:
+  case Value::ArrayByte:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int8_t>(Values, DataPtr, NrOfElements,
                                                 MetaData.getValue());
     break;
-  case Value::Int8:
+  case Value::Byte:
     CValuesInfo =
-        appendScalarData<const std::int8_t, Int8>(Values, ScalarDataMessage);
+        appendScalarData<const std::int8_t, Byte>(Values, LogDataMessage);
     break;
-  case Value::ArrayUInt8:
+  case Value::ArrayUByte:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint8_t>(Values, DataPtr, NrOfElements,
                                                  MetaData.getValue());
     break;
-  case Value::UInt8:
+  case Value::UByte:
     CValuesInfo =
-        appendScalarData<const std::uint8_t, UInt8>(Values, ScalarDataMessage);
+        appendScalarData<const std::uint8_t, UByte>(Values, LogDataMessage);
     break;
-  case Value::ArrayInt16:
+  case Value::ArrayShort:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements,
                                                  MetaData.getValue());
     break;
-  case Value::Int16:
+    case Value::Short:
     CValuesInfo =
-        appendScalarData<const std::int16_t, Int16>(Values, ScalarDataMessage);
+        appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
     break;
-  case Value::ArrayUInt16:
+  case Value::ArrayUShort:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint16_t>(Values, DataPtr, NrOfElements,
                                                   MetaData.getValue());
     break;
-  case Value::UInt16:
+  case Value::UShort:
     CValuesInfo =
-        appendScalarData<const std::uint16_t, Int16>(Values, ScalarDataMessage);
+        appendScalarData<const std::uint16_t, UShort>(Values, LogDataMessage);
     break;
-  case Value::ArrayInt32:
+  case Value::ArrayInt:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int32_t>(Values, DataPtr, NrOfElements,
                                                  MetaData.getValue());
     break;
-  case Value::Int32:
+  case Value::Int:
     CValuesInfo =
-        appendScalarData<const std::int32_t, Int32>(Values, ScalarDataMessage);
+        appendScalarData<const std::int32_t, Int>(Values, LogDataMessage);
     break;
-  case Value::ArrayUInt32:
+  case Value::ArrayUInt:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint32_t>(Values, DataPtr, NrOfElements,
                                                   MetaData.getValue());
     break;
-  case Value::UInt32:
-    CValuesInfo = appendScalarData<const std::uint32_t, UInt32>(
-        Values, ScalarDataMessage);
+  case Value::UInt:
+    CValuesInfo = appendScalarData<const std::uint32_t, UInt>(
+        Values, LogDataMessage);
     break;
-  case Value::ArrayInt64:
+  case Value::ArrayLong:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int64_t>(Values, DataPtr, NrOfElements,
                                                  MetaData.getValue());
     break;
-  case Value::Int64:
+  case Value::Long:
     CValuesInfo =
-        appendScalarData<const std::int64_t, Int64>(Values, ScalarDataMessage);
+        appendScalarData<const std::int64_t, Long>(Values, LogDataMessage);
     break;
-  case Value::ArrayUInt64:
+  case Value::ArrayULong:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint64_t>(Values, DataPtr, NrOfElements,
                                                   MetaData.getValue());
     break;
-  case Value::UInt64:
-    CValuesInfo = appendScalarData<const std::uint64_t, UInt64>(
-        Values, ScalarDataMessage);
+  case Value::ULong:
+    CValuesInfo = appendScalarData<const std::uint64_t, ULong>(
+        Values, LogDataMessage);
     break;
-  case Value::ArrayFloat32:
+  case Value::ArrayFloat:
     extractArrayInfo();
     CValuesInfo = appendData<const float>(Values, DataPtr, NrOfElements,
                                           MetaData.getValue());
     break;
-  case Value::Float32:
+  case Value::Float:
     CValuesInfo =
-        appendScalarData<const float, Float32>(Values, ScalarDataMessage);
+        appendScalarData<const float, Float>(Values, LogDataMessage);
     break;
-  case Value::ArrayFloat64:
+  case Value::ArrayDouble:
     extractArrayInfo();
     CValuesInfo = appendData<const double>(Values, DataPtr, NrOfElements,
                                            MetaData.getValue());
     break;
-  case Value::Float64:
+  case Value::Double:
     CValuesInfo =
-        appendScalarData<const double, Float64>(Values, ScalarDataMessage);
+        appendScalarData<const double, Double>(Values, LogDataMessage);
     break;
   default:
     throw WriterModule::WriterException(
@@ -352,7 +352,7 @@ void scal_Writer::write(FlatbufferMessage const &Message) {
   if ((NrOfWrites - LastIndexAtWrite) / ValueIndexInterval.getValue() > 0) {
     LastIndexAtWrite = NrOfWrites;
     CueIndex.appendElement(NrOfWrites - 1);
-    CueTimestampZero.appendElement(ScalarDataMessage->timestamp());
+    CueTimestampZero.appendElement(LogDataMessage->timestamp());
   }
   if (MetaData.getValue()) {
     if (TotalNrOfElementsWritten == 0) {
@@ -369,7 +369,7 @@ void scal_Writer::write(FlatbufferMessage const &Message) {
   }
 }
 
-void scal_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
+void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
                                      const MetaData::TrackerPtr &Tracker) {
 
   if (MetaData.getValue()) {
@@ -388,7 +388,7 @@ void scal_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
 }
 
 /// Register the writer module.
-static WriterModule::Registry::Registrar<scal_Writer> RegisterWriter("scal",
-                                                                     "scal");
+static WriterModule::Registry::Registrar<f144_Writer> RegisterWriter("f144",
+                                                                     "f144");
 
 } // namespace WriterModule::scal

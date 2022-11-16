@@ -14,8 +14,8 @@
 namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
-/// \brief For extracting info from scal flatbuffer messages.
-class scal_Extractor : public FileWriter::FlatbufferReader {
+/// \brief For extracting info from f144 flatbuffer messages.
+class f144_Extractor : public FileWriter::FlatbufferReader {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;

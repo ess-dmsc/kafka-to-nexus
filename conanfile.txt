@@ -5,7 +5,7 @@ h5cpp/0.5.1
 zlib/1.2.12
 librdkafka/1.8.2
 nlohmann_json/3.10.5
-streaming-data-types/3c24787
+streaming-data-types/cc618df@ess-dmsc/testing
 cli11/2.2.0
 trompeloeil/42
 graylog-logger/2.1.4@ess-dmsc/stable
