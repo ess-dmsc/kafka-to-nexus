@@ -7,9 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <ep01_epics_connection_generated.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <ep01_epics_connection_generated.h>
 
 #include "AccessMessageMetadata/ep01/ep01_Extractor.h"
 #include "WriterModule/ep01/ep01_Writer.h"

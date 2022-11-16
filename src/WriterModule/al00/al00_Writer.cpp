@@ -12,9 +12,9 @@
 #include "WriterRegistrar.h"
 #include "json.h"
 #include "logger.h"
+#include <al00_alarm_generated.h>
 #include <algorithm>
 #include <cctype>
-#include <al00_alarm_generated.h>
 
 namespace WriterModule::al00 {
 
@@ -65,7 +65,7 @@ void al00_Writer::write(FlatbufferMessage const &Message) {
     AlarmSeverityString = "UNRECOGNISED_SEVERITY";
   }
   AlarmSeverity.appendStringElement(AlarmSeverityString);
-  
+
   std::string AlarmMessageString = AlarmMessage->message()->str();
   if (AlarmMessageString.empty()) {
     AlarmMessageString = "NO ALARM MESSAGE";

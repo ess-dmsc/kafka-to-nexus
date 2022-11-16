@@ -26,8 +26,8 @@ public:
 class AlarmMsg : public FixedSizeString {
 public:
   AlarmMsg() = default;
-  AlarmMsg(hdf5::node::Group const &Parent, Mode CMode,
-                size_t StringSize = 200, size_t ChunkSize = 1024)
+  AlarmMsg(hdf5::node::Group const &Parent, Mode CMode, size_t StringSize = 200,
+           size_t ChunkSize = 1024)
       : FixedSizeString(Parent, "alarm_message", CMode, StringSize,
                         ChunkSize){};
 };

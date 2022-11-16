@@ -94,5 +94,5 @@ protected:
   bool HasCheckedMessageType{false};
 };
 
-} // namespace f144
+} // namespace f144_logdata
 } // namespace WriterModule

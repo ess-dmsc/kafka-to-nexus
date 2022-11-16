@@ -7,9 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <al00_alarm_generated.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <al00_alarm_generated.h>
 
 #include "AccessMessageMetadata/al00/al00_Extractor.h"
 #include "WriterModule/al00/al00_Writer.h"
@@ -108,6 +108,5 @@ TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   std::vector<std::string> AlarmMsg(1);
   EXPECT_NO_THROW(AlarmMsgDataset.read(AlarmMsg));
   AlarmMsg[0].erase(AlarmMsg[0].find('\0'));
-  EXPECT_EQ(FbPointer->message()->str(),
-            AlarmMsg[0]);
+  EXPECT_EQ(FbPointer->message()->str(), AlarmMsg[0]);
 }

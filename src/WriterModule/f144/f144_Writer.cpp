@@ -195,16 +195,16 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
       {Value::Double, f144_Writer::Type::float64},
   };
   std::unordered_map<Value, std::string> MsgTypeString{
-      {Value::ArrayByte, "int8"},       {Value::Byte, "int8"},
-      {Value::ArrayUByte, "uint8"},     {Value::UByte, "uint8"},
-      {Value::ArrayShort, "int16"},     {Value::Short, "int16"},
-      {Value::ArrayUShort, "uint16"},   {Value::UShort, "uint16"},
-      {Value::ArrayInt, "int32"},       {Value::Int, "int32"},
-      {Value::ArrayUInt, "uint32"},     {Value::UInt, "uint32"},
-      {Value::ArrayLong, "int64"},      {Value::Long, "int64"},
-      {Value::ArrayULong, "uint64"},    {Value::ULong, "uint64"},
-      {Value::ArrayFloat, "float32"},   {Value::Float, "float32"},
-      {Value::ArrayDouble, "float64"},  {Value::Double, "float64"},
+      {Value::ArrayByte, "int8"},      {Value::Byte, "int8"},
+      {Value::ArrayUByte, "uint8"},    {Value::UByte, "uint8"},
+      {Value::ArrayShort, "int16"},    {Value::Short, "int16"},
+      {Value::ArrayUShort, "uint16"},  {Value::UShort, "uint16"},
+      {Value::ArrayInt, "int32"},      {Value::Int, "int32"},
+      {Value::ArrayUInt, "uint32"},    {Value::UInt, "uint32"},
+      {Value::ArrayLong, "int64"},     {Value::Long, "int64"},
+      {Value::ArrayULong, "uint64"},   {Value::ULong, "uint64"},
+      {Value::ArrayFloat, "float32"},  {Value::Float, "float32"},
+      {Value::ArrayDouble, "float64"}, {Value::Double, "float64"},
   };
   std::unordered_map<f144_Writer::Type, std::string> ConfigTypeString{
       {f144_Writer::Type::int8, "int8"},
@@ -276,7 +276,7 @@ void f144_Writer::write(FlatbufferMessage const &Message) {
     CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements,
                                                  MetaData.getValue());
     break;
-    case Value::Short:
+  case Value::Short:
     CValuesInfo =
         appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
     break;
@@ -304,8 +304,8 @@ void f144_Writer::write(FlatbufferMessage const &Message) {
                                                   MetaData.getValue());
     break;
   case Value::UInt:
-    CValuesInfo = appendScalarData<const std::uint32_t, UInt>(
-        Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::uint32_t, UInt>(Values, LogDataMessage);
     break;
   case Value::ArrayLong:
     extractArrayInfo();
@@ -322,8 +322,8 @@ void f144_Writer::write(FlatbufferMessage const &Message) {
                                                   MetaData.getValue());
     break;
   case Value::ULong:
-    CValuesInfo = appendScalarData<const std::uint64_t, ULong>(
-        Values, LogDataMessage);
+    CValuesInfo =
+        appendScalarData<const std::uint64_t, ULong>(Values, LogDataMessage);
     break;
   case Value::ArrayFloat:
     extractArrayInfo();
@@ -331,8 +331,7 @@ void f144_Writer::write(FlatbufferMessage const &Message) {
                                           MetaData.getValue());
     break;
   case Value::Float:
-    CValuesInfo =
-        appendScalarData<const float, Float>(Values, LogDataMessage);
+    CValuesInfo = appendScalarData<const float, Float>(Values, LogDataMessage);
     break;
   case Value::ArrayDouble:
     extractArrayInfo();
@@ -391,4 +390,4 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
 static WriterModule::Registry::Registrar<f144_Writer> RegisterWriter("f144",
                                                                      "f144");
 
-} // namespace WriterModule::scal
+} // namespace WriterModule::f144_logdata
