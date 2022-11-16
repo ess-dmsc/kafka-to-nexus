@@ -9,22 +9,23 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include <ep01_epics_connection_generated.h>
+#include <al00_alarm_generated.h>
 
-#include "AccessMessageMetadata/pvCn/pvCn_Extractor.h"
-#include "WriterModule/pvCn/pvCn_Writer.h"
+#include "AccessMessageMetadata/al00/al00_Extractor.h"
+#include "WriterModule/al00/al00_Writer.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 
 static std::unique_ptr<std::uint8_t[]>
-GenerateConStatusFlatbufferData(size_t &BufferSize) {
+GenerateAlarmFlatbufferData(size_t &BufferSize) {
   flatbuffers::FlatBufferBuilder builder;
   auto FBNameStringOffset = builder.CreateString("SomeTestString");
-  EpicsPVConnectionInfoBuilder MessageBuilder(builder);
+  AlarmBuilder MessageBuilder(builder);
   MessageBuilder.add_source_name(FBNameStringOffset);
-  MessageBuilder.add_timestamp(1655901153732343040);
-  MessageBuilder.add_status(ConnectionInfo::DESTROYED);
-  builder.Finish(MessageBuilder.Finish(), EpicsPVConnectionInfoIdentifier());
+  MessageBuilder.add_timestamp(1655901153832343040);
+  MessageBuilder.add_severity(Severity::MAJOR);
+  MessageBuilder.add_message(FBNameStringOffset);
+  builder.Finish(MessageBuilder.Finish(), AlarmIdentifier());
   BufferSize = builder.GetSize();
   auto RawBuffer = std::make_unique<std::uint8_t[]>(BufferSize);
   std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), BufferSize);
@@ -34,13 +35,13 @@ GenerateConStatusFlatbufferData(size_t &BufferSize) {
 // using FBMsg = FileWriter::FlatbufferMessage;
 using namespace WriterModule;
 
-class EPICS_ConStatusWriter : public ::testing::Test {
+class EPICS_AlarmWriter : public ::testing::Test {
 public:
   void SetUp() override {
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File->hdfGroup();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    setExtractorModule<AccessMessageMetadata::ep01_Extractor>("ep01");
+    setExtractorModule<AccessMessageMetadata::al00_Extractor>("al00");
   };
 
   std::string TestFileName{"SomeTestFile.hdf5"};
@@ -52,53 +53,61 @@ public:
 
 using WriterModule::InitResult;
 
-TEST_F(EPICS_ConStatusWriter, InitFile) {
+TEST_F(EPICS_AlarmWriter, InitFile) {
   {
-    ep01::ep01_Writer Writer;
+    WriterModule::al00::al00_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
-  EXPECT_TRUE(TestGroup.has_dataset("connection_status_time"));
-  EXPECT_TRUE(TestGroup.has_dataset("connection_status"));
+  EXPECT_TRUE(TestGroup.has_dataset("alarm_severity"));
+  EXPECT_TRUE(TestGroup.has_dataset("alarm_message"));
+  EXPECT_TRUE(TestGroup.has_dataset("alarm_time"));
 }
 
-TEST_F(EPICS_ConStatusWriter, ReopenFileFailure) {
-  ep01::ep01_Writer Writer;
+TEST_F(EPICS_AlarmWriter, ReopenFileFailure) {
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_FALSE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
-TEST_F(EPICS_ConStatusWriter, InitFileFail) {
-  ep01::ep01_Writer Writer;
+TEST_F(EPICS_AlarmWriter, InitFileFail) {
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_FALSE(Writer.init_hdf(UsedGroup) == InitResult::OK);
 }
 
-TEST_F(EPICS_ConStatusWriter, ReopenFileSuccess) {
-  ep01::ep01_Writer Writer;
+TEST_F(EPICS_AlarmWriter, ReopenFileSuccess) {
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
-TEST_F(EPICS_ConStatusWriter, WriteDataOnce) {
+TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   size_t BufferSize{0};
-  auto Buffer = GenerateConStatusFlatbufferData(BufferSize);
-  ep01::ep01_Writer Writer;
+  auto Buffer = GenerateAlarmFlatbufferData(BufferSize);
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto ConStatusTimeDataset = UsedGroup.get_dataset("connection_status_time");
-  auto ConStatusDataset = UsedGroup.get_dataset("connection_status");
-  auto FbPointer = GetEpicsPVConnectionInfo(TestMsg.data());
+  auto AlarmMsgDataset = UsedGroup.get_dataset("alarm_message");
+  auto AlarmSeverityDataset = UsedGroup.get_dataset("alarm_severity");
+  auto AlarmTimeDataset = UsedGroup.get_dataset("alarm_time");
+  auto FbPointer = GetAlarm(TestMsg.data());
 
   std::vector<std::int64_t> Timestamp(1);
-  EXPECT_NO_THROW(ConStatusTimeDataset.read(Timestamp));
+  EXPECT_NO_THROW(AlarmTimeDataset.read(Timestamp));
   EXPECT_EQ(FbPointer->timestamp(), Timestamp[0]);
 
-  std::vector<std::string> ConStatus(1);
-  EXPECT_NO_THROW(ConStatusDataset.read(ConStatus));
-  ConStatus[0].erase(ConStatus[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameConnectionInfo(FbPointer->status())),
-            ConStatus[0]);
+  std::vector<std::string> AlarmSeverity(1);
+  EXPECT_NO_THROW(AlarmSeverityDataset.read(AlarmSeverity));
+  AlarmSeverity[0].erase(AlarmSeverity[0].find('\0'));
+  EXPECT_EQ(std::string(EnumNameSeverity(FbPointer->severity())),
+            AlarmSeverity[0]);
+
+  std::vector<std::string> AlarmMsg(1);
+  EXPECT_NO_THROW(AlarmMsgDataset.read(AlarmMsg));
+  AlarmMsg[0].erase(AlarmMsg[0].find('\0'));
+  EXPECT_EQ(FbPointer->message()->str(),
+            AlarmMsg[0]);
 }
