@@ -158,7 +158,7 @@ def publish_al00_message(
         severity=severity,
         source=source_name,
         timestamp_ns=int(timestamp.timestamp() * 1e9),
-        message=alarm_msg
+        message=alarm_msg,
     )
     publish_message(producer, message, topic, timestamp)
 

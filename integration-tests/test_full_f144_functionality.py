@@ -76,9 +76,7 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     connection_map = {
         getattr(ConnectionInfo, a): a for a in dir(ConnectionInfo) if a[0:2] != "__"
     }
-    severity_map = {
-        getattr(Severity, a): a for a in dir(Severity) if a[0:2] != "__"
-    }
+    severity_map = {getattr(Severity, a): a for a in dir(Severity) if a[0:2] != "__"}
 
     with OpenNexusFile(file_path) as file:
         assert file["entry/scal_data/minimum_value"][0] == Min
