@@ -6,16 +6,14 @@ from confluent_kafka import Consumer, Producer
 
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 import streaming_data_types.logdata_f142
-from streaming_data_types.epics_pv_scalar_data_scal import serialise_scal
-from streaming_data_types.epics_pv_conn_status_pvCn import (
-    serialise_pvCn,
+from streaming_data_types.logdata_f144 import serialise_f144
+from streaming_data_types.epics_connection_ep01 import (
+    serialise_ep01,
     ConnectionInfo,
 )
-from streaming_data_types.epics_pv_alarm_status_pvAl import (
-    serialise_pvAl,
-    AlarmState,
-    AlarmSeverity,
-    CAAlarmState,
+from streaming_data_types.alarm_al00 import (
+    serialise_al00,
+    Severity,
 )
 
 try:
@@ -118,50 +116,49 @@ def publish_f142_message(
     publish_message(producer, f142_message, topic, timestamp, flush)
 
 
-def publish_scal_message(
+def publish_f144_message(
     producer: Producer,
     topic: str,
     timestamp: datetime,
     value: Union[float, np.ndarray] = 42,
     source_name: str = "fw-test-helpers",
 ):
-    message = serialise_scal(
+    message = serialise_f144(
         value=value,
         source_name=source_name,
-        timestamp=timestamp,
+        timestamp_unix_ns=int(timestamp.timestamp() * 1e9),
     )
     publish_message(producer, message, topic, timestamp)
 
 
-def publish_pvCn_message(
+def publish_ep01_message(
     producer: Producer,
     topic: str,
     timestamp: datetime,
     status: ConnectionInfo,
     source_name: str = "fw-test-helpers",
 ):
-    message = serialise_pvCn(
+    message = serialise_ep01(
         status=status,
         source_name=source_name,
-        timestamp=timestamp,
+        timestamp_ns=int(timestamp.timestamp() * 1e9),
     )
     publish_message(producer, message, topic, timestamp)
 
 
-def publish_pvAl_message(
+def publish_al00_message(
     producer: Producer,
     topic: str,
     timestamp: datetime,
-    state: AlarmState,
-    severity: AlarmSeverity,
+    severity: Severity,
+    alarm_msg: str,
     source_name: str = "fw-test-helpers",
 ):
-    message = serialise_pvAl(
-        ca_state=CAAlarmState.NO_ALARM,
-        state=state,
+    message = serialise_al00(
         severity=severity,
-        source_name=source_name,
-        timestamp=timestamp,
+        source=source_name,
+        timestamp_ns=int(timestamp.timestamp() * 1e9),
+        message=alarm_msg
     )
     publish_message(producer, message, topic, timestamp)
 

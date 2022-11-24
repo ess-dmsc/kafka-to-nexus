@@ -9,7 +9,7 @@
           "name": "scal_data",
           "children": [
             {
-              "module": "scal",
+              "module": "f144",
               "config": {
                 "type": "int32",
                 "topic": "TEST_scalData",

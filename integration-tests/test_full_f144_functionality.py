@@ -1,11 +1,10 @@
 from helpers.nexushelpers import OpenNexusFile
 from helpers.kafkahelpers import (
     create_producer,
-    publish_scal_message,
-    publish_pvAl_message,
-    AlarmState,
-    AlarmSeverity,
-    publish_pvCn_message,
+    publish_f144_message,
+    publish_al00_message,
+    Severity,
+    publish_ep01_message,
     ConnectionInfo,
 )
 from datetime import datetime, timedelta
@@ -19,7 +18,7 @@ from helpers.writer import (
 import numpy as np
 
 
-def test_scal(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
+def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer(kafka_address)
@@ -29,18 +28,18 @@ def test_scal(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
 
     start_time = datetime(year=2020, month=6, day=12, hour=11, minute=1, second=35)
     step_time = timedelta(seconds=10)
-    alarm_state = AlarmState.DEVICE
-    alarm_severity = AlarmSeverity.MAJOR
-    publish_pvAl_message(
+    alarm_severity = Severity.MAJOR
+    alarm_msg = "Some alarm message you might find informative."
+    publish_al00_message(
         producer,
         topic=data_topic,
         timestamp=start_time + step_time,
-        state=alarm_state,
         severity=alarm_severity,
+        alarm_msg=alarm_msg,
         source_name=source_name,
     )
     connection_status = ConnectionInfo.REMOTE_ERROR
-    publish_pvCn_message(
+    publish_ep01_message(
         producer,
         topic=data_topic,
         timestamp=start_time + step_time,
@@ -52,7 +51,7 @@ def test_scal(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     Max = 15
     values = (Min, Mean, Max)
     for i, c_value in enumerate(values):
-        publish_scal_message(
+        publish_f144_message(
             producer,
             data_topic,
             timestamp=start_time + step_time * (i + 1),
@@ -61,7 +60,7 @@ def test_scal(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
         )
 
     stop_time = start_time + timedelta(seconds=148)
-    with open("commands/nexus_structure_scal.json", "r") as f:
+    with open("commands/nexus_structure_f144.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
@@ -77,19 +76,16 @@ def test_scal(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     connection_map = {
         getattr(ConnectionInfo, a): a for a in dir(ConnectionInfo) if a[0:2] != "__"
     }
-    alarm_map = {getattr(AlarmState, a): a for a in dir(AlarmState) if a[0:2] != "__"}
     severity_map = {
-        getattr(AlarmSeverity, a): a for a in dir(AlarmSeverity) if a[0:2] != "__"
+        getattr(Severity, a): a for a in dir(Severity) if a[0:2] != "__"
     }
 
     with OpenNexusFile(file_path) as file:
         assert file["entry/scal_data/minimum_value"][0] == Min
         assert file["entry/scal_data/maximum_value"][0] == Max
         assert file["entry/scal_data/average_value"][0] == Mean
+        assert file["entry/scal_data/alarm_message"][0].decode() == alarm_msg
         assert (file["entry/scal_data/value"][:].flatten() == np.array(values)).all()
-        assert (
-            file["entry/scal_data/alarm_status"][0].decode() == alarm_map[alarm_state]
-        )
         assert (
             file["entry/scal_data/alarm_severity"][0].decode()
             == severity_map[alarm_severity]

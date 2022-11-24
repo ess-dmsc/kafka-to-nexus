@@ -44,7 +44,7 @@ public:
 
   f144_Writer()
       : WriterModule::Base(false, "NXlog",
-                           {"epics_con_status", "epics_alarm_status"}),
+                           {"epics_con_status", "alarm_status"}),
         MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
         MetaDataMean("", "average_value") {}
   ~f144_Writer() override = default;
