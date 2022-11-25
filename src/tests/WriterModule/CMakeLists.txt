@@ -6,6 +6,7 @@ set(writer_module_SRC
     senv_WriterTests.cpp
     ns10_WriterTests.cpp
     f142_WriterTests.cpp
+    f144_WriterTests.cpp
     ep00_WriterTests.cpp
     TemplateWriterTests.cpp
     WriterRegistrationTests.cpp
