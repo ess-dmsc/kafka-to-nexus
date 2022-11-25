@@ -238,8 +238,9 @@ public:
 };
 
 template <class ValFuncType>
-std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
-    ValFuncType ValueFunc, Value ValueTypeId, std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
+                              std::uint64_t Timestamp) {
   auto Builder = flatbuffers::FlatBufferBuilder();
   auto SourceNameOffset = Builder.CreateString("SomeSourceName");
   auto ValueOffset = ValueFunc(Builder);
@@ -256,8 +257,8 @@ std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
   return {std::move(ReturnBuffer), BufferSize};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessage(
-    double Value, std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
   auto ValueFunc = [Value](auto &Builder) {
     DoubleBuilder ValueBuilder(Builder);
     ValueBuilder.add_value(Value);
