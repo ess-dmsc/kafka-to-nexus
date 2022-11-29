@@ -237,34 +237,36 @@ public:
   hdf5::node::Group RootGroup;
 };
 
-template <class ValFuncType>
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
-generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
-                              std::uint64_t Timestamp) {
-  auto Builder = flatbuffers::FlatBufferBuilder();
-  auto SourceNameOffset = Builder.CreateString("SomeSourceName");
-  auto ValueOffset = ValueFunc(Builder);
-  LogDataBuilder LogDataBuilder(Builder);
-  LogDataBuilder.add_value(ValueOffset);
-  LogDataBuilder.add_timestamp(Timestamp);
-  LogDataBuilder.add_source_name(SourceNameOffset);
-  LogDataBuilder.add_value_type(ValueTypeId);
+namespace f144_schema {
+  template <class ValFuncType>
+  std::pair<std::unique_ptr<uint8_t[]>, size_t>
+  generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
+                                std::uint64_t Timestamp) {
+    auto Builder = flatbuffers::FlatBufferBuilder();
+    auto SourceNameOffset = Builder.CreateString("SomeSourceName");
+    auto ValueOffset = ValueFunc(Builder);
+    LogDataBuilder LogDataBuilder(Builder);
+    LogDataBuilder.add_value(ValueOffset);
+    LogDataBuilder.add_timestamp(Timestamp);
+    LogDataBuilder.add_source_name(SourceNameOffset);
+    LogDataBuilder.add_value_type(ValueTypeId);
+    
+    FinishLogDataBuffer(Builder, LogDataBuilder.Finish());
+    size_t BufferSize = Builder.GetSize();
+    auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
+    std::memcpy(ReturnBuffer.get(), Builder.GetBufferPointer(), BufferSize);
+    return {std::move(ReturnBuffer), BufferSize};
+  }
 
-  FinishLogDataBuffer(Builder, LogDataBuilder.Finish());
-  size_t BufferSize = Builder.GetSize();
-  auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
-  std::memcpy(ReturnBuffer.get(), Builder.GetBufferPointer(), BufferSize);
-  return {std::move(ReturnBuffer), BufferSize};
-}
-
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
-generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
-  auto ValueFunc = [Value](auto &Builder) {
-    DoubleBuilder ValueBuilder(Builder);
-    ValueBuilder.add_value(Value);
-    return ValueBuilder.Finish().Union();
-  };
-  return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp);
+  std::pair<std::unique_ptr<uint8_t[]>, size_t>
+  generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
+    auto ValueFunc = [Value](auto &Builder) {
+      DoubleBuilder ValueBuilder(Builder);
+      ValueBuilder.add_value(Value);
+      return ValueBuilder.Finish().Union();
+    };
+    return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp);
+  }
 }
 
 TEST_F(f144WriteData, ConfigUnitsAttributeOnValueDataset) {
@@ -322,7 +324,7 @@ TEST_F(f144WriteData, WriteOneElement) {
   TestWriter.reopen(RootGroup);
   double ElementValue{3.14};
   std::uint64_t Timestamp{11};
-  auto FlatbufferData = generateFlatbufferMessage(ElementValue, Timestamp);
+  auto FlatbufferData = f144_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
@@ -346,7 +348,7 @@ TEST_F(f144WriteData, WriteOneDefaultValueElement) {
   // caused a bug in the past.
   double ElementValue{0.0};
   std::uint64_t Timestamp{11};
-  auto FlatbufferData = generateFlatbufferMessage(ElementValue, Timestamp);
+  auto FlatbufferData = f144_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
@@ -360,17 +362,18 @@ TEST_F(f144WriteData, WriteOneDefaultValueElement) {
   TestWriter.Timestamp.read(WrittenTimes);
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
-
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
-generateFlatbufferArrayMessage(std::vector<double> Value, uint64_t Timestamp) {
-  auto ValueFunc = [Value](auto &Builder) {
-    auto VectorOffset = Builder.CreateVector(Value);
-    ArrayDoubleBuilder ValueBuilder(Builder);
-    ValueBuilder.add_value(VectorOffset);
-    return ValueBuilder.Finish().Union();
-  };
-  return generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble,
-                                       Timestamp);
+namespace f144_schema {
+  std::pair<std::unique_ptr<uint8_t[]>, size_t>
+  generateFlatbufferArrayMessage(std::vector<double> Value, uint64_t Timestamp) {
+    auto ValueFunc = [Value](auto &Builder) {
+      auto VectorOffset = Builder.CreateVector(Value);
+      ArrayDoubleBuilder ValueBuilder(Builder);
+      ValueBuilder.add_value(VectorOffset);
+      return ValueBuilder.Finish().Union();
+    };
+    return generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble,
+                                         Timestamp);
+  }
 }
 
 TEST_F(f144WriteData, WriteOneArray) {
@@ -380,7 +383,7 @@ TEST_F(f144WriteData, WriteOneArray) {
   std::vector<double> ElementValues{3.14, 4.5, 3.1};
   uint64_t Timestamp{12};
   auto FlatbufferData =
-      generateFlatbufferArrayMessage(ElementValues, Timestamp);
+    f144_schema::generateFlatbufferArrayMessage(ElementValues, Timestamp);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 3}));
@@ -398,7 +401,7 @@ TEST_F(f144WriteData, WriteCueIndex) {
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 1.234};
   for (unsigned int i = 0; i < 10; ++i) {
-    auto FlatbufferData = generateFlatbufferArrayMessage(ElementValues, i + 10);
+    auto FlatbufferData = f144_schema::generateFlatbufferArrayMessage(ElementValues, i + 10);
     TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                    FlatbufferData.second));
   }
@@ -428,7 +431,7 @@ TEST_F(f144WriteData, WriteNoCueIndex) {
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 1.234};
   for (unsigned int i = 0; i < 10; ++i) {
-    auto FlatbufferData = generateFlatbufferArrayMessage(ElementValues, i + 10);
+    auto FlatbufferData = f144_schema::generateFlatbufferArrayMessage(ElementValues, i + 10);
     TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                    FlatbufferData.second));
   }
