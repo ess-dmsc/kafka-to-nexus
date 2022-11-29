@@ -249,45 +249,45 @@ struct AlarmInfo {
 };
 
 namespace f142_schema {
-  template <class ValFuncType>
-  std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
-                                                                              ValFuncType ValueFunc, Value ValueTypeId, std::uint64_t Timestamp,
-                                                                              std::optional<AlarmInfo> EpicsAlarmChange = std::nullopt) {
-    auto Builder = flatbuffers::FlatBufferBuilder();
-    auto SourceNameOffset = Builder.CreateString("SomeSourceName");
-    auto ValueOffset = ValueFunc(Builder);
-    LogDataBuilder LogDataBuilder(Builder);
-    LogDataBuilder.add_value(ValueOffset);
-    LogDataBuilder.add_timestamp(Timestamp);
-    LogDataBuilder.add_source_name(SourceNameOffset);
-    LogDataBuilder.add_value_type(ValueTypeId);
-    
-    if (EpicsAlarmChange) {
-      auto AlarmChange = *EpicsAlarmChange;
-      LogDataBuilder.add_status(AlarmChange.Status);
-      LogDataBuilder.add_severity(AlarmChange.Severity);
-    }
-    
-    FinishLogDataBuffer(Builder, LogDataBuilder.Finish());
-    size_t BufferSize = Builder.GetSize();
-    auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
-    std::memcpy(ReturnBuffer.get(), Builder.GetBufferPointer(), BufferSize);
-    return {std::move(ReturnBuffer), BufferSize};
+template <class ValFuncType>
+std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
+    ValFuncType ValueFunc, Value ValueTypeId, std::uint64_t Timestamp,
+    std::optional<AlarmInfo> EpicsAlarmChange = std::nullopt) {
+  auto Builder = flatbuffers::FlatBufferBuilder();
+  auto SourceNameOffset = Builder.CreateString("SomeSourceName");
+  auto ValueOffset = ValueFunc(Builder);
+  LogDataBuilder LogDataBuilder(Builder);
+  LogDataBuilder.add_value(ValueOffset);
+  LogDataBuilder.add_timestamp(Timestamp);
+  LogDataBuilder.add_source_name(SourceNameOffset);
+  LogDataBuilder.add_value_type(ValueTypeId);
+
+  if (EpicsAlarmChange) {
+    auto AlarmChange = *EpicsAlarmChange;
+    LogDataBuilder.add_status(AlarmChange.Status);
+    LogDataBuilder.add_severity(AlarmChange.Severity);
   }
 
-  std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessage(
-                                                                          double Value, std::uint64_t Timestamp,
-                                                                          std::optional<AlarmInfo> EpicsAlarmChange = std::nullopt) {
-    auto ValueFunc = [Value](auto &Builder) {
-      DoubleBuilder ValueBuilder(Builder);
-      ValueBuilder.add_value(Value);
-      return ValueBuilder.Finish().Union();
-    };
-    return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp,
-                                         std::move(EpicsAlarmChange));
+  FinishLogDataBuffer(Builder, LogDataBuilder.Finish());
+  size_t BufferSize = Builder.GetSize();
+  auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
+  std::memcpy(ReturnBuffer.get(), Builder.GetBufferPointer(), BufferSize);
+  return {std::move(ReturnBuffer), BufferSize};
 }
 
+std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessage(
+    double Value, std::uint64_t Timestamp,
+    std::optional<AlarmInfo> EpicsAlarmChange = std::nullopt) {
+  auto ValueFunc = [Value](auto &Builder) {
+    DoubleBuilder ValueBuilder(Builder);
+    ValueBuilder.add_value(Value);
+    return ValueBuilder.Finish().Union();
+  };
+  return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp,
+                                       std::move(EpicsAlarmChange));
 }
+
+} // namespace f142_schema
 
 TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
   f142_WriterStandIn TestWriter;
@@ -344,7 +344,8 @@ TEST_F(f142WriteData, WriteOneElement) {
   TestWriter.reopen(RootGroup);
   double ElementValue{3.14};
   std::uint64_t Timestamp{11};
-  auto FlatbufferData = f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
+  auto FlatbufferData =
+      f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
@@ -368,7 +369,8 @@ TEST_F(f142WriteData, WriteOneDefaultValueElement) {
   // caused a bug in the past.
   double ElementValue{0.0};
   std::uint64_t Timestamp{11};
-  auto FlatbufferData = f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
+  auto FlatbufferData =
+      f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
@@ -391,7 +393,8 @@ generateFlatbufferArrayMessage(std::vector<double> Value, uint64_t Timestamp) {
     ValueBuilder.add_value(VectorOffset);
     return ValueBuilder.Finish().Union();
   };
-  return f142_schema::generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble, Timestamp);
+  return f142_schema::generateFlatbufferMessageBase(
+      ValueFunc, Value::ArrayDouble, Timestamp);
 }
 
 TEST_F(f142WriteData, WriteOneArray) {
