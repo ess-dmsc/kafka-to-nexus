@@ -23,7 +23,7 @@
 #include <vector>
 
 namespace WriterModule {
-namespace f144_logdata {
+namespace f144 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 class f144_Writer : public WriterModule::Base {
@@ -44,7 +44,7 @@ public:
 
   f144_Writer()
       : WriterModule::Base(false, "NXlog",
-                           {"epics_con_status", "alarm_status"}),
+                           {"epics_con_info", "alarm_info"}),
         MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
         MetaDataMean("", "average_value") {}
   ~f144_Writer() override = default;
@@ -94,5 +94,5 @@ protected:
   bool HasCheckedMessageType{false};
 };
 
-} // namespace f144_logdata
+} // namespace f144
 } // namespace WriterModule

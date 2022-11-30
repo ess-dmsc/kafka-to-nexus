@@ -16,7 +16,7 @@
 #include <cctype>
 #include <f144_logdata_generated.h>
 
-namespace WriterModule::f144_logdata {
+namespace WriterModule::f144 {
 
 using nlohmann::json;
 
@@ -109,7 +109,7 @@ InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("scal writer could not init_hdf hdf_parent: {}  trace: {}",
+    LOG_ERROR("f144 writer could not init_hdf hdf_parent: {}  trace: {}",
               static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
@@ -220,7 +220,7 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
   };
   try {
     if (TypeComparison.at(MsgType) != ConfigType) {
-      LOG_WARN("Configured data type ({}) is not the same as the scal message "
+      LOG_WARN("Configured data type ({}) is not the same as the f144 message "
                "type ({}).",
                ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
     }
@@ -344,7 +344,7 @@ void f144_Writer::write(FlatbufferMessage const &Message) {
     break;
   default:
     throw WriterModule::WriterException(
-        "Unknown data type in scal flatbuffer.");
+        "Unknown data type in f144 flatbuffer.");
   }
 
   ++NrOfWrites;
@@ -390,4 +390,4 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
 static WriterModule::Registry::Registrar<f144_Writer> RegisterWriter("f144",
                                                                      "f144");
 
-} // namespace WriterModule::f144_logdata
+} // namespace WriterModule::f144

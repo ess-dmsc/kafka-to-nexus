@@ -48,7 +48,7 @@ void ep01_Writer::write(FileWriter::FlatbufferMessage const &Message) {
 }
 
 static WriterModule::Registry::Registrar<ep01_Writer>
-    RegisterWriter("ep01", "epics_con_status");
+    RegisterWriter("ep01", "epics_con_info");
 
 } // namespace ep01
 } // namespace WriterModule
