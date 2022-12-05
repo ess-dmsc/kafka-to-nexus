@@ -26,8 +26,7 @@ using namespace WriterModule::f144;
 class f144Init : public ::testing::Test {
 public:
   void SetUp() override {
-    TestFile =
-        HDFFileTestHelper::createInMemoryTestFile(TestFileName, false);
+    TestFile = HDFFileTestHelper::createInMemoryTestFile(TestFileName, false);
     RootGroup = TestFile->hdfGroup();
     setExtractorModule<AccessMessageMetadata::f144_Extractor>("f144");
   }
@@ -225,40 +224,40 @@ TEST_F(f144ConfigParse, DataTypes) {
 }
 
 namespace f144_schema {
-  template <class ValFuncType>
-  std::pair<std::unique_ptr<uint8_t[]>, size_t>
-  generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
-                                std::int64_t Timestamp) {
-    auto Builder = flatbuffers::FlatBufferBuilder();
-    auto SourceNameOffset = Builder.CreateString("SomeSourceName");
-    auto ValueOffset = ValueFunc(Builder);
-    f144_LogDataBuilder LogDataBuilder(Builder);
-    LogDataBuilder.add_value(ValueOffset);
-    LogDataBuilder.add_timestamp(Timestamp);
-    LogDataBuilder.add_source_name(SourceNameOffset);
-    LogDataBuilder.add_value_type(ValueTypeId);
-    Finishf144_LogDataBuffer(Builder, LogDataBuilder.Finish());
-    size_t BufferSize = Builder.GetSize();
-    auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
-    std::memcpy(ReturnBuffer.get(), Builder.GetBufferPointer(), BufferSize);
-    return {std::move(ReturnBuffer), BufferSize};
-  }
+template <class ValFuncType>
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
+                              std::int64_t Timestamp) {
+  auto Builder = flatbuffers::FlatBufferBuilder();
+  auto SourceNameOffset = Builder.CreateString("SomeSourceName");
+  auto ValueOffset = ValueFunc(Builder);
+  f144_LogDataBuilder LogDataBuilder(Builder);
+  LogDataBuilder.add_value(ValueOffset);
+  LogDataBuilder.add_timestamp(Timestamp);
+  LogDataBuilder.add_source_name(SourceNameOffset);
+  LogDataBuilder.add_value_type(ValueTypeId);
+  Finishf144_LogDataBuffer(Builder, LogDataBuilder.Finish());
+  size_t BufferSize = Builder.GetSize();
+  auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
+  std::memcpy(ReturnBuffer.get(), Builder.GetBufferPointer(), BufferSize);
+  return {std::move(ReturnBuffer), BufferSize};
+}
 
-  std::pair<std::unique_ptr<uint8_t[]>, size_t>
-  generateFlatbufferMessage(double Value, std::int64_t Timestamp) {
-    auto ValueFunc = [Value](auto &Builder) {
-      return CreateDouble(Builder, Value).Union();
-    };
-    return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp);
-  }
-  std::pair<std::unique_ptr<uint8_t[]>, size_t>
-  generateFlatbufferArrayMessage(std::vector<double> Value, int64_t Timestamp) {
-    auto ValueFunc = [Value](auto &Builder) {
-      return Builder.CreateVector(Value).Union();
-    };
-    return generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble,
-                                         Timestamp);
-  }
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferMessage(double Value, std::int64_t Timestamp) {
+  auto ValueFunc = [Value](auto &Builder) {
+    return CreateDouble(Builder, Value).Union();
+  };
+  return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp);
+}
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferArrayMessage(std::vector<double> Value, int64_t Timestamp) {
+  auto ValueFunc = [Value](auto &Builder) {
+    return Builder.CreateVector(Value).Union();
+  };
+  return generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble,
+                                       Timestamp);
+}
 } // namespace f144_schema
 
 TEST_F(f144Init, ConfigUnitsAttributeOnValueDataset) {
@@ -318,7 +317,8 @@ TEST_F(f144Init, WriteOneElement) {
   std::int64_t Timestamp{11};
   auto FlatbufferData =
       f144_schema::generateFlatbufferMessage(ElementValue, Timestamp);
-  FileWriter::FlatbufferMessage FlatbufferMsg(FlatbufferData.first.get(), FlatbufferData.second);
+  FileWriter::FlatbufferMessage FlatbufferMsg(FlatbufferData.first.get(),
+                                              FlatbufferData.second);
   EXPECT_EQ(FlatbufferMsg.getFlatbufferID(), "f144");
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
