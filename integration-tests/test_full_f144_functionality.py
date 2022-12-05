@@ -49,15 +49,14 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     Min = 5
     Mean = 10
     Max = 15
-    values = (Min, Mean, Max)
-    for i, c_value in enumerate(values):
-        publish_f144_message(
-            producer,
-            data_topic,
-            timestamp=start_time + step_time * (i + 1),
-            value=c_value,
-            source_name=source_name,
-        )
+    values = np.array([Min, Mean, Max])
+    publish_f144_message(
+        producer,
+        data_topic,
+        timestamp=start_time + step_time,
+        value=values,
+        source_name=source_name,
+    )
 
     stop_time = start_time + timedelta(seconds=148)
     with open("commands/nexus_structure_f144.json", "r") as f:

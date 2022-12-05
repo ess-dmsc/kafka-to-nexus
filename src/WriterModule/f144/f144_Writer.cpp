@@ -158,14 +158,14 @@ ValuesInformation appendData(DatasetType &Dataset, const void *Pointer,
 }
 
 template <typename FBValueType, typename ReturnType>
-ReturnType extractScalarValue(const LogData *LogDataMessage) {
+ReturnType extractScalarValue(const f144_LogData *LogDataMessage) {
   auto LogValue = LogDataMessage->value_as<FBValueType>();
   return LogValue->value();
 }
 
 template <typename DataType, typename ValueType, class DatasetType>
 ValuesInformation appendScalarData(DatasetType &Dataset,
-                                   const LogData *LogDataMessage) {
+                                   const f144_LogData *LogDataMessage) {
   auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
   Dataset.appendArray(hdf5::ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
   return {double(ScalarValue), double(ScalarValue), double(ScalarValue), 1};
@@ -230,7 +230,7 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
 }
 
 void f144_Writer::write(FlatbufferMessage const &Message) {
-  auto LogDataMessage = GetLogData(Message.data());
+  auto LogDataMessage = Getf144_LogData(Message.data());
   size_t NrOfElements{1};
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();
