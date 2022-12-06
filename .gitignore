@@ -11,3 +11,4 @@ pipeline.gdsl
 /integration-tests/output-files/*.nxs
 venv
 *.log
+*.DS_Store

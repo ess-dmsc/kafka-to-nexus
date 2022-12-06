@@ -7,6 +7,8 @@
 - The case when messages are not received from a specific Kafka topic does not make the file writer unsubscribe from the topic anymore. Instead a warning is provided in the file writer log.
 - Updated Conan package dependencies:
   - librdkakfa (1.9.2)
+- Adding _f144_, _al00_ and _ep01_ writer modules. For more information on the schemas mentioned,
+  see ([schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 
 
 ## Version 5.2.0: Kafka improvements and other fixes

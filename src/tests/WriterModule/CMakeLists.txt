@@ -9,7 +9,7 @@ set(writer_module_SRC
     ep00_WriterTests.cpp
     TemplateWriterTests.cpp
     WriterRegistrationTests.cpp
-        scal_WriterTests.cpp pvAl_WriterTests.cpp pvCn_WriterTests.cpp)
+        f144_WriterTests.cpp al00_WriterTests.cpp ep01_WriterTests.cpp)
 
 add_library(writer_module OBJECT ${writer_module_SRC})
 target_include_directories(writer_module PRIVATE .. ../../)

@@ -22,6 +22,16 @@ public:
       : FixedSizeString(Parent, "alarm_status", CMode, StringSize, ChunkSize){};
 };
 
+/// \brief Represents a dataset with the name "alarm_message".
+class AlarmMsg : public FixedSizeString {
+public:
+  AlarmMsg() = default;
+  AlarmMsg(hdf5::node::Group const &Parent, Mode CMode, size_t StringSize = 200,
+           size_t ChunkSize = 1024)
+      : FixedSizeString(Parent, "alarm_message", CMode, StringSize,
+                        ChunkSize){};
+};
+
 /// \brief Represents a dataset with the name "alarm_severity".
 class AlarmSeverity : public FixedSizeString {
 public:
