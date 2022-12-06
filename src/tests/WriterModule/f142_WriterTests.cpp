@@ -248,6 +248,7 @@ struct AlarmInfo {
   AlarmSeverity Severity;
 };
 
+namespace f142_schema {
 template <class ValFuncType>
 std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessageBase(
     ValFuncType ValueFunc, Value ValueTypeId, std::uint64_t Timestamp,
@@ -285,6 +286,8 @@ std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessage(
   return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp,
                                        std::move(EpicsAlarmChange));
 }
+
+} // namespace f142_schema
 
 TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
   f142_WriterStandIn TestWriter;
@@ -341,7 +344,8 @@ TEST_F(f142WriteData, WriteOneElement) {
   TestWriter.reopen(RootGroup);
   double ElementValue{3.14};
   std::uint64_t Timestamp{11};
-  auto FlatbufferData = generateFlatbufferMessage(ElementValue, Timestamp);
+  auto FlatbufferData =
+      f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
@@ -365,7 +369,8 @@ TEST_F(f142WriteData, WriteOneDefaultValueElement) {
   // caused a bug in the past.
   double ElementValue{0.0};
   std::uint64_t Timestamp{11};
-  auto FlatbufferData = generateFlatbufferMessage(ElementValue, Timestamp);
+  auto FlatbufferData =
+      f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
@@ -388,8 +393,8 @@ generateFlatbufferArrayMessage(std::vector<double> Value, uint64_t Timestamp) {
     ValueBuilder.add_value(VectorOffset);
     return ValueBuilder.Finish().Union();
   };
-  return generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble,
-                                       Timestamp);
+  return f142_schema::generateFlatbufferMessageBase(
+      ValueFunc, Value::ArrayDouble, Timestamp);
 }
 
 TEST_F(f142WriteData, WriteOneArray) {
@@ -471,7 +476,7 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   uint64_t Timestamp{11};
-  auto FlatbufferData = generateFlatbufferMessage(
+  auto FlatbufferData = f142_schema::generateFlatbufferMessage(
       3.14, Timestamp,
       std::optional<AlarmInfo>(
           {AlarmStatus::NO_CHANGE, AlarmSeverity::NO_CHANGE}));
@@ -510,7 +515,7 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   AlarmWritingTestInfo TestAlarm = GetParam();
-  auto FlatbufferData = generateFlatbufferMessage(
+  auto FlatbufferData = f142_schema::generateFlatbufferMessage(
       3.14, TestAlarm.Timestamp,
       std::optional<AlarmInfo>({TestAlarm.Status, TestAlarm.Severity}));
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),

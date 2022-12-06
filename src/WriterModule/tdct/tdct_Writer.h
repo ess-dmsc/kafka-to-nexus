@@ -28,7 +28,7 @@ class tdct_Writer : public WriterModule::Base {
 public:
   tdct_Writer()
       : WriterModule::Base(false, "NXlog",
-                           {"epics_con_status", "epics_alarm_status"}) {}
+                           {"epics_con_status", "alarm_status"}) {}
   ~tdct_Writer() override = default;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;

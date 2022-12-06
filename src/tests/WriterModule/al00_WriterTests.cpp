@@ -7,12 +7,12 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <al00_alarm_generated.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <pvAl_epics_pv_alarm_state_generated.h>
 
-#include "AccessMessageMetadata/pvAl/pvAl_Extractor.h"
-#include "WriterModule/pvAl/pvAl_Writer.h"
+#include "AccessMessageMetadata/al00/al00_Extractor.h"
+#include "WriterModule/al00/al00_Writer.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 
@@ -20,12 +20,12 @@ static std::unique_ptr<std::uint8_t[]>
 GenerateAlarmFlatbufferData(size_t &BufferSize) {
   flatbuffers::FlatBufferBuilder builder;
   auto FBNameStringOffset = builder.CreateString("SomeTestString");
-  PV_AlarmStateBuilder MessageBuilder(builder);
+  AlarmBuilder MessageBuilder(builder);
   MessageBuilder.add_source_name(FBNameStringOffset);
   MessageBuilder.add_timestamp(1655901153832343040);
-  MessageBuilder.add_severity(AlarmSeverity::MAJOR);
-  MessageBuilder.add_state(AlarmState::CLIENT);
-  builder.Finish(MessageBuilder.Finish(), PV_AlarmStateIdentifier());
+  MessageBuilder.add_severity(Severity::MAJOR);
+  MessageBuilder.add_message(FBNameStringOffset);
+  builder.Finish(MessageBuilder.Finish(), AlarmIdentifier());
   BufferSize = builder.GetSize();
   auto RawBuffer = std::make_unique<std::uint8_t[]>(BufferSize);
   std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), BufferSize);
@@ -41,7 +41,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File->hdfGroup();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    setExtractorModule<AccessMessageMetadata::pvAl_Extractor>("pvAl");
+    setExtractorModule<AccessMessageMetadata::al00_Extractor>("al00");
   };
 
   std::string TestFileName{"SomeTestFile.hdf5"};
@@ -55,29 +55,29 @@ using WriterModule::InitResult;
 
 TEST_F(EPICS_AlarmWriter, InitFile) {
   {
-    pvAl::pvAl_Writer Writer;
+    WriterModule::al00::al00_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
-  EXPECT_TRUE(TestGroup.has_dataset("alarm_status"));
   EXPECT_TRUE(TestGroup.has_dataset("alarm_severity"));
+  EXPECT_TRUE(TestGroup.has_dataset("alarm_message"));
   EXPECT_TRUE(TestGroup.has_dataset("alarm_time"));
 }
 
 TEST_F(EPICS_AlarmWriter, ReopenFileFailure) {
-  pvAl::pvAl_Writer Writer;
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_FALSE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(EPICS_AlarmWriter, InitFileFail) {
-  pvAl::pvAl_Writer Writer;
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_FALSE(Writer.init_hdf(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(EPICS_AlarmWriter, ReopenFileSuccess) {
-  pvAl::pvAl_Writer Writer;
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
@@ -85,15 +85,15 @@ TEST_F(EPICS_AlarmWriter, ReopenFileSuccess) {
 TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   size_t BufferSize{0};
   auto Buffer = GenerateAlarmFlatbufferData(BufferSize);
-  pvAl::pvAl_Writer Writer;
+  WriterModule::al00::al00_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto AlarmStatusDataset = UsedGroup.get_dataset("alarm_status");
+  auto AlarmMsgDataset = UsedGroup.get_dataset("alarm_message");
   auto AlarmSeverityDataset = UsedGroup.get_dataset("alarm_severity");
   auto AlarmTimeDataset = UsedGroup.get_dataset("alarm_time");
-  auto FbPointer = GetPV_AlarmState(TestMsg.data());
+  auto FbPointer = GetAlarm(TestMsg.data());
 
   std::vector<std::int64_t> Timestamp(1);
   EXPECT_NO_THROW(AlarmTimeDataset.read(Timestamp));
@@ -102,12 +102,11 @@ TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   std::vector<std::string> AlarmSeverity(1);
   EXPECT_NO_THROW(AlarmSeverityDataset.read(AlarmSeverity));
   AlarmSeverity[0].erase(AlarmSeverity[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameAlarmSeverity(FbPointer->severity())),
+  EXPECT_EQ(std::string(EnumNameSeverity(FbPointer->severity())),
             AlarmSeverity[0]);
 
-  std::vector<std::string> AlarmsStatus(1);
-  EXPECT_NO_THROW(AlarmStatusDataset.read(AlarmsStatus));
-  AlarmsStatus[0].erase(AlarmsStatus[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameAlarmState(FbPointer->state())),
-            AlarmsStatus[0]);
+  std::vector<std::string> AlarmMsg(1);
+  EXPECT_NO_THROW(AlarmMsgDataset.read(AlarmMsg));
+  AlarmMsg[0].erase(AlarmMsg[0].find('\0'));
+  EXPECT_EQ(FbPointer->message()->str(), AlarmMsg[0]);
 }

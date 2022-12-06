@@ -14,8 +14,8 @@
 namespace AccessMessageMetadata {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
-/// \brief For extracting info from pvCn flatbuffer messages.
-class pvCn_Extractor : public FileWriter::FlatbufferReader {
+/// \brief For extracting info from al00 flatbuffer messages.
+class al00_Extractor : public FileWriter::FlatbufferReader {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;

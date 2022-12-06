@@ -23,10 +23,10 @@
 #include <vector>
 
 namespace WriterModule {
-namespace scal {
+namespace f144 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
-class scal_Writer : public WriterModule::Base {
+class f144_Writer : public WriterModule::Base {
 public:
   /// Implements writer module interface.
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
@@ -42,12 +42,11 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  scal_Writer()
-      : WriterModule::Base(false, "NXlog",
-                           {"epics_con_status", "epics_alarm_status"}),
+  f144_Writer()
+      : WriterModule::Base(false, "NXlog", {"epics_con_info", "alarm_info"}),
         MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
         MetaDataMean("", "average_value") {}
-  ~scal_Writer() override = default;
+  ~f144_Writer() override = default;
 
   enum class Type {
     int8,
@@ -67,13 +66,13 @@ protected:
 
   NeXusDataset::MultiDimDatasetBase Values;
 
-  /// Timestamps of the scal updates.
+  /// Timestamps of the f144 updates.
   NeXusDataset::Time Timestamp;
 
   /// Index into DatasetTimestamp.
   NeXusDataset::CueTimestampZero CueTimestampZero;
 
-  /// Index into the scal values.
+  /// Index into the f144 values.
   NeXusDataset::CueIndex CueIndex;
 
   JsonConfig::Field<uint32_t> ValueIndexInterval{
@@ -94,5 +93,5 @@ protected:
   bool HasCheckedMessageType{false};
 };
 
-} // namespace scal
+} // namespace f144
 } // namespace WriterModule

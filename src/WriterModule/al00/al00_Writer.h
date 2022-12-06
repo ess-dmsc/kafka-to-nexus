@@ -23,10 +23,10 @@
 #include <vector>
 
 namespace WriterModule {
-namespace pvAl {
+namespace al00 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
-class pvAl_Writer : public WriterModule::Base {
+class al00_Writer : public WriterModule::Base {
 public:
   /// Implements writer module interface.
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
@@ -36,19 +36,14 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  pvAl_Writer() : WriterModule::Base(false, "NXlog") {}
-  ~pvAl_Writer() override = default;
+  al00_Writer() : WriterModule::Base(false, "NXlog") {}
+  ~al00_Writer() override = default;
 
 protected:
-  /// Timestamps of changes in EPICS alarm status
   NeXusDataset::AlarmTime AlarmTime;
-
-  /// Changes in EPICS alarm status
-  NeXusDataset::AlarmStatus AlarmStatus;
-
-  /// Severity corresponding to EPICS alarm status
   NeXusDataset::AlarmSeverity AlarmSeverity;
+  NeXusDataset::AlarmMsg AlarmMsg;
 };
 
-} // namespace pvAl
+} // namespace al00
 } // namespace WriterModule
