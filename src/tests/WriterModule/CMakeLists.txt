@@ -4,6 +4,7 @@ set(writer_module_SRC
     hs00_WriterTests.cpp
     ev42_WriterTests.cpp
     senv_WriterTests.cpp
+    se00_WriterTests.cpp
     ns10_WriterTests.cpp
     f142_WriterTests.cpp
     ep00_WriterTests.cpp
