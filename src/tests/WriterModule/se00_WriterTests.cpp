@@ -17,41 +17,42 @@
 #include "helpers/SetExtractorModule.h"
 
 namespace se00_tests {
-  std::unique_ptr<std::uint8_t[]>
-  GenerateFlatbufferData(size_t &DataSize, size_t NrOfElements = 6,
-                         bool CreateTimestamps = true) {
-    flatbuffers::FlatBufferBuilder builder;
-    std::vector<std::uint16_t> TestValues(NrOfElements);
-    std::vector<std::int64_t> TestTimestamps(NrOfElements);
-    for (size_t i = 0; i < NrOfElements; i++) {
-      float value = (i + 1) / 10.;
-      TestValues.push_back(value);
-      TestTimestamps.push_back(i);
-    }
-    
-    auto FBValuesOffset = builder.CreateVector(TestValues);
-    auto ValueObjectOffset = CreateUInt16Array(builder, FBValuesOffset);
-    auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
-    auto FBNameStringOffset = builder.CreateString("SomeTestString");
-    se00_SampleEnvironmentDataBuilder MessageBuilder(builder);
-    MessageBuilder.add_name(FBNameStringOffset);
-    MessageBuilder.add_values(ValueObjectOffset.Union());
-    MessageBuilder.add_values_type(ValueUnion::UInt16Array);
-    if (CreateTimestamps) {
-      MessageBuilder.add_timestamps(FBTimestampOffset);
-    }
-    MessageBuilder.add_channel(42);
-    MessageBuilder.add_packet_timestamp(123456789);
-    MessageBuilder.add_time_delta(0.565656);
-    MessageBuilder.add_message_counter(987654321);
-    MessageBuilder.add_timestamp_location(Location::Middle);
-    builder.Finish(MessageBuilder.Finish(), se00_SampleEnvironmentDataIdentifier());
-    DataSize = builder.GetSize();
-    auto RawBuffer = std::make_unique<std::uint8_t[]>(DataSize);
-    std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), DataSize);
-    return RawBuffer;
+std::unique_ptr<std::uint8_t[]>
+GenerateFlatbufferData(size_t &DataSize, size_t NrOfElements = 6,
+                       bool CreateTimestamps = true) {
+  flatbuffers::FlatBufferBuilder builder;
+  std::vector<std::uint16_t> TestValues(NrOfElements);
+  std::vector<std::int64_t> TestTimestamps(NrOfElements);
+  for (size_t i = 0; i < NrOfElements; i++) {
+    float value = (i + 1) / 10.;
+    TestValues.push_back(value);
+    TestTimestamps.push_back(i);
   }
+
+  auto FBValuesOffset = builder.CreateVector(TestValues);
+  auto ValueObjectOffset = CreateUInt16Array(builder, FBValuesOffset);
+  auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
+  auto FBNameStringOffset = builder.CreateString("SomeTestString");
+  se00_SampleEnvironmentDataBuilder MessageBuilder(builder);
+  MessageBuilder.add_name(FBNameStringOffset);
+  MessageBuilder.add_values(ValueObjectOffset.Union());
+  MessageBuilder.add_values_type(ValueUnion::UInt16Array);
+  if (CreateTimestamps) {
+    MessageBuilder.add_timestamps(FBTimestampOffset);
+  }
+  MessageBuilder.add_channel(42);
+  MessageBuilder.add_packet_timestamp(123456789);
+  MessageBuilder.add_time_delta(0.565656);
+  MessageBuilder.add_message_counter(987654321);
+  MessageBuilder.add_timestamp_location(Location::Middle);
+  builder.Finish(MessageBuilder.Finish(),
+                 se00_SampleEnvironmentDataIdentifier());
+  DataSize = builder.GetSize();
+  auto RawBuffer = std::make_unique<std::uint8_t[]>(DataSize);
+  std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), DataSize);
+  return RawBuffer;
 }
+} // namespace se00_tests
 
 class se00Writer : public ::testing::Test {
 public:

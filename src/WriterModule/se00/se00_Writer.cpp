@@ -73,10 +73,10 @@ WriterModule::InitResult se00_Writer::reopen(hdf5::node::Group &HDFGroup) {
 
 void se00_Writer::config_post_processing() {
   std::map<std::string, se00_Writer::Type> TypeMap{
-      {"int8", Type::int8},   {"uint8", Type::uint8},
-      {"int16", Type::int16}, {"uint16", Type::uint16},
-      {"int32", Type::int32}, {"uint32", Type::uint32},
-      {"int64", Type::int64}, {"uint64", Type::uint64},
+      {"int8", Type::int8},     {"uint8", Type::uint8},
+      {"int16", Type::int16},   {"uint16", Type::uint16},
+      {"int32", Type::int32},   {"uint32", Type::uint32},
+      {"int64", Type::int64},   {"uint64", Type::uint64},
       {"float", Type::float32}, {"double", Type::float64},
   };
   try {
@@ -111,10 +111,10 @@ void msgTypeIsConfigType(se00_Writer::Type ConfigType, ValueUnion MsgType) {
       {ValueUnion::DoubleArray, se00_Writer::Type::float64},
   };
   std::unordered_map<ValueUnion, std::string> MsgTypeString{
-      {ValueUnion::Int8Array, "int8"},   {ValueUnion::UInt8Array, "uint8"},
-      {ValueUnion::Int16Array, "int16"}, {ValueUnion::UInt16Array, "uint16"},
-      {ValueUnion::Int32Array, "int32"}, {ValueUnion::UInt32Array, "uint32"},
-      {ValueUnion::Int64Array, "int64"}, {ValueUnion::UInt64Array, "uint64"},
+      {ValueUnion::Int8Array, "int8"},     {ValueUnion::UInt8Array, "uint8"},
+      {ValueUnion::Int16Array, "int16"},   {ValueUnion::UInt16Array, "uint16"},
+      {ValueUnion::Int32Array, "int32"},   {ValueUnion::UInt32Array, "uint32"},
+      {ValueUnion::Int64Array, "int64"},   {ValueUnion::UInt64Array, "uint64"},
       {ValueUnion::DoubleArray, "double"}, {ValueUnion::FloatArray, "float"},
   };
   std::unordered_map<se00_Writer::Type, std::string> ConfigTypeString{
@@ -216,8 +216,7 @@ void se00_Writer::write(const FileWriter::FlatbufferMessage &Message) {
                                   se00_SampleEnvironmentData::VT_TIMESTAMPS)) {
     auto TimestampPtr = FbPointer->timestamps()->data();
     auto TimestampSize = FbPointer->timestamps()->size();
-    hdf5::ArrayAdapter<const std::int64_t> TSArray(TimestampPtr,
-                                                   TimestampSize);
+    hdf5::ArrayAdapter<const std::int64_t> TSArray(TimestampPtr, TimestampSize);
     Timestamp.appendArray(TSArray);
   } else { // If timestamps are not available, generate them
     std::vector<std::uint64_t> TempTimeStamps(GenerateTimeStamps(
