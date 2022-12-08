@@ -24,7 +24,7 @@ public:
         EventsWrittenMetadataField("", "events") {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
-  
+
   /// \brief Write flatbuffer message.
   ///
   /// \param FlatBufferMessage
