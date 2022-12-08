@@ -16,7 +16,7 @@ namespace WriterModule {
 namespace ev44 {
 
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
-
+/// \brief Write module for the ev44 flatbuffer schema.
 class ev44_Writer : public WriterModule::Base {
 public:
   ev44_Writer()
@@ -24,6 +24,10 @@ public:
         EventsWrittenMetadataField("", "events") {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
+  
+  /// \brief Write flatbuffer message.
+  ///
+  /// \param FlatBufferMessage
   void write(FlatbufferMessage const &Message) override;
 
   NeXusDataset::EventTimeOffset EventTimeOffset;
