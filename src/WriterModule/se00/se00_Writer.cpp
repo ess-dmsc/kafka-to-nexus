@@ -247,6 +247,10 @@ void se00_Writer::initValueDataset(hdf5::node::Group const &Parent) const {
       {Type::int64, [&]() { return makeIt<std::int64_t>(Parent, ChunkSize); }},
       {Type::uint64,
        [&]() { return makeIt<std::uint64_t>(Parent, ChunkSize); }},
+      {Type::float32,
+       [&]() { return makeIt<std::float_t>(Parent, ChunkSize); }},
+      {Type::float64,
+       [&]() { return makeIt<std::double_t>(Parent, ChunkSize); }},
   };
   CreateValuesMap.at(ElementType)();
 }
