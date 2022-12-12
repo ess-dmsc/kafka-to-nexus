@@ -3,6 +3,7 @@ set(fb_metadata_SRC
     TemplateExtractorTests.cpp
     tdct_ExtractorTests.cpp
     ev42_ExtractorTests.cpp
+    ev44_ExtractorTests.cpp
     senv_ExtractorTests.cpp
     ns10_ExtractorTests.cpp
     ReaderRegistrationTests.cpp

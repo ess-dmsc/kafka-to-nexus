@@ -19,7 +19,7 @@ public:
   ~ev44_Extractor() = default;
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;
-  const flatbuffers::Vector<int64_t> *
+  std::vector<int64_t>
   timestamp(FlatbufferMessage const &Message) const override;
 };
 

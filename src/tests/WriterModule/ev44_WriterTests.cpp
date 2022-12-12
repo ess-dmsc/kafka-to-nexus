@@ -63,14 +63,16 @@ namespace ev44_tests {
   class Event44WriterTests : public ::testing::Test {
   public:
     void SetUp() override {
-      File = HDFFileTestHelper::createInMemoryTestFile("EventWriterTestFile.nxs");
-      TestGroup = File->hdfGroup().create_group(TestGroupName);
+      File = HDFFileTestHelper::createInMemoryTestFile("Event44WriterTestFile.nxs");
+      RootGroup = File->hdfGroup();
+      TestGroup = RootGroup.create_group(TestGroupName);
       setExtractorModule<AccessMessageMetadata::ev44_Extractor>("ev44");
     };
     
     std::unique_ptr<HDFFileTestHelper::DebugHDFFile> File;
     hdf5::node::Group TestGroup;
     std::string const TestGroupName = "test_group";
+    hdf5::node::Group RootGroup;
   };
 
   using WriterModule::InitResult;

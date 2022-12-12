@@ -62,7 +62,7 @@ public:
   ///
   /// \param Message The message from which the timestamp should be extracted.
   /// \return The timestamp of the flatbuffer message.
-  virtual const flatbuffers::Vector<int64_t> *
+  virtual std::vector<int64_t>
   timestamp(FlatbufferMessage const &Message) const = 0;
 };
 

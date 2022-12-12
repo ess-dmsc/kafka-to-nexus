@@ -29,10 +29,14 @@ ev44_Extractor::source_name(FlatbufferMessage const &Message) const {
   return NamePtr->str();
 }
 
-const flatbuffers::Vector<int64_t> *
+std::vector<int64_t>
 ev44_Extractor::timestamp(FlatbufferMessage const &Message) const {
   auto fbuf = GetEvent44Message(Message.data());
-  return fbuf->reference_time();
+  std::vector<int64_t> reference_time;
+  for (auto ref_time: *fbuf->reference_time()) {
+    reference_time.push_back(ref_time);
+  }
+  return reference_time;
 }
 
 static FileWriter::FlatbufferReaderRegistry::Registrar<ev44_Extractor>
