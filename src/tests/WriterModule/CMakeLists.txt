@@ -3,6 +3,7 @@ set(writer_module_SRC
     tdct_WriterTests.cpp
     hs00_WriterTests.cpp
     ev42_WriterTests.cpp
+    ev44_WriterTests.cpp
     senv_WriterTests.cpp
     se00_WriterTests.cpp
     ns10_WriterTests.cpp
