@@ -9,7 +9,7 @@
 
 #include "helpers/SetExtractorModule.h"
 #include "helpers/StubWriterModule.h"
-#include <AccessMessageMetadata/ev42/ev42_Extractor.h>
+#include <AccessMessageMetadata/ev44/ev44_Extractor.h>
 #include <FlatbufferMessage.h>
 #include <Source.h>
 #include <flatbuffers/flatbuffers.h>
@@ -17,7 +17,7 @@
 #include <trompeloeil.hpp>
 
 namespace AccessMessageMetadata {
-#include <ev42_events_generated.h>
+#include <ev44_events_generated.h>
 } // namespace AccessMessageMetadata
 
 using FileWriter::FlatbufferMessage;
@@ -28,7 +28,7 @@ using WriterModule::Base;
 class SourceTests : public ::testing::Test {
 public:
   void SetUp() override {
-    setExtractorModule<AccessMessageMetadata::ev42_Extractor>("ev42");
+    setExtractorModule<AccessMessageMetadata::ev44_Extractor>("ev44");
   };
 };
 
