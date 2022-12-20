@@ -29,8 +29,7 @@ ev44_Extractor::source_name(FlatbufferMessage const &Message) const {
   return NamePtr->str();
 }
 
-uint64_t
-ev44_Extractor::timestamp(FlatbufferMessage const &Message) const {
+uint64_t ev44_Extractor::timestamp(FlatbufferMessage const &Message) const {
   auto fbuf = GetEvent44Message(Message.data());
   std::vector<int64_t> reference_time;
   for (auto ref_time : *fbuf->reference_time()) {
