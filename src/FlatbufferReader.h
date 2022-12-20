@@ -10,7 +10,6 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "flatbuffers/flatbuffers.h"
 #include "logger.h"
 #include <array>
 #include <map>
