@@ -23,8 +23,6 @@
 
 using namespace WriterModule::ev44;
 
-namespace ev44_tests {
-
 flatbuffers::DetachedBuffer generateFlatbufferData(
     std::string const &SourceName = "TestSource", uint64_t const MessageID = 0,
     std::vector<int32_t> const &TimeOfFlight = {0, 1, 2},
@@ -260,4 +258,3 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
       << "Expected event_id dataset to contain the detector ID "
          "values from both messages";
 }
-} // namespace ev44_tests
