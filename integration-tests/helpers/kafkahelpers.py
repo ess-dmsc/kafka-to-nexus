@@ -143,13 +143,14 @@ def publish_ev44_message(
     message_id: int = 1,
     source_name: str = "fw-test-helpers",
 ):
-    message = serialise_ev44(source_name=source_name,
-                             reference_time=reference_time,
-                             reference_time_index=reference_time_index,
-                             time_of_flight=time_of_flight,
-                             pixel_id=pixel_id,
-                             message_id=message_id,
-                             )
+    message = serialise_ev44(
+        source_name=source_name,
+        reference_time=reference_time,
+        reference_time_index=reference_time_index,
+        time_of_flight=time_of_flight,
+        pixel_id=pixel_id,
+        message_id=message_id,
+    )
     publish_message(producer, message, topic, timestamp)
 
 
