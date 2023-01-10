@@ -129,7 +129,7 @@ def publish_f144_message(
         source_name=source_name,
         timestamp_unix_ns=int(timestamp.timestamp() * 1e9),
     )
-    publish_message(producer, message, topic, 0)
+    publish_message(producer, message, topic, timestamp)
 
 
 def publish_ev44_message(
