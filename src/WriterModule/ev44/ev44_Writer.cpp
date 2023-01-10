@@ -46,6 +46,11 @@ InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         HDFGroup,                // NOLINT(bugprone-unused-raii)
         Create,                  // NOLINT(bugprone-unused-raii)
         ChunkSize);              // NOLINT(bugprone-unused-raii)
+    
+    NeXusDataset::EventTimeZeroIndex( // NOLINT(bugprone-unused-raii)
+        HDFGroup,                // NOLINT(bugprone-unused-raii)
+        Create,                  // NOLINT(bugprone-unused-raii)
+        ChunkSize);              // NOLINT(bugprone-unused-raii)
 
     NeXusDataset::EventIndex( // NOLINT(bugprone-unused-raii)
         HDFGroup,             // NOLINT(bugprone-unused-raii)
@@ -77,6 +82,7 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
     EventTimeOffset = NeXusDataset::EventTimeOffset(HDFGroup, Open);
     EventId = NeXusDataset::EventId(HDFGroup, Open);
     EventTimeZero = NeXusDataset::EventTimeZero(HDFGroup, Open);
+    EventTimeZeroIndex = NeXusDataset::EventTimeZeroIndex(HDFGroup, Open);
     EventIndex = NeXusDataset::EventIndex(HDFGroup, Open);
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
@@ -103,7 +109,8 @@ void ev44_Writer::write(FlatbufferMessage const &Message) {
       EventMsgFlatbuffer->reference_time();
 
   auto CurrentNumberOfEvents = EventMsgFlatbuffer->pixel_id()->size();
-  EventTimeZero.appendElement(*CurrentRefTime->begin());
+  EventTimeZero.appendArray(getFBVectorAsArrayAdapter(CurrentRefTime));
+  EventTimeZeroIndex.appendArray(getFBVectorAsArrayAdapter(EventMsgFlatbuffer->reference_time_index()));
   EventIndex.appendElement(EventsWritten);
   EventsWritten += CurrentNumberOfEvents;
   if (EventsWritten > LastEventIndex + EventIndexInterval) {

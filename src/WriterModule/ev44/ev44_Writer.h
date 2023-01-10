@@ -33,6 +33,7 @@ public:
   NeXusDataset::EventTimeOffset EventTimeOffset;
   NeXusDataset::EventId EventId;
   NeXusDataset::EventTimeZero EventTimeZero;
+  NeXusDataset::EventTimeZeroIndex EventTimeZeroIndex;
   NeXusDataset::EventIndex EventIndex;
   NeXusDataset::CueIndex CueIndex;
   NeXusDataset::CueTimestampZero CueTimestampZero;

@@ -190,7 +190,7 @@ TEST_F(Event44WriterTests,
   EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
       << "Expected event_time_offset dataset to contain the time of flight "
          "values from the message";
-  EXPECT_EQ(EventTimeZero.size(), 1U)
+  EXPECT_EQ(EventTimeZero.size(), 3U)
       << "Expected event_time_zero to contain a "
          "single value, as we wrote a single "
          "message";
@@ -246,7 +246,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
       << "Expected event_time_offset dataset to contain the time of flight "
          "values from both messages";
-  EXPECT_EQ(EventTimeZero.size(), 2U)
+  EXPECT_EQ(EventTimeZero.size(), 6U)
       << "Expected event_time_zero to contain a "
          "two values, as we wrote two "
          "messages";

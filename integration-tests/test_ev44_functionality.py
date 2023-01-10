@@ -48,3 +48,5 @@ def test_ev44(worker_pool, kafka_address, hdf_file_name="ev44_output_file.nxs"):
     with OpenNexusFile(file_path) as file:
         assert (file["entry/test/event_data/event_id"][:].flatten() == np.array([2, 3, 4])).all()
         assert (file["entry/test/event_data/event_time_offset"][:].flatten()  == np.array([0, 1, 2])).all()
+        assert (file["entry/test/event_data/event_time_zero"][:].flatten() == np.array([19284265, 19284268, 19284269])).all()
+        assert (file["entry/test/event_data/event_time_zero_index"][:].flatten() == np.array([12, 11, 13])).all()
