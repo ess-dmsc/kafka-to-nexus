@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional, Union, Any
 
 from confluent_kafka import Consumer, Producer
+from streaming_data_types import serialise_ev44
 
 from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 import streaming_data_types.logdata_f142
@@ -127,6 +128,28 @@ def publish_f144_message(
         value=value,
         source_name=source_name,
         timestamp_unix_ns=int(timestamp.timestamp() * 1e9),
+    )
+    publish_message(producer, message, topic, timestamp)
+
+
+def publish_ev44_message(
+    producer: Producer,
+    topic: str,
+    reference_time,
+    reference_time_index,
+    time_of_flight,
+    pixel_id,
+    timestamp: datetime,
+    message_id: int = 1,
+    source_name: str = "fw-test-helpers",
+):
+    message = serialise_ev44(
+        source_name=source_name,
+        reference_time=reference_time,
+        reference_time_index=reference_time_index,
+        time_of_flight=time_of_flight,
+        pixel_id=pixel_id,
+        message_id=message_id,
     )
     publish_message(producer, message, topic, timestamp)
 
