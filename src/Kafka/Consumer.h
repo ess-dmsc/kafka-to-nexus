@@ -50,7 +50,7 @@ public:
 
   /// Set a topic partition at a specified offset to consume from.
   ///
-  /// Replaces any exisiting topics + partitions that are currently being
+  /// Replaces any existing topics + partitions that are currently being
   /// consumed.
   /// \note This is a non blocking call.
   void addPartitionAtOffset(std::string const &Topic, int PartitionId,
