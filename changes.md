@@ -2,6 +2,8 @@
 
 ## Next version
 
+- Redact Kafka SASL password in logs.
+- Ignore deprecated warnings on macOS (can be removed when https://github.com/chriskohlhoff/asio/issues/1183 is addressed.
 - Breaking: Ignore Kafka IP addresses sent in `StartJob` messages, experiment
   data is now fetched from the broker configured in `job-pool-uri`.
 - The case when messages are not received from a specific Kafka topic does not make the file writer unsubscribe from the topic anymore. Instead a warning is provided in the file writer log.
