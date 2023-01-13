@@ -59,7 +59,7 @@ public:
   void stop();
 
   /// \brief Checks for occurrence for time out and logs it once for each time
-  /// out occurence.
+  /// out occurrence.
   void checkAndLogPartitionTimeOut();
 
   void setStopTime(time_point Stop);
