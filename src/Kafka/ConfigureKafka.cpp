@@ -15,13 +15,18 @@ void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
                     Kafka::BrokerSettings Settings) {
   std::string ErrorString;
   for (const auto &ConfigurationItem : Settings.KafkaConfiguration) {
-    LOG_DEBUG("set config: {} = {}", ConfigurationItem.first,
-              ConfigurationItem.second);
+    std::string Key{ConfigurationItem.first};
+    std::string Value{ConfigurationItem.second};
+
+    // Don't log sensitive data
+    if (Key == "sasl.password") {
+      Value = "<REDACTED>";
+    }
+
+    LOG_DEBUG("set config: {} = {}", Key, Value);
     if (RdKafka::Conf::ConfResult::CONF_OK !=
-        RdKafkaConfiguration->set(ConfigurationItem.first,
-                                  ConfigurationItem.second, ErrorString)) {
-      LOG_WARN("Failure setting config: {} = {}", ConfigurationItem.first,
-               ConfigurationItem.second);
+        RdKafkaConfiguration->set(Key, Value, ErrorString)) {
+      LOG_WARN("Failure setting config: {} = {}", Key, Value);
     }
   }
 }
