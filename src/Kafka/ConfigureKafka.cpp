@@ -16,7 +16,7 @@ namespace Kafka {
 void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
                     Kafka::BrokerSettings Settings) {
   std::string ErrorString;
-  static const std::regex RegexSensitiveKey(
+  const std::regex RegexSensitiveKey(
       R"(ssl_key|.+password|.+secret|.+key\.pem)");
 
   for (const auto &ConfigurationItem : Settings.KafkaConfiguration) {
