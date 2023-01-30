@@ -1,0 +1,38 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Build",
+            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake .. && make",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "UnitTests",
+            "command": "cd _build && make UnitTests && source activate_run.sh && ./bin/UnitTests",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOn": [
+                "Build"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        }
+    ],
+    "version": "2.0.0"
+}
