@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <regex>
-
 #include "BrokerSettings.h"
 #include <librdkafka/rdkafkacpp.h>
 
