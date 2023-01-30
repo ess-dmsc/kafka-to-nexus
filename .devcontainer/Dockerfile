@@ -15,17 +15,19 @@ RUN apt-get update \
     #
     # Install
     && apt-get -y install \
-    # Linux tools : Python is used to install conan
+    build-essential \
+    gdb \
+    cmake \
+    cppcheck \
     libsasl2-dev \
     libssl-dev \
     git \
     zip \
     unzip \
+    # Python
     python3-pip \
-    build-essential \
-    gdb \
-    cmake \
-    cppcheck \
+    python-is-python3 \
+    python3.10-venv \
     #
     # [Optional] Update UID/GID if needed
     && if [ "$USER_GID" != "1000" ] || [ "$USER_UID" != "1000" ]; then \

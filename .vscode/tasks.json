@@ -32,6 +32,24 @@
                 "kind": "test",
                 "isDefault": true
             }
+        },
+        {
+            "type": "shell",
+            "label": "IntegrationTests",
+            "command": "docker stop integration-tests_kafka_1 integration-tests_zookeeper_1 ; source .venv/bin/activate && python -m pip install -r requirements.txt && source ../_build/activate_run.sh && python -m pytest -s . --writer-binary=../_build",
+            "options": {
+                "cwd": "${workspaceFolder}/integration-tests"
+            },
+            // "problemMatcher": [
+            //     "$gcc",
+            // ],
+            "dependsOn": [
+                "Build"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
         }
     ],
     "version": "2.0.0"
