@@ -1,6 +1,7 @@
 from file_writer_control import WorkerJobPool
 from file_writer_control.WorkerStatus import WorkerState
 from file_writer_control import JobState
+from file_writer_control import CommandHandler
 from file_writer_control import CommandState
 from file_writer_control import WriteJob
 from file_writer_control import JobHandler
@@ -43,37 +44,34 @@ def wait_no_working_writers(worker_pool: WorkerJobPool, timeout: float):
             raise RuntimeError("Timed out when waiting for workers to finish")
 
 
-def wait_start_job(worker_pool: WorkerJobPool, write_job: WriteJob, timeout: float):
-    job_handler = JobHandler(worker_finder=worker_pool)
-    start_handler = job_handler.start_job(write_job)
+def wait_command_is_done(command_handler: CommandHandler, timeout: float):
     start_time = datetime.now()
     try:
-        while not start_handler.is_done():
+        while not command_handler.is_done():
             if start_time + timedelta(seconds=timeout) < datetime.now():
-                raise RuntimeError("Timed out when waiting for write job to start")
-            elif start_handler.get_state() == CommandState.ERROR:
+                raise RuntimeError("Timed out when waiting for command to finish")
+            elif command_handler.get_state() == CommandState.ERROR:
                 raise RuntimeError(
-                    f"Got error when trying to start job. Message was: {start_handler.get_message()}"
+                    f"Command failed. Message was: {command_handler.get_message()}"
                 )
             time.sleep(0.5)
     except RuntimeError as e:
         raise RuntimeError(
-            e.__str__() + f" The message was: {start_handler.get_message()}"
+            e.__str__() + f" The message was: {command_handler.get_message()}"
         )
+
+
+def wait_start_job(worker_pool: WorkerJobPool, write_job: WriteJob, timeout: float):
+    job_handler = JobHandler(worker_finder=worker_pool)
+    start_handler = job_handler.start_job(write_job)
+    start_time = datetime.now()
+    wait_command_is_done(start_handler, timeout)
     return job_handler
 
 
 def wait_set_stop_now(job: JobHandler, timeout: float):
     stop_handler = job.set_stop_time(datetime.now())
-    start_time = datetime.now()
-    while not stop_handler.is_done():
-        if start_time + timedelta(seconds=timeout) < datetime.now():
-            raise RuntimeError("Timed out when setting new stop time for job.")
-        elif stop_handler.get_state() == CommandState.ERROR:
-            raise RuntimeError(
-                f"Got error when trying to stop job. Message was: {stop_handler.get_message()}"
-            )
-        time.sleep(0.5)
+    wait_command_is_done(stop_handler, timeout)
 
 
 def wait_fail_start_job(
