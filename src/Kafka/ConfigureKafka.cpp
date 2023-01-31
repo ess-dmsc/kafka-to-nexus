@@ -19,7 +19,7 @@ void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
   const std::regex RegexSensitiveKey(
       R"(ssl_key|.+password|.+secret|.+key\.pem)");
 
-  for (const auto& [Key, Value] : Settings.KafkaConfiguration) {
+  for (const auto &[Key, Value] : Settings.KafkaConfiguration) {
     const std::string &Key{ConfigurationItem.first};
     const std::string &Value{ConfigurationItem.second};
     const bool IsSensitive = std::regex_match(Key, RegexSensitiveKey);
