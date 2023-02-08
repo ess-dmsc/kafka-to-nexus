@@ -204,11 +204,12 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
         {[&]() {
            if (not StartJob.ControlTopic.empty()) {
              if (IsJobPoolCommand) {
-               LOG_INFO(R"(Connecting to an alternative command topic: "{}")",
-                        StartJob.ControlTopic);
+               LOG_INFO(
+                   R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
+                   StartJob.ControlTopic, StartJob.StartTime);
                CommandSource = std::make_unique<CommandListener>(
                    uri::URI{CommandTopicAddress, StartJob.ControlTopic},
-                   KafkaSettings);
+                   KafkaSettings, StartJob.StartTime);
                AltCommandResponse = std::make_unique<FeedbackProducer>(
                    ServiceId,
                    uri::URI{CommandTopicAddress, StartJob.ControlTopic},

@@ -24,6 +24,13 @@ CommandListener::CommandListener(uri::URI CommandTopicUri,
   KafkaSettings.Address = CommandTopicUri.HostPort;
 }
 
+CommandListener::CommandListener(uri::URI CommandTopicUri,
+                                 Kafka::BrokerSettings Settings,
+                                 time_point StartTimestamp)
+    : KafkaAddress(CommandTopicUri.HostPort),
+      CommandTopic(CommandTopicUri.Topic), KafkaSettings(Settings),
+      StartTimestamp(StartTimestamp) {}
+
 std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
   if (not KafkaAddress.empty() and not CommandTopic.empty()) {
     if (Consumer == nullptr) {
@@ -36,8 +43,15 @@ std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
 }
 
 void CommandListener::setUpConsumer() {
-  Consumer = Kafka::createConsumer(KafkaSettings);
-  Consumer->addTopic(CommandTopic);
+  if (StartTimestamp < time_point::max()) {
+    // The CommandListener instance was created to process commands since a
+    // specific timestamp
+    Consumer = Kafka::createConsumer(KafkaSettings, KafkaAddress);
+    Consumer->assignAllPartitions(CommandTopic, StartTimestamp);
+  } else {
+    Consumer = Kafka::createConsumer(KafkaSettings, KafkaAddress);
+    Consumer->addTopic(CommandTopic);
+  }
 }
 
 } // namespace Command

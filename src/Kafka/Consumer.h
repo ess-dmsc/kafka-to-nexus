@@ -14,7 +14,7 @@
 #include "KafkaEventCb.h"
 #include "Msg.h"
 #include "PollStatus.h"
-#include <chrono>
+#include "TimeUtility.h"
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 
@@ -32,6 +32,11 @@ public:
   virtual void addPartitionAtOffset(std::string const &Topic, int PartitionId,
                                     int64_t Offset) = 0;
   virtual void addTopic(std::string const &Topic) = 0;
+  virtual void assignAllPartitions(std::string const &Topic,
+                                   time_point const &StartTimestamp) = 0;
+  virtual const RdKafka::TopicMetadata *
+  getTopicMetadata(const std::string &Topic,
+                   RdKafka::Metadata *MetadataPtr) = 0;
 };
 
 class Consumer : public ConsumerInterface {
@@ -48,20 +53,32 @@ public:
   Consumer(Consumer const &) = delete;
   ~Consumer() override;
 
-  /// Set a topic partition at a specified offset to consume from.
+  /// Add a topic partition at a specified offset to consume from.
   ///
-  /// Replaces any existing topics + partitions that are currently being
-  /// consumed.
+  /// Previously assigned topic partitions are preserved.
   /// \note This is a non blocking call.
   void addPartitionAtOffset(std::string const &Topic, int PartitionId,
                             int64_t Offset) override;
 
   void addTopic(std::string const &Topic) override;
 
+  /// Assign all topic's partitions using the offsets defined by the
+  /// provided timestamp.
+  ///
+  /// Previous partition assignments are NOT preserved.
+  void assignAllPartitions(std::string const &Topic,
+                           time_point const &StartTimestamp) override;
+
   /// \brief Polls for any new messages.
   /// \note Is a blocking call with a timeout that is hard coded in the broker
   /// settings. \return Any new messages consumed.
   std::pair<PollStatus, FileWriter::Msg> poll() override;
+
+  /// Obtain metadata for given topic.
+  /// \param Topic Topic. \param MetadataPtr Pointer to store the metadata.
+  const RdKafka::TopicMetadata *
+  getTopicMetadata(const std::string &Topic,
+                   RdKafka::Metadata *MetadataPtr) override;
 
 private:
   std::unique_ptr<RdKafka::Conf> Conf;
@@ -87,5 +104,19 @@ public:
   };
 
   void addTopic(std::string const &Topic) override { UNUSED_ARG(Topic); }
+
+  void assignAllPartitions(std::string const &Topic,
+                           time_point const &StartTimestamp) override {
+    UNUSED_ARG(Topic);
+    UNUSED_ARG(StartTimestamp);
+  }
+
+  const RdKafka::TopicMetadata *
+  getTopicMetadata(const std::string &Topic,
+                   RdKafka::Metadata *MetadataPtr) override {
+    UNUSED_ARG(Topic);
+    UNUSED_ARG(MetadataPtr);
+    return nullptr;
+  }
 };
 } // namespace Kafka

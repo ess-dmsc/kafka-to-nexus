@@ -22,6 +22,8 @@ public:
   IMPLEMENT_MOCK0(poll);
   IMPLEMENT_MOCK3(addPartitionAtOffset);
   IMPLEMENT_MOCK1(addTopic);
+  IMPLEMENT_MOCK2(assignAllPartitions);
+  IMPLEMENT_MOCK2(getTopicMetadata);
 };
 
 } // namespace Kafka

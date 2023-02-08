@@ -117,10 +117,10 @@ getPartitionsForTopicImpl(std::string const &Broker, std::string const &Topic,
   auto ReturnCode =
       Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    throw MetadataException(
-        fmt::format("Failed to query broker for available partitions on topic "
-                    "{}. Error code was: {}",
-                    Topic, ReturnCode));
+    throw MetadataException(fmt::format(
+        "Failed to query broker {} for available partitions on topic "
+        "{}. Error was: {}",
+        Broker, Topic, RdKafka::err2str(ReturnCode)));
   }
   auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
   auto ReturnVector = extractPartitinIDs(TopicMetaData);

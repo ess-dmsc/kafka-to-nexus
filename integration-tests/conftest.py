@@ -95,7 +95,7 @@ def wait_until_kafka_ready(docker_cmd, docker_options, kafka_address):
     n_polls = 0
     while n_polls < 10 and not topic_ready:
         all_topics = client.list_topics().topics.keys()
-        if "TEST_writer_jobs" in all_topics and "TEST_writer_commands" in all_topics:
+        if "TEST_writer_jobs" in all_topics and "TEST_writer_commands" in all_topics and "TEST_writer_commands_alternative" in all_topics:
             topic_ready = True
             print("Topic is ready!", flush=True)
             break
