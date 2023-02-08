@@ -17,6 +17,21 @@
         },
         {
             "type": "shell",
+            "label": "BuildDocs",
+            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -DRUN_DOXYGEN=ON .. && make docs",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "shell",
             "label": "UnitTests",
             "command": "cd _build && make UnitTests && source activate_run.sh && ./bin/UnitTests",
             "options": {
@@ -36,13 +51,10 @@
         {
             "type": "shell",
             "label": "IntegrationTests",
-            "command": "docker stop integration-tests_kafka_1 integration-tests_zookeeper_1 ; source .venv/bin/activate && python -m pip install -r requirements.txt && source ../_build/activate_run.sh && python -m pytest -s . --writer-binary=../_build",
+            "command": "docker stop integration-tests_kafka_1 integration-tests_zookeeper_1 ; source .venv/bin/activate && source ../_build/activate_run.sh && python -m pytest -s . --writer-binary=../_build",
             "options": {
                 "cwd": "${workspaceFolder}/integration-tests"
             },
-            // "problemMatcher": [
-            //     "$gcc",
-            // ],
             "dependsOn": [
                 "Build"
             ],

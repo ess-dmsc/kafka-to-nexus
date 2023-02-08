@@ -19,6 +19,8 @@ RUN apt-get update \
     gdb \
     cmake \
     cppcheck \
+    doxygen \
+    graphviz \
     libsasl2-dev \
     libssl-dev \
     git \

@@ -8,21 +8,27 @@
         "--security-opt",
         "seccomp=unconfined"
     ],
-    // Set *default* container specific settings.json values on container create.
-    "settings": {
-        "terminal.integrated.profiles.linux": {
-            "bash": {
-                "path": "/bin/bash"
-            }
-        },
-        "terminal.integrated.defaultProfile.linux": "bash"
+    "customizations": {
+        "vscode": {
+            // Set *default* container specific settings.json values on container create.
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "/bin/bash"
+                    }
+                }
+            },
+            // Extensions you want installed when the container is created.
+            "extensions": [
+                "ms-vscode.cpptools", // C++
+                "matepek.vscode-catch2-test-adapter", // Test explorer
+                "ms-vscode.cmake-tools", // CMake extension
+                "ms-python.python",
+                "eamodio.gitlens"
+            ]
+        }
     },
-    // Add the IDs of extensions you want installed when the container is created.
-    "extensions": [
-        "ms-vscode.cpptools", // C++
-        "matepek.vscode-catch2-test-adapter", // Test explorer
-        "ms-vscode.cmake-tools" // CMake extension
-    ],
 
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:2": {
