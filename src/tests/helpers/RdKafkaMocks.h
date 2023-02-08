@@ -152,7 +152,9 @@ public:
              RdKafka::Error *(const std::vector<RdKafka::TopicPartition *> &),
              override);
   MAKE_MOCK0(sasl_background_callbacks_enable, RdKafka::Error *(), override);
-  MAKE_MOCK2(sasl_set_credentials, RdKafka::Error *(const std::string &, const std::string &), override);
+  MAKE_MOCK2(sasl_set_credentials,
+             RdKafka::Error *(const std::string &, const std::string &),
+             override);
   MAKE_MOCK0(get_sasl_queue, RdKafka::Queue *(), override);
   MAKE_MOCK0(get_background_queue, RdKafka::Queue *(), override);
   MAKE_MOCK1(close, RdKafka::Error *(RdKafka::Queue *), override);
@@ -242,7 +244,9 @@ public:
               override);
   MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
   MAKE_MOCK0(sasl_background_callbacks_enable, RdKafka::Error *(), override);
-  MAKE_MOCK2(sasl_set_credentials, RdKafka::Error *(const std::string &, const std::string &), override);
+  MAKE_MOCK2(sasl_set_credentials,
+             RdKafka::Error *(const std::string &, const std::string &),
+             override);
   MAKE_MOCK0(get_sasl_queue, RdKafka::Queue *(), override);
   MAKE_MOCK0(get_background_queue, RdKafka::Queue *(), override);
   IMPLEMENT_MOCK1(init_transactions);
