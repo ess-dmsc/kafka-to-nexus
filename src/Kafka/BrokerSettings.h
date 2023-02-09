@@ -51,6 +51,7 @@ struct BrokerSettings {
       {"statistics.interval.ms", "600000"}, // 10 Minutes
       {"api.version.request", "true"},
       {"enable.auto.commit", "false"},
-      {"enable.partition.eof", "true"}};
+      {"enable.partition.eof", "true"},
+      {"enable.idempotence", "true"}};
 };
 } // namespace Kafka
