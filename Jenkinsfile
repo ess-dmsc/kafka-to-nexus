@@ -43,6 +43,7 @@ def cpp_dependencies(builder, container) {
           mkdir build
           cd build
           conan install --build=outdated ../${builder.project}/conanfile.txt
+          conan info ../${builder.project}/conanfile.txt > CONAN_INFO
         """
     }
 }
@@ -275,6 +276,8 @@ def copy_binaries(builder, container) {
         cp ./bin/kafka-to-nexus ${builder.project}/bin/
         cp -r ./lib ${builder.project}/
         cp -r ./licenses ${builder.project}/
+
+        cp ./CONAN_INFO ${builder.project}/
 
         # Create file with build information
         touch ${builder.project}/BUILD_INFO
