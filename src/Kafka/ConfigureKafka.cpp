@@ -7,6 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include <regex>
+
 #include "ConfigureKafka.h"
 #include <logger.h>
 
@@ -14,14 +16,17 @@ namespace Kafka {
 void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
                     Kafka::BrokerSettings Settings) {
   std::string ErrorString;
-  for (const auto &ConfigurationItem : Settings.KafkaConfiguration) {
-    LOG_DEBUG("set config: {} = {}", ConfigurationItem.first,
-              ConfigurationItem.second);
+  const std::regex RegexSensitiveKey(
+      R"(ssl_key|.+password|.+secret|.+key\.pem)");
+
+  for (const auto &[Key, Value] : Settings.KafkaConfiguration) {
+    const bool IsSensitive = std::regex_match(Key, RegexSensitiveKey);
+
+    LOG_DEBUG("Set config: {} = {}", Key, IsSensitive ? "<REDACTED>" : Value);
     if (RdKafka::Conf::ConfResult::CONF_OK !=
-        RdKafkaConfiguration->set(ConfigurationItem.first,
-                                  ConfigurationItem.second, ErrorString)) {
-      LOG_WARN("Failure setting config: {} = {}", ConfigurationItem.first,
-               ConfigurationItem.second);
+        RdKafkaConfiguration->set(Key, Value, ErrorString)) {
+      LOG_WARN("Failure setting config: {} = {}", Key,
+               IsSensitive ? "<REDACTED>" : Value);
     }
   }
 }
