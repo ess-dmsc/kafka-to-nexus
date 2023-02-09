@@ -52,7 +52,6 @@ struct BrokerSettings {
       {"api.version.request", "true"},
       {"enable.auto.commit", "false"},
       {"enable.partition.eof", "true"},
-      {"enable.idempotence", "true"}
-  };
+      {"enable.idempotence", "true"}};
 };
 } // namespace Kafka
