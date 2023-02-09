@@ -23,6 +23,7 @@
 - Adding _ev44_ writer module (see [schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 - Ignore deprecated warnings on macOS (can be removed when https://github.com/chriskohlhoff/asio/issues/1183 is addressed.
 - Updated Conan package dependencies: librdkakfa (1.9.2)
+- Enable idempotence setting in the Kafka producer.
 
 
 ## Version 5.2.0: Kafka improvements and other fixes
@@ -36,6 +37,7 @@
 - Enabled SSL and SASL in librdkafka to support Kafka authentication.
 - Fix to make all Kafka connections honour the provided librdkafka parameters.
 - Silencing x5f2 schema message and file writer not currently writing status message.
+
 
 ## Version 5.1.0: Attributes and dependencies
 
