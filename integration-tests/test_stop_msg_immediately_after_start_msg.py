@@ -12,8 +12,12 @@ from helpers.writer import (
 )
 
 
-def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(worker_pool, kafka_address):
-    file_path = full_file_path(f"output_file_stop_msg_immediately_after_start_msg_on_alternative_command_topic.nxs")
+def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(
+    worker_pool, kafka_address
+):
+    file_path = full_file_path(
+        f"output_file_stop_msg_immediately_after_start_msg_on_alternative_command_topic.nxs"
+    )
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     with open("commands/nexus_structure_static.json", "r") as f:
@@ -26,8 +30,8 @@ def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(worke
         start_time=now,
         control_topic="TEST_writer_commands_alternative",
     )
-    # ECDC-3333 file-writer-control does not correctly handle jobs with 
-    # alternative command topics. For now we create a secondary WorkerJobPool 
+    # ECDC-3333 file-writer-control does not correctly handle jobs with
+    # alternative command topics. For now we create a secondary WorkerJobPool
     # to do so.
     worker_pool_alternative = WorkerJobPool(
         job_topic_url=f"{kafka_address}/TEST_writer_jobs",
@@ -35,7 +39,9 @@ def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(worke
         max_message_size=1048576 * 500,
     )
     job_handler = JobHandler(worker_finder=worker_pool)
-    job_handler_alternative = JobHandler(worker_finder=worker_pool_alternative, job_id=write_job.job_id)
+    job_handler_alternative = JobHandler(
+        worker_finder=worker_pool_alternative, job_id=write_job.job_id
+    )
     start_handler = job_handler.start_job(write_job)
     stop_handler = job_handler_alternative.set_stop_time(now)
 
