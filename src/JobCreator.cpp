@@ -199,7 +199,7 @@ void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
       auto FoundModule = WriterModule::Registry::find(StreamSettings.Module);
       Source ThisSource(StreamSettings.Source, FoundModule.second.Id,
                         FoundModule.second.Name, StreamSettings.Topic,
-                        move(StreamSettings.WriterModule));
+                        std::move(StreamSettings.WriterModule));
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
       LOG_WARN(
