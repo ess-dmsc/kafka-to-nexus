@@ -13,6 +13,7 @@
   see ([schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 - Adding _se00_ writer module (see [schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 - Adding _ev44_ writer module (see [schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
+- Enable idempotence setting in the Kafka producer.
 - Updated librdkakfa Conan package version to 2.0.2
 
 
