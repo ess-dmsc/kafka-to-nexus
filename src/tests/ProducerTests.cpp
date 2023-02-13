@@ -35,7 +35,7 @@ class FakeTopic : public RdKafka::Topic {
 public:
   FakeTopic() = default;
   ~FakeTopic() override = default;
-  const std::string name() const override { return ""; };
+  std::string name() const override { return ""; };
   bool partition_available(int32_t /*partition*/) const override {
     return true;
   };
