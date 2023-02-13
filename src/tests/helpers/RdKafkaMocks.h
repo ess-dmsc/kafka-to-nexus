@@ -19,7 +19,7 @@ public:
   MAKE_CONST_MOCK0(topics, const RdKafka::Metadata::TopicMetadataVector *(),
                    override);
   MAKE_CONST_MOCK0(orig_broker_id, int32_t(), override);
-  MAKE_CONST_MOCK0(orig_broker_name, const std::string(), override);
+  MAKE_CONST_MOCK0(orig_broker_name, std::string(), override);
 };
 
 class MockTopicMetadata : public RdKafka::TopicMetadata {
@@ -29,7 +29,7 @@ private:
 public:
   explicit MockTopicMetadata(const std::string &TopicName) : Name(TopicName) {}
 
-  const std::string topic() const override { return Name; }
+  std::string topic() const override { return Name; }
 
   MAKE_CONST_MOCK0(partitions, const PartitionMetadataVector *(), override);
   MAKE_CONST_MOCK0(err, RdKafka::ErrorCode(), override);
@@ -67,8 +67,8 @@ public:
   }
 
 public:
-  MAKE_CONST_MOCK0(name, const std::string(), override);
-  MAKE_CONST_MOCK0(memberid, const std::string(), override);
+  MAKE_CONST_MOCK0(name, std::string(), override);
+  MAKE_CONST_MOCK0(memberid, std::string(), override);
   MAKE_MOCK1(poll, int(int), override);
   MAKE_MOCK0(outq_len, int(), override);
   MAKE_MOCK1(pause,
@@ -92,7 +92,7 @@ public:
              RdKafka::Queue *(const RdKafka::TopicPartition *), override);
   MAKE_MOCK1(set_log_queue, RdKafka::ErrorCode(RdKafka::Queue *), override);
   MAKE_MOCK0(yield, void(), override);
-  MAKE_MOCK1(clusterid, const std::string(int), override);
+  MAKE_MOCK1(clusterid, std::string(int), override);
   MAKE_MOCK0(c_ptr, rd_kafka_s *(), override);
   MAKE_MOCK1(subscribe, RdKafka::ErrorCode(const std::vector<std::string> &),
              override);
@@ -152,6 +152,9 @@ public:
              RdKafka::Error *(const std::vector<RdKafka::TopicPartition *> &),
              override);
   MAKE_MOCK0(sasl_background_callbacks_enable, RdKafka::Error *(), override);
+  MAKE_MOCK2(sasl_set_credentials,
+             RdKafka::Error *(const std::string &, const std::string &),
+             override);
   MAKE_MOCK0(get_sasl_queue, RdKafka::Queue *(), override);
   MAKE_MOCK0(get_background_queue, RdKafka::Queue *(), override);
   MAKE_MOCK1(close, RdKafka::Error *(RdKafka::Queue *), override);
@@ -167,7 +170,7 @@ private:
 
 class MockTopic : public RdKafka::Topic {
 public:
-  MAKE_CONST_MOCK0(name, const std::string(), override);
+  MAKE_CONST_MOCK0(name, std::string(), override);
   MAKE_CONST_MOCK1(partition_available, bool(int32_t), override);
   MAKE_MOCK2(offset_store, RdKafka::ErrorCode(int32_t, int64_t), override);
   MAKE_MOCK0(c_ptr, rd_kafka_topic_s *(), override);
@@ -175,8 +178,8 @@ public:
 
 class MockProducer : public trompeloeil::mock_interface<RdKafka::Producer> {
 public:
-  MAKE_CONST_MOCK0(name, const std::string(), override);
-  MAKE_CONST_MOCK0(memberid, const std::string(), override);
+  MAKE_CONST_MOCK0(name, std::string(), override);
+  MAKE_CONST_MOCK0(memberid, std::string(), override);
   MAKE_MOCK1(poll, int(int), override);
   MAKE_MOCK0(outq_len, int(), override);
   MAKE_MOCK4(metadata,
@@ -204,7 +207,7 @@ public:
              RdKafka::Queue *(const RdKafka::TopicPartition *), override);
   MAKE_MOCK1(set_log_queue, RdKafka::ErrorCode(RdKafka::Queue *), override);
   MAKE_MOCK0(yield, void(), override);
-  MAKE_MOCK1(clusterid, const std::string(int), override);
+  MAKE_MOCK1(clusterid, std::string(int), override);
   MAKE_MOCK0(c_ptr, rd_kafka_s *(), override);
   MAKE_MOCK2(create, RdKafka::Producer *(RdKafka::Conf *, std::string));
   MAKE_MOCK7(produce,
@@ -241,6 +244,9 @@ public:
               override);
   MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
   MAKE_MOCK0(sasl_background_callbacks_enable, RdKafka::Error *(), override);
+  MAKE_MOCK2(sasl_set_credentials,
+             RdKafka::Error *(const std::string &, const std::string &),
+             override);
   MAKE_MOCK0(get_sasl_queue, RdKafka::Queue *(), override);
   MAKE_MOCK0(get_background_queue, RdKafka::Queue *(), override);
   IMPLEMENT_MOCK1(init_transactions);
