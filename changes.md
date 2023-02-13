@@ -22,7 +22,6 @@
 - Adding _se00_ writer module (see [schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 - Adding _ev44_ writer module (see [schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 - Ignore deprecated warnings on macOS (can be removed when https://github.com/chriskohlhoff/asio/issues/1183 is addressed.
-- Updated Conan package dependencies: librdkakfa (1.9.2)
 - Enable idempotence setting in the Kafka producer.
 - Updated librdkakfa Conan package version to 2.0.2
 
