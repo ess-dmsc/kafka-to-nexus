@@ -308,7 +308,9 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           }}});
 
     CommandSteps.push_back(
-        {[&]() { return ServiceId == StopCmd.ServiceID; },
+        {[&]() {
+           return StopCmd.ServiceID.empty() || ServiceId == StopCmd.ServiceID;
+         },
          {LogLevel::Debug, 0, false, [&]() {
             return fmt::format(
                 "Rejected stop command as the service id was wrong. It "
