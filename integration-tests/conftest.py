@@ -176,18 +176,18 @@ def build_and_run(
         time.sleep(10)
 
     def fin():
-        # Stop the containers then remove them and their volumes (--volumes option)
-        if not custom_kafka_broker:
-            print("Stopping docker containers", flush=True)
-            options["--timeout"] = 30
-            cmd.down(options)
-            print("Containers stopped", flush=True)
         print("Stopping file-writers")
         for fw in list_of_writers:
             fw.terminate()
         for fw in list_of_writers:
             fw.wait()
         print("File-writers stopped")
+        # Stop the containers then remove them and their volumes (--volumes option)
+        if not custom_kafka_broker:
+            print("Stopping docker containers", flush=True)
+            options["--timeout"] = 10
+            cmd.down(options)
+            print("Containers stopped", flush=True)
 
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
