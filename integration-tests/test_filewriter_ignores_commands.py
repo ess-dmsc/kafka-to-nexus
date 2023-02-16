@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from file_writer_control.CommandStatus import CommandState
+from file_writer_control.JobStatus import JobState
 from file_writer_control.WriteJob import WriteJob
 from helpers import full_file_path
 from helpers.writer import (
@@ -13,13 +14,13 @@ from helpers.writer import (
 )
 
 
-def test_ignores_commands_with_incorrect_id(
+def test_ignores_stop_command_with_incorrect_service_id(
+    request,
     worker_pool,
     kafka_address,
     multiple_writers,
-    hdf_file_name="output_file_stop_id.nxs",
 ):
-    file_path = full_file_path(hdf_file_name)
+    file_path = full_file_path(f"{request.node.name}.nxs")
     wait_writers_available(worker_pool, nr_of=2, timeout=20)
     now = datetime.now()
 
@@ -32,37 +33,106 @@ def test_ignores_commands_with_incorrect_id(
         start_time=now,
         stop_time=now + timedelta(days=30),
     )
-    wait_start_job(worker_pool, write_job, timeout=20)
+    start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
-    cmd_handler = worker_pool.try_send_stop_now(
+    stop_cmd_handler = worker_pool.try_send_stop_now(
         "incorrect service id", write_job.job_id
     )
 
     used_timeout = timedelta(seconds=5)
-    cmd_handler.set_timeout(used_timeout)
+    stop_cmd_handler.set_timeout(used_timeout)
 
-    time.sleep(used_timeout.total_seconds() + 2)
+    time.sleep(used_timeout.total_seconds() + 5)
     assert (
-        cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
-    ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
+        stop_cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
+    ), f"Stop command not ignored. State was {stop_cmd_handler.get_state()} (cmd id: f{stop_cmd_handler.command_id})"
+    assert (
+        start_cmd_handler.get_state() in [JobState.WRITING]
+    ), f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
+
+    stop_all_jobs(worker_pool)
+    wait_no_working_writers(worker_pool, timeout=15)
+    assert Path(file_path).is_file()
+
+
+def test_ignores_stop_command_with_incorrect_job_id(
+    request,
+    worker_pool,
+    kafka_address,
+    multiple_writers,
+):
+    file_path = full_file_path(f"{request.node.name}.nxs")
+    wait_writers_available(worker_pool, nr_of=2, timeout=20)
+    now = datetime.now()
+
+    with open("commands/nexus_structure.json", "r") as f:
+        structure = f.read()
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_path,
+        broker=kafka_address,
+        start_time=now,
+        stop_time=now + timedelta(days=30),
+    )
+    start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
     cmd_handler = worker_pool.try_send_stop_now(write_job.service_id, "wrong job id")
+    used_timeout = timedelta(seconds=5)
     cmd_handler.set_timeout(used_timeout)
 
-    time.sleep(used_timeout.total_seconds() + 2)
+    time.sleep(used_timeout.total_seconds() + 5)
     assert (
-        cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
-    ), f"State was {cmd_handler.get_state()} (cmd id: f{cmd_handler.command_id})"
+        start_cmd_handler.get_state() in [JobState.WRITING]
+    ), f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=0)
     assert Path(file_path).is_file()
 
 
-def test_ignores_commands_with_incorrect_job_id(
-    worker_pool, kafka_address, hdf_file_name="output_file_job_id.nxs"
+def test_accepts_stop_command_with_empty_service_id(
+    request,
+    worker_pool,
+    kafka_address,
+    multiple_writers,
 ):
-    file_path = full_file_path(hdf_file_name)
+    file_path = full_file_path(f"{request.node.name}.nxs")
+    wait_writers_available(worker_pool, nr_of=2, timeout=20)
+    now = datetime.now()
+
+    with open("commands/nexus_structure.json", "r") as f:
+        structure = f.read()
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_path,
+        broker=kafka_address,
+        start_time=now,
+        stop_time=now + timedelta(days=30),
+    )
+    start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
+
+    stop_cmd_handler = worker_pool.try_send_stop_now(
+        None, write_job.job_id
+    )
+
+    used_timeout = timedelta(seconds=5)
+    stop_cmd_handler.set_timeout(used_timeout)
+
+    time.sleep(used_timeout.total_seconds() + 5)
+    start_job_state = start_cmd_handler.get_state()
+    assert (
+        start_job_state in [JobState.DONE]
+    ), f"Start job was not stopped after Stop command. State was {start_job_state} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
+
+    stop_all_jobs(worker_pool)
+    wait_no_working_writers(worker_pool, timeout=5)
+    assert Path(file_path).is_file()
+
+
+def test_ignores_start_command_with_incorrect_job_id(
+    request, worker_pool, kafka_address
+):
+    file_path = full_file_path(f"{request.node.name}.nxs")
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     with open("commands/nexus_structure.json", "r") as f:
@@ -82,9 +152,9 @@ def test_ignores_commands_with_incorrect_job_id(
 
 
 def test_reject_bad_json(
-    worker_pool, kafka_address, hdf_file_name="rejected_start_command.nxs"
+    request, worker_pool, kafka_address
 ):
-    file_path = full_file_path(hdf_file_name)
+    file_path = full_file_path(f"{request.node.name}.nxs")
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
