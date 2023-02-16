@@ -95,6 +95,11 @@ void Consumer::assignAllPartitions(std::string const &Topic,
   RdKafka::Metadata *MetadataPtr{nullptr};
   const RdKafka::TopicMetadata *TopicMetadata =
       getTopicMetadata(Topic, MetadataPtr);
+  if (TopicMetadata == nullptr) {
+    throw std::runtime_error(fmt::format(
+        R"(Could not assign partitions in topic "{}" for the provided timestamp "{}". Topic metadata not found)",
+        Topic, StartTimestamp));
+  }
   std::vector<RdKafka::TopicPartition *> TopicPartitions;
   for (auto const &Partition : *TopicMetadata->partitions()) {
     LOG_DEBUG(
