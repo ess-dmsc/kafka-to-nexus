@@ -95,7 +95,11 @@ def wait_until_kafka_ready(docker_cmd, docker_options, kafka_address):
     n_polls = 0
     while n_polls < 10 and not topic_ready:
         all_topics = client.list_topics().topics.keys()
-        if "TEST_writer_jobs" in all_topics and "TEST_writer_commands" in all_topics:
+        if (
+            "TEST_writer_jobs" in all_topics
+            and "TEST_writer_commands" in all_topics
+            and "TEST_writer_commands_alternative" in all_topics
+        ):
             topic_ready = True
             print("Topic is ready!", flush=True)
             break
@@ -172,18 +176,18 @@ def build_and_run(
         time.sleep(10)
 
     def fin():
-        # Stop the containers then remove them and their volumes (--volumes option)
-        if not custom_kafka_broker:
-            print("Stopping docker containers", flush=True)
-            options["--timeout"] = 30
-            cmd.down(options)
-            print("Containers stopped", flush=True)
         print("Stopping file-writers")
         for fw in list_of_writers:
             fw.terminate()
         for fw in list_of_writers:
             fw.wait()
         print("File-writers stopped")
+        # Stop the containers then remove them and their volumes (--volumes option)
+        if not custom_kafka_broker:
+            print("Stopping docker containers", flush=True)
+            options["--timeout"] = 10
+            cmd.down(options)
+            print("Containers stopped", flush=True)
 
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail

@@ -2,19 +2,29 @@
 
 ## Next version
 
-- Redact Kafka SASL password in logs.
-- Ignore deprecated warnings on macOS (can be removed when https://github.com/chriskohlhoff/asio/issues/1183 is addressed.
+- 
+
+## Version 6.0.0
+
+- Breaking: Run start messages (pl72 schema) now require a `start_time` field.
 - Breaking: Ignore Kafka IP addresses sent in `StartJob` messages, experiment
   data is now fetched from the broker configured in `job-pool-uri`.
-- The case when messages are not received from a specific Kafka topic does not make the file writer unsubscribe from the topic anymore. Instead a warning is provided in the file writer log.
-- Updated Conan package dependencies:
-  - librdkakfa (1.9.2)
+- Commands received without an explicit kafka-to-nexus `service_id` are no
+  longer skipped. The command is processed by all workers and accepted by the
+  worker with a matching `job_id`.
+- Fix: The case when messages are not received from a specific Kafka topic does not
+  make the file writer unsubscribe from the topic anymore. Instead a warning is
+  provided in the file writer log.
+- Fix: Stop commands sent immediately after a start command were not always processed.
+- Fix: Redact Kafka SASL password in logs.
 - Adding _f144_, _al00_ and _ep01_ writer modules. For more information on the schemas mentioned,
   see ([schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 - Adding _se00_ writer module (see [schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
 - Adding _ev44_ writer module (see [schema definitions here](https://github.com/ess-dmsc/streaming-data-types)).
+- Ignore deprecated warnings on macOS (can be removed when https://github.com/chriskohlhoff/asio/issues/1183 is addressed.
 - Enable idempotence setting in the Kafka producer.
 - Updated librdkakfa Conan package version to 2.0.2
+
 
 
 ## Version 5.2.0: Kafka improvements and other fixes
@@ -28,6 +38,7 @@
 - Enabled SSL and SASL in librdkafka to support Kafka authentication.
 - Fix to make all Kafka connections honour the provided librdkafka parameters.
 - Silencing x5f2 schema message and file writer not currently writing status message.
+
 
 ## Version 5.1.0: Attributes and dependencies
 

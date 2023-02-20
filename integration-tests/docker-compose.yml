@@ -16,7 +16,7 @@ services:
       KAFKA_REPLICA_FETCH_MAX_BYTES: 300000000
       KAFKA_BROKER_ID: 0
       KAFKA_LOG_RETENTION_MS: -1  # keep data forever, required for tests involving fake "historical" data
-      KAFKA_CREATE_TOPICS: "TEST_epicsConnectionStatus:1:1,TEST_sampleEnv:1:1,TEST_writer_jobs:1:1,TEST_writer_commands:1:1,TEST_forwarderConfig:1:1,TEST_forwarderStatusLR:1:1,TEST_forwarderDataLR:1:1"
+      KAFKA_CREATE_TOPICS: "TEST_epicsConnectionStatus:1:1,TEST_sampleEnv:1:1,TEST_writer_jobs:1:1,TEST_writer_commands:1:1,TEST_writer_commands_alternative:1:1,TEST_forwarderConfig:1:1,TEST_forwarderStatusLR:1:1,TEST_forwarderDataLR:1:1"
     depends_on:
       - wait_for_zookeeper
 

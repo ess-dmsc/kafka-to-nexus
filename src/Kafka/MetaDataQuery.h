@@ -18,6 +18,10 @@
 
 namespace Kafka {
 
+const RdKafka::TopicMetadata *
+findTopicMetadata(const std::string &Topic,
+                  const RdKafka::Metadata *KafkaMetadata);
+
 std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> const &Partitions, time_point Time,

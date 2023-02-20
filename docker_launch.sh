@@ -8,7 +8,7 @@ FOUND=false
 
 for I in {1..10}
 do
-  if $KAFKA_CMD | grep -q "TEST_writer_commands" && $KAFKA_CMD | grep -q "TEST_writer_jobs"; then
+  if $KAFKA_CMD | grep -q "TEST_writer_commands_alternative" && $KAFKA_CMD | grep -q "TEST_writer_commands" && $KAFKA_CMD | grep -q "TEST_writer_jobs"; then
     FOUND=true
     break
   else
