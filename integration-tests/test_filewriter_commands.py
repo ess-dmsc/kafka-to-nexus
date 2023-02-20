@@ -46,9 +46,9 @@ def test_ignores_stop_command_with_incorrect_service_id(
     assert (
         stop_cmd_handler.get_state() == CommandState.TIMEOUT_RESPONSE
     ), f"Stop command not ignored. State was {stop_cmd_handler.get_state()} (cmd id: f{stop_cmd_handler.command_id})"
-    assert (
-        start_cmd_handler.get_state() in [JobState.WRITING]
-    ), f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
+    assert start_cmd_handler.get_state() in [
+        JobState.WRITING
+    ], f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=15)
@@ -81,9 +81,9 @@ def test_ignores_stop_command_with_incorrect_job_id(
     cmd_handler.set_timeout(used_timeout)
 
     time.sleep(used_timeout.total_seconds() + 5)
-    assert (
-        start_cmd_handler.get_state() in [JobState.WRITING]
-    ), f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
+    assert start_cmd_handler.get_state() in [
+        JobState.WRITING
+    ], f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=0)
@@ -111,18 +111,16 @@ def test_accepts_stop_command_with_empty_service_id(
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
-    stop_cmd_handler = worker_pool.try_send_stop_now(
-        None, write_job.job_id
-    )
+    stop_cmd_handler = worker_pool.try_send_stop_now(None, write_job.job_id)
 
     used_timeout = timedelta(seconds=5)
     stop_cmd_handler.set_timeout(used_timeout)
 
     time.sleep(used_timeout.total_seconds() + 5)
     start_job_state = start_cmd_handler.get_state()
-    assert (
-        start_job_state in [JobState.DONE]
-    ), f"Start job was not stopped after Stop command. State was {start_job_state} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
+    assert start_job_state in [
+        JobState.DONE
+    ], f"Start job was not stopped after Stop command. State was {start_job_state} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=5)
@@ -151,9 +149,7 @@ def test_ignores_start_command_with_incorrect_job_id(
     assert not Path(file_path).is_file()
 
 
-def test_reject_bad_json(
-    request, worker_pool, kafka_address
-):
+def test_reject_bad_json(request, worker_pool, kafka_address):
     file_path = full_file_path(f"{request.node.name}.nxs")
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()

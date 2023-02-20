@@ -61,7 +61,9 @@ def wait_command_is_done(command_handler: CommandHandler, timeout: float):
         )
 
 
-def wait_start_job(worker_pool: WorkerJobPool, write_job: WriteJob, timeout: float) -> JobHandler:
+def wait_start_job(
+    worker_pool: WorkerJobPool, write_job: WriteJob, timeout: float
+) -> JobHandler:
     job_handler = JobHandler(worker_finder=worker_pool)
     start_handler = job_handler.start_job(write_job)
     wait_command_is_done(start_handler, timeout)
