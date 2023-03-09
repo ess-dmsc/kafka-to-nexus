@@ -27,6 +27,14 @@
 #include <CLI/CLI.hpp>
 #include <csignal>
 #include <string>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 
 enum class RunStates {
   Running,
@@ -104,6 +112,36 @@ bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
     return false;
   }
   return true;
+}
+
+// MJC Testing
+void statusThread(int arg) {
+  printf("arg: %d\n", arg);
+
+  int listenfd = 0, connfd = 0;
+  struct sockaddr_in serv_addr;
+
+  char sendBuff[1025];
+
+  listenfd = socket(AF_INET, SOCK_STREAM, 0);
+  memset(&serv_addr, '0', sizeof(serv_addr));
+  memset(sendBuff, '0', sizeof(sendBuff));
+
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  serv_addr.sin_port = htons(8888);
+
+  bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+
+  listen(listenfd, 10);
+
+  while(1) {
+    connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
+    snprintf(sendBuff, sizeof(sendBuff), "STATUS: running\n");
+    write(connfd, sendBuff, strlen(sendBuff));
+    close(connfd);
+    sleep(1);
+  }
 }
 
 int main(int argc, char **argv) {
@@ -186,6 +224,10 @@ int main(int argc, char **argv) {
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
         UsedRegistrar);
   };
+
+
+  auto statusthread = std::thread(statusThread, 0);
+  //statusthread.join();
 
   bool FindTopicMode{true};
   duration CMetaDataTimeout{
