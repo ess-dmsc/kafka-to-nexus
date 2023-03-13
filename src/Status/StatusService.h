@@ -48,4 +48,4 @@ private:
   static constexpr int MESSAGE_BACKLOG{10}; // Max # of queued connections
 };
 
-} // namespace FileWriter
+} // namespace Status
