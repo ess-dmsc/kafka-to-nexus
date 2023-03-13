@@ -23,7 +23,7 @@
 #include <cstring>
 #include <thread>
 
-namespace FileWriter {
+namespace Status {
 
 class StatusService {
 public:

@@ -19,9 +19,9 @@
 #include "Metrics/LogSink.h"
 #include "Metrics/Registrar.h"
 #include "Metrics/Reporter.h"
-#include <StatusService.h>
 #include "Status/StatusInfo.h"
 #include "Status/StatusReporter.h"
+#include <Status/StatusService.h>
 #include "Version.h"
 #include "WriterRegistrar.h"
 #include "logger.h"
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
         UsedRegistrar);
   };
 
-  FileWriter::StatusService status(8888);
+  Status::StatusService status(Options->ServerStatusPort);
   status.startThread();
 
   bool FindTopicMode{true};

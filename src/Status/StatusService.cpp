@@ -7,9 +7,9 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <StatusService.h>
+#include <Status/StatusService.h>
 
-namespace FileWriter {
+namespace Status {
 
 StatusService::StatusService(int Port) : TcpPort(Port) {
   ListenFd = socket(AF_INET, SOCK_STREAM, 0);
