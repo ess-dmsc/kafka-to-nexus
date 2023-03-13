@@ -26,6 +26,7 @@
 #include "WriterRegistrar.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
+#include <StatusService.h>
 #include <csignal>
 #include <string>
 
