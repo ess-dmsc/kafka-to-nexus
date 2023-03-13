@@ -74,6 +74,7 @@ set(kafka_to_nexus_SRC
         JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
+        StatusService.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
         HDFAttributes.cpp
@@ -147,6 +148,7 @@ set(kafka_to_nexus_INC
         Msg.h
         FlatbufferMessage.h
         Source.h
+        StatusService.h
         StreamerOptions.h
         StreamController.h
         URI.h
