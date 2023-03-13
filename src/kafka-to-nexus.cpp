@@ -19,13 +19,13 @@
 #include "Metrics/LogSink.h"
 #include "Metrics/Registrar.h"
 #include "Metrics/Reporter.h"
-#include <StatusService.h>
 #include "Status/StatusInfo.h"
 #include "Status/StatusReporter.h"
 #include "Version.h"
 #include "WriterRegistrar.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
+#include <StatusService.h>
 #include <csignal>
 #include <string>
 

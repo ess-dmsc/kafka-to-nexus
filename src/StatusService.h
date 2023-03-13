@@ -13,15 +13,15 @@
 
 #pragma once
 
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstdio>
 #include <cstdlib>
-#include <unistd.h>
-#include <sys/types.h>
 #include <cstring>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <thread>
+#include <unistd.h>
 
 namespace FileWriter {
 

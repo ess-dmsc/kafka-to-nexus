@@ -20,11 +20,10 @@ StatusService::StatusService(int Port) : TcpPort(Port) {
   ServerAddr.sin_addr.s_addr = htonl(INADDR_ANY);
   ServerAddr.sin_port = htons(TcpPort);
 
-  bind(ListenFd, (struct sockaddr*)&ServerAddr, sizeof(ServerAddr));
+  bind(ListenFd, (struct sockaddr *)&ServerAddr, sizeof(ServerAddr));
 
   listen(ListenFd, MESSAGE_BACKLOG);
 }
-
 
 void StatusService::startThread() {
   status = std::thread(&StatusService::run, this);
@@ -34,7 +33,7 @@ void StatusService::startThread() {
 /// data to the returned status message
 void StatusService::run() {
   while (true) {
-    int ConnFd = accept(ListenFd, (struct sockaddr*)NULL, NULL);
+    int ConnFd = accept(ListenFd, (struct sockaddr *)NULL, NULL);
     snprintf(TxBuffer, sizeof(TxBuffer), "STATUS: running\n");
     write(ConnFd, TxBuffer, strlen(TxBuffer));
     close(ConnFd);
