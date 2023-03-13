@@ -1,3 +1,11 @@
+// Copyright (C) 2023 European Spallation Source, ERIC. See LICENSE file
+//===----------------------------------------------------------------------===//
+///
+/// \file
+///
+/// \brief StatusService class implementation
+///
+//===----------------------------------------------------------------------===//
 
 #include <StatusService.h>
 
@@ -5,8 +13,8 @@ namespace FileWriter {
 
 StatusService::StatusService(int Port) : TcpPort(Port) {
   ListenFd = socket(AF_INET, SOCK_STREAM, 0);
-  memset(&ServerAddr, '0', sizeof(ServerAddr));
-  memset(TxBuffer, '0', sizeof(TxBuffer));
+  memset(&ServerAddr, 0, sizeof(ServerAddr));
+  memset(TxBuffer, 0, sizeof(TxBuffer));
 
   ServerAddr.sin_family = AF_INET;
   ServerAddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -20,12 +28,13 @@ StatusService::StatusService(int Port) : TcpPort(Port) {
 
 void StatusService::startThread() {
   status = std::thread(&StatusService::run, this);
-  //status.join();
 }
 
+/// \todo can add responses to queries or add runtime
+/// data to the returned status message
 void StatusService::run() {
   while (true) {
-    ConnFd = accept(ListenFd, (struct sockaddr*)NULL, NULL);
+    int ConnFd = accept(ListenFd, (struct sockaddr*)NULL, NULL);
     snprintf(TxBuffer, sizeof(TxBuffer), "STATUS: running\n");
     write(ConnFd, TxBuffer, strlen(TxBuffer));
     close(ConnFd);
