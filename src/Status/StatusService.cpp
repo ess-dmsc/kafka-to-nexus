@@ -41,4 +41,4 @@ void StatusService::run() {
   }
 }
 
-} // namespace FileWriter
+} // namespace Status
