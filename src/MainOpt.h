@@ -51,6 +51,9 @@ struct MainOpt {
   /// Used for logging to file
   std::string LogFilename;
 
+  /// TCP port number for querying application status
+  int ServerStatusPort{8888};
+
   /// Kafka broker and topic where file writer commands are published.
   uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
 

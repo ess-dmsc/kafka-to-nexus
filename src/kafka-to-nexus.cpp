@@ -25,6 +25,7 @@
 #include "WriterRegistrar.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
+#include <Status/StatusService.h>
 #include <csignal>
 #include <string>
 
@@ -186,6 +187,9 @@ int main(int argc, char **argv) {
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
         UsedRegistrar);
   };
+
+  Status::StatusService status(Options->ServerStatusPort);
+  status.startThread();
 
   bool FindTopicMode{true};
   duration CMetaDataTimeout{

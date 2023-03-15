@@ -100,6 +100,7 @@ set(kafka_to_nexus_SRC
         Status/StatusReporterBase.cpp
         Stream/PartitionFilter.cpp
         Status/StatusReporter.cpp
+        Status/StatusService.cpp
         Stream/MessageWriter.cpp
         Stream/SourceFilter.cpp
         Stream/Partition.cpp
@@ -165,7 +166,7 @@ set(kafka_to_nexus_INC
         Metrics/Reporter.h
         Status/StatusInfo.h
         Status/StatusReporter.h
-        Status/StatusReporter.cpp
+        Status/StatusService.h
         Status/StatusReporterBase.h
         Stream/PartitionFilter.h
         Status/StatusReporterBase.h

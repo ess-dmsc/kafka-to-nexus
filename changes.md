@@ -2,7 +2,7 @@
 
 ## Next version
 
-- 
+- Adding (tcp based) service api to query a filewriter for its status
 
 ## Version 6.0.0
 
@@ -49,11 +49,11 @@
 - All the dependencies have been updated to their latest (conan) version as of 2022-05-23. This has required some changes and bug fixes in the application.
 
 
-## Version 5.0.0: Usage and opinion 
+## Version 5.0.0: Usage and opinion
 
 - The filewriter will now only run in the job pool mode. This means that the user is required to supply a job pool topic in the filewriter .ini configuration flag using the --job-pool-uri option.
 - Improved log messages and thread names. Done to aid debugging.
-- Changed _fetch.message.max.bytes_ Kafka variable back to its default value as it was causing timeouts. 
+- Changed _fetch.message.max.bytes_ Kafka variable back to its default value as it was causing timeouts.
 - Fix of bug in setting up the console logger interface.
 - Warning (log) messages will now be produced if the first message from a source has a data type different than that configured for the current writer module instance. This has been implemented for the `f142`, `senv` and `ADAr` modules.
 - The Grafana metrics prefix now has the form "kafka-to-nexus.*hostname*.*service_name*" if the service name is set. If not, it has the form "kafka-to-nexus.*hostname*.*service_id*".
@@ -97,7 +97,7 @@ from shortly before the start of each file being written. ([#551](https://github
   - trompeloeil
   - date
   - graylog
-- Codebase now requires C++17 to make use of `std::optional`, `std::variant` and `std::filesystem`. `filesystem` is 
+- Codebase now requires C++17 to make use of `std::optional`, `std::variant` and `std::filesystem`. `filesystem` is
 used from the `std::experimental` namespace when necessary to support gcc 8 and AppleClang 10. Compile times reduced by
 approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-to-nexus/pull/558)).
 - The application will no longer fail silently when encountering unit types that it does not recognise when parsing the JSON code for the HDF structure.
@@ -133,7 +133,7 @@ approx 5%, for details of test see PR ([#558](https://github.com/ess-dmsc/kafka-
 ### Command system re-write
 
 - The command system has been (almost completely) re-written. This change completely breaks backwards compatibility in the command system as there are strict requirements on some of the fields in the "start" and "stop" schemas.
-- As a part of this change, the file-writer will now also (if possible and reasonable) respond to a command with a confirmation or failure message. Furthermore, a message will also be sent when the write job has stopped. 
+- As a part of this change, the file-writer will now also (if possible and reasonable) respond to a command with a confirmation or failure message. Furthermore, a message will also be sent when the write job has stopped.
 - The code is (currently) the documentation. Instead of implementing your own code for commanding the file-writer, you can use the [file-writer-control](https://github.com/ess-dmsc/file-writer-control) Python library.
 - Furthermore, command and status topics have been merged into one command + status topic. The command line argument has thus also been changed to `--command-status-uri`.
 - There is now a job pool functionality. The job pool topic is set with the argument `--job-pool-uri`.

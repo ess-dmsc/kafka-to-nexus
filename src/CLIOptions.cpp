@@ -175,6 +175,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                     "commands"));
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
+  App.add_option("--server-status-port", MainOptions.ServerStatusPort,
+                 "TCP Port");
   App.add_option(
          "--service-name",
          [&MainOptions](std::vector<std::string> ServiceNames) -> bool {
