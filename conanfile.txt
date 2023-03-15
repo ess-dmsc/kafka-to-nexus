@@ -8,7 +8,7 @@ nlohmann_json/3.10.5
 streaming-data-types/5b537f9@ess-dmsc/stable
 cli11/2.2.0
 trompeloeil/42
-graylog-logger/2.1.4-1@ess-dmsc/stable
+graylog-logger/2.1.4-2@ess-dmsc/stable
 date/3.0.1
 readerwriterqueue/1.0.6
 concurrentqueue/1.0.3
