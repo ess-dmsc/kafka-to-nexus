@@ -1,4 +1,11 @@
 {
+    "cmake.configureOnOpen": false,
+    "search.exclude": {
+        "**/.git": true,
+        "**/_build": true,
+        "**/build": true,
+        "**/*.code-search": true
+    },
     "files.associations": {
         "array": "cpp",
         "atomic": "cpp",
