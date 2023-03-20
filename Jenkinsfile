@@ -386,7 +386,9 @@ node {
     }
   }
 
-   builders['macOS'] = get_macos_pipeline()
+  if (env.ENABLE_MACOS_BUILDS.toUpperCase() == 'TRUE') {
+    builders['macOS'] = get_macos_pipeline()
+  }
 
   try {
     parallel builders
