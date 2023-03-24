@@ -73,10 +73,9 @@ createStatusReporter(MainOpt const &MainConfig,
   BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
   auto const StatusInformation =
       Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,
-                                    ApplicationName,
+                                      ApplicationName,
                                     ApplicationVersion,
-                                    getHostName(),
-                                    MainConfig.ServiceName,
+                                    getHostName(), MainConfig.ServiceName,
                                     MainConfig.getServiceId(),
                                     getPID()};
   return std::make_unique<Status::StatusReporter>(
