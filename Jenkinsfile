@@ -189,18 +189,18 @@ def static_checks(builder, container) {
           }
 
           // Push any changes resulting from formatting
+          container.copyFrom(pipeline_builder.project, 'clang-formatted-code')
           try {
             withCredentials([
-              usernamePassword(
-              credentialsId: 'cow-bot-username-with-token',
-              usernameVariable: 'USERNAME',
-              passwordVariable: 'PASSWORD'
+              gitUsernamePassword(
+                credentialsId: 'cow-bot-username-with-token',
+                gitToolName: 'Default'
               )
             ]) {
               withEnv(["PROJECT=${builder.project}"]) {
-                container.sh '''
-                  cd $PROJECT
-                  git push https://$USERNAME:$PASSWORD@github.com/ess-dmsc/$PROJECT.git HEAD:$CHANGE_BRANCH
+                sh '''
+                  cd clang-formatted-code
+                  git push https://github.com/ess-dmsc/$PROJECT.git HEAD:$CHANGE_BRANCH
                 '''
               }  // withEnv
             }  // withCredentials
