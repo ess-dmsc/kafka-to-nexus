@@ -305,8 +305,8 @@ def integration_test(builder, container) {
       stage("${container.key}: Sys.-test requirements") {
         sh "tar xvf ${builder.project}-${container.key}.tar.gz"
         sh """cd kafka-to-nexus
-       python3.8 -m pip install --user --upgrade pip
-       python3.8 -m pip install --user -r integration-tests/requirements.txt
+       scl enable rh-python38 -- python -m pip install --user --upgrade pip
+       scl enable rh-python38 -- python -m pip install --user -r integration-tests/requirements.txt
         """
       }  // stage
       dir("kafka-to-nexus/integration-tests") {
@@ -316,7 +316,7 @@ def integration_test(builder, container) {
         sh "docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true"
         timeout(time: 30, activity: true){
           sh """chmod go+w logs output-files
-          LD_LIBRARY_PATH=../lib python3.8 -m pytest -s --writer-binary="../" --junitxml=./IntegrationTestsOutput.xml .
+          LD_LIBRARY_PATH=../lib scl enable rh-python38 -- python -m pytest -s --writer-binary="../" --junitxml=./IntegrationTestsOutput.xml .
           """
         }
       }  // stage
