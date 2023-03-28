@@ -29,7 +29,7 @@ class StatusService {
 public:
   /// \brief Service constructor.
   /// \param TcpPort Desired tcp port for accepting connections(default 8888)
-  StatusService(int TcpPort);
+  explicit StatusService(int TcpPort);
 
   /// \brief launches run() in a thread.
   void startThread();
