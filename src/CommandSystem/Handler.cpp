@@ -76,6 +76,8 @@ void Handler::revertCommandTopic() {
 void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
                                     nlohmann::json Metadata) {
   Metadata["hdf_structure"] = NexusStructure;
+  LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={})",
+            "Success", GetJobId(), FilePath.string());
   CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
                                      FilePath, Metadata.dump());
   revertCommandTopic();
@@ -84,6 +86,8 @@ void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
 void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                           std::string const &Metadata,
                                           std::string const &ErrorMessage) {
+  LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={}): {}",
+            "Failure", GetJobId(), FileName, ErrorMessage);
   CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(),
                                      ErrorMessage, FileName, Metadata);
 }
