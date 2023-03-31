@@ -39,6 +39,20 @@ void StreamController::setStopTime(time_point const &StopTime) {
   });
 }
 
+void StreamController::pauseStreams() {
+  LOG_INFO("Pausing all stream consumers...");
+  for (auto &Stream : Streamers) {
+    Stream->pause();
+  }
+}
+
+void StreamController::resumeStreams() {
+  LOG_INFO("Resuming all stream consumers...");
+  for (auto &Stream : Streamers) {
+    Stream->resume();
+  }
+}
+
 void StreamController::stop() {
   for (auto &Stream : Streamers) {
     Stream->stop();

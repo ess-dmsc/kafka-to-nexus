@@ -36,6 +36,19 @@ public:
   /// \note This function exist in order to make unit testing possible.
   void start();
 
+  /// \brief Pause the consumer threads.
+  ///
+  /// Non blocking. Will tell the consumer threads to pause as soon as possible.
+  /// There are no guarantees for when the consumers are actually paused.
+  void pause();
+
+  /// \brief Resume the consumer threads.
+  ///
+  /// Non blocking. Will tell the consumer threads to resume as soon as
+  /// possible. There are no guarantees for when the consumers are actually
+  /// resumed.
+  void resume();
+
   /// \brief Stop the consumer threads.
   ///
   /// Non blocking. Will tell the consumer threads to stop as soon as possible.
