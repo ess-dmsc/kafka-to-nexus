@@ -52,6 +52,19 @@ public:
   /// \note This function exist in order to make unit testing possible.
   void start();
 
+  /// \brief Pause the consumer thread.
+  ///
+  /// Non blocking. Will tell the consumer thread to pause as soon as possible.
+  /// There are no guarantees for when the consumer is actually paused.
+  void pause();
+
+  /// \brief Resume the consumer thread.
+  ///
+  /// Non blocking. Will tell the consumer thread to resume as soon as
+  /// possible. There are no guarantees for when the consumer is actually
+  /// resumed.
+  void resume();
+
   /// \brief Stop the consumer thread.
   ///
   /// Non blocking. Will tell the consumer thread to stop as soon as possible.
@@ -65,6 +78,7 @@ public:
   void setStopTime(time_point Stop);
 
   virtual bool hasFinished() const;
+  virtual bool isPaused() const;
   auto getPartitionID() const { return PartitionID; }
   auto getTopicName() const { return Topic; }
 
@@ -109,8 +123,13 @@ protected:
 
   virtual void pollForMessage();
   virtual void addPollTask();
+  virtual bool hasStopBeenRequested();
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
   void forceStop();
+
+  /// \brief Sleep.
+  /// \note This function exist in order to make unit testing possible.
+  virtual void sleep(duration Duration);
 
   virtual void processMessage(FileWriter::Msg const &Message);
   std::unique_ptr<Kafka::ConsumerInterface> ConsumerPtr;
@@ -118,9 +137,11 @@ protected:
   bool PartitionTimeOutLogged{false};
   std::string Topic{"not_initialized"};
   std::atomic_bool HasFinished{false};
+  std::atomic_bool IsPaused{false};
   std::int64_t CurrentOffset{0};
   time_point StopTime;
   duration StopTimeLeeway;
+  duration PauseCheckInterval{200ms};
   PartitionFilter StopTester;
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>

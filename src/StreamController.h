@@ -92,6 +92,8 @@ private:
   bool StopNow{false};
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
+  void pauseStreams();
+  void resumeStreams();
   void checkIfStreamsAreDone();
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};

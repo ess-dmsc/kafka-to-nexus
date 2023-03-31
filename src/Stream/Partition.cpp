@@ -77,7 +77,15 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
 
 void Partition::start() { addPollTask(); }
 
+void Partition::pause() { IsPaused.store(true); }
+
+void Partition::resume() { IsPaused.store(false); }
+
 void Partition::forceStop() { StopTester.forceStop(); }
+
+void Partition::sleep(duration Duration) {
+  std::this_thread::sleep_for(Duration);
+}
 
 void Partition::stop() {
   Executor.sendLowPriorityWork([=]() { forceStop(); });
@@ -95,6 +103,8 @@ void Partition::setStopTime(time_point Stop) {
 }
 
 bool Partition::hasFinished() const { return HasFinished.load(); }
+
+bool Partition::isPaused() const { return IsPaused.load(); }
 
 void Partition::addPollTask() {
   Executor.sendLowPriorityWork([=]() { pollForMessage(); });
@@ -116,6 +126,10 @@ void Partition::checkAndLogPartitionTimeOut() {
   } else {
     PartitionTimeOutLogged = false;
   }
+}
+
+bool Partition::hasStopBeenRequested() {
+  return StopTester.hasForceStopBeenRequested();
 }
 
 bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
@@ -144,44 +158,52 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
 }
 
 void Partition::pollForMessage() {
-  auto Msg = ConsumerPtr->poll();
-  switch (Msg.first) {
-  case Kafka::PollStatus::Message:
-    MessagesReceived++;
-    break;
-  case Kafka::PollStatus::EndOfPartition:
-    EndOfPartition++;
-    break;
-  case Kafka::PollStatus::TimedOut:
-    KafkaTimeouts++;
-    break;
-  case Kafka::PollStatus::Error:
-    KafkaErrors++;
-    break;
-  default:
-    // Do nothing
-    break;
-  }
-  if (shouldStopBasedOnPollStatus(Msg.first)) {
+  if (hasStopBeenRequested()) {
     HasFinished = true;
     return;
   }
+  if (isPaused()) {
+    sleep(PauseCheckInterval);
+  } else {
+    auto Msg = ConsumerPtr->poll();
+    switch (Msg.first) {
+    case Kafka::PollStatus::Message:
+      MessagesReceived++;
+      break;
+    case Kafka::PollStatus::EndOfPartition:
+      EndOfPartition++;
+      break;
+    case Kafka::PollStatus::TimedOut:
+      KafkaTimeouts++;
+      break;
+    case Kafka::PollStatus::Error:
+      KafkaErrors++;
+      break;
+    default:
+      // Do nothing
+      break;
+    }
+    if (shouldStopBasedOnPollStatus(Msg.first)) {
+      HasFinished = true;
+      return;
+    }
 
-  if (Msg.first == Kafka::PollStatus::Message) {
-    processMessage(Msg.second);
-    if (MsgFilters.empty()) {
-      LOG_INFO(
-          R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
-          PartitionID, Topic);
-      HasFinished = true;
-      return;
-    } else if (Msg.second.getMetaData().timestamp() >
-               StopTime + StopTimeLeeway) {
-      LOG_INFO(
-          R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
-          PartitionID, Topic, Msg.second.getMetaData().timestamp());
-      HasFinished = true;
-      return;
+    if (Msg.first == Kafka::PollStatus::Message) {
+      processMessage(Msg.second);
+      if (MsgFilters.empty()) {
+        LOG_INFO(
+            R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
+            PartitionID, Topic);
+        HasFinished = true;
+        return;
+      } else if (Msg.second.getMetaData().timestamp() >
+                 StopTime + StopTimeLeeway) {
+        LOG_INFO(
+            R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
+            PartitionID, Topic, Msg.second.getMetaData().timestamp());
+        HasFinished = true;
+        return;
+      }
     }
   }
   addPollTask();

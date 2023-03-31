@@ -40,8 +40,10 @@ void PartitionFilter::updateStatusOccurrenceTime(
 
 void PartitionFilter::forceStop() { ForceStop = true; }
 
+bool PartitionFilter::hasForceStopBeenRequested() { return ForceStop; }
+
 bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
-  if (ForceStop) {
+  if (hasForceStopBeenRequested()) {
     return true;
   }
   switch (CurrentPollStatus) {
