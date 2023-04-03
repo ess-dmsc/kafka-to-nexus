@@ -32,6 +32,24 @@
         },
         {
             "type": "shell",
+            "label": "BuildUnitTests",
+            "command": "cd _build && make UnitTests",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOn": [
+                "Build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "shell",
             "label": "UnitTests",
             "command": "cd _build && make UnitTests && source activate_run.sh && ./bin/UnitTests",
             "options": {
@@ -41,7 +59,7 @@
                 "$gcc"
             ],
             "dependsOn": [
-                "Build"
+                "BuildUnitTests"
             ],
             "group": {
                 "kind": "test",
