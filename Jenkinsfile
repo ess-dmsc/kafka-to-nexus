@@ -217,8 +217,10 @@ def static_checks(builder, container) {
               cd ${builder.project}
               cppcheck --xml --inline-suppr --suppress=unusedFunction --suppress=missingInclude --enable=all --inconclusive src/ 2> ${test_output}
             """
-            container.copyFrom("${builder.project}/${test_output}", '.')
-            recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
+            container.copyFrom("${builder.project}/${test_output}", builder.project)
+            dir("${builder.project}") {
+              recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
+            }
         }  // stage
 
         builder.stage("${container.key}: Doxygen") {
