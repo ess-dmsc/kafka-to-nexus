@@ -138,7 +138,7 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
     CTopic->start();
     Streamers.emplace_back(std::move(CTopic));
   }
-  Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
+  Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
 }
 
 bool StreamController::hasErrorState() const { return HasError; }
@@ -149,18 +149,21 @@ std::string StreamController::errorMessage() {
 }
 
 using std::chrono_literals::operator""ms;
+void StreamController::performPeriodicChecks() {
+  checkIfStreamsAreDone();
+  std::this_thread::sleep_for(50ms);
+  Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
+}
+
 void StreamController::checkIfStreamsAreDone() {
   try {
     Streamers.erase(
         std::remove_if(Streamers.begin(), Streamers.end(),
                        [](auto const &Elem) { return Elem->isDone(); }),
         Streamers.end());
-
     if (Streamers.empty()) {
       StreamersRemaining.store(false);
     }
-    std::this_thread::sleep_for(50ms);
-    Executor.sendLowPriorityWork([=]() { checkIfStreamsAreDone(); });
   } catch (std::exception &E) {
     HasError = true;
     std::lock_guard Guard(ErrorMsgMutex);
