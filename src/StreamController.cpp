@@ -17,7 +17,7 @@ StreamController::StreamController(
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
-      KafkaSettings(Settings), MetaDataTracker(Tracker) {
+      StreamerOptions(Settings), MetaDataTracker(Tracker) {
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -32,7 +32,7 @@ StreamController::~StreamController() {
 
 void StreamController::setStopTime(time_point const &StopTime) {
   Executor.sendWork([=]() {
-    KafkaSettings.StopTimestamp = StopTime;
+    StreamerOptions.StopTimestamp = StopTime;
     for (auto &s : Streamers) {
       s->setStopTime(StopTime);
     }
@@ -67,8 +67,8 @@ bool StreamController::isDoneWriting() {
   auto IsDoneWriting =
       HasError or StopNow or
       (!StreamersRemaining.load() and
-       KafkaSettings.StopTimestamp != time_point(duration(0)) and
-       Now > KafkaSettings.StopTimestamp);
+       StreamerOptions.StopTimestamp != time_point(duration(0)) and
+       Now > StreamerOptions.StopTimestamp);
   if (not IsDoneWriting) {
     auto TimeDiffPeriods = (Now - LastFileSizeCalcTime) / FileSizeCalcInterval;
     if (TimeDiffPeriods >= 1) {
@@ -84,13 +84,13 @@ std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 
 void StreamController::getTopicNames() {
   try {
-    auto TopicNames = Kafka::getTopicList(KafkaSettings.BrokerSettings.Address,
-                                          CurrentMetadataTimeOut,
-                                          KafkaSettings.BrokerSettings);
+    auto TopicNames = Kafka::getTopicList(
+        StreamerOptions.BrokerSettings.Address, CurrentMetadataTimeOut,
+        StreamerOptions.BrokerSettings);
     Executor.sendLowPriorityWork([=]() { initStreams(TopicNames); });
   } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;
-    auto &Settings = KafkaSettings.BrokerSettings;
+    auto &Settings = StreamerOptions.BrokerSettings;
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
@@ -128,13 +128,14 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
   }
   for (auto &CItem : TopicSrcMap) {
     auto CStartTime =
-        std::chrono::system_clock::time_point(KafkaSettings.StartTimestamp);
+        std::chrono::system_clock::time_point(StreamerOptions.StartTimestamp);
     auto CStopTime =
-        std::chrono::system_clock::time_point(KafkaSettings.StopTimestamp);
+        std::chrono::system_clock::time_point(StreamerOptions.StopTimestamp);
     auto CTopic = std::make_unique<Stream::Topic>(
-        KafkaSettings.BrokerSettings, CItem.first, CItem.second, &WriterThread,
-        StreamMetricRegistrar, CStartTime, KafkaSettings.BeforeStartTime,
-        CStopTime, KafkaSettings.AfterStopTime);
+        StreamerOptions.BrokerSettings, CItem.first, CItem.second,
+        &WriterThread, StreamMetricRegistrar, CStartTime,
+        StreamerOptions.BeforeStartTime, CStopTime,
+        StreamerOptions.AfterStopTime);
     CTopic->start();
     Streamers.emplace_back(std::move(CTopic));
   }

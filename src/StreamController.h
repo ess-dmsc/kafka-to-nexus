@@ -122,7 +122,7 @@ private:
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;
-  FileWriter::StreamerOptions KafkaSettings;
+  FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
