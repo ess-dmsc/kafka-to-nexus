@@ -19,6 +19,7 @@
 #include "Metrics/Registrar.h"
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
+#include "TimeUtility.h"
 #include <atomic>
 #include <set>
 #include <vector>
@@ -106,11 +107,13 @@ private:
   void initStreams(std::set<std::string> KnownTopicNames);
   void performPeriodicChecks();
   void checkIfStreamsAreDone();
+  void checkIfWriteQueueIsFull();
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
   std::atomic<bool> HasError{false};
   std::mutex ErrorMsgMutex;
   std::string ErrorMessage;
+  duration const PeriodicChecksInterval{50ms};
   duration const FileSizeCalcInterval{5s};
   time_point LastFileSizeCalcTime{system_clock::now() - FileSizeCalcInterval};
 

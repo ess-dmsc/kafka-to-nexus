@@ -149,10 +149,10 @@ std::string StreamController::errorMessage() {
   return ErrorMessage;
 }
 
-using std::chrono_literals::operator""ms;
 void StreamController::performPeriodicChecks() {
   checkIfStreamsAreDone();
-  std::this_thread::sleep_for(50ms);
+  checkIfWriteQueueIsFull();
+  std::this_thread::sleep_for(PeriodicChecksInterval);
   Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
 }
 
@@ -172,6 +172,14 @@ void StreamController::checkIfStreamsAreDone() {
         fmt::format("Got stream error. The error message was: {}", E.what());
     stop();
     StreamersRemaining.store(false);
+  }
+}
+
+void StreamController::checkIfWriteQueueIsFull() {
+  if (WriterThread.nrOfWritesQueued() > StreamerOptions.MaxQueuedWrites) {
+    pauseConsumers();
+  } else {
+    resumeConsumers();
   }
 }
 
