@@ -40,13 +40,13 @@ void StreamController::setStopTime(time_point const &StopTime) {
   });
 }
 
-void StreamController::pauseConsumers() {
+void StreamController::pauseStreamers() {
   for (auto &Stream : Streamers) {
     Stream->pause();
   }
 }
 
-void StreamController::resumeConsumers() {
+void StreamController::resumeStreamers() {
   for (auto &Stream : Streamers) {
     Stream->resume();
   }
@@ -176,14 +176,15 @@ void StreamController::checkIfStreamsAreDone() {
 
 void StreamController::checkIfWriteQueueIsFull() {
   auto QueuedWrites = WriterThread.nrOfWritesQueued();
-  if (QueuedWrites > StreamerOptions.MaxQueuedWrites) {
+  if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
+      !StreamersPaused.load()) {
     LOG_DEBUG("Maximum queued writes reached (count={}). Pausing consumers...",
               QueuedWrites);
     StreamersPaused.store(true);
     pauseConsumers();
-  } else if (StreamersPaused.load() &&
-             QueuedWrites < QueuedWritesResumeThreshold *
-                                StreamerOptions.MaxQueuedWrites) {
+  } else if (QueuedWrites < QueuedWritesResumeThreshold *
+                                StreamerOptions.MaxQueuedWrites &&
+             StreamersPaused.load()) {
     LOG_DEBUG("Write queue below maximum (count={}). Resuming consumers...",
               QueuedWrites);
     resumeConsumers();

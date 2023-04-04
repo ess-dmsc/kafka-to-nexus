@@ -32,8 +32,8 @@ public:
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const time_point &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
-  virtual void pauseConsumers() = 0;
-  virtual void resumeConsumers() = 0;
+  virtual void pauseStreamers() = 0;
+  virtual void resumeStreamers() = 0;
   virtual void stop() = 0;
   virtual bool hasErrorState() const = 0;
   virtual std::string errorMessage() = 0;
@@ -67,12 +67,12 @@ public:
   /// \brief Pause consumers.
   ///
   /// Pauses consumer polling to throttle the ingestion of data.
-  void pauseConsumers() override final;
+  void pauseStreamers() override final;
 
   /// \brief Resume consumers.
   ///
   /// Resumes consumers if they were paused.
-  void resumeConsumers() override final;
+  void resumeStreamers() override final;
 
   /// \brief Stop the streams as soon as possible.
   ///
