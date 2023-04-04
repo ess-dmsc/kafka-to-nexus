@@ -6,6 +6,7 @@
 #include "Stream/Partition.h"
 #include "TimeUtility.h"
 #include "helper.h"
+#include "logger.h"
 
 namespace FileWriter {
 StreamController::StreamController(
