@@ -39,14 +39,14 @@ void StreamController::setStopTime(time_point const &StopTime) {
   });
 }
 
-void StreamController::pauseStreams() {
+void StreamController::pauseConsumers() {
   LOG_INFO("Pausing all stream consumers...");
   for (auto &Stream : Streamers) {
     Stream->pause();
   }
 }
 
-void StreamController::resumeStreams() {
+void StreamController::resumeConsumers() {
   LOG_INFO("Resuming all stream consumers...");
   for (auto &Stream : Streamers) {
     Stream->resume();
