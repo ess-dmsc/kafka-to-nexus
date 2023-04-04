@@ -110,6 +110,7 @@ private:
   void checkIfWriteQueueIsFull();
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
+  std::atomic<bool> StreamersPaused{false};
   std::atomic<bool> HasError{false};
   std::mutex ErrorMsgMutex;
   std::string ErrorMessage;
