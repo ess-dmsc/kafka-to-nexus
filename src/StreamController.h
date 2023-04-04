@@ -118,6 +118,13 @@ private:
   duration const FileSizeCalcInterval{5s};
   time_point LastFileSizeCalcTime{system_clock::now() - FileSizeCalcInterval};
 
+  /// \brief Hysteresis factor to start refilling the write queue after a pause.
+  ///
+  /// Consumers are stopped when the write queue is larger than
+  /// StreamerOptions.MaxQueuedWrites. This variable defines the ratio below
+  /// which the consumers will be resumed.
+  float const QueuedWritesResumeThreshold{0.8F};
+
   /// \brief The file-writing task object
   /// \note Must be located before the streamers and the writer thread to
   /// guarantee that its destructor is not called before the writer modules have
