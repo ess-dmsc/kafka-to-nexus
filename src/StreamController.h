@@ -31,6 +31,8 @@ public:
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const time_point &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
+  virtual void pauseConsumers() = 0;
+  virtual void resumeConsumers() = 0;
   virtual void stop() = 0;
   virtual bool hasErrorState() const = 0;
   virtual std::string errorMessage() = 0;
@@ -60,6 +62,16 @@ public:
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
   void setStopTime(const time_point &StopTime) override;
+
+  /// \brief Pause consumers.
+  ///
+  /// Pauses consumer polling to throttle the ingestion of data.
+  void pauseConsumers() override final;
+
+  /// \brief Resume consumers.
+  ///
+  /// Resumes consumers if they were paused.
+  void resumeConsumers() override final;
 
   /// \brief Stop the streams as soon as possible.
   ///
@@ -92,8 +104,6 @@ private:
   bool StopNow{false};
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
-  void pauseStreams();
-  void resumeStreams();
   void checkIfStreamsAreDone();
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
