@@ -181,13 +181,13 @@ void StreamController::checkIfWriteQueueIsFull() {
     LOG_DEBUG("Maximum queued writes reached (count={}). Pausing consumers...",
               QueuedWrites);
     StreamersPaused.store(true);
-    pauseConsumers();
+    pauseStreamers();
   } else if (QueuedWrites < QueuedWritesResumeThreshold *
                                 StreamerOptions.MaxQueuedWrites &&
              StreamersPaused.load()) {
     LOG_DEBUG("Write queue below maximum (count={}). Resuming consumers...",
               QueuedWrites);
-    resumeConsumers();
+    resumeStreamers();
     StreamersPaused.store(false);
   }
 }
