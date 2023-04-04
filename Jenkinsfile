@@ -219,7 +219,6 @@ def static_checks(builder, container) {
             """
             container.copyFrom("${builder.project}/${test_output}", builder.project)
             dir("${builder.project}") {
-              cat ${test_output} || true
               recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
             }
         }  // stage
