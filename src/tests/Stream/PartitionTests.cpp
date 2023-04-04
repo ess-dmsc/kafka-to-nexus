@@ -76,7 +76,7 @@ public:
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
-  MAKE_MOCK1(sleep, void(duration Duration), override);
+  MAKE_CONST_MOCK1(sleep, void(const duration Duration), override);
 };
 
 void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
