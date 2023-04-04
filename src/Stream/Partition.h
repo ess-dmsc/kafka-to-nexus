@@ -54,15 +54,15 @@ public:
 
   /// \brief Pause the consumer thread.
   ///
-  /// Non blocking. Will tell the consumer thread to pause as soon as possible.
-  /// There are no guarantees for when the consumer is actually paused.
+  /// Non blocking. Will stop the queuing of poll commands to the consumer
+  /// thread command queue. There are no guarantees for when the consumer is
+  /// actually paused.
   void pause();
 
   /// \brief Resume the consumer thread.
   ///
-  /// Non blocking. Will tell the consumer thread to resume as soon as
-  /// possible. There are no guarantees for when the consumer is actually
-  /// resumed.
+  /// Non blocking. Will resume the queuing of poll commands to the consumer
+  /// thread command queue.
   void resume();
 
   /// \brief Stop the consumer thread.
