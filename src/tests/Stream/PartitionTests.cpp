@@ -172,7 +172,6 @@ TEST_F(PartitionTest, PollsIfResumedAfterPause) {
   UnderTest->pause();
   UnderTest->pollForMessage();
   UnderTest->resume();
-  std::this_thread::sleep_for(2s);
   UnderTest->pollForMessage();
   EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
 }
