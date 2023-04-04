@@ -177,9 +177,11 @@ void StreamController::checkIfStreamsAreDone() {
 
 void StreamController::checkIfWriteQueueIsFull() {
   if (WriterThread.nrOfWritesQueued() > StreamerOptions.MaxQueuedWrites) {
+    StreamersPaused.store(true);
     pauseConsumers();
-  } else {
+  } else if (StreamersPaused.load()) {
     resumeConsumers();
+    StreamersPaused.store(false);
   }
 }
 
