@@ -23,7 +23,7 @@ struct StreamerOptions {
   time_point StopTimestamp{time_point::max()};
   duration BeforeStartTime{10s};
   duration AfterStopTime{10s};
-  size_t MaxQueuedWrites{24000};
+  size_t MaxQueuedWrites{1000};
 };
 
 } // namespace FileWriter

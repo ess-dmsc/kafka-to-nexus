@@ -178,6 +178,12 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--server-status-port", MainOptions.ServerStatusPort,
                  "TCP Port");
   App.add_option(
+      "--max-queued-writes", MainOptions.StreamerConfiguration.MaxQueuedWrites,
+      addLineBreaks(
+          "Maximum number of messages buffered for writing. Directly "
+          "affects the memory usage of the application. Note that message "
+          "sizes are determined by Kafka producers, not by kafka-to-nexus."));
+  App.add_option(
          "--service-name",
          [&MainOptions](std::vector<std::string> ServiceNames) -> bool {
            MainOptions.setServiceName(ServiceNames.back());
