@@ -39,7 +39,7 @@ public:
   void forceStop();
 
   /// \brief Return true if forceStop() has been called.
-  bool hasForceStopBeenRequested();
+  bool hasForceStopBeenRequested() const;
 
   /// \brief Applies the stop logic to the current poll status.
   /// \param CurrentPollStatus The current (last) poll status.

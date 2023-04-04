@@ -123,13 +123,13 @@ protected:
 
   virtual void pollForMessage();
   virtual void addPollTask();
-  virtual bool hasStopBeenRequested();
+  virtual bool hasStopBeenRequested() const;
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
   void forceStop();
 
   /// \brief Sleep.
   /// \note This function exist in order to make unit testing possible.
-  virtual void sleep(duration Duration);
+  virtual void sleep(const duration Duration) const;
 
   virtual void processMessage(FileWriter::Msg const &Message);
   std::unique_ptr<Kafka::ConsumerInterface> ConsumerPtr;

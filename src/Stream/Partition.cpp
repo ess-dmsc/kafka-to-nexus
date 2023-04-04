@@ -83,7 +83,7 @@ void Partition::resume() { IsPaused.store(false); }
 
 void Partition::forceStop() { StopTester.forceStop(); }
 
-void Partition::sleep(duration Duration) {
+void Partition::sleep(const duration Duration) const {
   std::this_thread::sleep_for(Duration);
 }
 
@@ -128,7 +128,7 @@ void Partition::checkAndLogPartitionTimeOut() {
   }
 }
 
-bool Partition::hasStopBeenRequested() {
+bool Partition::hasStopBeenRequested() const {
   return StopTester.hasForceStopBeenRequested();
 }
 
