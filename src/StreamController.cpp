@@ -150,7 +150,7 @@ std::string StreamController::errorMessage() {
 
 void StreamController::performPeriodicChecks() {
   checkIfStreamsAreDone();
-  checkIfWriteQueueIsFull();
+  throttleIfWriteQueueIsFull();
   std::this_thread::sleep_for(PeriodicChecksInterval);
   Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
 }
@@ -174,7 +174,7 @@ void StreamController::checkIfStreamsAreDone() {
   }
 }
 
-void StreamController::checkIfWriteQueueIsFull() {
+void StreamController::throttleIfWriteQueueIsFull() {
   auto QueuedWrites = WriterThread.nrOfWritesQueued();
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {

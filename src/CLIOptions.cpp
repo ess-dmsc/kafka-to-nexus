@@ -181,8 +181,10 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       "--max-queued-writes", MainOptions.StreamerConfiguration.MaxQueuedWrites,
       addLineBreaks(
           "Maximum number of messages buffered for writing. Directly "
-          "affects the memory usage of the application. Note that message "
-          "sizes are determined by Kafka producers, not by kafka-to-nexus."));
+          "affects the memory usage of the application. The maximum is "
+          "not enforced, only used as guideline to throttle Kafka "
+          "consumption. Note that total memory usage will depend on "
+          "the size of the actual messages consumed from Kafka."));
   App.add_option(
          "--service-name",
          [&MainOptions](std::vector<std::string> ServiceNames) -> bool {

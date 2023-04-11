@@ -107,7 +107,7 @@ private:
   void initStreams(std::set<std::string> KnownTopicNames);
   void performPeriodicChecks();
   void checkIfStreamsAreDone();
-  void checkIfWriteQueueIsFull();
+  void throttleIfWriteQueueIsFull();
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
   std::atomic<bool> StreamersPaused{false};
