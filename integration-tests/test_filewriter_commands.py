@@ -10,6 +10,7 @@ from helpers.writer import (
     wait_writers_available,
     wait_no_working_writers,
     wait_fail_start_job,
+    stop_all_jobs,
 )
 
 
@@ -49,6 +50,7 @@ def test_ignores_stop_command_with_incorrect_service_id(
         JobState.WRITING
     ], f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
 
+    stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=15)
     assert Path(file_path).is_file()
 
@@ -83,6 +85,7 @@ def test_ignores_stop_command_with_incorrect_job_id(
         JobState.WRITING
     ], f"Start job may have been affected by Stop command. State was {start_cmd_handler.get_state()} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
 
+    stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=0)
     assert Path(file_path).is_file()
 
@@ -119,6 +122,7 @@ def test_accepts_stop_command_with_empty_service_id(
         JobState.DONE
     ], f"Start job was not stopped after Stop command. State was {start_job_state} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
 
+    stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=5)
     assert Path(file_path).is_file()
 
