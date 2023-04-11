@@ -27,10 +27,17 @@ public:
     FileWriterTask = std::make_unique<FileWriter::FileWriterTask>(
         TestRegistrar, std::make_shared<MetaData::Tracker>());
     FileWriterTask->setJobId(JobId);
+    auto Registrar = Metrics::Registrar("some-app", {});
+    auto StreamerOptions = FileWriter::StreamerOptions();
+    auto MessageWriter = std::make_unique<Stream::MessageWriter>(
+        [&]() { FileWriterTask->flushDataToFile(); },
+        StreamerOptions.DataFlushInterval, Registrar.getNewRegistrar("stream"));
     StreamController = std::make_unique<FileWriter::StreamController>(
-        std::move(FileWriterTask), FileWriter::StreamerOptions(),
-        Metrics::Registrar("some-app", {}),
-        std::make_shared<MetaData::Tracker>());
+        std::move(FileWriterTask), StreamerOptions,
+        // TestRegistrar,
+        Registrar,
+        // Metrics::Registrar("some-app", {}),
+        std::move(MessageWriter), std::make_shared<MetaData::Tracker>());
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;
