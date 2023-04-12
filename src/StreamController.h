@@ -45,6 +45,7 @@ public:
   StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
                    FileWriter::StreamerOptions const &Settings,
                    Metrics::Registrar const &Registrar,
+                   std::unique_ptr<Stream::MessageWriter> MessageWriter,
                    MetaData::TrackerPtr const &Tracker);
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
@@ -132,7 +133,7 @@ private:
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   Metrics::Registrar StreamMetricRegistrar;
-  Stream::MessageWriter WriterThread;
+  std::unique_ptr<Stream::MessageWriter> WriterThread{nullptr};
   FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last

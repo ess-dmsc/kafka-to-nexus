@@ -14,6 +14,7 @@
 #include "FileWriterTask.h"
 #include "HDFOperations.h"
 #include "Msg.h"
+#include "Stream/MessageWriter.h"
 #include "StreamController.h"
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
@@ -170,9 +171,15 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   Settings.StreamerConfiguration.BrokerSettings.Address =
       Settings.JobPoolURI.HostPort;
 
+  auto MessageWriter = std::make_unique<Stream::MessageWriter>(
+      [&]() { Task->flushDataToFile(); },
+      Settings.StreamerConfiguration.DataFlushInterval,
+      Registrar.getNewRegistrar("stream"));
+
   LOG_INFO("Write file with job_id: {}", Task->jobID());
   return std::make_unique<StreamController>(
-      std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);
+      std::move(Task), Settings.StreamerConfiguration, Registrar,
+      std::move(MessageWriter), Tracker);
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
