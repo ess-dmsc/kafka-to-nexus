@@ -40,6 +40,10 @@ void StreamController::setStopTime(time_point const &StopTime) {
   });
 }
 
+size_t StreamController::nrOfWritesQueued() const {
+  return WriterThread.nrOfWritesQueued();
+}
+
 void StreamController::pauseStreamers() {
   for (auto &Stream : Streamers) {
     Stream->pause();
@@ -175,8 +179,7 @@ void StreamController::checkIfStreamsAreDone() {
 }
 
 void StreamController::throttleIfWriteQueueIsFull() {
-  auto QueuedWrites = WriterThread->nrOfWritesQueued();
-  // LOG_INFO("queued writes (count={})", QueuedWrites);
+  auto QueuedWrites = nrOfWritesQueued();
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {
     LOG_DEBUG("Maximum queued writes reached (count={}). Pausing consumers...",

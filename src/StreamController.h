@@ -32,6 +32,7 @@ public:
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const time_point &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
+  virtual size_t nrOfWritesQueued() const = 0;
   virtual void pauseStreamers() = 0;
   virtual void resumeStreamers() = 0;
   virtual void stop() = 0;
@@ -64,6 +65,9 @@ public:
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
   void setStopTime(const time_point &StopTime) override;
+
+  /// \brief Return the approximate number of writes queued.
+  size_t nrOfWritesQueued() const override;
 
   /// \brief Pause consumers.
   ///
