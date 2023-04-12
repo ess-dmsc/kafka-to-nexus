@@ -176,6 +176,7 @@ void StreamController::checkIfStreamsAreDone() {
 
 void StreamController::throttleIfWriteQueueIsFull() {
   auto QueuedWrites = WriterThread->nrOfWritesQueued();
+  // LOG_INFO("queued writes (count={})", QueuedWrites);
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {
     LOG_DEBUG("Maximum queued writes reached (count={}). Pausing consumers...",
