@@ -51,7 +51,7 @@
         {
             "type": "shell",
             "label": "UnitTests",
-            "command": "cd _build && make UnitTests && source activate_run.sh && ./bin/UnitTests",
+            "command": "cd _build && source activate_run.sh && ./bin/UnitTests",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
