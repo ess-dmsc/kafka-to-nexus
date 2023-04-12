@@ -12,13 +12,13 @@ namespace FileWriter {
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     FileWriter::StreamerOptions const &Settings,
-    Metrics::Registrar const &Registrar,
-    std::unique_ptr<Stream::MessageWriter> MessageWriter,
-    MetaData::TrackerPtr const &Tracker)
+    Metrics::Registrar const &Registrar, MetaData::TrackerPtr const &Tracker)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
-      WriterThread(std::move(MessageWriter)), StreamerOptions(Settings),
-      MetaDataTracker(Tracker) {
+      WriterThread([this]() { WriterTask->flushDataToFile(); },
+                   Settings.DataFlushInterval,
+                   Registrar.getNewRegistrar("stream")),
+      StreamerOptions(Settings), MetaDataTracker(Tracker) {
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -56,7 +56,7 @@ void StreamController::stop() {
   for (auto &Stream : Streamers) {
     Stream->stop();
   }
-  WriterThread->stop();
+  WriterThread.stop();
   StopNow = true;
 }
 
@@ -132,7 +132,7 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
         std::chrono::system_clock::time_point(StreamerOptions.StopTimestamp);
     auto CTopic = std::make_unique<Stream::Topic>(
         StreamerOptions.BrokerSettings, CItem.first, CItem.second,
-        WriterThread.get(), StreamMetricRegistrar, CStartTime,
+        &WriterThread, StreamMetricRegistrar, CStartTime,
         StreamerOptions.BeforeStartTime, CStopTime,
         StreamerOptions.AfterStopTime);
     CTopic->start();
@@ -175,7 +175,7 @@ void StreamController::checkIfStreamsAreDone() {
 }
 
 void StreamController::throttleIfWriteQueueIsFull() {
-  auto QueuedWrites = WriterThread->nrOfWritesQueued();
+  auto QueuedWrites = WriterThread.nrOfWritesQueued();
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {
     LOG_DEBUG("Maximum queued writes reached (count={}). Pausing consumers...",
