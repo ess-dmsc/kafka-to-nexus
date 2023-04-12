@@ -41,7 +41,7 @@ void StreamController::setStopTime(time_point const &StopTime) {
 }
 
 size_t StreamController::nrOfWritesQueued() const {
-  return WriterThread.nrOfWritesQueued();
+  return WriterThread->nrOfWritesQueued();
 }
 
 void StreamController::pauseStreamers() {
