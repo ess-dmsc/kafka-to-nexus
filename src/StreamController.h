@@ -72,12 +72,12 @@ public:
   /// \brief Pause consumers.
   ///
   /// Pauses consumer polling to throttle the ingestion of data.
-  void pauseStreamers() override final;
+  void pauseStreamers() override;
 
   /// \brief Resume consumers.
   ///
   /// Resumes consumers if they were paused.
-  void resumeStreamers() override final;
+  void resumeStreamers() override;
 
   /// \brief Stop the streams as soon as possible.
   ///
