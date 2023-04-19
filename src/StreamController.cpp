@@ -44,12 +44,14 @@ void StreamController::pauseStreamers() {
   for (auto &Stream : Streamers) {
     Stream->pause();
   }
+  StreamersPaused.store(true);
 }
 
 void StreamController::resumeStreamers() {
   for (auto &Stream : Streamers) {
     Stream->resume();
   }
+  StreamersPaused.store(false);
 }
 
 void StreamController::stop() {
@@ -180,7 +182,6 @@ void StreamController::throttleIfWriteQueueIsFull() {
       !StreamersPaused.load()) {
     LOG_DEBUG("Maximum queued writes exceeded (count={}). Pausing consumers...",
               QueuedWrites);
-    StreamersPaused.store(true);
     pauseStreamers();
   } else if (QueuedWrites < QueuedWritesResumeThreshold *
                                 StreamerOptions.MaxQueuedWrites &&
@@ -188,7 +189,6 @@ void StreamController::throttleIfWriteQueueIsFull() {
     LOG_DEBUG("Write queue below maximum (count={}). Resuming consumers...",
               QueuedWrites);
     resumeStreamers();
-    StreamersPaused.store(false);
   }
 }
 
