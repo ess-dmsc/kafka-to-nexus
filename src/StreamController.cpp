@@ -178,7 +178,7 @@ void StreamController::throttleIfWriteQueueIsFull() {
   auto QueuedWrites = WriterThread.nrOfWritesQueued();
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {
-    LOG_DEBUG("Maximum queued writes reached (count={}). Pausing consumers...",
+    LOG_DEBUG("Maximum queued writes exceeded (count={}). Pausing consumers...",
               QueuedWrites);
     StreamersPaused.store(true);
     pauseStreamers();
