@@ -44,6 +44,9 @@ void StreamController::pauseStreamers() {
   for (auto &Stream : Streamers) {
     Stream->pause();
   }
+  // We set the mutex last. Pause operations are idempotent, so we worry more
+  // about preventing a concurrent call to resumeStreamers() than a concurrent
+  // call to pauseStreamers()
   StreamersPaused.store(true);
 }
 
@@ -51,6 +54,9 @@ void StreamController::resumeStreamers() {
   for (auto &Stream : Streamers) {
     Stream->resume();
   }
+  // We set the mutex last. Resume operations are idempotent, so we worry more
+  // about preventing a concurrent call to pauseStreamers() than a concurrent
+  // call to resumeStreamers()
   StreamersPaused.store(false);
 }
 
