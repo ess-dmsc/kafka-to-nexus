@@ -183,7 +183,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
           "Maximum number of messages buffered for writing. Directly "
           "affects the memory usage of the application. The maximum is "
           "not enforced, only used as guideline to throttle Kafka "
-          "consumption. Note that total memory usage will depend on "
+          "consumption. Note that total memory usage will also depend on "
           "the size of the actual messages consumed from Kafka."));
   App.add_option(
          "--service-name",
