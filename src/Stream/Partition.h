@@ -61,7 +61,7 @@ public:
 
   /// \brief Resume the consumer thread.
   ///
-  /// Non blocking. Will resume the queuing of poll commands to the consumer
+  /// Non-blocking. Will resume the queuing of poll commands to the consumer
   /// thread command queue.
   void resume();
 
