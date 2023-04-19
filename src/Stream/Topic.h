@@ -44,7 +44,7 @@ public:
 
   /// \brief Resume the consumer threads.
   ///
-  /// Non blocking. Will tell the consumer threads to resume as soon as
+  /// Non-blocking. Will tell the consumer threads to resume as soon as
   /// possible. There are no guarantees for when the consumers are actually
   /// resumed.
   void resume();
