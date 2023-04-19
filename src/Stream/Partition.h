@@ -54,7 +54,7 @@ public:
 
   /// \brief Pause the consumer thread.
   ///
-  /// Non blocking. Will stop the queuing of poll commands to the consumer
+  /// Non-blocking. Will stop the queuing of poll commands to the consumer
   /// thread command queue. There are no guarantees for when the consumer is
   /// actually paused.
   void pause();
