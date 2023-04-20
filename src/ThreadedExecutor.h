@@ -52,6 +52,7 @@ public:
       WorkerThread.join();
     }
   }
+
   /// \brief Put tasks in the high priority queue.
   ///
   /// \param Task The std::function that will be executed when processing the

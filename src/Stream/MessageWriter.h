@@ -47,6 +47,9 @@ public:
 
   using ModuleHash = size_t;
 
+  /// \brief Return the approximate number of writes queued.
+  auto nrOfWritesQueued() const { return WriteJobs.size_approx(); };
+
   auto nrOfWritesDone() const { return int64_t(WritesDone); };
   auto nrOfWriteErrors() const { return int64_t(WriteErrors); };
   auto nrOfWriterModulesWithErrors() const {

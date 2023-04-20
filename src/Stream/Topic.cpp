@@ -42,6 +42,18 @@ void Topic::initMetadataCalls(Kafka::BrokerSettings const &Settings,
   });
 }
 
+void Topic::pause() {
+  for (auto &Stream : ConsumerThreads) {
+    Stream->pause();
+  }
+}
+
+void Topic::resume() {
+  for (auto &Stream : ConsumerThreads) {
+    Stream->resume();
+  }
+}
+
 void Topic::stop() {
   for (auto &Stream : ConsumerThreads) {
     Stream->stop();

@@ -178,6 +178,14 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--server-status-port", MainOptions.ServerStatusPort,
                  "TCP Port");
   App.add_option(
+      "--max-queued-writes", MainOptions.StreamerConfiguration.MaxQueuedWrites,
+      addLineBreaks(
+          "Maximum number of messages buffered for writing. Directly "
+          "affects the memory usage of the application. The maximum is "
+          "not enforced, only used as guideline to throttle Kafka "
+          "consumption. Note that total memory usage will also depend on "
+          "the size of the actual messages consumed from Kafka."));
+  App.add_option(
          "--service-name",
          [&MainOptions](std::vector<std::string> ServiceNames) -> bool {
            MainOptions.setServiceName(ServiceNames.back());

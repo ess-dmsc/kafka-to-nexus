@@ -38,6 +38,9 @@ public:
   /// \brief Force shouldStopPartition() to return true on next call.
   void forceStop();
 
+  /// \brief Return true if forceStop() has been called.
+  bool hasForceStopBeenRequested() const;
+
   /// \brief Applies the stop logic to the current poll status.
   /// \param CurrentPollStatus The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should

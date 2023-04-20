@@ -19,6 +19,7 @@
 #include "Metrics/Registrar.h"
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
+#include "TimeUtility.h"
 #include <atomic>
 #include <set>
 #include <vector>
@@ -31,6 +32,8 @@ public:
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const time_point &StopTime) = 0;
   virtual bool isDoneWriting() = 0;
+  virtual void pauseStreamers() = 0;
+  virtual void resumeStreamers() = 0;
   virtual void stop() = 0;
   virtual bool hasErrorState() const = 0;
   virtual std::string errorMessage() = 0;
@@ -60,6 +63,16 @@ public:
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
   void setStopTime(const time_point &StopTime) override;
+
+  /// \brief Pause consumers.
+  ///
+  /// Pauses consumer polling to throttle the ingestion of data.
+  void pauseStreamers() override;
+
+  /// \brief Resume consumers.
+  ///
+  /// Resumes consumers if they were paused.
+  void resumeStreamers() override;
 
   /// \brief Stop the streams as soon as possible.
   ///
@@ -92,14 +105,25 @@ private:
   bool StopNow{false};
   void getTopicNames();
   void initStreams(std::set<std::string> KnownTopicNames);
+  void performPeriodicChecks();
   void checkIfStreamsAreDone();
+  void throttleIfWriteQueueIsFull();
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
+  std::atomic<bool> StreamersPaused{false};
   std::atomic<bool> HasError{false};
   std::mutex ErrorMsgMutex;
   std::string ErrorMessage;
+  duration const PeriodicChecksInterval{50ms};
   duration const FileSizeCalcInterval{5s};
   time_point LastFileSizeCalcTime{system_clock::now() - FileSizeCalcInterval};
+
+  /// \brief Hysteresis factor to start refilling the write queue after a pause.
+  ///
+  /// Consumers are stopped when the write queue is larger than
+  /// StreamerOptions.MaxQueuedWrites. This variable defines the ratio below
+  /// which the consumers will be resumed.
+  float const QueuedWritesResumeThreshold{0.8F};
 
   /// \brief The file-writing task object
   /// \note Must be located before the streamers and the writer thread to
@@ -109,7 +133,7 @@ private:
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;
-  FileWriter::StreamerOptions KafkaSettings;
+  FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };

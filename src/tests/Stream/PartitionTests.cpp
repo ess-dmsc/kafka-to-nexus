@@ -11,6 +11,7 @@
 #include "Metrics/Registrar.h"
 #include "Stream/MessageWriter.h"
 #include "Stream/Partition.h"
+#include "TimeUtility.h"
 #include "WriterModuleBase.h"
 #include "helpers/KafkaMocks.h"
 #include "helpers/RdKafkaMocks.h"
@@ -75,6 +76,7 @@ public:
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
+  MAKE_CONST_MOCK1(sleep, void(const duration Duration), override);
 };
 
 void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
@@ -134,6 +136,7 @@ TEST_F(PartitionTest, OnConstructionValuesAreAsExpected) {
   EXPECT_EQ(UnderTest->getTopicName(), TopicName);
   EXPECT_EQ(UnderTest->StopTimeLeeway, StopLeeway);
   EXPECT_EQ(UnderTest->StopTime, StopTime);
+  EXPECT_EQ(UnderTest->isPaused(), false);
 }
 
 TEST_F(PartitionTest, IfStopTimeTooCloseToMaxThenItIsBackedOff) {
@@ -147,6 +150,28 @@ TEST_F(PartitionTest, ActualMessageIsCounted) {
   PollReturn.first = Kafka::PollStatus::Message;
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+  UnderTest->pollForMessage();
+  EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
+}
+
+TEST_F(PartitionTest, DoesNotPollIfPaused) {
+  auto UnderTest = createTestedInstance();
+  UnderTest->pause();
+  FORBID_CALL(*Consumer, poll());
+  REQUIRE_CALL(*UnderTest, sleep(_)).TIMES(1);
+  UnderTest->pollForMessage();
+  EXPECT_EQ(int(UnderTest->MessagesReceived), 0);
+}
+
+TEST_F(PartitionTest, PollsIfResumedAfterPause) {
+  Kafka::MockConsumer::PollReturnType PollReturn;
+  PollReturn.first = Kafka::PollStatus::Message;
+  auto UnderTest = createTestedInstance();
+  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+  REQUIRE_CALL(*UnderTest, sleep(_)).TIMES(1);
+  UnderTest->pause();
+  UnderTest->pollForMessage();
+  UnderTest->resume();
   UnderTest->pollForMessage();
   EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
 }
@@ -244,7 +269,19 @@ TEST_F(PartitionTest, ForceStopStops) {
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
   auto UnderTest = createTestedInstance(Stop);
-  REQUIRE_CALL(*Consumer, poll()).TIMES(2).LR_RETURN(std::move(PollReturn));
+  REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
+  UnderTest->pollForMessage();
+  EXPECT_FALSE(UnderTest->hasFinished());
+  UnderTest->forceStop();
+  UnderTest->pollForMessage();
+  EXPECT_TRUE(UnderTest->hasFinished());
+}
+
+TEST_F(PartitionTest, ForceStopWhenPausedStops) {
+  auto UnderTest = createTestedInstance(Stop);
+  UnderTest->pause();
+  FORBID_CALL(*Consumer, poll());
+  ALLOW_CALL(*UnderTest, sleep(_));
   UnderTest->pollForMessage();
   EXPECT_FALSE(UnderTest->hasFinished());
   UnderTest->forceStop();
