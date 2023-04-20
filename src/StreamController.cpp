@@ -48,12 +48,20 @@ void StreamController::pauseStreamers() {
   for (auto &Stream : Streamers) {
     Stream->pause();
   }
+  // We set the mutex last. Pause operations are idempotent, so we worry more
+  // about preventing a concurrent call to resumeStreamers() than a concurrent
+  // call to pauseStreamers()
+  StreamersPaused.store(true);
 }
 
 void StreamController::resumeStreamers() {
   for (auto &Stream : Streamers) {
     Stream->resume();
   }
+  // We set the mutex last. Resume operations are idempotent, so we worry more
+  // about preventing a concurrent call to pauseStreamers() than a concurrent
+  // call to resumeStreamers()
+  StreamersPaused.store(false);
 }
 
 void StreamController::stop() {
@@ -182,9 +190,8 @@ void StreamController::throttleIfWriteQueueIsFull() {
   auto QueuedWrites = nrOfWritesQueued();
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {
-    LOG_DEBUG("Maximum queued writes reached (count={}). Pausing consumers...",
+    LOG_DEBUG("Maximum queued writes exceeded (count={}). Pausing consumers...",
               QueuedWrites);
-    StreamersPaused.store(true);
     pauseStreamers();
   } else if (QueuedWrites < QueuedWritesResumeThreshold *
                                 StreamerOptions.MaxQueuedWrites &&
@@ -192,7 +199,6 @@ void StreamController::throttleIfWriteQueueIsFull() {
     LOG_DEBUG("Write queue below maximum (count={}). Resuming consumers...",
               QueuedWrites);
     resumeStreamers();
-    StreamersPaused.store(false);
   }
 }
 

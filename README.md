@@ -60,6 +60,13 @@ Part of the ESS data streaming pipeline.
   --data-flush-interval       (Max) amount of time between flushing of data to
                               file, in seconds.  Ex. "10s". Accepts "h", "m",
                               "s" and "ms".
+  --max-queued-writes         Maximum number of messages buffered for writing.
+                              Directly affects the memory usage of the
+                              application. The maximum is not enforced, only
+                              used as guideline to throttle Kafka consumption.
+                              Note that total memory usage will also depend on
+                              the size of the actual messages consumed from
+                              Kafka.
   -X,--kafka-config KEY VALUE ...
                               LibRDKafka options
   -c,--config-file            Read configuration from an ini file
