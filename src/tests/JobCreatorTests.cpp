@@ -121,6 +121,9 @@ TEST_F(JobCreator, SetWriterAttributes) {
   ASSERT_TRUE(RootGroup.get_group("entry").attributes.exists("source"));
   RootGroup.get_group("entry").attributes["source"].read(TempString);
   EXPECT_EQ(TempString, "my_test_pv");
+  ASSERT_TRUE(RootGroup.get_group("entry").attributes.exists("writer_module"));
+  RootGroup.get_group("entry").attributes["writer_module"].read(TempString);
+  EXPECT_EQ(TempString, ModuleId);
   ASSERT_TRUE(RootGroup.get_group("entry").attributes.exists("NX_class"));
   RootGroup.get_group("entry").attributes["NX_class"].read(TempString);
   EXPECT_EQ(TempString, "NXlog");
