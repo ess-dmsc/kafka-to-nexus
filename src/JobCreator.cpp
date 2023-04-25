@@ -259,10 +259,12 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
       HdfAttribute.write(Attribute.second);
     }
   };
-  writeAttributesList(
-      {{"NX_class", std::string(StreamInfo.WriterModule->defaultNeXusClass())},
-       {"topic", StreamInfo.Topic},
-       {"source", StreamInfo.Source}});
+  writeAttributesList({
+      {"NX_class", std::string(StreamInfo.WriterModule->defaultNeXusClass())},
+      {"topic", StreamInfo.Topic},
+      {"source", StreamInfo.Source},
+      {"writer_module", StreamInfo.Module},
+  });
   if (not StreamInfo.Attributes.empty()) {
     LOG_WARN("Writing of writer module attributes to parent group has been "
              "removed. Attributes should be assigned directly to group. The "
