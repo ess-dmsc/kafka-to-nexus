@@ -14,6 +14,7 @@
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 
 namespace MetaData {
@@ -57,22 +58,29 @@ public:
   Value() = default;
   Value(std::string const &Path, std::string const &Name,
         std::function<void(hdf5::node::Node, std::string, DataType)>
-            HDF5Writer = {})
+            HDF5Writer = {},
+        std::function<void(hdf5::node::Node, std::string, std::string)>
+            HDF5AttributeWriter = {})
       : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
-            Path, Name, HDF5Writer)) {}
+            Path, Name, HDF5Writer, HDF5AttributeWriter)) {}
 
   Value(char const *const Path, std::string const &Name,
         std::function<void(hdf5::node::Node, std::string, DataType)>
-            HDF5Writer = {})
+            HDF5Writer = {},
+        std::function<void(hdf5::node::Node, std::string, std::string)>
+            HDF5AttributeWriter = {})
       : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
-            Path, Name, HDF5Writer)) {}
+            Path, Name, HDF5Writer, HDF5AttributeWriter)) {}
 
   template <class NodeType>
   Value(NodeType const &Node, std::string const &Name,
         std::function<void(hdf5::node::Node, std::string, DataType)>
-            HDF5Writer = {})
+            HDF5Writer = {},
+        std::function<void(hdf5::node::Node, std::string, std::string)>
+            HDF5AttributeWriter = {})
       : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
-            std::string(Node.link().path()), Name, HDF5Writer)) {}
+            std::string(Node.link().path()), Name, HDF5Writer,
+            HDF5AttributeWriter)) {}
 
   void setValue(DataType NewValue) {
     std::dynamic_pointer_cast<MetaDataInternal::ValueInternal<DataType>>(
@@ -83,6 +91,12 @@ public:
     return std::dynamic_pointer_cast<MetaDataInternal::ValueInternal<DataType>>(
                getValuePtr())
         ->getValue();
+  }
+  std::optional<std::string> getAttribute(const std::string &Key) {
+    return getValuePtr()->getAttribute(Key);
+  }
+  void setAttribute(const std::string &Key, const std::string &Value) {
+    getValuePtr()->setAttribute(Key, Value);
   }
 };
 
