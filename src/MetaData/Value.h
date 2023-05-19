@@ -92,10 +92,13 @@ public:
                getValuePtr())
         ->getValue();
   }
-  std::optional<std::string> getAttribute(const std::string &Key) {
+  std::optional<std::string> getAttribute(const std::string &Key) const {
     return getValuePtr()->getAttribute(Key);
   }
+
+  // cppcheck-suppress functionConst
   void setAttribute(const std::string &Key, const std::string &Value) {
+
     getValuePtr()->setAttribute(Key, Value);
   }
 };
