@@ -34,7 +34,7 @@ void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
             hdf5::Dimensions const &ChunkSize) {
   NeXusDataset::MultiDimDataset<Type>( // NOLINT(bugprone-unused-raii)
       Parent, NeXusDataset::Mode::Create, Shape,
-      ChunkSize);                      // NOLINT(bugprone-unused-raii)
+      ChunkSize); // NOLINT(bugprone-unused-raii)
 }
 
 void initValueDataset(hdf5::node::Group const &Parent, Type ElementType,
@@ -93,11 +93,11 @@ InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
-                       ChunkSize);             // NOLINT(bugprone-unused-raii)
+                       ChunkSize); // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueTimestampZero(HDFGroup, Create,
                                    ChunkSize); // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(HDFGroup, Create,
-                           ChunkSize);         // NOLINT(bugprone-unused-raii)
+                           ChunkSize); // NOLINT(bugprone-unused-raii)
     initValueDataset(HDFGroup, ElementType,
                      {
                          ArraySize,
