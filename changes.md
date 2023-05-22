@@ -7,6 +7,7 @@
   usage falls below a fixed threshold.
 - Adding (tcp based) service api to query a filewriter for its status
 - Fix: Cannot import extra modules due to mismatch in ep00, ep01 and al00 registered names
+- Fix: Max/min/avg datasets do not specify units
 
 ## Version 6.0.0
 
