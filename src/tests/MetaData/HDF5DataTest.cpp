@@ -32,21 +32,6 @@ public:
   hdf5::node::Dataset UsedDataset;
 };
 
-TEST_F(HDF5Data, IntFunctionCall) {
-  bool FunctionCalled{false};
-  std::function<void(hdf5::node::Node, std::string, int)> HDF5WriteFunction =
-      [&](hdf5::node::Node, std::string, int) { FunctionCalled = true; };
-  MetaDataInternal::ValueInternal<int> UnderTest{"/", "SomeKey",
-                                                 HDF5WriteFunction};
-  UnderTest.writeToHDF5File(UsedGroup);
-  EXPECT_TRUE(FunctionCalled);
-}
-
-TEST_F(HDF5Data, NoFunctionCall) {
-  MetaDataInternal::ValueInternal<int> UnderTest{"/", "SomeKey", {}};
-  EXPECT_NO_THROW(UnderTest.writeToHDF5File(UsedGroup));
-}
-
 TEST_F(HDF5Data, IntAttributeWritten) {
   std::string Name{"someName"};
   int const Value{42};
@@ -110,6 +95,28 @@ TEST_F(HDF5Data, GroupStringDataDestination) {
   EXPECT_EQ(Value, ReadInto.at(0));
 }
 
+TEST_F(HDF5Data, GroupStringDataDestinationWritesAttributes) {
+  std::string Name{"datasetWithAttribute"};
+  MetaData::Value<int> TestDataset(fmt::format("/{}", GroupName), Name,
+                                   MetaData::basicDatasetWriter<int>,
+                                   MetaData::basicAttributeWriter<std::string>);
+  MetaData::Tracker UsedTracker;
+  int const Value{42};
+  std::string const AttributeKey{"someKey"};
+  std::string const AttributeValue{"someValue"};
+  TestDataset.setValue(Value);
+  TestDataset.setAttribute(AttributeKey, AttributeValue);
+  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.writeToHDF5File(RootGroup);
+  ASSERT_TRUE(UsedGroup.has_dataset(Name));
+  auto Dataset = UsedGroup.get_dataset(Name);
+  ASSERT_TRUE(Dataset.attributes.exists(AttributeKey));
+  auto Attribute = Dataset.attributes[AttributeKey];
+  std::string ReadInto{};
+  Attribute.read(ReadInto);
+  EXPECT_EQ(AttributeValue, ReadInto);
+}
+
 TEST_F(HDF5Data, GroupNodeDataDestination) {
   std::string Name{"someName"};
   MetaData::Value<int> TestDataset(UsedGroup, Name,
@@ -169,22 +176,6 @@ TEST_F(HDF5Data, DatasetDatasetDestinationFailure) {
   UsedTracker.registerMetaData(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   // We should probably/maybe (somehow) check that we got an error here
-}
-
-TEST_F(HDF5Data, AttributeDatasetDestinationSuccess) {
-  std::string Name{"someName"};
-  MetaData::Value<int> TestDataset(UsedDataset, Name,
-                                   MetaData::basicAttributeWriter<int>);
-  MetaData::Tracker UsedTracker;
-  int const Value{42};
-  TestDataset.setValue(Value);
-  UsedTracker.registerMetaData(TestDataset);
-  UsedTracker.writeToHDF5File(RootGroup);
-  ASSERT_TRUE(UsedDataset.attributes.exists(Name));
-  auto Attribute = UsedDataset.attributes[Name];
-  int ReadInto{0};
-  Attribute.read(ReadInto);
-  EXPECT_EQ(Value, ReadInto);
 }
 
 TEST_F(HDF5Data, GroupNodeDataDestinationFailure) {
