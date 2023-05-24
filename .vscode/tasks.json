@@ -84,7 +84,7 @@
         {
             "type": "shell",
             "label": "IntegrationTests",
-            "command": "docker stop integration-tests_kafka_1 integration-tests_zookeeper_1 ; source .venv/bin/activate && source ../_build/activate_run.sh && python -m pytest -s . --writer-binary=../_build",
+            "command": "docker stop integration-tests_kafka_1 integration-tests_zookeeper_1 || true ; source .venv/bin/activate && source ../_build/activate_run.sh && python -m pytest -s . --writer-binary=../_build",
             "options": {
                 "cwd": "${workspaceFolder}/integration-tests"
             },

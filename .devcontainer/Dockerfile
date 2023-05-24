@@ -26,6 +26,7 @@ RUN apt-get update \
     git \
     zip \
     unzip \
+    vim \
     # Python
     python3-pip \
     python-is-python3 \

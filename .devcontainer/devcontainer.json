@@ -7,7 +7,7 @@
         "--cap-add=SYS_PTRACE",
         "--security-opt",
         "seccomp=unconfined",
-        "--memory=4gb"
+        "--memory=7gb"
     ],
     "customizations": {
         "vscode": {
@@ -49,6 +49,10 @@
 
     "postStartCommand": {
         "conanLibcxx": "conan profile update settings.compiler.libcxx=libstdc++11 default"
+    },
+
+    "postAttachCommand": {
+        "createVirtualEnv": "cd integration-tests && python -m venv .venv && pip install -r requirements.txt"
     },
 
     // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
