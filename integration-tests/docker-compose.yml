@@ -1,4 +1,4 @@
-version: "2"
+version: "2.1"
 services:
   kafka:
     image: wurstmeister/kafka:2.13-2.8.1
@@ -17,14 +17,17 @@ services:
       KAFKA_BROKER_ID: 0
       KAFKA_LOG_RETENTION_MS: -1  # keep data forever, required for tests involving fake "historical" data
       KAFKA_CREATE_TOPICS: "TEST_epicsConnectionStatus:1:1,TEST_sampleEnv:1:1,TEST_writer_jobs:1:1,TEST_writer_commands:1:1,TEST_writer_commands_alternative:1:1,TEST_forwarderConfig:1:1,TEST_forwarderStatusLR:1:1,TEST_forwarderDataLR:1:1"
+    mem_limit: 600m
     depends_on:
       - wait_for_zookeeper
 
   zookeeper:
     image: zookeeper:3.8.0
+    mem_limit: 200m
 
   wait_for_zookeeper:
     image: dadarek/wait-for-dependencies
     command: zookeeper:2181
+    mem_limit: 100m
     depends_on:
       - zookeeper

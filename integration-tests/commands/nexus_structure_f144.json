@@ -14,6 +14,7 @@
                 "type": "int32",
                 "topic": "TEST_scalData",
                 "source": "someSource",
+                "value_units": "mm",
                 "meta_data": true
               }
             }
