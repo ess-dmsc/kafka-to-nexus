@@ -13,6 +13,7 @@
           "config": {
             "type": "double",
             "topic": "TEST_forwarderDataLR",
+            "value_units": "mm",
             "source": "SIMPLE:DOUBLE"
           }
         }

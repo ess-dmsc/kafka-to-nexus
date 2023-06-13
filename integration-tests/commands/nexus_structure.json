@@ -21,6 +21,7 @@
                       "config": {
                         "dtype": "double",
                         "source": "Det_Temp_RRB",
+                        "value_units": "mm",
                         "topic": "TEST_sampleEnv"
                       }
                     }

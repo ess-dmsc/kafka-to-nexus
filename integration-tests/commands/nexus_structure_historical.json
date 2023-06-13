@@ -13,6 +13,7 @@
               "config": {
                 "type": "int32",
                 "topic": "TEST_historicalData1",
+                "value_units": "mm",
                 "source": "fw-test-helpers"
               }
             }
@@ -27,6 +28,7 @@
               "config": {
                 "type": "int32",
                 "topic": "TEST_historicalData2",
+                "value_units": "mm",
                 "source": "fw-test-helpers"
               }
             }
