@@ -24,9 +24,9 @@ public:
                   RdKafka::err2str(Event.err()), Event.str());
       break;
     case RdKafka::Event::EVENT_STATS:
-      Log::FmtMsg(LogLevels.at(Event.severity()),
-                  "Kafka Stats id: {} broker: {} message: {}",
-                  Event.broker_id(), Event.broker_name(), Event.str());
+      // Log::FmtMsg(LogLevels.at(Event.severity()),
+      //             "Kafka Stats id: {} broker: {} message: {}",
+      //             Event.broker_id(), Event.broker_name(), Event.str());
       break;
     case RdKafka::Event::EVENT_LOG:
       Log::FmtMsg(
