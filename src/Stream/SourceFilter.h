@@ -60,7 +60,7 @@ protected:
                                     Metrics::Severity::ERROR};
   Metrics::Metric UnorderedTimestamp{
       "unordered_timestamp", "Timestamp of message not in chronological order.",
-      Metrics::Severity::ERROR};
+      Metrics::Severity::WARNING};
   Metrics::Metric RepeatedTimestamp{"repeated_timestamp",
                                     "Got message with repeated timestamp.",
                                     Metrics::Severity::DEBUG};

@@ -19,10 +19,10 @@ SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
       WriteRepeatedTimestamps(AcceptRepeatedTimestamps), Dest(Destination) {
   RegisterMetric.registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
   RegisterMetric.registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(MessagesTransmitted, {Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(MessagesDiscarded, {Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(RepeatedTimestamp, {Metrics::LogTo::LOG_MSG});
+  RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
+  RegisterMetric.registerMetric(MessagesTransmitted, {Metrics::LogTo::CARBON});
+  RegisterMetric.registerMetric(MessagesDiscarded, {Metrics::LogTo::CARBON});
+  RegisterMetric.registerMetric(RepeatedTimestamp, {Metrics::LogTo::CARBON});
 }
 
 SourceFilter::~SourceFilter() { sendBufferedMessage(); }

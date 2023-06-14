@@ -153,13 +153,13 @@ int main(int argc, char **argv) {
   using std::chrono_literals::operator""ms;
   std::vector<std::shared_ptr<Metrics::Reporter>> MetricsReporters;
   MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
-      std::make_unique<Metrics::LogSink>(), 500ms));
+      std::make_unique<Metrics::LogSink>(), 60s));
 
   if (not Options->GrafanaCarbonAddress.HostPort.empty()) {
     auto HostName = Options->GrafanaCarbonAddress.Host;
     auto Port = Options->GrafanaCarbonAddress.Port;
     MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
-        std::make_unique<Metrics::CarbonSink>(HostName, Port), 500ms));
+        std::make_unique<Metrics::CarbonSink>(HostName, Port), 10s));
   }
 
   Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
