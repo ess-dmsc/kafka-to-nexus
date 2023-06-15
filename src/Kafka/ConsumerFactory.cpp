@@ -36,6 +36,7 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
   std::string ErrorString;
   Conf->set("event_cb", EventCallback.get(), ErrorString);
   Conf->set("metadata.broker.list", SettingsCopy.Address, ErrorString);
+  Conf->set("debug", "fetch", ErrorString);
   configureKafka(Conf.get(), SettingsCopy);
   auto KafkaConsumer = std::unique_ptr<RdKafka::KafkaConsumer>(
       RdKafka::KafkaConsumer::create(Conf.get(), ErrorString));
