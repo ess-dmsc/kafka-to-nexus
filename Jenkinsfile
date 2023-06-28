@@ -343,6 +343,7 @@ def integration_test(builder, container) {
     }
 }
 
+String almalinux_key = "almalinux8"
 String ubuntu_key = "ubuntu2204"
 String centos_key = "centos7"
 String release_key = "centos7-release"
@@ -350,6 +351,7 @@ String integration_test_key = "integration-test"
 String static_checks_key = "static-checks"
 
 container_build_nodes = [
+  (almalinux_key): ContainerBuildNode.getDefaultContainerBuildNode('almalinux8-gcc12'),
   (centos_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
   (release_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
   (ubuntu_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204'),
