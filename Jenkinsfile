@@ -361,6 +361,7 @@ container_build_nodes = [
 base_steps = [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}]
 
 container_build_node_steps = [
+    (almalinux_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
     (centos_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
     (release_key): base_steps + [{b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
     (ubuntu_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, true)}],
