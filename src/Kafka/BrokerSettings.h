@@ -26,10 +26,10 @@ struct BrokerSettings {
   duration MinMetadataTimeout{
       400ms}; // When doing Kafka metadata calls, start with this timeout
   duration MaxMetadataTimeout{
-      10s}; // When doing Kafka metadata calls, use this as the max timeout
+      10s};   // When doing Kafka metadata calls, use this as the max timeout
   duration KafkaErrorTimeout{
-      30s}; // If there is an error with the Kafka broker when consuming data
-            // (for writing files), wait this long before stopping
+      30s};   // If there is an error with the Kafka broker when consuming data
+              // (for writing files), wait this long before stopping
   const int fetch_max_bytes{52428800 * 6};
   const int message_max_bytes{fetch_max_bytes};
   const int receive_max_bytes{fetch_max_bytes + 512};

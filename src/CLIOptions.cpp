@@ -170,9 +170,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       LogLevelInfoStr, true);
   App.add_option(
       "--hdf-output-prefix", MainOptions.HDFOutputPrefix,
-      addLineBreaks("<absolute/or/relative/directory> Directory which gets "
+      addLineBreaks("Absolute path to directory which gets "
                     "prepended to the HDF output filenames in the file write "
-                    "commands"));
+                    "commands. Default: current working directory"));
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option("--server-status-port", MainOptions.ServerStatusPort,
