@@ -8,7 +8,7 @@ from streaming_data_types.fbschemas.epics_connection_info_ep00.EventType import 
     EventType,
 )
 from file_writer_control import WriteJob
-from helpers import full_file_path
+from helpers import build_relative_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -17,7 +17,7 @@ from helpers.writer import (
 
 
 def test_ep00(worker_pool, kafka_address, hdf_file_name="output_file_ep00.nxs"):
-    file_path = full_file_path(hdf_file_name)
+    file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
     producer = create_producer(kafka_address)

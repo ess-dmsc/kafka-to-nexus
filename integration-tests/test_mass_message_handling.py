@@ -5,7 +5,7 @@ from helpers.kafkahelpers import (
 import pytest
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
-from helpers import full_file_path
+from helpers import build_relative_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -58,7 +58,7 @@ def create_messages(kafka_address, start_time, stop_time, step_time):
 def test_mass_message_handling(
     worker_pool, kafka_address, hdf_file_name="write_from_mass_message_topic.nxs"
 ):
-    file_path = full_file_path(hdf_file_name)
+    file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
     start_time = datetime(year=2014, month=7, day=15, hour=11, minute=1, second=35)

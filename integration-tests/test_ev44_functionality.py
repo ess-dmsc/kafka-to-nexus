@@ -5,7 +5,7 @@ from helpers.kafkahelpers import (
 )
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
-from helpers import full_file_path
+from helpers import build_relative_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -15,7 +15,7 @@ import numpy as np
 
 
 def test_ev44(worker_pool, kafka_address, hdf_file_name="ev44_output_file.nxs"):
-    file_path = full_file_path(hdf_file_name)
+    file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer(kafka_address)
 
