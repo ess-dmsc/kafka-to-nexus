@@ -7,7 +7,9 @@
                 "${workspaceFolder}/**",
                 "~/.conan/data/**"
             ],
-            "configurationProvider": "ms-vscode.cmake-tools"
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17"
         }
     ]
 }
