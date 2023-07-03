@@ -3,13 +3,18 @@ from datetime import datetime, timedelta
 import time
 import os
 
-NEXUS_FILES_DIR = os.getcwd()  # default used by the filewriter if hdf-output-prefix not set
+NEXUS_FILES_DIR = (
+    os.getcwd()
+)  # default used by the filewriter if hdf-output-prefix not set
+
 
 def build_relative_file_path(file_name: str) -> str:
     return os.path.join("output-files", file_name)
 
+
 def build_absolute_file_path(rel_file_name: str) -> str:
     return os.path.join(NEXUS_FILES_DIR, rel_file_name)
+
 
 class OpenNexusFile:
     """
