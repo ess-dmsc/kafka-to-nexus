@@ -77,8 +77,13 @@ public:
     UnderTest = std::make_unique<FileWriter::Master>(
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
         Registrar);
-    if (std::filesystem::exists(StartCmd.Filename)) {
-      std::filesystem::remove(StartCmd.Filename);
+    std::filesystem::path fullFilePath = Config.getHDFOutputPrefix();
+    fullFilePath.append(StartCmd.Filename);
+    if (std::filesystem::exists(fullFilePath)) {
+      std::filesystem::remove(fullFilePath);
+    }
+    if (std::filesystem::exists(StartCmdAbsolute.Filename)) {
+      std::filesystem::remove(StartCmdAbsolute.Filename);
     }
   }
   MainOpt Config;
@@ -94,10 +99,29 @@ public:
                               StartTime,
                               StartTime + 50s,
                               "control_topic"};
+  Command::StartInfo StartCmdAbsolute{"job_id",
+                                      "/tmp/some_file_name",
+                                      R"({"nexus_structure":5})",
+                                      R"({"meta_data":54})",
+                                      StartTime,
+                                      StartTime + 50s,
+                                      "control_topic"};
 };
 
 TEST_F(MasterTest, Init) {
   // Do nothing extra here, its all done in the SetUp()-function
+}
+
+TEST_F(MasterTest, DestinationFileFromRelativePath) {
+  UnderTest->startWriting(StartCmd);
+  std::filesystem::path fullFilePath = Config.getHDFOutputPrefix();
+  fullFilePath.append(StartCmd.Filename);
+  EXPECT_EQ(UnderTest->getCurrentFilePath(), fullFilePath);
+}
+
+TEST_F(MasterTest, DestinationFileFromAbsolutePath) {
+  UnderTest->startWriting(StartCmdAbsolute);
+  EXPECT_EQ(UnderTest->getCurrentFilePath(), StartCmdAbsolute.Filename);
 }
 
 TEST_F(MasterTest, StartWritingSuccess) {
