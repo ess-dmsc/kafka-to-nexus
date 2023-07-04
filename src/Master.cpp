@@ -152,7 +152,8 @@ std::filesystem::path Master::getCurrentFilePath() const {
   std::lock_guard LockGuard(StatusMutex);
   std::filesystem::path fullFilePath = MainConfig.getHDFOutputPrefix();
   fullFilePath.append(CurrentStatus.Filename);
-  LOG_INFO("Full path of file written: {}", fullFilePath.string());
+  LOG_INFO("Full path of file written: {} (filename from job: {})",
+           fullFilePath.string(), CurrentStatus.Filename);
   return fullFilePath;
 }
 
