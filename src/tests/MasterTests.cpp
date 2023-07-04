@@ -79,7 +79,7 @@ public:
         Registrar);
     std::filesystem::path fullFilePath = Config.getHDFOutputPrefix();
     fullFilePath.append(StartCmd.Filename);
-    if (std::filesystem::exists(fullFilePath)) {
+    if (!StartCmd.Filename.empty() && std::filesystem::exists(fullFilePath)) {
       std::filesystem::remove(fullFilePath);
     }
     if (std::filesystem::exists(StartCmdAbsolute.Filename)) {
