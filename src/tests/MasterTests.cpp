@@ -112,14 +112,18 @@ TEST_F(MasterTest, Init) {
   // Do nothing extra here, its all done in the SetUp()-function
 }
 
-TEST_F(MasterTest, DestinationFileFromRelativePath) {
+TEST_F(MasterTest, DestinationFilenameFromRelativePath) {
+  REQUIRE_CALL(*StatusReporter,
+               useAlternativeStatusTopic(StartCmd.ControlTopic));
   UnderTest->startWriting(StartCmd);
   std::filesystem::path fullFilePath = Config.getHDFOutputPrefix();
   fullFilePath.append(StartCmd.Filename);
   EXPECT_EQ(UnderTest->getCurrentFilePath(), fullFilePath);
 }
 
-TEST_F(MasterTest, DestinationFileFromAbsolutePath) {
+TEST_F(MasterTest, DestinationFilenameFromAbsolutePath) {
+  REQUIRE_CALL(*StatusReporter,
+               useAlternativeStatusTopic(StartCmdAbsolute.ControlTopic));
   UnderTest->startWriting(StartCmdAbsolute);
   EXPECT_EQ(UnderTest->getCurrentFilePath(), StartCmdAbsolute.Filename);
 }
