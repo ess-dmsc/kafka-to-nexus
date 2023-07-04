@@ -153,7 +153,7 @@ std::filesystem::path Master::getCurrentFilePath() const {
   std::filesystem::path fullFilePath = MainConfig.getHDFOutputPrefix();
   fullFilePath.append(CurrentStatus.Filename);
   LOG_INFO("Full path of file written: {} (filename from job: {})",
-           fullFilePath.string(), CurrentStatus.Filename);
+           fullFilePath.string(), getCurrentFileName());
   return fullFilePath;
 }
 
