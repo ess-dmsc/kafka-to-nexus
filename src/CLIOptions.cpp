@@ -170,7 +170,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       LogLevelInfoStr, true);
   App.add_option(
       "--hdf-output-prefix", MainOptions.HDFOutputPrefix,
-      addLineBreaks("Absolute path to directory which gets "
+      addLineBreaks("Relative or absolute path to directory which gets "
                     "prepended to the HDF output filenames in the file write "
                     "commands. Default: current working directory"));
   App.add_option("--log-file", MainOptions.LogFilename,
