@@ -12,3 +12,4 @@ pipeline.gdsl
 venv
 *.log
 *.DS_Store
+.vscode/

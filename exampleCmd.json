@@ -1,0 +1,41 @@
+{
+  "cmd": "FileWriter_new",
+  "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
+  "broker": "localhost:9092",
+  "start_time": 1547198055000,
+  "stop_time": 15472198055005,
+  "service_id": "filewriter1",
+  "file_attributes": {
+    "file_name": "my_nexus_file.h5"
+  } ,
+  "nexus_structure": "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "my_test_group",
+        "children": [
+          {
+            "type": "group",
+            "name": "my_nested_group_1"
+          },
+          {
+            "type": "group",
+            "name": "my_nested_group_2",
+            "attributes": [
+              {
+                "NX_class": "NXlog",
+                "unit": "blintz"
+              }
+            ]
+          }
+        ],
+        "attributes": [
+          {
+            "NX_class": "NXentry",
+            "origin": "spaaaaace"
+          }
+        ]
+      }
+    ]
+  }
+}

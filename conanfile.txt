@@ -1,14 +1,14 @@
 [requires]
 gtest/1.11.0
 fmt/8.1.1
-h5cpp/0.5.1
+h5cpp/0.5.2@ess-dmsc/stable
 zlib/1.2.12
-librdkafka/2.0.2
+librdkafka/1.9.2
 nlohmann_json/3.10.5
 streaming-data-types/5b537f9@ess-dmsc/stable
 cli11/2.2.0
 trompeloeil/42
-graylog-logger/2.1.4-2@ess-dmsc/stable
+graylog-logger/2.1.4-1@ess-dmsc/stable
 date/3.0.1
 readerwriterqueue/1.0.6
 concurrentqueue/1.0.3
@@ -21,14 +21,14 @@ virtualbuildenv
 virtualrunenv
 
 [options]
-flatbuffers:shared=True
-gtest:shared=False
-hdf5:shared=True
-h5cpp:with_boost=False
-librdkafka:shared=True
-librdkafka:ssl=True
-librdkafka:sasl=True
-date:use_system_tz_db=True
+flatbuffers/*:shared=True
+gtest/*:shared=False
+hdf5/*:shared=True
+h5cpp/*:with_boost=False
+librdkafka/*:shared=True
+librdkafka/*:ssl=True
+librdkafka/*:sasl=True
+date/*:use_system_tz_db=True
 
 [imports]
 ., *.dylib* -> ./lib @ keep_path=False
