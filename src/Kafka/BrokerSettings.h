@@ -36,9 +36,7 @@ struct BrokerSettings {
   std::map<std::string, std::string> KafkaConfiguration = {
       {"socket.timeout.ms", "10000"},
       {"message.max.bytes", std::to_string(message_max_bytes)},
-      {"fetch.max.bytes",
-       std::to_string(fetch_max_bytes)}, // this is the default value, here as
-                                         // documentation
+      {"fetch.max.bytes", std::to_string(fetch_max_bytes)},
       {"receive.message.max.bytes",
        std::to_string(
            receive_max_bytes)}, // must be at least fetch.max.bytes + 512
