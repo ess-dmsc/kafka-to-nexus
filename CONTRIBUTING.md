@@ -12,9 +12,9 @@ To summarise:
 
 ### Branching
 
-- Branch your feature off 'master'
+- Branch your feature off 'main'
 
-- Create pull requests against 'master'.
+- Create pull requests against 'main'.
 
 ### Branch naming
 The names should start with the ticket number and contain a brief description. For example:
