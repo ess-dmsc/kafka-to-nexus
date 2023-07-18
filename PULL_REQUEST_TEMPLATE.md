@@ -10,3 +10,4 @@ See [CONTRIBUTING.MD](CONTRIBUTING.MD) for more information on code standards et
 ## Checklist
 
 - [ ] Changes have been documented in `changes.md`
+- [ ] Documentation has been updated in `documentation` directory
