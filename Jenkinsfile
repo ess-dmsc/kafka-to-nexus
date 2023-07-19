@@ -5,11 +5,11 @@ import ecdcpipeline.PipelineBuilder
 project = "kafka-to-nexus"
 
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
-// but based on the fact that for the master branch we want to have a certain
+// but based on the fact that for the main branch we want to have a certain
 // number of old builds available, while for the other branches we want to be
 // able to deploy easily without using too much disk space.
 def num_artifacts_to_keep
-if (env.BRANCH_NAME == 'master') {
+if (env.BRANCH_NAME == 'main') {
   num_artifacts_to_keep = '5'
 } else {
   num_artifacts_to_keep = '2'
