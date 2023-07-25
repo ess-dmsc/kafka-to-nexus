@@ -64,7 +64,7 @@ struct MainOpt {
   ///
   /// This gets prepended to the HDF output filename given in the write
   /// commands.
-  std::string HDFOutputPrefix{std::filesystem::current_path().root_path()};
+  std::string HDFOutputPrefix{std::filesystem::current_path()};
 
   /// Used for command line argument.
   bool ListWriterModules = false;

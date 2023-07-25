@@ -1,1 +1,1 @@
-from .nexushelpers import full_file_path
+from .nexushelpers import build_relative_file_path, build_absolute_file_path

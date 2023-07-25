@@ -6,7 +6,7 @@ from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
 
 from file_writer_control.WriteJob import WriteJob
-from helpers import full_file_path
+from helpers import build_relative_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -17,7 +17,7 @@ from helpers.writer import (
 def test_two_different_writer_modules_with_same_flatbuffer_id(
     worker_pool, kafka_address, hdf_file_name="output_file_multiple_modules.nxs"
 ):
-    file_path = full_file_path(hdf_file_name)
+    file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer(kafka_address)
     now = datetime.now()

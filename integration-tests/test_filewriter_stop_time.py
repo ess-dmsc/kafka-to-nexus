@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 from file_writer_control.WriteJob import WriteJob
-from helpers import full_file_path
+from helpers import build_relative_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -18,7 +18,7 @@ from helpers.writer import (
 def test_start_and_stop_time_are_in_the_past(
     worker_pool, kafka_address, hdf_file_name="output_file_of_historical_data.nxs"
 ):
-    file_path = full_file_path(hdf_file_name)
+    file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
     producer = create_producer(kafka_address)
 
