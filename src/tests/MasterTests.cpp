@@ -77,13 +77,21 @@ public:
     UnderTest = std::make_unique<FileWriter::Master>(
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
         Registrar);
-    std::filesystem::path fullFilePath = Config.getHDFOutputPrefix();
-    fullFilePath.append(StartCmd.Filename);
-    if (!StartCmd.Filename.empty() && std::filesystem::exists(fullFilePath)) {
-      std::filesystem::remove(fullFilePath);
+    std::filesystem::path FullFilePath = Config.getHDFOutputPrefix();
+    FullFilePath.append(StartCmd.Filename);
+    if (!StartCmd.Filename.empty() && std::filesystem::exists(FullFilePath)) {
+      std::filesystem::remove(FullFilePath);
     }
-    if (std::filesystem::exists(StartCmdAbsolute.Filename)) {
-      std::filesystem::remove(StartCmdAbsolute.Filename);
+    std::filesystem::path FullFilePath2 =
+        std::filesystem::path(Config.getHDFOutputPrefix()) /
+        std::filesystem::path(StartCmdAbsoluteFilename).relative_path();
+    if (std::filesystem::exists(FullFilePath2)) {
+      std::filesystem::remove(FullFilePath2);
+    }
+    if (!std::filesystem::exists(
+            std::filesystem::path(FullFilePath2).remove_filename())) {
+      std::filesystem::create_directory(
+          std::filesystem::path(FullFilePath2).remove_filename());
     }
   }
   MainOpt Config;
@@ -99,8 +107,9 @@ public:
                               StartTime,
                               StartTime + 50s,
                               "control_topic"};
+  std::string StartCmdAbsoluteFilename{"/tmp/some_file_name"};
   Command::StartInfo StartCmdAbsolute{"job_id",
-                                      "/tmp/some_file_name",
+                                      StartCmdAbsoluteFilename,
                                       R"({"nexus_structure":5})",
                                       R"({"meta_data":54})",
                                       StartTime,
@@ -116,16 +125,18 @@ TEST_F(MasterTest, DestinationFilenameFromRelativePath) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmd.ControlTopic));
   UnderTest->startWriting(StartCmd);
-  std::filesystem::path fullFilePath = Config.getHDFOutputPrefix();
-  fullFilePath.append(StartCmd.Filename);
-  EXPECT_EQ(UnderTest->getCurrentFilePath(), fullFilePath);
+  std::filesystem::path FullFilePath =
+      std::filesystem::path(Config.getHDFOutputPrefix()) / StartCmd.Filename;
+  EXPECT_EQ(UnderTest->getCurrentFilePath(), FullFilePath);
 }
 
 TEST_F(MasterTest, DestinationFilenameFromAbsolutePath) {
   REQUIRE_CALL(*StatusReporter,
                useAlternativeStatusTopic(StartCmdAbsolute.ControlTopic));
   UnderTest->startWriting(StartCmdAbsolute);
-  EXPECT_EQ(UnderTest->getCurrentFilePath(), StartCmdAbsolute.Filename);
+  std::filesystem::path FullFilePath = std::filesystem::path(
+      Config.getHDFOutputPrefix() + StartCmdAbsolute.Filename);
+  EXPECT_EQ(UnderTest->getCurrentFilePath(), FullFilePath);
 }
 
 TEST_F(MasterTest, StartWritingSuccess) {
