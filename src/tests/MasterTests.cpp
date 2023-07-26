@@ -77,21 +77,20 @@ public:
     UnderTest = std::make_unique<FileWriter::Master>(
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
         Registrar);
+
     std::filesystem::path FullFilePath = Config.getHDFOutputPrefix();
     FullFilePath.append(StartCmd.Filename);
     if (!StartCmd.Filename.empty() && std::filesystem::exists(FullFilePath)) {
       std::filesystem::remove(FullFilePath);
     }
-    std::filesystem::path FullFilePath2 =
+    FullFilePath =
         std::filesystem::path(Config.getHDFOutputPrefix()) /
         std::filesystem::path(StartCmdAbsoluteFilename).relative_path();
-    if (std::filesystem::exists(FullFilePath2)) {
-      std::filesystem::remove(FullFilePath2);
+    if (std::filesystem::exists(FullFilePath)) {
+      std::filesystem::remove(FullFilePath);
     }
-    if (!std::filesystem::exists(
-            std::filesystem::path(FullFilePath2).remove_filename())) {
-      std::filesystem::create_directory(
-          std::filesystem::path(FullFilePath2).remove_filename());
+    if (!std::filesystem::exists(FullFilePath.parent_path())) {
+      std::filesystem::create_directory(FullFilePath.parent_path());
     }
   }
   MainOpt Config;
