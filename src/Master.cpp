@@ -153,9 +153,8 @@ std::string Master::getCurrentFileName() const {
 
 std::filesystem::path Master::getCurrentFilePath() const {
   std::lock_guard LockGuard(StatusMutex);
-  std::filesystem::path fullFilePath = MainConfig.getHDFOutputPrefix();
-  fullFilePath.append(CurrentStatus.Filename);
-  return fullFilePath;
+  return std::filesystem::path(MainConfig.getHDFOutputPrefix()) /
+         std::filesystem::path(CurrentStatus.Filename).relative_path();
 }
 
 void Master::setStopTimeInternal(time_point NewStopTime) {

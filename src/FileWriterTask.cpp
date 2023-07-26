@@ -36,8 +36,8 @@ std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 void FileWriterTask::setFullFilePath(std::string const &Prefix,
                                      std::string const &Name) {
-  FullFilePath = Prefix;
-  FullFilePath.append(Name);
+  FullFilePath = std::filesystem::path(Prefix) /
+                 std::filesystem::path(Name).relative_path();
 }
 
 void FileWriterTask::addSource(Source &&Source) {
