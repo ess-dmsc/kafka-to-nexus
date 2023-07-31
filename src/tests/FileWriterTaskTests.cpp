@@ -39,7 +39,7 @@ TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
   ASSERT_EQ("/File.hdf", Task.filename());
 }
 
-TEST_F(FileWriterTask, AddingSourceAddsToDemuxers) {
+TEST_F(FileWriterTask, AddingSourceAddsToTopics) {
   FileWriter::FileWriterTask Task(TestRegistrar,
                                   std::make_shared<MetaData::Tracker>());
   FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);

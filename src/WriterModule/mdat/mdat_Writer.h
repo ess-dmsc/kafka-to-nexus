@@ -63,18 +63,18 @@ public:
     NeXusDataset::Mode ndmode = NeXusDataset::Mode::Create;
     std::cout << "mdat_Writer::init_hdf()\n";
     return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
-  }
+  }*/
 
   /// \brief Re-open datasets created when calling WriterModule::Base::init_hdf(),
   /// i.e. on the second instantiation of this. You cannot do any of the included:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
   /// This member function is called in the second instantiation of this class
   /// (for a specific data source).
-  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override {
+  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;/* {
     NeXusDataset::Mode ndmode = NeXusDataset::Mode::Open;
     std::cout << "mdat_Writer::reopen()\n";
     return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
-  }
+  }*/
 
   /// \brief Here we do the data writing.
   /// This member function is called on the second instance of this class.

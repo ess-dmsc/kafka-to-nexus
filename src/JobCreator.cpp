@@ -18,6 +18,7 @@
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
 #include "json.h"
+#include "pl72_run_start_generated.h"
 #include <algorithm>
 
 using std::vector;
@@ -51,22 +52,29 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   json ConfigStream = json::parse(ModuleSettings.ModuleHDFInfoObj.ConfigStream);
 
   ModuleSettings.ConfigStreamJson = ConfigStream.dump();
-  ModuleSettings.Source =
-      Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
+  ModuleSettings.Source = ( ModuleInfo.WriterModule == "mdat"
+                            ? ""
+                            : Command::Parser::getRequiredValue<std::string>("source", ConfigStream)
+                          );
   ModuleSettings.Module = ModuleInfo.WriterModule;
-  if (ModuleSettings.Module != "link") {
-    ModuleSettings.Topic =
-        Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
-    ModuleSettings.isLink = false;
-  } else {
+  ModuleSettings.isLink = false;
+
+  if(ModuleSettings.Module == "mdat"){
+    ModuleSettings.Name =
+        Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
+  } else if (ModuleSettings.Module=="link") {
     ModuleSettings.Name =
         Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
     ModuleSettings.isLink = true;
+  } else {  //  everything else should be here...including incorrect values!
+    ModuleSettings.Topic =
+        Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
   }
+
   auto Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
-  if (not Attributes.empty()) {
+  if ( !Attributes.empty() && Attributes != "\"\"" ) {
     LOG_WARN("Writing of writer module attributes to parent group has been "
              "removed. Attributes should be assigned directly to group. The "
              "(unused) attributes belongs to dataset with source name \"{}\" "
@@ -75,6 +83,7 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   }
 
   return ModuleSettings;
+
 }
 
 /// Helper to extract information about the provided links and streams.
@@ -139,6 +148,26 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       }
       setWriterHDFAttributes(StreamGroup, Item);
       Item.WriterModule->init_hdf(StreamGroup);
+      //  This message must contain "start_time" and the start time..!
+      if( Item.Module == "mdat" ){
+        flatbuffers::FlatBufferBuilder builder;
+//        std::__1::chrono::duration_cast<std::chrono::milliseconds>(time_point{StartInfo.StartTime});
+        uint64_t myStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(StartInfo.StartTime.time_since_epoch()).count();
+        const auto maybeThisWorks = builder.CreateString("{\"start_time\":" + std::to_string(myStartTime)+"}");
+        flatbuffers::uoffset_t start_ = builder.StartTable();
+        builder.AddElement<uint64_t>(4U, myStartTime, 0);
+        builder.AddOffset(12U, maybeThisWorks);
+//        flatbuffers::Offset<RunStart> fbOffset;
+        const auto end = builder.EndTable(start_);
+        auto o = flatbuffers::Offset<RunStart>(end);
+        builder.Finish(o,"mdat");
+        auto msgbuff = builder.Release();
+
+
+//        buildRun
+        FileWriter::FlatbufferMessage myWorkingMsg = {msgbuff.data(),msgbuff.size()};
+        Item.WriterModule->write(myWorkingMsg);
+      }
     } catch (std::runtime_error const &E) {
       auto ErrorMsg = fmt::format(
           R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",

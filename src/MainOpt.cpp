@@ -27,7 +27,7 @@ void MainOpt::setServiceName(std::string NewServiceName) {
     ServiceId = getDefaultServiceId();
   } else {
     ServiceId = fmt::format("{}-pid:{}-{}", ServiceName, getPID(),
-                            randomHexString(RandomStringLength));
+                            randomHexString(RandomStringLength)); //  why have this ending? Harder to construct programattically, but PID is unique for the process
   }
 }
 

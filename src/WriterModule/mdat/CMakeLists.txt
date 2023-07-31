@@ -4,7 +4,6 @@ set(mdat_SRC
 
 set(mdat_INC
         mdat_Writer.h
-        ConnectionStatusDatasets.h
 )
 
 create_writer_module(mdat)

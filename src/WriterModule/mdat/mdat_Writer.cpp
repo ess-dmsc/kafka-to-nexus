@@ -1,51 +1,46 @@
-#include "ep00_Writer.h"
-#include "FlatbufferMessage.h"
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
+#include "mdat_Writer.h"
 #include "WriterRegistrar.h"
-#include <ep00_epics_connection_info_generated.h>
 
-namespace WriterModule {
-namespace ep00 {
+namespace mdat {
 
-InitResult ep00_Writer::reopen(hdf5::node::Group &HDFGroup) {
-  auto Open = NeXusDataset::Mode::Open;
+// Register our module so the parsing of JSON recognises it.
+static WriterModule::Registry::Registrar<mdat_Writer> RegisterWriter("mdat", "mdat");
+
+WriterModule::InitResult mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
-    TimestampDataset = NeXusDataset::ConnectionStatusTime(HDFGroup, Open);
-    StatusDataset = NeXusDataset::ConnectionStatus(HDFGroup, Open);
-  } catch (std::exception &E) {
-    LOG_ERROR(
-        R"(Failed to reopen datasets in HDF file with error message: "{}")",
-        std::string(E.what()));
-    return InitResult::ERROR;
-  }
-  return InitResult::OK;
-}
-
-InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
-  auto Create = NeXusDataset::Mode::Create;
-  try {
-    NeXusDataset::ConnectionStatusTime(
-        HDFGroup, Create, ChunkSize); // NOLINT(bugprone-unused-raii)
-    NeXusDataset::ConnectionStatus(HDFGroup, Create,
-                                   ChunkSize); // NOLINT(bugprone-unused-raii)
+    NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Create); //  make a timestamp entry in ns since epoch
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("ep00 could not init_hdf HDFGroup: {}  trace: {}",
+    LOG_ERROR("mdat could not init_hdf (or re-open) HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
               static_cast<std::string>(HDFGroup.link().path()), message);
-    return InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return InitResult::OK;
+
+  return WriterModule::InitResult::OK;
+
 }
 
-void ep00_Writer::write(FileWriter::FlatbufferMessage const &Message) {
-  auto FlatBuffer = GetEpicsConnectionInfo(Message.data());
-  std::string const Status = EnumNameEventType(FlatBuffer->type());
-  StatusDataset.appendStringElement(Status);
-  auto FBTimestamp = FlatBuffer->timestamp();
-  TimestampDataset.appendElement(FBTimestamp);
+WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
+  try {
+    mdatStart_time = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
+  } catch (std::exception const &E) {
+    auto message = hdf5::error::print_nested(E);
+    LOG_ERROR("mdat could not init_hdf (or re-open) HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
+              static_cast<std::string>(HDFGroup.link().path()), message);
+    return WriterModule::InitResult::ERROR;
+  }
+
+  return WriterModule::InitResult::OK;
+
 }
 
-static WriterModule::Registry::Registrar<ep00_Writer>
-    RegisterWriter("ep00", "epics_con_status");
-
-} // namespace ep00
-} // namespace WriterModule
+} // namespace mdat

@@ -11,7 +11,7 @@
 
 /// \file
 ///
-/// \brief This file acts as a template for creating file writing modules.
+/// \brief This file acts as a mdat for creating file writing modules.
 ///
 /// All of the classes required are explained here. The
 /// only thing missing from this header file is the registration of the file
@@ -34,7 +34,9 @@
 
 #pragma once
 #include "FlatbufferReader.h"
-#include "WriterModuleBase.h"
+#include "flatbuffers/flatbuffers.h"
+#include <pl72_run_start_generated.h>
+//#include "WriterModuleBase.h"
 #include <iostream>
 
 /// \brief A separate namespace for this specific file writing module. Use this
@@ -47,7 +49,7 @@ namespace AccessMessageMetadata {
 /// See TestWriter.cpp for code which is used to tie a file identifier to an
 /// instance of this class. Note that this class is only instantiated once in
 /// the entire run of the application.
-class Extractor : public FileWriter::FlatbufferReader {
+class mdat_Extractor : public FileWriter::FlatbufferReader {
 public:
   /// \brief Is used to verify the contents of a flatbuffer.
   ///
@@ -130,11 +132,15 @@ public:
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
   // cppcheck-suppress functionStatic
-  uint64_t timestamp(FileWriter::FlatbufferMessage const &/*Message*/) const override {
+  uint64_t timestamp(FileWriter::FlatbufferMessage const &Message) const override {
     std::cout << "ReaderClass::timestamp()\n";
-    return 0;
+//    Message.data(); //  byte (pointer?)
+  auto somePointer = GetRunStart(Message.data());
+//  flatbuffers::GetRoot<timestamp>(Message);
+    std::cout << somePointer->start_time() << "\n";
+    return somePointer->start_time();
   }
 };
 
-} // namespace AccessMessageMetadata
+} // namespace mdatWriter
 // clang-format on
