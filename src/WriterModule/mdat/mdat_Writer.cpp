@@ -17,10 +17,10 @@ static WriterModule::Registry::Registrar<mdat_Writer> RegisterWriter("mdat", "md
 
 WriterModule::InitResult mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
-    NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Create); //  make a timestamp entry in ns since epoch
+    NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Create, ChunkSize); //  make a timestamp entry in ns since epoch
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("mdat could not init_hdf (or re-open) HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
+    LOG_ERROR("mdat could not init_hdf HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
               static_cast<std::string>(HDFGroup.link().path()), message);
     return WriterModule::InitResult::ERROR;
   }
@@ -34,7 +34,7 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
     mdatStart_time = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("mdat could not init_hdf (or re-open) HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
+    LOG_ERROR("mdat could not reopen HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
               static_cast<std::string>(HDFGroup.link().path()), message);
     return WriterModule::InitResult::ERROR;
   }
@@ -42,5 +42,16 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 
 }
+
+void mdat_Writer::write(FileWriter::FlatbufferMessage const &Message) {
+    std::cout << "mdat_Writer::write()\n";
+    Message.isValid();
+    auto somePointer = GetRunStart(Message.data());
+//  flatbuffers::GetRoot<timestamp>(Message);
+    auto myst = somePointer->start_time();
+    std::cout << somePointer->start_time() << "\n";
+    mdatStart_time.appendElement(myst);
+    std::cout << "Written...(?!)\n";
+  }
 
 } // namespace mdat

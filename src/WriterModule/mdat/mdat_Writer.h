@@ -56,6 +56,8 @@ public:
   /// Any expansion to mdat should ensure those resources are destroyed here.
   ~mdat_Writer() override { std::cout << "mdat module destroyed\n"; }
 
+  JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
+
   /// \brief Initialise datasets and attributes in the HDF5 file;
   /// currently only time (for start_time and end_time).
   /// This must be implemented for HDF5 single writer multiple reader (SWMR) support.
@@ -81,16 +83,7 @@ public:
   /// \note !!Exceptions here lead to an undefined state, avoid throwing them in this method!!
   /// \param Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
-  void write(FileWriter::FlatbufferMessage const &Message) override {
-    std::cout << "mdat_Writer::write()\n";
-    Message.isValid();
-    auto somePointer = GetRunStart(Message.data());
-//  flatbuffers::GetRoot<timestamp>(Message);
-    auto myst = somePointer->start_time();
-    std::cout << somePointer->start_time() << "\n";
-    mdatStart_time.write(myst);
-    std::cout << "Written...(?!)\n";
-  }
+  void write(FileWriter::FlatbufferMessage const &Message) override;
   NeXusDataset::Time mdatStart_time;
 
   private:
