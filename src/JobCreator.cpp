@@ -125,6 +125,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   std::vector<ModuleSettings> StreamSettingsList;
   std::vector<ModuleSettings> LinkSettingsList;
 
+  FileWriter::FlatbufferMessage myWorkingMsg;
   for (auto &Item : SettingsList) {
     if (Item.isLink) {
       LinkSettingsList.push_back(std::move(Item));
@@ -165,8 +166,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
 
 //        buildRun
-        FileWriter::FlatbufferMessage myWorkingMsg = {msgbuff.data(),msgbuff.size()};
-        Item.WriterModule->write(myWorkingMsg);
+        myWorkingMsg = {msgbuff.data(),msgbuff.size()};
+//        Item.WriterModule->write(myWorkingMsg);
       }
     } catch (std::runtime_error const &E) {
       auto ErrorMsg = fmt::format(
@@ -200,6 +201,11 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       Settings.JobPoolURI.HostPort;
 
   LOG_INFO("Write file with job_id: {}", Task->jobID());
+
+  for (auto &Item : SettingsList)
+      if( Item.Module == "mdat" )
+        Item.WriterModule->write(myWorkingMsg); //  this needs to be treated better before being pushed to main since there could be multiple mdats and therefore multiple msg
+
   return std::make_unique<StreamController>(
       std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);
 }
