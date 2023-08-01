@@ -106,7 +106,8 @@ public:
                               StartTime,
                               StartTime + 50s,
                               "control_topic"};
-  std::string StartCmdAbsoluteFilename{std::filesystem::temp_directory_path().append("some_file_name"};
+  std::string StartCmdAbsoluteFilename{
+      std::filesystem::temp_directory_path().append("some_file_name")};
   Command::StartInfo StartCmdAbsolute{"job_id",
                                       StartCmdAbsoluteFilename,
                                       R"({"nexus_structure":5})",
