@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "pl72_run_start_generated.h"
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MetaData/HDF5DataWriter.h"

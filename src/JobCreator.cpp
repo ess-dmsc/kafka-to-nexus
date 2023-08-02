@@ -130,7 +130,14 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
     if (Item.isLink) {
       LinkSettingsList.push_back(std::move(Item));
     } else {
-      StreamSettingsList.push_back(std::move(Item));
+      std::string module_name = Item.Module;
+      //  if there are two modules of the same name in the filewriter
+      //  problems can occur since the module for ingesting gets initiated twice
+      //  so we ensure StreamSettingsList is only filled once per module occurence
+      if( module_name == "dataset" ||
+        std::find_if(StreamSettingsList.begin(), StreamSettingsList.end(),[&module_name](const ModuleSettings& module){return module.Module == module_name; }) == StreamSettingsList.end()
+      )
+        StreamSettingsList.push_back(std::move(Item));
     }
   }
 
@@ -149,26 +156,6 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       }
       setWriterHDFAttributes(StreamGroup, Item);
       Item.WriterModule->init_hdf(StreamGroup);
-      //  This message must contain "start_time" and the start time..!
-      if( Item.Module == "mdat" ){
-        flatbuffers::FlatBufferBuilder builder;
-//        std::__1::chrono::duration_cast<std::chrono::milliseconds>(time_point{StartInfo.StartTime});
-        uint64_t myStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(StartInfo.StartTime.time_since_epoch()).count();
-        const auto maybeThisWorks = builder.CreateString("{\"start_time\":" + std::to_string(myStartTime)+"}");
-        flatbuffers::uoffset_t start_ = builder.StartTable();
-        builder.AddElement<uint64_t>(4U, myStartTime, 0);
-        builder.AddOffset(12U, maybeThisWorks);
-//        flatbuffers::Offset<RunStart> fbOffset;
-        const auto end = builder.EndTable(start_);
-        auto o = flatbuffers::Offset<RunStart>(end);
-        builder.Finish(o,"mdat");
-        auto msgbuff = builder.Release();
-
-
-//        buildRun
-        myWorkingMsg = {msgbuff.data(),msgbuff.size()};
-//        Item.WriterModule->write(myWorkingMsg);
-      }
     } catch (std::runtime_error const &E) {
       auto ErrorMsg = fmt::format(
           R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",
@@ -193,6 +180,23 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
+  //  Now we have our modules established and files open
+  //  Create fake message for writing start time as we have the information here and ready to be consumed
+  for (auto &Item : Task->sources())
+      if( Item.writerModuleID() == "mdat" ){
+        flatbuffers::FlatBufferBuilder builder;
+        uint64_t myStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(StartInfo.StartTime.time_since_epoch()).count();
+        auto startName = builder.CreateString("start_time");
+        flatbuffers::uoffset_t start_ = builder.StartTable();
+        builder.AddElement<uint64_t>(4U, myStartTime, 0); //  add time under pl72 schema
+        builder.AddOffset(12U, startName);  //  add JSON name under pl72 schema
+        const flatbuffers::uoffset_t end_ = builder.EndTable(start_);
+        auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
+        builder.Finish(offsetForFinish, "mdat");
+        flatbuffers::DetachedBuffer msgbuff = builder.Release();
+        Item.getWriterPtr()->write({msgbuff.data(), msgbuff.size()});
+      }
+
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
   // Ignore broker addresses sent in StartInfo message and use known broker
@@ -201,10 +205,6 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       Settings.JobPoolURI.HostPort;
 
   LOG_INFO("Write file with job_id: {}", Task->jobID());
-
-  for (auto &Item : SettingsList)
-      if( Item.Module == "mdat" )
-        Item.WriterModule->write(myWorkingMsg); //  this needs to be treated better before being pushed to main since there could be multiple mdats and therefore multiple msg
 
   return std::make_unique<StreamController>(
       std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);

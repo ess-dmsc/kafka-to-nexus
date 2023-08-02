@@ -61,6 +61,20 @@ void StreamController::resumeStreamers() {
 }
 
 void StreamController::stop() {
+  for (auto &Item : WriterTask->sources())
+      if( Item.writerModuleID() == "mdat" ){
+        flatbuffers::FlatBufferBuilder builder;
+        uint64_t myStopTime = std::chrono::duration_cast<std::chrono::milliseconds>(StreamerOptions.StopTimestamp.time_since_epoch()).count();
+        auto stopName = builder.CreateString("stop_time");
+        flatbuffers::uoffset_t stop_ = builder.StartTable();
+        builder.AddElement<uint64_t>(6U, myStopTime, 0); //  add time under pl72 schema
+        builder.AddOffset(12U, stopName);  //  add JSON name under pl72 schema
+        const flatbuffers::uoffset_t end_ = builder.EndTable(stop_);
+        auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
+        builder.Finish(offsetForFinish, "mdat");
+        flatbuffers::DetachedBuffer msgbuff = builder.Release();
+        Item.getWriterPtr()->write({msgbuff.data(), msgbuff.size()});
+      }
   for (auto &Stream : Streamers) {
     Stream->stop();
   }

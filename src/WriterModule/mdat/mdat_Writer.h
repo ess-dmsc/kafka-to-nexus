@@ -47,16 +47,16 @@ namespace mdat {
 
 class mdat_Writer : public WriterModule::Base {
 public:
-  /// \brief Constructor should take NXClass "Nxlog" because reasons???
-  mdat_Writer() : WriterModule::Base(false /*AcceptRepeatedTimestamps*/, "NXlog" /*NXClass*/) { std::cout << "mdat module initialised\n"; }
+  /// \brief Constructor should take NXClass "Nxlog" because???
+  mdat_Writer() : WriterModule::Base(false /*AcceptRepeatedTimestamps*/, "NXlog" /*NXClass*/) {
+    std::cout << "mdat module initialised\n";
+  }
 
   /// \brief Close relevant datasets (if any) here.
   /// Note: WriterModule classes are instantiated twice
   /// and WriterModule::Base::close() is called only on the first instantiation.
   /// Any expansion to mdat should ensure those resources are destroyed here.
-  ~mdat_Writer() override { std::cout << "mdat module destroyed\n"; }
-
-  JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
+  ~mdat_Writer() override {}
 
   /// \brief Initialise datasets and attributes in the HDF5 file;
   /// currently only time (for start_time and end_time).
@@ -84,10 +84,13 @@ public:
   /// \param Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
   void write(FileWriter::FlatbufferMessage const &Message) override;
-  NeXusDataset::Time mdatStart_time;
 
-  private:
-    WriterModule::InitResult init_or_reopen(NeXusDataset::Mode, hdf5::node::Group&) const;
+  protected:
+  // new datasets go here
+    NeXusDataset::Time mdatStart_time;
+    NeXusDataset::Time mdatStop_time;
+    JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
+
 };
 } // namespace mdat
 // clang-format on

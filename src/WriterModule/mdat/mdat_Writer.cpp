@@ -17,7 +17,8 @@ static WriterModule::Registry::Registrar<mdat_Writer> RegisterWriter("mdat", "md
 
 WriterModule::InitResult mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
-    NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Create, ChunkSize); //  make a timestamp entry in ns since epoch
+    NeXusDataset::Time(HDFGroup, "start_time", NeXusDataset::Mode::Create, ChunkSize, "ms");
+    NeXusDataset::Time(HDFGroup, "stop_time", NeXusDataset::Mode::Create, ChunkSize, "ms");
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("mdat could not init_hdf HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
@@ -31,7 +32,8 @@ WriterModule::InitResult mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) cons
 
 WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
-    mdatStart_time = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
+    mdatStart_time = NeXusDataset::Time(HDFGroup, "start_time", NeXusDataset::Mode::Open, ChunkSize, "ms");
+    mdatStop_time = NeXusDataset::Time(HDFGroup, "stop_time", NeXusDataset::Mode::Open, ChunkSize, "ms");
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("mdat could not reopen HDFGroup: {}  trace: {}\nError with NeXusDataset::Time(..)?",
@@ -44,14 +46,13 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 }
 
 void mdat_Writer::write(FileWriter::FlatbufferMessage const &Message) {
-    std::cout << "mdat_Writer::write()\n";
+    std::cout << "mdat writ" << std::endl;
     Message.isValid();
-    auto somePointer = GetRunStart(Message.data());
-//  flatbuffers::GetRoot<timestamp>(Message);
-    auto myst = somePointer->start_time();
-    std::cout << somePointer->start_time() << "\n";
-    mdatStart_time.appendElement(myst);
-    std::cout << "Written...(?!)\n";
+    auto dataPointer = GetRunStart(Message.data()); //  we get data from 'fake' pl72
+    if( !std::strcmp( dataPointer->nexus_structure()->c_str(), "start_time" ) )
+      mdatStart_time.appendElement(dataPointer->start_time());
+    if( !std::strcmp( dataPointer->nexus_structure()->c_str(), "stop_time") )
+      mdatStop_time.appendElement(dataPointer->stop_time());
   }
 
 } // namespace mdat

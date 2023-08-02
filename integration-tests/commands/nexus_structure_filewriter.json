@@ -64,13 +64,6 @@
           ],
           "children": [
             {
-              "module": "link",
-              "config": {
-                "name": "features",
-                "source": "testLinkValue"
-              }
-            },
-            {
               "module": "dataset",
               "config": {
                 "name": "description",

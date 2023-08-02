@@ -108,9 +108,8 @@ public:
   /// \return The name of the source of the data in the flatbuffer pointed to by
   /// the Message parameter.
   // cppcheck-suppress functionStatic
-  std::string source_name(FileWriter::FlatbufferMessage const &/*Message*/) const override {
-    std::cout << "ReaderClass::source_name()\n";
-    return "";
+  std::string source_name(FileWriter::FlatbufferMessage const &Message) const override {
+    return GetRunStart(Message.data())->nexus_structure()->c_str();
   }
 
   /// \brief Extract the timestamp of a flatbuffer.
@@ -133,12 +132,10 @@ public:
   /// (see above).
   // cppcheck-suppress functionStatic
   uint64_t timestamp(FileWriter::FlatbufferMessage const &Message) const override {
-    std::cout << "ReaderClass::timestamp()\n";
-//    Message.data(); //  byte (pointer?)
-  auto somePointer = GetRunStart(Message.data());
-//  flatbuffers::GetRoot<timestamp>(Message);
-    std::cout << somePointer->start_time() << "\n";
-    return somePointer->start_time();
+    uint64_t returnTime = GetRunStart(Message.data())->start_time();
+    if( !returnTime )
+      returnTime = GetRunStart(Message.data())->stop_time();
+    return returnTime;
   }
 };
 
