@@ -4,7 +4,7 @@ from file_writer_control.WorkerJobPool import WorkerJobPool
 from file_writer_control.WriteJob import WriteJob
 from file_writer_control.JobHandler import JobHandler
 from helpers.nexushelpers import OpenNexusFile
-from helpers import full_file_path
+from helpers import build_relative_file_path
 from helpers.writer import (
     wait_command_is_done,
     wait_writers_available,
@@ -15,7 +15,7 @@ from helpers.writer import (
 def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(
     worker_pool, kafka_address
 ):
-    file_path = full_file_path(
+    file_path = build_relative_file_path(
         f"output_file_stop_msg_immediately_after_start_msg_on_alternative_command_topic.nxs"
     )
     wait_writers_available(worker_pool, nr_of=1, timeout=10)

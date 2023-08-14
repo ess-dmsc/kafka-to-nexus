@@ -4,7 +4,7 @@ from pathlib import Path
 from file_writer_control.CommandStatus import CommandState
 from file_writer_control.JobStatus import JobState
 from file_writer_control.WriteJob import WriteJob
-from helpers import full_file_path
+from helpers import build_relative_file_path, build_absolute_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -20,7 +20,8 @@ def test_ignores_stop_command_with_incorrect_service_id(
     kafka_address,
     multiple_writers,
 ):
-    file_path = full_file_path(f"{request.node.name}.nxs")
+    relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
+    absolute_file_path = build_absolute_file_path(relative_file_path)
     wait_writers_available(worker_pool, nr_of=2, timeout=20)
     now = datetime.now()
 
@@ -28,7 +29,7 @@ def test_ignores_stop_command_with_incorrect_service_id(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_path,
+        file_name=relative_file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
@@ -52,7 +53,7 @@ def test_ignores_stop_command_with_incorrect_service_id(
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=15)
-    assert Path(file_path).is_file()
+    assert Path(absolute_file_path).is_file()
 
 
 def test_ignores_stop_command_with_incorrect_job_id(
@@ -61,7 +62,8 @@ def test_ignores_stop_command_with_incorrect_job_id(
     kafka_address,
     multiple_writers,
 ):
-    file_path = full_file_path(f"{request.node.name}.nxs")
+    relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
+    absolute_file_path = build_absolute_file_path(relative_file_path)
     wait_writers_available(worker_pool, nr_of=2, timeout=20)
     now = datetime.now()
 
@@ -69,7 +71,7 @@ def test_ignores_stop_command_with_incorrect_job_id(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_path,
+        file_name=relative_file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
@@ -87,7 +89,7 @@ def test_ignores_stop_command_with_incorrect_job_id(
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=0)
-    assert Path(file_path).is_file()
+    assert Path(absolute_file_path).is_file()
 
 
 def test_accepts_stop_command_with_empty_service_id(
@@ -96,7 +98,8 @@ def test_accepts_stop_command_with_empty_service_id(
     kafka_address,
     multiple_writers,
 ):
-    file_path = full_file_path(f"{request.node.name}.nxs")
+    relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
+    absolute_file_path = build_absolute_file_path(relative_file_path)
     wait_writers_available(worker_pool, nr_of=2, timeout=20)
     now = datetime.now()
 
@@ -104,7 +107,7 @@ def test_accepts_stop_command_with_empty_service_id(
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_path,
+        file_name=relative_file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
@@ -124,20 +127,21 @@ def test_accepts_stop_command_with_empty_service_id(
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=5)
-    assert Path(file_path).is_file()
+    assert Path(absolute_file_path).is_file()
 
 
 def test_ignores_start_command_with_incorrect_job_id(
     request, worker_pool, kafka_address
 ):
-    file_path = full_file_path(f"{request.node.name}.nxs")
+    relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
+    absolute_file_path = build_absolute_file_path(relative_file_path)
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     with open("commands/nexus_structure.json", "r") as f:
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_path,
+        file_name=relative_file_path,
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
@@ -146,11 +150,12 @@ def test_ignores_start_command_with_incorrect_job_id(
     wait_fail_start_job(worker_pool, write_job, timeout=20)
 
     wait_no_working_writers(worker_pool, timeout=0)
-    assert not Path(file_path).is_file()
+    assert not Path(absolute_file_path).is_file()
 
 
 def test_reject_bad_json(request, worker_pool, kafka_address):
-    file_path = full_file_path(f"{request.node.name}.nxs")
+    relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
+    absolute_file_path = build_absolute_file_path(relative_file_path)
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
@@ -159,7 +164,7 @@ def test_reject_bad_json(request, worker_pool, kafka_address):
         structure = f.read()
     write_job = WriteJob(
         nexus_structure=structure,
-        file_name=file_path,
+        file_name=relative_file_path,
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,

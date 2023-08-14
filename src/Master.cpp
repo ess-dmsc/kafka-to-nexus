@@ -118,7 +118,10 @@ void Master::setToIdle() {
           "Failed to parse JSON metadata string from start message. Skipping.");
     }
     CurrentJSONStatus.update(StaticMetaData);
-    CommandAndControl->sendHasStoppedMessage(getCurrentFilePath(),
+    auto writtenFilePath = getCurrentFilePath();
+    LOG_INFO("Full path of file written: {} (filename from job: {})",
+             writtenFilePath.string(), getCurrentFileName());
+    CommandAndControl->sendHasStoppedMessage(writtenFilePath,
                                              CurrentJSONStatus);
   }
   CurrentStreamController.reset(nullptr);
@@ -149,10 +152,8 @@ std::string Master::getCurrentFileName() const {
 
 std::filesystem::path Master::getCurrentFilePath() const {
   std::lock_guard LockGuard(StatusMutex);
-  std::filesystem::path fullFilePath = MainConfig.getHDFOutputPrefix();
-  fullFilePath.append(CurrentStatus.Filename);
-  LOG_INFO("Full path of file written: {}", fullFilePath.string());
-  return fullFilePath;
+  return std::filesystem::path(MainConfig.getHDFOutputPrefix()) /
+         std::filesystem::path(CurrentStatus.Filename).relative_path();
 }
 
 void Master::setStopTimeInternal(time_point NewStopTime) {

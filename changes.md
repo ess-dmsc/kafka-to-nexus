@@ -5,6 +5,8 @@
 - Feat: Cap the size of the output buffer (`max-queued-writes` setting) to
   avoid out-of-memory issues. Kafka consumers are paused until the buffer
   usage falls below a fixed threshold.
+- Fix: Honour hdf-output-prefix setting even if absolute paths are sent in
+  pl72 messages.
 - Adding (tcp based) service api to query a filewriter for its status
 - Added new module 'mdat' for processing filewriter metadata (see https://confluence.esss.lu.se/display/ECDC/ECDC+Metadata+Workshop+Topics )
   - Currently used for start_time and stop_time, implementing functionality for changes in NeXus Constructor https://jira.esss.lu.se/browse/ECDC-3446

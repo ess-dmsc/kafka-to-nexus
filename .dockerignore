@@ -1,7 +1,7 @@
 .git
 .gitignore
 ansible
-/system-tests/output-files/
+/integration-tests/output-files/
 /build-script/
 /documentation/
 /system-tests/

@@ -1,3 +1,4 @@
+_build/
 /build*/
 /cmake-build-*/
 .idea/
@@ -13,4 +14,4 @@ venv
 *.log
 *.DS_Store
 .vscode/
-someFilePathFromPythoN
+.venv/

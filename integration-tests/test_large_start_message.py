@@ -2,7 +2,7 @@ from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
 import pytest
 from file_writer_control.WriteJob import WriteJob
-from helpers import full_file_path
+from helpers import build_relative_file_path
 from helpers.writer import (
     wait_start_job,
     wait_writers_available,
@@ -14,7 +14,7 @@ from helpers.writer import (
     "json_padding,file_nr", [(2**20, 0), (2**24, 1), (2**26, 2)]
 )
 def test_large_start_message(worker_pool, kafka_address, json_padding, file_nr):
-    file_path = full_file_path(f"output_file_large_msg_{file_nr}.nxs")
+    file_path = build_relative_file_path(f"output_file_large_msg_{file_nr}.nxs")
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)

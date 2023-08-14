@@ -1,3 +1,4 @@
+import os
 import os.path
 import time
 from subprocess import Popen
@@ -10,6 +11,8 @@ from file_writer_control import WorkerJobPool
 from typing import Optional
 
 from helpers.writer import stop_all_jobs
+from helpers.nexushelpers import NEXUS_FILES_DIR
+
 
 BINARY_PATH = "--writer-binary"
 START_NO_FW = "--start-no-filewriter"
@@ -197,7 +200,7 @@ def build_and_run(
 @pytest.fixture(scope="session", autouse=True)
 def remove_logs_from_previous_run(request):
     print("Removing previous NeXus files", flush=True)
-    output_dir_name = os.path.join(os.getcwd(), "output-files")
+    output_dir_name = os.path.join(NEXUS_FILES_DIR, "output-files")
     output_dirlist = os.listdir(output_dir_name)
     for filename in output_dirlist:
         if filename.endswith(".nxs"):
