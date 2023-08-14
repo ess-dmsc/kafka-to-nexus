@@ -43,7 +43,7 @@
 #include <iostream>
 
 /// \brief Separate namespace for each module avoids method collisions
-namespace mdat {
+namespace WriterModule::mdat {
 
 class mdat_Writer : public WriterModule::Base {
 public:

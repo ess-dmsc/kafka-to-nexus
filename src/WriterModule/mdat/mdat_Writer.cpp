@@ -10,7 +10,7 @@
 #include "mdat_Writer.h"
 #include "WriterRegistrar.h"
 
-namespace mdat {
+namespace WriterModule::mdat {
 
 // Register our module so the parsing of JSON recognises it.
 static WriterModule::Registry::Registrar<mdat_Writer> RegisterWriter("mdat", "mdat");
