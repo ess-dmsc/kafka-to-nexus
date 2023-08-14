@@ -1,7 +1,4 @@
 from helpers.nexushelpers import OpenNexusFile
-from helpers.kafkahelpers import (
-    create_producer
-)
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
 from helpers import full_file_path
@@ -10,23 +7,18 @@ from helpers.writer import (
     wait_writers_available,
     wait_no_working_writers,
 )
-import numpy as np
 
 
 def test_mdat(worker_pool, kafka_address, hdf_file_name="mdat_output.nxs"):
     file_path = full_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
-    producer = create_producer(kafka_address)
-
-    data_topic = "mdat_topic"
-    source_name = "mdat_source"
 
     start_t = datetime(year=2023, month=7, day=7, hour=0, minute=0, second=0)
-    # here we do the writing
+    stop_time = start_t + timedelta(seconds=10)
 
-    stop_time = start_t + timedelta(seconds=148)
-    with open("commands/nexus_structure_mdat.json", "r") as f:
+    with open("commands/nexus_structure_filewriter.json", "r") as f:
         structure = f.read()
+
     write_job = WriteJob(
         nexus_structure=structure,
         file_name=file_path,

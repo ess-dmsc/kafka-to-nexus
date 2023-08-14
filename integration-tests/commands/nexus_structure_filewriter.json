@@ -23,7 +23,7 @@
           "module": "dataset",
           "config": {
             "name": "title",
-            "values": "someTitle",
+            "values": "JSON for mdat test",
             "type": "string"
           }
         },
