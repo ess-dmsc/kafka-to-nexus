@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "pl72_run_start_generated.h"
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MetaData/HDF5DataWriter.h"
@@ -21,6 +20,7 @@
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
 #include "TimeUtility.h"
+#include "pl72_run_start_generated.h"
 #include <atomic>
 #include <set>
 #include <vector>

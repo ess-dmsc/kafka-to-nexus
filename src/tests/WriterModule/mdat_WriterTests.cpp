@@ -36,9 +36,9 @@ public:
 
 class mdat_WriterStandIn : public mdat_Writer {
 public:
+  using mdat_Writer::ChunkSize;
   using mdat_Writer::mdatStart_time;
   using mdat_Writer::mdatStop_time;
-  using mdat_Writer::ChunkSize;
 };
 
 TEST_F(mdatInit, BasicDefaultInit) {
@@ -71,12 +71,13 @@ public:
 };
 
 namespace mdat_schema {
-std::pair<std::unique_ptr<uint8_t[]>, size_t> generateFlatbufferMessage(std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferMessage(std::uint64_t Timestamp) {
   flatbuffers::FlatBufferBuilder builder;
   auto startName = builder.CreateString("start_time");
   flatbuffers::uoffset_t start_ = builder.StartTable();
   builder.AddElement<uint64_t>(4U, Timestamp, 0); //  add time under pl72 schema
-  builder.AddOffset(12U, startName);  //  add JSON name under pl72 schema
+  builder.AddOffset(12U, startName); //  add JSON name under pl72 schema
   const flatbuffers::uoffset_t end_ = builder.EndTable(start_);
   auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
   builder.Finish(offsetForFinish, "mdat");
@@ -92,8 +93,7 @@ TEST_F(mdatInit, WriteOneElement) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   std::int64_t Timestamp{1234}; //  gtest compares int64_t
-  auto FlatbufferData =
-      mdat_schema::generateFlatbufferMessage(Timestamp);
+  auto FlatbufferData = mdat_schema::generateFlatbufferMessage(Timestamp);
   FileWriter::FlatbufferMessage FlatbufferMsg(FlatbufferData.first.get(),
                                               FlatbufferData.second);
   EXPECT_EQ(FlatbufferMsg.getFlatbufferID(), "mdat");

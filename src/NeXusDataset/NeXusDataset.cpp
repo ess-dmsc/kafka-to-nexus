@@ -26,12 +26,14 @@ Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
   }
 }
 
-Time::Time(hdf5::node::Group const &Parent, std::string name, Mode CMode, size_t ChunkSize, std::string units)
+Time::Time(hdf5::node::Group const &Parent, std::string name, Mode CMode,
+           size_t ChunkSize, std::string units)
     : ExtensibleDataset<std::uint64_t>(Parent, name, CMode, ChunkSize) {
   if (Mode::Create == CMode) {
     auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
-//    StartAttr.write(std::format( chrono::system_clock::now());
-    time_t tmpTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    //    StartAttr.write(std::format( chrono::system_clock::now());
+    time_t tmpTime =
+        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     char tBuffer[22]; //  a bit bigger to avoid buffer overrun in 9999 CE
     std::strftime(tBuffer, 22, "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&tmpTime));
     StartAttr.write(std::string(tBuffer));

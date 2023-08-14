@@ -9,12 +9,11 @@
 
 /** Copyright (C) 2023 European Spallation Source ERIC */
 
-
 /// \file
 ///
-/// \brief This module contains instructions to write Module DATa about the file via the filewriter,
-/// such as the start_time and end_time.
-/// The structure is based on the existing WriterModules.
+/// \brief This module contains instructions to write Module DATa about the file
+/// via the filewriter, such as the start_time and end_time. The structure is
+/// based on the existing WriterModules.
 ///
 /// The class requires the FileWriter::FlatbufferReader interface.
 /// The virtual functions to be overridden are called to verify the
@@ -33,14 +32,13 @@
 /// \li WriterModule::Base::close()
 /// \li WriterModule::Base::~Base()
 
-
 #pragma once
 
 #include "FlatbufferMessage.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
-#include <pl72_run_start_generated.h>
 #include <iostream>
+#include <pl72_run_start_generated.h>
 
 /// \brief Separate namespace for each module avoids method collisions
 namespace WriterModule::mdat {
@@ -48,7 +46,9 @@ namespace WriterModule::mdat {
 class mdat_Writer : public WriterModule::Base {
 public:
   /// \brief Constructor should take NXClass "Nxlog" because???
-  mdat_Writer() : WriterModule::Base(false /*AcceptRepeatedTimestamps*/, "NXlog" /*NXClass*/) {
+  mdat_Writer()
+      : WriterModule::Base(false /*AcceptRepeatedTimestamps*/,
+                           "NXlog" /*NXClass*/) {
     std::cout << "mdat module initialised\n";
   }
 
@@ -60,37 +60,40 @@ public:
 
   /// \brief Initialise datasets and attributes in the HDF5 file;
   /// currently only time (for start_time and end_time).
-  /// This must be implemented for HDF5 single writer multiple reader (SWMR) support.
-  WriterModule::InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;/* {
-    NeXusDataset::Mode ndmode = NeXusDataset::Mode::Create;
-    std::cout << "mdat_Writer::init_hdf()\n";
-    return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
-  }*/
+  /// This must be implemented for HDF5 single writer multiple reader (SWMR)
+  /// support.
+  WriterModule::InitResult
+  init_hdf(hdf5::node::Group &HDFGroup) const override; /* {
+NeXusDataset::Mode ndmode = NeXusDataset::Mode::Create;
+std::cout << "mdat_Writer::init_hdf()\n";
+return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
+}*/
 
-  /// \brief Re-open datasets created when calling WriterModule::Base::init_hdf(),
-  /// i.e. on the second instantiation of this. You cannot do any of the included:
+  /// \brief Re-open datasets created when calling
+  /// WriterModule::Base::init_hdf(), i.e. on the second instantiation of this.
+  /// You cannot do any of the included:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
   /// This member function is called in the second instantiation of this class
   /// (for a specific data source).
-  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;/* {
-    NeXusDataset::Mode ndmode = NeXusDataset::Mode::Open;
-    std::cout << "mdat_Writer::reopen()\n";
-    return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
-  }*/
+  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override; /* {
+     NeXusDataset::Mode ndmode = NeXusDataset::Mode::Open;
+     std::cout << "mdat_Writer::reopen()\n";
+     return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
+   }*/
 
   /// \brief Here we do the data writing.
   /// This member function is called on the second instance of this class.
-  /// \note !!Exceptions here lead to an undefined state, avoid throwing them in this method!!
-  /// \param Message The structure containing a pointer to a buffer
-  /// containing data received from the Kafka broker and the size of the buffer.
+  /// \note !!Exceptions here lead to an undefined state, avoid throwing them in
+  /// this method!! \param Message The structure containing a pointer to a
+  /// buffer containing data received from the Kafka broker and the size of the
+  /// buffer.
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
-  protected:
+protected:
   // new datasets go here
-    NeXusDataset::Time mdatStart_time;
-    NeXusDataset::Time mdatStop_time;
-    JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
-
+  NeXusDataset::Time mdatStart_time;
+  NeXusDataset::Time mdatStop_time;
+  JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 };
-} // namespace mdat
-// clang-format on
+} // namespace WriterModule::mdat
+  // clang-format on

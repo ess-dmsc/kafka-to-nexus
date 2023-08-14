@@ -59,7 +59,8 @@ public:
   /// size in number of elements for this dataset (if/when creating it). \throws
   /// std::runtime_error if dataset already exists.
   Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
-  Time(hdf5::node::Group const &Parent, std::string name, Mode CMode, size_t ChunkSize = 1024, std::string units="ns");
+  Time(hdf5::node::Group const &Parent, std::string name, Mode CMode,
+       size_t ChunkSize = 1024, std::string units = "ns");
 };
 
 /// \brief Represents the index register for searching a large NXlog

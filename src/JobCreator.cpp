@@ -52,21 +52,21 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   json ConfigStream = json::parse(ModuleSettings.ModuleHDFInfoObj.ConfigStream);
 
   ModuleSettings.ConfigStreamJson = ConfigStream.dump();
-  ModuleSettings.Source = ( ModuleInfo.WriterModule == "mdat"
-                            ? ""
-                            : Command::Parser::getRequiredValue<std::string>("source", ConfigStream)
-                          );
+  ModuleSettings.Source = (ModuleInfo.WriterModule == "mdat"
+                               ? ""
+                               : Command::Parser::getRequiredValue<std::string>(
+                                     "source", ConfigStream));
   ModuleSettings.Module = ModuleInfo.WriterModule;
   ModuleSettings.isLink = false;
 
-  if(ModuleSettings.Module == "mdat"){
+  if (ModuleSettings.Module == "mdat") {
     ModuleSettings.Name =
         Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
-  } else if (ModuleSettings.Module=="link") {
+  } else if (ModuleSettings.Module == "link") {
     ModuleSettings.Name =
         Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
     ModuleSettings.isLink = true;
-  } else {  //  everything else should be here...including incorrect values!
+  } else { //  everything else should be here...including incorrect values!
     ModuleSettings.Topic =
         Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
   }
@@ -74,7 +74,7 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   auto Attributes =
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
-  if ( !Attributes.empty() && Attributes != "\"\"" ) {
+  if (!Attributes.empty() && Attributes != "\"\"") {
     LOG_WARN("Writing of writer module attributes to parent group has been "
              "removed. Attributes should be assigned directly to group. The "
              "(unused) attributes belongs to dataset with source name \"{}\" "
@@ -83,7 +83,6 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   }
 
   return ModuleSettings;
-
 }
 
 /// Helper to extract information about the provided links and streams.
@@ -133,10 +132,13 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       std::string module_name = Item.Module;
       //  if there are two modules of the same name in the filewriter
       //  problems can occur since the module for ingesting gets initiated twice
-      //  so we ensure StreamSettingsList is only filled once per module occurence
-      if( module_name == "dataset" ||
-        std::find_if(StreamSettingsList.begin(), StreamSettingsList.end(),[&module_name](const ModuleSettings& module){return module.Module == module_name; }) == StreamSettingsList.end()
-      )
+      //  so we ensure StreamSettingsList is only filled once per module
+      //  occurence
+      if (module_name == "dataset" ||
+          std::find_if(StreamSettingsList.begin(), StreamSettingsList.end(),
+                       [&module_name](const ModuleSettings &module) {
+                         return module.Module == module_name;
+                       }) == StreamSettingsList.end())
         StreamSettingsList.push_back(std::move(Item));
     }
   }
@@ -181,21 +183,26 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   //  Now we have our modules established and files open
-  //  Create fake message for writing start time as we have the information here and ready to be consumed
+  //  Create fake message for writing start time as we have the information here
+  //  and ready to be consumed
   for (auto &Item : Task->sources())
-      if( Item.writerModuleID() == "mdat" ){
-        flatbuffers::FlatBufferBuilder builder;
-        uint64_t myStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(StartInfo.StartTime.time_since_epoch()).count();
-        auto startName = builder.CreateString("start_time");
-        flatbuffers::uoffset_t start_ = builder.StartTable();
-        builder.AddElement<uint64_t>(4U, myStartTime, 0); //  add time under pl72 schema
-        builder.AddOffset(12U, startName);  //  add JSON name under pl72 schema
-        const flatbuffers::uoffset_t end_ = builder.EndTable(start_);
-        auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
-        builder.Finish(offsetForFinish, "mdat");
-        flatbuffers::DetachedBuffer msgbuff = builder.Release();
-        Item.getWriterPtr()->write({msgbuff.data(), msgbuff.size()});
-      }
+    if (Item.writerModuleID() == "mdat") {
+      flatbuffers::FlatBufferBuilder builder;
+      uint64_t myStartTime =
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              StartInfo.StartTime.time_since_epoch())
+              .count();
+      auto startName = builder.CreateString("start_time");
+      flatbuffers::uoffset_t start_ = builder.StartTable();
+      builder.AddElement<uint64_t>(4U, myStartTime,
+                                   0);   //  add time under pl72 schema
+      builder.AddOffset(12U, startName); //  add JSON name under pl72 schema
+      const flatbuffers::uoffset_t end_ = builder.EndTable(start_);
+      auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
+      builder.Finish(offsetForFinish, "mdat");
+      flatbuffers::DetachedBuffer msgbuff = builder.Release();
+      Item.getWriterPtr()->write({msgbuff.data(), msgbuff.size()});
+    }
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;

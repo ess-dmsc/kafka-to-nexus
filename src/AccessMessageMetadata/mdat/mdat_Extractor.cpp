@@ -15,4 +15,4 @@ namespace AccessMessageMetadata {
 // verifying a flatbuffers.
 static FileWriter::FlatbufferReaderRegistry::Registrar<mdat_Extractor>
     RegisterReader("mdat");
-} // namespace mdatExtractor
+} // namespace AccessMessageMetadata
