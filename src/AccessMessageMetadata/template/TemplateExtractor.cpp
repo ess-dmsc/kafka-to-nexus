@@ -14,5 +14,5 @@ namespace AccessMessageMetadata {
 // Instantiates a ReaderClass used for extracting source names, timestamps and
 // verifying a flatbuffers.
 static FileWriter::FlatbufferReaderRegistry::Registrar<Extractor>
-    RegisterReader("temp");
+    RegisterReader("test");
 } // namespace AccessMessageMetadata
