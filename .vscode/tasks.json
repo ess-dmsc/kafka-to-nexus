@@ -3,7 +3,7 @@
         {
             "type": "shell",
             "label": "Build",
-            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake .. && make",
+            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake .. && make -j$(nproc)",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -18,7 +18,7 @@
         {
             "type": "shell",
             "label": "BuildDocs",
-            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -DRUN_DOXYGEN=ON .. && make docs",
+            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -DRUN_DOXYGEN=ON .. && make -j$(nproc) docs",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -33,7 +33,7 @@
         {
             "type": "shell",
             "label": "BuildUnitTests",
-            "command": "cd _build && make UnitTests",
+            "command": "cd _build && make -j$(nproc) UnitTests",
             "options": {
                 "cwd": "${workspaceFolder}"
             },

@@ -52,8 +52,12 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 }
 
 void mdat_Writer::write(FileWriter::FlatbufferMessage const &Message) {
+<<<<<<< HEAD
 //  std::cout << "mdat writ" << std::endl;
   const flatbuffers::String* nexus_structure;
+=======
+  //  std::cout << "mdat writ" << std::endl;
+>>>>>>> refs/remotes/origin/ECDC-3447-Filewriter-attribute-module
   Message.isValid();
   auto dataPointer =
       GetRunStart(Message.data()); //  we get data from 'fake' pl72
