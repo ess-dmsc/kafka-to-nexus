@@ -52,7 +52,7 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 }
 
 void mdat_Writer::write(FileWriter::FlatbufferMessage const &Message) {
-//  std::cout << "mdat writ" << std::endl;
+  //  std::cout << "mdat writ" << std::endl;
   Message.isValid();
   auto dataPointer =
       GetRunStart(Message.data()); //  we get data from 'fake' pl72
