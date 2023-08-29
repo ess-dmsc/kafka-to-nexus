@@ -53,13 +53,18 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 
 void mdat_Writer::write(FileWriter::FlatbufferMessage const &Message) {
 //  std::cout << "mdat writ" << std::endl;
+  const flatbuffers::String* nexus_structure;
   Message.isValid();
   auto dataPointer =
       GetRunStart(Message.data()); //  we get data from 'fake' pl72
-  if (!std::strcmp(dataPointer->nexus_structure()->c_str(), "start_time"))
-    mdatStart_time.appendElement(dataPointer->start_time());
-  if (!std::strcmp(dataPointer->nexus_structure()->c_str(), "stop_time"))
-    mdatStop_time.appendElement(dataPointer->stop_time());
+  if( dataPointer )
+    nexus_structure = dataPointer->nexus_structure();
+  if( nexus_structure ){
+    if (!std::strcmp(dataPointer->nexus_structure()->c_str(), "start_time"))
+      mdatStart_time.appendElement(dataPointer->start_time());
+    if (dataPointer && dataPointer->nexus_structure() && !std::strcmp(dataPointer->nexus_structure()->c_str(), "stop_time"))
+      mdatStop_time.appendElement(dataPointer->stop_time());
+  }
 }
 
 } // namespace WriterModule::mdat
