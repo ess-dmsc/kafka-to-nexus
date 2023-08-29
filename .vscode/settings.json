@@ -6,6 +6,7 @@
         "**/build": true,
         "**/*.code-search": true
     },
+    "search.showLineNumbers": true,
     "files.associations": {
         "array": "cpp",
         "atomic": "cpp",
@@ -83,5 +84,6 @@
         "variant": "cpp",
         "*.ipp": "cpp",
         "complex": "cpp"
-    }
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }
