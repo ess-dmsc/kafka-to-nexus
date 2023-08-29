@@ -44,7 +44,7 @@ public:
 TEST_F(mdatInit, BasicDefaultInit) {
   mdat_Writer TestWriter;
   TestWriter.init_hdf(RootGroup);
-  EXPECT_TRUE(RootGroup.has_dataset("time"));
+  EXPECT_TRUE(RootGroup.has_dataset("start_time"));
 }
 
 TEST_F(mdatInit, ReOpenSuccess) {
@@ -61,8 +61,7 @@ TEST_F(mdatInit, ReOpenFailure) {
 TEST_F(mdatInit, CheckInitDataType) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
-  auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::Time Value(RootGroup, Open);
+  NeXusDataset::Time Value(RootGroup, "start_time", NeXusDataset::Mode::Open, TestWriter.ChunkSize, "ms");
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<uint64_t>());
 }
 
@@ -73,7 +72,7 @@ public:
 namespace mdat_schema {
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
 generateFlatbufferMessage(std::uint64_t Timestamp) {
-  flatbuffers::FlatBufferBuilder builder;
+  flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();;
   auto startName = builder.CreateString("start_time");
   flatbuffers::uoffset_t start_ = builder.StartTable();
   builder.AddElement<uint64_t>(4U, Timestamp, 0); //  add time under pl72 schema
@@ -81,9 +80,10 @@ generateFlatbufferMessage(std::uint64_t Timestamp) {
   const flatbuffers::uoffset_t end_ = builder.EndTable(start_);
   auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
   builder.Finish(offsetForFinish, "mdat");
-  flatbuffers::DetachedBuffer msgbuff = builder.Release();
+//  flatbuffers::DetachedBuffer msgbuff = builder.Release();
   size_t BufferSize = builder.GetSize();
   auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
+  std::memcpy(ReturnBuffer.get(), builder.GetBufferPointer(), BufferSize);
   return {std::move(ReturnBuffer), BufferSize};
 }
 } // namespace mdat_schema
@@ -94,8 +94,7 @@ TEST_F(mdatInit, WriteOneElement) {
   TestWriter.reopen(RootGroup);
   std::int64_t Timestamp{1234}; //  gtest compares int64_t
   auto FlatbufferData = mdat_schema::generateFlatbufferMessage(Timestamp);
-  FileWriter::FlatbufferMessage FlatbufferMsg(FlatbufferData.first.get(),
-                                              FlatbufferData.second);
+  FileWriter::FlatbufferMessage FlatbufferMsg(FlatbufferData.first.get(), FlatbufferData.second);
   EXPECT_EQ(FlatbufferMsg.getFlatbufferID(), "mdat");
   EXPECT_EQ(TestWriter.mdatStart_time.dataspace().size(), 0);
   TestWriter.write(FlatbufferMsg);
