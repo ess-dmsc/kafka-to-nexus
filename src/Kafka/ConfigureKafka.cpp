@@ -18,16 +18,21 @@ void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
   std::string ErrorString;
   const std::regex RegexSensitiveKey(
       R"(ssl_key|.+password|.+secret|.+key\.pem)");
+  std::string DebugOutput;
 
   for (const auto &[Key, Value] : Settings.KafkaConfiguration) {
-    const bool IsSensitive = std::regex_match(Key, RegexSensitiveKey);
+    const auto IsSensitive = std::regex_match(Key, RegexSensitiveKey);
+    const auto LogValue = IsSensitive ? "<REDACTED>" : Value;
 
-    LOG_DEBUG("Set config: {} = {}", Key, IsSensitive ? "<REDACTED>" : Value);
     if (RdKafka::Conf::ConfResult::CONF_OK !=
         RdKafkaConfiguration->set(Key, Value, ErrorString)) {
-      LOG_WARN("Failure setting config: {} = {}", Key,
-               IsSensitive ? "<REDACTED>" : Value);
+      LOG_WARN("Failure setting config: {} = {}", Key, LogValue);
+    } else {
+      DebugOutput += fmt::format(" {}={}", Key, LogValue);
     }
   }
+
+  LOG_DEBUG("RdKafka settings applied:{}", DebugOutput);
 }
+
 } // namespace Kafka
