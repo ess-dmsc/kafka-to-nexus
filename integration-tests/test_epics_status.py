@@ -22,7 +22,7 @@ def test_ep00(worker_pool, kafka_address, hdf_file_name="output_file_ep00.nxs"):
 
     producer = create_producer(kafka_address)
     topic = "TEST_epicsConnectionStatus"
-    now = datetime(year=2023, month=8, day=30, hour=11, minute=11, second=11)
+    now = datetime.now()
     start_time = now - timedelta(seconds=5)
     stop_time = now
     publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, start_time)
