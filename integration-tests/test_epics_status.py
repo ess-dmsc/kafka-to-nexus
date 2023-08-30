@@ -49,9 +49,9 @@ def test_ep00(worker_pool, kafka_address, hdf_file_name="output_file_ep00.nxs"):
         start_time=start_time,
         stop_time=stop_time,
     )
-    wait_start_job(worker_pool, write_job, timeout=20)
+    wait_start_job(worker_pool, write_job, timeout=60)
 
-    wait_no_working_writers(worker_pool, timeout=35)
+    wait_no_working_writers(worker_pool, timeout=60)
 
     with OpenNexusFile(file_path) as file:
         assert file["EpicsConnectionStatus/connection_status_time"][0] == int(

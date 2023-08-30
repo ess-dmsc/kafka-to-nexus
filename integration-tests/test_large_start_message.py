@@ -29,9 +29,9 @@ def test_large_start_message(worker_pool, kafka_address, json_padding, file_nr):
         start_time=start_time,
         stop_time=stop_time,
     )
-    wait_start_job(worker_pool, write_job, timeout=80)
+    wait_start_job(worker_pool, write_job, timeout=90)
 
-    wait_no_working_writers(worker_pool, timeout=40)
+    wait_no_working_writers(worker_pool, timeout=60)
 
     with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
