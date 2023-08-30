@@ -15,7 +15,7 @@ def test_static_data_reaches_file(
 ):
     file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
-    now = datetime.now()
+    now = datetime(year=2023, month=8, day=30, hour=11, minute=11, second=11)
     start_time = now - timedelta(seconds=10)
     stop_time = now
     with open("commands/nexus_structure_static.json", "r") as f:
