@@ -14,7 +14,7 @@ def test_mdat(worker_pool, kafka_address, hdf_file_name="mdat_output.nxs"):
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
     start_t = datetime(year=2023, month=7, day=7, hour=0, minute=0, second=0)
-    stop_time = start_t + timedelta(seconds=10)
+    stop_t = start_t + timedelta(seconds=10)
 
     with open("commands/nexus_structure_filewriter.json", "r") as f:
         structure = f.read()
@@ -24,10 +24,10 @@ def test_mdat(worker_pool, kafka_address, hdf_file_name="mdat_output.nxs"):
         file_name=file_path,
         broker=kafka_address,
         start_time=start_t,
-        stop_time=stop_time,
+        stop_time=stop_t,
     )
     wait_start_job(worker_pool, write_job, timeout=20)
     wait_no_working_writers(worker_pool, timeout=30)
     with OpenNexusFile(file_path) as file:
-        assert (file["entry/myFWStuff/start_time"][:].flatten() == 1000).all()
-        assert (file["entry/myFWStuff/end_time"][:].flatten() == 10000).all()
+        assert (file["entry/myFWStuff/start_time"][:].flatten() == 1688680800000).all()
+        assert (file["entry/myFWStuff/stop_time"][:].flatten() == 1688680810000).all()

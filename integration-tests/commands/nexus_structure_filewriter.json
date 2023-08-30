@@ -47,7 +47,7 @@
             {
               "module": "mdat",
               "config": {
-                "name": "end_time"
+                "name": "stop_time"
               }
             }
           ]
