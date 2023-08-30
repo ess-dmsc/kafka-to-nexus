@@ -82,7 +82,6 @@ generateFlatbufferMessage(std::uint64_t Timestamp) {
   const flatbuffers::uoffset_t end_ = builder.EndTable(start_);
   auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
   builder.Finish(offsetForFinish, "mdat");
-  //  flatbuffers::DetachedBuffer msgbuff = builder.Release();
   size_t BufferSize = builder.GetSize();
   auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
   std::memcpy(ReturnBuffer.get(), builder.GetBufferPointer(), BufferSize);
