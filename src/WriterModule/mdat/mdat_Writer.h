@@ -42,7 +42,11 @@
 
 /// \brief Separate namespace for each module avoids method collisions
 namespace WriterModule::mdat {
-
+/// \brief Implements the actual file writing code of the metadata file writing module.
+///
+/// This class is instantiated twice for every new data source via
+///  init_hdf and reopen, where the first of these creates
+///  the datasets and the second enables them for writing
 class mdat_Writer : public WriterModule::Base {
 public:
   /// \brief Constructor should take NXClass "Nxlog" because???
@@ -63,11 +67,7 @@ public:
   /// This must be implemented for HDF5 single writer multiple reader (SWMR)
   /// support.
   WriterModule::InitResult
-  init_hdf(hdf5::node::Group &HDFGroup) const override; /* {
-NeXusDataset::Mode ndmode = NeXusDataset::Mode::Create;
-std::cout << "mdat_Writer::init_hdf()\n";
-return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
-}*/
+  init_hdf(hdf5::node::Group &HDFGroup) const override;
 
   /// \brief Re-open datasets created when calling
   /// WriterModule::Base::init_hdf(), i.e. on the second instantiation of this.

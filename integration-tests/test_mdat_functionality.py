@@ -23,7 +23,7 @@ def test_mdat(worker_pool, kafka_address, hdf_file_name="mdat_output.nxs"):
         nexus_structure=structure,
         file_name=file_path,
         broker=kafka_address,
-        start_t=start_t,
+        start_time=start_t,
         stop_time=stop_time,
     )
     wait_start_job(worker_pool, write_job, timeout=20)

@@ -26,7 +26,7 @@ Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
   }
 }
 
-Time::Time(hdf5::node::Group const &Parent, std::string name, Mode CMode,
+Time::Time(hdf5::node::Group const &Parent, std::string const &name, Mode CMode,
            size_t ChunkSize, std::string units)
     : ExtensibleDataset<std::uint64_t>(Parent, name, CMode, ChunkSize) {
   if (Mode::Create == CMode) {
