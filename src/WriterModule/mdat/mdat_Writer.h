@@ -42,7 +42,8 @@
 
 /// \brief Separate namespace for each module avoids method collisions
 namespace WriterModule::mdat {
-/// \brief Implements the actual file writing code of the metadata file writing module.
+/// \brief Implements the actual file writing code of the metadata file writing
+/// module.
 ///
 /// This class is instantiated twice for every new data source via
 ///  init_hdf and reopen, where the first of these creates
@@ -66,8 +67,7 @@ public:
   /// currently only time (for start_time and end_time).
   /// This must be implemented for HDF5 single writer multiple reader (SWMR)
   /// support.
-  WriterModule::InitResult
-  init_hdf(hdf5::node::Group &HDFGroup) const override;
+  WriterModule::InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
 
   /// \brief Re-open datasets created when calling
   /// WriterModule::Base::init_hdf(), i.e. on the second instantiation of this.
