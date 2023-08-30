@@ -53,7 +53,7 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 
 void mdat_Writer::write(FileWriter::FlatbufferMessage const &Message) {
   Message.isValid();
-  const flatbuffers::String* nexus_structure = nullptr;
+  const flatbuffers::String *nexus_structure = nullptr;
   auto dataPointer =
       GetRunStart(Message.data()); //  we get data from 'fake' pl72
   if (dataPointer)
