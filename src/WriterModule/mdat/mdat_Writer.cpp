@@ -56,12 +56,13 @@ void mdat_Writer::write(FileWriter::FlatbufferMessage const &Message) {
   const flatbuffers::String* nexus_structure;
   auto dataPointer =
       GetRunStart(Message.data()); //  we get data from 'fake' pl72
-  if( dataPointer )
+  if (dataPointer)
     nexus_structure = dataPointer->nexus_structure();
-  if( nexus_structure ){
+  if (nexus_structure) {
     if (!std::strcmp(dataPointer->nexus_structure()->c_str(), "start_time"))
       mdatStart_time.appendElement(dataPointer->start_time());
-    if (dataPointer && dataPointer->nexus_structure() && !std::strcmp(dataPointer->nexus_structure()->c_str(), "stop_time"))
+    if (dataPointer && dataPointer->nexus_structure() &&
+        !std::strcmp(dataPointer->nexus_structure()->c_str(), "stop_time"))
       mdatStop_time.appendElement(dataPointer->stop_time());
   }
 }
