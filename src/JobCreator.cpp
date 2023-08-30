@@ -134,11 +134,12 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       //  problems can occur since the module for ingesting gets initiated twice
       //  so we ensure StreamSettingsList is only filled once per module
       //  occurence
-      if (module_name != "mdat" || (module_name == "mdat" &&
-          std::find_if(StreamSettingsList.begin(), StreamSettingsList.end(),
-                       [&module_name](const ModuleSettings &module) {
-                         return module.Module == module_name;
-                       }) == StreamSettingsList.end()))
+      if (module_name != "mdat" ||
+          (module_name == "mdat" &&
+           std::find_if(StreamSettingsList.begin(), StreamSettingsList.end(),
+                        [&module_name](const ModuleSettings &module) {
+                          return module.Module == module_name;
+                        }) == StreamSettingsList.end()))
         StreamSettingsList.push_back(std::move(Item));
     }
   }
