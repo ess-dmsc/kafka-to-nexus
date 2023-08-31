@@ -10,6 +10,7 @@
 - Adding (tcp based) service api to query a filewriter for its status
 - Fix: Cannot import extra modules due to mismatch in ep00, ep01 and al00 registered names
 - Fix: Max/min/avg datasets do not specify units
+- Fix: Commands with invalid IDs no longer produce a command response, they are now skipped silently.
 
 ## Version 6.0.0
 
