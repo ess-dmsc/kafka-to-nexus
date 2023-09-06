@@ -114,7 +114,9 @@ def test_accepts_stop_command_with_correct_service_id(
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
-    stop_cmd_handler = worker_pool.try_send_stop_now(write_job.service_id, write_job.job_id)
+    stop_cmd_handler = worker_pool.try_send_stop_now(
+        write_job.service_id, write_job.job_id
+    )
 
     used_timeout = timedelta(seconds=5)
     stop_cmd_handler.set_timeout(used_timeout)
