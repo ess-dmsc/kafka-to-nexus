@@ -1,3 +1,5 @@
+import time
+
 from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
 import pytest
@@ -29,9 +31,10 @@ def test_large_start_message(worker_pool, kafka_address, json_padding, file_nr):
         start_time=start_time,
         stop_time=stop_time,
     )
-    wait_start_job(worker_pool, write_job, timeout=80)
+    wait_start_job(worker_pool, write_job, timeout=50)
 
     wait_no_working_writers(worker_pool, timeout=40)
+    time.sleep(5)  # test is prone to fail in worker_pool's stop_current_jobs finalizer
 
     with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
