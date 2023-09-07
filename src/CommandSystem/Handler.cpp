@@ -322,16 +322,18 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
                 ServiceId, StopCmd.ServiceID);
           }}});
 
-    CommandSteps.push_back({[&]() { return IsWritingNow(); },
-                            {LogLevel::Error, 400, false, [&]() {
-                               return fmt::format(
-                                   "Rejected stop command as there is "
-                                   "currently no write job in progress.");
-                             }}});
+    CommandSteps.push_back(
+        {[&]() { return IsWritingNow(); },
+         {LogLevel::Warning, 400,
+          !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID, [&]() {
+            return fmt::format("Rejected stop command as there is "
+                               "currently no write job in progress.");
+          }}});
 
     CommandSteps.push_back(
         {[&]() { return GetJobId() == StopCmd.JobID; },
-         {LogLevel::Warning, 400, false, [&]() {
+         {LogLevel::Warning, 400,
+          !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID, [&]() {
             return fmt::format(
                 "Rejected stop command as the job id was invalid (It "
                 "should be {}, it was: {}).",

@@ -2,6 +2,7 @@ import os
 import os.path
 import time
 from subprocess import Popen
+from datetime import datetime
 
 import pytest
 from compose.cli.main import TopLevelCommand, project_from_options
@@ -20,6 +21,10 @@ KAFKA_BROKER = "--kafka-broker"
 INTEGRATION_TEST_DOCKER = "docker-compose.yml"
 DEFAULT_KAFKA_BROKER = "localhost:9093"
 START_NR_OF_WRITERS = 2
+
+
+def pytest_runtest_protocol(item, nextitem):
+    print(f"\n\n{datetime.now()} - Starting test: {item.nodeid}")
 
 
 def pytest_addoption(parser):

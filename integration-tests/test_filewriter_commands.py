@@ -36,7 +36,6 @@ def test_ignores_stop_command_with_incorrect_service_id(
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
-    time.sleep(3)
     stop_cmd_handler = worker_pool.try_send_stop_now(
         "incorrect service id", write_job.job_id
     )
@@ -79,7 +78,6 @@ def test_ignores_stop_command_with_incorrect_job_id(
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
-    time.sleep(3)
     cmd_handler = worker_pool.try_send_stop_now(write_job.service_id, "wrong job id")
     used_timeout = timedelta(seconds=5)
     cmd_handler.set_timeout(used_timeout)
@@ -91,6 +89,45 @@ def test_ignores_stop_command_with_incorrect_job_id(
 
     stop_all_jobs(worker_pool)
     wait_no_working_writers(worker_pool, timeout=10)
+    assert Path(absolute_file_path).is_file()
+
+
+def test_accepts_stop_command_with_correct_service_id(
+    request,
+    worker_pool,
+    kafka_address,
+    multiple_writers,
+):
+    relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
+    absolute_file_path = build_absolute_file_path(relative_file_path)
+    wait_writers_available(worker_pool, nr_of=2, timeout=20)
+    now = datetime.now()
+
+    with open("commands/nexus_structure.json", "r") as f:
+        structure = f.read()
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=relative_file_path,
+        broker=kafka_address,
+        start_time=now,
+        stop_time=now + timedelta(days=30),
+    )
+    start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
+
+    stop_cmd_handler = worker_pool.try_send_stop_now(
+        write_job.service_id, write_job.job_id
+    )
+
+    used_timeout = timedelta(seconds=5)
+    stop_cmd_handler.set_timeout(used_timeout)
+
+    time.sleep(used_timeout.total_seconds() + 5)
+    start_job_state = start_cmd_handler.get_state()
+    assert start_job_state in [
+        JobState.DONE
+    ], f"Start job was not stopped after Stop command. State was {start_job_state} (job id: {start_cmd_handler.job_id}): {start_cmd_handler.get_message()}"
+
+    wait_no_working_writers(worker_pool, timeout=15)
     assert Path(absolute_file_path).is_file()
 
 
@@ -116,7 +153,6 @@ def test_accepts_stop_command_with_empty_service_id(
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
-    time.sleep(3)
     stop_cmd_handler = worker_pool.try_send_stop_now(None, write_job.job_id)
 
     used_timeout = timedelta(seconds=5)
