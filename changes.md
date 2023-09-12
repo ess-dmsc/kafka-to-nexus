@@ -12,6 +12,8 @@
   - Currently used for start_time and stop_time, implementing functionality for changes in NeXus Constructor https://jira.esss.lu.se/browse/ECDC-3446
 - Fix: Cannot import extra modules due to mismatch in ep00, ep01 and al00 registered names
 - Fix: Max/min/avg datasets do not specify units
+- Fix: Error responses to `run_stop` commands are generated only if `service_id` is set and
+  matches the id of the filewriter.
 
 ## Version 6.0.0
 
