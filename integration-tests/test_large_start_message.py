@@ -15,7 +15,7 @@ from helpers.writer import (
 )
 def test_large_start_message(worker_pool, kafka_address, json_padding, file_nr):
     file_path = build_relative_file_path(f"output_file_large_msg_{file_nr}.nxs")
-    wait_writers_available(worker_pool, nr_of=1, timeout=30)
+    wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now

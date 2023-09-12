@@ -27,9 +27,9 @@ def test_static_data_reaches_file(
         start_time=start_time,
         stop_time=stop_time,
     )
-    wait_start_job(worker_pool, write_job, timeout=60)
+    wait_start_job(worker_pool, write_job, timeout=20)
 
-    wait_no_working_writers(worker_pool, timeout=60)
+    wait_no_working_writers(worker_pool, timeout=30)
 
     with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
