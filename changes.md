@@ -10,6 +10,8 @@
 - Adding (tcp based) service api to query a filewriter for its status
 - Fix: Cannot import extra modules due to mismatch in ep00, ep01 and al00 registered names
 - Fix: Max/min/avg datasets do not specify units
+- Fix: Error responses to `run_stop` commands are generated only if `service_id` is set and
+  matches the id of the filewriter.
 
 ## Version 6.0.0
 

@@ -1,3 +1,5 @@
+urllib3<2  # urllib3-2 requires openssl-1.1 whereas centos-7 ships openssl-1.0
+cython<3  # docker-compose pulls pyyaml-5 which breaks with cython-3
 pytest>=6.2.2
 confluent_kafka == 1.9.2
 docker-compose==1.29.2
@@ -7,4 +9,3 @@ flatbuffers>=1.12
 black==19.3b0
 ess-streaming_data_types>=0.21.0
 file-writer-control>=1.2.5
-
