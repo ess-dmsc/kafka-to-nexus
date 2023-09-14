@@ -9,10 +9,10 @@
 
 #include "TemplateExtractor.h"
 
-namespace TemplateExtractor {
+namespace AccessMessageMetadata {
 
 // Instantiates a ReaderClass used for extracting source names, timestamps and
 // verifying a flatbuffers.
 static FileWriter::FlatbufferReaderRegistry::Registrar<Extractor>
     RegisterReader("test");
-} // namespace TemplateExtractor
+} // namespace AccessMessageMetadata
