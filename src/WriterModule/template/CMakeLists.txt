@@ -1,4 +1,4 @@
-#[[ Line 1 and line 11 should be removed from this file when in use
+#[[ Remove line 1 and line 10 of this file when in use
 set(template_SRC
   TemplateWriter.cpp
 )
