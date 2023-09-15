@@ -145,11 +145,11 @@ def publish_ev44_message(
 ):
     message = serialise_ev44(
         source_name=source_name,
+        message_id=message_id,
         reference_time=reference_time,
         reference_time_index=reference_time_index,
         time_of_flight=time_of_flight,
         pixel_id=pixel_id,
-        message_id=message_id,
     )
     publish_message(producer, message, topic, timestamp)
 
