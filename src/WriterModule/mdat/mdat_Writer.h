@@ -38,7 +38,6 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 #include <iostream>
-#include <pl72_run_start_generated.h>
 
 /// \brief Separate namespace for each module avoids method collisions
 namespace WriterModule::mdat {
@@ -87,7 +86,14 @@ public:
   /// this method!! \param Message The structure containing a pointer to a
   /// buffer containing data received from the Kafka broker and the size of the
   /// buffer.
-  void write(FileWriter::FlatbufferMessage const &Message) override;
+  void write(FileWriter::FlatbufferMessage const &Message) override{/*pass*/}
+
+  /// \brief A soecial writing class for metadata
+  /// This member function is functional equivalent to the normal
+  /// write(FileWriter::FlatbufferMessage const&) method but allows for a call
+  /// without requiring a message to be constructed, necessary for the overriden
+  /// method which is inherited
+  template<typename T> void writemetadata(std::string name, T data);
 
 protected:
   // new datasets go here

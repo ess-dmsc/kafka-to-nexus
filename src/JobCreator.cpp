@@ -18,7 +18,6 @@
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
 #include "json.h"
-#include "pl72_run_start_generated.h"
 #include <algorithm>
 
 using std::vector;
@@ -186,23 +185,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   //  Create fake message for writing start time as we have the information here
   //  and ready to be consumed
   for (auto &Item : Task->sources())
-    if (Item.writerModuleID() == "mdat") {
-      flatbuffers::FlatBufferBuilder builder;
-      uint64_t myStartTime =
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              StartInfo.StartTime.time_since_epoch())
-              .count();
-      auto startName = builder.CreateString("start_time");
-      flatbuffers::uoffset_t start_ = builder.StartTable();
-      builder.AddElement<uint64_t>(4U, myStartTime,
-                                   0);   //  add time under pl72 schema
-      builder.AddOffset(12U, startName); //  add JSON name under pl72 schema
-      const flatbuffers::uoffset_t end_ = builder.EndTable(start_);
-      auto offsetForFinish = flatbuffers::Offset<RunStart>(end_);
-      builder.Finish(offsetForFinish, "mdat");
-      flatbuffers::DetachedBuffer msgbuff = builder.Release();
-      Item.getWriterPtr()->write({msgbuff.data(), msgbuff.size()});
-    }
+    if (Item.writerModuleID() == "mdat")
+      static_cast<WriterModule::mdat::mdat_Writer*>(Item.getWriterPtr())->writemetadata("start_time", std::chrono::duration_cast<std::chrono::milliseconds>(StartInfo.StartTime.time_since_epoch()).count());
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
