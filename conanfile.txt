@@ -23,7 +23,7 @@ virtualrunenv
 [options]
 flatbuffers/*:shared=True
 gtest/*:shared=False
-HDF5/*:shared=True
+hdf5/*:shared=True
 h5cpp/*:with_boost=False
 librdkafka/*:shared=True
 librdkafka/*:ssl=True
