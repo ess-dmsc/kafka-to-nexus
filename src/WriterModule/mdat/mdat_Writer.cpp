@@ -53,9 +53,9 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 
 template <typename T>
 void mdat_Writer::writemetadata(std::string name, T data) { //  all is valid
-  if (!std::strcmp(name, "start_time"))
+  if ( name == "start_time" )
     mdatStart_time.appendElement(data);
-  if (!std::strcmp(name, "stop_time"))
+  else if ( name == "stop_time" )
     mdatStop_time.appendElement(data);
 }
 
