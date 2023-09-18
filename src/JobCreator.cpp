@@ -186,7 +186,11 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   //  and ready to be consumed
   for (auto &Item : Task->sources())
     if (Item.writerModuleID() == "mdat")
-      static_cast<WriterModule::mdat::mdat_Writer*>(Item.getWriterPtr())->writemetadata("start_time", std::chrono::duration_cast<std::chrono::milliseconds>(StartInfo.StartTime.time_since_epoch()).count());
+      static_cast<WriterModule::mdat::mdat_Writer *>(Item.getWriterPtr())
+          ->writemetadata("start_time",
+                          std::chrono::duration_cast<std::chrono::milliseconds>(
+                              StartInfo.StartTime.time_since_epoch())
+                              .count());
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
