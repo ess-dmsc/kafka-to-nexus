@@ -86,7 +86,8 @@ public:
   /// this method!! \param Message The structure containing a pointer to a
   /// buffer containing data received from the Kafka broker and the size of the
   /// buffer.
-  void write(FileWriter::FlatbufferMessage const &/*Message*/) override { /*pass*/
+  void
+  write(FileWriter::FlatbufferMessage const & /*Message*/) override { /*pass*/
   }
 
   /// \brief A soecial writing class for metadata
