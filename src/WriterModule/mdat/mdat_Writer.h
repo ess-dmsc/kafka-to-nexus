@@ -95,7 +95,7 @@ public:
   /// write(FileWriter::FlatbufferMessage const&) method but allows for a call
   /// without requiring a message to be constructed, necessary for the overriden
   /// method which is inherited
-  template <typename T> void writemetadata(std::string const & name, T data);
+  template <typename T> void writemetadata(std::string const &name, T data);
 
 protected:
   // new datasets go here
