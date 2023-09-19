@@ -60,6 +60,7 @@ void mdat_Writer::writemetadata(std::string name, T data) { //  all is valid
 }
 
 //  avoid linker errors by instantiating a version of the template with expected data types
+template void mdat_Writer::writemetadata(std::string name, long data);
 template void mdat_Writer::writemetadata(std::string name, long long data);
 
 } // namespace WriterModule::mdat
