@@ -59,7 +59,8 @@ void mdat_Writer::writemetadata(std::string name, T data) { //  all is valid
     mdatStop_time.appendElement(data);
 }
 
-//  avoid linker errors by instantiating a version of the template with expected data types
+//  avoid linker errors by instantiating a version of the template with expected
+//  data types
 template void mdat_Writer::writemetadata(std::string name, long long data);
 
 } // namespace WriterModule::mdat
