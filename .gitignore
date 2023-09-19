@@ -16,3 +16,5 @@ venv
 .vscode/
 .venv/
 .vscode.local/
+exampleconfig.ini
+compile_commands.json
