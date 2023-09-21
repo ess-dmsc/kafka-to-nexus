@@ -52,7 +52,8 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 }
 
 template <typename T>
-void mdat_Writer::writemetadata(std::string const &  name, T data) { //  all is valid
+void mdat_Writer::writemetadata(std::string const &name,
+                                T data) { //  all is valid
   if (name == "start_time")
     mdatStart_time.appendElement(data);
   else if (name == "stop_time")
@@ -61,7 +62,8 @@ void mdat_Writer::writemetadata(std::string const &  name, T data) { //  all is 
 
 //  avoid linker errors by instantiating a version of the template with expected
 //  data types
-template void mdat_Writer::writemetadata(std::string const &  name, long data);
-template void mdat_Writer::writemetadata(std::string const &  name, long long data);
+template void mdat_Writer::writemetadata(std::string const &name, long data);
+template void mdat_Writer::writemetadata(std::string const &name,
+                                         long long data);
 
 } // namespace WriterModule::mdat
