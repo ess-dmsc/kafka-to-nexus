@@ -13,6 +13,8 @@ pipeline.gdsl
 venv
 *.log
 *.DS_Store
+.vscode/
 .venv/
-integration-tests/core
 .vscode.local/
+exampleconfig.ini
+compile_commands.json

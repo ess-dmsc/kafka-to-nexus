@@ -20,6 +20,7 @@
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
 #include "TimeUtility.h"
+#include "WriterModule/mdat/mdat_Writer.h"
 #include <atomic>
 #include <set>
 #include <vector>
