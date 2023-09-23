@@ -61,9 +61,15 @@ void StreamController::resumeStreamers() {
 }
 
 void StreamController::stop() {
-  for (auto &Stream : Streamers) {
+  for (auto &Item : WriterTask->sources())
+    if (Item.writerModuleID() == "mdat")
+      static_cast<WriterModule::mdat::mdat_Writer *>(Item.getWriterPtr())
+          ->writemetadata("stop_time",
+                          std::chrono::duration_cast<std::chrono::milliseconds>(
+                              StreamerOptions.StopTimestamp.time_since_epoch())
+                              .count());
+  for (auto &Stream : Streamers)
     Stream->stop();
-  }
   WriterThread.stop();
   StopNow = true;
 }
