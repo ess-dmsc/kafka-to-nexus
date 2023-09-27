@@ -360,17 +360,13 @@ container_build_node_steps = [
     (integration_test_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> integration_test(b, c)}]
 ]
 
-if ( env.CHANGE_ID ) {
-  
-}
-
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
     current_steps_list = container_build_node_steps[container.key]
 
-    node('inttest') {
+    node('docker') {
         for (step in current_steps_list) {
             step(pipeline_builder, container)
         }
