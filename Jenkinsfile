@@ -378,12 +378,24 @@ pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
     current_steps_list = container_build_node_steps[container.key]
-    for (step in current_steps_list) {
-        step(pipeline_builder, container)
-    }
+
+    if (container.key == integration_test_key) {
+        node('inttest') {
+            for (step in current_steps_list) {
+                step(pipeline_builder, container)
+            }
+        }  // node
+
+    } else {
+        node('docker') {
+            for (step in current_steps_list) {
+                step(pipeline_builder, container)
+            }
+        }  // node
+    }  // if/else
 }  // createBuilders
 
-node {
+node('master') {
   dir("${project}") {
     try {
       scm_vars = checkout scm
