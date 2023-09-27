@@ -351,26 +351,17 @@ String integration_test_key = "integration-test"
 String static_checks_key = "static-checks"
 
 container_build_nodes = [
-  (almalinux_key): ContainerBuildNode.getDefaultContainerBuildNode('almalinux8-gcc12'),
-  (centos_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  (release_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  (ubuntu_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204'),
-  (static_checks_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
+  (integration_test_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11')
 ]
 
 base_steps = [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}]
 
 container_build_node_steps = [
-    (almalinux_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
-    (centos_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
-    (release_key): base_steps + [{b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
-    (ubuntu_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, true)}],
-    (static_checks_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON", false)}, {b,c -> static_checks(b, c)}],
     (integration_test_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> integration_test(b, c)}]
 ]
 
 if ( env.CHANGE_ID ) {
-  container_build_nodes[integration_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11')
+  
 }
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
@@ -379,20 +370,12 @@ pipeline_builder.activateEmailFailureNotifications()
 builders = pipeline_builder.createBuilders { container ->
     current_steps_list = container_build_node_steps[container.key]
 
-    if (container.key == integration_test_key) {
-        node('inttest') {
-            for (step in current_steps_list) {
-                step(pipeline_builder, container)
-            }
-        }  // node
+    node('inttest') {
+        for (step in current_steps_list) {
+            step(pipeline_builder, container)
+        }
+    }  // node
 
-    } else {
-        node('docker') {
-            for (step in current_steps_list) {
-                step(pipeline_builder, container)
-            }
-        }  // node
-    }  // if/else
 }  // createBuilders
 
 node('master') {
@@ -402,10 +385,6 @@ node('master') {
     } catch (e) {
       failure_function(e, 'Checkout failed')
     }
-  }
-
-  if (env.ENABLE_MACOS_BUILDS.toUpperCase() == 'TRUE') {
-    builders['macOS'] = get_macos_pipeline()
   }
 
   try {
@@ -423,53 +402,4 @@ def failure_function(exception_obj, failureMessage) {
   def toEmails = [[$class: 'DevelopersRecipientProvider']]
   emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.', recipientProviders: toEmails, subject: '${DEFAULT_SUBJECT}'
   throw exception_obj
-}
-
-def get_macos_pipeline() {
-  return {
-
-      node ("macos") {
-        // Delete workspace when build is done
-        cleanWs()
-        stage("macOS: Checkout") {
-        dir("${project}/code") {
-          try {
-          // temporary conan remove until all projects move to new package version
-          sh "conan remove -f FlatBuffers/*"
-          sh "conan remove -f OpenSSL/*"
-          sh "conan remove -f cli11/*"
-            checkout scm
-          } catch (e) {
-            failure_function(e, 'MacOSX / Checkout failed')
-          }
-        }
-        }
-
-        dir("${project}/build") {
-        stage("macOS: Configure") {
-          try {
-            sh "cmake ../code"
-          } catch (e) {
-            failure_function(e, 'MacOSX / CMake failed')
-          }
-        }
-
-          stage("macOS: Build") {
-              try {
-                sh "make -j4 UnitTests"
-              } catch (e) {
-                failure_function(e, 'MacOSX / build failed')
-              }
-          }
-
-          stage("macOS: Unit tests") {
-          try {
-               sh ". ./activate_run.sh && ./bin/UnitTests"
-          } catch (e) {
-            failure_function(e, 'MacOSX / unit tests failed')
-          }
-          }
-        }
-      }
-  }
 }
