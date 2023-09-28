@@ -59,10 +59,10 @@ void mdat_Writer::writemetadata(std::string const &name,
   tm *nowtm = gmtime(&datatime);
   if (name == "start_time")
     mdatStart_datetime.appendElement(
-        std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
+        std::strftime(buffer, 32, "%FT%TZ%z", nowtm));
   else if (name == "end_time")
     mdatEnd_datetime.appendElement(
-        std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
+        std::strftime(buffer, 32, "%FT%TZ%z", nowtm));
 }
 
 //  avoid linker errors by instantiating a version of the template with expected
