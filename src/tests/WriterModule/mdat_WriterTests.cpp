@@ -74,11 +74,11 @@ TEST_F(mdatInit, WriteOneElement) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
-  std::int64_t Timestamp{1234}; //  gtest compares int64_t
+  std::chrono::time_point<std::chrono::duration<int>> Timestamp(std::chrono::duration<int>(1));
   EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
   TestWriter.writemetadata("start_time", Timestamp);
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
   std::vector<std::int64_t> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
-  EXPECT_EQ(WrittenTimes.at(0), Timestamp);
+  EXPECT_EQ(WrittenTimes.at(0), "1970-01-01T00:00:01Z+0000");
 }
