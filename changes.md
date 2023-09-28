@@ -9,7 +9,8 @@
   pl72 messages.
 - Adding (tcp based) service api to query a filewriter for its status
 - Added new module 'mdat' for processing filewriter metadata (see https://confluence.esss.lu.se/display/ECDC/ECDC+Metadata+Workshop+Topics )
-  - Currently used for start_time and stop_time, implementing functionality for changes in NeXus Constructor https://jira.esss.lu.se/browse/ECDC-3446
+  - Currently used for start_time and end_time, implementing functionality for changes in NeXus Constructor https://jira.esss.lu.se/browse/ECDC-3446
+  - Special 'writemetadata' method used for ability to write without use of flatbuffer
 - Fix: Cannot import extra modules due to mismatch in ep00, ep01 and al00 registered names
 - Fix: Max/min/avg datasets do not specify units
 - Fix: Error responses to `run_stop` commands are generated only if `service_id` is set and
