@@ -74,7 +74,8 @@ TEST_F(mdatInit, WriteOneElement) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
-  std::chrono::time_point<std::chrono::duration<int>> Timestamp(std::chrono::duration<int>(1));
+  std::chrono::time_point<std::chrono::duration<int>> Timestamp(
+      std::chrono::duration<int>(1));
   EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
   TestWriter.writemetadata("start_time", Timestamp);
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
