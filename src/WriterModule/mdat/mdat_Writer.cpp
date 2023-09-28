@@ -19,10 +19,10 @@ static WriterModule::Registry::Registrar<mdat_Writer> RegisterWriter("mdat",
 WriterModule::InitResult
 mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
-    NeXusDataset::Time(HDFGroup, "start_time", NeXusDataset::Mode::Create,
-                       ChunkSize, "ms");
-    NeXusDataset::Time(HDFGroup, "stop_time", NeXusDataset::Mode::Create,
-                       ChunkSize, "ms");
+    NeXusDataset::DateTime(HDFGroup, "start_time", NeXusDataset::Mode::Create,
+                       ChunkSize);
+    NeXusDataset::DateTime(HDFGroup, "end_time", NeXusDataset::Mode::Create,
+                       ChunkSize);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("mdat could not init_hdf HDFGroup: {}  trace: {}\nError with "
@@ -36,14 +36,14 @@ mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 
 WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
-    mdatStart_time = NeXusDataset::Time(
-        HDFGroup, "start_time", NeXusDataset::Mode::Open, ChunkSize, "ms");
-    mdatStop_time = NeXusDataset::Time(
-        HDFGroup, "stop_time", NeXusDataset::Mode::Open, ChunkSize, "ms");
+    mdatStart_datetime = NeXusDataset::DateTime(
+        HDFGroup, "start_time", NeXusDataset::Mode::Open, ChunkSize);
+    mdatEnd_datetime = NeXusDataset::DateTime(
+        HDFGroup, "end_time", NeXusDataset::Mode::Open, ChunkSize);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("mdat could not reopen HDFGroup: {}  trace: {}\nError with "
-              "NeXusDataset::Time(..)?",
+              "NeXusDataset::DateTime(..)?",
               static_cast<std::string>(HDFGroup.link().path()), message);
     return WriterModule::InitResult::ERROR;
   }
@@ -54,16 +54,17 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
 template <typename T>
 void mdat_Writer::writemetadata(std::string const &name,
                                 T data) { //  all is valid
+  char buffer[32];
+  time_t datatime = std::chrono::system_clock::to_time_t(data);
+  tm* nowtm = gmtime(&datatime);
   if (name == "start_time")
-    mdatStart_time.appendElement(data);
-  else if (name == "stop_time")
-    mdatStop_time.appendElement(data);
+    mdatStart_datetime.appendElement(std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
+  else if (name == "end_time")
+    mdatEnd_datetime.appendElement(std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
 }
 
 //  avoid linker errors by instantiating a version of the template with expected
 //  data types
-template void mdat_Writer::writemetadata(std::string const &name, long data);
-template void mdat_Writer::writemetadata(std::string const &name,
-                                         long long data);
+template void mdat_Writer::writemetadata(std::string const &name, time_point data);
 
 } // namespace WriterModule::mdat

@@ -99,8 +99,8 @@ public:
 
 protected:
   // new datasets go here
-  NeXusDataset::Time mdatStart_time;
-  NeXusDataset::Time mdatStop_time;
+  NeXusDataset::DateTime mdatStart_datetime;
+  NeXusDataset::DateTime mdatEnd_datetime;
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 };
 } // namespace WriterModule::mdat

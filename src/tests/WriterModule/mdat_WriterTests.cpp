@@ -37,8 +37,8 @@ public:
 class mdat_WriterStandIn : public mdat_Writer {
 public:
   using mdat_Writer::ChunkSize;
-  using mdat_Writer::mdatStart_time;
-  using mdat_Writer::mdatStop_time;
+  using mdat_Writer::mdatStart_datetime;
+  using mdat_Writer::mdatEnd_datetime;
 };
 
 TEST_F(mdatInit, BasicDefaultInit) {
@@ -61,8 +61,8 @@ TEST_F(mdatInit, ReOpenFailure) {
 TEST_F(mdatInit, CheckInitDataType) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
-  NeXusDataset::Time Value(RootGroup, "start_time", NeXusDataset::Mode::Open,
-                           TestWriter.ChunkSize, "ms");
+  NeXusDataset::DateTime Value(RootGroup, "start_time", NeXusDataset::Mode::Open,
+                           TestWriter.ChunkSize);
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<uint64_t>());
 }
 
@@ -75,10 +75,10 @@ TEST_F(mdatInit, WriteOneElement) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
   std::int64_t Timestamp{1234}; //  gtest compares int64_t
-  EXPECT_EQ(TestWriter.mdatStart_time.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
   TestWriter.writemetadata("start_time", Timestamp);
-  ASSERT_EQ(TestWriter.mdatStart_time.dataspace().size(), 1);
+  ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
   std::vector<std::int64_t> WrittenTimes(1);
-  TestWriter.mdatStart_time.read(WrittenTimes);
+  TestWriter.mdatStart_datetime.read(WrittenTimes);
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
