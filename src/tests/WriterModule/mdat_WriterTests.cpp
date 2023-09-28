@@ -78,7 +78,7 @@ TEST_F(mdatInit, WriteOneElement) {
   EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
   TestWriter.writemetadata("start_time", Timestamp);
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
-  std::vector<std::int64_t> WrittenTimes(1);
+  std::vector<std::string> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
   EXPECT_EQ(WrittenTimes.at(0), "1970-01-01T00:00:01Z+0000");
 }
