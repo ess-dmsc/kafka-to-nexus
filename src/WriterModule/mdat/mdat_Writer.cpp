@@ -20,9 +20,9 @@ WriterModule::InitResult
 mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
     NeXusDataset::DateTime(HDFGroup, "start_time", NeXusDataset::Mode::Create,
-                       ChunkSize);
+                           ChunkSize);
     NeXusDataset::DateTime(HDFGroup, "end_time", NeXusDataset::Mode::Create,
-                       ChunkSize);
+                           ChunkSize);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("mdat could not init_hdf HDFGroup: {}  trace: {}\nError with "
@@ -56,15 +56,18 @@ void mdat_Writer::writemetadata(std::string const &name,
                                 T data) { //  all is valid
   char buffer[32];
   time_t datatime = std::chrono::system_clock::to_time_t(data);
-  tm* nowtm = gmtime(&datatime);
+  tm *nowtm = gmtime(&datatime);
   if (name == "start_time")
-    mdatStart_datetime.appendElement(std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
+    mdatStart_datetime.appendElement(
+        std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
   else if (name == "end_time")
-    mdatEnd_datetime.appendElement(std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
+    mdatEnd_datetime.appendElement(
+        std::strftime(buffer, 32, "%FT%TZ%Ez", nowtm));
 }
 
 //  avoid linker errors by instantiating a version of the template with expected
 //  data types
-template void mdat_Writer::writemetadata(std::string const &name, time_point data);
+template void mdat_Writer::writemetadata(std::string const &name,
+                                         time_point data);
 
 } // namespace WriterModule::mdat
