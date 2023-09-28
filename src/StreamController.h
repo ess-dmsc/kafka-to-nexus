@@ -22,7 +22,6 @@
 #include "TimeUtility.h"
 #include "WriterModule/mdat/mdat_Writer.h"
 #include <atomic>
-#include <format>
 #include <set>
 #include <vector>
 
