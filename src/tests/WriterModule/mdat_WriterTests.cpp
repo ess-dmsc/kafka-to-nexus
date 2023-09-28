@@ -37,8 +37,8 @@ public:
 class mdat_WriterStandIn : public mdat_Writer {
 public:
   using mdat_Writer::ChunkSize;
-  using mdat_Writer::mdatStart_datetime;
   using mdat_Writer::mdatEnd_datetime;
+  using mdat_Writer::mdatStart_datetime;
 };
 
 TEST_F(mdatInit, BasicDefaultInit) {
@@ -61,8 +61,8 @@ TEST_F(mdatInit, ReOpenFailure) {
 TEST_F(mdatInit, CheckInitDataType) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
-  NeXusDataset::DateTime Value(RootGroup, "start_time", NeXusDataset::Mode::Open,
-                           TestWriter.ChunkSize);
+  NeXusDataset::DateTime Value(RootGroup, "start_time",
+                               NeXusDataset::Mode::Open, TestWriter.ChunkSize);
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<uint64_t>());
 }
 
