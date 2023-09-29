@@ -83,5 +83,6 @@ TEST_F(mdatInit, WriteOneElement) {
   std::vector<char> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
   std::cout << WrittenTimes.at(0) << std::endl;
-  EXPECT_EQ(WrittenTimes.at(0), *(std::string("1970-01-01T00:00:01Z+0000").c_str()));
+  EXPECT_EQ(WrittenTimes.at(0),
+            *(std::string("1970-01-01T00:00:01Z+0000").c_str()));
 }
