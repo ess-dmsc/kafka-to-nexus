@@ -63,7 +63,7 @@ TEST_F(mdatInit, CheckInitDataType) {
   TestWriter.init_hdf(RootGroup);
   NeXusDataset::DateTime Value(RootGroup, "start_time",
                                NeXusDataset::Mode::Open, TestWriter.ChunkSize);
-  EXPECT_EQ(Value.datatype(), hdf5::datatype::create<uint64_t>());
+  EXPECT_EQ(Value.datatype(), hdf5::datatype::create<std::string>());
 }
 
 class mdatConfigParse : public ::testing::Test {
