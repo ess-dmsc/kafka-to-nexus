@@ -28,7 +28,7 @@ Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
 
 DateTime::DateTime(hdf5::node::Group const &Parent, std::string const &name,
                    Mode CMode, size_t ChunkSize)
-    : ExtensibleDataset<const char[32]>(Parent, name.c_str(), CMode,
+    : ExtensibleDataset<const char>(Parent, name, CMode,
                                         ChunkSize) {}
 
 DoubleValue::DoubleValue(hdf5::node::Group const &Parent,
