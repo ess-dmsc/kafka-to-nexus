@@ -62,7 +62,7 @@ public:
 };
 
 /// \brief Class for a NX_DATE_TIME entry (as a string)
-class DateTime : public ExtensibleDataset<const char> {
+class DateTime : public ExtensibleDataset<char const> {
 public:
   DateTime() = default;
   /// \brief Create a string-type entry, e.g. NX_DATE_TIME
