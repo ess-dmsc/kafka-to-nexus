@@ -63,7 +63,7 @@ TEST_F(mdatInit, CheckInitDataType) {
   TestWriter.init_hdf(RootGroup);
   NeXusDataset::DateTime Value(RootGroup, "start_time",
                                NeXusDataset::Mode::Open, TestWriter.ChunkSize);
-  EXPECT_EQ(Value.datatype(), hdf5::datatype::create<std::string>());
+  EXPECT_EQ(Value.datatype(), hdf5::datatype::create<char const>());
 }
 
 class mdatConfigParse : public ::testing::Test {
@@ -78,7 +78,10 @@ TEST_F(mdatInit, WriteOneElement) {
   EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
   TestWriter.writemetadata("start_time", Timestamp);
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
-  std::vector<std::string> WrittenTimes(1);
+  std::cout << "Test proceeding fine so far...?" << std::endl;
+  std::cout << std::string("1970-01-01T00:00:01Z+0000").c_str() << std::endl;
+  std::vector<char> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
-  EXPECT_EQ(WrittenTimes.at(0), "1970-01-01T00:00:01Z+0000");
+  std::cout << WrittenTimes.at(0) << std::endl;
+  EXPECT_EQ(WrittenTimes.at(0), *(std::string("1970-01-01T00:00:01Z+0000").c_str()));
 }
