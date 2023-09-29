@@ -78,11 +78,8 @@ TEST_F(mdatInit, WriteOneElement) {
   EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
   TestWriter.writemetadata("start_time", Timestamp);
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
-  std::cout << "Test proceeding fine so far...?" << std::endl;
-  std::cout << std::string("1970-01-01T00:00:01Z+0000").c_str() << std::endl;
   std::vector<char> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
-  std::cout << WrittenTimes.at(0) << std::endl;
   EXPECT_EQ(WrittenTimes.at(0),
             *(std::string("1970-01-01T00:00:01Z+0000").c_str()));
 }
