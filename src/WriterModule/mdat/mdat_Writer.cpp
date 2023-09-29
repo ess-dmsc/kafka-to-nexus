@@ -57,12 +57,11 @@ void mdat_Writer::writemetadata(std::string const &name,
   char buffer[32];
   time_t datatime = std::chrono::system_clock::to_time_t(data);
   tm *nowtm = gmtime(&datatime);
+  std::strftime(buffer, 32, "%FT%TZ%z", nowtm);
   if (name == "start_time")
-    mdatStart_datetime.appendElement(
-        std::strftime(buffer, 32, "%FT%TZ%z", nowtm));
+    mdatStart_datetime.appendElement(buffer);
   else if (name == "end_time")
-    mdatEnd_datetime.appendElement(
-        std::strftime(buffer, 32, "%FT%TZ%z", nowtm));
+    mdatEnd_datetime.appendElement(buffer);
 }
 
 //  avoid linker errors by instantiating a version of the template with expected
