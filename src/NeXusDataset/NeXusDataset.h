@@ -61,6 +61,7 @@ public:
   Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
+/// \brief Class for a NX_DATE_TIME entry (as a string)
 class DateTime : public ExtensibleDataset<std::string> {
 public:
   DateTime() = default;
