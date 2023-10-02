@@ -62,7 +62,8 @@ void mdat_Writer::writemetadata(std::string const &name,
     mdatStart_datetime.appendElement(*buffer);
   else if (name == "end_time")
     mdatEnd_datetime.appendElement(*buffer);
-  std::cout << "writing metadata...data:" << data << ", datatime:" << datatime << ", tm:"<< tm << std::endl;
+  std::cout << "writing metadata...data:" << data << ", datatime:" << datatime
+            << ", tm:" << tm << std::endl;
 }
 
 //  avoid linker errors by instantiating a version of the template with expected
