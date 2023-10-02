@@ -89,7 +89,8 @@ void mdat_Writer::writemetadata(std::string const &name,
 
 
 //    mdatStart_datetime.appendArray(hdf5::ArrayAdapter<char>(buffer, 32));
-//  else if (name == "end_time")
+  else if (name == "end_time")
+    mdatEnd_datetime.appendStringElement(std::string(buffer));
 //    mdatEnd_datetime.appendArray(hdf5::ArrayAdapter<const char[]>(&buffer, 32));
 }
 
