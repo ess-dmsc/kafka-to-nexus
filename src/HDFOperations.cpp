@@ -246,7 +246,9 @@ void writeStringDataset(hdf5::node::Group const &Parent,
     auto DataType = hdf5::datatype::String::variable();
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     DataType.padding(hdf5::datatype::StringPad::NullTerm);
-    std::cout << "JsonHERE" << std::endl << Values.dump() << std::endl << std::endl;
+    std::cout << "JsonHERE" << std::endl
+              << Values.dump() << std::endl
+              << std::endl;
     auto StringArray = jsonArrayToMultiArray<std::string>(Values);
     auto Dims = StringArray.getDimensions();
 
