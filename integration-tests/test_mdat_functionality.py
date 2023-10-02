@@ -31,11 +31,5 @@ def test_mdat(worker_pool, kafka_address, hdf_file_name="mdat_output.nxs"):
     with OpenNexusFile(file_path) as file:
         print("mdat start time is")
         print(file["entry/myFWStuff/start_time"][:].flatten())
-        assert (
-            file["entry/myFWStuff/start_time"][0]
-            == "2023-07-07T00:00:00Z+0000"
-        )
-        assert (
-            file["entry/myFWStuff/stop_time"][0]
-            == "2023-07-07T00:00:10Z+0000"
-        )
+        assert file["entry/myFWStuff/start_time"][0] == "2023-07-07T00:00:00Z+0000"
+        assert file["entry/myFWStuff/stop_time"][0] == "2023-07-07T00:00:10Z+0000"
