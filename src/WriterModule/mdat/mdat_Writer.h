@@ -102,6 +102,7 @@ protected:
   NeXusDataset::DateTime mdatStart_datetime;
   NeXusDataset::DateTime mdatEnd_datetime;
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
+  JsonConfig::Field<size_t> StringSize{this, "string_size", 128};
 };
 } // namespace WriterModule::mdat
   // clang-format on

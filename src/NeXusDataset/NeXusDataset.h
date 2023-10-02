@@ -62,7 +62,7 @@ public:
 };
 
 /// \brief Class for a NX_DATE_TIME entry (as a string)
-class DateTime : public ExtensibleDataset<char const> {
+class DateTime : public FixedSizeString {
 public:
   DateTime() = default;
   /// \brief Create a string-type entry, e.g. NX_DATE_TIME
@@ -72,8 +72,7 @@ public:
   /// dataset. \param ChunkSize The chunk size in number of elements for this
   /// dataset (if/when creating it). \throws std::runtime_error if dataset
   /// already exists.
-  DateTime(hdf5::node::Group const &Parent, std::string const &name, Mode CMode,
-           size_t ChunkSize = 1024);
+  DateTime(hdf5::node::Group const &Parent, std::string const &name, Mode CMode, size_t StringSize = 32, size_t ChunkSize = 1024);
 };
 
 /// \brief Represents the index register for searching a large NXlog
