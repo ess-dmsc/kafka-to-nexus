@@ -57,12 +57,12 @@ builders = pipeline_builder.createBuilders { container ->
     if (container.key == 'centos7-release') {
       container.sh """
         cd build
-        ..${pipeline_builder.project}/jenkins-scripts/configure-release.sh
+        ../${pipeline_builder.project}/jenkins-scripts/configure-release.sh
       """
     } else {
       container.sh """
         cd build
-        cmake -DCOV=ON -DRUN_DOXYGEN=ON -GNinja ../${builder.project}
+        cmake -DCOV=ON -DRUN_DOXYGEN=ON -GNinja ../${pipeline_builder.project}
       """
     }
   }  // stage: configuration
