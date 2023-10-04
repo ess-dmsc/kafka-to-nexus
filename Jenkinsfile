@@ -32,10 +32,6 @@ container_build_nodes = [
   'ubuntu2204': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
 ]
 
-if (env.CHANGE_ID) {
-  container_build_nodes['static-checks'] = ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
-}
-
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
@@ -71,8 +67,8 @@ builders = pipeline_builder.createBuilders { container ->
     pipeline_builder.stage("${container.key}: black") {
       container.sh """
         cd ${pipeline_builder.project}
-        python -m black --version
-        python -m black --check integration-tests
+        python3 -m black --version
+        python3 -m black --check integration-tests
       """
     }  // stage: clang-format 
 
