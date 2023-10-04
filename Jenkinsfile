@@ -54,7 +54,7 @@ builders = pipeline_builder.createBuilders { container ->
     """
   }  // stage: dependencies
 
-  // Only run static checks in pull requests
+  // Only run static checks and build documentation in pull requests
   if (env.CHANGE_ID && container.key == 'ubuntu2204') {
 
     pipeline_builder.stage("${container.key}: clang-format") {
@@ -97,6 +97,13 @@ builders = pipeline_builder.createBuilders { container ->
           tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
       }  // dir
     }  // stage: cppecheck
+
+    builder.stage("${container.key}: documentation") {
+      container.sh """
+        cd build
+        ninja docs
+      """
+    }  // stage: documentation
 
   }  // if
 
