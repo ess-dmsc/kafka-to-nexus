@@ -29,9 +29,12 @@ container_build_nodes = [
   'almalinux8': ContainerBuildNode.getDefaultContainerBuildNode('almalinux8-gcc12'),
   'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
   'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  'ubuntu2204': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204'),
-  'static-checks': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
+  'ubuntu2204': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
 ]
+
+if (env.CHANGE_ID) {
+  container_build_nodes['static-checks'] = ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
+}
 
 pipeline_builder = new PipelineBuilder(this, container_build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
@@ -56,12 +59,12 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage: dependencies
 
   // Only run static checks in pull requests
-  if (env.CHANGE_ID && container.key == 'static-checks') {
+  if (env.CHANGE_ID && container.key == 'ubuntu2204') {
 
     pipeline_builder.stage("${container.key}: clang-format") {
       container.sh """
         cd ${pipeline_builder.project}
-        build-scripts/check-formatting.sh
+        jenkins-scripts/check-formatting.sh
       """
     }  // stage: clang-format 
 
