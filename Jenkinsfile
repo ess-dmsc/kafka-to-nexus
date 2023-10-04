@@ -392,10 +392,6 @@ node {
     }
   }
 
-  if (env.ENABLE_MACOS_BUILDS.toUpperCase() == 'TRUE') {
-    builders['macOS'] = get_macos_pipeline()
-  }
-
   try {
     parallel builders
   } catch (e) {
@@ -411,53 +407,4 @@ def failure_function(exception_obj, failureMessage) {
   def toEmails = [[$class: 'DevelopersRecipientProvider']]
   emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.', recipientProviders: toEmails, subject: '${DEFAULT_SUBJECT}'
   throw exception_obj
-}
-
-def get_macos_pipeline() {
-  return {
-
-      node ("macos") {
-        // Delete workspace when build is done
-        cleanWs()
-        stage("macOS: Checkout") {
-        dir("${project}/code") {
-          try {
-          // temporary conan remove until all projects move to new package version
-          sh "conan remove -f FlatBuffers/*"
-          sh "conan remove -f OpenSSL/*"
-          sh "conan remove -f cli11/*"
-            checkout scm
-          } catch (e) {
-            failure_function(e, 'MacOSX / Checkout failed')
-          }
-        }
-        }
-
-        dir("${project}/build") {
-        stage("macOS: Configure") {
-          try {
-            sh "cmake ../code"
-          } catch (e) {
-            failure_function(e, 'MacOSX / CMake failed')
-          }
-        }
-
-          stage("macOS: Build") {
-              try {
-                sh "make -j4 UnitTests"
-              } catch (e) {
-                failure_function(e, 'MacOSX / build failed')
-              }
-          }
-
-          stage("macOS: Unit tests") {
-          try {
-               sh ". ./activate_run.sh && ./bin/UnitTests"
-          } catch (e) {
-            failure_function(e, 'MacOSX / unit tests failed')
-          }
-          }
-        }
-      }
-  }
 }
