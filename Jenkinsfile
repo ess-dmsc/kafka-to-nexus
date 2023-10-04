@@ -52,6 +52,27 @@ builders = pipeline_builder.createBuilders { container ->
       conan info ../${pipeline_builder.project}/conanfile.txt > CONAN_INFO
     """
   }  // stage: dependencies
+
+  pipeline_builder.stage("${container.key}: configuration") {
+    if (container.key == 'centos7-release') {
+      container.sh """
+        cd build
+        ../jenkins-scripts/configure-release.sh
+      """
+    } else {
+      container.sh """
+        cd build
+        cmake -DCOV=ON -DRUN_DOXYGEN=ON -GNinja ../${builder.project}
+      """
+    }
+  }  // stage: configuration
+
+  pipeline_builder.stage("${container.key}: documentation") {
+      container.sh """
+        cd build
+        ninja docs
+      """
+    }  // stage: documentation
 }  // createBuilders
 
 // Only run static checks and build documentation in pull requests
@@ -111,13 +132,6 @@ if (env.CHANGE_ID) {
           tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
       }  // dir
     }  // stage: cppecheck
-
-    pr_pipeline_builder.stage("${container.key}: documentation") {
-      container.sh """
-        cd build
-        ninja docs
-      """
-    }  // stage: documentation
   }  // PR checks createBuilders
 
   builders = builders + pr_checks_builders
