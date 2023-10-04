@@ -72,7 +72,7 @@ builders = pipeline_builder.createBuilders { container ->
       """
     }  // stage: black
 
-    builder.stage("${container.key}: cppcheck") {
+    pipeline_builder.stage("${container.key}: cppcheck") {
       container.sh """
         cd ${pipeline_builder.project}
         cppcheck \
