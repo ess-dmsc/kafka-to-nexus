@@ -25,18 +25,17 @@ properties([[
   ]
 ]]);
 
-container_build_nodes = [
+build_nodes = [
   'almalinux8': ContainerBuildNode.getDefaultContainerBuildNode('almalinux8-gcc12'),
   'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
   'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
   'ubuntu2204': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
 ]
 
-pipeline_builder = new PipelineBuilder(this, container_build_nodes)
+pipeline_builder = new PipelineBuilder(this, build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
 builders = pipeline_builder.createBuilders { container ->
-
   pipeline_builder.stage("${container.key}: checkout") {
     dir(pipeline_builder.project) {
       scm_vars = checkout scm
@@ -53,28 +52,43 @@ builders = pipeline_builder.createBuilders { container ->
       conan info ../${pipeline_builder.project}/conanfile.txt > CONAN_INFO
     """
   }  // stage: dependencies
+}  // createBuilders
 
-  // Only run static checks and build documentation in pull requests
-  if (env.CHANGE_ID && container.key == 'ubuntu2204') {
+// Only run static checks and build documentation in pull requests
+if (env.CHANGE_ID) {
+  pr_checks_nodes = [
+    'pr-checks': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
+  ]
 
-    pipeline_builder.stage("${container.key}: clang-format") {
+  pr_pipeline_builder = new PipelineBuilder(this, pr_checks_nodes)
+  pr_pipeline_builder.activateEmailFailureNotifications()
+
+  pr_checks_builders = pr_pipeline_builder.createBuilders { container ->
+    pr_pipeline_builder.stage("${container.key}: checkout") {
+      dir(pr_pipeline_builder.project) {
+        scm_vars = checkout scm
+      }
+      // Copy source code to container
+      container.copyTo(pr_pipeline_builder.project, pr_pipeline_builder.project)
+    }  // stage: checkout
+    pr_pipeline_builder.stage("${container.key}: clang-format") {
       container.sh """
-        cd ${pipeline_builder.project}
+        cd ${pr_pipeline_builder.project}
         jenkins-scripts/check-formatting.sh
       """
     }  // stage: clang-format 
 
-    pipeline_builder.stage("${container.key}: black") {
+    pr_pipeline_builder.stage("${container.key}: black") {
       container.sh """
-        cd ${pipeline_builder.project}
+        cd ${pr_pipeline_builder.project}
         python3 -m black --version
         python3 -m black --check integration-tests
       """
     }  // stage: black
 
-    pipeline_builder.stage("${container.key}: cppcheck") {
+    pr_pipeline_builder.stage("${container.key}: cppcheck") {
       container.sh """
-        cd ${pipeline_builder.project}
+        cd ${pr_pipeline_builder.project}
         cppcheck \
           --xml \
           --inline-suppr \
@@ -84,8 +98,8 @@ builders = pipeline_builder.createBuilders { container ->
           --inconclusive \
           src/ 2> cppcheck.xml
       """
-      container.copyFrom("${pipeline_builder.project}/cppcheck.xml", pipeline_builder.project)
-      dir("${pipeline_builder.project}") {
+      container.copyFrom("${pipeline_builder.project}/cppcheck.xml", pr_pipeline_builder.project)
+      dir("${pr_pipeline_builder.project}") {
         recordIssues \
           quiet: true,
           sourceCodeEncoding: 'UTF-8',
@@ -98,16 +112,16 @@ builders = pipeline_builder.createBuilders { container ->
       }  // dir
     }  // stage: cppecheck
 
-    builder.stage("${container.key}: documentation") {
+    pr_pipeline_builder.stage("${container.key}: documentation") {
       container.sh """
         cd build
         ninja docs
       """
     }  // stage: documentation
+  }  // PR checks createBuilders
 
-  }  // if
-
-}  // createBuilders
+  builders = builders + pr_pipeline_builder
+}
 
 node('master') {
   dir("${pipeline_builder.project}") {
