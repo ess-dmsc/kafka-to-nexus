@@ -120,7 +120,7 @@ if (env.CHANGE_ID) {
     }  // stage: documentation
   }  // PR checks createBuilders
 
-  builders = builders + pr_pipeline_builder
+  builders = builders + pr_checks_builders
 }
 
 node('master') {
