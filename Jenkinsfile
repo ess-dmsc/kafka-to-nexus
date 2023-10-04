@@ -57,7 +57,8 @@ builders = pipeline_builder.createBuilders { container ->
     if (container.key == 'centos7-release') {
       container.sh """
         cd build
-        ../${pipeline_builder.project}/jenkins-scripts/configure-release.sh
+        ../${pipeline_builder.project}/jenkins-scripts/configure-release.sh \
+          ../${pipeline_builder.project}
       """
     } else {
       container.sh """
@@ -119,7 +120,7 @@ if (env.CHANGE_ID) {
           --inconclusive \
           src/ 2> cppcheck.xml
       """
-      container.copyFrom("${pipeline_builder.project}/cppcheck.xml", pr_pipeline_builder.project)
+      container.copyFrom("${pr_pipeline_builder.project}/cppcheck.xml", pr_pipeline_builder.project)
       dir("${pr_pipeline_builder.project}") {
         recordIssues \
           quiet: true,
