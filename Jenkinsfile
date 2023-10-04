@@ -70,7 +70,33 @@ builders = pipeline_builder.createBuilders { container ->
         python3 -m black --version
         python3 -m black --check integration-tests
       """
-    }  // stage: clang-format 
+    }  // stage: black
+
+    builder.stage("${container.key}: cppcheck") {
+      container.sh """
+        cd ${pipeline_builder.project}
+        cppcheck \
+          --xml \
+          --inline-suppr \
+          --suppress=unusedFunction \
+          --suppress=missingInclude \
+          --enable=all \
+          --inconclusive \
+          src/ 2> cppcheck.xml
+      """
+      container.copyFrom("${pipeline_builder.project}/cppcheck.xml", pipeline_builder.project)
+      dir("${pipeline_builder.project}") {
+        recordIssues \
+          quiet: true,
+          sourceCodeEncoding: 'UTF-8',
+          qualityGates: [[
+            threshold: 1,
+            type: 'TOTAL',
+            unstable: true
+          ]],
+          tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
+      }  // dir
+    }  // stage: cppecheck
 
   }  // if
 
