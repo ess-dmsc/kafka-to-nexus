@@ -68,12 +68,19 @@ builders = pipeline_builder.createBuilders { container ->
     }
   }  // stage: configuration
 
+  pipeline_builder.stage("${container.key}: build") {
+    container.sh """
+      cd build
+      ninja kafka-to-nexus UnitTests
+    """
+  }  // stage: build
+
   pipeline_builder.stage("${container.key}: documentation") {
-      container.sh """
-        cd build
-        ninja docs
-      """
-    }  // stage: documentation
+    container.sh """
+      cd build
+      ninja docs
+    """
+  }  // stage: documentation
 }  // createBuilders
 
 // Only run static checks and build documentation in pull requests
