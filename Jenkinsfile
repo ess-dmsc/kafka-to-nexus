@@ -69,8 +69,8 @@ node('master') {
 def failure_function(exception_obj, failureMessage) {
   def to_emails = [[$class: 'DevelopersRecipientProvider']]
   def email_body = '' + 
-    '${DEFAULT_CONTENT}\n' + '
-    '\"' + failureMessage + '\"\n\n'
+    '${DEFAULT_CONTENT}\n' +
+    '\"' + failureMessage + '\"\n\n' +
     'Check console output at $BUILD_URL to view the results.'
 
   emailext body: email_body, recipientProviders: to_emails, subject: '${DEFAULT_SUBJECT}'
