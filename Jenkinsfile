@@ -118,6 +118,7 @@ if (env.CHANGE_ID) {
     pr_pipeline_builder.stage("${container.key}: cppcheck") {
       container.sh """
         cd ${pr_pipeline_builder.project}
+        cppcheck --version
         cppcheck \
           --xml \
           --inline-suppr \
