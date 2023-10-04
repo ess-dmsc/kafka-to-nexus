@@ -57,7 +57,7 @@ builders = pipeline_builder.createBuilders { container ->
     if (container.key == 'centos7-release') {
       container.sh """
         cd build
-        ../jenkins-scripts/configure-release.sh
+        ..${pipeline_builder.project}/jenkins-scripts/configure-release.sh
       """
     } else {
       container.sh """
