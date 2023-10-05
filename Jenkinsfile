@@ -112,6 +112,7 @@ builders = pipeline_builder.createBuilders { container ->
         zoomCoverageChart: true
       ])
     } else {
+      // Not a coverage nod
       container.sh """
         cd build
         ./bin/UnitTests
@@ -125,6 +126,37 @@ builders = pipeline_builder.createBuilders { container ->
       ninja docs
     """
   }  // stage: documentation
+
+  if (container.key == release_os) {
+    def archive_output = "${builder.project}-${container.key}.tar.gz"
+    pipeline_builder.stage("${container.key}: archive") {
+      // Create archive file
+      container.sh """
+        cd build
+        rm -rf ${builder.project}; mkdir ${builder.project}
+        mkdir ${builder.project}/bin
+        cp ./bin/kafka-to-nexus ${builder.project}/bin/
+        cp -r ./lib ${builder.project}/
+        cp -r ./licenses ${builder.project}/
+
+        cp ./CONAN_INFO ${builder.project}/
+
+        # Create file with build information
+        touch ${builder.project}/BUILD_INFO
+        echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
+        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
+        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
+
+        tar czf ${archive_output} ${builder.project}
+      """
+
+      // Copy files from container and archive
+      container.copyFrom("build/${archive_output}", '.')
+      container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
+      archiveArtifacts "${archive_output},BUILD_INFO"
+    }  // stage: archive
+  }  // if
+
 }  // createBuilders
 
 // Only run static checks in pull requests
