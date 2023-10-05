@@ -78,11 +78,13 @@ TEST_F(mdatInit, WriteOneElement) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
-  time_point Timestamp(std::chrono::duration<int>(1));
+  time_point Timestamp{std::chrono::seconds{1}};
+
   EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
   TestWriter.writemetadata("start_time", Timestamp);
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
   std::vector<std::string> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
-  EXPECT_EQ(WrittenTimes.at(0), "1970-01-01T00:00:01Z+0100");
+  //  timezones not existing on all Jenkins builds
+  EXPECT_EQ(WrittenTimes.at(0).substr(0,21), std::string("1970-01-01T00:00:01Z+0100").substr(0,21));
 }
