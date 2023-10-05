@@ -13,7 +13,7 @@ def test_mdat(worker_pool, kafka_address, hdf_file_name="mdat_output.nxs"):
     file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
-    start_t = datetime(year=2023, month=7, day=7, hour=0, minute=0, second=0)
+    start_t = datetime(year=2023, month=7, day=7, hour=2, minute=0, second=0)
     stop_t = start_t + timedelta(seconds=10)
 
     with open("commands/nexus_structure_filewriter.json", "r") as f:
@@ -29,9 +29,6 @@ def test_mdat(worker_pool, kafka_address, hdf_file_name="mdat_output.nxs"):
     wait_start_job(worker_pool, write_job, timeout=20)
     wait_no_working_writers(worker_pool, timeout=30)
     with OpenNexusFile(file_path) as file:
-        print("mdat start time is")
-        print(file["entry/myFWStuff/start_time"][()][0].decode("utf-8"))
-        print(start_t)
         assert (
             file["entry/myFWStuff/start_time"][()][0].decode("utf-8")
             == "2023-07-07T00:00:00Z+0000"
