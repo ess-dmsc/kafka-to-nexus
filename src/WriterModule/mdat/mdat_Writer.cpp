@@ -8,8 +8,8 @@
 // Screaming Udder!                              https://esss.se
 
 #include "mdat_Writer.h"
-#include "WriterRegistrar.h"
 #include "HDFOperations.h"
+#include "WriterRegistrar.h"
 
 namespace WriterModule::mdat {
 
@@ -20,10 +20,10 @@ static WriterModule::Registry::Registrar<mdat_Writer> RegisterWriter("mdat",
 WriterModule::InitResult
 mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   try {
-    NeXusDataset::DateTime(HDFGroup, "start_time", NeXusDataset::Mode::Create, StringSize,
-                           ChunkSize);
-    NeXusDataset::DateTime(HDFGroup, "end_time", NeXusDataset::Mode::Create, StringSize,
-                           ChunkSize);
+    NeXusDataset::DateTime(HDFGroup, "start_time", NeXusDataset::Mode::Create,
+                           StringSize, ChunkSize);
+    NeXusDataset::DateTime(HDFGroup, "end_time", NeXusDataset::Mode::Create,
+                           StringSize, ChunkSize);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     LOG_ERROR("mdat could not init_hdf HDFGroup: {}  trace: {}\nError with "
@@ -37,8 +37,9 @@ mdat_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 
 WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
-    mdatStart_datetime = NeXusDataset::DateTime(
-        HDFGroup, "start_time", NeXusDataset::Mode::Open, StringSize, ChunkSize);
+    mdatStart_datetime =
+        NeXusDataset::DateTime(HDFGroup, "start_time", NeXusDataset::Mode::Open,
+                               StringSize, ChunkSize);
     mdatEnd_datetime = NeXusDataset::DateTime(
         HDFGroup, "end_time", NeXusDataset::Mode::Open, StringSize, ChunkSize);
   } catch (std::exception const &E) {
