@@ -13,7 +13,7 @@ if (env.BRANCH_NAME == 'main') {
   num_artifacts_to_keep = '2'
 }
 
-// Set number of old builds to keep.
+// Set number of old builds to keep
 properties([[
   $class: 'BuildDiscarderProperty',
   strategy: [
@@ -92,7 +92,7 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage: documentation
 }  // createBuilders
 
-// Only run static checks and build documentation in pull requests
+// Only run static checks in pull requests
 if (env.CHANGE_ID) {
   pr_checks_nodes = [
     'pr-checks': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
