@@ -130,7 +130,7 @@ builders = pipeline_builder.createBuilders { container ->
     """
   }  // stage: documentation
 
-  if (container.key == release_os) {
+  if (container.key == release_node) {
     pipeline_builder.stage("${container.key}: archive") {
       // Create archive file
       container.sh """
