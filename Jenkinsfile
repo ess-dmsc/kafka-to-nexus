@@ -84,6 +84,41 @@ builders = pipeline_builder.createBuilders { container ->
     """
   }  // stage: build
 
+  pipeline_builder.stage("${container.key}: test") {
+    if (container.key == coverage_node) {
+      container.sh """
+        cd build
+        ./bin/UnitTests -- --gtest_output=xml:test_results.xml
+        ninja coverage
+      """
+
+      // Copy test and coverage results
+      container.copyFrom('build', '.')
+
+      // Publish test results
+      junit "build/test_results.xml"
+
+      // Publish test coverage
+      step([
+        $class: 'CoberturaPublisher',
+        autoUpdateHealth: true,
+        autoUpdateStability: true,
+        coberturaReportFile: 'build/coverage.xml',
+        failUnhealthy: false,
+        failUnstable: false,
+        maxNumberOfBuilds: 0,
+        onlyStable: false,
+        sourceEncoding: 'ASCII',
+        zoomCoverageChart: true
+      ])
+    } else {
+      container.sh """
+        cd build
+        ./bin/UnitTests
+      """
+    }
+  }  // stage: test
+
   pipeline_builder.stage("${container.key}: documentation") {
     container.sh """
       cd build
