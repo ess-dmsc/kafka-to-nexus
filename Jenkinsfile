@@ -258,7 +258,7 @@ if (env.CHANGE_ID) {
     }  // stage: checkout
 
     try {
-      stage("${container.key}: requirements") {
+      stage("requirements") {
         sh """
           cd ${pipeline_builder.project}
           scl enable rh-python38 -- python -m pip install \
@@ -271,7 +271,7 @@ if (env.CHANGE_ID) {
         """
       }  // stage: requirements
 
-      stage("${container.key}: integration-test") {
+      stage("integration-test") {
         dir("${pipeline_builder.project}/integration-tests") {
           // Stop and remove any containers that may have been from the job before,
           // i.e. if a Jenkins job has been aborted.
@@ -295,7 +295,7 @@ if (env.CHANGE_ID) {
         }  // dir
       }  // stage: integration-test
     } finally {
-      stage ("${container.key}: clean-up") {
+      stage ("clean-up") {
         dir("${pipeline_builder.project}/integration-tests") {
           // The statements below return true because the build should pass
           // even if there are no docker containers or output files to be
@@ -310,7 +310,7 @@ if (env.CHANGE_ID) {
         }  // dir
       }  // stage: clean-up
 
-      stage("${container.key}: results") {
+      stage("results") {
         junit "${pipeline_builder.project}/integration-tests/IntegrationTestsOutput.xml"
         archiveArtifacts "${pipeline_builder.project}/integration-tests/logs/*.txt"
       }  // stage: results
