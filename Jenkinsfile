@@ -43,7 +43,7 @@ pipeline_builder.activateEmailFailureNotifications()
 def archive_output = "${pipeline_builder.project}-${release_node}.tar.gz"
 
 builders = pipeline_builder.createBuilders { container ->
-  pipeline_builder.stage("${container.key}: checkout") {
+  pipeline_builder.stage("${container.key}: Checkout") {
     dir(pipeline_builder.project) {
       scm_vars = checkout scm
     }
@@ -51,7 +51,7 @@ builders = pipeline_builder.createBuilders { container ->
     container.copyTo(pipeline_builder.project, pipeline_builder.project)
   }  // stage: checkout
 
-  pipeline_builder.stage("${container.key}: dependencies") {
+  pipeline_builder.stage("${container.key}: Dependencies") {
     container.sh """
       mkdir build
       cd build
@@ -60,7 +60,7 @@ builders = pipeline_builder.createBuilders { container ->
     """
   }  // stage: dependencies
 
-  pipeline_builder.stage("${container.key}: configuration") {
+  pipeline_builder.stage("${container.key}: Configuration") {
     if (container.key == release_node) {
       container.sh """
         ${pipeline_builder.project}/jenkins-scripts/configure-release.sh \
@@ -80,14 +80,14 @@ builders = pipeline_builder.createBuilders { container ->
     }
   }  // stage: configuration
 
-  pipeline_builder.stage("${container.key}: build") {
+  pipeline_builder.stage("${container.key}: Build") {
     container.sh """
       cd build
       ninja kafka-to-nexus UnitTests
     """
   }  // stage: build
 
-  pipeline_builder.stage("${container.key}: test") {
+  pipeline_builder.stage("${container.key}: Test") {
     if (container.key == coverage_node) {
       container.sh """
         cd build
@@ -123,7 +123,7 @@ builders = pipeline_builder.createBuilders { container ->
     }
   }  // stage: test
 
-  pipeline_builder.stage("${container.key}: documentation") {
+  pipeline_builder.stage("${container.key}: Documentation") {
     container.sh """
       cd build
       ninja docs
@@ -131,7 +131,7 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage: documentation
 
   if (container.key == release_node) {
-    pipeline_builder.stage("${container.key}: archive") {
+    pipeline_builder.stage("${container.key}: Archive") {
       // Create archive file
       container.sh """
         cd build
@@ -176,7 +176,7 @@ if (env.CHANGE_ID) {
   pr_pipeline_builder.activateEmailFailureNotifications()
 
   pr_checks_builders = pr_pipeline_builder.createBuilders { container ->
-    pr_pipeline_builder.stage("${container.key}: checkout") {
+    pr_pipeline_builder.stage("${container.key}: Checkout") {
       dir(pr_pipeline_builder.project) {
         scm_vars = checkout scm
       }
@@ -184,14 +184,14 @@ if (env.CHANGE_ID) {
       container.copyTo(pr_pipeline_builder.project, pr_pipeline_builder.project)
     }  // stage: checkout
 
-    pr_pipeline_builder.stage("${container.key}: clang-format") {
+    pr_pipeline_builder.stage("${container.key}: Clang-format") {
       container.sh """
         cd ${pr_pipeline_builder.project}
         jenkins-scripts/check-formatting.sh
       """
     }  // stage: clang-format 
 
-    pr_pipeline_builder.stage("${container.key}: black") {
+    pr_pipeline_builder.stage("${container.key}: Black") {
       container.sh """
         cd ${pr_pipeline_builder.project}
         python3 -m black --version
@@ -199,7 +199,7 @@ if (env.CHANGE_ID) {
       """
     }  // stage: black
 
-    pr_pipeline_builder.stage("${container.key}: cppcheck") {
+    pr_pipeline_builder.stage("${container.key}: Cppcheck") {
       container.sh """
         cd ${pr_pipeline_builder.project}
         cppcheck --version
