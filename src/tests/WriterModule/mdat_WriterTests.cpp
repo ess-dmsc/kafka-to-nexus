@@ -39,6 +39,7 @@ public:
   using mdat_Writer::ChunkSize;
   using mdat_Writer::mdatEnd_datetime;
   using mdat_Writer::mdatStart_datetime;
+  using mdat_Writer::StringSize;
 };
 
 TEST_F(mdatInit, BasicDefaultInit) {
@@ -62,8 +63,11 @@ TEST_F(mdatInit, CheckInitDataType) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   NeXusDataset::DateTime Value(RootGroup, "start_time",
-                               NeXusDataset::Mode::Open, TestWriter.ChunkSize);
-  EXPECT_EQ(Value.datatype(), hdf5::datatype::String());
+                               NeXusDataset::Mode::Open, TestWriter.StringSize, TestWriter.ChunkSize);
+  hdf5::datatype::String StringType = hdf5::datatype::String::fixed(TestWriter.StringSize);
+  StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  StringType.padding(hdf5::datatype::StringPad::NullTerm);
+  EXPECT_EQ(Value.datatype(), StringType.native_type());
 }
 
 class mdatConfigParse : public ::testing::Test {
@@ -80,5 +84,5 @@ TEST_F(mdatInit, WriteOneElement) {
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
   std::vector<std::string> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
-  EXPECT_EQ(WrittenTimes.at(0), "1970-01-01T00:00:01Z+0000");
+  EXPECT_EQ(WrittenTimes.at(0), "1970-01-01T00:00:01Z+0100");
 }
