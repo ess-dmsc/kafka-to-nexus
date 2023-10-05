@@ -157,7 +157,7 @@ builders = pipeline_builder.createBuilders { container ->
       container.copyFrom("build/${pipeline_builder.project}/BUILD_INFO", '.')
       archiveArtifacts "${archive_output},BUILD_INFO"
 
-      // Stash archive file for integration test
+      // Stash archive file for integration test in pull request builds
       if (env.CHANGE_ID) {
         stash "${archive_output}"
       }
@@ -260,7 +260,7 @@ if (env.CHANGE_ID) {
     try {
       stage("${container.key}: requirements") {
         sh """
-          cd kafka-to-nexus
+          cd ${pipeline_builder.project}
           scl enable rh-python38 -- python -m pip install \
             --user \
             --upgrade \
@@ -272,7 +272,7 @@ if (env.CHANGE_ID) {
       }  // stage: requirements
 
       stage("${container.key}: integration-test") {
-        dir("kafka-to-nexus/integration-tests") {
+        dir("${pipeline_builder.project}/integration-tests") {
           // Stop and remove any containers that may have been from the job before,
           // i.e. if a Jenkins job has been aborted.
           sh """
@@ -296,7 +296,7 @@ if (env.CHANGE_ID) {
       }  // stage: integration-test
     } finally {
       stage ("${container.key}: clean-up") {
-        dir("kafka-to-nexus/integration-tests") {
+        dir("${pipeline_builder.project}/integration-tests") {
           // The statements below return true because the build should pass
           // even if there are no docker containers or output files to be
           // removed.
@@ -311,8 +311,8 @@ if (env.CHANGE_ID) {
       }  // stage: clean-up
 
       stage("${container.key}: results") {
-        junit "kafka-to-nexus/integration-tests/IntegrationTestsOutput.xml"
-        archiveArtifacts "kafka-to-nexus/integration-tests/logs/*.txt"
+        junit "${pipeline_builder.project}/integration-tests/IntegrationTestsOutput.xml"
+        archiveArtifacts "${pipeline_builder.project}/integration-tests/logs/*.txt"
       }  // stage: results
     }  // try/finally
   }  // node
