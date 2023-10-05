@@ -63,8 +63,10 @@ TEST_F(mdatInit, CheckInitDataType) {
   mdat_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   NeXusDataset::DateTime Value(RootGroup, "start_time",
-                               NeXusDataset::Mode::Open, TestWriter.StringSize, TestWriter.ChunkSize);
-  hdf5::datatype::String StringType = hdf5::datatype::String::fixed(TestWriter.StringSize);
+                               NeXusDataset::Mode::Open, TestWriter.StringSize,
+                               TestWriter.ChunkSize);
+  hdf5::datatype::String StringType =
+      hdf5::datatype::String::fixed(TestWriter.StringSize);
   StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   StringType.padding(hdf5::datatype::StringPad::NullTerm);
   EXPECT_EQ(Value.datatype(), StringType.native_type());
