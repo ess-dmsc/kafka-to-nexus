@@ -63,9 +63,9 @@ builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: configuration") {
     if (container.key == release_node) {
       container.sh """
-        cd build
-        ../${pipeline_builder.project}/jenkins-scripts/configure-release.sh \
-          ../${pipeline_builder.project}
+        ${pipeline_builder.project}/jenkins-scripts/configure-release.sh \
+          ${pipeline_builder.project} \
+          build
       """
     } else if (container.key == coverage_node) {
       container.sh """
