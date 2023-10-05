@@ -39,6 +39,9 @@ build_nodes = [
 pipeline_builder = new PipelineBuilder(this, build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
+// Define name for the archive file
+def archive_output = "${pipeline_builder.project}-${release_node}.tar.gz"
+
 builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: checkout") {
     dir(pipeline_builder.project) {
@@ -128,7 +131,6 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage: documentation
 
   if (container.key == release_os) {
-    def archive_output = "${pipeline_builder.project}-${container.key}.tar.gz"
     pipeline_builder.stage("${container.key}: archive") {
       // Create archive file
       container.sh """
@@ -251,7 +253,67 @@ if (env.CHANGE_ID) {
   node('inttest') {
     stage('checkout') {
       checkout scm
-      unstash 
-    }
-  }
-}
+      unstash "${archive_output}"
+      sh "tar xvf ${archive_output}"
+    }  // stage: checkout
+
+    try {
+      stage("${container.key}: requirements") {
+        sh """
+          cd kafka-to-nexus
+          scl enable rh-python38 -- python -m pip install \
+            --user \
+            --upgrade \
+            pip
+          scl enable rh-python38 -- python -m pip install \
+            --user \
+            -r integration-tests/requirements.txt
+        """
+      }  // stage: requirements
+
+      stage("${container.key}: integration-test") {
+        dir("kafka-to-nexus/integration-tests") {
+          // Stop and remove any containers that may have been from the job before,
+          // i.e. if a Jenkins job has been aborted.
+          sh """
+            docker stop \$(docker-compose ps -a -q)
+            && docker rm \$(docker-compose ps -a -q) \
+            || true
+          """
+
+          // Limit run to 30 minutes
+          timeout(time: 30, activity: true) {
+            sh """
+              chmod go+w logs output-files
+              LD_LIBRARY_PATH=../lib scl enable rh-python38 -- python -m pytest \
+                -s \
+                --writer-binary="../" \
+                --junitxml=./IntegrationTestsOutput.xml \
+                .
+            """
+          }  // timeout
+        }  // dir
+      }  // stage: integration-test
+    } finally {
+      stage ("${container.key}: clean-up") {
+        dir("kafka-to-nexus/integration-tests") {
+          // The statements below return true because the build should pass
+          // even if there are no docker containers or output files to be
+          // removed.
+          sh """
+            rm -rf output-files/* || true
+            docker stop \$(docker-compose ps -a -q) \
+            && docker rm \$(docker-compose ps -a -q) \
+            || true
+            chmod go-w logs output-files
+          """
+        }  // dir
+      }  // stage: clean-up
+
+      stage("${container.key}: results") {
+        junit "kafka-to-nexus/integration-tests/IntegrationTestsOutput.xml"
+        archiveArtifacts "kafka-to-nexus/integration-tests/logs/*.txt"
+      }  // stage: results
+    }  // try/finally
+  }  // node
+}  // if
