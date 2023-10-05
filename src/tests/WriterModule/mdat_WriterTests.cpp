@@ -88,5 +88,6 @@ TEST_F(mdatInit, WriteOneElement) {
   std::vector<std::string> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
   //  timezones not existing on all Jenkins builds
-  EXPECT_EQ(WrittenTimes.at(0).substr(0,21), std::string("1970-01-01T00:00:01Z+0100").substr(0,21));
+  EXPECT_EQ(WrittenTimes.at(0).substr(0, 21),
+            std::string("1970-01-01T00:00:01Z+0100").substr(0, 21));
 }
