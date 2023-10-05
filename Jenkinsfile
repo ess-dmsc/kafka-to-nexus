@@ -186,7 +186,7 @@ if (env.CHANGE_ID) {
           ]],
           tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
       }  // dir
-    }  // stage: cppecheck
+    }  // stage: cppcheck
   }  // PR checks createBuilders
 
   builders = builders + pr_checks_builders
