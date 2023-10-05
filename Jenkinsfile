@@ -112,7 +112,7 @@ builders = pipeline_builder.createBuilders { container ->
         zoomCoverageChart: true
       ])
     } else {
-      // Not a coverage nod
+      // Not a coverage node
       container.sh """
         cd build
         ./bin/UnitTests
