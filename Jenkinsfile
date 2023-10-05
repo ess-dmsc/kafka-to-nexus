@@ -176,6 +176,7 @@ if (env.CHANGE_ID) {
       // Copy source code to container
       container.copyTo(pr_pipeline_builder.project, pr_pipeline_builder.project)
     }  // stage: checkout
+
     pr_pipeline_builder.stage("${container.key}: clang-format") {
       container.sh """
         cd ${pr_pipeline_builder.project}
