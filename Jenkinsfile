@@ -276,7 +276,7 @@ if (env.CHANGE_ID) {
           // Stop and remove any containers that may have been from the job before,
           // i.e. if a Jenkins job has been aborted.
           sh """
-            docker stop \$(docker-compose ps -a -q)
+            docker stop \$(docker-compose ps -a -q) \
             && docker rm \$(docker-compose ps -a -q) \
             || true
           """
