@@ -128,32 +128,37 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage: documentation
 
   if (container.key == release_os) {
-    def archive_output = "${builder.project}-${container.key}.tar.gz"
+    def archive_output = "${pipeline_builder.project}-${container.key}.tar.gz"
     pipeline_builder.stage("${container.key}: archive") {
       // Create archive file
       container.sh """
         cd build
-        rm -rf ${builder.project}; mkdir ${builder.project}
-        mkdir ${builder.project}/bin
-        cp ./bin/kafka-to-nexus ${builder.project}/bin/
-        cp -r ./lib ${builder.project}/
-        cp -r ./licenses ${builder.project}/
+        rm -rf ${pipeline_builder.project}; mkdir ${pipeline_builder.project}
+        mkdir ${pipeline_builder.project}/bin
+        cp ./bin/kafka-to-nexus ${pipeline_builder.project}/bin/
+        cp -r ./lib ${pipeline_builder.project}/
+        cp -r ./licenses ${pipeline_builder.project}/
 
-        cp ./CONAN_INFO ${builder.project}/
+        cp ./CONAN_INFO ${pipeline_builder.project}/
 
         # Create file with build information
-        touch ${builder.project}/BUILD_INFO
-        echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
-        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
-        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
+        touch ${pipeline_builder.project}/BUILD_INFO
+        echo 'Repository: ${pipeline_builder.project}/${env.BRANCH_NAME}' >> ${pipeline_builder.project}/BUILD_INFO
+        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${pipeline_builder.project}/BUILD_INFO
+        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${pipeline_builder.project}/BUILD_INFO
 
-        tar czf ${archive_output} ${builder.project}
+        tar czf ${archive_output} ${pipeline_builder.project}
       """
 
       // Copy files from container and archive
       container.copyFrom("build/${archive_output}", '.')
-      container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
+      container.copyFrom("build/${pipeline_builder.project}/BUILD_INFO", '.')
       archiveArtifacts "${archive_output},BUILD_INFO"
+
+      // Stash archive file for integration test
+      if (env.CHANGE_ID) {
+        stash "${archive_output}"
+      }
     }  // stage: archive
   }  // if
 
@@ -239,4 +244,14 @@ node('master') {
 
   // Delete workspace when build is done
   cleanWs()
+}
+
+// Only run integration test on pull requests
+if (env.CHANGE_ID) {
+  node('inttest') {
+    stage('checkout') {
+      checkout scm
+      unstash 
+    }
+  }
 }
