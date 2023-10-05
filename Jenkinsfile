@@ -25,11 +25,15 @@ properties([[
   ]
 ]]);
 
+// Define node labels for additional steps
+def release_node = 'centos7-release'  // Build for archiving artefact
+def coverage_node = 'ubuntu2204'  // Calculate test coverage
+
 build_nodes = [
   'almalinux8': ContainerBuildNode.getDefaultContainerBuildNode('almalinux8-gcc12'),
   'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  'ubuntu2204': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
+  (release_node): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
+  (coverage_node): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
 ]
 
 pipeline_builder = new PipelineBuilder(this, build_nodes)
@@ -54,16 +58,21 @@ builders = pipeline_builder.createBuilders { container ->
   }  // stage: dependencies
 
   pipeline_builder.stage("${container.key}: configuration") {
-    if (container.key == 'centos7-release') {
+    if (container.key == release_node) {
       container.sh """
         cd build
         ../${pipeline_builder.project}/jenkins-scripts/configure-release.sh \
           ../${pipeline_builder.project}
       """
-    } else {
+    } else if (container.key == coverage_node) {
       container.sh """
         cd build
         cmake -DCOV=ON -DRUN_DOXYGEN=ON -GNinja ../${pipeline_builder.project}
+      """
+    } else {
+      container.sh """
+        cd build
+        cmake -DRUN_DOXYGEN=ON -GNinja ../${pipeline_builder.project}
       """
     }
   }  // stage: configuration
@@ -128,6 +137,8 @@ if (env.CHANGE_ID) {
           --inconclusive \
           src/ 2> cppcheck.xml
       """
+
+      // Copy files from container and publish report
       container.copyFrom("${pr_pipeline_builder.project}/cppcheck.xml", pr_pipeline_builder.project)
       dir("${pr_pipeline_builder.project}") {
         recordIssues \
@@ -144,7 +155,7 @@ if (env.CHANGE_ID) {
   }  // PR checks createBuilders
 
   builders = builders + pr_checks_builders
-}
+}  // if
 
 node('master') {
   dir("${pipeline_builder.project}") {
