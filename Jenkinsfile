@@ -254,7 +254,7 @@ node('master') {
 
 // Only run integration test on pull requests
 if (env.CHANGE_ID) {
-  node('inttest') {
+  node('docker') {
     stage('checkout') {
       checkout scm
       unstash "${archive_output}"
@@ -262,25 +262,28 @@ if (env.CHANGE_ID) {
     }  // stage: checkout
 
     stage("requirements") {
+      dir("integration-tests") {
         sh """
-          scl enable rh-python38 -- python -m pip install \
+          scl enable rh-python38 -- python -m venv venv
+          venv/bin/pip install \
             --user \
             --upgrade \
             pip
-          scl enable rh-python38 -- python -m pip install \
+          venv/bin/pip install \
             --user \
-            -r integration-tests/requirements.txt
+            -r requirements.txt
         """
-      }  // stage: requirements
+      }  // dir
+    }  // stage: requirements
 
     try {
-      stage("integration-test") {
-        dir("integration-tests") {
+      dir("integration-tests") {
+        stage("integration-test") {
           // Stop and remove any containers that may have been from the job before,
           // i.e. if a Jenkins job has been aborted.
           sh """
-            docker stop \$(docker-compose ps -a -q) \
-              && docker rm \$(docker-compose ps -a -q) \
+            docker stop \$(venv/bin/docker-compose ps -a -q) \
+              && docker rm \$(venv/bin/docker-compose ps -a -q) \
               || true
           """
 
@@ -288,35 +291,35 @@ if (env.CHANGE_ID) {
           timeout(time: 30, activity: true) {
             sh """
               chmod go+w logs output-files
-              LD_LIBRARY_PATH=../lib scl enable rh-python38 -- python -m pytest \
+              LD_LIBRARY_PATH=../lib venv/bin/python -m pytest \
                 -s \
                 --writer-binary="../" \
                 --junitxml=./IntegrationTestsOutput.xml \
                 .
             """
           }  // timeout
-        }  // dir
-      }  // stage: integration-test
+        }  // stage: integration-test
+      }  // dir
     } finally {
-      stage ("clean-up") {
-        dir("integration-tests") {
+      dir("integration-tests") {
+        stage ("clean-up") {
           // The statements below return true because the build should pass
           // even if there are no docker containers or output files to be
           // removed.
           sh """
             rm -rf output-files/* || true
-            docker stop \$(docker-compose ps -a -q) \
-              && docker rm \$(docker-compose ps -a -q) \
+            docker stop \$(venv/bin/docker-compose ps -a -q) \
+              && docker rm \$(venv/bin/docker-compose ps -a -q) \
               || true
             chmod go-w logs output-files
           """
-        }  // dir
-      }  // stage: clean-up
+        }  // stage: clean-up
 
-      stage("results") {
-        junit "integration-tests/IntegrationTestsOutput.xml"
-        archiveArtifacts "integration-tests/logs/*.txt"
-      }  // stage: results
+        stage("results") {
+          junit "IntegrationTestsOutput.xml"
+          archiveArtifacts "logs/*.txt"
+        }  // stage: results
+      }  // dir
     }  // try/finally
   }  // node
 }  // if
