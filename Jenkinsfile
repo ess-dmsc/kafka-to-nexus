@@ -282,8 +282,8 @@ if (env.CHANGE_ID) {
           // Stop and remove any containers that may have been from the job before,
           // i.e. if a Jenkins job has been aborted.
           sh """
-            docker stop \$(venv/bin/docker-compose ps -a -q) \
-              && docker rm \$(venv/bin/docker-compose ps -a -q) \
+            docker stop \$(docker-compose ps -a -q) \
+              && docker rm \$(docker-compose ps -a -q) \
               || true
           """
 
@@ -308,8 +308,8 @@ if (env.CHANGE_ID) {
           // removed.
           sh """
             rm -rf output-files/* || true
-            docker stop \$(venv/bin/docker-compose ps -a -q) \
-              && docker rm \$(venv/bin/docker-compose ps -a -q) \
+            docker stop \$(docker-compose ps -a -q) \
+              && docker rm \$(docker-compose ps -a -q) \
               || true
             chmod go-w logs output-files
           """
