@@ -265,13 +265,8 @@ if (env.CHANGE_ID) {
       dir("integration-tests") {
         sh """
           scl enable rh-python38 -- python -m venv venv
-          venv/bin/pip install \
-            --user \
-            --upgrade \
-            pip
-          venv/bin/pip install \
-            --user \
-            -r requirements.txt
+          venv/bin/pip install --upgrade pip
+          venv/bin/pip install -r requirements.txt
         """
       }  // dir
     }  // stage: requirements
