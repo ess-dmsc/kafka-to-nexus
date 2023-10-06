@@ -145,7 +145,8 @@ builders = pipeline_builder.createBuilders { container ->
 
         # Create file with build information
         touch ${pipeline_builder.project}/BUILD_INFO
-        echo 'Repository: ${pipeline_builder.project}/${env.BRANCH_NAME}' >> ${pipeline_builder.project}/BUILD_INFO
+        echo 'Repository: ${pipeline_builder.project}/${env.BRANCH_NAME}' \
+          >> ${pipeline_builder.project}/BUILD_INFO
         echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${pipeline_builder.project}/BUILD_INFO
         echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${pipeline_builder.project}/BUILD_INFO
 
@@ -214,7 +215,10 @@ if (env.CHANGE_ID) {
       """
 
       // Copy files from container and publish report
-      container.copyFrom("${pr_pipeline_builder.project}/cppcheck.xml", pr_pipeline_builder.project)
+      container.copyFrom(
+        "${pr_pipeline_builder.project}/cppcheck.xml",
+        pr_pipeline_builder.project
+      )
       dir("${pr_pipeline_builder.project}") {
         recordIssues \
           quiet: true,
@@ -276,8 +280,8 @@ if (env.CHANGE_ID) {
           // i.e. if a Jenkins job has been aborted.
           sh """
             docker stop \$(docker-compose ps -a -q) \
-            && docker rm \$(docker-compose ps -a -q) \
-            || true
+              && docker rm \$(docker-compose ps -a -q) \
+              || true
           """
 
           // Limit run to 30 minutes
@@ -302,8 +306,8 @@ if (env.CHANGE_ID) {
           sh """
             rm -rf output-files/* || true
             docker stop \$(docker-compose ps -a -q) \
-            && docker rm \$(docker-compose ps -a -q) \
-            || true
+              && docker rm \$(docker-compose ps -a -q) \
+              || true
             chmod go-w logs output-files
           """
         }  // dir
