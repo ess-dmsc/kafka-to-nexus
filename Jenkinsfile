@@ -39,7 +39,7 @@ build_nodes = [
 pipeline_builder = new PipelineBuilder(this, build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
-// Define name for the archive file
+// Define name for the archive file used in main pipeline and integration test
 def archive_output = "${pipeline_builder.project}-${release_node}.tar.gz"
 
 builders = pipeline_builder.createBuilders { container ->
@@ -260,7 +260,6 @@ if (env.CHANGE_ID) {
     try {
       stage("requirements") {
         sh """
-          cd ${pipeline_builder.project}
           scl enable rh-python38 -- python -m pip install \
             --user \
             --upgrade \
@@ -272,7 +271,7 @@ if (env.CHANGE_ID) {
       }  // stage: requirements
 
       stage("integration-test") {
-        dir("${pipeline_builder.project}/integration-tests") {
+        dir("integration-tests") {
           // Stop and remove any containers that may have been from the job before,
           // i.e. if a Jenkins job has been aborted.
           sh """
@@ -296,7 +295,7 @@ if (env.CHANGE_ID) {
       }  // stage: integration-test
     } finally {
       stage ("clean-up") {
-        dir("${pipeline_builder.project}/integration-tests") {
+        dir("integration-tests") {
           // The statements below return true because the build should pass
           // even if there are no docker containers or output files to be
           // removed.
@@ -311,8 +310,8 @@ if (env.CHANGE_ID) {
       }  // stage: clean-up
 
       stage("results") {
-        junit "${pipeline_builder.project}/integration-tests/IntegrationTestsOutput.xml"
-        archiveArtifacts "${pipeline_builder.project}/integration-tests/logs/*.txt"
+        junit "integration-tests/IntegrationTestsOutput.xml"
+        archiveArtifacts "integration-tests/logs/*.txt"
       }  // stage: results
     }  // try/finally
   }  // node
