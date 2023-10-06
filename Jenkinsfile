@@ -261,8 +261,7 @@ if (env.CHANGE_ID) {
       sh "tar xvf ${archive_output}"
     }  // stage: checkout
 
-    try {
-      stage("requirements") {
+    stage("requirements") {
         sh """
           scl enable rh-python38 -- python -m pip install \
             --user \
@@ -274,6 +273,7 @@ if (env.CHANGE_ID) {
         """
       }  // stage: requirements
 
+    try {
       stage("integration-test") {
         dir("integration-tests") {
           // Stop and remove any containers that may have been from the job before,
