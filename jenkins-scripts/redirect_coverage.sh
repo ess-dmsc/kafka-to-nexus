@@ -2,6 +2,8 @@
 
 # Process test coverage results for publishing by Jenkins, replacing path
 # to source code from container with path in build node.
+#
+# Usage: redirect-coverage.sh <coverage_file> <source_root>
 
 coverage_results_file=$1
 project_dir=$2
