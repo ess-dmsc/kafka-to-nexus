@@ -102,7 +102,12 @@ builders = pipeline_builder.createBuilders { container ->
       // Publish test results
       junit "build/test_results.xml"
 
-      // Publish test coverage
+      // Process and publish test coverage
+      sh """
+        ${pipeline_builder.project}/jenkins-scripts/redirect-coverage.sh \
+          build/coverage.xml \
+          ${pipeline_builder.project}
+      """
       step([
         $class: 'CoberturaPublisher',
         autoUpdateHealth: true,
