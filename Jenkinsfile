@@ -290,7 +290,7 @@ if (env.CHANGE_ID) {
               chmod go+w logs output-files
               LD_LIBRARY_PATH=../lib venv/bin/python -m pytest \
                 -s \
-                --writer-binary="../" \
+                --writer-binary="../kafka-to-nexus" \
                 --junitxml=./IntegrationTestsOutput.xml \
                 .
             """
