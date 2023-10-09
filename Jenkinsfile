@@ -42,6 +42,7 @@ pipeline_builder.activateEmailFailureNotifications()
 // Define name for the archive file used in main pipeline and integration test
 def archive_output = "${pipeline_builder.project}-${release_node}.tar.gz"
 
+// Main build and test pipeline
 builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: Checkout") {
     dir(pipeline_builder.project) {
@@ -242,6 +243,7 @@ node('master') {
   }
 
   try {
+    // Start pipelines
     parallel builders
   } catch (e) {
     pipeline_builder.handleFailureMessages()
