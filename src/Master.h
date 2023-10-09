@@ -67,7 +67,7 @@ private:
   Metrics::Registrar MasterMetricsRegistrar;
   mutable std::mutex StatusMutex;
   Status::JobStatusInfo CurrentStatus;
-  Metrics::Metric CurrentStateMetric{"file_writer_state", "idle/writing"};
+  Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};
   std::string CurrentMetadata;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();
