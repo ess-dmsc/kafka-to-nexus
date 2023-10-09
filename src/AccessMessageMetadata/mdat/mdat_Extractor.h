@@ -11,7 +11,7 @@
 
 /// \file
 ///
-/// \brief This file acts as a template for creating file writing modules.
+/// \brief This file acts as a mdat for creating file writing modules.
 ///
 /// All of the classes required are explained here. The
 /// only thing missing from this header file is the registration of the file
@@ -34,7 +34,7 @@
 
 #pragma once
 #include "FlatbufferReader.h"
-#include "WriterModuleBase.h"
+#include "flatbuffers/flatbuffers.h"
 #include <iostream>
 
 /// \brief A separate namespace for this specific file writing module. Use this
@@ -47,7 +47,7 @@ namespace AccessMessageMetadata {
 /// See TestWriter.cpp for code which is used to tie a file identifier to an
 /// instance of this class. Note that this class is only instantiated once in
 /// the entire run of the application.
-class Extractor : public FileWriter::FlatbufferReader {
+class mdat_Extractor : public FileWriter::FlatbufferReader {
 public:
   /// \brief Is used to verify the contents of a flatbuffer.
   ///
@@ -79,10 +79,7 @@ public:
   ///
   /// \return `true` if the data was verified as "correct", `false` otherwise.
   // cppcheck-suppress functionStatic
-  bool verify(FileWriter::FlatbufferMessage const &/*Message*/) const override {
-    std::cout << "ReaderClass::verify()\n";
-    return true;
-  }
+  bool verify(FileWriter::FlatbufferMessage const &/*Message*/) const override {return true;}
 
   /// \brief Extract the name of the data source from the flatbuffer.
   ///
@@ -106,10 +103,7 @@ public:
   /// \return The name of the source of the data in the flatbuffer pointed to by
   /// the Message parameter.
   // cppcheck-suppress functionStatic
-  std::string source_name(FileWriter::FlatbufferMessage const &/*Message*/) const override {
-    std::cout << "ReaderClass::source_name()\n";
-    return "";
-  }
+  std::string source_name(FileWriter::FlatbufferMessage const &/*Message*/) const override{ return ""; }
 
   /// \brief Extract the timestamp of a flatbuffer.
   ///
@@ -130,11 +124,8 @@ public:
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
   // cppcheck-suppress functionStatic
-  uint64_t timestamp(FileWriter::FlatbufferMessage const &/*Message*/) const override {
-    std::cout << "ReaderClass::timestamp()\n";
-    return 0;
-  }
+  uint64_t timestamp(FileWriter::FlatbufferMessage const &/*Message*/) const override{ return 0; }
 };
 
-} // namespace AccessMessageMetadata
+} // namespace mdatWriter
 // clang-format on

@@ -7,12 +7,12 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "TemplateExtractor.h"
+#include "mdat_Extractor.h"
 
 namespace AccessMessageMetadata {
 
 // Instantiates a ReaderClass used for extracting source names, timestamps and
 // verifying a flatbuffers.
-static FileWriter::FlatbufferReaderRegistry::Registrar<Extractor>
-    RegisterReader("test");
+static FileWriter::FlatbufferReaderRegistry::Registrar<mdat_Extractor>
+    RegisterReader("mdat");
 } // namespace AccessMessageMetadata

@@ -55,7 +55,7 @@ public:
   /// \brief For doing extra processing related to the configuration of the
   /// writer module.
   ///
-  /// If extra processing of the configuration parameters is requried, for
+  /// If extra processing of the configuration parameters is required, for
   /// example: converting a string to an enum, it should
   /// be done in this function. This function is called by the application right
   /// after the constructor and parse_config().

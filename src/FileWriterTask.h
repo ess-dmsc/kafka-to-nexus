@@ -30,7 +30,7 @@ public:
 
 /// \brief Represents the task of writing a HDF file.
 ///
-/// It contains the list of `Source` and `DemuxTopic`
+/// It contains the list of `Source` and `Topic`
 /// and makes those available to the FileMaster and `Streamer`.
 /// Created by `Master` on command message and passed to FileMaster in vector.
 class FileWriterTask {
@@ -59,7 +59,7 @@ public:
   /// \param Id The Id value to use.
   void setJobId(const std::string &Id);
 
-  /// \brief Add a source to the demuxers.
+  /// \brief Add a source to the topics.
   ///
   /// \param Source The source to add.
   void addSource(Source &&Source);
@@ -70,9 +70,9 @@ public:
   /// \param Name The filename (can include path).
   void setFullFilePath(std::string const &Prefix, std::string const &Name);
 
-  /// \brief Get the list of demuxers.
+  /// \brief Get the list of topics.
   ///
-  /// \return The demux topics.
+  /// \return The topics.
   std::vector<Source> &sources();
 
   /// \brief  Get the job ID of the file being written.

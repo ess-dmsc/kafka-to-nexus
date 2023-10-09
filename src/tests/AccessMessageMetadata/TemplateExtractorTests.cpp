@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 
 TEST(TemplateTests, ReaderReturnValues) {
-  TemplateExtractor::Extractor SomeExtractor;
+  AccessMessageMetadata::Extractor SomeExtractor;
   EXPECT_TRUE(SomeExtractor.verify(FileWriter::FlatbufferMessage()));
   EXPECT_EQ(SomeExtractor.source_name(FileWriter::FlatbufferMessage()),
             std::string(""));

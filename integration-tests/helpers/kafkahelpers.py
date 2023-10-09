@@ -145,11 +145,11 @@ def publish_ev44_message(
 ):
     message = serialise_ev44(
         source_name=source_name,
+        message_id=message_id,
         reference_time=reference_time,
         reference_time_index=reference_time_index,
         time_of_flight=time_of_flight,
         pixel_id=pixel_id,
-        message_id=message_id,
     )
     publish_message(producer, message, topic, timestamp)
 
@@ -187,6 +187,15 @@ def publish_al00_message(
 
 
 def publish_ep00_message(
+    producer, topic, status, timestamp: datetime, source_name: str = "SIMPLE:DOUBLE"
+):
+    ep00_message = serialise_ep00(
+        datetime_to_ns(timestamp), status, source_name=source_name
+    )
+    publish_message(producer, ep00_message, topic, timestamp)
+
+
+def publish_mdat_message(
     producer, topic, status, timestamp: datetime, source_name: str = "SIMPLE:DOUBLE"
 ):
     ep00_message = serialise_ep00(

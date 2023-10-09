@@ -69,9 +69,9 @@ void clear();
 template <typename Module> class Registrar {
 public:
   /// \brief Register the writer module given in template parameter `Module`
-  /// under the
-  /// identifier `FlatbufferID`.
-  ///
+  /// under an identifier `FlatbufferID`.
+  /// Name should match the name used in
+  /// FlatbufferReaderRegistry::Registrar<template> RegisterReader(Name).
   /// \param FlatbufferID The unique identifier for this writer module.
   explicit Registrar(std::string const &ID, std::string const &Name) {
     auto FactoryFunction = []() { return std::make_unique<Module>(); };
