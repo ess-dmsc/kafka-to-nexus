@@ -12,6 +12,10 @@
 
 constexpr size_t RandomStringLength{4};
 
+void a_function() {
+  int i = 123;
+}
+
 void setupLoggerFromOptions(MainOpt const &opt) {
   setUpLogging(opt.LoggingLevel, opt.LogFilename, opt.GraylogLoggerAddress);
 }
