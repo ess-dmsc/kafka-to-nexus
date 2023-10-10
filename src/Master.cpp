@@ -34,6 +34,9 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   this->Reporter->setJSONMetaDataGenerator(
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
+  CurrentStateMetric = static_cast<int64_t>(getCurrentState());
+  MasterMetricsRegistrar.registerMetric(CurrentStateMetric,
+                                        {Metrics::LogTo::CARBON});
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {
@@ -145,6 +148,11 @@ Status::WorkerState Master::getCurrentState() const {
   return CurrentStatus.State;
 }
 
+const Metrics::Metric &Master::getCurrentStateMetric() const {
+  std::lock_guard LockGuard(StatusMutex);
+  return CurrentStateMetric;
+}
+
 std::string Master::getCurrentFileName() const {
   std::lock_guard LockGuard(StatusMutex);
   return CurrentStatus.Filename;
@@ -164,11 +172,13 @@ void Master::setStopTimeInternal(time_point NewStopTime) {
 void Master::setCurrentStatus(Status::JobStatusInfo const &NewStatus) {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = NewStatus;
+  CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
 }
 
 void Master::resetStatusInfo() {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = {};
+  CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
 }
 
 } // namespace FileWriter
