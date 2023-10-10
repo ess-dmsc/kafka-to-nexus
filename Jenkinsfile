@@ -2,8 +2,6 @@
 import ecdcpipeline.ContainerBuildNode
 import ecdcpipeline.PipelineBuilder
 
-project = "kafka-to-nexus"
-
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
 // but based on the fact that for the main branch we want to have a certain
 // number of old builds available, while for the other branches we want to be
@@ -15,7 +13,7 @@ if (env.BRANCH_NAME == 'main') {
   num_artifacts_to_keep = '2'
 }
 
-// Set number of old builds to keep.
+// Set number of old builds to keep
 properties([[
   $class: 'BuildDiscarderProperty',
   strategy: [
@@ -27,376 +25,230 @@ properties([[
   ]
 ]]);
 
-def checkout(builder, container) {
-    builder.stage("${container.key}: Checkout") {
-        dir(builder.project) {
-          scm_vars = checkout scm
-        }
-        container.copyTo(builder.project, builder.project)
-    }
-}
+// Define node labels for additional steps
+def release_node = 'centos7-release'  // Build for archiving artefact
+def coverage_node = 'ubuntu2204'  // Calculate test coverage
 
-def cpp_dependencies(builder, container) {
-    builder.stage("${container.key}: Dependencies") {
-
-        container.sh """
-          mkdir build
-          cd build
-          conan install --build=outdated ../${builder.project}/conanfile.txt
-          conan info ../${builder.project}/conanfile.txt > CONAN_INFO
-        """
-    }
-}
-
-def build(builder, container, unit_tests=false) {
-    String Target = "kafka-to-nexus"
-    if (unit_tests) {
-        Target = "UnitTests"
-    }
-    builder.stage("${container.key}: Build") {
-        container.sh """
-        cd build
-        . ./activate_run.sh
-        ninja ${Target}
-        """
-    }
-}
-
-def unit_tests(builder, container, coverage) {
-    builder.stage("${container.key}: Test") {
-        // env.CHANGE_ID is set for pull request builds.
-        if (coverage) {
-          def test_output = "TestResults.xml"
-          container.sh """
-            cd build
-            . ./activate_run.sh
-            ./bin/UnitTests -- --gtest_output=xml:${test_output}
-            ninja coverage
-          """
-
-          container.copyFrom('build', '.')
-          junit "build/${test_output}"
-
-          step([
-              $class: 'CoberturaPublisher',
-              autoUpdateHealth: true,
-              autoUpdateStability: true,
-              coberturaReportFile: 'build/coverage.xml',
-              failUnhealthy: false,
-              failUnstable: false,
-              maxNumberOfBuilds: 0,
-              onlyStable: false,
-              sourceEncoding: 'ASCII',
-              zoomCoverageChart: true
-          ])
-
-          if (env.CHANGE_ID) {
-            coverage_summary = sh (
-                script: "sed -n -e '/^TOTAL/p' build/coverage.txt",
-                returnStdout: true
-            ).trim()
-
-            def repository_url = scm.userRemoteConfigs[0].url
-            def repository_name = repository_url.replace("git@github.com:","").replace(".git","").replace("https://github.com/","")
-            def comment_text = "**Code Coverage**\\n*(Lines    Exec  Cover)*\\n${coverage_summary}\\n*For more detail see Cobertura report in Jenkins interface*"
-
-            withCredentials([usernamePassword(credentialsId: 'cow-bot-username-with-token', usernameVariable: 'UNUSED_VARIABLE', passwordVariable: 'GITHUB_TOKEN')]) {
-              withEnv(["comment_text=${comment_text}", "repository_name=${repository_name}"]) {
-                sh 'curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\\"body\\": \\"$comment_text\\"}" "https://api.github.com/repos/$repository_name/issues/$CHANGE_ID/comments"'
-              }
-            }
-          }
-
-        } else {
-          def test_dir
-          test_dir = 'bin'
-
-          container.sh """
-            cd build
-            . ./activate_run.sh
-            ./${test_dir}/UnitTests
-          """
-        }
-      }  // stage
-}
-
-def configure(builder, container, extra_flags, release_build) {
-    builder.stage("${container.key}: Configure") {
-        if (!release_build) {
-          container.sh """
-            cd build
-            . ./activate_run.sh
-            cmake ${extra_flags} -GNinja ../${builder.project}
-          """
-        } else {
-
-          container.sh """
-            cd build
-            . ./activate_run.sh
-            cmake \
-              -GNinja \
-              -DCMAKE_BUILD_TYPE=Release \
-              -DCONAN=MANUAL \
-              -DCMAKE_SKIP_RPATH=FALSE \
-              -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
-              -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
-              ../${builder.project}
-          """
-        }
-    }
-}
-
-def static_checks(builder, container) {
-    builder.stage("${container.key}: Formatting") {
-          if (!env.CHANGE_ID) {
-            // Ignore non-PRs
-            return
-          }
-
-          container.setupLocalGitUser(builder.project)
-
-          try {
-            // Do clang-format of C++ files
-            container.sh """
-              clang-format -version
-              cd ${project}
-              find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
-              -exec clang-format -i {} +
-              git status -s
-              git add -u
-              git commit -m 'GO FORMAT YOURSELF (clang-format)'
-            """
-          } catch (e) {
-          // Okay to fail as there could be no badly formatted files to commit
-          } finally {
-          // Clean up
-          }
-
-          try {
-            // Do black format of python scripts
-            container.sh """
-              /home/jenkins/.local/bin/black --version
-              cd ${project}
-              /home/jenkins/.local/bin/black integration-tests
-              git status -s
-              git add -u
-              git commit -m 'GO FORMAT YOURSELF (black)'
-            """
-          } catch (e) {
-          // Okay to fail as there could be no badly formatted files to commit
-          } finally {
-          // Clean up
-          }
-
-          // Push any changes resulting from formatting
-          container.copyFrom(pipeline_builder.project, 'clang-formatted-code')
-          try {
-            withCredentials([
-              gitUsernamePassword(
-                credentialsId: 'cow-bot-username-with-token',
-                gitToolName: 'Default'
-              )
-            ]) {
-              withEnv(["PROJECT=${builder.project}"]) {
-                sh '''
-                  cd clang-formatted-code
-                  git push https://github.com/ess-dmsc/$PROJECT.git HEAD:$CHANGE_BRANCH
-                '''
-              }  // withEnv
-            }  // withCredentials
-          } catch (e) {
-          // Okay to fail; there may be nothing to push
-          } finally {
-          // Clean up
-          }
-        }  // stage
-
-        builder.stage("${container.key}: Cppcheck") {
-          def test_output = "cppcheck.xml"
-            container.sh """
-              cd ${builder.project}
-              cppcheck --xml --inline-suppr --suppress=unusedFunction --suppress=missingInclude --enable=all --inconclusive src/ 2> ${test_output}
-            """
-            container.copyFrom("${builder.project}/${test_output}", builder.project)
-            dir("${builder.project}") {
-              sh "cat ${test_output} || true"
-              recordIssues quiet: true, sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
-            }
-        }  // stage
-
-        builder.stage("${container.key}: Doxygen") {
-          def test_output = "doxygen_results.txt"
-            container.sh """
-              cd build
-              pwd
-              ninja docs 2>&1 > ${test_output}
-            """
-            container.copyFrom("build/${test_output}", '.')
-
-            String regexMissingDocsMemberConsumer = /.* warning: Member Consumer .* of class .* is not documented .*/
-            String regexInvalidArg = /.* warning: argument: .* is not found in the argument list of .*/
-            String regexMissingCompoundDocs = /.*warning: Compound .* is not documented./
-            boolean doxygenStepFailed = false
-            def failingCases = []
-            def doxygenResultContent = readFile test_output
-            def doxygenResultLines = doxygenResultContent.readLines()
-
-            for(line in doxygenResultLines) {
-                if(line ==~ regexMissingDocsMemberConsumer || line ==~ regexInvalidArg ||
-                    line ==~ regexMissingCompoundDocs) {
-                    failingCases.add(line)
-                    }
-            }
-
-            int acceptableFailedCases = 75
-            int numFailedCases = failingCases.size()
-            if(numFailedCases > acceptableFailedCases) {
-                doxygenStepFailed = true
-                println "Doxygen failed to generate HTML documentation due to issued warnings displayed below."
-                println "The total number of Doxygen warnings that needs to be corrected ( $numFailedCases ) is greater"
-                println "than the acceptable number of warnings ( $acceptableFailedCases ). The warnings are the following:"
-                for(line in failingCases) {
-                    println line
-                }
-            }
-            else{
-                println "Doxygen successfully generated all the FileWriter HTML documentation without warnings."
-            }
-            archiveArtifacts "${test_output}"
-            if(doxygenStepFailed) {
-             unstable("Code is missing documentation. See log output for further information.")
-            }
-        }  // stage
-}
-
-def copy_binaries(builder, container) {
-    builder.stage("${container.key}: Copying binaries") {
-      def archive_output = "${builder.project}-${container.key}.tar.gz"
-      container.sh """
-        cd build
-        rm -rf ${builder.project}; mkdir ${builder.project}
-        mkdir ${builder.project}/bin
-        cp ./bin/kafka-to-nexus ${builder.project}/bin/
-        cp -r ./lib ${builder.project}/
-        cp -r ./licenses ${builder.project}/
-
-        cp ./CONAN_INFO ${builder.project}/
-
-        # Create file with build information
-        touch ${builder.project}/BUILD_INFO
-        echo 'Repository: ${builder.project}/${env.BRANCH_NAME}' >> ${builder.project}/BUILD_INFO
-        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${builder.project}/BUILD_INFO
-        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${builder.project}/BUILD_INFO
-
-        tar czf ${archive_output} ${builder.project}
-      """
-
-      container.copyFrom("build/${archive_output}", '.')
-      container.copyFrom("build/${builder.project}/BUILD_INFO", '.')
-    }
-}
-
-def archive(builder, container) {
-    builder.stage("${container.key}: Archiving") {
-      def archive_output = "${builder.project}-${container.key}.tar.gz"
-      archiveArtifacts "${archive_output},BUILD_INFO"
-    }
-}
-
-def integration_test(builder, container) {
-    try {
-      stage("${container.key}: Sys.-test requirements") {
-        sh "tar xvf ${builder.project}-${container.key}.tar.gz"
-        sh """cd kafka-to-nexus
-       scl enable rh-python38 -- python -m pip install --user --upgrade pip
-       scl enable rh-python38 -- python -m pip install --user -r integration-tests/requirements.txt
-        """
-      }  // stage
-      dir("kafka-to-nexus/integration-tests") {
-      stage("${container.key}: integration test run") {
-        // Stop and remove any containers that may have been from the job before,
-        // i.e. if a Jenkins job has been aborted.
-        sh "docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true"
-        timeout(time: 30, activity: true){
-          sh """chmod go+w logs output-files
-          LD_LIBRARY_PATH=../lib scl enable rh-python38 -- python -m pytest -s --writer-binary="../" --junitxml=./IntegrationTestsOutput.xml .
-          """
-        }
-      }  // stage
-      }
-    } finally {
-      stage ("${container.key}: Integration test clean-up") {
-        dir("kafka-to-nexus/integration-tests") {
-            // The statements below return true because the build should pass
-            // even if there are no docker containers or output files to be
-            // removed.
-            sh """rm -rf output-files/* || true
-            docker stop \$(docker-compose ps -a -q) && docker rm \$(docker-compose ps -a -q) || true
-            """
-            sh "chmod go-w logs output-files"
-        }
-      }  // stage
-      stage("${container.key}: Integration test archive") {
-        junit "kafka-to-nexus/integration-tests/IntegrationTestsOutput.xml"
-        archiveArtifacts "kafka-to-nexus/integration-tests/logs/*.txt"
-      }
-    }
-}
-
-String almalinux_key = "almalinux8"
-String ubuntu_key = "ubuntu2204"
-String centos_key = "centos7"
-String release_key = "centos7-release"
-String integration_test_key = "integration-test"
-String static_checks_key = "static-checks"
-
-container_build_nodes = [
-  (almalinux_key): ContainerBuildNode.getDefaultContainerBuildNode('almalinux8-gcc12'),
-  (centos_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  (release_key): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  (ubuntu_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204'),
-  (static_checks_key): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
+build_nodes = [
+  'almalinux8': ContainerBuildNode.getDefaultContainerBuildNode('almalinux8-gcc12'),
+  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
+  (release_node): ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
+  (coverage_node): ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
 ]
 
-base_steps = [{b,c -> checkout(b, c)}, {b,c -> cpp_dependencies(b, c)}]
-
-container_build_node_steps = [
-    (almalinux_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
-    (centos_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, false)}],
-    (release_key): base_steps + [{b,c -> configure(b, c, "", true)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> archive(b, c)}],
-    (ubuntu_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON -DCOV=ON", false)}, {b,c -> build(b, c, true)}, {b,c -> unit_tests(b, c, true)}],
-    (static_checks_key): base_steps + [{b,c -> configure(b, c, "-DRUN_DOXYGEN=ON", false)}, {b,c -> static_checks(b, c)}],
-    (integration_test_key): base_steps + [{b,c -> configure(b, c, "", false)}, {b,c -> build(b, c, false)}, {b,c -> copy_binaries(b, c)}, {b,c -> integration_test(b, c)}]
-]
-
-if ( env.CHANGE_ID ) {
-  container_build_nodes[integration_test_key] = ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11')
-}
-
-pipeline_builder = new PipelineBuilder(this, container_build_nodes)
+pipeline_builder = new PipelineBuilder(this, build_nodes)
 pipeline_builder.activateEmailFailureNotifications()
 
+// Define name for the archive file used in main pipeline and integration test
+def archive_output = "${pipeline_builder.project}-${release_node}.tar.gz"
+
+// Main build and test pipeline
 builders = pipeline_builder.createBuilders { container ->
-    current_steps_list = container_build_node_steps[container.key]
-    for (step in current_steps_list) {
-        step(pipeline_builder, container)
+  pipeline_builder.stage("${container.key}: Checkout") {
+    dir(pipeline_builder.project) {
+      scm_vars = checkout scm
     }
+    // Copy source code to container
+    container.copyTo(pipeline_builder.project, pipeline_builder.project)
+  }  // stage: checkout
+
+  pipeline_builder.stage("${container.key}: Dependencies") {
+    container.sh """
+      mkdir build
+      cd build
+      conan install --build=outdated ../${pipeline_builder.project}/conanfile.txt
+      conan info ../${pipeline_builder.project}/conanfile.txt > CONAN_INFO
+    """
+  }  // stage: dependencies
+
+  pipeline_builder.stage("${container.key}: Configuration") {
+    if (container.key == release_node) {
+      container.sh """
+        ${pipeline_builder.project}/jenkins-scripts/configure-release.sh \
+          ${pipeline_builder.project} \
+          build
+      """
+    } else if (container.key == coverage_node) {
+      container.sh """
+        cd build
+        cmake -DCOV=ON -DRUN_DOXYGEN=ON -GNinja ../${pipeline_builder.project}
+      """
+    } else {
+      container.sh """
+        cd build
+        cmake -DRUN_DOXYGEN=ON -GNinja ../${pipeline_builder.project}
+      """
+    }
+  }  // stage: configuration
+
+  pipeline_builder.stage("${container.key}: Build") {
+    container.sh """
+      cd build
+      ninja kafka-to-nexus UnitTests
+    """
+  }  // stage: build
+
+  pipeline_builder.stage("${container.key}: Test") {
+    if (container.key == coverage_node) {
+      container.sh """
+        cd build
+        ./bin/UnitTests -- --gtest_output=xml:test_results.xml
+        ninja coverage
+      """
+
+      // Copy test and coverage results
+      container.copyFrom('build', '.')
+
+      // Publish test results
+      junit "build/test_results.xml"
+
+      // Process and publish test coverage
+      sh """
+        ${pipeline_builder.project}/jenkins-scripts/redirect-coverage.sh \
+          build/coverage.xml \
+          ${pipeline_builder.project}
+      """
+      step([
+        $class: 'CoberturaPublisher',
+        autoUpdateHealth: true,
+        autoUpdateStability: true,
+        coberturaReportFile: 'build/coverage.xml',
+        failUnhealthy: false,
+        failUnstable: false,
+        maxNumberOfBuilds: 0,
+        onlyStable: false,
+        sourceEncoding: 'ASCII',
+        zoomCoverageChart: true
+      ])
+    } else {
+      // Not a coverage node
+      container.sh """
+        cd build
+        ./bin/UnitTests
+      """
+    }
+  }  // stage: test
+
+  pipeline_builder.stage("${container.key}: Documentation") {
+    container.sh """
+      cd build
+      ninja docs
+    """
+  }  // stage: documentation
+
+  if (container.key == release_node) {
+    pipeline_builder.stage("${container.key}: Archive") {
+      // Create archive file
+      container.sh """
+        cd build
+        rm -rf ${pipeline_builder.project}; mkdir ${pipeline_builder.project}
+        mkdir ${pipeline_builder.project}/bin
+        cp ./bin/kafka-to-nexus ${pipeline_builder.project}/bin/
+        cp -r ./lib ${pipeline_builder.project}/
+        cp -r ./licenses ${pipeline_builder.project}/
+
+        cp ./CONAN_INFO ${pipeline_builder.project}/
+
+        # Create file with build information
+        touch ${pipeline_builder.project}/BUILD_INFO
+        echo 'Repository: ${pipeline_builder.project}/${env.BRANCH_NAME}' \
+          >> ${pipeline_builder.project}/BUILD_INFO
+        echo 'Commit: ${scm_vars.GIT_COMMIT}' >> ${pipeline_builder.project}/BUILD_INFO
+        echo 'Jenkins build: ${env.BUILD_NUMBER}' >> ${pipeline_builder.project}/BUILD_INFO
+
+        tar czf ${archive_output} ${pipeline_builder.project}
+      """
+
+      // Copy files from container and archive
+      container.copyFrom("build/${archive_output}", '.')
+      container.copyFrom("build/${pipeline_builder.project}/BUILD_INFO", '.')
+      archiveArtifacts "${archive_output},BUILD_INFO"
+
+      // Stash archive file for integration test in pull request builds
+      if (env.CHANGE_ID) {
+        stash "${archive_output}"
+      }
+    }  // stage: archive
+  }  // if
+
 }  // createBuilders
 
-node {
-  dir("${project}") {
-    try {
-      scm_vars = checkout scm
-    } catch (e) {
-      failure_function(e, 'Checkout failed')
-    }
-  }
+// Only run static checks in pull requests
+if (env.CHANGE_ID) {
+  pr_checks_nodes = [
+    'pr-checks': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu2204')
+  ]
 
-  if (env.ENABLE_MACOS_BUILDS.toUpperCase() == 'TRUE') {
-    builders['macOS'] = get_macos_pipeline()
+  pr_pipeline_builder = new PipelineBuilder(this, pr_checks_nodes)
+  pr_pipeline_builder.activateEmailFailureNotifications()
+
+  pr_checks_builders = pr_pipeline_builder.createBuilders { container ->
+    pr_pipeline_builder.stage("${container.key}: Checkout") {
+      dir(pr_pipeline_builder.project) {
+        scm_vars = checkout scm
+      }
+      // Copy source code to container
+      container.copyTo(pr_pipeline_builder.project, pr_pipeline_builder.project)
+    }  // stage: checkout
+
+    pr_pipeline_builder.stage("${container.key}: Clang-format") {
+      container.sh """
+        cd ${pr_pipeline_builder.project}
+        jenkins-scripts/check-formatting.sh
+      """
+    }  // stage: clang-format 
+
+    pr_pipeline_builder.stage("${container.key}: Black") {
+      container.sh """
+        cd ${pr_pipeline_builder.project}
+        python3 -m black --version
+        python3 -m black --check integration-tests
+      """
+    }  // stage: black
+
+    pr_pipeline_builder.stage("${container.key}: Cppcheck") {
+      container.sh """
+        cd ${pr_pipeline_builder.project}
+        cppcheck --version
+        cppcheck \
+          --xml \
+          --inline-suppr \
+          --suppress=unusedFunction \
+          --suppress=missingInclude \
+          --enable=all \
+          --inconclusive \
+          src/ 2> cppcheck.xml
+      """
+
+      // Copy files from container and publish report
+      container.copyFrom(
+        "${pr_pipeline_builder.project}/cppcheck.xml",
+        pr_pipeline_builder.project
+      )
+      dir("${pr_pipeline_builder.project}") {
+        recordIssues \
+          quiet: true,
+          sourceCodeEncoding: 'UTF-8',
+          qualityGates: [[
+            threshold: 1,
+            type: 'TOTAL',
+            unstable: true
+          ]],
+          tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
+      }  // dir
+    }  // stage: cppcheck
+  }  // PR checks createBuilders
+
+  builders = builders + pr_checks_builders
+}  // if
+
+node('master') {
+  dir("${pipeline_builder.project}") {
+    scm_vars = checkout scm
   }
 
   try {
+    // Start pipelines
     parallel builders
   } catch (e) {
     pipeline_builder.handleFailureMessages()
@@ -407,57 +259,69 @@ node {
   cleanWs()
 }
 
-def failure_function(exception_obj, failureMessage) {
-  def toEmails = [[$class: 'DevelopersRecipientProvider']]
-  emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.', recipientProviders: toEmails, subject: '${DEFAULT_SUBJECT}'
-  throw exception_obj
-}
+// Only run integration test on pull requests
+if (env.CHANGE_ID) {
+  node('docker') {
+    stage('checkout') {
+      checkout scm
+      unstash "${archive_output}"
+      sh "tar xvf ${archive_output}"
+    }  // stage: checkout
 
-def get_macos_pipeline() {
-  return {
+    stage("requirements") {
+      dir("integration-tests") {
+        sh """
+          scl enable rh-python38 -- python -m venv venv
+          venv/bin/pip install --upgrade pip
+          venv/bin/pip install -r requirements.txt
+        """
+      }  // dir
+    }  // stage: requirements
 
-      node ("macos") {
-        // Delete workspace when build is done
-        cleanWs()
-        stage("macOS: Checkout") {
-        dir("${project}/code") {
-          try {
-          // temporary conan remove until all projects move to new package version
-          sh "conan remove -f FlatBuffers/*"
-          sh "conan remove -f OpenSSL/*"
-          sh "conan remove -f cli11/*"
-            checkout scm
-          } catch (e) {
-            failure_function(e, 'MacOSX / Checkout failed')
-          }
-        }
-        }
+    try {
+      dir("integration-tests") {
+        stage("integration-test") {
+          // Stop and remove any containers that may have been from the job before,
+          // i.e. if a Jenkins job has been aborted.
+          sh """
+            docker stop \$(docker-compose ps -a -q) \
+              && docker rm \$(docker-compose ps -a -q) \
+              || true
+          """
 
-        dir("${project}/build") {
-        stage("macOS: Configure") {
-          try {
-            sh "cmake ../code"
-          } catch (e) {
-            failure_function(e, 'MacOSX / CMake failed')
-          }
-        }
+          // Limit run to 30 minutes
+          timeout(time: 30, activity: true) {
+            sh """
+              chmod go+w logs output-files
+              LD_LIBRARY_PATH=../lib venv/bin/python -m pytest \
+                -s \
+                --writer-binary="../kafka-to-nexus" \
+                --junitxml=./IntegrationTestsOutput.xml \
+                .
+            """
+          }  // timeout
+        }  // stage: integration-test
+      }  // dir
+    } finally {
+      dir("integration-tests") {
+        stage ("clean-up") {
+          // The statements below return true because the build should pass
+          // even if there are no docker containers or output files to be
+          // removed.
+          sh """
+            rm -rf output-files/* || true
+            docker stop \$(docker-compose ps -a -q) \
+              && docker rm \$(docker-compose ps -a -q) \
+              || true
+            chmod go-w logs output-files
+          """
+        }  // stage: clean-up
 
-          stage("macOS: Build") {
-              try {
-                sh "make -j4 UnitTests"
-              } catch (e) {
-                failure_function(e, 'MacOSX / build failed')
-              }
-          }
-
-          stage("macOS: Unit tests") {
-          try {
-               sh ". ./activate_run.sh && ./bin/UnitTests"
-          } catch (e) {
-            failure_function(e, 'MacOSX / unit tests failed')
-          }
-          }
-        }
-      }
-  }
-}
+        stage("results") {
+          junit "IntegrationTestsOutput.xml"
+          archiveArtifacts "logs/*.txt"
+        }  // stage: results
+      }  // dir
+    }  // try/finally
+  }  // node
+}  // if
