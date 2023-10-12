@@ -83,7 +83,7 @@ TEST_F(mdatInit, WriteOneElement) {
   time_point Timestamp{std::chrono::seconds{1}};
 
   EXPECT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 0);
-  TestWriter.writemetadata("start_time", Timestamp);
+  TestWriter.writeStartTime(Timestamp);
   ASSERT_EQ(TestWriter.mdatStart_datetime.dataspace().size(), 1);
   std::vector<std::string> WrittenTimes(1);
   TestWriter.mdatStart_datetime.read(WrittenTimes);
