@@ -66,12 +66,13 @@ class DateTime : public FixedSizeString {
 public:
   DateTime() = default;
   /// \brief Create a string-type entry, e.g. NX_DATE_TIME
-  ///
   /// \param Parent The group/node where the dataset exists or should be
-  /// created. \param name The NeXus field name \param CMode Create or open
-  /// dataset. \param ChunkSize The chunk size in number of elements for this
-  /// dataset (if/when creating it). \throws std::runtime_error if dataset
-  /// already exists.
+  /// created.
+  /// \param name The NeXus field name.
+  /// \param CMode Create or open dataset.
+  /// \param ChunkSize The chunk size in number of elements for this
+  /// dataset (if/when creating it).
+  /// \throws std::runtime_error if dataset already exists.
   DateTime(hdf5::node::Group const &Parent, std::string const &name, Mode CMode,
            size_t StringSize = 25, size_t ChunkSize = 1024);
 };
