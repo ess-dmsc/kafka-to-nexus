@@ -53,22 +53,21 @@ WriterModule::InitResult mdat_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-template <typename T>
-void mdat_Writer::writemetadata(std::string const &name,
-                                T data) { //  all is valid
-  char buffer[32];
-  time_t datatime = std::chrono::system_clock::to_time_t(data);
-  tm *nowtm = gmtime(&datatime);
-  std::strftime(buffer, max_buffer_length, "%FT%TZ%z", nowtm);
-  if (name == "start_time")
-    mdatStart_datetime.appendStringElement(std::string(buffer));
-  else if (name == "end_time")
-    mdatEnd_datetime.appendStringElement(std::string(buffer));
+void mdat_Writer::writeStartTime(time_point startTime) {
+  mdatStart_datetime.appendStringElement(convertToIso8601(startTime));
 }
 
-//  avoid linker errors by instantiating a version of the template with expected
-//  data types
-template void mdat_Writer::writemetadata(std::string const &name,
-                                         time_point data);
+void mdat_Writer::writeStopTime(time_point stopTime) {
+  mdatEnd_datetime.appendStringElement(convertToIso8601(stopTime));
+}
+
+std::string mdat_Writer::convertToIso8601(time_point timePoint) {
+  char buffer[32];
+  time_t datatime = std::chrono::system_clock::to_time_t(timePoint);
+  tm *nowtm = gmtime(&datatime);
+  std::strftime(buffer, max_buffer_length, "%FT%TZ", nowtm);
+  return {buffer};
+}
+
 
 } // namespace WriterModule::mdat

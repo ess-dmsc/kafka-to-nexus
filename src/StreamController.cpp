@@ -64,7 +64,7 @@ void StreamController::stop() {
   for (auto &Item : WriterTask->sources())
     if (Item.writerModuleID() == "mdat")
       static_cast<WriterModule::mdat::mdat_Writer *>(Item.getWriterPtr())
-          ->writemetadata("end_time", StreamerOptions.StopTimestamp);
+          ->writeStopTime(StreamerOptions.StopTimestamp);
   for (auto &Stream : Streamers)
     Stream->stop();
   WriterThread.stop();

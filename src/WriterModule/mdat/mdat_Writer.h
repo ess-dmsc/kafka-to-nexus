@@ -90,12 +90,13 @@ public:
   write(FileWriter::FlatbufferMessage const & /*Message*/) override { /*pass*/
   }
 
-  /// \brief A soecial writing class for metadata
-  /// This member function is functional equivalent to the normal
-  /// write(FileWriter::FlatbufferMessage const&) method but allows for a call
-  /// without requiring a message to be constructed, necessary for the overriden
-  /// method which is inherited
-  template <typename T> void writemetadata(std::string const &name, T data);
+  /// \brief Writes the start time to the data file.
+  /// \note Values will be written at UTC in the ISO8601 format.
+  void writeStartTime(time_point startTime);
+
+  /// \brief Writes the stop time to the data file.
+  /// \note Values will be written at UTC in the ISO8601 format.
+  void writeStopTime(time_point stopTime);
 
 protected:
   // new datasets go here
@@ -104,6 +105,9 @@ protected:
   const size_t max_buffer_length = 25;
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
   JsonConfig::Field<size_t> StringSize{this, "string_size", max_buffer_length};
+
+private:
+  std::string convertToIso8601(time_point timePoint);
 };
 } // namespace WriterModule::mdat
   // clang-format on
