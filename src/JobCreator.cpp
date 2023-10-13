@@ -123,7 +123,6 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   std::vector<ModuleSettings> StreamSettingsList;
   std::vector<ModuleSettings> LinkSettingsList;
 
-  FileWriter::FlatbufferMessage myWorkingMsg;
   for (auto &Item : SettingsList) {
     if (Item.isLink) {
       LinkSettingsList.push_back(std::move(Item));
