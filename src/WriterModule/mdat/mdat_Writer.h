@@ -51,10 +51,8 @@ class mdat_Writer : public WriterModule::Base {
 public:
   /// \brief Constructor should take NXClass "Nxlog" because???
   mdat_Writer()
-      : WriterModule::Base(false /*AcceptRepeatedTimestamps*/,
-                           "NXlog" /*NXClass*/) {
-    std::cout << "mdat module initialised\n";
-  }
+      : WriterModule::Base(false,
+                           "NXlog") {}
 
   /// \brief Close relevant datasets (if any) here.
   /// Note: WriterModule classes are instantiated twice
@@ -74,21 +72,12 @@ public:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
   /// This member function is called in the second instantiation of this class
   /// (for a specific data source).
-  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override; /* {
-     NeXusDataset::Mode ndmode = NeXusDataset::Mode::Open;
-     std::cout << "mdat_Writer::reopen()\n";
-     return init_or_reopen(ndmode, HDFGroup);  //  not monitored?
-   }*/
+  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  /// \brief Here we do the data writing.
-  /// This member function is called on the second instance of this class.
-  /// \note !!Exceptions here lead to an undefined state, avoid throwing them in
-  /// this method!! \param Message The structure containing a pointer to a
-  /// buffer containing data received from the Kafka broker and the size of the
-  /// buffer.
+  /// \brief Write flqtbuffer to the file.
+  /// \note For mdat this is unused.
   void
-  write(FileWriter::FlatbufferMessage const & /*Message*/) override { /*pass*/
-  }
+  write(FileWriter::FlatbufferMessage const & /*Message*/) override {}
 
   /// \brief Writes the start time to the data file.
   /// \note Values will be written at UTC in the ISO8601 format.
@@ -99,10 +88,9 @@ public:
   void writeStopTime(time_point stopTime);
 
 protected:
-  // new datasets go here
   NeXusDataset::DateTime mdatStart_datetime;
   NeXusDataset::DateTime mdatEnd_datetime;
-  const size_t max_buffer_length = 25;
+  const size_t max_buffer_length = std::size("1970-01-01T00:00:00Z");
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
   JsonConfig::Field<size_t> StringSize{this, "string_size", max_buffer_length};
 

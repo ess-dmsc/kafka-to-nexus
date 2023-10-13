@@ -62,7 +62,7 @@ void mdat_Writer::writeStopTime(time_point stopTime) {
 }
 
 std::string mdat_Writer::convertToIso8601(time_point timePoint) {
-  char buffer[32];
+  char buffer[max_buffer_length];
   time_t datatime = std::chrono::system_clock::to_time_t(timePoint);
   tm *nowtm = gmtime(&datatime);
   std::strftime(buffer, max_buffer_length, "%FT%TZ", nowtm);
