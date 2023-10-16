@@ -1,8 +1,10 @@
 #include "StreamController.h"
 #include "FileWriterTask.h"
+#include "HDFOperations.h"
 #include "Kafka/ConsumerFactory.h"
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
+#include "MultiVector.h"
 #include "Stream/Partition.h"
 #include "TimeUtility.h"
 #include "helper.h"
@@ -19,6 +21,7 @@ StreamController::StreamController(
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
       StreamerOptions(Settings), MetaDataTracker(Tracker) {
+  writeStartTime();
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -27,13 +30,39 @@ StreamController::StreamController(
 
 StreamController::~StreamController() {
   stop();
+  writeStopTime();
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
 }
 
+void StreamController::writeStartTime() {
+  writeTimePointAsIso8601String("/entry", "start_time",
+                                StreamerOptions.StartTimestamp);
+}
+
+void StreamController::writeStopTime() {
+  writeTimePointAsIso8601String("/entry", "stop_time",
+                                StreamerOptions.StopTimestamp);
+  writeTimePointAsIso8601String("/entry", "stop_time",
+                                StreamerOptions.StopTimestamp);
+}
+
+void StreamController::writeTimePointAsIso8601String(std::string const &Path,
+                                                     std::string const &Name,
+                                                     time_point const &Value) {
+  try {
+    auto StringVec = MultiVector<std::string>{{1}};
+    StringVec.at({0}) = toUTCDateTime(Value);
+    auto Group = hdf5::node::get_group(WriterTask->hdfGroup(), Path);
+    HDFOperations::writeStringDataset(Group, Name, StringVec);
+  } catch (std::runtime_error &Error) {
+    LOG_ERROR("Failed to write time-point as ISO8601: {}", Error.what());
+  }
+}
+
 void StreamController::setStopTime(time_point const &StopTime) {
+  StreamerOptions.StopTimestamp = StopTime;
   Executor.sendWork([=]() {
-    StreamerOptions.StopTimestamp = StopTime;
     for (auto &s : Streamers) {
       s->setStopTime(StopTime);
     }
@@ -61,10 +90,6 @@ void StreamController::resumeStreamers() {
 }
 
 void StreamController::stop() {
-  for (auto &Item : WriterTask->sources())
-    if (Item.writerModuleID() == "mdat")
-      static_cast<WriterModule::mdat::mdat_Writer *>(Item.getWriterPtr())
-          ->writeStopTime(StreamerOptions.StopTimestamp);
   for (auto &Stream : Streamers)
     Stream->stop();
   WriterThread.stop();

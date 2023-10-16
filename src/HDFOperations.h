@@ -36,6 +36,10 @@ void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values);
 
 void writeStringDataset(hdf5::node::Group const &Parent,
+                                const std::string &Name,
+                                MultiVector<std::string> const &Values);
+
+void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
                         const std::string &Name, nlohmann::json const &Values);
 
 void writeGenericDataset(const std::string &DataType,

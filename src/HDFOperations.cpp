@@ -241,25 +241,30 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
 }
 
 void writeStringDataset(hdf5::node::Group const &Parent,
-                        const std::string &Name, nlohmann::json const &Values) {
+                        const std::string &Name, MultiVector<std::string> const &Values) {
   try {
     auto DataType = hdf5::datatype::String::variable();
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     DataType.padding(hdf5::datatype::StringPad::NullTerm);
-    auto StringArray = jsonArrayToMultiArray<std::string>(Values);
-    auto Dims = StringArray.getDimensions();
 
+    auto Dims = Values.getDimensions();
     auto Dataspace =
         hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
 
     Parent.create_dataset(Name, DataType, Dataspace)
-        .write(StringArray.Data, DataType, Dataspace);
+        .write(Values.Data, DataType, Dataspace);
   } catch (const std::exception &e) {
     auto ErrorStr = fmt::format(
         "Failed to write variable-size string dataset {}/{}. Message was: {}",
         std::string(Parent.link().path()), Name, e.what());
     std::throw_with_nested(std::runtime_error(ErrorStr));
   }
+}
+
+void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
+                                const std::string &Name, nlohmann::json const &Values) {
+  auto StringArray = jsonArrayToMultiArray<std::string>(Values);
+  writeStringDataset(Parent, Name, StringArray);
 }
 
 void writeGenericDataset(const std::string &DataType,
@@ -287,7 +292,7 @@ void writeGenericDataset(const std::string &DataType,
         {"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},
         {"double",
          [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
-        {"string", [&]() { writeStringDataset(Parent, Name, Values); }},
+        {"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
     };
     WriteDatasetMap.at(DataType)();
   } catch (std::exception const &e) {

@@ -180,14 +180,6 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
-  //  Now we have our modules established and files open
-  //  Create fake message for writing start time as we have the information here
-  //  and ready to be consumed
-  for (auto &Item : Task->sources())
-    if (Item.writerModuleID() == "mdat")
-      static_cast<WriterModule::mdat::mdat_Writer *>(Item.getWriterPtr())
-          ->writeStartTime(StartInfo.StartTime);
-
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
   // Ignore broker addresses sent in StartInfo message and use known broker

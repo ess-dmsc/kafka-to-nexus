@@ -68,6 +68,7 @@ void Master::stopNow() {
   if (CurrentStreamController != nullptr) {
     CurrentStreamController->stop();
   }
+  CurrentStreamController->setStopTime(system_clock::now());
   setStopTimeInternal(time_point{0ms});
 }
 
