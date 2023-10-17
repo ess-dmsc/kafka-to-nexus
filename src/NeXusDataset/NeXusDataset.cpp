@@ -26,10 +26,6 @@ Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
   }
 }
 
-DateTime::DateTime(hdf5::node::Group const &Parent, std::string const &name,
-                   Mode CMode, size_t StringSize, size_t ChunkSize)
-    : FixedSizeString(Parent, name, CMode, StringSize, ChunkSize) {}
-
 DoubleValue::DoubleValue(hdf5::node::Group const &Parent,
                          NeXusDataset::Mode CMode, size_t ChunkSize)
     : NeXusDataset::ExtensibleDataset<double>(Parent, "value", CMode,

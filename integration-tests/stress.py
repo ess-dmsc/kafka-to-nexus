@@ -9,7 +9,6 @@ from test_same_id_multiple_modules import (
 from test_filewriter_stop_time import test_start_and_stop_time_are_in_the_past
 from test_filewriter_commands import test_ignores_stop_command_with_incorrect_job_id
 from test_f142_meta_data import test_f142_meta_data
-from test_mdat_functionality import test_mdat
 from file_writer_control import WorkerJobPool
 
 
@@ -29,7 +28,6 @@ def main():
         test_start_and_stop_time_are_in_the_past,
         test_ignores_stop_command_with_incorrect_job_id,
         test_f142_meta_data,
-        test_mdat,
     ]
     for func in list_of_tests:
         for i in range(10):

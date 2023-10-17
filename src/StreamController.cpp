@@ -43,8 +43,6 @@ void StreamController::writeStartTime() {
 void StreamController::writeStopTime() {
   writeTimePointAsIso8601String("/entry", "stop_time",
                                 StreamerOptions.StopTimestamp);
-  writeTimePointAsIso8601String("/entry", "stop_time",
-                                StreamerOptions.StopTimestamp);
 }
 
 void StreamController::writeTimePointAsIso8601String(std::string const &Path,
