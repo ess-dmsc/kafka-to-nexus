@@ -67,8 +67,8 @@ void Master::stopNow() {
   LOG_INFO("Attempting to stop file-writing (quickly).");
   if (CurrentStreamController != nullptr) {
     CurrentStreamController->stop();
+    CurrentStreamController->setStopTime(system_clock::now());
   }
-  CurrentStreamController->setStopTime(system_clock::now());
   setStopTimeInternal(time_point{0ms});
 }
 
