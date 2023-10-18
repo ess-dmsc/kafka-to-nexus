@@ -86,7 +86,8 @@ std::string FileWriterTask::jobID() const { return JobId; }
 
 hdf5::node::Group FileWriterTask::hdfGroup() const {
   if (!File) {
-    throw std::runtime_error("Could not obtain group as no HDF file currently open");
+    throw std::runtime_error(
+        "Could not obtain group as no HDF file currently open");
   }
 
   return File->hdfGroup();

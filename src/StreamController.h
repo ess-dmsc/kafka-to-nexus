@@ -110,7 +110,8 @@ private:
   void throttleIfWriteQueueIsFull();
   void writeStartTime();
   void writeStopTime();
-  void writeTimePointAsIso8601String(std::string const &Path, std::string const &Name,
+  void writeTimePointAsIso8601String(std::string const &Path,
+                                     std::string const &Name,
                                      time_point const &Value);
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};

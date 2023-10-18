@@ -241,7 +241,8 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
 }
 
 void writeStringDataset(hdf5::node::Group const &Parent,
-                        const std::string &Name, MultiVector<std::string> const &Values) {
+                        const std::string &Name,
+                        MultiVector<std::string> const &Values) {
   try {
     auto DataType = hdf5::datatype::String::variable();
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -262,7 +263,8 @@ void writeStringDataset(hdf5::node::Group const &Parent,
 }
 
 void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
-                                const std::string &Name, nlohmann::json const &Values) {
+                                const std::string &Name,
+                                nlohmann::json const &Values) {
   auto StringArray = jsonArrayToMultiArray<std::string>(Values);
   writeStringDataset(Parent, Name, StringArray);
 }

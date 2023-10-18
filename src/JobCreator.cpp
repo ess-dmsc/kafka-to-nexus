@@ -51,8 +51,8 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   json ConfigStream = json::parse(ModuleSettings.ModuleHDFInfoObj.ConfigStream);
 
   ModuleSettings.ConfigStreamJson = ConfigStream.dump();
-  ModuleSettings.Source = Command::Parser::getRequiredValue<std::string>("source",
-                                                                         ConfigStream);
+  ModuleSettings.Source =
+      Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
   ModuleSettings.Module = ModuleInfo.WriterModule;
   ModuleSettings.isLink = false;
 
