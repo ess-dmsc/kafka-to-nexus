@@ -53,7 +53,7 @@ void StreamController::writeTimePointAsIso8601String(std::string const &Path,
     StringVec.at({0}) = toUTCDateTime(Value);
     auto Group = hdf5::node::get_group(WriterTask->hdfGroup(), Path);
     HDFOperations::writeStringDataset(Group, Name, StringVec);
-  } catch (std::runtime_error &Error) {
+  } catch (std::exception &Error) {
     LOG_ERROR("Failed to write time-point as ISO8601: {}", Error.what());
   }
 }
