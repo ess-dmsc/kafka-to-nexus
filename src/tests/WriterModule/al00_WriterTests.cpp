@@ -99,14 +99,26 @@ TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   EXPECT_NO_THROW(AlarmTimeDataset.read(Timestamp));
   EXPECT_EQ(FbPointer->timestamp(), Timestamp[0]);
 
-  std::vector<std::string> AlarmSeverity(1);
+  std::vector<short> AlarmSeverity(1);
   EXPECT_NO_THROW(AlarmSeverityDataset.read(AlarmSeverity));
-  AlarmSeverity[0].erase(AlarmSeverity[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameSeverity(FbPointer->severity())),
-            AlarmSeverity[0]);
+  EXPECT_EQ(static_cast<short>(FbPointer->severity()), AlarmSeverity[0]);
 
   std::vector<std::string> AlarmMsg(1);
   EXPECT_NO_THROW(AlarmMsgDataset.read(AlarmMsg));
   AlarmMsg[0].erase(AlarmMsg[0].find('\0'));
   EXPECT_EQ(FbPointer->message()->str(), AlarmMsg[0]);
+}
+
+TEST_F(EPICS_AlarmWriter, SeverityStoredAsInteger) {
+  size_t BufferSize{0};
+  auto Buffer = GenerateAlarmFlatbufferData(BufferSize);
+  WriterModule::al00::al00_Writer Writer;
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
+  EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
+  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
+  EXPECT_NO_THROW(Writer.write(TestMsg));
+  auto AlarmSeverityDataset = UsedGroup.get_dataset("alarm_severity");
+
+  ASSERT_EQ(AlarmSeverityDataset.datatype().get_class(),
+            hdf5::datatype::create<short>().get_class());
 }
