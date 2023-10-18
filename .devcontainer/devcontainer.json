@@ -7,7 +7,7 @@
         "--cap-add=SYS_PTRACE",
         "--security-opt",
         "seccomp=unconfined",
-        "--memory=8gb"
+        "--memory=12gb"
     ],
     "customizations": {
         "vscode": {
