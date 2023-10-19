@@ -51,21 +51,16 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
   json ConfigStream = json::parse(ModuleSettings.ModuleHDFInfoObj.ConfigStream);
 
   ModuleSettings.ConfigStreamJson = ConfigStream.dump();
-  ModuleSettings.Source = (ModuleInfo.WriterModule == "mdat"
-                               ? ""
-                               : Command::Parser::getRequiredValue<std::string>(
-                                     "source", ConfigStream));
+  ModuleSettings.Source =
+      Command::Parser::getRequiredValue<std::string>("source", ConfigStream);
   ModuleSettings.Module = ModuleInfo.WriterModule;
   ModuleSettings.isLink = false;
 
-  if (ModuleSettings.Module == "mdat") {
-    ModuleSettings.Name =
-        Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
-  } else if (ModuleSettings.Module == "link") {
+  if (ModuleSettings.Module == "link") {
     ModuleSettings.Name =
         Command::Parser::getRequiredValue<std::string>("name", ConfigStream);
     ModuleSettings.isLink = true;
-  } else { //  everything else should be here...including incorrect values!
+  } else {
     ModuleSettings.Topic =
         Command::Parser::getRequiredValue<std::string>("topic", ConfigStream);
   }
@@ -123,22 +118,11 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   std::vector<ModuleSettings> StreamSettingsList;
   std::vector<ModuleSettings> LinkSettingsList;
 
-  FileWriter::FlatbufferMessage myWorkingMsg;
   for (auto &Item : SettingsList) {
     if (Item.isLink) {
       LinkSettingsList.push_back(std::move(Item));
     } else {
-      std::string module_name = Item.Module;
-      //  if there are two modules of the same name in the filewriter
-      //  problems can occur since the module for ingesting gets initiated twice
-      //  so we ensure StreamSettingsList is only filled once per module
-      //  occurence
-      if (module_name != "mdat" ||
-          std::find_if(StreamSettingsList.begin(), StreamSettingsList.end(),
-                       [&module_name](const ModuleSettings &module) {
-                         return module.Module == module_name;
-                       }) == StreamSettingsList.end())
-        StreamSettingsList.push_back(std::move(Item));
+      StreamSettingsList.push_back(std::move(Item));
     }
   }
 
@@ -180,17 +164,6 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   Task->switchToWriteMode();
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
-
-  //  Now we have our modules established and files open
-  //  Create fake message for writing start time as we have the information here
-  //  and ready to be consumed
-  for (auto &Item : Task->sources())
-    if (Item.writerModuleID() == "mdat")
-      static_cast<WriterModule::mdat::mdat_Writer *>(Item.getWriterPtr())
-          ->writemetadata("start_time",
-                          std::chrono::duration_cast<std::chrono::milliseconds>(
-                              StartInfo.StartTime.time_since_epoch())
-                              .count());
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;

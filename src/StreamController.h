@@ -20,7 +20,6 @@
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
 #include "TimeUtility.h"
-#include "WriterModule/mdat/mdat_Writer.h"
 #include <atomic>
 #include <set>
 #include <vector>
@@ -109,6 +108,11 @@ private:
   void performPeriodicChecks();
   void checkIfStreamsAreDone();
   void throttleIfWriteQueueIsFull();
+  void writeStartTime();
+  void writeStopTime();
+  void writeTimePointAsIso8601String(std::string const &Path,
+                                     std::string const &Name,
+                                     time_point const &Value);
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
   std::atomic<bool> StreamersPaused{false};
