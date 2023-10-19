@@ -78,14 +78,8 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
         assert file["entry/scal_data/average_value"][0] == Mean
         assert file["entry/scal_data/alarm_message"][0].decode() == alarm_msg
         assert (file["entry/scal_data/value"][:].flatten() == np.array(values)).all()
-        assert (
-            file["entry/scal_data/alarm_severity"][0]
-            == alarm_severity.value
-        )
-        assert (
-            file["entry/scal_data/connection_status"][0]
-            == connection_status.value
-        )
+        assert file["entry/scal_data/alarm_severity"][0] == alarm_severity.value
+        assert file["entry/scal_data/connection_status"][0] == connection_status.value
         assert (
             file["entry/scal_data/connection_status_time"][0]
             == file["entry/scal_data/alarm_time"][0]
