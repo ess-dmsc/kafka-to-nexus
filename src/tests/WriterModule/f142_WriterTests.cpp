@@ -542,7 +542,8 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
   std::vector<std::int16_t> WrittenAlarmSeverity(1);
   TestWriter.AlarmSeverity.read(WrittenAlarmSeverity);
   EXPECT_EQ(WrittenAlarmSeverity.at(0),
-            static_cast<std::int16_t>(TestAlarm.Severity));
+            F142SeverityToAl00Severity[static_cast<std::int16_t>(
+                TestAlarm.Severity)]);
 }
 
 std::vector<AlarmWritingTestInfo> const AlarmWritingTestParams = {
