@@ -14,6 +14,7 @@
 - Fix: Max/min/avg datasets do not specify units
 - Fix: Error responses to `run_stop` commands are generated only if `service_id` is set and
   matches the id of the filewriter.
+- Feat: Export worker_state Carbon metric (idle/writing)
 
 ## Version 6.0.0
 
