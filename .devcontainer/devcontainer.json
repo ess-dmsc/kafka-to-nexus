@@ -7,7 +7,7 @@
         "--cap-add=SYS_PTRACE",
         "--security-opt",
         "seccomp=unconfined",
-        "--memory=8gb"
+        "--memory=12gb"
     ],
     "customizations": {
         "vscode": {
@@ -43,7 +43,9 @@
     "postCreateCommand": {
         "conanProfile": "conan profile new default --detect",
         "conanConfigInstall": "conan config install https://github.com/ess-dmsc/conan-configuration.git",
-        "conanSetting": "conan config set general.revisions_enabled=True"
+        "conanSetting": "conan config set general.revisions_enabled=True",
+        "aliases": "echo \"alias g='git'\\nalias gst='git status'\\nalias gco='git checkout'\\nalias gp='git pull'\" >> ~/.bashrc",
+        "pre-commit_install": "pre-commit install"
     },
 
     "postStartCommand": {
@@ -51,7 +53,7 @@
     },
 
     "postAttachCommand": {
-        "createVirtualEnv": "cd integration-tests && python -m venv .venv && pip install -r requirements.txt"
+        "createVirtualEnv": "cd integration-tests && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt"
     },
 
     // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
