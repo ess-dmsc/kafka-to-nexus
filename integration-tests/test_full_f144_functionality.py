@@ -72,11 +72,6 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
 
     wait_no_working_writers(worker_pool, timeout=30)
 
-    connection_map = {
-        getattr(ConnectionInfo, a): a for a in dir(ConnectionInfo) if a[0:2] != "__"
-    }
-    severity_map = {getattr(Severity, a): a for a in dir(Severity) if a[0:2] != "__"}
-
     with OpenNexusFile(file_path) as file:
         assert file["entry/scal_data/minimum_value"][0] == Min
         assert file["entry/scal_data/maximum_value"][0] == Max
@@ -84,12 +79,12 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
         assert file["entry/scal_data/alarm_message"][0].decode() == alarm_msg
         assert (file["entry/scal_data/value"][:].flatten() == np.array(values)).all()
         assert (
-            file["entry/scal_data/alarm_severity"][0].decode()
-            == severity_map[alarm_severity]
+            file["entry/scal_data/alarm_severity"][0]
+            == alarm_severity.value
         )
         assert (
-            file["entry/scal_data/connection_status"][0].decode()
-            == connection_map[connection_status]
+            file["entry/scal_data/connection_status"][0]
+            == connection_status.value
         )
         assert (
             file["entry/scal_data/connection_status_time"][0]

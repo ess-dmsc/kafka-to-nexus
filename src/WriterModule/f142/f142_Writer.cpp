@@ -12,6 +12,7 @@
 #include "WriterRegistrar.h"
 #include "json.h"
 #include "logger.h"
+#include <al00_alarm_generated.h>
 #include <algorithm>
 #include <cctype>
 #include <f142_logdata_generated.h>
@@ -203,12 +204,17 @@ std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
     {AlarmStatus::COMM, "COMM"},
     {AlarmStatus::NO_CHANGE, "NO_CHANGE"}};
 
-std::unordered_map<AlarmSeverity, std::string> AlarmSeverityToString{
-    {AlarmSeverity::NO_ALARM, "NO_ALARM"},
-    {AlarmSeverity::MINOR, "MINOR"},
-    {AlarmSeverity::MAJOR, "MAJOR"},
-    {AlarmSeverity::INVALID, "INVALID"},
-    {AlarmSeverity::NO_CHANGE, "NO_CHANGE"}};
+std::unordered_map<std::int16_t, std::int16_t> F142SeverityToAl00Severity{
+    {static_cast<std::int16_t>(AlarmSeverity::MINOR),
+     static_cast<std::int16_t>(Severity::MINOR)},
+    {static_cast<std::int16_t>(AlarmSeverity::MAJOR),
+     static_cast<std::int16_t>(Severity::MAJOR)},
+    {static_cast<std::int16_t>(AlarmSeverity::NO_ALARM),
+     static_cast<std::int16_t>(Severity::OK)},
+    {static_cast<std::int16_t>(AlarmSeverity::INVALID),
+     static_cast<std::int16_t>(Severity::INVALID)},
+    {static_cast<std::int16_t>(AlarmSeverity::NO_CHANGE),
+     static_cast<std::int16_t>(Severity::INVALID)}};
 
 void msgTypeIsConfigType(f142_Writer::Type ConfigType, Value MsgType) {
   std::unordered_map<Value, f142_Writer::Type> TypeComparison{
@@ -421,8 +427,8 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     }
     AlarmStatus.appendStringElement(AlarmStatusString);
 
-    AlarmSeverity.appendElement(
-        static_cast<std::int16_t>(LogDataMessage->severity()));
+    auto Severity = static_cast<std::int16_t>(LogDataMessage->severity());
+    AlarmSeverity.appendElement(F142SeverityToAl00Severity[Severity]);
   }
 }
 
