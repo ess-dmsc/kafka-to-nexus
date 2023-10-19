@@ -95,6 +95,31 @@
                 "kind": "test",
                 "isDefault": false
             }
+        },
+        {
+            "type": "shell",
+            "label": "Selected UnitTests from Filter",
+            "command": "cd _build && source activate_run.sh && ./bin/UnitTests --gtest_filter=${input:filterString}",
+            "options": {
+              "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+              "$gcc"
+            ],
+            "dependsOn": [
+              "BuildUnitTests"
+            ],
+            "group": {
+              "kind": "test",
+              "isDefault": false
+            }
+          }
+    ],
+    "inputs": [
+        {
+            "id": "filterString",
+            "type": "promptString",
+            "description": "Enter the gtest_filter string."
         }
     ],
     "version": "2.0.0"
