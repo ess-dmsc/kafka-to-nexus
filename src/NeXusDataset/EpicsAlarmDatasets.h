@@ -15,7 +15,7 @@ namespace NeXusDataset {
 
 /// \brief Represents a dataset with the name "alarm_status".
 /// \deprecated This class is deprecated in favour of AlarmMsg.
-[[deprecated]] class AlarmStatus : public FixedSizeString {
+class AlarmStatus : public FixedSizeString {
 public:
   AlarmStatus() = default;
   AlarmStatus(hdf5::node::Group const &Parent, Mode CMode,

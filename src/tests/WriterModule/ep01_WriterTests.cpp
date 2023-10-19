@@ -96,11 +96,9 @@ TEST_F(EPICS_ConStatusWriter, WriteDataOnce) {
   EXPECT_NO_THROW(ConStatusTimeDataset.read(Timestamp));
   EXPECT_EQ(FbPointer->timestamp(), Timestamp[0]);
 
-  std::vector<std::string> ConStatus(1);
+  std::vector<std::int16_t> ConStatus(1);
   EXPECT_NO_THROW(ConStatusDataset.read(ConStatus));
-  ConStatus[0].erase(ConStatus[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameConnectionInfo(FbPointer->status())),
-            ConStatus[0]);
+  EXPECT_EQ(static_cast<std::int16_t>(FbPointer->status()), ConStatus[0]);
 }
 
 TEST_F(EPICS_ConStatusWriter, ConnectionStatusStoredAsInteger) {
