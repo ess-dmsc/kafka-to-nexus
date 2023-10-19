@@ -44,17 +44,17 @@
         "conanProfile": "conan profile new default --detect",
         "conanConfigInstall": "conan config install https://github.com/ess-dmsc/conan-configuration.git",
         "conanSetting": "conan config set general.revisions_enabled=True",
-        "aliases": "echo \"alias g='git'\\nalias gst='git status'\\nalias gco='git checkout'\\nalias gp='git pull'\" >> ~/.bashrc",
+        "aliases": "echo \"alias g='git'\\nalias gst='git status'\\nalias gco='git checkout'\\nalias gb='git branch'\\nalias gp='git pull'\" >> ~/.bashrc",
         "pre-commit_install": "pre-commit install"
     },
 
     "postStartCommand": {
-        "conanLibcxx": "conan profile update settings.compiler.libcxx=libstdc++11 default"
-    },
-
-    "postAttachCommand": {
+        "conanLibcxx": "conan profile update settings.compiler.libcxx=libstdc++11 default",
         "createVirtualEnv": "cd integration-tests && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt"
     },
+
+    // "postAttachCommand": {
+    // },
 
     // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
     "remoteUser": "vscode"
