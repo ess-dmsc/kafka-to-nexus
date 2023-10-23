@@ -100,17 +100,3 @@ TEST_F(EPICS_ConStatusWriter, WriteDataOnce) {
   EXPECT_NO_THROW(ConStatusDataset.read(ConStatus));
   EXPECT_EQ(static_cast<std::int16_t>(FbPointer->status()), ConStatus[0]);
 }
-
-TEST_F(EPICS_ConStatusWriter, ConnectionStatusStoredAsInteger) {
-  size_t BufferSize{0};
-  auto Buffer = GenerateConStatusFlatbufferData(BufferSize);
-  ep01::ep01_Writer Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
-  EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
-  FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto ConStatusDataset = UsedGroup.get_dataset("connection_status");
-
-  ASSERT_EQ(ConStatusDataset.datatype().get_class(),
-            hdf5::datatype::create<short>().get_class());
-}

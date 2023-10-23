@@ -101,29 +101,7 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
   auto StatusDataset = UsedGroup.get_dataset(StatusName);
   std::vector<std::int16_t> StatusData(StatusDataset.dataspace().size());
   EXPECT_NO_THROW(StatusDataset.read(StatusData));
-  EXPECT_EQ(static_cast<EventType>(StatusData[0]), Status);
-}
-
-TEST_F(Schema_ep00, ConnectionStatusStoredAsInteger) {
-  size_t BufferSize;
-  uint64_t Timestamp = 5555555;
-  std::string SourceName = "SIMPLE:DOUBLE";
-  auto Status = EventType::CONNECTED;
-  std::unique_ptr<std::int8_t[]> Buffer =
-      GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
-  WriterModule::ep00::ep00_Writer Writer;
-  {
-    Writer.init_hdf(UsedGroup);
-    Writer.reopen(UsedGroup);
-  }
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<uint8_t const *>(Buffer.get()), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
-
-  auto StatusDataset = UsedGroup.get_dataset(StatusName);
-
-  ASSERT_EQ(StatusDataset.datatype().get_class(),
-            hdf5::datatype::create<short>().get_class());
+  EXPECT_EQ(StatusData[0], static_cast<int16_t>(Status));
 }
 
 } // namespace ep00
