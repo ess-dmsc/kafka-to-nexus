@@ -52,7 +52,7 @@ void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
     auto Group = hdf5::node::get_group(Task->hdfGroup(), Path);
     HDFOperations::writeStringDataset(Group, Name, StringVec);
   } catch (std::exception &Error) {
-    LOG_ERROR("Failed to write time-point as ISO8601: {}", Error.what());
+    LOG_ERROR("Failed to write mdat string value: {}", Error.what());
   }
 }
 
