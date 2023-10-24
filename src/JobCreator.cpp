@@ -127,7 +127,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   std::vector<ModuleHDFInfo> mdatInfoList = extractMdatModules(ModuleHDFInfoList);
 
   auto mdatWriter = std::make_unique<WriterModule::mdat::mdat_Writer>();
-  mdatWriter->declareWriteables(mdatInfoList);
+  mdatWriter->defineMetadata(mdatInfoList);
 
   std::vector<ModuleSettings> SettingsList =
       extractModuleInformationFromJson(ModuleHDFInfoList);

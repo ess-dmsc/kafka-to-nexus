@@ -9,82 +9,52 @@
 
 #pragma once
 
+#include "FileWriterTask.h"
 #include "ModuleHDFInfo.h"
 #include "TimeUtility.h"
-#include "json.h"
-#include "MultiVector.h"
-#include "FileWriterTask.h"
-#include "HDFOperations.h"
 
-namespace WriterModule {
-namespace mdat {
+namespace WriterModule::mdat {
 
+/// \brief Used to write basic metadata such as start time, etc.
+///
+/// It works differently to other writer modules in that it doesn't listen to
+/// a Kafka topic. Instead values to be written are set in regular code.
 class mdat_Writer {
 public:
-  void declareWriteables(std::vector<ModuleHDFInfo> const& Modules) {
-    Writables = extractDetails(Modules);
-  }
+  /// \brief Work out what data to write based on the contents of mdat modules.
+  ///
+  /// \param Modules
+  void defineMetadata(std::vector<ModuleHDFInfo> const &Modules);
 
-  void setStartTime(time_point startTime) {
-    StringValues["start_time"] = toUTCDateTime(startTime);
-  }
+  /// \brief Set start time which should be written to the file.
+  ///
+  /// \param startTime
+  void setStartTime(time_point startTime);
 
-  void setStopTime(time_point startTime) {
-    StringValues["end_time"] = toUTCDateTime(startTime);
-  }
+  /// \brief Set stop time which should be written to the file.
+  ///
+  /// \param startTime
+  void setStopTime(time_point startTime);
 
-  void writeMetadata(FileWriter::FileWriterTask const *Task) {
-    for (auto const & Allowed : AllowedNames) {
-      if (isWritable(Allowed)) {
-        writeStringValue(Task, Writables[Allowed], Allowed, StringValues[Allowed]);
-      }
-    }
-  };
-
-private:
-  bool isWritable(std::string const& Name) const {
-    return Writables.find(Name) != Writables.end() && StringValues.find(Name) != StringValues.end();
-  }
-
-  void writeStringValue(FileWriter::FileWriterTask const *Task, std::string const &Path, std::string const &Name, std::string const& Value) {
-    try {
-      auto StringVec = MultiVector<std::string>{{1}};
-      StringVec.at({0}) = Value;
-      auto Group = hdf5::node::get_group(Task->hdfGroup(), Path);
-      HDFOperations::writeStringDataset(Group, Name, StringVec);
-    } catch (std::exception &Error) {
-      LOG_ERROR("Failed to write time-point as ISO8601: {}", Error.what());
-    }
-  }
+  /// \brief Write any defined values to the HDF file.
+  ///
+  /// \note Nothing will be written until this is called.
+  ///
+  /// \param Task
+  void writeMetadata(FileWriter::FileWriterTask const *Task);
 
 private:
+  [[nodiscard]] bool isWritable(std::string const &Name) const;
+
+  void writeStringValue(FileWriter::FileWriterTask const *Task,
+                        std::string const &Path, std::string const &Name,
+                        std::string const &Value);
+
   [[nodiscard]] std::unordered_map<std::string, std::string>
-  extractDetails(std::vector<ModuleHDFInfo> const &Modules) const {
-    std::unordered_map<std::string, std::string> Details;
-
-    std::for_each(
-        Modules.cbegin(), Modules.cend(), [&Details, this](auto const &Module) {
-          if (Module.WriterModule == "mdat") {
-            std::string name;
-            nlohmann::json json = nlohmann::json::parse(Module.ConfigStream);
-            for (auto it = json.begin(); it != json.end(); ++it) {
-              if (it.key() == "name") {
-                name = it.value();
-              }
-            }
-            if (!name.empty() &&
-                std::find(AllowedNames.begin(), AllowedNames.end(), name) !=
-                    AllowedNames.end()) {
-              Details[name] = Module.HDFParentName;
-            }
-          }
-        });
-    return Details;
-  }
+  extractDetails(std::vector<ModuleHDFInfo> const &Modules) const;
 
   std::vector<std::string> const AllowedNames{"start_time", "end_time"};
   std::unordered_map<std::string, std::string> Writables;
   std::unordered_map<std::string, std::string> StringValues;
 };
-} // namespace mdat
-} // namespace WriterModule
+} // namespace WriterModule::mdat

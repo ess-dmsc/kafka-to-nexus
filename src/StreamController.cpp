@@ -1,10 +1,8 @@
 #include "StreamController.h"
 #include "FileWriterTask.h"
 #include "HDFOperations.h"
-#include "Kafka/ConsumerFactory.h"
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
-#include "MultiVector.h"
 #include "Stream/Partition.h"
 #include "TimeUtility.h"
 #include "helper.h"
@@ -23,7 +21,6 @@ StreamController::StreamController(
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
       StreamerOptions(Settings), MetaDataTracker(Tracker) {
-//  writeStartTime();
   MdatWriter->setStartTime(Settings.StartTimestamp);
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
@@ -35,7 +32,6 @@ StreamController::~StreamController() {
   stop();
   MdatWriter->setStopTime(StreamerOptions.StopTimestamp);
   MdatWriter->writeMetadata(WriterTask.get());
-//  writeStopTime();
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
 }
