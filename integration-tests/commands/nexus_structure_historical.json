@@ -5,6 +5,18 @@
       "name" : "entry",
       "children": [
         {
+          "module": "mdat",
+          "config": {
+            "name": "start_time"
+          }
+        },
+        {
+          "module": "mdat",
+          "config": {
+            "name": "stop_time"
+          }
+        },
+        {
           "type": "group",
           "name": "historical_data_1",
           "children": [

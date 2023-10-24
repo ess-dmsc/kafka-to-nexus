@@ -30,7 +30,6 @@ StreamController::StreamController(
 
 StreamController::~StreamController() {
   stop();
-  MdatWriter->setStopTime(StreamerOptions.StopTimestamp);
   MdatWriter->writeMetadata(WriterTask.get());
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
@@ -38,6 +37,7 @@ StreamController::~StreamController() {
 
 void StreamController::setStopTime(time_point const &StopTime) {
   StreamerOptions.StopTimestamp = StopTime;
+  MdatWriter->setStopTime(StopTime);
   Executor.sendWork([=]() {
     for (auto &s : Streamers) {
       s->setStopTime(StopTime);
