@@ -43,8 +43,9 @@ bool mdat_Writer::isWritable(std::string const &Name) const {
 }
 
 void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
-                      std::string const &Path, std::string const &Name,
-                      std::string const &Value) {
+                                   std::string const &Path,
+                                   std::string const &Name,
+                                   std::string const &Value) {
   try {
     auto StringVec = MultiVector<std::string>{{1}};
     StringVec.at({0}) = Value;
@@ -77,4 +78,4 @@ mdat_Writer::extractDetails(std::vector<ModuleHDFInfo> const &Modules) const {
   }
   return Details;
 }
-}
+} // namespace WriterModule::mdat

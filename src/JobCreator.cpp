@@ -15,9 +15,9 @@
 #include "HDFOperations.h"
 #include "Msg.h"
 #include "StreamController.h"
+#include "WriterModule/mdat/mdat_Writer.h"
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
-#include "WriterModule/mdat/mdat_Writer.h"
 #include "json.h"
 #include <algorithm>
 
@@ -104,10 +104,12 @@ static std::vector<ModuleSettings> extractModuleInformationFromJson(
   return SettingsList;
 }
 
-std::vector<ModuleHDFInfo> extractMdatModules(std::vector<ModuleHDFInfo> &Modules) {
-  auto it = std::stable_partition(Modules.begin(),
-                           Modules.end(), [](ModuleHDFInfo const& Module) {
-                             return Module.WriterModule != "mdat";});
+std::vector<ModuleHDFInfo>
+extractMdatModules(std::vector<ModuleHDFInfo> &Modules) {
+  auto it = std::stable_partition(Modules.begin(), Modules.end(),
+                                  [](ModuleHDFInfo const &Module) {
+                                    return Module.WriterModule != "mdat";
+                                  });
 
   std::vector<ModuleHDFInfo> mdatInfoList{it, Modules.end()};
   Modules.erase(it, Modules.end());
@@ -124,7 +126,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
-  std::vector<ModuleHDFInfo> mdatInfoList = extractMdatModules(ModuleHDFInfoList);
+  std::vector<ModuleHDFInfo> mdatInfoList =
+      extractMdatModules(ModuleHDFInfoList);
 
   auto mdatWriter = std::make_unique<WriterModule::mdat::mdat_Writer>();
   mdatWriter->defineMetadata(mdatInfoList);
@@ -191,7 +194,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   LOG_INFO("Write file with job_id: {}", Task->jobID());
 
   return std::make_unique<StreamController>(
-      std::move(Task), std::move(mdatWriter), Settings.StreamerConfiguration, Registrar, Tracker);
+      std::move(Task), std::move(mdatWriter), Settings.StreamerConfiguration,
+      Registrar, Tracker);
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
