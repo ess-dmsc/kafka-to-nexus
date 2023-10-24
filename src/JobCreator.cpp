@@ -17,6 +17,7 @@
 #include "StreamController.h"
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
+#include "WriterModule/mdat/mdat_Writer.h"
 #include "json.h"
 #include <algorithm>
 
@@ -125,6 +126,9 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
       initializeHDF(*Task, StartInfo.NexusStructure);
   std::vector<ModuleHDFInfo> mdatInfoList = extractMdatModules(ModuleHDFInfoList);
 
+  auto mdatWriter = std::make_unique<WriterModule::mdat::mdat_Writer>();
+  mdatWriter->declareWriteables(mdatInfoList);
+
   std::vector<ModuleSettings> SettingsList =
       extractModuleInformationFromJson(ModuleHDFInfoList);
   std::vector<ModuleSettings> StreamSettingsList;
@@ -187,7 +191,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   LOG_INFO("Write file with job_id: {}", Task->jobID());
 
   return std::make_unique<StreamController>(
-      std::move(Task), Settings.StreamerConfiguration, Registrar, Tracker);
+      std::move(Task), std::move(mdatWriter), Settings.StreamerConfiguration, Registrar, Tracker);
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,

@@ -131,11 +131,11 @@ TEST_F(JobCreator, SetWriterAttributes) {
 
 TEST(ExtractMdat, ExtractsAllMdatModulesFromModuleList) {
   std::vector<ModuleHDFInfo> ModuleList{
-      {"not mdat", ":: parent ::", "not mdat 1"},
-      {"mdat", ":: parent ::", "mdat 1"},
-      {"not mdat", ":: parent ::", "not mdat 2"},
-      {"mdat", ":: parent ::", "mdat 2"},
-      {"not mdat", ":: parent ::", "not mdat 3"}};
+      {"not mdat", ":: parent ::", ":: stream ::"},
+      {"mdat", ":: parent ::", ":: stream ::"},
+      {"not mdat", ":: parent ::", ":: stream ::"},
+      {"mdat", ":: parent ::", ":: stream ::"},
+      {"not mdat", ":: parent ::", ":: stream ::"}};
 
   auto MdatModules = FileWriter::extractMdatModules(ModuleList);
 

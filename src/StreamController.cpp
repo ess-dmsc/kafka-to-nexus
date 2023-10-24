@@ -13,15 +13,18 @@
 namespace FileWriter {
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
+    std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
     FileWriter::StreamerOptions const &Settings,
     Metrics::Registrar const &Registrar, MetaData::TrackerPtr const &Tracker)
 
-    : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
+    : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
+      StreamMetricRegistrar(Registrar),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
       StreamerOptions(Settings), MetaDataTracker(Tracker) {
-  writeStartTime();
+//  writeStartTime();
+  MdatWriter->setStartTime(Settings.StartTimestamp);
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -30,32 +33,11 @@ StreamController::StreamController(
 
 StreamController::~StreamController() {
   stop();
-  writeStopTime();
+  MdatWriter->setStopTime(StreamerOptions.StopTimestamp);
+  MdatWriter->writeMetadata(WriterTask.get());
+//  writeStopTime();
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
-}
-
-void StreamController::writeStartTime() {
-  writeTimePointAsIso8601String("/entry", "start_time",
-                                StreamerOptions.StartTimestamp);
-}
-
-void StreamController::writeStopTime() {
-  writeTimePointAsIso8601String("/entry", "stop_time",
-                                StreamerOptions.StopTimestamp);
-}
-
-void StreamController::writeTimePointAsIso8601String(std::string const &Path,
-                                                     std::string const &Name,
-                                                     time_point const &Value) {
-  try {
-    auto StringVec = MultiVector<std::string>{{1}};
-    StringVec.at({0}) = toUTCDateTime(Value);
-    auto Group = hdf5::node::get_group(WriterTask->hdfGroup(), Path);
-    HDFOperations::writeStringDataset(Group, Name, StringVec);
-  } catch (std::exception &Error) {
-    LOG_ERROR("Failed to write time-point as ISO8601: {}", Error.what());
-  }
 }
 
 void StreamController::setStopTime(time_point const &StopTime) {
