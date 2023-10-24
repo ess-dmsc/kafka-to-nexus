@@ -103,6 +103,16 @@ static std::vector<ModuleSettings> extractModuleInformationFromJson(
   return SettingsList;
 }
 
+std::vector<ModuleHDFInfo> extractMdatModules(std::vector<ModuleHDFInfo> &Modules) {
+  auto it = std::stable_partition(Modules.begin(),
+                           Modules.end(), [](ModuleHDFInfo const& Module) {
+                             return Module.WriterModule != "mdat";});
+
+  std::vector<ModuleHDFInfo> mdatInfoList{it, Modules.end()};
+  Modules.erase(it, Modules.end());
+  return mdatInfoList;
+};
+
 std::unique_ptr<IStreamController>
 createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                      Metrics::Registrar Registrar,
@@ -113,6 +123,8 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
+  std::vector<ModuleHDFInfo> mdatInfoList = extractMdatModules(ModuleHDFInfoList);
+
   std::vector<ModuleSettings> SettingsList =
       extractModuleInformationFromJson(ModuleHDFInfoList);
   std::vector<ModuleSettings> StreamSettingsList;
