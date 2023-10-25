@@ -21,6 +21,8 @@ class ConsumerFactoryInterface {
 public:
   virtual std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) = 0;
+  virtual std::shared_ptr<ConsumerInterface>
+  getConsumer(std::string_view Id, BrokerSettings const &Settings) = 0;
   virtual ~ConsumerFactoryInterface() = default;
 };
 
@@ -28,13 +30,26 @@ class ConsumerFactory : public ConsumerFactoryInterface {
 public:
   std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) override;
+  std::shared_ptr<ConsumerInterface>
+  getConsumer(std::string_view Id, BrokerSettings const &Settings) override;
   ~ConsumerFactory() override = default;
+
+private:
+  std::unordered_map<std::string, std::shared_ptr<ConsumerInterface>>
+      ConsumerMap;
+  std::mutex ConsumerMapMutex;
 };
 
 class StubConsumerFactory : public ConsumerFactoryInterface {
 public:
   std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) override {
+    UNUSED_ARG(Settings);
+    return std::unique_ptr<ConsumerInterface>(new StubConsumer());
+  };
+  std::shared_ptr<ConsumerInterface>
+  getConsumer(std::string_view Id, BrokerSettings const &Settings) override {
+    UNUSED_ARG(Id);
     UNUSED_ARG(Settings);
     return std::unique_ptr<ConsumerInterface>(new StubConsumer());
   };

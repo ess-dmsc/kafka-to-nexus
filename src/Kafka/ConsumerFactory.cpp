@@ -55,4 +55,19 @@ std::unique_ptr<ConsumerInterface>
 ConsumerFactory::createConsumer(const BrokerSettings &Settings) {
   return Kafka::createConsumer(Settings);
 }
+
+std::shared_ptr<ConsumerInterface>
+ConsumerFactory::getConsumer(std::string_view Id,
+                             BrokerSettings const &Settings) {
+  std::lock_guard<std::mutex> Lock(ConsumerMapMutex);
+  auto It = ConsumerMap.find(std::string(Id));
+  if (It != ConsumerMap.end()) {
+    return It->second;
+  }
+  auto NewConsumer = Kafka::createConsumer(Settings);
+  std::shared_ptr<ConsumerInterface> SharedConsumer = std::move(NewConsumer);
+  ConsumerMap[std::string(Id)] = SharedConsumer;
+  return SharedConsumer;
+}
+
 } // namespace Kafka

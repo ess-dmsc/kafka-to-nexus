@@ -23,6 +23,7 @@ set(UnitTests_SRC
         ProducerTests.cpp
         ProducerDeliveryTests.cpp
         ConsumerTests.cpp
+        ConsumerFactoryTests.cpp
         StreamControllerTests.cpp
         Metrics/MetricsRegistrarTest.cpp
         Metrics/MetricTest.cpp
