@@ -98,5 +98,5 @@ def test_start_and_stop_time_are_in_the_past(
         assert file["entry/historical_data_1/alarm_time"][0] == int(
             (start_time + step_time).timestamp() * 1e9
         )  # ns
-        assert file["entry/start_time"][0] == f"{file_start_time.isoformat()}.000Z"
-        assert file["entry/end_time"][0] == f"{file_stop_time.isoformat()}.000Z"
+        assert file["entry/start_time"][0] == f"{file_start_time.isoformat()}.000Z".encode()
+        assert file["entry/end_time"][0] == f"{file_stop_time.isoformat()}.000Z".encode()
