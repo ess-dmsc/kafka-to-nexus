@@ -42,7 +42,7 @@ bool mdat_Writer::isWritable(std::string const &Name) const {
          StringValues.find(Name) != StringValues.end();
 }
 
-void  mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
+void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
                                    std::string const &Path,
                                    std::string const &Name,
                                    std::string const &Value) {
