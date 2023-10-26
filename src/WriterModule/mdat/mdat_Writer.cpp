@@ -75,7 +75,7 @@ mdat_Writer::extractDetails(std::vector<ModuleHDFInfo> const &Modules) const {
 }
 
 std::optional<std::string>
-mdat_Writer::extractName(std::string const &configJson) const {
+mdat_Writer::extractName(std::string const &configJson) {
   nlohmann::json json = nlohmann::json::parse(configJson);
   for (auto it = json.begin(); it != json.end(); ++it) {
     if (it.key() == "name" && !it.value().empty()) {
