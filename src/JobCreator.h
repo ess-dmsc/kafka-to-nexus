@@ -51,7 +51,7 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
 ///
 /// \param AllModules
 /// \return The mdat modules.
-std::vector<ModuleHDFInfo> extractMdatModules(std::vector<ModuleHDFInfo> &Modules);
-
+std::vector<ModuleHDFInfo>
+extractMdatModules(std::vector<ModuleHDFInfo> &Modules);
 
 } // namespace FileWriter
