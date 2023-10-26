@@ -64,18 +64,24 @@ mdat_Writer::extractDetails(std::vector<ModuleHDFInfo> const &Modules) const {
     if (Module.WriterModule != "mdat") {
       continue;
     }
-    std::string name;
-    nlohmann::json json = nlohmann::json::parse(Module.ConfigStream);
-    for (auto it = json.begin(); it != json.end(); ++it) {
-      if (it.key() == "name") {
-        name = it.value();
-      }
-    }
-    if (!name.empty() && std::find(AllowedNames.begin(), AllowedNames.end(),
-                                   name) != AllowedNames.end()) {
-      Details[name] = Module.HDFParentName;
+
+    auto const name = extractName(Module.ConfigStream);
+    if (name && std::find(AllowedNames.begin(), AllowedNames.end(), name) !=
+                    AllowedNames.end()) {
+      Details[name.value()] = Module.HDFParentName;
     }
   }
   return Details;
+}
+
+std::optional<std::string>
+mdat_Writer::extractName(std::string const &configJson) const {
+  nlohmann::json json = nlohmann::json::parse(configJson);
+  for (auto it = json.begin(); it != json.end(); ++it) {
+    if (it.key() == "name" && !it.value().empty()) {
+      return it.value();
+    }
+  }
+  return {};
 }
 } // namespace WriterModule::mdat

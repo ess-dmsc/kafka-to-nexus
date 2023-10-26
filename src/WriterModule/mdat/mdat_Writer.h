@@ -53,6 +53,9 @@ private:
   [[nodiscard]] std::unordered_map<std::string, std::string>
   extractDetails(std::vector<ModuleHDFInfo> const &Modules) const;
 
+  [[nodiscard]] std::optional<std::string>
+  extractName(std::string const &configJson) const;
+
   std::vector<std::string> const AllowedNames{"start_time", "end_time"};
   std::unordered_map<std::string, std::string> Writables;
   std::unordered_map<std::string, std::string> StringValues;
