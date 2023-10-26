@@ -25,12 +25,17 @@ namespace Stream {
 /// partitions.
 class Topic {
 public:
+  // Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
+  //       SrcToDst Map, MessageWriter *Writer, Metrics::Registrar
+  //       &RegisterMetric, time_point StartTime, duration StartTimeLeeway,
+  //       time_point StopTime, duration StopTimeLeeway,
+  //       std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
+  //           std::make_unique<Kafka::ConsumerFactory>());
   Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
         SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway,
-        std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
-            std::make_unique<Kafka::ConsumerFactory>());
+        std::shared_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers);
 
   /// \brief Must be called after the constructor.
   /// \note This function exist in order to make unit testing possible.
@@ -120,7 +125,7 @@ protected:
   virtual time_point getCurrentTime() const { return system_clock::now(); }
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
-  std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
+  std::shared_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
   ThreadedExecutor Executor{false, "topic"}; // Must be last
 };
 } // namespace Stream

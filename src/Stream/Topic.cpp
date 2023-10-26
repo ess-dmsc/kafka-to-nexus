@@ -21,7 +21,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              Metrics::Registrar &RegisterMetric, time_point StartTime,
              duration StartTimeLeeway, time_point StopTime,
              duration StopTimeLeeway,
-             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
+             std::shared_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
@@ -171,6 +171,14 @@ void Topic::createStreams(
         "partition_" + std::to_string(CParOffset.first));
     auto Consumer = ConsumerCreator->getConsumer("Stream::Topic", Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
+    LOG_DEBUG("Creating partition with Consumer address={}, "
+              "CParOffset.first={}, Topic={}, DataMap=..., WriterPtr={}, "
+              "CRegistrar=..., StartConsumeTime={}, StopConsumeTime={}, "
+              "StopLeeway=..., KafkaErrorTimeout=...",
+              static_cast<void *>(Consumer.get()), CParOffset.first, Topic,
+              static_cast<void *>(WriterPtr), StartConsumeTime,
+              StopConsumeTime);
+
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,
         CRegistrar, StartConsumeTime, StopConsumeTime, StopLeeway,

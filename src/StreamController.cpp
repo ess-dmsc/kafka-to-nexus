@@ -139,6 +139,8 @@ void StreamController::getTopicNames() {
 void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
   std::map<std::string, Stream::SrcToDst> TopicSrcMap;
   std::string GetTopicsErrorString;
+  std::shared_ptr<Kafka::ConsumerFactoryInterface> ConsumerFactoryPtr =
+      std::make_shared<Kafka::ConsumerFactory>();
   for (auto &Src : WriterTask->sources()) {
     if (KnownTopicNames.find(Src.topic()) != KnownTopicNames.end()) {
       TopicSrcMap[Src.topic()].push_back(
@@ -168,7 +170,7 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
         StreamerOptions.BrokerSettings, CItem.first, CItem.second,
         &WriterThread, StreamMetricRegistrar, CStartTime,
         StreamerOptions.BeforeStartTime, CStopTime,
-        StreamerOptions.AfterStopTime);
+        StreamerOptions.AfterStopTime, ConsumerFactoryPtr);
     CTopic->start();
     Streamers.emplace_back(std::move(CTopic));
   }
