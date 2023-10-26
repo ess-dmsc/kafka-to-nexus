@@ -46,15 +46,15 @@ public:
 private:
   [[nodiscard]] bool isWritable(std::string const &Name) const;
 
-  void writeStringValue(FileWriter::FileWriterTask const *Task,
-                        std::string const &Path, std::string const &Name,
-                        std::string const &Value);
+  void static writeStringValue(FileWriter::FileWriterTask const *Task,
+                               std::string const &Path, std::string const &Name,
+                               std::string const &Value);
 
   [[nodiscard]] std::unordered_map<std::string, std::string>
   extractDetails(std::vector<ModuleHDFInfo> const &Modules) const;
 
-  [[nodiscard]] std::optional<std::string>
-  extractName(std::string const &configJson) const;
+  [[nodiscard]] std::optional<std::string> static extractName(
+      std::string const &configJson);
 
   std::vector<std::string> const AllowedNames{"start_time", "end_time"};
   std::unordered_map<std::string, std::string> Writables;
