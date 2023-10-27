@@ -3,7 +3,7 @@ from helpers.kafkahelpers import (
     create_producer,
     publish_f142_message,
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
 from streaming_data_types.fbschemas.logdata_f142.AlarmSeverity import AlarmSeverity
 from file_writer_control.WriteJob import WriteJob
@@ -24,6 +24,7 @@ def test_start_and_stop_time_are_in_the_past(
 
     data_topics = ["TEST_historicalData1", "TEST_historicalData2"]
 
+    # NOTE: this is local time - the filewriter will convert it to UTC
     start_time = datetime(year=2019, month=6, day=12, hour=11, minute=1, second=35)
     stop_time = start_time + timedelta(seconds=200)
     step_time = timedelta(seconds=1)
@@ -100,8 +101,9 @@ def test_start_and_stop_time_are_in_the_past(
         )  # ns
         assert (
             file["entry/start_time"][0]
-            == f"{file_start_time.isoformat()}.000Z".encode()
+            == f"{file_start_time.astimezone(timezone.utc).isoformat()}.000Z".encode()
         )
         assert (
-            file["entry/end_time"][0] == f"{file_stop_time.isoformat()}.000Z".encode()
+            file["entry/end_time"][0]
+            == f"{file_stop_time.astimezone(timezone.utc).isoformat()}.000Z".encode()
         )
