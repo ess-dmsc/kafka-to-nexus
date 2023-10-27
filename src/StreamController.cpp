@@ -22,6 +22,7 @@ StreamController::StreamController(
                    Registrar.getNewRegistrar("stream")),
       StreamerOptions(Settings), MetaDataTracker(Tracker) {
   MdatWriter->setStartTime(Settings.StartTimestamp);
+  MdatWriter->setStopTime(Settings.StopTimestamp);
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
