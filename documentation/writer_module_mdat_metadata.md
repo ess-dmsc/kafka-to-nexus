@@ -29,7 +29,7 @@ Example `nexus_structure` to write start and stop times:
           {
             "module": "mdat",
             "config": {
-              "name": "stop_time"
+              "name": "end_time"
             }
           }
       }
