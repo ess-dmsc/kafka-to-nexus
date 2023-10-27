@@ -1,6 +1,7 @@
 from helpers.kafkahelpers import (
     create_producer,
     publish_ep00_message,
+    ConnectionInfo,
 )
 from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
@@ -57,8 +58,14 @@ def test_ep00(worker_pool, kafka_address, hdf_file_name="output_file_ep00.nxs"):
         assert file["EpicsConnectionStatus/connection_status_time"][0] == int(
             start_time.timestamp() * 1e9
         )
-        assert file["EpicsConnectionStatus/connection_status"][0] == b"NEVER_CONNECTED"
+        assert (
+            file["EpicsConnectionStatus/connection_status"][0]
+            == ConnectionInfo.NEVER_CONNECTED.value
+        )
         assert file["EpicsConnectionStatus/connection_status_time"][1] == int(
             (start_time + timedelta(seconds=0.01)).timestamp() * 1e9
         )
-        assert file["EpicsConnectionStatus/connection_status"][1] == b"CONNECTED"
+        assert (
+            file["EpicsConnectionStatus/connection_status"][1]
+            == ConnectionInfo.CONNECTED.value
+        )
