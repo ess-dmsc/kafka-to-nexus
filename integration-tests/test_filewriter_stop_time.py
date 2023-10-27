@@ -99,6 +99,7 @@ def test_start_and_stop_time_are_in_the_past(
         assert file["entry/historical_data_1/alarm_time"][0] == int(
             (start_time + step_time).timestamp() * 1e9
         )  # ns
+        print(f"============= {list(file['entry'].keys())} ========")
         assert (
             file["entry/start_time"][0]
             == file_start_time.astimezone(timezone.utc)
