@@ -16,10 +16,12 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                      int Partition, std::string TopicName, SrcToDst const &Map,
                      MessageWriter *Writer, Metrics::Registrar RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway,
-                     duration KafkaErrorTimeout)
+                     duration KafkaErrorTimeout,
+                     std::function<bool()> AreStreamersPausedFunction)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
-      StopTester(Stop, StopLeeway, KafkaErrorTimeout) {
+      StopTester(Stop, StopLeeway, KafkaErrorTimeout),
+      AreStreamersPausedFunction(AreStreamersPausedFunction) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
@@ -76,10 +78,6 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
 
 void Partition::start() { addPollTask(); }
 
-void Partition::pause() { IsPaused.store(true); }
-
-void Partition::resume() { IsPaused.store(false); }
-
 void Partition::forceStop() { StopTester.forceStop(); }
 
 void Partition::sleep(const duration Duration) const {
@@ -102,8 +100,6 @@ void Partition::setStopTime(time_point Stop) {
 }
 
 bool Partition::hasFinished() const { return HasFinished.load(); }
-
-bool Partition::isPaused() const { return IsPaused.load(); }
 
 void Partition::addPollTask() {
   Executor.sendLowPriorityWork([=]() { pollForMessage(); });
@@ -161,7 +157,7 @@ void Partition::pollForMessage() {
     HasFinished = true;
     return;
   }
-  if (isPaused()) {
+  if (AreStreamersPausedFunction()) {
     sleep(PauseCheckInterval);
   } else {
     auto Msg = ConsumerPtr->poll();

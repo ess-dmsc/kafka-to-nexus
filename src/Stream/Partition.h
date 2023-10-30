@@ -45,25 +45,13 @@ public:
   Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::Registrar RegisterMetric, time_point Start,
-            time_point Stop, duration StopLeeway, duration KafkaErrorTimeout);
+            time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
+            std::function<bool()> AreStreamersPausedFunction);
   virtual ~Partition() = default;
 
   /// \brief Must be called after the constructor.
   /// \note This function exist in order to make unit testing possible.
   void start();
-
-  /// \brief Pause the consumer thread.
-  ///
-  /// Non-blocking. Will stop the queuing of poll commands to the consumer
-  /// thread command queue. There are no guarantees for when the consumer is
-  /// actually paused.
-  void pause();
-
-  /// \brief Resume the consumer thread.
-  ///
-  /// Non-blocking. Will resume the queuing of poll commands to the consumer
-  /// thread command queue.
-  void resume();
 
   /// \brief Stop the consumer thread.
   ///
@@ -78,7 +66,6 @@ public:
   void setStopTime(time_point Stop);
 
   virtual bool hasFinished() const;
-  virtual bool isPaused() const;
   auto getPartitionID() const { return PartitionID; }
   auto getTopicName() const { return Topic; }
 
@@ -137,12 +124,12 @@ protected:
   bool PartitionTimeOutLogged{false};
   std::string Topic{"not_initialized"};
   std::atomic_bool HasFinished{false};
-  std::atomic_bool IsPaused{false};
   std::int64_t CurrentOffset{0};
   time_point StopTime;
   duration StopTimeLeeway;
   duration PauseCheckInterval{200ms};
   PartitionFilter StopTester;
+  std::function<bool()> AreStreamersPausedFunction;
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
       MsgFilters;

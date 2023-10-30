@@ -30,10 +30,11 @@ public:
                Metrics::Registrar &RegisterMetric, time_point StartTime,
                duration StartTimeLeeway, time_point StopTime,
                duration StopTimeLeeway,
+               std::function<bool()> AreStreamersPausedFunction,
                std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
       : Stream::Topic(Settings, Topic, Map, Writer, RegisterMetric, StartTime,
                       StartTimeLeeway, StopTime, StopTimeLeeway,
-                      std::move(CreateConsumers)) {}
+                      AreStreamersPausedFunction, std::move(CreateConsumers)) {}
   virtual void checkIfDoneTask() override {
     // Do nothing to prevent repeated calling of checkIfDone()
   }
@@ -108,7 +109,8 @@ public:
   auto createTestedInstance() {
     return std::make_unique<TopicStandIn>(
         KafkaSettings, UsedTopicName, Map, nullptr, Registrar, Start, 5s, Stop,
-        5s, std::make_unique<Kafka::StubConsumerFactory>());
+        5s, []() { return false; },
+        std::make_unique<Kafka::StubConsumerFactory>());
   }
   std::string const UsedTopicName{"some_topic_or_another"};
   Kafka::BrokerSettings KafkaSettings;
@@ -274,7 +276,7 @@ class PartitionStandInAlt : public Stream::Partition {
 public:
   PartitionStandInAlt()
       : Stream::Partition({}, 0, "", {}, nullptr, Metrics::Registrar("", {}),
-                          {}, {}, {}, {}) {}
+                          {}, {}, {}, {}, []() { return false; }) {}
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
 
