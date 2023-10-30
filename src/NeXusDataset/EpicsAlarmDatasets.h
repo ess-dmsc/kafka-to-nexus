@@ -14,6 +14,7 @@
 namespace NeXusDataset {
 
 /// \brief Represents a dataset with the name "alarm_status".
+/// \deprecated This class is deprecated in favour of AlarmMsg.
 class AlarmStatus : public FixedSizeString {
 public:
   AlarmStatus() = default;
@@ -33,13 +34,13 @@ public:
 };
 
 /// \brief Represents a dataset with the name "alarm_severity".
-class AlarmSeverity : public FixedSizeString {
+class AlarmSeverity : public ExtensibleDataset<std::int16_t> {
 public:
   AlarmSeverity() = default;
   AlarmSeverity(hdf5::node::Group const &Parent, Mode CMode,
-                size_t StringSize = 32, size_t ChunkSize = 1024)
-      : FixedSizeString(Parent, "alarm_severity", CMode, StringSize,
-                        ChunkSize){};
+                size_t ChunkSize = 1024)
+      : ExtensibleDataset<std::int16_t>(Parent, "alarm_severity", CMode,
+                                        ChunkSize){};
 };
 
 /// \brief Represents a timestamp dataset.
