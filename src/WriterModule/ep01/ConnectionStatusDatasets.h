@@ -33,14 +33,14 @@ public:
   };
 };
 
-class ConnectionStatus : public FixedSizeString {
+class ConnectionStatus : public ExtensibleDataset<std::int16_t> {
 public:
   ConnectionStatus() = default;
   /// \brief Create the alarm_status dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
   ConnectionStatus(hdf5::node::Group const &Parent, Mode CMode,
-                   size_t StringSize = 32, size_t ChunkSize = 1024)
-      : FixedSizeString(Parent, "connection_status", CMode, StringSize,
-                        ChunkSize){};
+                   size_t ChunkSize = 1024)
+      : ExtensibleDataset<std::int16_t>(Parent, "connection_status", CMode,
+                                        ChunkSize){};
 };
 } // namespace NeXusDataset

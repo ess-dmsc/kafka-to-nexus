@@ -99,11 +99,9 @@ TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   EXPECT_NO_THROW(AlarmTimeDataset.read(Timestamp));
   EXPECT_EQ(FbPointer->timestamp(), Timestamp[0]);
 
-  std::vector<std::string> AlarmSeverity(1);
+  std::vector<int16_t> AlarmSeverity(1);
   EXPECT_NO_THROW(AlarmSeverityDataset.read(AlarmSeverity));
-  AlarmSeverity[0].erase(AlarmSeverity[0].find('\0'));
-  EXPECT_EQ(std::string(EnumNameSeverity(FbPointer->severity())),
-            AlarmSeverity[0]);
+  EXPECT_EQ(static_cast<int16_t>(FbPointer->severity()), AlarmSeverity[0]);
 
   std::vector<std::string> AlarmMsg(1);
   EXPECT_NO_THROW(AlarmMsgDataset.read(AlarmMsg));
