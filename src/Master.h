@@ -53,8 +53,6 @@ public:
   std::string getCurrentFileName() const;
   std::filesystem::path getCurrentFilePath() const;
   void stopNow();
-
-
   void startWriting(Command::StartInfo const &StartInfo);
   bool writingIsFinished();
 
