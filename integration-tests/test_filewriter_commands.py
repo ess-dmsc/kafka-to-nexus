@@ -20,7 +20,6 @@ def test_ignores_stop_command_with_incorrect_service_id(
     kafka_address,
     multiple_writers,
 ):
-    
     relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
     absolute_file_path = build_absolute_file_path(relative_file_path)
     wait_writers_available(worker_pool, nr_of=2, timeout=20)
