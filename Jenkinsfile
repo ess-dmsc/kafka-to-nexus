@@ -233,7 +233,7 @@ if (env.CHANGE_ID) {
       )
       dir("${pr_pipeline_builder.project}") {
         recordIssues \
-          enabledForFailure: true
+          enabledForFailure: true,
           quiet: true,
           sourceCodeEncoding: 'UTF-8',
           qualityGates: [[
