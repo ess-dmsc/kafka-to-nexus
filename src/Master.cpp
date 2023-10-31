@@ -60,6 +60,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     LOG_ERROR("{}", Error.what());
     throw;
   }
+  int unused{0};
 }
 
 void Master::stopNow() {
