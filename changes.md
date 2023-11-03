@@ -15,6 +15,7 @@
 - Fix: Error responses to `run_stop` commands are generated only if `service_id` is set and
   matches the id of the filewriter.
 - Feat: Export worker_state Carbon metric (idle/writing)
+- Refa: Rename MetaData namespace to Statistics
 
 ## Version 6.0.0
 
