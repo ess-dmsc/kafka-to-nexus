@@ -192,18 +192,24 @@ if (env.CHANGE_ID) {
     }  // stage: checkout
 
     pr_pipeline_builder.stage("${container.key}: Clang-format") {
-      container.sh """
-        cd ${pr_pipeline_builder.project}
-        jenkins-scripts/check-formatting.sh
-      """
+      // Postpone failure to end of pipeline
+      catchError(stageResult: 'FAILURE') {
+        container.sh """
+          cd ${pr_pipeline_builder.project}
+          jenkins-scripts/check-formatting.sh
+        """
+      }  // catchError
     }  // stage: clang-format 
 
     pr_pipeline_builder.stage("${container.key}: Black") {
-      container.sh """
-        cd ${pr_pipeline_builder.project}
-        python3 -m black --version
-        python3 -m black --check integration-tests
-      """
+      // Postpone failure to end of pipeline
+      catchError(stageResult: 'FAILURE') {
+        container.sh """
+          cd ${pr_pipeline_builder.project}
+          python3 -m black --version
+          python3 -m black --check integration-tests
+        """
+      }  // catchError
     }  // stage: black
 
     pr_pipeline_builder.stage("${container.key}: Cppcheck") {
@@ -227,12 +233,13 @@ if (env.CHANGE_ID) {
       )
       dir("${pr_pipeline_builder.project}") {
         recordIssues \
+          enabledForFailure: true,
           quiet: true,
           sourceCodeEncoding: 'UTF-8',
           qualityGates: [[
             threshold: 1,
             type: 'TOTAL',
-            unstable: true
+            unstable: false
           ]],
           tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
       }  // dir
