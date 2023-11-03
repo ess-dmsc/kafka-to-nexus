@@ -216,13 +216,13 @@ TEST_F(PartitionTest, WithNoFiltersPartitionIsFinishedOnMessage) {
 }
 
 TEST_F(PartitionTest, MessageWithInvalidFlatBufferIsNotProcessed) {
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           (Start + 10s).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
-      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, Statistics}};
   auto UnderTest = createTestedInstance();
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
@@ -232,13 +232,13 @@ TEST_F(PartitionTest, MessageWithInvalidFlatBufferIsNotProcessed) {
 
 TEST_F(PartitionTest, MessageWithinStopLeewayDoesNotTriggerFinished) {
   Stop = Start + 20s;
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           (Stop + StopLeeway).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
-      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, Statistics}};
   auto UnderTest = createTestedInstance(Stop);
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
@@ -247,13 +247,13 @@ TEST_F(PartitionTest, MessageWithinStopLeewayDoesNotTriggerFinished) {
 
 TEST_F(PartitionTest, MessageAfterStopLeewayTriggersFinished) {
   Stop = Start + 20s;
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           (Stop + StopLeeway + 1s).time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
-      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, Statistics}};
   auto UnderTest = createTestedInstance(Stop);
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
@@ -261,13 +261,13 @@ TEST_F(PartitionTest, MessageAfterStopLeewayTriggersFinished) {
 }
 
 TEST_F(PartitionTest, ForceStopStops) {
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           Start.time_since_epoch()),
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
-      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
+      Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, Statistics}};
   auto UnderTest = createTestedInstance(Stop);
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   UnderTest->pollForMessage();
@@ -405,11 +405,11 @@ TEST_F(PartitionTest, PartitionHasNotFinishedIfAnyOfItsFiltersHaveNotFinished) {
   REQUIRE_CALL(*TestFilterPtr2, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(false);
 
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
-      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+      FileWriter::Msg{SomeData.data(), SomeData.size(), Statistics}};
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
 
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -433,11 +433,11 @@ TEST_F(PartitionTest, HasNotFinishedAlt2) {
   REQUIRE_CALL(*TestFilterPtr2, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(true);
 
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
-      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+      FileWriter::Msg{SomeData.data(), SomeData.size(), Statistics}};
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
 
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -455,11 +455,11 @@ TEST_F(PartitionTest, HasNotFinishedAlt3) {
   REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(false);
 
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
-      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+      FileWriter::Msg{SomeData.data(), SomeData.size(), Statistics}};
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
 
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -477,11 +477,11 @@ TEST_F(PartitionTest, HasFinishedAlt1) {
   REQUIRE_CALL(*TestFilterPtr1, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(true);
 
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
-      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+      FileWriter::Msg{SomeData.data(), SomeData.size(), Statistics}};
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
 
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -505,11 +505,11 @@ TEST_F(PartitionTest, PartitionHasFinishedIfAllItsFiltersHaveFinished) {
   REQUIRE_CALL(*TestFilterPtr2, filterMessage(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(true);
 
-  FileWriter::MessageMetaData MetaData{
+  FileWriter::MessageMetaData Statistics{
       1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
-      FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
+      FileWriter::Msg{SomeData.data(), SomeData.size(), Statistics}};
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
 
   setExtractorModule<zzzzFbReader>("zzzz");

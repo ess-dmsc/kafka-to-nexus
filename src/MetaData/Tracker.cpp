@@ -9,9 +9,9 @@
 
 #include "Tracker.h"
 
-namespace MetaData {
+namespace Statistics {
 
-void Tracker::registerMetaData(MetaData::ValueBase NewMetaData) {
+void Tracker::registerMetaData(Statistics::ValueBase NewMetaData) {
   std::lock_guard LockGuard(MetaDataMutex);
   if (NewMetaData.getValuePtr() != nullptr) {
     KnownMetaData.emplace_back(NewMetaData.getValuePtr());
@@ -24,8 +24,8 @@ void Tracker::clearMetaData() {
 
 void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
   std::lock_guard LockGuard(MetaDataMutex);
-  for (auto const &MetaData : KnownMetaData) {
-    auto JSONObj = MetaData->getAsJSON();
+  for (auto const &Statistics : KnownMetaData) {
+    auto JSONObj = Statistics->getAsJSON();
     JSONNode.insert(JSONObj.cbegin(), JSONObj.cend());
   }
 }
@@ -33,9 +33,9 @@ void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
 void Tracker::writeToHDF5File(hdf5::node::Group RootNode) const {
   std::lock_guard LockGuard(MetaDataMutex);
   int ErrorCounter{0};
-  for (auto const &MetaData : KnownMetaData) {
+  for (auto const &Statistics : KnownMetaData) {
     try {
-      MetaData->writeToHDF5File(RootNode);
+      Statistics->writeToHDF5File(RootNode);
     } catch (std::exception const &E) {
       ErrorCounter++;
     }
@@ -47,4 +47,4 @@ void Tracker::writeToHDF5File(hdf5::node::Group RootNode) const {
   }
 }
 
-} // namespace MetaData
+} // namespace Statistics

@@ -14,8 +14,8 @@
 
 using std::string_literals::operator""s;
 
-TEST(MetaData, IntValue) {
-  MetaData::Value<int> UnderTest{"/", "SomeKey"};
+TEST(Statistics, IntValue) {
+  Statistics::Value<int> UnderTest{"/", "SomeKey"};
   int TestValue{1235};
   UnderTest.setValue(TestValue);
 
@@ -23,8 +23,8 @@ TEST(MetaData, IntValue) {
   EXPECT_EQ(UnderTest.getAsJSON(), R"({"/:SomeKey":1235})"_json);
 }
 
-TEST(MetaData, IntVectorValue) {
-  MetaData::Value<std::vector<int>> UnderTest{"/", "SomeKey"};
+TEST(Statistics, IntVectorValue) {
+  Statistics::Value<std::vector<int>> UnderTest{"/", "SomeKey"};
   std::vector<int> TestValue{1, 2, 3, 4};
   UnderTest.setValue(TestValue);
 
@@ -32,8 +32,8 @@ TEST(MetaData, IntVectorValue) {
   EXPECT_EQ(UnderTest.getAsJSON(), R"({"/:SomeKey":[1,2,3,4]})"_json);
 }
 
-TEST(MetaData, StringValue) {
-  MetaData::Value<std::string> UnderTest{"/", "SomeKey"};
+TEST(Statistics, StringValue) {
+  Statistics::Value<std::string> UnderTest{"/", "SomeKey"};
   std::string TestValue{"hello"};
   UnderTest.setValue(TestValue);
 

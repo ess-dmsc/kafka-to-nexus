@@ -48,7 +48,7 @@ public:
   HDFFile(std::filesystem::path const &FileName,
           nlohmann::json const &NexusStructure,
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
-          MetaData::TrackerPtr &TrackerPtr);
+          Statistics::TrackerPtr &TrackerPtr);
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
   void addMetaData();
   void openInSWMRMode();
@@ -69,7 +69,7 @@ private:
 
   std::filesystem::path H5FileName;
   nlohmann::json StoredNexusStructure;
-  MetaData::TrackerPtr const MetaDataTracker;
+  Statistics::TrackerPtr const MetaDataTracker;
 };
 
 } // namespace FileWriter

@@ -23,7 +23,7 @@ namespace FileWriter {
 std::unique_ptr<IStreamController>
 createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                      Metrics::Registrar Registrar,
-                     MetaData::TrackerPtr const &Tracker);
+                     Statistics::TrackerPtr const &Tracker);
 
 // Note: The functions below are "private" helper functions.
 

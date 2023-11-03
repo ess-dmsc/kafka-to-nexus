@@ -12,7 +12,7 @@
 #include "NeXusDataset/ExtensibleDataset.h"
 #include <functional>
 
-namespace MetaData {
+namespace Statistics {
 
 template <class DataType>
 void basicAttributeWriter(hdf5::node::Node Node, std::string Name,
@@ -32,7 +32,7 @@ getPathOffsetAttributeWriter(std::string PathOffset) {
                                    DataType Value) {
     auto UsedNode =
         hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
-    MetaData::basicAttributeWriter<DataType>(UsedNode, Name, Value);
+    Statistics::basicAttributeWriter<DataType>(UsedNode, Name, Value);
   };
   return TempFunction;
 }
@@ -65,9 +65,9 @@ getPathOffsetDatasetWriter(std::string PathOffset) {
                                    DataType Value) {
     auto UsedNode =
         hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
-    MetaData::basicDatasetWriter<DataType>(UsedNode, Name, Value);
+    Statistics::basicDatasetWriter<DataType>(UsedNode, Name, Value);
   };
   return TempFunction;
 }
 
-} // namespace MetaData
+} // namespace Statistics

@@ -73,7 +73,7 @@ public:
   /// fields.
   virtual void
   register_meta_data([[maybe_unused]] hdf5::node::Group const &HDFGroup,
-                     [[maybe_unused]] MetaData::TrackerPtr const &Tracker){};
+                     [[maybe_unused]] Statistics::TrackerPtr const &Tracker){};
 
   /// \brief Initialise the writer instance for writing.
   ///

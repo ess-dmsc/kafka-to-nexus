@@ -35,7 +35,7 @@ public:
   NeXusDataset::CueTimestampZero CueTimestampZero;
 
   void register_meta_data(hdf5::node::Group const &HDFGroup,
-                          MetaData::TrackerPtr const &Tracker) override;
+                          Statistics::TrackerPtr const &Tracker) override;
 
 private:
   void createAdcDatasets(hdf5::node::Group &HDFGroup) const;
@@ -57,7 +57,7 @@ private:
                                                   false};
   uint64_t EventsWritten{0};
   uint64_t LastEventIndex{0};
-  MetaData::Value<uint64_t> EventsWrittenMetadataField;
+  Statistics::Value<uint64_t> EventsWrittenMetadataField;
 };
 } // namespace ev42
 } // namespace WriterModule

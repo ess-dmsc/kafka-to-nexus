@@ -432,19 +432,19 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
 }
 
 void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
-                                     const MetaData::TrackerPtr &Tracker) {
+                                     const Statistics::TrackerPtr &Tracker) {
 
   if (MetaData.getValue()) {
-    MetaDataMin = MetaData::Value<double>(HDFGroup, "minimum_value",
-                                          MetaData::basicDatasetWriter<double>);
+    MetaDataMin = Statistics::Value<double>(HDFGroup, "minimum_value",
+                                          Statistics::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMin);
 
-    MetaDataMax = MetaData::Value<double>(HDFGroup, "maximum_value",
-                                          MetaData::basicDatasetWriter<double>);
+    MetaDataMax = Statistics::Value<double>(HDFGroup, "maximum_value",
+                                          Statistics::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMax);
 
-    MetaDataMean = MetaData::Value<double>(
-        HDFGroup, "average_value", MetaData::basicDatasetWriter<double>);
+    MetaDataMean = Statistics::Value<double>(
+        HDFGroup, "average_value", Statistics::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMean);
   }
 }

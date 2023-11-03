@@ -39,7 +39,7 @@ public:
   ///
   /// \param TaskID The service ID.
   explicit FileWriterTask(Metrics::Registrar const &Registrar,
-                          MetaData::TrackerPtr const &Tracker)
+                          Statistics::TrackerPtr const &Tracker)
       : MetaDataTracker(Tracker), FileSizeMB("", "approx_file_size_mb") {
     Registrar.registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
     MetaDataTracker->registerMetaData(FileSizeMB);
@@ -107,8 +107,8 @@ public:
 
 private:
   std::filesystem::path FullFilePath;
-  MetaData::TrackerPtr MetaDataTracker;
-  MetaData::Value<uint32_t> FileSizeMB;
+  Statistics::TrackerPtr MetaDataTracker;
+  Statistics::Value<uint32_t> FileSizeMB;
   Metrics::Metric FileSizeMBMetric{"approx_file_size_mb",
                                    "Approximate size of file in MB."};
 

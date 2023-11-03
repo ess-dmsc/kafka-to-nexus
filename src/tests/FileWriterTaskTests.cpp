@@ -23,7 +23,7 @@ public:
 
 TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
   FileWriter::FileWriterTask Task(TestRegistrar,
-                                  std::make_shared<MetaData::Tracker>());
+                                  std::make_shared<Statistics::Tracker>());
 
   Task.setFullFilePath("SomePrefix", "File.hdf");
 
@@ -32,7 +32,7 @@ TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
 
 TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
   FileWriter::FileWriterTask Task(TestRegistrar,
-                                  std::make_shared<MetaData::Tracker>());
+                                  std::make_shared<Statistics::Tracker>());
 
   Task.setFullFilePath("/", "File.hdf");
 
@@ -41,7 +41,7 @@ TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
 
 TEST_F(FileWriterTask, AddingSourceAddsToTopics) {
   FileWriter::FileWriterTask Task(TestRegistrar,
-                                  std::make_shared<MetaData::Tracker>());
+                                  std::make_shared<Statistics::Tracker>());
   FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);
 
   Task.addSource(std::move(Src));
@@ -51,7 +51,7 @@ TEST_F(FileWriterTask, AddingSourceAddsToTopics) {
 
 TEST_F(FileWriterTask, SettingJobIdSetsID) {
   FileWriter::FileWriterTask Task(TestRegistrar,
-                                  std::make_shared<MetaData::Tracker>());
+                                  std::make_shared<Statistics::Tracker>());
   std::string NewId = "NewID";
 
   Task.setJobId(NewId);

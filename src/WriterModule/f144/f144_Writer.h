@@ -35,7 +35,7 @@ public:
   /// Implements writer module interface.
 
   void register_meta_data(hdf5::node::Group const &HDFGroup,
-                          MetaData::TrackerPtr const &Tracker) override;
+                          Statistics::TrackerPtr const &Tracker) override;
 
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
@@ -83,9 +83,9 @@ protected:
   JsonConfig::Field<std::string> Unit{this, {"value_units", "unit"}, ""};
   JsonConfig::Field<bool> MetaData{this, "meta_data", true};
 
-  MetaData::Value<double> MetaDataMin;
-  MetaData::Value<double> MetaDataMax;
-  MetaData::Value<double> MetaDataMean;
+  Statistics::Value<double> MetaDataMin;
+  Statistics::Value<double> MetaDataMax;
+  Statistics::Value<double> MetaDataMean;
   double Min{0}, Max{0}, Sum{0};
   uint64_t LastIndexAtWrite{0};
   uint64_t NrOfWrites{0};

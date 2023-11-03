@@ -17,7 +17,7 @@
 #include <optional>
 #include <string>
 
-namespace MetaData {
+namespace Statistics {
 
 class Tracker;
 

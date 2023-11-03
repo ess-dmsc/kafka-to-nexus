@@ -369,28 +369,28 @@ void f144_Writer::write(FlatbufferMessage const &Message) {
 }
 
 void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
-                                     const MetaData::TrackerPtr &Tracker) {
+                                     const Statistics::TrackerPtr &Tracker) {
 
   if (MetaData.getValue()) {
-    MetaDataMin = MetaData::Value<double>(
-        HDFGroup, "minimum_value", MetaData::basicDatasetWriter<double>,
-        MetaData::basicAttributeWriter<std::string>);
+    MetaDataMin = Statistics::Value<double>(
+        HDFGroup, "minimum_value", Statistics::basicDatasetWriter<double>,
+        Statistics::basicAttributeWriter<std::string>);
     if (not Unit.getValue().empty()) {
       MetaDataMin.setAttribute("units", Unit.getValue());
     }
     Tracker->registerMetaData(MetaDataMin);
 
-    MetaDataMax = MetaData::Value<double>(
-        HDFGroup, "maximum_value", MetaData::basicDatasetWriter<double>,
-        MetaData::basicAttributeWriter<std::string>);
+    MetaDataMax = Statistics::Value<double>(
+        HDFGroup, "maximum_value", Statistics::basicDatasetWriter<double>,
+        Statistics::basicAttributeWriter<std::string>);
     if (not Unit.getValue().empty()) {
       MetaDataMax.setAttribute("units", Unit.getValue());
     }
     Tracker->registerMetaData(MetaDataMax);
 
-    MetaDataMean = MetaData::Value<double>(
-        HDFGroup, "average_value", MetaData::basicDatasetWriter<double>,
-        MetaData::basicAttributeWriter<std::string>);
+    MetaDataMean = Statistics::Value<double>(
+        HDFGroup, "average_value", Statistics::basicDatasetWriter<double>,
+        Statistics::basicAttributeWriter<std::string>);
     if (not Unit.getValue().empty()) {
       MetaDataMean.setAttribute("units", Unit.getValue());
     }

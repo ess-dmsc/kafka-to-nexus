@@ -155,12 +155,12 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
       toMilliSeconds(ConsumerBrokerSettings.PollTimeout)));
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR: {
-    auto MetaData = FileWriter::MessageMetaData{
+    auto Statistics = FileWriter::MessageMetaData{
         std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
         KafkaMsg->timestamp().type, KafkaMsg->offset(), KafkaMsg->partition()};
     auto RetMsg =
         FileWriter::Msg(reinterpret_cast<const char *>(KafkaMsg->payload()),
-                        KafkaMsg->len(), MetaData);
+                        KafkaMsg->len(), Statistics);
     return {PollStatus::Message, std::move(RetMsg)};
   }
   case RdKafka::ERR__TIMED_OUT:

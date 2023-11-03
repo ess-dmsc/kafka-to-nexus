@@ -384,7 +384,7 @@ TEST_F(EventWriterTests,
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
                                             MessageBuffer.size());
 
-  MetaData::TrackerPtr Tracker = std::make_shared<MetaData::Tracker>();
+  Statistics::TrackerPtr Tracker = std::make_shared<Statistics::Tracker>();
 
   // Create writer and give it the message to write
   {

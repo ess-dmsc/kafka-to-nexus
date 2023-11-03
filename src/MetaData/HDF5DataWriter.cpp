@@ -9,7 +9,7 @@
 
 #include "HDF5DataWriter.h"
 
-namespace MetaData {
+namespace Statistics {
 
 void basicStringDatasetWriter(hdf5::node::Node Node, std::string Name,
                               std::string Value) {
@@ -32,4 +32,4 @@ void basicStringDatasetWriter(hdf5::node::Node Node, std::string Name,
   TempDataset.write(Value, string_type, string_dataspace);
 }
 
-} // namespace MetaData
+} // namespace Statistics

@@ -13,7 +13,7 @@
 #include <memory>
 #include <mutex>
 
-namespace MetaData {
+namespace Statistics {
 
 using TrackerPtr = std::shared_ptr<Tracker>;
 
@@ -24,7 +24,7 @@ using TrackerPtr = std::shared_ptr<Tracker>;
 class Tracker {
 public:
   Tracker() = default;
-  void registerMetaData(MetaData::ValueBase NewMetaData);
+  void registerMetaData(Statistics::ValueBase NewMetaData);
   void clearMetaData();
   void writeToJSONDict(nlohmann::json &JSONNode) const;
   void writeToHDF5File(hdf5::node::Group RootNode) const;

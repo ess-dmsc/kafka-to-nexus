@@ -14,7 +14,7 @@ namespace FileWriter {
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     FileWriter::StreamerOptions const &Settings,
-    Metrics::Registrar const &Registrar, MetaData::TrackerPtr const &Tracker)
+    Metrics::Registrar const &Registrar, Statistics::TrackerPtr const &Tracker)
 
     : WriterTask(std::move(FileWriterTask)), StreamMetricRegistrar(Registrar),
       WriterThread([this]() { WriterTask->flushDataToFile(); },

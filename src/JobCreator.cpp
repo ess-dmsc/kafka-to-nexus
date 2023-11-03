@@ -106,7 +106,7 @@ static std::vector<ModuleSettings> extractModuleInformationFromJson(
 std::unique_ptr<IStreamController>
 createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                      Metrics::Registrar Registrar,
-                     MetaData::TrackerPtr const &Tracker) {
+                     Statistics::TrackerPtr const &Tracker) {
   auto Task = std::make_unique<FileWriterTask>(Registrar, Tracker);
   Task->setJobId(StartInfo.JobID);
   Task->setFullFilePath(Settings.HDFOutputPrefix, StartInfo.Filename);

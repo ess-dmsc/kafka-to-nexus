@@ -69,7 +69,7 @@ private:
   Status::JobStatusInfo CurrentStatus;
   Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};
   std::string CurrentMetadata;
-  MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
+  Statistics::TrackerPtr MetaDataTracker{std::make_shared<Statistics::Tracker>()};
   void setToIdle();
   virtual bool hasWritingStopped();
 };
