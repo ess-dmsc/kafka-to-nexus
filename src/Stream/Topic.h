@@ -29,25 +29,13 @@ public:
         SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway,
+        std::function<bool()> AreStreamersPausedFunction,
         std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
             std::make_unique<Kafka::ConsumerFactory>());
 
   /// \brief Must be called after the constructor.
   /// \note This function exist in order to make unit testing possible.
   void start();
-
-  /// \brief Pause the consumer threads.
-  ///
-  /// Non-blocking. Will tell the consumer threads to pause as soon as possible.
-  /// There are no guarantees for when the consumers are actually paused.
-  void pause();
-
-  /// \brief Resume the consumer threads.
-  ///
-  /// Non-blocking. Will tell the consumer threads to resume as soon as
-  /// possible. There are no guarantees for when the consumers are actually
-  /// resumed.
-  void resume();
 
   /// \brief Stop the consumer threads.
   ///
@@ -84,6 +72,7 @@ protected:
   duration StopLeeway;
   duration CurrentMetadataTimeOut;
   Metrics::Registrar Registrar;
+  std::function<bool()> AreStreamersPausedFunction;
 
   // This intermediate function is required for unit testing.
   virtual void initMetadataCalls(Kafka::BrokerSettings const &Settings,
