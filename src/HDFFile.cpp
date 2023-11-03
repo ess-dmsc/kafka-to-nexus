@@ -23,7 +23,7 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
                  nlohmann::json const &NexusStructure,
                  std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                  Statistics::TrackerPtr &TrackerPtr)
-    : H5FileName(FileName), MetaDataTracker(TrackerPtr) {
+    : H5FileName(FileName), StatisticsTracker(TrackerPtr) {
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
   }
@@ -34,7 +34,7 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
   StoredNexusStructure = NexusStructure;
 }
 
-HDFFile::~HDFFile() { addMetaData(); }
+HDFFile::~HDFFile() { addStatistics(); }
 
 void HDFFile::createFileInRegularMode() {
   hdfFile() = hdf5::file::create(H5FileName,
@@ -151,11 +151,11 @@ void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
   }
 }
 
-void HDFFile::addMetaData() {
+void HDFFile::addStatistics() {
   try {
     openInRegularMode();
-    if (MetaDataTracker != nullptr) {
-      MetaDataTracker->writeToHDF5File(hdfFile().root());
+    if (StatisticsTracker != nullptr) {
+      StatisticsTracker->writeToHDF5File(hdfFile().root());
     }
   } catch (std::exception const &E) {
     LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",

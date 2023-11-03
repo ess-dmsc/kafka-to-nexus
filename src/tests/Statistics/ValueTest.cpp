@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "MetaData/Value.h"
+#include "Statistics/Value.h"
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>

@@ -222,7 +222,7 @@ void ev42_Writer::padDatasetsWithZeroesEqualToNumberOfEvents(
 void ev42_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
                                      const Statistics::TrackerPtr &Tracker) {
   EventsWrittenMetadataField = Statistics::Value<uint64_t>(HDFGroup, "events");
-  Tracker->registerMetaData(EventsWrittenMetadataField);
+  Tracker->registerStatistic(EventsWrittenMetadataField);
 }
 
 static WriterModule::Registry::Registrar<ev42_Writer> RegisterWriter("ev42",

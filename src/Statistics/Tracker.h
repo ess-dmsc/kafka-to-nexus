@@ -24,15 +24,15 @@ using TrackerPtr = std::shared_ptr<Tracker>;
 class Tracker {
 public:
   Tracker() = default;
-  void registerMetaData(Statistics::ValueBase NewMetaData);
-  void clearMetaData();
+  void registerStatistic(Statistics::ValueBase NewStatistic);
+  void clearStatistics();
   void writeToJSONDict(nlohmann::json &JSONNode) const;
   void writeToHDF5File(hdf5::node::Group RootNode) const;
 
 private:
-  mutable std::mutex MetaDataMutex;
-  std::vector<std::shared_ptr<MetaDataInternal::ValueBaseInternal>>
-      KnownMetaData;
+  mutable std::mutex StatisticsMutex;
+  std::vector<std::shared_ptr<StatisticsInternal::ValueBaseInternal>>
+      KnownStatistics;
 };
 
-} // namespace MetaData
+} // namespace Statistics

@@ -11,7 +11,7 @@
 
 #include "FlatbufferMessage.h"
 #include "JsonConfig/Field.h"
-#include "MetaData/Value.h"
+#include "Statistics/Value.h"
 #include "WriterModuleBase.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>

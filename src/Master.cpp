@@ -31,8 +31,9 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   CommandAndControl->registerIsWritingFunction(
       [this]() { return Status::WorkerState::Writing == getCurrentState(); });
   LOG_INFO("file-writer service id: {}", Config.getServiceId());
-  this->Reporter->setJSONMetaDataGenerator(
-      [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
+  this->Reporter->setJSONMetaDataGenerator([&](auto &JsonObject) {
+    StatisticsTracker->writeToJSONDict(JsonObject);
+  });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
   CurrentStateMetric = static_cast<int64_t>(getCurrentState());
   MasterMetricsRegistrar.registerMetric(CurrentStateMetric,
@@ -46,9 +47,9 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
         StartInfo.JobID));
   }
   try {
-    MetaDataTracker->clearMetaData();
+    StatisticsTracker->clearStatistics();
     CurrentStreamController = createFileWritingJob(
-        StartInfo, MainConfig, MasterMetricsRegistrar, MetaDataTracker);
+        StartInfo, MainConfig, MasterMetricsRegistrar, StatisticsTracker);
     CurrentMetadata = StartInfo.Metadata;
     if (not StartInfo.ControlTopic.empty()) {
       Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);
@@ -129,7 +130,7 @@ void Master::setToIdle() {
                                              CurrentJSONStatus);
   }
   CurrentStreamController.reset(nullptr);
-  MetaDataTracker->clearMetaData();
+  StatisticsTracker->clearStatistics();
   resetStatusInfo();
   Reporter->revertToDefaultStatusTopic();
 }

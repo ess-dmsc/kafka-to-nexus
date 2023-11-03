@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "f142_Writer.h"
-#include "MetaData/HDF5DataWriter.h"
+#include "Statistics/HDF5DataWriter.h"
 #include "WriterRegistrar.h"
 #include "json.h"
 #include "logger.h"
@@ -295,7 +295,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayByte:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int8_t>(Values, DataPtr, NrOfElements,
-                                                MetaData.getValue());
+                                                Statistics.getValue());
     break;
   case Value::Byte:
     CValuesInfo =
@@ -304,7 +304,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayUByte:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint8_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 Statistics.getValue());
     break;
   case Value::UByte:
     CValuesInfo =
@@ -313,7 +313,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayShort:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 Statistics.getValue());
     break;
   case Value::Short:
     CValuesInfo =
@@ -322,7 +322,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayUShort:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint16_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.getValue());
+                                                  Statistics.getValue());
     break;
   case Value::UShort:
     CValuesInfo =
@@ -331,7 +331,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayInt:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int32_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 Statistics.getValue());
     break;
   case Value::Int:
     CValuesInfo =
@@ -340,7 +340,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayUInt:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint32_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.getValue());
+                                                  Statistics.getValue());
     break;
   case Value::UInt:
     CValuesInfo =
@@ -349,7 +349,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayLong:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int64_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 Statistics.getValue());
     break;
   case Value::Long:
     CValuesInfo =
@@ -358,7 +358,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayULong:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint64_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.getValue());
+                                                  Statistics.getValue());
     break;
   case Value::ULong:
     CValuesInfo =
@@ -367,7 +367,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayFloat:
     extractArrayInfo();
     CValuesInfo = appendData<const float>(Values, DataPtr, NrOfElements,
-                                          MetaData.getValue());
+                                          Statistics.getValue());
     break;
   case Value::Float:
     CValuesInfo = appendScalarData<const float, Float>(Values, LogDataMessage);
@@ -375,7 +375,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   case Value::ArrayDouble:
     extractArrayInfo();
     CValuesInfo = appendData<const double>(Values, DataPtr, NrOfElements,
-                                           MetaData.getValue());
+                                           Statistics.getValue());
     break;
   case Value::Double:
     CValuesInfo =
@@ -392,7 +392,7 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     CueIndex.appendElement(NrOfWrites - 1);
     CueTimestampZero.appendElement(LogDataMessage->timestamp());
   }
-  if (MetaData.getValue()) {
+  if (Statistics.getValue()) {
     if (TotalNrOfElementsWritten == 0) {
       Min = CValuesInfo.Min;
       Max = CValuesInfo.Max;
@@ -401,9 +401,9 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     Max = std::max(Max, CValuesInfo.Max);
     Sum += CValuesInfo.Sum;
     TotalNrOfElementsWritten += CValuesInfo.NrOfElements;
-    MetaDataMin.setValue(Min);
-    MetaDataMax.setValue(Max);
-    MetaDataMean.setValue(Sum / TotalNrOfElementsWritten);
+    MinStatistic.setValue(Min);
+    MaxStatistic.setValue(Max);
+    MeanStatistic.setValue(Sum / TotalNrOfElementsWritten);
   }
 
   // AlarmStatus::NO_CHANGE is not a real EPICS alarm status value, it is used
@@ -434,18 +434,18 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
 void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
                                      const Statistics::TrackerPtr &Tracker) {
 
-  if (MetaData.getValue()) {
-    MetaDataMin = Statistics::Value<double>(HDFGroup, "minimum_value",
-                                          Statistics::basicDatasetWriter<double>);
-    Tracker->registerMetaData(MetaDataMin);
+  if (Statistics.getValue()) {
+    MinStatistic = Statistics::Value<double>(
+        HDFGroup, "minimum_value", Statistics::basicDatasetWriter<double>);
+    Tracker->registerStatistic(MinStatistic);
 
-    MetaDataMax = Statistics::Value<double>(HDFGroup, "maximum_value",
-                                          Statistics::basicDatasetWriter<double>);
-    Tracker->registerMetaData(MetaDataMax);
+    MaxStatistic = Statistics::Value<double>(
+        HDFGroup, "maximum_value", Statistics::basicDatasetWriter<double>);
+    Tracker->registerStatistic(MaxStatistic);
 
-    MetaDataMean = Statistics::Value<double>(
+    MeanStatistic = Statistics::Value<double>(
         HDFGroup, "average_value", Statistics::basicDatasetWriter<double>);
-    Tracker->registerMetaData(MetaDataMean);
+    Tracker->registerStatistic(MeanStatistic);
   }
 }
 

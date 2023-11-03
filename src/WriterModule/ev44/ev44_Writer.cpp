@@ -128,7 +128,7 @@ void ev44_Writer::write(FlatbufferMessage const &Message) {
 void ev44_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
                                      const Statistics::TrackerPtr &Tracker) {
   EventsWrittenMetadataField = Statistics::Value<uint64_t>(HDFGroup, "events");
-  Tracker->registerMetaData(EventsWrittenMetadataField);
+  Tracker->registerStatistic(EventsWrittenMetadataField);
 }
 
 static WriterModule::Registry::Registrar<ev44_Writer> RegisterWriter("ev44",

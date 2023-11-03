@@ -14,9 +14,9 @@
 
 #include "FileWriterTask.h"
 #include "MainOpt.h"
-#include "MetaData/HDF5DataWriter.h"
-#include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
+#include "Statistics/HDF5DataWriter.h"
+#include "Statistics/Tracker.h"
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
 #include "TimeUtility.h"
@@ -139,7 +139,7 @@ private:
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions StreamerOptions;
-  Statistics::TrackerPtr MetaDataTracker;
+  Statistics::TrackerPtr StatisticsTracker;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
 

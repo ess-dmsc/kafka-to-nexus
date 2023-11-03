@@ -8,8 +8,8 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FlatbufferMessage.h"
-#include "MetaData/Value.h"
 #include "NeXusDataset/NeXusDataset.h"
+#include "Statistics/Value.h"
 #include "WriterModuleBase.h"
 
 namespace WriterModule {

@@ -24,7 +24,7 @@ class Tracker;
 class ValueBase {
 public:
   explicit ValueBase(
-      std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValuePtr)
+      std::shared_ptr<StatisticsInternal::ValueBaseInternal> ValuePtr)
       : ValueObj(ValuePtr) {}
   nlohmann::json getAsJSON() const {
     throwIfInvalid();
@@ -49,7 +49,7 @@ protected:
   }
 
 private:
-  std::shared_ptr<MetaDataInternal::ValueBaseInternal> ValueObj{nullptr};
+  std::shared_ptr<StatisticsInternal::ValueBaseInternal> ValueObj{nullptr};
   friend Tracker;
 };
 
@@ -61,7 +61,7 @@ public:
             HDF5Writer = {},
         std::function<void(hdf5::node::Node, std::string, std::string)>
             HDF5AttributeWriter = {})
-      : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
+      : ValueBase(std::make_shared<StatisticsInternal::ValueInternal<DataType>>(
             Path, Name, HDF5Writer, HDF5AttributeWriter)) {}
 
   Value(char const *const Path, std::string const &Name,
@@ -69,7 +69,7 @@ public:
             HDF5Writer = {},
         std::function<void(hdf5::node::Node, std::string, std::string)>
             HDF5AttributeWriter = {})
-      : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
+      : ValueBase(std::make_shared<StatisticsInternal::ValueInternal<DataType>>(
             Path, Name, HDF5Writer, HDF5AttributeWriter)) {}
 
   template <class NodeType>
@@ -78,18 +78,18 @@ public:
             HDF5Writer = {},
         std::function<void(hdf5::node::Node, std::string, std::string)>
             HDF5AttributeWriter = {})
-      : ValueBase(std::make_shared<MetaDataInternal::ValueInternal<DataType>>(
+      : ValueBase(std::make_shared<StatisticsInternal::ValueInternal<DataType>>(
             std::string(Node.link().path()), Name, HDF5Writer,
             HDF5AttributeWriter)) {}
 
   void setValue(DataType NewValue) {
-    std::dynamic_pointer_cast<MetaDataInternal::ValueInternal<DataType>>(
+    std::dynamic_pointer_cast<StatisticsInternal::ValueInternal<DataType>>(
         getValuePtr())
         ->setValue(NewValue);
   }
   DataType getValue() const {
-    return std::dynamic_pointer_cast<MetaDataInternal::ValueInternal<DataType>>(
-               getValuePtr())
+    return std::dynamic_pointer_cast<
+               StatisticsInternal::ValueInternal<DataType>>(getValuePtr())
         ->getValue();
   }
   std::optional<std::string> getAttribute(const std::string &Key) const {
@@ -103,4 +103,4 @@ public:
   }
 };
 
-} // namespace MetaData
+} // namespace Statistics

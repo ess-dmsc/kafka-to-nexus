@@ -12,7 +12,7 @@
 #include "FlatbufferMessage.h"
 #include "JsonConfig/Field.h"
 #include "JsonConfig/FieldHandler.h"
-#include "MetaData/Tracker.h"
+#include "Statistics/Tracker.h"
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <string>
@@ -69,7 +69,7 @@ public:
   /// written at the end of the write job just before closing the file for good.
   /// \param HDFGroup The (base/root) location in the HDF5 hierarchy for the
   /// meta-data. \param Tracker A unique pointer to an instance of the
-  /// MetaData::Tracker class that is used to keep track of known meta-data
+  /// Statistics::Tracker class that is used to keep track of known meta-data
   /// fields.
   virtual void
   register_meta_data([[maybe_unused]] hdf5::node::Group const &HDFGroup,

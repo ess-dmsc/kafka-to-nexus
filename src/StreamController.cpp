@@ -20,7 +20,7 @@ StreamController::StreamController(
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
-      StreamerOptions(Settings), MetaDataTracker(Tracker) {
+      StreamerOptions(Settings), StatisticsTracker(Tracker) {
   writeStartTime();
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;

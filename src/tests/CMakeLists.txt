@@ -48,7 +48,7 @@ set(UnitTests_SRC
         TimeUtilityTest.cpp
         JsonConfig/FieldTest.cpp
         JsonConfig/FieldHandlerTest.cpp
-        MetaData/ValueTest.cpp
+        Statistics/ValueTest.cpp
         JobCreatorTests.cpp
         HDFFileTest.cpp
         MasterTests.cpp)
@@ -63,7 +63,7 @@ set(UnitTests_INC
         Metrics/MockSink.h
         Metrics/MockReporter.h
         helpers/SetExtractorModule.h
-        helpers/StatusHelpers.h MetaData/TrackerTest.cpp MetaData/HDF5DataTest.cpp)
+        helpers/StatusHelpers.h Statistics/TrackerTest.cpp Statistics/HDF5DataTest.cpp)
 
 add_executable(UnitTests EXCLUDE_FROM_ALL
         ${UnitTests_SRC}

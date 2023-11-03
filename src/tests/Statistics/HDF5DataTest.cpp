@@ -7,8 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "MetaData/HDF5DataWriter.h"
-#include "MetaData/ValueInternal.h"
+#include "Statistics/HDF5DataWriter.h"
+#include "Statistics/ValueInternal.h"
 #include "helpers/HDFFileTestHelper.h"
 #include <functional>
 #include <gtest/gtest.h>
@@ -81,11 +81,11 @@ TEST_F(HDF5Data, StringDatasetWritten) {
 TEST_F(HDF5Data, GroupStringDataDestination) {
   std::string Name{"someName"};
   Statistics::Value<int> TestDataset(fmt::format("/{}", GroupName), Name,
-                                   Statistics::basicDatasetWriter<int>);
+                                     Statistics::basicDatasetWriter<int>);
   Statistics::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
-  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.registerStatistic(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   ASSERT_TRUE(UsedGroup.has_dataset(Name));
   auto Dataset = UsedGroup.get_dataset(Name);
@@ -97,16 +97,16 @@ TEST_F(HDF5Data, GroupStringDataDestination) {
 
 TEST_F(HDF5Data, GroupStringDataDestinationWritesAttributes) {
   std::string Name{"datasetWithAttribute"};
-  Statistics::Value<int> TestDataset(fmt::format("/{}", GroupName), Name,
-                                   Statistics::basicDatasetWriter<int>,
-                                   Statistics::basicAttributeWriter<std::string>);
+  Statistics::Value<int> TestDataset(
+      fmt::format("/{}", GroupName), Name, Statistics::basicDatasetWriter<int>,
+      Statistics::basicAttributeWriter<std::string>);
   Statistics::Tracker UsedTracker;
   int const Value{42};
   std::string const AttributeKey{"someKey"};
   std::string const AttributeValue{"someValue"};
   TestDataset.setValue(Value);
   TestDataset.setAttribute(AttributeKey, AttributeValue);
-  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.registerStatistic(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   ASSERT_TRUE(UsedGroup.has_dataset(Name));
   auto Dataset = UsedGroup.get_dataset(Name);
@@ -120,11 +120,11 @@ TEST_F(HDF5Data, GroupStringDataDestinationWritesAttributes) {
 TEST_F(HDF5Data, GroupNodeDataDestination) {
   std::string Name{"someName"};
   Statistics::Value<int> TestDataset(UsedGroup, Name,
-                                   Statistics::basicDatasetWriter<int>);
+                                     Statistics::basicDatasetWriter<int>);
   Statistics::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
-  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.registerStatistic(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   ASSERT_TRUE(UsedGroup.has_dataset(Name));
   auto Dataset = UsedGroup.get_dataset(Name);
@@ -137,11 +137,11 @@ TEST_F(HDF5Data, GroupNodeDataDestination) {
 TEST_F(HDF5Data, GroupStringAttributeDestination) {
   std::string Name{"someName"};
   Statistics::Value<int> TestDataset(fmt::format("/{}", GroupName), Name,
-                                   Statistics::basicAttributeWriter<int>);
+                                     Statistics::basicAttributeWriter<int>);
   Statistics::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
-  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.registerStatistic(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   ASSERT_TRUE(UsedGroup.attributes.exists(Name));
   auto Attribute = UsedGroup.attributes[Name];
@@ -153,11 +153,11 @@ TEST_F(HDF5Data, GroupStringAttributeDestination) {
 TEST_F(HDF5Data, GroupNodeAttributeDestination) {
   std::string Name{"someName"};
   Statistics::Value<int> TestDataset(UsedGroup, Name,
-                                   Statistics::basicAttributeWriter<int>);
+                                     Statistics::basicAttributeWriter<int>);
   Statistics::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
-  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.registerStatistic(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   ASSERT_TRUE(UsedGroup.attributes.exists(Name));
   auto Attribute = UsedGroup.attributes[Name];
@@ -169,11 +169,11 @@ TEST_F(HDF5Data, GroupNodeAttributeDestination) {
 TEST_F(HDF5Data, DatasetDatasetDestinationFailure) {
   std::string Name{"someName"};
   Statistics::Value<int> TestDataset(UsedDataset, Name,
-                                   Statistics::basicDatasetWriter<int>);
+                                     Statistics::basicDatasetWriter<int>);
   Statistics::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
-  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.registerStatistic(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   // We should probably/maybe (somehow) check that we got an error here
 }
@@ -181,11 +181,11 @@ TEST_F(HDF5Data, DatasetDatasetDestinationFailure) {
 TEST_F(HDF5Data, GroupNodeDataDestinationFailure) {
   std::string Name{"someName"};
   Statistics::Value<int> TestDataset("/SomeGroupThatDoesNotExist", Name,
-                                   Statistics::basicDatasetWriter<int>);
+                                     Statistics::basicDatasetWriter<int>);
   Statistics::Tracker UsedTracker;
   int const Value{42};
   TestDataset.setValue(Value);
-  UsedTracker.registerMetaData(TestDataset);
+  UsedTracker.registerStatistic(TestDataset);
   UsedTracker.writeToHDF5File(RootGroup);
   // We should probably/maybe (somehow) check that we got an error here
 }

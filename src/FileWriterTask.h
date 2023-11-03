@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
 #include "ModuleSettings.h"
 #include "Source.h"
+#include "Statistics/Tracker.h"
 #include "json.h"
 #include <map>
 #include <memory>
@@ -40,9 +40,9 @@ public:
   /// \param TaskID The service ID.
   explicit FileWriterTask(Metrics::Registrar const &Registrar,
                           Statistics::TrackerPtr const &Tracker)
-      : MetaDataTracker(Tracker), FileSizeMB("", "approx_file_size_mb") {
+      : StatisticsTracker(Tracker), FileSizeMB("", "approx_file_size_mb") {
     Registrar.registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
-    MetaDataTracker->registerMetaData(FileSizeMB);
+    StatisticsTracker->registerStatistic(FileSizeMB);
   }
 
   ~FileWriterTask() = default;
@@ -96,7 +96,7 @@ public:
 
   void writeLinks(std::vector<ModuleSettings> const &LinkSettingsList);
 
-  void writeMetaData();
+  void writeStatistics();
 
   void flushDataToFile();
 
@@ -107,7 +107,7 @@ public:
 
 private:
   std::filesystem::path FullFilePath;
-  Statistics::TrackerPtr MetaDataTracker;
+  Statistics::TrackerPtr StatisticsTracker;
   Statistics::Value<uint32_t> FileSizeMB;
   Metrics::Metric FileSizeMBMetric{"approx_file_size_mb",
                                    "Approximate size of file in MB."};

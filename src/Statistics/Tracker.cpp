@@ -11,29 +11,29 @@
 
 namespace Statistics {
 
-void Tracker::registerMetaData(Statistics::ValueBase NewMetaData) {
-  std::lock_guard LockGuard(MetaDataMutex);
-  if (NewMetaData.getValuePtr() != nullptr) {
-    KnownMetaData.emplace_back(NewMetaData.getValuePtr());
+void Tracker::registerStatistic(Statistics::ValueBase NewStatistic) {
+  std::lock_guard LockGuard(StatisticsMutex);
+  if (NewStatistic.getValuePtr() != nullptr) {
+    KnownStatistics.emplace_back(NewStatistic.getValuePtr());
   }
 }
-void Tracker::clearMetaData() {
-  std::lock_guard LockGuard(MetaDataMutex);
-  KnownMetaData.clear();
+void Tracker::clearStatistics() {
+  std::lock_guard LockGuard(StatisticsMutex);
+  KnownStatistics.clear();
 }
 
 void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
-  std::lock_guard LockGuard(MetaDataMutex);
-  for (auto const &Statistics : KnownMetaData) {
+  std::lock_guard LockGuard(StatisticsMutex);
+  for (auto const &Statistics : KnownStatistics) {
     auto JSONObj = Statistics->getAsJSON();
     JSONNode.insert(JSONObj.cbegin(), JSONObj.cend());
   }
 }
 
 void Tracker::writeToHDF5File(hdf5::node::Group RootNode) const {
-  std::lock_guard LockGuard(MetaDataMutex);
+  std::lock_guard LockGuard(StatisticsMutex);
   int ErrorCounter{0};
-  for (auto const &Statistics : KnownMetaData) {
+  for (auto const &Statistics : KnownStatistics) {
     try {
       Statistics->writeToHDF5File(RootNode);
     } catch (std::exception const &E) {
@@ -43,7 +43,7 @@ void Tracker::writeToHDF5File(hdf5::node::Group RootNode) const {
   if (ErrorCounter > 0) {
     LOG_ERROR(
         "Failed to write {} (out of a total of {}) meta-data values to file.",
-        ErrorCounter, KnownMetaData.size());
+        ErrorCounter, KnownStatistics.size());
   }
 }
 

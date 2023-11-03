@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "al00_Writer.h"
-#include "MetaData/HDF5DataWriter.h"
+#include "Statistics/HDF5DataWriter.h"
 #include "WriterRegistrar.h"
 #include "json.h"
 #include "logger.h"

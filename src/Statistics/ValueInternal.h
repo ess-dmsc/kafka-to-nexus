@@ -18,7 +18,7 @@
 #include <optional>
 #include <string>
 
-namespace MetaDataInternal {
+namespace StatisticsInternal {
 class ValueBaseInternal {
 public:
   ValueBaseInternal(
@@ -69,16 +69,16 @@ public:
         WriteToFile(HDF5Writer) {}
   void setValue(DataType const &NewValue) {
     std::lock_guard Lock(ValueMutex);
-    MetaDataValue = NewValue;
+    StatisticValue = NewValue;
   }
   DataType getValue() const {
     std::lock_guard Lock(ValueMutex);
-    return MetaDataValue;
+    return StatisticValue;
   }
   virtual nlohmann::json getAsJSON() const override {
     std::lock_guard Lock(ValueMutex);
     nlohmann::json RetObj;
-    RetObj[getPath() + ":" + getName()] = MetaDataValue;
+    RetObj[getPath() + ":" + getName()] = StatisticValue;
     return RetObj;
   }
   virtual void writeToHDF5File(hdf5::node::Group RootNode) const override {
@@ -86,21 +86,21 @@ public:
     try {
       auto UsedNode = get_group(RootNode, getPath());
       if (WriteToFile) {
-        WriteToFile(UsedNode, getName(), MetaDataValue);
+        WriteToFile(UsedNode, getName(), StatisticValue);
       }
       ValueBaseInternal::writeAttributesToHDF5File(
           UsedNode.get_dataset(getName()));
     } catch (std::exception &E) {
       LOG_ERROR(
           R"(Failed to write the value "{}" to the path "{}" in HDF5-file. The message was: {})",
-          MetaDataValue, getPath(), E.what());
+          StatisticValue, getPath(), E.what());
       throw;
     }
   };
 
 private:
   mutable std::mutex ValueMutex;
-  DataType MetaDataValue{};
+  DataType StatisticValue{};
   std::function<void(hdf5::node::Node, std::string, DataType)> WriteToFile;
 };
-} // namespace MetaDataInternal
+} // namespace StatisticsInternal

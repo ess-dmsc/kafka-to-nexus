@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "MetaData/Tracker.h"
 #include "ModuleHDFInfo.h"
 #include "ModuleSettings.h"
+#include "Statistics/Tracker.h"
 #include "json.h"
 #include "logger.h"
 #include <H5Ipublic.h>
@@ -50,7 +50,7 @@ public:
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
           Statistics::TrackerPtr &TrackerPtr);
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
-  void addMetaData();
+  void addStatistics();
   void openInSWMRMode();
   void openInRegularMode();
   bool isSWMRMode() const;
@@ -69,7 +69,7 @@ private:
 
   std::filesystem::path H5FileName;
   nlohmann::json StoredNexusStructure;
-  Statistics::TrackerPtr const MetaDataTracker;
+  Statistics::TrackerPtr const StatisticsTracker;
 };
 
 } // namespace FileWriter

@@ -72,7 +72,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
   try {
     LOG_INFO("Creating HDF file {}", FullFilePath.string());
     File = std::make_unique<HDFFile>(FullFilePath, NexusStructureJson, HdfInfo,
-                                     MetaDataTracker);
+                                     StatisticsTracker);
   } catch (std::exception const &E) {
     ErrorString =
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: {})",
@@ -110,7 +110,7 @@ void FileWriterTask::writeLinks(
   File->addLinks(LinkSettingsList);
 }
 
-void FileWriterTask::writeMetaData() { File->addMetaData(); }
+void FileWriterTask::writeStatistics() { File->addStatistics(); }
 
 void FileWriterTask::flushDataToFile() {
   if (File != nullptr) {

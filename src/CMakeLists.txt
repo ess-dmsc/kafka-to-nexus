@@ -112,8 +112,8 @@ set(kafka_to_nexus_SRC
         JsonConfig/Field.cpp
         JsonConfig/FieldHandler.cpp
         SetThreadName.cpp
-        MetaData/Tracker.cpp
-        MetaData/HDF5DataWriter.cpp WriterModuleBase.cpp)
+        Statistics/Tracker.cpp
+        Statistics/HDF5DataWriter.cpp WriterModuleBase.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -188,10 +188,10 @@ set(kafka_to_nexus_INC
         JsonConfig/FieldHandler.h
         MultiVector.h
         SetThreadName.h
-        MetaData/Tracker.h
-        MetaData/Value.h
-        MetaData/ValueInternal.h
-        MetaData/HDF5DataWriter.h)
+        Statistics/Tracker.h
+        Statistics/Value.h
+        Statistics/ValueInternal.h
+        Statistics/HDF5DataWriter.h)
 
 add_library(kafka_to_nexus__objects OBJECT
         ${kafka_to_nexus_SRC}

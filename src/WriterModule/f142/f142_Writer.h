@@ -11,7 +11,7 @@
 
 #include "FlatbufferMessage.h"
 #include "JsonConfig/Field.h"
-#include "MetaData/Value.h"
+#include "Statistics/Value.h"
 #include "WriterModuleBase.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
@@ -44,8 +44,8 @@ public:
 
   f142_Writer()
       : WriterModule::Base(false, "NXlog", {"epics_con_status"}),
-        MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
-        MetaDataMean("", "average_value") {}
+        MinStatistic("", "minimum_value"), MaxStatistic("", "maximum_value"),
+        MeanStatistic("", "average_value") {}
   ~f142_Writer() override = default;
 
   enum class Type {
@@ -90,11 +90,11 @@ protected:
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "double"};
   JsonConfig::Field<std::string> Unit{this, {"value_units", "unit"}, ""};
-  JsonConfig::Field<bool> MetaData{this, "meta_data", true};
+  JsonConfig::Field<bool> Statistics{this, "meta_data", true};
 
-  Statistics::Value<double> MetaDataMin;
-  Statistics::Value<double> MetaDataMax;
-  Statistics::Value<double> MetaDataMean;
+  Statistics::Value<double> MinStatistic;
+  Statistics::Value<double> MaxStatistic;
+  Statistics::Value<double> MeanStatistic;
   double Min{0}, Max{0}, Sum{0};
   uint64_t LastIndexAtWrite{0};
   uint64_t NrOfWrites{0};

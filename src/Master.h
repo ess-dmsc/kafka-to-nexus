@@ -12,9 +12,9 @@
 #include "CommandSystem/Handler.h"
 #include "Kafka/PollStatus.h"
 #include "MainOpt.h"
-#include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
 #include "Msg.h"
+#include "Statistics/Tracker.h"
 #include "Status/StatusInfo.h"
 #include <atomic>
 #include <memory>
@@ -69,7 +69,8 @@ private:
   Status::JobStatusInfo CurrentStatus;
   Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};
   std::string CurrentMetadata;
-  Statistics::TrackerPtr MetaDataTracker{std::make_shared<Statistics::Tracker>()};
+  Statistics::TrackerPtr StatisticsTracker{
+      std::make_shared<Statistics::Tracker>()};
   void setToIdle();
   virtual bool hasWritingStopped();
 };
