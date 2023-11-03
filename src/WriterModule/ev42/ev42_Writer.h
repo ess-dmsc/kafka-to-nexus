@@ -22,7 +22,7 @@ class ev42_Writer : public WriterModule::Base {
 public:
   ev42_Writer()
       : WriterModule::Base(true, "NXevent_data"),
-        EventsWrittenMetadataField("", "events") {}
+        EventsWrittenStatistic("", "events") {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;
@@ -57,7 +57,7 @@ private:
                                                   false};
   uint64_t EventsWritten{0};
   uint64_t LastEventIndex{0};
-  Statistics::Value<uint64_t> EventsWrittenMetadataField;
+  Statistics::Value<uint64_t> EventsWrittenStatistic;
 };
 } // namespace ev42
 } // namespace WriterModule

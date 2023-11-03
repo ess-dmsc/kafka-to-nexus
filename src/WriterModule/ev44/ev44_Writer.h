@@ -21,7 +21,7 @@ class ev44_Writer : public WriterModule::Base {
 public:
   ev44_Writer()
       : WriterModule::Base(true, "NXevent_data"),
-        EventsWrittenMetadataField("", "events") {}
+        EventsWrittenStatistic("", "events") {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
@@ -50,7 +50,7 @@ private:
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
   uint64_t EventsWritten{0};
   uint64_t LastEventIndex{0};
-  Statistics::Value<uint64_t> EventsWrittenMetadataField;
+  Statistics::Value<uint64_t> EventsWrittenStatistic;
 };
 } // namespace ev44
 } // namespace WriterModule

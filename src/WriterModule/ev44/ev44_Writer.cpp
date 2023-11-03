@@ -122,13 +122,13 @@ void ev44_Writer::write(FlatbufferMessage const &Message) {
     CueIndex.appendElement(EventsWritten - 1);
     LastEventIndex = EventsWritten - 1;
   }
-  EventsWrittenMetadataField.setValue(EventsWritten);
+  EventsWrittenStatistic.setValue(EventsWritten);
 }
 
 void ev44_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
                                      const Statistics::TrackerPtr &Tracker) {
-  EventsWrittenMetadataField = Statistics::Value<uint64_t>(HDFGroup, "events");
-  Tracker->registerStatistic(EventsWrittenMetadataField);
+  EventsWrittenStatistic = Statistics::Value<uint64_t>(HDFGroup, "events");
+  Tracker->registerStatistic(EventsWrittenStatistic);
 }
 
 static WriterModule::Registry::Registrar<ev44_Writer> RegisterWriter("ev44",

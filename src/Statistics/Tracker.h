@@ -17,10 +17,10 @@ namespace Statistics {
 
 using TrackerPtr = std::shared_ptr<Tracker>;
 
-/// \brief Used to store the pointers to metadata variables.
+/// \brief Used to store the pointers to statistics variables.
 ///
 /// The (almost) sole for this class to exist is so that we can automatically
-/// write (or do whatever) to the metadata when its destructor is called.
+/// write (or do whatever) to the statistics when its destructor is called.
 class Tracker {
 public:
   Tracker() = default;
