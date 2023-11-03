@@ -2,14 +2,17 @@
 
 ## Next version
 
+
+## Version 6.1.0
+
 - Feat: Cap the size of the output buffer (`max-queued-writes` setting) to
   avoid out-of-memory issues. Kafka consumers are paused until the buffer
   usage falls below a fixed threshold.
 - Fix: Honour hdf-output-prefix setting even if absolute paths are sent in
   pl72 messages.
 - Adding (tcp based) service api to query a filewriter for its status
-- Added new module 'mdat' for processing filewriter metadata (see https://confluence.esss.lu.se/display/ECDC/ECDC+Metadata+Workshop+Topics )
-- Writes start_time and end_time automatically to the /entry.
+- Added new module 'mdat' for processing filewriter metadata
+  It writes start_time and end_time automatically to the /entry.
 - Fix: Cannot import extra modules due to mismatch in ep00, ep01 and al00 registered names
 - Fix: Max/min/avg datasets do not specify units
 - Fix: Error responses to `run_stop` commands are generated only if `service_id` is set and
