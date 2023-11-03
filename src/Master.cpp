@@ -31,7 +31,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   CommandAndControl->registerIsWritingFunction(
       [this]() { return Status::WorkerState::Writing == getCurrentState(); });
   LOG_INFO("file-writer service id: {}", Config.getServiceId());
-  this->Reporter->setJSONMetaDataGenerator([&](auto &JsonObject) {
+  this->Reporter->setJSONStatisticsGenerator([&](auto &JsonObject) {
     StatisticsTracker->writeToJSONDict(JsonObject);
   });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });

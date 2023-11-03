@@ -62,7 +62,7 @@ public:
   virtual nlohmann::json createJSONReport() const;
 
   virtual void
-  setJSONMetaDataGenerator(JsonGeneratorFuncType GeneratorFunction) {
+  setJSONStatisticsGenerator(JsonGeneratorFuncType GeneratorFunction) {
     std::unique_lock const Lock(StatusMutex);
     JSONGenerator = GeneratorFunction;
   }

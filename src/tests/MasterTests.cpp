@@ -47,7 +47,7 @@ public:
   MAKE_CONST_MOCK1(createReport,
                    flatbuffers::DetachedBuffer(std::string const &), override);
   MAKE_CONST_MOCK0(createJSONReport, nlohmann::json(), override);
-  MAKE_MOCK1(setJSONMetaDataGenerator, void(Status::JsonGeneratorFuncType),
+  MAKE_MOCK1(setJSONStatisticsGenerator, void(Status::JsonGeneratorFuncType),
              override);
 };
 
@@ -72,7 +72,7 @@ public:
     StatusReporter = // cppcheck-suppress danglingLifetime
         dynamic_cast<StatusReporterStandIn *>(TmpStatusReporter.get());
 
-    REQUIRE_CALL(*StatusReporter, setJSONMetaDataGenerator(_)).TIMES(1);
+    REQUIRE_CALL(*StatusReporter, setJSONStatisticsGenerator(_)).TIMES(1);
 
     UnderTest = std::make_unique<FileWriter::Master>(
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),

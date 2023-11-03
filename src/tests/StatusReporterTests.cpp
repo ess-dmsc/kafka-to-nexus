@@ -57,7 +57,7 @@ public:
 
 TEST_F(StatusReporterTests, OnInitialisationValues) {
   ReporterPtr->setStatusGetter([=]() -> Status::JobStatusInfo { return {}; });
-  ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
+  ReporterPtr->setJSONStatisticsGenerator([](auto &) {});
   auto JSONReport = ReporterPtr->createJSONReport().dump();
   auto Report = ReporterPtr->createReport(JSONReport);
   auto StatusMsg = deserialiseStatusMessage(Report);
@@ -72,7 +72,7 @@ TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
                                    "file1.nxs", time_point(1234567890ms),
                                    time_point(19876543210ms)};
   ReporterPtr->setStatusGetter([=]() { return Info; });
-  ReporterPtr->setJSONMetaDataGenerator([](auto &) {});
+  ReporterPtr->setJSONStatisticsGenerator([](auto &) {});
 
   auto JSONReport = ReporterPtr->createJSONReport().dump();
   auto Report = ReporterPtr->createReport(JSONReport);
