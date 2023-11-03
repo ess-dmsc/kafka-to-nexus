@@ -58,14 +58,8 @@ void al00_Writer::write(FlatbufferMessage const &Message) {
   auto AlarmMessage = GetAlarm(Message.data());
 
   AlarmTime.appendElement(AlarmMessage->timestamp());
-
-  auto AlarmSeverityString =
-      std::string(EnumNameSeverity(AlarmMessage->severity()));
-  if (AlarmSeverityString.empty()) {
-    AlarmSeverityString = "UNRECOGNISED_SEVERITY";
-  }
-  AlarmSeverity.appendStringElement(AlarmSeverityString);
-
+  AlarmSeverity.appendElement(
+      static_cast<std::int16_t>(AlarmMessage->severity()));
   std::string AlarmMessageString = AlarmMessage->message()->str();
   if (AlarmMessageString.empty()) {
     AlarmMessageString = "NO ALARM MESSAGE";

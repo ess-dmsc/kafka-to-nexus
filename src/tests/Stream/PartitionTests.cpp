@@ -56,10 +56,12 @@ public:
                    Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
                    Metrics::Registrar RegisterMetric, time_point Start,
                    time_point Stop, duration StopLeeway,
-                   duration KafkaErrorTimeout)
+                   duration KafkaErrorTimeout,
+                   std::function<bool()> AreStreamersPausedFunction)
       : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
                           Map, Writer, std::move(RegisterMetric), Start, Stop,
-                          StopLeeway, KafkaErrorTimeout) {}
+                          StopLeeway, KafkaErrorTimeout,
+                          AreStreamersPausedFunction) {}
   void addPollTask() override {
     // Do nothing as don't want to automatically poll again
   }
@@ -102,16 +104,24 @@ protected:
 
 class PartitionTest : public ::testing::Test {
 public:
-  auto createTestedInstance(time_point StopTime = time_point::max()) {
+  auto createTestedInstance(
+      time_point StopTime = time_point::max(),
+      std::function<bool()> AreStreamersPausedFunction = []() {
+        return false;
+      }) {
     Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
         UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start,
-        StopTime, StopLeeway, ErrorTimeout);
+        StopTime, StopLeeway, ErrorTimeout, AreStreamersPausedFunction);
     Stop = StopTime;
     Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->ConsumerPtr.get());
     return Temp;
   }
+  auto createTestedInstance(std::function<bool()> AreStreamersPausedFunction) {
+    return createTestedInstance(time_point::max(), AreStreamersPausedFunction);
+  }
+
   Kafka::MockConsumer *Consumer{nullptr};
   int UsedPartitionId{0};
   std::string TopicName{"some_topic"};
@@ -136,7 +146,6 @@ TEST_F(PartitionTest, OnConstructionValuesAreAsExpected) {
   EXPECT_EQ(UnderTest->getTopicName(), TopicName);
   EXPECT_EQ(UnderTest->StopTimeLeeway, StopLeeway);
   EXPECT_EQ(UnderTest->StopTime, StopTime);
-  EXPECT_EQ(UnderTest->isPaused(), false);
 }
 
 TEST_F(PartitionTest, IfStopTimeTooCloseToMaxThenItIsBackedOff) {
@@ -155,8 +164,8 @@ TEST_F(PartitionTest, ActualMessageIsCounted) {
 }
 
 TEST_F(PartitionTest, DoesNotPollIfPaused) {
-  auto UnderTest = createTestedInstance();
-  UnderTest->pause();
+  auto IsPausedLambda = []() { return true; };
+  auto UnderTest = createTestedInstance(IsPausedLambda);
   FORBID_CALL(*Consumer, poll());
   REQUIRE_CALL(*UnderTest, sleep(_)).TIMES(1);
   UnderTest->pollForMessage();
@@ -166,12 +175,14 @@ TEST_F(PartitionTest, DoesNotPollIfPaused) {
 TEST_F(PartitionTest, PollsIfResumedAfterPause) {
   Kafka::MockConsumer::PollReturnType PollReturn;
   PollReturn.first = Kafka::PollStatus::Message;
-  auto UnderTest = createTestedInstance();
+  bool IsPaused = false;
+  auto IsPausedLambda = [&IsPaused]() { return IsPaused; };
+  auto UnderTest = createTestedInstance(IsPausedLambda);
   REQUIRE_CALL(*Consumer, poll()).TIMES(1).LR_RETURN(std::move(PollReturn));
   REQUIRE_CALL(*UnderTest, sleep(_)).TIMES(1);
-  UnderTest->pause();
+  IsPaused = true;
   UnderTest->pollForMessage();
-  UnderTest->resume();
+  IsPaused = false;
   UnderTest->pollForMessage();
   EXPECT_EQ(int(UnderTest->MessagesReceived), 1);
 }
@@ -278,8 +289,9 @@ TEST_F(PartitionTest, ForceStopStops) {
 }
 
 TEST_F(PartitionTest, ForceStopWhenPausedStops) {
-  auto UnderTest = createTestedInstance(Stop);
-  UnderTest->pause();
+  bool IsPaused = true;
+  auto IsPausedLambda = [&IsPaused]() { return IsPaused; };
+  auto UnderTest = createTestedInstance(Stop, IsPausedLambda);
   FORBID_CALL(*Consumer, poll());
   ALLOW_CALL(*UnderTest, sleep(_));
   UnderTest->pollForMessage();

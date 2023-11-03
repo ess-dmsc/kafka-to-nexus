@@ -21,6 +21,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              Metrics::Registrar &RegisterMetric, time_point StartTime,
              duration StartTimeLeeway, time_point StopTime,
              duration StopTimeLeeway,
+             std::function<bool()> AreStreamersPausedFunction,
              std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
@@ -28,6 +29,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
       StopLeeway(StopTimeLeeway),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
       Registrar(RegisterMetric.getNewRegistrar(Topic)),
+      AreStreamersPausedFunction(AreStreamersPausedFunction),
       ConsumerCreator(std::move(CreateConsumers)) {}
 
 void Topic::start() {
@@ -40,18 +42,6 @@ void Topic::initMetadataCalls(Kafka::BrokerSettings const &Settings,
     CurrentMetadataTimeOut = Settings.MinMetadataTimeout;
     getPartitionsForTopic(Settings, Topic);
   });
-}
-
-void Topic::pause() {
-  for (auto &Stream : ConsumerThreads) {
-    Stream->pause();
-  }
-}
-
-void Topic::resume() {
-  for (auto &Stream : ConsumerThreads) {
-    Stream->resume();
-  }
 }
 
 void Topic::stop() {
@@ -174,7 +164,7 @@ void Topic::createStreams(
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,
         CRegistrar, StartConsumeTime, StopConsumeTime, StopLeeway,
-        Settings.KafkaErrorTimeout);
+        Settings.KafkaErrorTimeout, AreStreamersPausedFunction);
     TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));
   }

@@ -2,6 +2,7 @@ from helpers.nexushelpers import OpenNexusFile
 from helpers.kafkahelpers import (
     create_producer,
     publish_f142_message,
+    Severity,
 )
 from datetime import datetime, timedelta
 from streaming_data_types.fbschemas.logdata_f142.AlarmStatus import AlarmStatus
@@ -94,7 +95,7 @@ def test_start_and_stop_time_are_in_the_past(
         assert file["entry/historical_data_1/alarm_status"].len() == expected_elements
         assert file["entry/historical_data_1/alarm_severity"].len() == expected_elements
         assert file["entry/historical_data_1/alarm_status"][0] == b"NO_ALARM"
-        assert file["entry/historical_data_1/alarm_severity"][0] == b"NO_ALARM"
+        assert file["entry/historical_data_1/alarm_severity"][0] == Severity.OK.value
         assert file["entry/historical_data_1/alarm_time"][0] == int(
             (start_time + step_time).timestamp() * 1e9
         )  # ns

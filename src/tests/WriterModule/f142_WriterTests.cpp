@@ -495,7 +495,6 @@ struct AlarmWritingTestInfo {
   AlarmStatus Status;
   AlarmSeverity Severity;
   std::string ExpectedStatusString;
-  std::string ExpectedSeverityString;
 };
 
 class f142WriteAlarms : public ::testing::TestWithParam<AlarmWritingTestInfo> {
@@ -540,41 +539,36 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
           .data()); // Trim null characters from end of string
   EXPECT_EQ(WrittenAlarmStatus, TestAlarm.ExpectedStatusString);
 
-  std::string WrittenAlarmSeverityTemporary;
-  TestWriter.AlarmSeverity.read(
-      WrittenAlarmSeverityTemporary, TestWriter.AlarmSeverity.datatype(),
-      hdf5::dataspace::Scalar(), hdf5::dataspace::Hyperslab{{0}, {1}});
-  std::string WrittenAlarmSeverity(
-      WrittenAlarmSeverityTemporary
-          .data()); // Trim null characters from end of string
-  EXPECT_EQ(WrittenAlarmSeverity, TestAlarm.ExpectedSeverityString);
+  std::vector<std::int16_t> WrittenAlarmSeverity(1);
+  TestWriter.AlarmSeverity.read(WrittenAlarmSeverity);
+  EXPECT_EQ(WrittenAlarmSeverity.at(0),
+            F142SeverityToAl00Severity[static_cast<std::int16_t>(
+                TestAlarm.Severity)]);
 }
 
 std::vector<AlarmWritingTestInfo> const AlarmWritingTestParams = {
-    {1, AlarmStatus::WRITE, AlarmSeverity::MAJOR, "WRITE", "MAJOR"},
-    {2, AlarmStatus::NO_ALARM, AlarmSeverity::MINOR, "NO_ALARM", "MINOR"},
-    {3, AlarmStatus::COS, AlarmSeverity::INVALID, "COS", "INVALID"},
-    {4, AlarmStatus::LOW, AlarmSeverity::NO_ALARM, "LOW", "NO_ALARM"},
-    {5, AlarmStatus::UDF, AlarmSeverity::NO_ALARM, "UDF", "NO_ALARM"},
-    {6, AlarmStatus::CALC, AlarmSeverity::NO_ALARM, "CALC", "NO_ALARM"},
-    {7, AlarmStatus::COMM, AlarmSeverity::NO_ALARM, "COMM", "NO_ALARM"},
-    {8, AlarmStatus::HIGH, AlarmSeverity::NO_ALARM, "HIGH", "NO_ALARM"},
-    {9, AlarmStatus::HIHI, AlarmSeverity::NO_ALARM, "HIHI", "NO_ALARM"},
-    {10, AlarmStatus::LINK, AlarmSeverity::NO_ALARM, "LINK", "NO_ALARM"},
-    {11, AlarmStatus::LOLO, AlarmSeverity::NO_ALARM, "LOLO", "NO_ALARM"},
-    {12, AlarmStatus::READ, AlarmSeverity::NO_ALARM, "READ", "NO_ALARM"},
-    {13, AlarmStatus::SCAN, AlarmSeverity::NO_ALARM, "SCAN", "NO_ALARM"},
-    {14, AlarmStatus::SIMM, AlarmSeverity::NO_ALARM, "SIMM", "NO_ALARM"},
-    {15, AlarmStatus::SOFT, AlarmSeverity::NO_ALARM, "SOFT", "NO_ALARM"},
-    {16, AlarmStatus::STATE, AlarmSeverity::NO_ALARM, "STATE", "NO_ALARM"},
-    {17, AlarmStatus::TIMED, AlarmSeverity::NO_ALARM, "TIMED", "NO_ALARM"},
-    {18, AlarmStatus::BAD_SUB, AlarmSeverity::NO_ALARM, "BAD_SUB", "NO_ALARM"},
-    {19, AlarmStatus::DISABLE, AlarmSeverity::NO_ALARM, "DISABLE", "NO_ALARM"},
-    {20, AlarmStatus::HWLIMIT, AlarmSeverity::NO_ALARM, "HWLIMIT", "NO_ALARM"},
-    {21, AlarmStatus::READ_ACCESS, AlarmSeverity::NO_ALARM, "READ_ACCESS",
-     "NO_ALARM"},
-    {22, AlarmStatus::WRITE_ACCESS, AlarmSeverity::NO_ALARM, "WRITE_ACCESS",
-     "NO_ALARM"}};
+    {1, AlarmStatus::WRITE, AlarmSeverity::MAJOR, "WRITE"},
+    {2, AlarmStatus::NO_ALARM, AlarmSeverity::MINOR, "NO_ALARM"},
+    {3, AlarmStatus::COS, AlarmSeverity::INVALID, "COS"},
+    {4, AlarmStatus::LOW, AlarmSeverity::NO_ALARM, "LOW"},
+    {5, AlarmStatus::UDF, AlarmSeverity::NO_ALARM, "UDF"},
+    {6, AlarmStatus::CALC, AlarmSeverity::NO_ALARM, "CALC"},
+    {7, AlarmStatus::COMM, AlarmSeverity::NO_ALARM, "COMM"},
+    {8, AlarmStatus::HIGH, AlarmSeverity::NO_ALARM, "HIGH"},
+    {9, AlarmStatus::HIHI, AlarmSeverity::NO_ALARM, "HIHI"},
+    {10, AlarmStatus::LINK, AlarmSeverity::NO_ALARM, "LINK"},
+    {11, AlarmStatus::LOLO, AlarmSeverity::NO_ALARM, "LOLO"},
+    {12, AlarmStatus::READ, AlarmSeverity::NO_ALARM, "READ"},
+    {13, AlarmStatus::SCAN, AlarmSeverity::NO_ALARM, "SCAN"},
+    {14, AlarmStatus::SIMM, AlarmSeverity::NO_ALARM, "SIMM"},
+    {15, AlarmStatus::SOFT, AlarmSeverity::NO_ALARM, "SOFT"},
+    {16, AlarmStatus::STATE, AlarmSeverity::NO_ALARM, "STATE"},
+    {17, AlarmStatus::TIMED, AlarmSeverity::NO_ALARM, "TIMED"},
+    {18, AlarmStatus::BAD_SUB, AlarmSeverity::NO_ALARM, "BAD_SUB"},
+    {19, AlarmStatus::DISABLE, AlarmSeverity::NO_ALARM, "DISABLE"},
+    {20, AlarmStatus::HWLIMIT, AlarmSeverity::NO_ALARM, "HWLIMIT"},
+    {21, AlarmStatus::READ_ACCESS, AlarmSeverity::NO_ALARM, "READ_ACCESS"},
+    {22, AlarmStatus::WRITE_ACCESS, AlarmSeverity::NO_ALARM, "WRITE_ACCESS"}};
 
 INSTANTIATE_TEST_SUITE_P(TestWritingAllAlarmTypes, f142WriteAlarms,
                          testing::ValuesIn(AlarmWritingTestParams));

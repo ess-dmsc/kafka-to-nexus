@@ -203,13 +203,6 @@ std::unordered_map<AlarmStatus, std::string> AlarmStatusToString{
     {AlarmStatus::COMM, "COMM"},
     {AlarmStatus::NO_CHANGE, "NO_CHANGE"}};
 
-std::unordered_map<AlarmSeverity, std::string> AlarmSeverityToString{
-    {AlarmSeverity::NO_ALARM, "NO_ALARM"},
-    {AlarmSeverity::MINOR, "MINOR"},
-    {AlarmSeverity::MAJOR, "MAJOR"},
-    {AlarmSeverity::INVALID, "INVALID"},
-    {AlarmSeverity::NO_CHANGE, "NO_CHANGE"}};
-
 void msgTypeIsConfigType(f142_Writer::Type ConfigType, Value MsgType) {
   std::unordered_map<Value, f142_Writer::Type> TypeComparison{
       {Value::ArrayByte, f142_Writer::Type::int8},
@@ -421,13 +414,8 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     }
     AlarmStatus.appendStringElement(AlarmStatusString);
 
-    auto const AlarmSeverityStringIterator =
-        AlarmSeverityToString.find(LogDataMessage->severity());
-    std::string AlarmSeverityString = "UNRECOGNISED_SEVERITY";
-    if (AlarmSeverityStringIterator != AlarmSeverityToString.end()) {
-      AlarmSeverityString = AlarmSeverityStringIterator->second;
-    }
-    AlarmSeverity.appendStringElement(AlarmSeverityString);
+    auto Severity = static_cast<std::int16_t>(LogDataMessage->severity());
+    AlarmSeverity.appendElement(F142SeverityToAl00Severity[Severity]);
   }
 }
 

@@ -15,8 +15,10 @@
 #include "WriterModuleBase.h"
 #include <NeXusDataset/EpicsAlarmDatasets.h>
 #include <NeXusDataset/NeXusDataset.h>
+#include <al00_alarm_generated.h>
 #include <array>
 #include <chrono>
+#include <f142_logdata_generated.h>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -101,6 +103,19 @@ protected:
   uint64_t TotalNrOfElementsWritten{0};
   bool HasCheckedMessageType{false};
 };
+
+inline std::unordered_map<std::int16_t, std::int16_t>
+    F142SeverityToAl00Severity{
+        {static_cast<std::int16_t>(AlarmSeverity::MINOR),
+         static_cast<std::int16_t>(Severity::MINOR)},
+        {static_cast<std::int16_t>(AlarmSeverity::MAJOR),
+         static_cast<std::int16_t>(Severity::MAJOR)},
+        {static_cast<std::int16_t>(AlarmSeverity::NO_ALARM),
+         static_cast<std::int16_t>(Severity::OK)},
+        {static_cast<std::int16_t>(AlarmSeverity::INVALID),
+         static_cast<std::int16_t>(Severity::INVALID)},
+        {static_cast<std::int16_t>(AlarmSeverity::NO_CHANGE),
+         static_cast<std::int16_t>(Severity::INVALID)}};
 
 } // namespace f142
 } // namespace WriterModule
