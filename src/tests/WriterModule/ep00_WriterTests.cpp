@@ -8,11 +8,6 @@ namespace {
 const std::string StatusName = "connection_status";
 const std::string TimestampName = "connection_status_time";
 
-void removeTrailingNullFromString(std::string &StringToTruncate) {
-  StringToTruncate.erase(
-      std::find(StringToTruncate.begin(), StringToTruncate.end(), '\0'),
-      StringToTruncate.end());
-}
 } // namespace
 
 namespace WriterModule {
@@ -104,14 +99,9 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
   EXPECT_EQ(Timestamps[0], Timestamp);
 
   auto StatusDataset = UsedGroup.get_dataset(StatusName);
-  std::vector<std::string> StatusData(StatusDataset.dataspace().size());
-  auto Datatype = hdf5::datatype::String::fixed(20);
-  Datatype.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  auto Dataspace = hdf5::dataspace::Simple({1});
-  EXPECT_NO_THROW(StatusDataset.read(StatusData, Datatype, Dataspace));
-  std::string StringFromDataset = StatusData[0];
-  removeTrailingNullFromString(StringFromDataset);
-  EXPECT_EQ(StringFromDataset, "CONNECTED");
+  std::vector<std::int16_t> StatusData(StatusDataset.dataspace().size());
+  EXPECT_NO_THROW(StatusDataset.read(StatusData));
+  EXPECT_EQ(StatusData[0], static_cast<int16_t>(Status));
 }
 
 } // namespace ep00

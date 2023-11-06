@@ -32,6 +32,7 @@ Example `nexus_structure` to write start and stop times:
               "name": "end_time"
             }
           }
+        ]
       }
     ]
   }

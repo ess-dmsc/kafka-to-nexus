@@ -38,8 +38,8 @@ InitResult ep00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 
 void ep00_Writer::write(FileWriter::FlatbufferMessage const &Message) {
   auto FlatBuffer = GetEpicsConnectionInfo(Message.data());
-  std::string const Status = EnumNameEventType(FlatBuffer->type());
-  StatusDataset.appendStringElement(Status);
+  std::int16_t Status = static_cast<std::int16_t>(FlatBuffer->type());
+  StatusDataset.appendElement(Status);
   auto FBTimestamp = FlatBuffer->timestamp();
   TimestampDataset.appendElement(FBTimestamp);
 }
