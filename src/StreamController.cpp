@@ -144,8 +144,7 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
     return;
   }
   auto CheckStreamersPausedLambda =
-      [&StreamersPausedConst =
-           static_cast<const std::atomic<bool> &>(StreamersPaused)]() -> bool {
+      [&StreamersPausedConst = std::as_const(StreamersPaused)]() -> bool {
     return StreamersPausedConst.load(std::memory_order_relaxed);
   };
   for (auto &CItem : TopicSrcMap) {
