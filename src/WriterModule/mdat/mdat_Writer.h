@@ -44,20 +44,26 @@ public:
   void writeMetadata(FileWriter::FileWriterTask const *Task);
 
 private:
-  [[nodiscard]] bool isWritable(std::string const &Name) const;
+  struct Writable {
+    std::string Path;
+    std::string Value;
+
+    [[nodiscard]] bool isWritable() const {
+      return !Path.empty() && !Value.empty();
+    }
+  };
 
   void static writeStringValue(FileWriter::FileWriterTask const *Task,
-                               std::string const &Path, std::string const &Name,
+                               std::string const &Name, std::string const &Path,
                                std::string const &Value);
 
-  [[nodiscard]] std::unordered_map<std::string, std::string>
+  [[nodiscard]] std::unordered_map<std::string, Writable>
   extractDetails(std::vector<ModuleHDFInfo> const &Modules) const;
 
   [[nodiscard]] std::optional<std::string> static extractName(
       std::string const &configJson);
 
   std::vector<std::string> const AllowedNames{"start_time", "end_time"};
-  std::unordered_map<std::string, std::string> Writables;
-  std::unordered_map<std::string, std::string> StringValues;
+  std::unordered_map<std::string, Writable> Writables;
 };
 } // namespace WriterModule::mdat

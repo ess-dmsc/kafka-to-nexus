@@ -21,30 +21,28 @@ void mdat_Writer::defineMetadata(std::vector<ModuleHDFInfo> const &Modules) {
 }
 
 void mdat_Writer::setStartTime(time_point startTime) {
-  StringValues["start_time"] = toUTCDateTime(startTime);
+  Writables["start_time"].Value = toUTCDateTime(startTime);
 }
 
 void mdat_Writer::setStopTime(time_point startTime) {
-  StringValues["end_time"] = toUTCDateTime(startTime);
+  Writables["end_time"].Value = toUTCDateTime(startTime);
 }
 
 void mdat_Writer::writeMetadata(FileWriter::FileWriterTask const *Task) {
-  for (auto const &Allowed : AllowedNames) {
-    if (isWritable(Allowed)) {
-      writeStringValue(Task, Writables[Allowed], Allowed,
-                       StringValues[Allowed]);
+  for (auto const &[Name, Value] : Writables) {
+    if (std::find(AllowedNames.cbegin(), AllowedNames.cend(), Name) ==
+        AllowedNames.end()) {
+      continue;
+    }
+    if (Value.isWritable()) {
+      writeStringValue(Task, Name, Value.Path, Value.Value);
     }
   }
 }
 
-bool mdat_Writer::isWritable(std::string const &Name) const {
-  return Writables.find(Name) != Writables.end() &&
-         StringValues.find(Name) != StringValues.end();
-}
-
 void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
-                                   std::string const &Path,
                                    std::string const &Name,
+                                   std::string const &Path,
                                    std::string const &Value) {
   try {
     auto StringVec = MultiVector<std::string>{{1}};
@@ -56,9 +54,9 @@ void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
   }
 }
 
-std::unordered_map<std::string, std::string>
+std::unordered_map<std::string, mdat_Writer::Writable>
 mdat_Writer::extractDetails(std::vector<ModuleHDFInfo> const &Modules) const {
-  std::unordered_map<std::string, std::string> Details;
+  std::unordered_map<std::string, Writable> Details;
 
   for (auto const &Module : Modules) {
     if (Module.WriterModule != "mdat") {
@@ -68,7 +66,9 @@ mdat_Writer::extractDetails(std::vector<ModuleHDFInfo> const &Modules) const {
     auto const name = extractName(Module.ConfigStream);
     if (name && std::find(AllowedNames.begin(), AllowedNames.end(), name) !=
                     AllowedNames.end()) {
-      Details[name.value()] = Module.HDFParentName;
+      Writable NewWritable;
+      NewWritable.Path = Module.HDFParentName;
+      Details[name.value()] = NewWritable;
     }
   }
   return Details;
