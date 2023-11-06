@@ -21,14 +21,21 @@ void mdat_Writer::defineMetadata(std::vector<ModuleHDFInfo> const &Modules) {
 }
 
 void mdat_Writer::setStartTime(time_point startTime) {
-  Writables["start_time"].Value = toUTCDateTime(startTime);
+  setWritableValueIfDefined(StartTime, startTime);
 }
 
-void mdat_Writer::setStopTime(time_point startTime) {
-  Writables["end_time"].Value = toUTCDateTime(startTime);
+void mdat_Writer::setStopTime(time_point stopTime) {
+  setWritableValueIfDefined(EndTime, stopTime);
 }
 
-void mdat_Writer::writeMetadata(FileWriter::FileWriterTask const *Task) {
+void mdat_Writer::setWritableValueIfDefined(std::string const &Name,
+                                            time_point const &Time) {
+  if (auto Result = Writables.find(Name); Result != Writables.end()) {
+    Result->second.Value = toUTCDateTime(Time);
+  }
+}
+
+void mdat_Writer::writeMetadata(FileWriter::FileWriterTask const *Task) const {
   for (auto const &[Name, Value] : Writables) {
     if (std::find(AllowedNames.cbegin(), AllowedNames.cend(), Name) ==
         AllowedNames.end()) {

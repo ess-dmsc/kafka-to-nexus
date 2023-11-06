@@ -34,14 +34,14 @@ public:
   /// \brief Set stop time which should be written to the file.
   ///
   /// \param startTime
-  void setStopTime(time_point startTime);
+  void setStopTime(time_point stopTime);
 
   /// \brief Write any defined values to the HDF file.
   ///
   /// \note Nothing will be written until this is called.
   ///
   /// \param Task
-  void writeMetadata(FileWriter::FileWriterTask const *Task);
+  void writeMetadata(FileWriter::FileWriterTask const *Task) const;
 
 private:
   struct Writable {
@@ -63,7 +63,12 @@ private:
   [[nodiscard]] std::optional<std::string> static extractName(
       std::string const &configJson);
 
-  std::vector<std::string> const AllowedNames{"start_time", "end_time"};
+  void setWritableValueIfDefined(std::string const &Name,
+                                 time_point const &Time);
+
+  inline static const std::string StartTime = "start_time";
+  inline static const std::string EndTime = "end_time";
+  std::vector<std::string> const AllowedNames{StartTime, EndTime};
   std::unordered_map<std::string, Writable> Writables;
 };
 } // namespace WriterModule::mdat
