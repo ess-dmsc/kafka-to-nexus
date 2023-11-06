@@ -46,25 +46,9 @@ void StreamController::setStopTime(time_point const &StopTime) {
   });
 }
 
-void StreamController::pauseStreamers() {
-  for (auto &Stream : Streamers) {
-    Stream->pause();
-  }
-  // We set the mutex last. Pause operations are idempotent, so we worry more
-  // about preventing a concurrent call to resumeStreamers() than a concurrent
-  // call to pauseStreamers()
-  StreamersPaused.store(true);
-}
+void StreamController::pauseStreamers() { StreamersPaused.store(true); }
 
-void StreamController::resumeStreamers() {
-  for (auto &Stream : Streamers) {
-    Stream->resume();
-  }
-  // We set the mutex last. Resume operations are idempotent, so we worry more
-  // about preventing a concurrent call to pauseStreamers() than a concurrent
-  // call to resumeStreamers()
-  StreamersPaused.store(false);
-}
+void StreamController::resumeStreamers() { StreamersPaused.store(false); }
 
 void StreamController::stop() {
   for (auto &Stream : Streamers)
@@ -138,6 +122,10 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
     HasError = true;
     return;
   }
+  auto CheckStreamersPausedLambda =
+      [&StreamersPausedConst = std::as_const(StreamersPaused)]() -> bool {
+    return StreamersPausedConst.load(std::memory_order_relaxed);
+  };
   for (auto &CItem : TopicSrcMap) {
     auto CStartTime =
         std::chrono::system_clock::time_point(StreamerOptions.StartTimestamp);
@@ -147,7 +135,7 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
         StreamerOptions.BrokerSettings, CItem.first, CItem.second,
         &WriterThread, StreamMetricRegistrar, CStartTime,
         StreamerOptions.BeforeStartTime, CStopTime,
-        StreamerOptions.AfterStopTime);
+        StreamerOptions.AfterStopTime, CheckStreamersPausedLambda);
     CTopic->start();
     Streamers.emplace_back(std::move(CTopic));
   }
