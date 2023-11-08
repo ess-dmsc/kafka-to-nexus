@@ -128,3 +128,24 @@ TEST_F(JobCreator, SetWriterAttributes) {
   RootGroup.get_group("entry").attributes["NX_class"].read(TempString);
   EXPECT_EQ(TempString, "NXlog");
 }
+
+TEST(ExtractMdat, ExtractsAllMdatModulesFromModuleList) {
+  std::vector<ModuleHDFInfo> ModuleList{
+      {"not mdat", ":: parent ::", ":: stream ::"},
+      {"mdat", ":: parent ::", ":: stream ::"},
+      {"not mdat", ":: parent ::", ":: stream ::"},
+      {"mdat", ":: parent ::", ":: stream ::"},
+      {"not mdat", ":: parent ::", ":: stream ::"}};
+
+  auto MdatModules = FileWriter::extractMdatModules(ModuleList);
+
+  ASSERT_EQ(ModuleList.size(), static_cast<size_t>(3));
+  ASSERT_EQ(MdatModules.size(), static_cast<size_t>(2));
+  std::for_each(
+      MdatModules.cbegin(), MdatModules.cend(),
+      [](auto const &Module) { ASSERT_EQ(Module.WriterModule, "mdat"); });
+
+  std::for_each(ModuleList.cbegin(), ModuleList.cend(), [](auto const &Module) {
+    ASSERT_NE(Module.WriterModule, "mdat");
+  });
+}

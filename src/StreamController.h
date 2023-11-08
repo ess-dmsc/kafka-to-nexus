@@ -20,6 +20,7 @@
 #include "Stream/Topic.h"
 #include "ThreadedExecutor.h"
 #include "TimeUtility.h"
+#include "WriterModule/mdat/mdat_Writer.h"
 #include <atomic>
 #include <set>
 #include <vector>
@@ -43,6 +44,7 @@ public:
 class StreamController : public IStreamController {
 public:
   StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
+                   std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
                    FileWriter::StreamerOptions const &Settings,
                    Metrics::Registrar const &Registrar,
                    MetaData::TrackerPtr const &Tracker);
@@ -135,6 +137,7 @@ private:
   /// guarantee that its destructor is not called before the writer modules have
   /// been de-allocated.
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
+  std::unique_ptr<WriterModule::mdat::mdat_Writer> MdatWriter{nullptr};
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   Metrics::Registrar StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;

@@ -37,7 +37,7 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 /// \brief Extract information about the module (stream or link).
 ///
 /// \param StreamInfo
-/// \return The module nformation.
+/// \return The module information.
 ModuleSettings
 extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo);
 
@@ -46,5 +46,12 @@ generateWriterInstance(ModuleSettings const &StreamInfo);
 
 void setWriterHDFAttributes(hdf5::node::Group &RootNode,
                             ModuleSettings const &StreamInfo);
+
+/// \brief Extract all mdat modules from the list of modules.
+///
+/// \param AllModules
+/// \return The mdat modules.
+std::vector<ModuleHDFInfo>
+extractMdatModules(std::vector<ModuleHDFInfo> &Modules);
 
 } // namespace FileWriter
