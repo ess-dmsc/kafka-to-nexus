@@ -46,7 +46,7 @@ build:
     - cd build
     - $SCL conan install --build missing ..
     - $SCL cmake -DCONAN=MANUAL ..
-    - $SCL make -j
+    - $SCL make -j 4
   parallel:
     matrix:
       - DISTRIBUTION: centos7
