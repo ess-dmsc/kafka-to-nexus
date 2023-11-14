@@ -27,11 +27,11 @@ cppcheck:
   script:
     - cppcheck --version
     - >
-      cppcheck
-        --xml
-        --inline-suppr
-        --suppress=unusedFunction
-        --suppress=missingInclude
-        --enable=all
-        --inconclusive
+      cppcheck \
+        --xml \
+        --inline-suppr \
+        --suppress=unusedFunction \
+        --suppress=missingInclude \
+        --enable=all \
+        --inconclusive \
         src/ 2> cppcheck.xml
