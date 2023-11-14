@@ -35,6 +35,8 @@ cppcheck:
         --enable=all \
         --inconclusive \
         src/ 2> cppcheck.xml
+  only:
+    - merge_requests
 
 build:
   stage: build
