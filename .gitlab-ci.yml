@@ -52,3 +52,10 @@ build:
           - debian11
           - ubuntu2204
         SCL: ''
+
+build-release:
+  stage: build
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
+    - mkdir build
+    - jenkins-scripts/configure-release.sh . build
