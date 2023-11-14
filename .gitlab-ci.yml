@@ -8,10 +8,30 @@ stages:
   - test
 
 .checks:
+  stage: checks
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
 
 clang-format:
   extends: .checks
-  stage: checks
   script:
     - jenkins-scripts/check-formatting.sh
+
+black:
+  extends: .checks
+  script:
+    - python3 -m black --version
+    - python3 -m black --check integration-tests
+
+cppcheck:
+  extends: .checks
+  script:
+    - cppcheck --version
+    - |
+      cppcheck
+        --xml
+        --inline-suppr
+        --suppress=unusedFunction
+        --suppress=missingInclude
+        --enable=all
+        --inconclusive
+        src/ 2> cppcheck.xml
