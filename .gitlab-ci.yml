@@ -1,0 +1,17 @@
+default:
+  tags:
+    - docker
+
+stages:
+  - checks
+  - build
+  - test
+
+.checks:
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
+
+clang-format:
+  extends: .checks
+  stage: checks
+  script:
+    - jenkins-scripts/check-formatting.sh
