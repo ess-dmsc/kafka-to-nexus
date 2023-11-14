@@ -14,7 +14,7 @@ stages:
 clang-format:
   extends: .checks
   script:
-    - jenkins-scripts/check-formatting.sh
+    - jenkins-scripts/check-formatting.sh  # TODO Rename directory
 
 black:
   extends: .checks
@@ -35,3 +35,20 @@ cppcheck:
         --enable=all \
         --inconclusive \
         src/ 2> cppcheck.xml
+
+build:
+  stage: build
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRIBUTION-build-node:latest
+  script:
+    - mkdir build
+    - cd build
+    - $SCL cmake ..
+    - $SCL make -j
+  parallel:
+    matrix:
+      - DISTRIBUTION: centos7
+        SCL: scl enable devtoolset-11 --
+      - DISTRIBUTION:
+          - debian11
+          - ubuntu2204
+        SCL: ''
