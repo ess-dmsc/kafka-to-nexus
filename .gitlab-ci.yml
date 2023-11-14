@@ -51,7 +51,6 @@ build:
       - DISTRIBUTION:
           - debian11
           - ubuntu2204
-        SCL: ''
 
 build-release:
   stage: build
