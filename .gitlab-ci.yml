@@ -57,9 +57,7 @@ build-debug:
     - scl enable devtoolset-11 rh-python38 -- ninja all UnitTests docs
   artifacts:
     paths:
-      - build/bin/
-      - build/lib/
-      - build/licenses/
+      - build/
 
 build-release:
   stage: build
@@ -73,9 +71,7 @@ build-release:
     - ./bin/UnitTests
   artifacts:
     paths:
-      - build/bin/
-      - build/lib/
-      - build/licenses/
+      - build/
 
 test-debug:
   stage: test
