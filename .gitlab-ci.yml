@@ -6,6 +6,7 @@ stages:
   - checks
   - build
   - test
+  - release
 
 .checks:
   stage: checks
@@ -14,7 +15,7 @@ stages:
 clang-format:
   extends: .checks
   script:
-    - jenkins-scripts/check-formatting.sh  # TODO Rename directory
+    - ci/check-formatting.sh
 
 black:
   extends: .checks
@@ -38,22 +39,26 @@ cppcheck:
   only:
     - merge_requests
 
-build:
+build-debug:
   stage: build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRIBUTION-build-node:latest
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
     - mkdir build
     - cd build
-    - $SCL conan install --build missing ..
-    - $SCL cmake -DCONAN=MANUAL ..
-    - $SCL make -j 4
-  parallel:
-    matrix:
-      - DISTRIBUTION: centos7
-        SCL: scl enable devtoolset-11 rh-python38 --
-      - DISTRIBUTION:
-          - debian11
-          - ubuntu2204
+    - scl enable devtoolset-11 rh-python38 -- conan install --build missing ..
+    - >
+      scl enable devtoolset-11 rh-python38 -- cmake \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCONAN=MANUAL \
+        -DRUN_DOXYGEN=ON \
+        -DCOV=ON \
+        ..
+    - scl enable devtoolset-11 rh-python38 -- make -j 8 all UnitTests docs
+  artifacts:
+    paths:
+      - build/bin/
+      - build/lib/
+      - build/licenses/
 
 build-release:
   stage: build
@@ -62,4 +67,41 @@ build-release:
     - mkdir build
     - cd build
     - scl enable devtoolset-11 rh-python38 -- conan install --build missing ..
-    - scl enable devtoolset-11 rh-python38 -- ../jenkins-scripts/configure-release.sh .. .
+    - scl enable devtoolset-11 rh-python38 -- ../ci/configure-release.sh .. .
+    - scl enable devtoolset-11 rh-python38 -- make -j 8 all UnitTests docs
+    - ./bin/UnitTests
+  artifacts:
+    paths:
+      - build/bin/
+      - build/lib/
+      - build/licenses/
+
+test-debug:
+  stage: test
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
+    - cd build
+    - make coverage
+    - cat coverage.txt
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+  reports:
+    coverage_report:
+      coverage_format: cobertura
+      path: build/coverage.xml
+  dependencies:
+    - build-debug
+
+test-release:
+  stage: test
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
+    - cd build
+    - ./bin/UnitTests --gtest_output=xml:test-output.xml
+  artifacts:
+    paths:
+      - build/test-output.xml
+      - build/coverage.xml
+    reports:
+      junit: build/test-output.xml
+  dependencies:
+    - build-release
