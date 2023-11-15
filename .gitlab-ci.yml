@@ -84,10 +84,13 @@ test-debug:
     - make coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
-  reports:
-    coverage_report:
-      coverage_format: cobertura
-      path: build/coverage.xml
+  artifacts:
+    paths:
+      - build/coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
   dependencies:
     - build-debug
 
@@ -100,7 +103,6 @@ test-release:
   artifacts:
     paths:
       - build/test-output.xml
-      - build/coverage.xml
     reports:
       junit: build/test-output.xml
   dependencies:
