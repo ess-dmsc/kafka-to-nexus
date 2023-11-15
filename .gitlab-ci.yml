@@ -70,7 +70,7 @@ build-and-test-release:
     - $SCL conan install --build missing ..
     - $SCL ../ci/configure-release.sh .. .
     - $SCL ninja all UnitTests docs
-    - ./bin/UnitTests
+    - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
     paths:
       - build/test-output.xml
