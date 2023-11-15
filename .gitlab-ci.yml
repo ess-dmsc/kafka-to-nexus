@@ -82,7 +82,7 @@ test-debug:
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
     - cd build
-    - make coverage
+    - ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
