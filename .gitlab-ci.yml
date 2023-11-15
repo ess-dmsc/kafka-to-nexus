@@ -48,12 +48,13 @@ build-debug:
     - scl enable devtoolset-11 rh-python38 -- conan install --build missing ..
     - >
       scl enable devtoolset-11 rh-python38 -- cmake \
+        -GNinja \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCONAN=MANUAL \
         -DRUN_DOXYGEN=ON \
         -DCOV=ON \
         ..
-    - scl enable devtoolset-11 rh-python38 -- make -j 8 all UnitTests docs
+    - scl enable devtoolset-11 rh-python38 -- ninja all UnitTests docs
   artifacts:
     paths:
       - build/bin/
@@ -68,7 +69,7 @@ build-release:
     - cd build
     - scl enable devtoolset-11 rh-python38 -- conan install --build missing ..
     - scl enable devtoolset-11 rh-python38 -- ../ci/configure-release.sh .. .
-    - scl enable devtoolset-11 rh-python38 -- make -j 8 all UnitTests docs
+    - scl enable devtoolset-11 rh-python38 -- ninja all UnitTests docs
     - ./bin/UnitTests
   artifacts:
     paths:
