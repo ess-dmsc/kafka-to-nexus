@@ -3,28 +3,30 @@ default:
     - docker
 
 stages:
-  - checks
+  - static
   - build
-  - test
   - release
 
-.checks:
-  stage: checks
+variables:
+  SCL: scl enable devtoolset-11 rh-python38 --
+
+.static:
+  stage: static
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
 
 clang-format:
-  extends: .checks
+  extends: .static
   script:
     - ci/check-formatting.sh
 
 black:
-  extends: .checks
+  extends: .static
   script:
     - python3 -m black --version
     - python3 -m black --check integration-tests
 
 cppcheck:
-  extends: .checks
+  extends: .static
   script:
     - cppcheck --version
     - >
@@ -39,46 +41,16 @@ cppcheck:
   only:
     - merge_requests
 
-build-debug:
+build-and-test-debug:
   stage: build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
     - mkdir build
     - cd build
-    - scl enable devtoolset-11 rh-python38 -- conan install --build missing ..
-    - >
-      scl enable devtoolset-11 rh-python38 -- cmake \
-        -GNinja \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DCONAN=MANUAL \
-        -DRUN_DOXYGEN=ON \
-        -DCOV=ON \
-        ..
-    - scl enable devtoolset-11 rh-python38 -- ninja all UnitTests docs
-  artifacts:
-    paths:
-      - build/
-
-build-release:
-  stage: build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  script:
-    - mkdir build
-    - cd build
-    - scl enable devtoolset-11 rh-python38 -- conan install --build missing ..
-    - scl enable devtoolset-11 rh-python38 -- ../ci/configure-release.sh .. .
-    - scl enable devtoolset-11 rh-python38 -- ninja all UnitTests docs
-    - ./bin/UnitTests
-  artifacts:
-    paths:
-      - build/
-
-test-debug:
-  stage: test
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  script:
-    - cd build
-    - ninja coverage
+    - $SCL conan install --build missing ..
+    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+    - $SCL ninja all UnitTests docs
+    - $SCL ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
@@ -88,19 +60,19 @@ test-debug:
       coverage_report:
         coverage_format: cobertura
         path: build/coverage.xml
-  dependencies:
-    - build-debug
 
-test-release:
-  stage: test
+build-and-test-release:
+  stage: build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
+    - mkdir build
     - cd build
-    - ./bin/UnitTests --gtest_output=xml:test-output.xml
+    - $SCL conan install --build missing ..
+    - $SCL ../ci/configure-release.sh .. .
+    - $SCL ninja all UnitTests docs
+    - ./bin/UnitTests
   artifacts:
     paths:
       - build/test-output.xml
     reports:
       junit: build/test-output.xml
-  dependencies:
-    - build-release
