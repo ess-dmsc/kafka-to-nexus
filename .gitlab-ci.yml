@@ -5,6 +5,7 @@ default:
 stages:
   - static
   - build
+  - test
   - release
 
 .static:
@@ -63,7 +64,7 @@ cppcheck:
     # Store built packages to save build time on subsequent builds
     - conan upload '*' --all --confirm --remote ecdc-conan-external
 
-build-and-test-debug:
+centos-build:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   variables:
@@ -71,9 +72,20 @@ build-and-test-debug:
   script:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - $SCL ninja all UnitTests docs
-    - $SCL ninja coverage
+  artifacts:
+    paths:
+      - build/
+
+centos-test:
+  stage: test
+  needs: ["centos-build"]
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
+    - ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
+  dependencies:
+    - centos-build
   artifacts:
     paths:
       - build/coverage.xml
