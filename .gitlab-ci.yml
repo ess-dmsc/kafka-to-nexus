@@ -55,14 +55,13 @@ cppcheck:
   after_script:
     - >
       conan remote add \
-        --insert 0 \
         ecdc-conan-external \
         $ESS_ARTIFACTORY_ECDC_CONAN_EXTERNAL_REMOTE_URL
     - >
       conan user \
         --password $ESS_ARTIFACTORY_ECDC_CONAN_TOKEN \
         --remote ecdc-conan-external \
-        ESS_ARTIFACTORY_ECDC_CONAN_USER
+        $ESS_ARTIFACTORY_ECDC_CONAN_USER
     - conan upload '*' --all --confirm --remote ecdc-conan-external
 
 build-and-test-debug:
