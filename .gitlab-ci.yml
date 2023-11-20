@@ -64,7 +64,7 @@ cppcheck:
     # Store built packages to save build time on subsequent builds
     - conan upload '*' --all --confirm --remote ecdc-conan-external
 
-centos-build:
+centos-debug-build:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   variables:
@@ -76,16 +76,16 @@ centos-build:
     paths:
       - build/
 
-centos-test:
+centos-debug-test:
   stage: test
-  needs: ["centos-build"]
+  needs: ["centos-debug-build"]
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
     - ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   dependencies:
-    - centos-build
+    - centos-debug-build
   artifacts:
     paths:
       - build/coverage.xml
