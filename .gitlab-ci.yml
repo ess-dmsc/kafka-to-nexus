@@ -42,8 +42,8 @@ cppcheck:
 .build:
   stage: build
   before_script:
-    - mkdir build
-    - cd build
+    - mkdir $CI_JOB_NAME
+    - cd $CI_JOB_NAME
     - >
       conan remote add \
         --insert 0 \
@@ -74,7 +74,7 @@ centos-debug-build:
     - $SCL ninja all UnitTests docs
   artifacts:
     paths:
-      - build/
+      - $CI_JOB_NAME/
 
 centos-debug-test:
   stage: test
@@ -88,11 +88,11 @@ centos-debug-test:
     - centos-debug-build
   artifacts:
     paths:
-      - build/coverage.xml
+      - centos-debug-build/coverage.xml
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: build/coverage.xml
+        path: centos-debug-build/coverage.xml
 
 centos-release-build:
   extends: .build
@@ -104,10 +104,10 @@ centos-release-build:
     - $SCL ninja all UnitTests docs
   artifacts:
     paths:
-      - build/CONAN_INFO
-      - build/bin
-      - build/lib
-      - build/licenses
+      - $CI_JOB_NAME/CONAN_INFO
+      - $CI_JOB_NAME/bin
+      - $CI_JOB_NAME/lib
+      - $CI_JOB_NAME/licenses
 
 centos-release-test:
   stage: test
@@ -119,30 +119,75 @@ centos-release-test:
     - centos-release-build
   artifacts:
     paths:
-      - build/test-output.xml
+      - centos-release-build/test-output.xml
     reports:
-      junit: build/test-output.xml
+      junit: centos-release-build/test-output.xml
 
-build-and-test-alt-distro:
+.alt-distro-build:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
   script:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests docs
-    - ./bin/UnitTests
-  parallel:
-    matrix:
-      - DISTRO:
-          - debian11
-          - ubuntu2204
-      - DISTRO: almalinux8
-        SCL: scl enable gcc-toolset-12 --
+  artifacts:
+    paths:
+      - $CI_JOB_NAME/
+
+almalinux-build:
+  extends: .alt-distro-build
+  variables:
+    DISTRO: almalinux8
+    SCL:  scl enable gcc-toolset-12 --
+
+debian-build:
+  extends: .alt-distro-build
+  variables:
+    DISTRO: debian11
+
+ubuntu-build:
+  extends: .alt-distro-build
+  variables:
+    DISTRO: ubuntu2204
+
+.alt-distro-test:
+  stage: test
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
+
+almalinux-test:
+  extends: .alt-distro-test
+  needs: ["almalinux-build"]
+  variables:
+    DISTRO: almalinux8
+  script:
+    - almalinux-build/bin/UnitTests
+  dependencies:
+    - almalinux-build
+
+debian-test:
+  extends: .alt-distro-test
+  needs: ["debian-build"]
+  variables:
+    DISTRO: debian11
+  script:
+    - debian-build/bin/UnitTests
+  dependencies:
+    - debian-build
+
+ubuntu-test:
+  extends: .alt-distro-test
+  needs: ["ubuntu-build"]
+  variables:
+    DISTRO: ubuntu2204
+  script:
+    - ubuntu-build/bin/UnitTests
+  dependencies:
+    - ubuntu-build
 
 archive:
   stage: release
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
-    - cd build
+    - cd centos-release-build
     - mkdir -p archive/kafka-to-nexus/bin
     - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
     - cp -r ./lib archive/kafka-to-nexus/
@@ -154,4 +199,4 @@ archive:
     - centos-release-build
   artifacts:
     paths:
-      - build/archive/kafka-to-nexus.tar.gz
+      - centos-release-build/archive/kafka-to-nexus.tar.gz
