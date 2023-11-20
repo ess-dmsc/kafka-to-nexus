@@ -41,13 +41,34 @@ cppcheck:
   only:
     - merge_requests
 
-build-and-test-debug:
+.build:
   stage: build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  script:
+  before_script:
     - mkdir build
     - cd build
+    - >
+      conan remote add \
+        --insert 0 \
+        ecdc-conan-virtual \
+        $ESS_ARTIFACTORY_ECDC_CONAN_VIRTUAL_REMOTE_URL
     - $SCL conan install --build missing ..
+  after_script:
+    - >
+      conan remote add \
+        --insert 0 \
+        ecdc-conan-external \
+        $ESS_ARTIFACTORY_ECDC_CONAN_EXTERNAL_REMOTE_URL
+    - >
+      conan user \
+        --password $ESS_ARTIFACTORY_ECDC_CONAN_TOKEN \
+        --remote ecdc-conan-external \
+        ESS_ARTIFACTORY_ECDC_CONAN_USER
+    - conan upload '*' --all --confirm --remote ecdc-conan-external
+
+build-and-test-debug:
+  extends: .build
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - $SCL ninja all UnitTests docs
     - $SCL ninja coverage
@@ -62,12 +83,9 @@ build-and-test-debug:
         path: build/coverage.xml
 
 build-and-test-release:
-  stage: build
+  extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
-    - mkdir build
-    - cd build
-    - $SCL conan install --build missing ..
     - $SCL ../ci/configure-release.sh .. .
     - $SCL ninja all UnitTests docs
     - ./bin/UnitTests --gtest_output=xml:test-output.xml
