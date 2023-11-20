@@ -3,21 +3,21 @@ default:
     - docker
 
 stages:
-  - static
+  - check
   - build
   - release
 
-.static:
-  stage: static
+.check:
+  stage: check
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
 
 clang-format:
-  extends: .static
+  extends: .check
   script:
     - ci/check-formatting.sh
 
 black:
-  extends: .static
+  extends: .check
   script:
     - python3 -m black --version
     - python3 -m black --check integration-tests
@@ -63,7 +63,7 @@ cppcheck:
     # Store built packages to save build time on subsequent builds
     - conan upload '*' --all --confirm --remote ecdc-conan-external
 
-build-and-test-debug:
+build-debug:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   variables:
@@ -82,7 +82,7 @@ build-and-test-debug:
         coverage_format: cobertura
         path: build/coverage.xml
 
-build-and-test-release:
+build-release:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   variables:
@@ -101,7 +101,7 @@ build-and-test-release:
     reports:
       junit: build/test-output.xml
 
-build-and-test-alt-distro:
+build-alt-distro:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
   script:
@@ -129,7 +129,7 @@ archive:
     - cd archive
     - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
   dependencies:
-    - build-and-test-release
+    - build-release
   artifacts:
     paths:
       - build/archive/kafka-to-nexus.tar.gz
