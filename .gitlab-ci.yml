@@ -107,6 +107,6 @@ build-and-test-alt-distro:
       - DISTRO:
           - debian11
           - ubuntu2204
-        SCL: ''
+        SCL: ' '
       - DISTRO: almalinux8
         SCL: scl enable gcc-toolset-12 --
