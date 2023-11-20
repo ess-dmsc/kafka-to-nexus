@@ -49,6 +49,7 @@ cppcheck:
         ecdc-conan-virtual \
         $ESS_ARTIFACTORY_ECDC_CONAN_VIRTUAL_REMOTE_URL
     - $SCL conan install --build missing ..
+    - $SCL conan info ../conanfile.txt > CONAN_INFO
   after_script:
     - >
       conan remote add \
@@ -92,6 +93,7 @@ build-and-test-release:
     - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
     paths:
+      - build/CONAN_INFO
       - build/test-output.xml
       - build/bin
       - build/lib
@@ -118,15 +120,14 @@ archive:
   stage: release
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
-    - |
-      cd build
-      mkdir -p archive/kafka-to-nexus/bin
-      cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
-      cp -r ./lib archive/kafka-to-nexus/
-      cp -r ./licenses archive/kafka-to-nexus/
-      cp ./CONAN_INFO archive/kafka-to-nexus/
-      cd archive
-      tar czf kafka-to-nexus.tar.gz kafka-to-nexus
+    - cd build
+    - mkdir -p archive/kafka-to-nexus/bin
+    - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
+    - cp -r ./lib archive/kafka-to-nexus/
+    - cp -r ./licenses archive/kafka-to-nexus/
+    - cp ./CONAN_INFO archive/kafka-to-nexus/
+    - cd archive
+    - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
   dependencies:
     - build-and-test-release
   artifacts:
