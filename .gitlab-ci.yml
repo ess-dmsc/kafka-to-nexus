@@ -81,6 +81,7 @@ centos-debug-test:
   needs: ["centos-debug-build"]
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
+    - cd centos-debug-build
     - ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
@@ -114,7 +115,8 @@ centos-release-test:
   needs: ["centos-release-build"]
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
-    - ./bin/UnitTests --gtest_output=xml:test-output.xml
+    - cd centos-release-build
+    - ./build/bin/UnitTests --gtest_output=xml:test-output.xml
   dependencies:
     - centos-release-build
   artifacts:
@@ -159,7 +161,8 @@ almalinux-test:
   variables:
     DISTRO: almalinux8
   script:
-    - almalinux-build/bin/UnitTests
+    - cd almalinux-build
+    - ./bin/UnitTests
   dependencies:
     - almalinux-build
 
@@ -169,7 +172,8 @@ debian-test:
   variables:
     DISTRO: debian11
   script:
-    - debian-build/bin/UnitTests
+    - cd debian-build
+    - ./bin/UnitTests
   dependencies:
     - debian-build
 
@@ -179,7 +183,8 @@ ubuntu-test:
   variables:
     DISTRO: ubuntu2204
   script:
-    - ubuntu-build/bin/UnitTests
+    - cd ubuntu-build
+    - ./bin/UnitTests
   dependencies:
     - ubuntu-build
 
