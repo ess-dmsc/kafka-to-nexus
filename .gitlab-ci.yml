@@ -23,7 +23,7 @@ black:
     - python3 -m black --check integration-tests
 
 cppcheck:
-  extends: .static
+  extends: .check
   script:
     - cppcheck --version
     - >
