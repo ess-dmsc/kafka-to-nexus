@@ -94,7 +94,7 @@ centos-test:
         coverage_format: cobertura
         path: build/coverage.xml
 
-build-and-test-release:
+centos-release-build:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   variables:
@@ -102,14 +102,24 @@ build-and-test-release:
   script:
     - $SCL ../ci/configure-release.sh .. .
     - $SCL ninja all UnitTests docs
-    - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
     paths:
       - build/CONAN_INFO
-      - build/test-output.xml
       - build/bin
       - build/lib
       - build/licenses
+
+centos-release-test:
+  stage: test
+  needs: ["centos-release-build"]
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
+    - ./bin/UnitTests --gtest_output=xml:test-output.xml
+  dependencies:
+    - centos-release-build
+  artifacts:
+    paths:
+      - build/test-output.xml
     reports:
       junit: build/test-output.xml
 
@@ -141,7 +151,7 @@ archive:
     - cd archive
     - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
   dependencies:
-    - build-and-test-release
+    - centos-release-build
   artifacts:
     paths:
       - build/archive/kafka-to-nexus.tar.gz
