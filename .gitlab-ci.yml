@@ -100,7 +100,7 @@ build-and-test-alt-distro:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
   script:
-    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests docs
     - ./bin/UnitTests
   parallel:
