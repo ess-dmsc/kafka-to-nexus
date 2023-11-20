@@ -7,9 +7,6 @@ stages:
   - build
   - release
 
-variables:
-  SCL: scl enable devtoolset-11 rh-python38 --
-
 .static:
   stage: static
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
@@ -68,6 +65,8 @@ cppcheck:
 build-and-test-debug:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
   script:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - $SCL ninja all UnitTests docs
@@ -85,6 +84,8 @@ build-and-test-debug:
 build-and-test-release:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
   script:
     - $SCL ../ci/configure-release.sh .. .
     - $SCL ninja all UnitTests docs
@@ -107,6 +108,5 @@ build-and-test-alt-distro:
       - DISTRO:
           - debian11
           - ubuntu2204
-        SCL: ' '
       - DISTRO: almalinux8
         SCL: scl enable gcc-toolset-12 --
