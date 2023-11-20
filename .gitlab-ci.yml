@@ -62,6 +62,7 @@ cppcheck:
         --password $ESS_ARTIFACTORY_ECDC_CONAN_TOKEN \
         --remote ecdc-conan-external \
         $ESS_ARTIFACTORY_ECDC_CONAN_USER
+    # Store built packages to save build time on subsequent builds
     - conan upload '*' --all --confirm --remote ecdc-conan-external
 
 build-and-test-debug:
