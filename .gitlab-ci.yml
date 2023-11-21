@@ -93,8 +93,8 @@ build-release:
     - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
     paths:
-      - build/CONAN_INFO
       - build/test-output.xml
+      - build/CONAN_INFO
       - build/bin
       - build/lib
       - build/licenses
