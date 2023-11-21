@@ -133,3 +133,15 @@ archive:
   artifacts:
     paths:
       - build/archive/kafka-to-nexus.tar.gz
+
+publish:
+  stage: release
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Publishing binaries in release job."
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Version $CI_COMMIT_TAG"
+    description: "Release created by GitLab CI."
