@@ -143,8 +143,6 @@ keep-artifacts:
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
     - echo "Commit is tagged, keeping artefacts."
-  dependencies:
-    - archive
   artifacts:
     paths:
       - build/archive/kafka-to-nexus.tar.gz
