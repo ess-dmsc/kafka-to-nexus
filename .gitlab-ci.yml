@@ -135,24 +135,24 @@ archive:
     - cp ./CONAN_INFO archive/kafka-to-nexus/
     - cd archive
     - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
+    - cd ../..
+    - mv build/archive/kafka-to-nexus.tar.gz .
   dependencies:
     - build-release
   artifacts:
     paths:
-      - build/archive/kafka-to-nexus.tar.gz
+      - kafka-to-nexus.tar.gz
 
 keep-artifacts:
   stage: release
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
-    - pwd
-    - ls
-    - ls *
+    - ls kafka-to-nexus.tar.gz
   dependencies:
     - archive
   artifacts:
     paths:
-      - build/archive/kafka-to-nexus.tar.gz
+      - kafka-to-nexus.tar.gz
     expire_in: never
   rules:
     - if: $CI_COMMIT_TAG
