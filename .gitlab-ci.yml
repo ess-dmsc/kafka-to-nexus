@@ -12,6 +12,7 @@ workflow:
 stages:
   - check
   - build
+  - archive
   - release
 
 .check:
@@ -124,7 +125,7 @@ build-alt-distro:
         SCL: scl enable gcc-toolset-12 --
 
 archive:
-  stage: release
+  stage: archive
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
     - cd build
@@ -135,19 +136,17 @@ archive:
     - cp ./CONAN_INFO archive/kafka-to-nexus/
     - cd archive
     - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
-    - cd ../..
-    - mv build/archive/kafka-to-nexus.tar.gz .
   dependencies:
     - build-release
   artifacts:
     paths:
-      - kafka-to-nexus.tar.gz
+      - build/archive/kafka-to-nexus.tar.gz
 
 keep-artifacts:
   stage: release
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
-    - ls kafka-to-nexus.tar.gz
+    - ls build/archive/kafka-to-nexus.tar.gz
   dependencies:
     - archive
   artifacts:
