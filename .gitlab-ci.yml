@@ -1,6 +1,8 @@
 default:
   tags:
     - docker
+  artifacts:
+    expire_in: 1 week
 
 stages:
   - check
@@ -134,14 +136,14 @@ archive:
     paths:
       - build/archive/kafka-to-nexus.tar.gz
 
-publish:
+keep-artifacts:
   stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   rules:
     - if: $CI_COMMIT_TAG
-  script:
-    - echo "Publishing binaries in release job."
-  release:
-    tag_name: $CI_COMMIT_TAG
-    name: "Version $CI_COMMIT_TAG"
-    description: "Release created by GitLab CI."
+  dependencies:
+    - archive
+  artifacts:
+    paths:
+      - build/archive/kafka-to-nexus.tar.gz
+    expire_in: never
