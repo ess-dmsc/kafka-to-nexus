@@ -4,6 +4,11 @@ default:
   artifacts:
     expire_in: 1 week
 
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
 stages:
   - check
   - build
@@ -37,8 +42,8 @@ cppcheck:
         --enable=all \
         --inconclusive \
         src/ 2> cppcheck.xml
-  only:
-    - merge_requests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 .build:
   stage: build
