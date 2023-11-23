@@ -28,10 +28,6 @@ docker exec filewriter bash -c 'tar xzvf kafka-to-nexus.tar.gz'
 docker exec filewriter bash -c 'scl enable rh-python38 -- python -m venv venv'
 docker exec filewriter bash -c 'scl enable rh-python38 -- venv/bin/pip install -r integration-tests/requirements.txt'
 
-echo "Sleeping..."
-sleep 10
-echo "Continuing!"
-
 echo "Creating Kafka topics..."
 while read topic; do
   docker exec kafka bash -c "kafka-topics --bootstrap-server localhost:9092 --create --topic $topic"
