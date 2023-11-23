@@ -57,7 +57,8 @@ services:
     container_name: filewriter
     image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     tty: true
     networks:
       - frontend
