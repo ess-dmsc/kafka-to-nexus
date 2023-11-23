@@ -5,7 +5,6 @@ from subprocess import Popen
 from datetime import datetime
 
 import pytest
-from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 from file_writer_control import WorkerJobPool
@@ -18,7 +17,6 @@ from helpers.nexushelpers import NEXUS_FILES_DIR
 BINARY_PATH = "--writer-binary"
 START_NO_FW = "--start-no-filewriter"
 KAFKA_BROKER = "--kafka-broker"
-INTEGRATION_TEST_DOCKER = "docker-compose.yml"
 DEFAULT_KAFKA_BROKER = "localhost:9093"
 START_NR_OF_WRITERS = 2
 
@@ -39,7 +37,7 @@ def pytest_addoption(parser):
         type=str,
         action="store",
         default="",
-        help="Use existing Kafka broker instead of instantiating one with Docker.",
+        help="Use custom Kafka broker.",
     )
     parser.addoption(
         START_NO_FW,
@@ -68,11 +66,11 @@ def pytest_collection_modifyitems(items, config):
         config.hook.pytest_deselected(items=deselected_items)
         items[:] = selected_items
         print(
-            f"\nRunning system tests without starting (multiple) file-writers. De-selecting tests requiring multiple filewriters."
+            "\nRunning system tests without starting (multiple) file-writers. De-selecting tests requiring multiple filewriters."
         )
 
 
-def wait_until_kafka_ready(docker_cmd, docker_options, kafka_address):
+def wait_until_kafka_ready(kafka_address):
     print("Waiting for Kafka broker to be ready for system tests...")
     conf = {"bootstrap.servers": kafka_address}
     producer = Producer(conf)
@@ -94,7 +92,6 @@ def wait_until_kafka_ready(docker_cmd, docker_options, kafka_address):
         n_polls += 1
 
     if not kafka_ready:
-        docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka broker was not ready after 100 seconds, aborting tests.")
 
     client = AdminClient(conf)
@@ -115,54 +112,15 @@ def wait_until_kafka_ready(docker_cmd, docker_options, kafka_address):
         n_polls += 1
 
     if not topic_ready:
-        docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka topic was not ready after 60 seconds, aborting tests.")
 
 
-common_options = {
-    "--no-deps": False,
-    "--always-recreate-deps": False,
-    "--scale": "",
-    "--abort-on-container-exit": False,
-    "SERVICE": "",
-    "--remove-orphans": False,
-    "--no-recreate": True,
-    "--force-recreate": False,
-    "--no-build": False,
-    "--no-color": False,
-    "--rmi": "none",
-    "--volumes": True,  # Remove volumes when docker-compose down (don't persist kafka and zk data)
-    "--follow": False,
-    "--timestamps": False,
-    "--tail": "all",
-    "--detach": True,
-    "--build": False,
-    "--file": [
-        INTEGRATION_TEST_DOCKER,
-    ],
-}
-
-
-def run_containers(cmd, options, kafka_address, custom_kafka_broker):
-    if custom_kafka_broker:
-        print("Custom kafka broker configured, skipping Docker images.")
-        return
-    print("Running docker-compose up", flush=True)
-    cmd.up(options)
-    print("\nFinished docker-compose up\n", flush=True)
-    wait_until_kafka_ready(cmd, options, kafka_address)
-
-
-def build_and_run(
-    options,
+def run_writers(
     request,
     kafka_address,
-    custom_kafka_broker,
     binary_path: Optional[str] = None,
 ):
-    project = project_from_options(os.path.dirname(__file__), options)
-    cmd = TopLevelCommand(project)
-    run_containers(cmd, options, kafka_address, custom_kafka_broker)
+    wait_until_kafka_ready(kafka_address)
     list_of_writers = []
 
     if binary_path is not None:
@@ -190,12 +148,6 @@ def build_and_run(
         for fw in list_of_writers:
             fw.wait()
         print("File-writers stopped")
-        # Stop the containers then remove them and their volumes (--volumes option)
-        if not custom_kafka_broker:
-            print("Stopping docker containers", flush=True)
-            options["--timeout"] = 10
-            cmd.down(options)
-            print("Containers stopped", flush=True)
 
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
@@ -219,7 +171,7 @@ def remove_logs_from_previous_run(request):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def start_file_writer(request, kafka_address, custom_kafka_broker):
+def start_file_writer(request, kafka_address):
     """
     :type request: _pytest.python.FixtureRequest
     """
@@ -233,9 +185,7 @@ def start_file_writer(request, kafka_address, custom_kafka_broker):
     if not request.config.getoption(START_NO_FW):
         print("Starting the file-writer", flush=True)
         file_writer_path = request.config.getoption(BINARY_PATH)
-    return build_and_run(
-        common_options, request, kafka_address, custom_kafka_broker, file_writer_path
-    )
+    return run_writers(request, kafka_address, file_writer_path)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -259,11 +209,6 @@ def kafka_address(request):
     if addr == "":
         return DEFAULT_KAFKA_BROKER
     return addr
-
-
-@pytest.fixture(scope="session", autouse=True)
-def custom_kafka_broker(request) -> bool:
-    return request.config.getoption(KAFKA_BROKER) != ""
 
 
 @pytest.fixture(scope="session", autouse=False)
