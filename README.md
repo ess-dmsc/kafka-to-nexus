@@ -1,4 +1,5 @@
-[![Build Status](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/main/badge/icon)](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/main/)
+[![pipeline status](https://gitlab.esss.lu.se/ecdc/ess-dmsc/kafka-to-nexus/badges/main/pipeline.svg)](https://gitlab.esss.lu.se/ecdc/ess-dmsc/kafka-to-nexus/-/commits/main)
+[![coverage report](https://gitlab.esss.lu.se/ecdc/ess-dmsc/kafka-to-nexus/badges/main/coverage.svg)](https://gitlab.esss.lu.se/ecdc/ess-dmsc/kafka-to-nexus/-/commits/main)
 [![DOI](https://zenodo.org/badge/81435658.svg)](https://zenodo.org/badge/latestdoi/81435658)
 
 

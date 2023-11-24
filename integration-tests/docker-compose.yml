@@ -1,33 +1,67 @@
-version: "2.1"
+version: "3.5"
+
 services:
   kafka:
-    image: wurstmeister/kafka:2.13-2.8.1
+    container_name: kafka
     hostname: kafka
+    image: confluentinc/cp-kafka:7.4.3
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+    restart: always
+    depends_on:
+      - zookeeper
     ports:
       - "9093:9093"
+    networks:
+      - frontend
     environment:
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9093
-      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 0
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_MESSAGE_MAX_BYTES: 300000000
       KAFKA_SOCKET_REQUEST_MAX_BYTES: 300000000
       KAFKA_REPLICA_FETCH_MAX_BYTES: 300000000
-      KAFKA_BROKER_ID: 0
       KAFKA_LOG_RETENTION_MS: -1  # keep data forever, required for tests involving fake "historical" data
-      KAFKA_CREATE_TOPICS: "TEST_epicsConnectionStatus:1:1,TEST_sampleEnv:1:1,TEST_writer_jobs:1:1,TEST_writer_commands:1:1,TEST_writer_commands_alternative:1:1,TEST_forwarderConfig:1:1,TEST_forwarderStatusLR:1:1,TEST_forwarderDataLR:1:1"
-    mem_limit: 600m
-    depends_on:
-      - wait_for_zookeeper
+      ## listeners
+      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9093
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   zookeeper:
-    image: zookeeper:3.8.0
-    mem_limit: 200m
+    container_name: zookeeper
+    hostname: zookeeper
+    image: confluentinc/cp-zookeeper:7.4.3
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - frontend
 
-  wait_for_zookeeper:
-    image: dadarek/wait-for-dependencies
-    command: zookeeper:2181
-    mem_limit: 100m
+  filewriter:
+    container_name: filewriter
+    image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
     depends_on:
-      - zookeeper
+      kafka:
+        condition: service_healthy
+    tty: true
+    networks:
+      - frontend
+
+networks:
+  frontend:

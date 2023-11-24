@@ -1,0 +1,180 @@
+default:
+  tags:
+    - docker
+  artifacts:
+    expire_in: 1 week
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+stages:
+  - check
+  - build
+  - archive
+  - integration
+  - release
+
+.check:
+  stage: check
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
+
+clang-format:
+  extends: .check
+  script:
+    - ci/check-formatting.sh
+
+black:
+  extends: .check
+  script:
+    - python3 -m black --version
+    - python3 -m black --check integration-tests
+
+cppcheck:
+  extends: .check
+  script:
+    - cppcheck --version
+    - >
+      cppcheck \
+        --xml \
+        --inline-suppr \
+        --suppress=unusedFunction \
+        --suppress=missingInclude \
+        --enable=all \
+        --inconclusive \
+        src/ 2> cppcheck.xml
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+.build:
+  stage: build
+  before_script:
+    - mkdir build
+    - cd build
+    - >
+      conan remote add \
+        --insert 0 \
+        ecdc-conan-virtual \
+        $ESS_ARTIFACTORY_ECDC_CONAN_VIRTUAL_REMOTE_URL
+    - $SCL conan install --build missing ..
+    - $SCL conan info ../conanfile.txt > CONAN_INFO
+  after_script:
+    - >
+      conan remote add \
+        ecdc-conan-external \
+        $ESS_ARTIFACTORY_ECDC_CONAN_EXTERNAL_REMOTE_URL
+    - >
+      conan user \
+        --password $ESS_ARTIFACTORY_ECDC_CONAN_TOKEN \
+        --remote ecdc-conan-external \
+        $ESS_ARTIFACTORY_ECDC_CONAN_USER
+    # Store built packages to save build time on subsequent builds
+    - conan upload '*' --all --confirm --remote ecdc-conan-external
+
+build-debug:
+  extends: .build
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
+  script:
+    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+    - $SCL ninja all UnitTests docs
+    - $SCL ninja coverage
+    - cat coverage.txt
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+  artifacts:
+    paths:
+      - build/coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/coverage.xml
+
+build-release:
+  extends: .build
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
+  script:
+    - $SCL ../ci/configure-release.sh .. .
+    - $SCL ninja all UnitTests docs
+    - ./bin/UnitTests --gtest_output=xml:test-output.xml
+  artifacts:
+    paths:
+      - build/test-output.xml
+      - build/CONAN_INFO
+      - build/bin
+      - build/lib
+      - build/licenses
+    reports:
+      junit: build/test-output.xml
+
+build-alt-distro:
+  extends: .build
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
+  script:
+    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
+    - $SCL ninja all UnitTests docs
+    - ./bin/UnitTests
+  parallel:
+    matrix:
+      - DISTRO:
+          - debian11
+          - ubuntu2204
+      - DISTRO: almalinux8
+        SCL: scl enable gcc-toolset-12 --
+
+archive:
+  stage: archive
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
+    - cd build
+    - mkdir -p archive/kafka-to-nexus/bin
+    - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
+    - cp -r ./lib archive/kafka-to-nexus/
+    - cp -r ./licenses archive/kafka-to-nexus/
+    - cp ./CONAN_INFO archive/kafka-to-nexus/
+    - cd archive
+    - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
+  dependencies:
+    - build-release
+  artifacts:
+    paths:
+      - build/archive/kafka-to-nexus.tar.gz
+
+integration-tests:
+  stage: integration
+  image: docker:latest
+  before_script:
+    - cd integration-tests
+    - ./setup.sh ../build/archive/kafka-to-nexus.tar.gz
+  script:
+    - ./run-integration-tests.sh
+  after_script:
+    - cd integration-tests
+    - ./teardown.sh
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  dependencies:
+    - archive
+  artifacts:
+    paths:
+      - integration-tests/IntegrationTestsOutput.xml
+      - integration-tests/logs/*
+    reports:
+      junit: integration-tests/IntegrationTestsOutput.xml
+
+keep-artifacts:
+  stage: release
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  script:
+    - ls build/archive/kafka-to-nexus.tar.gz
+  dependencies:
+    - archive
+  artifacts:
+    paths:
+      - build/archive/kafka-to-nexus.tar.gz
+    expire_in: never
+  rules:
+    - if: $CI_COMMIT_TAG

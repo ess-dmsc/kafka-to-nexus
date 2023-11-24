@@ -4,7 +4,9 @@
 # clang-format.
 
 clang-format --version
+echo
 
+echo "Checking formatting..."
 find . \( \
     -name '*.cpp' \
     -or \
@@ -13,4 +15,5 @@ find . \( \
     -name '*.h' \
     -or \
     -name '*.hpp' \
-  \) -exec clang-format --dry-run -Werror {} +
+  \) -exec clang-format --dry-run -Werror {} + \
+  && echo "No formatting issues found."
