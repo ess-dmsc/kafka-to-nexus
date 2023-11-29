@@ -142,6 +142,7 @@ set(kafka_to_nexus_INC
         Kafka/ConsumerFactory.h
         Kafka/MetaDataQuery.h
         Kafka/MetaDataQueryImpl.h
+        kafka-to-nexus.h
         logger.h
         MainOpt.h
         Master.h
