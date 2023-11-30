@@ -64,7 +64,7 @@ builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: Configuration") {
     if (container.key == release_node) {
       container.sh """
-        ${pipeline_builder.project}/jenkins-scripts/configure-release.sh \
+        ${pipeline_builder.project}/ci/configure-release.sh \
           ${pipeline_builder.project} \
           build
       """
@@ -104,7 +104,7 @@ builders = pipeline_builder.createBuilders { container ->
 
       // Process and publish test coverage
       sh """
-        ${pipeline_builder.project}/jenkins-scripts/redirect-coverage.sh \
+        ${pipeline_builder.project}/ci/redirect-coverage.sh \
           build/coverage.xml \
           ${pipeline_builder.project}
       """
@@ -196,7 +196,7 @@ if (env.CHANGE_ID) {
       catchError(stageResult: 'FAILURE') {
         container.sh """
           cd ${pr_pipeline_builder.project}
-          jenkins-scripts/check-formatting.sh
+          ci/check-formatting.sh
         """
       }  // catchError
     }  // stage: clang-format 
