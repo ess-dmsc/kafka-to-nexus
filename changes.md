@@ -2,6 +2,8 @@
 
 ## Next version
 
+- Remove support for ep00 schema
+
 
 ## Version 6.1.0
 
