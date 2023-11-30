@@ -118,8 +118,9 @@ void Master::setToIdle() {
     try {
       StaticMetaData = nlohmann::json::parse(CurrentMetadata);
     } catch (nlohmann::json::parse_error const &E) {
-      LOG_WARN(
-          "Failed to parse JSON metadata string from start message. Skipping.");
+      LOG_WARN("Failed to parse JSON metadata string from start message. "
+               "Skipping (metadata={})",
+               CurrentMetadata);
     }
     CurrentJSONStatus.update(StaticMetaData);
     auto writtenFilePath = getCurrentFilePath();
