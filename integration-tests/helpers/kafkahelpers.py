@@ -5,7 +5,6 @@ from typing import Optional, Union, Any
 from confluent_kafka import Consumer, Producer
 from streaming_data_types import serialise_ev44
 
-from streaming_data_types.epics_connection_info_ep00 import serialise_ep00
 import streaming_data_types.logdata_f142
 from streaming_data_types.logdata_f144 import serialise_f144
 from streaming_data_types.epics_connection_ep01 import (
@@ -184,12 +183,3 @@ def publish_al00_message(
         message=alarm_msg,
     )
     publish_message(producer, message, topic, timestamp)
-
-
-def publish_ep00_message(
-    producer, topic, status, timestamp: datetime, source_name: str = "SIMPLE:DOUBLE"
-):
-    ep00_message = serialise_ep00(
-        datetime_to_ns(timestamp), status, source_name=source_name
-    )
-    publish_message(producer, ep00_message, topic, timestamp)

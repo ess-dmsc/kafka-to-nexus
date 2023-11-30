@@ -1,5 +1,5 @@
 from test_filewriter_static_data import test_static_data_reaches_file
-from test_epics_status import test_ep00
+from test_epics_status import test_ep01
 from test_repeated_messages_logic import test_repeated_messages
 from test_filewriter_links import test_links
 from test_filewriter_kafka_meta_data import test_end_message_metadata
@@ -20,7 +20,7 @@ def main():
     )
     list_of_tests = [
         test_static_data_reaches_file,
-        test_ep00,
+        test_ep01,
         test_repeated_messages,
         test_links,
         test_end_message_metadata,

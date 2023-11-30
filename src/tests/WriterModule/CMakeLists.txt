@@ -8,7 +8,6 @@ set(writer_module_SRC
     se00_WriterTests.cpp
     ns10_WriterTests.cpp
     f142_WriterTests.cpp
-    ep00_WriterTests.cpp
     TemplateWriterTests.cpp
     WriterRegistrationTests.cpp
     f144_WriterTests.cpp
