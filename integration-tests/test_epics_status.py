@@ -33,26 +33,26 @@ def test_ep01(worker_pool, kafka_address, hdf_file_name="output_file_ep01.nxs"):
     publish_ep01_message(
         producer,
         topic,
-        stop_time + timedelta(seconds=1),
-        ConnectionInfo.CONNECTED,
-    )
-    publish_ep01_message(
-        producer,
-        topic,
-        stop_time + timedelta(seconds=1.1),
+        start_time + timedelta(seconds=1.1),
         ConnectionInfo.REMOTE_ERROR,
     )
     publish_ep01_message(
         producer,
         topic,
-        stop_time + timedelta(seconds=1.2),
+        start_time + timedelta(seconds=1.2),
         ConnectionInfo.DISCONNECTED,
     )
     publish_ep01_message(
         producer,
         topic,
-        stop_time + timedelta(seconds=1.3),
+        start_time + timedelta(seconds=1.3),
         ConnectionInfo.CONNECTED,
+    )
+    publish_ep01_message(
+        producer,
+        topic,
+        stop_time + timedelta(seconds=1),
+        ConnectionInfo.DISCONNECTED,
     )
 
     with open("commands/nexus_structure_epics_status.json", "r") as f:
