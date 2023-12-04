@@ -120,13 +120,10 @@
         {
             "type": "shell",
             "label": "IntegrationTestsPre",
-            "command": "docker compose down || true && sed -i 's/docker-centos7-build-node/docker-ubuntu2204-build-node/' docker-compose.yml && sed -i 's/scl enable rh-python38 -- //g' run-integration-tests.sh setup.sh",
+            "command": "docker compose down || true && sed -i 's/docker-centos7-build-node/docker-ubuntu2204-build-node/' docker-compose.yml && sed -i 's/scl enable rh-python38 -- //g' run-integration-tests.sh setup.sh && sed -i 's/python -m venv/python3 -m venv/g' setup.sh",
             "options": {
                 "cwd": "${workspaceFolder}/integration-tests"
             },
-            "dependsOn": [
-                "Archive"
-            ],
             "problemMatcher": [
                 "$gcc"
             ],
