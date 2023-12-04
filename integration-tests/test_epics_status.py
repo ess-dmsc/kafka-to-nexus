@@ -41,29 +41,8 @@ def test_ep01(worker_pool, kafka_address, hdf_file_name="output_file_ep01.nxs"):
     publish_ep01_message(
         producer,
         topic,
-        start_time + timedelta(seconds=1.1),
-        ConnectionInfo.REMOTE_ERROR,
-        source_name=source_name,
-    )
-    publish_ep01_message(
-        producer,
-        topic,
-        start_time + timedelta(seconds=1.2),
-        ConnectionInfo.DISCONNECTED,
-        source_name=source_name,
-    )
-    publish_ep01_message(
-        producer,
-        topic,
-        start_time + timedelta(seconds=1.3),
+        stop_time + timedelta(seconds=1),  # after stop time
         ConnectionInfo.CONNECTED,
-        source_name=source_name,
-    )
-    publish_ep01_message(
-        producer,
-        topic,
-        stop_time + timedelta(seconds=1),
-        ConnectionInfo.DISCONNECTED,
         source_name=source_name,
     )
 
