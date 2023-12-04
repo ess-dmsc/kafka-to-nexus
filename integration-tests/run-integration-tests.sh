@@ -1,6 +1,6 @@
 #!/bin/sh
 
-docker exec filewriter bash -c 'cd integration-tests; scl enable rh-python38 -- ~/venv/bin/pytest --writer-binary=../kafka-to-nexus --junitxml=IntegrationTestsOutput.xml -k ep0'
+docker exec filewriter bash -c 'cd integration-tests; scl enable rh-python38 -- ~/venv/bin/pytest --writer-binary=../kafka-to-nexus --junitxml=IntegrationTestsOutput.xml'
 
 result=$?
 
