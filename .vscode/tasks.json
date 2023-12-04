@@ -2,8 +2,23 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "Build",
+            "label": "BuildOld",
             "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake .. && make -j$(nproc)",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "shell",
+            "label": "Build",
+            "command": "mkdir -p _build && cd _build && conan install .. --build=missing -o *:shared=False && cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL .. && ninja all",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -18,7 +33,8 @@
         {
             "type": "shell",
             "label": "BuildDocs",
-            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -DRUN_DOXYGEN=ON .. && make -j$(nproc) docs",
+            // "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -DRUN_DOXYGEN=ON .. && make -j$(nproc) docs",
+            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL .. && ninja all docs",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -32,10 +48,29 @@
         },
         {
             "type": "shell",
-            "label": "BuildUnitTests",
-            "command": "cd _build && make -j$(nproc) UnitTests",
+            "label": "Archive",
+            "command": "mkdir -p _archive/kafka-to-nexus && cp -a _build/bin _build/lib _build/licenses _archive/kafka-to-nexus && cd _archive && tar cf - kafka-to-nexus | pigz > kafka-to-nexus.tgz",
             "options": {
                 "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOn": [
+                "Build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "shell",
+            "label": "BuildUnitTests",
+            // "command": "make -j$(nproc) UnitTests",
+            "command": "ninja all UnitTests",
+            "options": {
+                "cwd": "${workspaceFolder}/_build"
             },
             "problemMatcher": [
                 "$gcc"
@@ -84,12 +119,12 @@
         {
             "type": "shell",
             "label": "IntegrationTests",
-            "command": "docker stop integration-tests_kafka_1 integration-tests_zookeeper_1 || true ; source .venv/bin/activate && source ../_build/activate_run.sh && python -m pytest -s . --writer-binary=../_build",
+            "command": "docker compose down || true ; (source .venv/bin/activate && source ../_build/activate_run.sh && docker compose up -d && sleep 10 && ./setup.sh ../_archive/kafka-to-nexus.tgz && ./run-integration-tests.sh) ; ./teardown.sh",
             "options": {
                 "cwd": "${workspaceFolder}/integration-tests"
             },
             "dependsOn": [
-                "Build"
+                "Archive"
             ],
             "group": {
                 "kind": "test",

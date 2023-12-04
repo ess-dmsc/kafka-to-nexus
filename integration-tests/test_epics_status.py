@@ -1,13 +1,10 @@
 from helpers.kafkahelpers import (
     create_producer,
-    publish_ep00_message,
-    ConnectionInfo,
+    publish_ep01_message,
 )
 from helpers.nexushelpers import OpenNexusFile
 from datetime import datetime, timedelta
-from streaming_data_types.fbschemas.epics_connection_info_ep00.EventType import (
-    EventType,
-)
+from streaming_data_types.epics_connection_ep01 import ConnectionInfo
 from file_writer_control import WriteJob
 from helpers import build_relative_file_path
 from helpers.writer import (
@@ -17,27 +14,36 @@ from helpers.writer import (
 )
 
 
-def test_ep00(worker_pool, kafka_address, hdf_file_name="output_file_ep00.nxs"):
+def test_ep01(worker_pool, kafka_address, hdf_file_name="output_file_ep01.nxs"):
     file_path = build_relative_file_path(hdf_file_name)
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
 
     producer = create_producer(kafka_address)
     topic = "TEST_epicsConnectionStatus"
+    source_name = "SIMPLE:DOUBLE"
     now = datetime.now()
     start_time = now - timedelta(seconds=5)
     stop_time = now
-    publish_ep00_message(producer, topic, EventType.NEVER_CONNECTED, start_time)
-    publish_ep00_message(
+    publish_ep01_message(
         producer,
         topic,
-        EventType.CONNECTED,
-        timestamp=start_time + timedelta(seconds=0.01),
+        start_time,
+        ConnectionInfo.NEVER_CONNECTED,
+        source_name=source_name,
     )
-    publish_ep00_message(
+    publish_ep01_message(
         producer,
         topic,
-        EventType.CONNECTED,
-        timestamp=stop_time + timedelta(seconds=1),
+        start_time + timedelta(seconds=0.01),
+        ConnectionInfo.CONNECTED,
+        source_name=source_name,
+    )
+    publish_ep01_message(
+        producer,
+        topic,
+        stop_time + timedelta(seconds=1),  # after stop time
+        ConnectionInfo.CONNECTED,
+        source_name=source_name,
     )
 
     with open("commands/nexus_structure_epics_status.json", "r") as f:

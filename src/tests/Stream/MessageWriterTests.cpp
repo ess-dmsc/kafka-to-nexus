@@ -9,7 +9,7 @@
 
 #include "Metrics/Registrar.h"
 #include "Stream/MessageWriter.h"
-#include "WriterModule/ep00/ep00_Writer.h"
+#include "WriterModule/ep01/ep01_Writer.h"
 #include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
 #include "helpers/SetExtractorModule.h"
@@ -33,8 +33,8 @@ class DataMessageWriterTest : public ::testing::Test {
 public:
   void SetUp() override {
     WriterModule::Registry::clear();
-    WriterModule::Registry::Registrar<WriterModule::ep00::ep00_Writer>
-        RegisterIt1("ep00", "epics_con_status");
+    WriterModule::Registry::Registrar<WriterModule::ep01::ep01_Writer>
+        RegisterIt1("ep01", "epics_con_info");
   }
   WriterModuleStandIn WriterModule;
   Metrics::Registrar MetReg{"some_prefix", {}};
@@ -53,29 +53,29 @@ TEST_F(DataMessageWriterTest, InvalidExtraModule) {
 }
 
 TEST_F(DataMessageWriterTest, ValidExtraModule) {
-  WriterModuleStandIn TestWriterModule({"ep00"});
+  WriterModuleStandIn TestWriterModule({"ep01"});
   EXPECT_TRUE(TestWriterModule.hasExtraModules());
   EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 1u);
 }
 
 TEST_F(DataMessageWriterTest, ValidExtraModuleByName) {
-  WriterModuleStandIn TestWriterModule({"epics_con_status"});
+  WriterModuleStandIn TestWriterModule({"epics_con_info"});
   EXPECT_TRUE(TestWriterModule.hasExtraModules());
   EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 1u);
 }
 
 TEST_F(DataMessageWriterTest, DisabledExtraModule) {
-  WriterModuleStandIn TestWriterModule({"epics_con_status"});
+  WriterModuleStandIn TestWriterModule({"epics_con_info"});
   REQUIRE_CALL(TestWriterModule, config_post_processing()).TIMES(1);
-  TestWriterModule.parse_config(R"({"enable_epics_con_status": false})");
+  TestWriterModule.parse_config(R"({"enable_epics_con_info": false})");
   EXPECT_TRUE(TestWriterModule.hasExtraModules());
   EXPECT_TRUE(TestWriterModule.getEnabledExtraModules().empty());
 }
 
 TEST_F(DataMessageWriterTest, EnableExtraModule) {
-  WriterModuleStandIn TestWriterModule({"epics_con_status"});
+  WriterModuleStandIn TestWriterModule({"epics_con_info"});
   REQUIRE_CALL(TestWriterModule, config_post_processing()).TIMES(1);
-  TestWriterModule.parse_config(R"({"enable_epics_con_status": true})");
+  TestWriterModule.parse_config(R"({"enable_epics_con_info": true})");
   EXPECT_TRUE(TestWriterModule.hasExtraModules());
   EXPECT_EQ(TestWriterModule.getEnabledExtraModules().size(), 1u);
 }

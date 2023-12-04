@@ -8,5 +8,6 @@ set -e
 
 docker cp filewriter:/home/jenkins/integration-tests/IntegrationTestsOutput.xml .
 docker cp filewriter:/home/jenkins/integration-tests/logs/. logs
+docker cp filewriter:/home/jenkins/integration-tests/output-files/. output-files
 
 exit $result

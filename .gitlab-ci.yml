@@ -159,9 +159,11 @@ integration-tests:
   dependencies:
     - archive
   artifacts:
+    when: always
     paths:
       - integration-tests/IntegrationTestsOutput.xml
       - integration-tests/logs/*
+      - integration-tests/output-files/*
     reports:
       junit: integration-tests/IntegrationTestsOutput.xml
 
