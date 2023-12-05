@@ -2,8 +2,8 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "BuildOld",
-            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake .. && make -j$(nproc)",
+            "label": "Build",
+            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -G Ninja -D CMAKE_BUILD_TYPE=Debug -D CONAN=MANUAL -D CMAKE_SKIP_RPATH=FALSE -D CMAKE_INSTALL_RPATH='$ORIGIN/../lib' -D CMAKE_BUILD_WITH_INSTALL_RPATH=TRUE -S .. -B . && ninja all",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -17,24 +17,77 @@
         },
         {
             "type": "shell",
-            "label": "Build",
-            "command": "mkdir -p _build && cd _build && conan install .. --build=missing -o *:shared=False && cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL .. && ninja all",
+            "label": "BuildDocs",
+            "command": "ninja all docs",
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}/_build"
             },
             "problemMatcher": [
                 "$gcc"
             ],
             "group": {
                 "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "shell",
+            "label": "BuildUnitTests",
+            "command": "ninja all UnitTests",
+            "options": {
+                "cwd": "${workspaceFolder}/_build"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOn": [
+                "Build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "shell",
+            "label": "UnitTests",
+            "command": "source activate_run.sh && ./bin/UnitTests",
+            "options": {
+                "cwd": "${workspaceFolder}/_build"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOn": [
+                "BuildUnitTests"
+            ],
+            "group": {
+                "kind": "test",
                 "isDefault": true
             }
         },
         {
             "type": "shell",
-            "label": "BuildDocs",
-            // "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -DRUN_DOXYGEN=ON .. && make -j$(nproc) docs",
-            "command": "mkdir -p _build && cd _build && conan install .. --build=missing && cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL .. && ninja all docs",
+            "label": "Selected UnitTests from Filter",
+            "command": "source activate_run.sh && ./bin/UnitTests --gtest_filter=${input:filterString}",
+            "options": {
+                "cwd": "${workspaceFolder}/_build"
+            },
+            "problemMatcher": [
+              "$gcc"
+            ],
+            "dependsOn": [
+              "BuildUnitTests"
+            ],
+            "group": {
+              "kind": "test",
+              "isDefault": false
+            }
+        },
+        {
+            "type": "shell",
+            "label": "cppcheck",
+            "command": "cppcheck --xml --inline-suppr --suppress=unusedFunction --suppress=missingInclude --enable=all --inconclusive src/ >/dev/null",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -42,7 +95,7 @@
                 "$gcc"
             ],
             "group": {
-                "kind": "build",
+                "kind": "test",
                 "isDefault": false
             }
         },
@@ -66,47 +119,10 @@
         },
         {
             "type": "shell",
-            "label": "BuildUnitTests",
-            // "command": "make -j$(nproc) UnitTests",
-            "command": "ninja all UnitTests",
+            "label": "IntegrationTestsPre",
+            "command": "docker compose down || true && sed -i 's/docker-centos7-build-node/docker-ubuntu2204-build-node/' docker-compose.yml && sed -i 's/scl enable rh-python38 -- //g' run-integration-tests.sh setup.sh && sed -i 's/python -m venv/python3 -m venv/g' setup.sh",
             "options": {
-                "cwd": "${workspaceFolder}/_build"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "dependsOn": [
-                "Build"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
-            "type": "shell",
-            "label": "UnitTests",
-            "command": "cd _build && source activate_run.sh && ./bin/UnitTests",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "dependsOn": [
-                "BuildUnitTests"
-            ],
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
-        },
-        {
-            "type": "shell",
-            "label": "cppcheck",
-            "command": "cppcheck --xml --inline-suppr --suppress=unusedFunction --suppress=missingInclude --enable=all --inconclusive src/ >/dev/null",
-            "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}/integration-tests"
             },
             "problemMatcher": [
                 "$gcc"
@@ -115,46 +131,33 @@
                 "kind": "test",
                 "isDefault": false
             }
-        },
+        }
         {
             "type": "shell",
             "label": "IntegrationTests",
-            "command": "docker compose down || true ; (source .venv/bin/activate && source ../_build/activate_run.sh && docker compose up -d && sleep 10 && ./setup.sh ../_archive/kafka-to-nexus.tgz && ./run-integration-tests.sh) ; ./teardown.sh",
+            "command": "source .venv/bin/activate && source ../_build/activate_run.sh && docker compose up -d && sleep 10 && ./setup.sh ../_archive/kafka-to-nexus.tgz && (./run-integration-tests.sh; status=$?; ./teardown.sh; exit $status)",
             "options": {
                 "cwd": "${workspaceFolder}/integration-tests"
             },
             "dependsOn": [
-                "Archive"
+                "Archive",
+                "IntegrationTestsPre"
+            ],
+            "problemMatcher": [
+                "$gcc"
             ],
             "group": {
                 "kind": "test",
                 "isDefault": false
             }
-        },
-        {
-            "type": "shell",
-            "label": "Selected UnitTests from Filter",
-            "command": "cd _build && source activate_run.sh && ./bin/UnitTests --gtest_filter=${input:filterString}",
-            "options": {
-              "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [
-              "$gcc"
-            ],
-            "dependsOn": [
-              "BuildUnitTests"
-            ],
-            "group": {
-              "kind": "test",
-              "isDefault": false
-            }
-          }
+        }
     ],
     "inputs": [
         {
             "id": "filterString",
             "type": "promptString",
-            "description": "Enter the gtest_filter string."
+            "description": "Enter the gtest_filter string.",
+            "default": "Class.SomeTest"
         }
     ],
     "version": "2.0.0"
