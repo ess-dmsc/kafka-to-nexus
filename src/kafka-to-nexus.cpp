@@ -21,6 +21,9 @@
 #include "WriterRegistrar.h"
 #include <CLI/CLI.hpp>
 
+// These should only be visible in this translation unit
+static std::atomic<RunStates> RunState{RunStates::Running};
+
 int main(int argc, char **argv) {
   std::string const ApplicationName = "kafka-to-nexus";
   std::string const ApplicationVersion = GetVersion();
@@ -86,9 +89,9 @@ int main(int argc, char **argv) {
     UsedRegistrar = UsedRegistrar.getNewRegistrar(Options->ServiceName);
   }
 
-  std::signal(SIGHUP, signal_handler);
-  std::signal(SIGINT, signal_handler);
-  std::signal(SIGTERM, signal_handler);
+  std::signal(SIGHUP, [](int signal) { signal_handler(signal, RunState); });
+  std::signal(SIGINT, [](int signal) { signal_handler(signal, RunState); });
+  std::signal(SIGTERM, [](int signal) { signal_handler(signal, RunState); });
 
   std::unique_ptr<FileWriter::Master> MasterPtr;
 
@@ -113,7 +116,7 @@ int main(int argc, char **argv) {
   auto CommandTopic = Options->CommandBrokerURI.Topic;
   LOG_DEBUG("Starting run loop.");
   LOG_DEBUG("Retrieving topic names from broker.");
-  while (!shouldStop(MasterPtr, FindTopicMode)) {
+  while (!shouldStop(MasterPtr, FindTopicMode, RunState)) {
     try {
       if (FindTopicMode) {
         if (tryToFindTopics(PoolTopic, CommandTopic,

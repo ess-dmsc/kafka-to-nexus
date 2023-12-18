@@ -52,9 +52,9 @@ public:
   const Metrics::Metric &getCurrentStateMetric() const;
   std::string getCurrentFileName() const;
   std::filesystem::path getCurrentFilePath() const;
-  void stopNow();
+  virtual void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);
-  bool writingIsFinished();
+  virtual bool writingIsFinished();
 
 private:
   void setStopTimeInternal(time_point NewStopTime);

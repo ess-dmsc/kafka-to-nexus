@@ -51,6 +51,7 @@ set(UnitTests_SRC
         MetaData/ValueTest.cpp
         JobCreatorTests.cpp
         HDFFileTest.cpp
+        KafkaToNexusTests.cpp
         MasterTests.cpp)
 
 set(UnitTests_INC

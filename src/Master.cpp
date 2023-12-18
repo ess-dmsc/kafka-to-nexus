@@ -13,7 +13,6 @@
 #include "logger.h"
 #include <chrono>
 #include <functional>
-
 namespace FileWriter {
 
 Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,

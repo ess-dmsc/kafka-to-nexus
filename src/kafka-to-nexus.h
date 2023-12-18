@@ -26,19 +26,17 @@ enum class RunStates {
   SIGHUP_Received,
 };
 
-// These should only be visible in this translation unit
-static std::atomic<RunStates> RunState{RunStates::Running};
-
-void signal_handler(int Signal) {
+void signal_handler(int Signal, std::atomic<RunStates> &RunState) {
   std::string CtrlCString{"Got SIGINT (Ctrl-C). Shutting down gracefully. "
                           "Press Ctrl-C again to shutdown quickly."};
   std::string SIGTERMString{"Got SIGTERM. Shutting down."};
   std::string SIGHUPString{
       "Got SIGHUP. Shutdown will be performed when file-writing is idle."};
-  std::string UnknownSignal{"Got unknown signal. Shutting down."};
+  std::string UnknownSignal{"Got unknown signal. Ignoring."};
   switch (Signal) {
   case SIGINT:
-    if (RunState == RunStates::Running) {
+    if (RunState == RunStates::Running ||
+        RunState == RunStates::SIGHUP_Received) {
       LOG_INFO(CtrlCString);
       RunState = RunStates::SIGINT_Received;
     } else {
@@ -51,17 +49,22 @@ void signal_handler(int Signal) {
     RunState = RunStates::Stopping;
     break;
   case SIGHUP:
-    LOG_INFO(SIGHUPString);
-    RunState = RunStates::SIGHUP_Received;
+    if (RunState == RunStates::Running) {
+      LOG_INFO(SIGHUPString);
+      RunState = RunStates::SIGHUP_Received;
+    } else {
+      LOG_INFO("SIGHUP is only honoured from 'Running' state, ignoring signal "
+               "received while on state {}",
+               static_cast<int>(RunState.load()));
+    }
     break;
   default:
     LOG_INFO(UnknownSignal);
-    RunState = RunStates::Stopping;
   }
 }
 
 bool shouldStop(std::unique_ptr<FileWriter::Master> &MasterPtr,
-                bool FindTopicMode) {
+                bool FindTopicMode, std::atomic<RunStates> &RunState) {
   static time_point SIGINTStart;
   duration WaitForStop{5s};
   if (RunState == RunStates::Stopping) {
