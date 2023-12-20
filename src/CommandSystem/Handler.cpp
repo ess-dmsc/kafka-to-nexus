@@ -90,6 +90,7 @@ void Handler::sendErrorEncounteredMessage(std::string const &FileName,
             "Failure", GetJobId(), FileName, ErrorMessage);
   CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(),
                                      ErrorMessage, FileName, Metadata);
+  revertCommandTopic();
 }
 
 void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
