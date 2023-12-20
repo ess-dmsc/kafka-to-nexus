@@ -198,14 +198,6 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                              }}});
 
     CommandSteps.push_back(
-        {[&]() { return isValidUUID(StartJob.JobID); },
-         {LogLevel::Warning, 400, true, [&]() {
-            return fmt::format(
-                R"(Rejected start command as the job id was invalid (it was: "{}").)",
-                StartJob.JobID);
-          }}});
-
-    CommandSteps.push_back(
         {[&]() {
            if (not StartJob.ControlTopic.empty()) {
              if (IsJobPoolCommand) {
@@ -231,6 +223,14 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
             return fmt::format(
                 R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
                 StartJob.ControlTopic);
+          }}});
+
+    CommandSteps.push_back(
+        {[&]() { return isValidUUID(StartJob.JobID); },
+         {LogLevel::Warning, 400, true, [&]() {
+            return fmt::format(
+                R"(Rejected start command as the job id was invalid (it was: "{}").)",
+                StartJob.JobID);
           }}});
 
     CommandSteps.push_back(
