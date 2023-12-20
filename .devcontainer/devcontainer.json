@@ -45,6 +45,7 @@
         "conanConfigInstall": "conan config install https://github.com/ess-dmsc/conan-configuration.git",
         "conanSetting": "conan config set general.revisions_enabled=True",
         "aliases": "echo \"alias g='git'\\nalias gst='git status'\\nalias gco='git checkout'\\nalias gb='git branch'\\nalias gp='git pull'\" >> ~/.bashrc",
+        "editor": "echo \"GIT_EDITOR=vim\" >> ~/.bashrc",
         "pre-commit_install": "pre-commit install"
     },
 
