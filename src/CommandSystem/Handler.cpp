@@ -264,7 +264,6 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
       if (not Step.first()) {
         OutcomeValue = Step.second;
         SendResult = ActionResult::Failure;
-        revertCommandTopic();
         break;
       }
     }
@@ -277,6 +276,9 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
           StartJob.StopTime, OutcomeValue.StatusCode,
           OutcomeValue.MessageString());
+    }
+    if (SendResult == ActionResult::Failure) {
+      revertCommandTopic();
     }
   } catch (std::exception &E) {
     LOG_ERROR("Unable to process start command, error was: {}", E.what());
