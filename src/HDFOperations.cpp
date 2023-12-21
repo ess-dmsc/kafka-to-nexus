@@ -316,10 +316,10 @@ void writeGenericDataset(const std::string &DataType,
          [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
         {"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
     };
-//    if (WriteDatasetMap.find(DataType) != WriteDatasetMap.end())
-      WriteDatasetMap.at(DataType)();
-//    else
-//      LOG_DEBUG("Dataset write failed with type = {}", DataType);
+    //    if (WriteDatasetMap.find(DataType) != WriteDatasetMap.end())
+    WriteDatasetMap.at(DataType)();
+    //    else
+    //      LOG_DEBUG("Dataset write failed with type = {}", DataType);
 
   } catch (std::exception const &e) {
     std::throw_with_nested(std::runtime_error(fmt::format(
