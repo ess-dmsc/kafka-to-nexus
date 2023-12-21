@@ -114,14 +114,20 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
       }
       if (CurrentAttribute.Type.hasDefaultValue() and
           not CurrentAttribute.Value.getValue().is_array()) {
+        //  assumption is type is a double, but writeScalarAttribute overrides
+        //  this depending on the detected type of value so the type is passed
+        //  to the method to warn user if this happens via LOG_DEBUG
         writeScalarAttribute(Node, CurrentAttribute.Name,
-                             CurrentAttribute.Value);
+                             CurrentAttribute.Value,
+                             CurrentAttribute.Type.getValue());
       } else {
         auto CValue = CurrentAttribute.Value.getValue();
         if (CurrentAttribute.Type.hasDefaultValue() and CValue.is_array()) {
           if (std::any_of(CValue.begin(), CValue.end(),
                           [](auto &A) { return A.is_string(); })) {
             CurrentAttribute.Type.setValue("dtype", "string");
+            LOG_DEBUG("{} dtype changed from double to string",
+                      CurrentAttribute.Name.getValue());
           }
         }
         writeAttrOfSpecifiedType(CurrentAttribute.Type, Node,
@@ -187,16 +193,25 @@ void writeObjectOfAttributes(hdf5::node::Node const &Node,
 /// \param Name         Name of the attribute
 /// \param AttrValue    Json value containing the attribute value
 void writeScalarAttribute(hdf5::node::Node const &Node, std::string const &Name,
-                          nlohmann::json const &Values) {
+                          nlohmann::json const &Values,
+                          std::string const &Type) {
+  std::string writtenString;
   if (Values.is_string()) {
     HDFAttributes::writeAttribute(Node, Name, Values.get<std::string>());
+    writtenString = "string";
   } else if (Values.is_number_integer()) {
     HDFAttributes::writeAttribute(Node, Name, Values.get<int64_t>());
   } else if (Values.is_number_unsigned()) {
+    writtenString = "string";
     HDFAttributes::writeAttribute(Node, Name, Values.get<uint64_t>());
+    writtenString = "string";
   } else if (Values.is_number_float()) {
     HDFAttributes::writeAttribute(Node, Name, Values.get<double>());
+    writtenString = "double";
   }
+  if (!Type.empty() && Type != writtenString)
+    LOG_DEBUG("The type given for {} was {} but {} was written", Name, Type,
+              writtenString);
 }
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
@@ -265,6 +280,11 @@ void writeStringDataset(hdf5::node::Group const &Parent,
 void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
                                 const std::string &Name,
                                 nlohmann::json const &Values) {
+  //  some datasets may be extremely long but arrayed values are similar so only
+  //  check first entry for speed
+  if (!Values[0].is_string())
+    LOG_DEBUG("Attempting to write string dataset but {} may not be a string",
+              Values[0]);
   auto StringArray = jsonArrayToMultiArray<std::string>(Values);
   writeStringDataset(Parent, Name, StringArray);
 }
@@ -296,7 +316,11 @@ void writeGenericDataset(const std::string &DataType,
          [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
         {"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
     };
-    WriteDatasetMap.at(DataType)();
+    if (WriteDatasetMap.find(DataType) != WriteDatasetMap.end())
+      WriteDatasetMap.at(DataType)();
+    else
+      LOG_DEBUG("Dataset write failed with type = {}", DataType);
+
   } catch (std::exception const &e) {
     std::throw_with_nested(std::runtime_error(fmt::format(
         "Failed dataset write in {}/{}. Type={}. "
@@ -327,6 +351,8 @@ std::string writeDataset(hdf5::node::Group const &Parent,
 
   JSONDataset Dataset(Values);
 
+  //  do not check value type against given datatype here as logs become too
+  //  verbose
   auto UsedDataType = Dataset.DataType.getValue();
 
   writeGenericDataset(UsedDataType, Parent, Dataset.Name,

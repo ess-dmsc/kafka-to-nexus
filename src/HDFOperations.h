@@ -57,7 +57,8 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
                             const nlohmann::json &ValuesJson);
 
 void writeScalarAttribute(hdf5::node::Node const &Node, const std::string &Name,
-                          const nlohmann::json &Values);
+                          const nlohmann::json &Values,
+                          const std::string &Type = "");
 
 void writeAttrOfSpecifiedType(std::string const &DType,
                               hdf5::node::Node const &Node,
