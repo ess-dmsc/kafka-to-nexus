@@ -282,9 +282,10 @@ void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
                                 nlohmann::json const &Values) {
   //  some datasets may be extremely long but arrayed values are similar so only
   //  check first entry for speed
-  if (!Values[0].is_string())
-    LOG_DEBUG("Attempting to write string dataset but {} may not be a string",
-              Values[0]);
+  //  if (!Values[0].is_string())
+  //    LOG_DEBUG("Attempting to write string dataset but {} may not be a
+  //    string",
+  //              Values[0]);
   auto StringArray = jsonArrayToMultiArray<std::string>(Values);
   writeStringDataset(Parent, Name, StringArray);
 }
