@@ -9,6 +9,8 @@ source|string|Yes|The source (name) of the data to be written.|
 writer_module|string|Yes|The identifier of this writer module (i.e. "senv").|
 chunk_size|int|No|The HDF5 chunk size in nr of elements. Defaults to 4096.|
 type *or* dtype|string|No|The data type of incoming data. Defaults to `"int64"`.|
+enable_alarm_info|bool|No|Enable or disable EPICS alarm status writing. Defaults to "true".|
+enable_epics_con_info|bool|No|Enable or disable EPICS connection status writing. Defaults to "true".|
 
 
 ## Example
