@@ -36,7 +36,7 @@ public:
 class ConnectionStatus : public ExtensibleDataset<std::int16_t> {
 public:
   ConnectionStatus() = default;
-  /// \brief Create the alarm_status dataset of NXLog.
+  /// \brief Create the alarm_info dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
   ConnectionStatus(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize = 1024)

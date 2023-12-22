@@ -12,7 +12,7 @@ chunk_size|int|No|The HDF5 chunk size in nr of rows. Defaults to 1024.|
 array_size|int|No|The size of the array in nr of columns. That is: the number of value elements per flatbuffer message. Defaults to 1. |
 type _or_ dtype|string|No|The data type of incoming data. Defaults to `double`. The writer module will try to convert the data to the given (or default) data type.|
 value_units _or_ unit|string|No|Sets the attribute "units" of the `value` data set. Will not be set if left as an empty string.|
-enable_epics_con_status|bool|No|Enable or disable EPICS connection status writing. Defaults to "true".|
+enable_epics_con_info|bool|No|Enable or disable EPICS connection status writing. Defaults to "true".|
 
 ## Example
 

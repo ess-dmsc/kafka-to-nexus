@@ -45,7 +45,7 @@ public:
   void write(FlatbufferMessage const &Message) override;
 
   f142_Writer()
-      : WriterModule::Base(false, "NXlog", {"epics_con_status"}),
+      : WriterModule::Base(false, "NXlog", {"epics_con_info"}),
         MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
         MetaDataMean("", "average_value") {}
   ~f142_Writer() override = default;
