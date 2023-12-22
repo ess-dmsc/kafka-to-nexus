@@ -8,8 +8,8 @@ topic|string|Yes|The kafka topic to listen to for data.|
 source|string|Yes|The source (name) of the data to be written.|
 writer_module|string|Yes|The identifier of this writer module (i.e. "senv").|
 chunk_size|int|No|The HDF5 chunk size in nr of elements. Defaults to 4096.|
-enable_epics_alarm_status|bool|No|Enable or disable EPICS alarm status writing. Defaults to "true".|
-enable_epics_con_status|bool|No|Enable or disable EPICS connection status writing. Defaults to "true".|
+type *or* dtype|string|No|The data type of incoming data. Defaults to `"int64"`.|
+
 
 ## Example
 
