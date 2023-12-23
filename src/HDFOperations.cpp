@@ -280,9 +280,9 @@ void writeStringDataset(hdf5::node::Group const &Parent,
 void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
                                 const std::string &Name,
                                 nlohmann::json const &Values) {
-  if (!Values[0].is_string())
+  if (!Values.is_string())
     LOG_DEBUG("Attempting to write string dataset but {} may not be a string ",
-              Values[0]);
+              Values);
   auto StringArray = jsonArrayToMultiArray<std::string>(Values);
   writeStringDataset(Parent, Name, StringArray);
 }
