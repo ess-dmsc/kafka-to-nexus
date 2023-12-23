@@ -280,12 +280,9 @@ void writeStringDataset(hdf5::node::Group const &Parent,
 void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
                                 const std::string &Name,
                                 nlohmann::json const &Values) {
-  //  some datasets may be extremely long but arrayed values are similar so only
-  //  check first entry for speed
-  //  if (!Values[0].is_string())
-  //    LOG_DEBUG("Attempting to write string dataset but {} may not be a
-  //    string",
-  //              Values[0]);
+  if (!Values[0].is_string())
+    LOG_DEBUG("Attempting to write string dataset but {} may not be a string ",
+              Values[0]);
   auto StringArray = jsonArrayToMultiArray<std::string>(Values);
   writeStringDataset(Parent, Name, StringArray);
 }
@@ -317,10 +314,10 @@ void writeGenericDataset(const std::string &DataType,
          [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
         {"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
     };
-    //    if (WriteDatasetMap.find(DataType) != WriteDatasetMap.end())
-    WriteDatasetMap.at(DataType)();
-    //    else
-    //      LOG_DEBUG("Dataset write failed with type = {}", DataType);
+    if (WriteDatasetMap.find(DataType) != WriteDatasetMap.end())
+      WriteDatasetMap.at(DataType)();
+    else
+      LOG_DEBUG("Dataset write failed with type = {}", DataType);
 
   } catch (std::exception const &e) {
     std::throw_with_nested(std::runtime_error(fmt::format(
