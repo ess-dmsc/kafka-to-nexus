@@ -127,7 +127,7 @@ void FileWriterTask::updateApproximateFileSize() {
         FullFilePath.string(), ErrorCode.message());
     return;
   }
-  auto SizeValue = int(std::ceil(size / 10'000'000.0) * 10);
+  auto SizeValue = int(std::ceil(size / (1024 * 1024)));
   FileSizeMB.setValue(SizeValue);
   FileSizeMBMetric = SizeValue;
 }
