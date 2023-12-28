@@ -56,7 +56,7 @@ Producer::Producer(BrokerSettings const &Settings)
   ProducerPtr = std::unique_ptr<RdKafka::Producer>(
       RdKafka::Producer::create(Conf.get(), ErrorString));
   if (ProducerPtr == nullptr) {
-    LOG_ERROR("can not create kafka handle: {}", ErrorString);
+    LOG_CRITICAL("Can not create kafka handle: {}", ErrorString);
     throw std::runtime_error("can not create Kafka handle");
   }
 

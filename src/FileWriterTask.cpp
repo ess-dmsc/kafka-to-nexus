@@ -26,7 +26,7 @@ json hdf_parse(std::string const &Structure) {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
   } catch (...) {
-    LOG_ERROR("Parse Error: ", Structure);
+    LOG_CRITICAL("JSON parse error: ", Structure);
     throw FileWriter::ParseError(Structure);
   }
 }
@@ -77,7 +77,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
     ErrorString =
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: {})",
                     FullFilePath.string(), E.what());
-    LOG_ERROR(ErrorString);
+    LOG_CRITICAL(ErrorString);
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 }
