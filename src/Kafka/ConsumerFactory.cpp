@@ -40,7 +40,7 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
   auto KafkaConsumer = std::unique_ptr<RdKafka::KafkaConsumer>(
       RdKafka::KafkaConsumer::create(Conf.get(), ErrorString));
   if (KafkaConsumer == nullptr) {
-    LOG_ERROR("can not create kafka consumer: {}", ErrorString);
+    LOG_CRITICAL("Can not create kafka consumer: {}", ErrorString);
     throw std::runtime_error("can not create Kafka consumer");
   }
   return std::make_unique<Consumer>(std::move(KafkaConsumer), std::move(Conf),

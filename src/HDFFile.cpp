@@ -86,9 +86,9 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
-    LOG_ERROR("Failed to initialize  file={}  trace:\n{}",
-              hdfFile().id().file_name().string(),
-              hdf5::error::print_nested(E));
+    LOG_CRITICAL("Failed to initialize  file={}  trace:\n{}",
+                 hdfFile().id().file_name().string(),
+                 hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
 }
@@ -100,12 +100,12 @@ void HDFFile::closeFile() {
       hdfFile().close();
       hdfFile() = hdf5::file::File();
     } else {
-      LOG_ERROR("File is not valid, unable to close.");
+      LOG_CRITICAL("File is not valid, unable to close.");
     }
   } catch (const std::runtime_error &E) {
     auto Trace = hdf5::error::print_nested(E);
-    LOG_ERROR(R"(Got error when closing file "{}". Failure was: {})",
-              hdfFile().id().file_name().string(), Trace);
+    LOG_CRITICAL(R"(Got error when closing file "{}". Failure was: {})",
+                 hdfFile().id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
         fs::current_path().string(), hdfFile().id().file_name().string(),
@@ -126,7 +126,7 @@ void HDFFileBase::flush() {
     if (H5File.is_valid()) {
       H5File.flush(hdf5::file::Scope::Global);
     } else {
-      LOG_ERROR("Unable to flush file due to it being invalid.");
+      LOG_CRITICAL("Unable to flush file due to it being invalid.");
     }
   } catch (const std::runtime_error &E) {
     std::throw_with_nested(std::runtime_error(
@@ -146,7 +146,7 @@ void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
   } catch (std::exception const &E) {
-    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
+    LOG_ERROR(R"(Unable to finish file "{}". addLinks failed with error: {})",
               H5FileName.string(), E.what());
   }
 }
@@ -158,8 +158,9 @@ void HDFFile::addMetaData() {
       MetaDataTracker->writeToHDF5File(hdfFile().root());
     }
   } catch (std::exception const &E) {
-    LOG_ERROR(R"(Unable to finish file "{}". Error message was: {})",
-              H5FileName.string(), E.what());
+    LOG_ERROR(
+        R"(Unable to finish file "{}". addMetadata failed with error: {})",
+        H5FileName.string(), E.what());
   }
 }
 

@@ -456,7 +456,9 @@ void addLinkToNode(hdf5::node::Group const &Group,
   try {
     H5Oclose(TargetID);
   } catch (const std::exception &e) {
-    LOG_ERROR("Could not close HDF5 object with target ID: {}", TargetID);
+    LOG_ERROR("Could not close HDF5 object while adding link with target {} to "
+              "group {}",
+              TargetID, std::string(Group.link().path()));
   }
 }
 

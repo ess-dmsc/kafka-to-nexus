@@ -56,7 +56,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
                       StartInfo.Filename, StartInfo.StartTime,
                       StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
-    LOG_ERROR("{}", Error.what());
+    LOG_CRITICAL("{}", Error.what());
     throw;
   }
 }

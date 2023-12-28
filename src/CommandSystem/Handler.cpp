@@ -281,7 +281,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
       revertCommandTopic();
     }
   } catch (std::exception &E) {
-    LOG_ERROR("Unable to process start command, error was: {}", E.what());
+    LOG_CRITICAL("Unable to process start command, error was: {}", E.what());
   }
 }
 
@@ -395,7 +395,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
                                        OutcomeValue.MessageString());
     }
   } catch (std::exception &E) {
-    LOG_ERROR("Unable to process stop command, error was: {}", E.what());
+    LOG_CRITICAL("Unable to process stop command, error was: {}", E.what());
   }
 }
 

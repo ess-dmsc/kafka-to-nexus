@@ -126,13 +126,13 @@ bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           R"(Unable to find job pool topic with name "{}".)", PoolTopic);
-      LOG_ERROR(MsgString);
+      LOG_CRITICAL(MsgString);
       throw std::runtime_error(MsgString);
     }
     if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           R"(Unable to find command topic with name "{}".)", CommandTopic);
-      LOG_ERROR(MsgString);
+      LOG_CRITICAL(MsgString);
       throw std::runtime_error(MsgString);
     }
   } catch (MetadataException const &E) {
