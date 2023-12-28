@@ -93,6 +93,11 @@ void setUpLogging(const Log::Severity &LoggingLevel,
                   const std::string &LogFileName, const uri::URI &GraylogURI);
 
 template <typename... Args>
+void LOG_CRITICAL(std::string fmt, const Args &... args) {
+  Log::FmtMsg(Log::Severity::Critical, fmt, args...);
+}
+
+template <typename... Args>
 void LOG_ERROR(std::string fmt, const Args &... args) {
   Log::FmtMsg(Log::Severity::Error, fmt, args...);
 }
