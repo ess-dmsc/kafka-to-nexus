@@ -26,7 +26,7 @@ public:
   MAKE_CONST_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &),
                    override);
   MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);
-  MAKE_MOCK1(write, void(FileWriter::FlatbufferMessage const &), override);
+  MAKE_MOCK1(writeImpl, void(FileWriter::FlatbufferMessage const &), override);
 };
 
 class DataMessageWriterTest : public ::testing::Test {
@@ -81,7 +81,7 @@ TEST_F(DataMessageWriterTest, EnableExtraModule) {
 }
 
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
-  REQUIRE_CALL(WriterModule, write(_)).TIMES(1);
+  REQUIRE_CALL(WriterModule, writeImpl(_)).TIMES(1);
   FileWriter::FlatbufferMessage Msg;
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
@@ -96,7 +96,7 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
 }
 
 TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
-  REQUIRE_CALL(WriterModule, write(_))
+  REQUIRE_CALL(WriterModule, writeImpl(_))
       .TIMES(1)
       .THROW(WriterModule::WriterException("Some error."));
   FileWriter::FlatbufferMessage Msg;
@@ -132,7 +132,7 @@ class xxxFbReader : public FileWriter::FlatbufferReader {
 };
 
 TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
-  REQUIRE_CALL(WriterModule, write(_))
+  REQUIRE_CALL(WriterModule, writeImpl(_))
       .TIMES(1)
       .THROW(WriterModule::WriterException("Some error."));
   std::array<uint8_t, 9> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};

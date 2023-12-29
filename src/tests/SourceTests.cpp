@@ -34,7 +34,7 @@ public:
 
 class WriterModuleMock : public StubWriterModule {
 public:
-  MAKE_MOCK1(write, void(FlatbufferMessage const &), override);
+  MAKE_MOCK1(writeImpl, void(FlatbufferMessage const &), override);
 };
 
 TEST_F(SourceTests, ConstructorSetsMembers) {

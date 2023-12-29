@@ -42,11 +42,6 @@ public:
                 "topic={} source={})",
                 WriterModule.getValue(), Topic.getValue(),
                 SourceName.getValue());
-    } else {
-      LOG_DEBUG("WriterModule finished with {} writes performed (module={} "
-                "topic={} source={})",
-                WriteCount, WriterModule.getValue(), Topic.getValue(),
-                SourceName.getValue());
     }
   }
 
