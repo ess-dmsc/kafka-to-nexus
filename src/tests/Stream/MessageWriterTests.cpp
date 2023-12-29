@@ -82,6 +82,7 @@ TEST_F(DataMessageWriterTest, EnableExtraModule) {
 
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   REQUIRE_CALL(WriterModule, writeImpl(_)).TIMES(1);
+  auto InitialWriteCount = WriterModule.getWriteCount();
   FileWriter::FlatbufferMessage Msg;
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
@@ -93,12 +94,14 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 0);
     });
   }
+  EXPECT_EQ(InitialWriteCount + 1, WriterModule.getWriteCount());
 }
 
 TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
   REQUIRE_CALL(WriterModule, writeImpl(_))
       .TIMES(1)
       .THROW(WriterModule::WriterException("Some error."));
+  auto InitialWriteCount = WriterModule.getWriteCount();
   FileWriter::FlatbufferMessage Msg;
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
@@ -114,6 +117,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
   }
+  EXPECT_EQ(InitialWriteCount, WriterModule.getWriteCount());
 }
 
 class xxxFbReader : public FileWriter::FlatbufferReader {
@@ -135,6 +139,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
   REQUIRE_CALL(WriterModule, writeImpl(_))
       .TIMES(1)
       .THROW(WriterModule::WriterException("Some error."));
+  auto InitialWriteCount = WriterModule.getWriteCount();
   std::array<uint8_t, 9> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
   setExtractorModule<xxxFbReader>("xxxx");
   FileWriter::FlatbufferMessage Msg(SomeData.data(), SomeData.size());
@@ -152,4 +157,5 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 2);
     });
   }
+  EXPECT_EQ(InitialWriteCount, WriterModule.getWriteCount());
 }

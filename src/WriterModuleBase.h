@@ -132,6 +132,9 @@ public:
   /// \brief Determine if this writer module can spawn extra writer modules.
   auto hasExtraModules() const { return not FoundExtraModules.empty(); }
 
+  /// \brief Get the number of writes performed by the module.
+  auto getWriteCount() const { return WriteCount; }
+
 private:
   // Must appear before any config field object.
   JsonConfig::FieldHandler ConfigHandler;
