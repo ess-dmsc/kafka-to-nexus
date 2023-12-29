@@ -34,7 +34,7 @@ public:
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  void write(FlatbufferMessage const &Message) override;
+  void writeImpl(FlatbufferMessage const &Message) override;
 
 protected:
   NeXusDataset::Time Timestamp;

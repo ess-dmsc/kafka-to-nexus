@@ -42,7 +42,7 @@ public:
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.
-  void write(FlatbufferMessage const &Message) override;
+  void writeImpl(FlatbufferMessage const &Message) override;
 
   f142_Writer()
       : WriterModule::Base(false, "NXlog", {"epics_con_info"}),

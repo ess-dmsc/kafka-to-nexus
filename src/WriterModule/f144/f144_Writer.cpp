@@ -229,7 +229,7 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
   }
 }
 
-void f144_Writer::write(FlatbufferMessage const &Message) {
+void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto LogDataMessage = Getf144_LogData(Message.data());
   size_t NrOfElements{1};
   Timestamp.appendElement(LogDataMessage->timestamp());

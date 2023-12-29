@@ -42,7 +42,7 @@ InitResult f142_TestWriter::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-void f142_TestWriter::write(FlatbufferMessage const &) {
+void f142_TestWriter::writeImpl(FlatbufferMessage const &) {
   Counter.appendElement(CounterValue++);
 }
 /// Register the writer module.

@@ -25,7 +25,7 @@ public:
   void config_post_processing() override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
-  void write(FlatbufferMessage const &Message) override;
+  void writeImpl(FlatbufferMessage const &Message) override;
 
   WriterUntyped::ptr TheWriterUntyped;
 

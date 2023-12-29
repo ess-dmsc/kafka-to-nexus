@@ -133,7 +133,7 @@ void msgTypeIsConfigType(senv_Writer::Type ConfigType, ValueUnion MsgType) {
   }
 }
 
-void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
+void senv_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto CueIndexValue = Value.dataspace().size();
   auto ValuesType = FbPointer->Values_type();

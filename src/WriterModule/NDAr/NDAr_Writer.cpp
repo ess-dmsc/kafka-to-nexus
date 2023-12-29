@@ -103,7 +103,7 @@ void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
       Shape);
 }
 
-void NDAr_Writer::write(const FileWriter::FlatbufferMessage &Message) {
+void NDAr_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto NDAr = FB_Tables::GetNDArray(Message.data());
   auto DataShape = hdf5::Dimensions(NDAr->dims()->begin(), NDAr->dims()->end());
   auto CurrentTimestamp =

@@ -261,7 +261,7 @@ void msgTypeIsConfigType(f142_Writer::Type ConfigType, Value MsgType) {
   }
 }
 
-void f142_Writer::write(FlatbufferMessage const &Message) {
+void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto LogDataMessage = GetLogData(Message.data());
   size_t NrOfElements{1};
   Timestamp.appendElement(LogDataMessage->timestamp());
