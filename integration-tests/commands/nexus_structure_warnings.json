@@ -1,0 +1,42 @@
+{
+  "children": [
+    {
+      "type": "group",
+      "name": "entry",
+      "children": [
+        {
+          "module": "dataset",
+          "config": {
+            "dtype": "string",
+            "name": "int_vector_as_string",
+            "values": [1, 2, 3]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "dtype": "int32",
+            "name": "double_vector_as_int32",
+            "values": [1.1, 2.2, 3.3]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "dtype": "string",
+            "name": "double_vector_as_string",
+            "values": [1.1, 2.2, 3.3]
+          }
+        },
+        {
+          "module": "dataset",
+          "config": {
+            "dtype": "int32",
+            "name": "string_vector_as_int32",
+            "values": ["1.1", "2.2", "3.3"]
+          }
+        }
+      ]
+    }
+  ]
+}

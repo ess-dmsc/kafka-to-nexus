@@ -17,7 +17,7 @@ from helpers.nexushelpers import NEXUS_FILES_DIR
 BINARY_PATH = "--writer-binary"
 START_NO_FW = "--start-no-filewriter"
 KAFKA_BROKER = "--kafka-broker"
-DEFAULT_KAFKA_BROKER = "kafka:9093"
+DEFAULT_KAFKA_BROKER = "127.0.0.1:9093"
 START_NR_OF_WRITERS = 2
 
 
