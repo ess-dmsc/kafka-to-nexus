@@ -35,7 +35,15 @@ class Base {
 public:
   Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class,
        std::vector<std::string> ExtraModules = {});
-  virtual ~Base() = default;
+
+  virtual ~Base() {
+    if (WriteCount == 0) {
+      LOG_ERROR("WriterModule finished but no writes were performed (module={} "
+                "topic={} source={})",
+                WriterModule.getValue(), Topic.getValue(),
+                SourceName.getValue());
+    }
+  }
 
   bool acceptsRepeatedTimestamps() const { return WriteRepeatedTimestamps; }
 
@@ -93,10 +101,18 @@ public:
   /// \return The result.
   virtual InitResult reopen(hdf5::node::Group &HDFGroup) = 0;
 
+  /// \brief Increment write counter and call the subclass-specific write logic.
+  ///
+  /// \param msg The message to process
+  void write(FileWriter::FlatbufferMessage const &Message) {
+    writeImpl(Message);
+    WriteCount++;
+  }
+
   /// \brief Process the message in some way, for example write to the HDF file.
   ///
   /// \param msg The message to process
-  virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
+  virtual void writeImpl(FileWriter::FlatbufferMessage const &Message) = 0;
 
   void registerField(JsonConfig::FieldBase *Ptr) {
     ConfigHandler.registerField(Ptr);
@@ -116,6 +132,9 @@ public:
   /// \brief Determine if this writer module can spawn extra writer modules.
   auto hasExtraModules() const { return not FoundExtraModules.empty(); }
 
+  /// \brief Get the number of writes performed by the module.
+  auto getWriteCount() const { return WriteCount; }
+
 private:
   // Must appear before any config field object.
   JsonConfig::FieldHandler ConfigHandler;
@@ -131,6 +150,7 @@ protected:
 private:
   bool WriteRepeatedTimestamps;
   std::string_view NX_class;
+  std::size_t WriteCount{0};
 };
 
 class WriterException : public std::runtime_error {

@@ -65,7 +65,7 @@ WriterModule::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
+void tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = Gettimestamp(Message.data());
   auto TempTimePtr = FbPointer->timestamps()->data();
   auto TempTimeSize = FbPointer->timestamps()->size();

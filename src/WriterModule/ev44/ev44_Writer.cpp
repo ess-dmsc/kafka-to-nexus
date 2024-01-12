@@ -95,7 +95,7 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-void ev44_Writer::write(FlatbufferMessage const &Message) {
+void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEvent44Message(Message.data());
   EventTimeOffset.appendArray(
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));

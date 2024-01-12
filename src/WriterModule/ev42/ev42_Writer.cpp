@@ -132,7 +132,7 @@ void ev42_Writer::reopenAdcDatasets(const hdf5::node::Group &HDFGroup) {
   PeakTimeDataset = NeXusDataset::PeakTime(HDFGroup, NeXusDataset::Mode::Open);
 }
 
-void ev42_Writer::write(FlatbufferMessage const &Message) {
+void ev42_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEventMessage(Message.data());
   EventTimeOffset.appendArray(
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));

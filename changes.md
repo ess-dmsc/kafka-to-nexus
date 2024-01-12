@@ -5,6 +5,7 @@
 - Remove support for ep00 schema
 - Add support for SIGHUP signal. The file-writer will stop after the current file is finished writing.
 - Fix: Answers to failed run_start commands are not sent to the control topic provided in the command.
+- Log an error if no data was found in Kafka for a given dataset.
 
 
 ## Version 6.1.0
