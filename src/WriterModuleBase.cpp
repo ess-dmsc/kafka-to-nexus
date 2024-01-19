@@ -11,9 +11,11 @@
 #include "WriterRegistrar.h"
 
 namespace WriterModule {
-Base::Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class,
+Base::Base(std::string_view WriterModuleId, bool AcceptRepeatedTimestamps,
+           std::string_view const &NX_class,
            std::vector<std::string> ExtraModules)
-    : WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {
+    : WriterModuleId(WriterModuleId),
+      WriteRepeatedTimestamps(AcceptRepeatedTimestamps), NX_class(NX_class) {
   for (auto &Module : ExtraModules) {
     try {
       auto FoundModule = WriterModule::Registry::find(Module);

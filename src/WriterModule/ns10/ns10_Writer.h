@@ -24,7 +24,7 @@ namespace ns10 {
 
 class ns10_Writer : public WriterModule::Base {
 public:
-  ns10_Writer() : WriterModule::Base(false, "NXlog") {}
+  ns10_Writer() : WriterModule::Base("ns10", false, "NXlog") {}
   ~ns10_Writer() override = default;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;

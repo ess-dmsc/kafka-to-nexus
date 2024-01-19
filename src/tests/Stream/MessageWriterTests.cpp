@@ -21,7 +21,7 @@ class WriterModuleStandIn : public WriterModule::Base {
 public:
   MAKE_MOCK0(config_post_processing, void(), override);
   WriterModuleStandIn(std::vector<std::string> const &ExtraModules = {})
-      : WriterModule::Base(true, "test", ExtraModules) {}
+      : WriterModule::Base("test", true, "test", ExtraModules) {}
   ~WriterModuleStandIn() = default;
   MAKE_CONST_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &),
                    override);

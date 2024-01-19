@@ -28,7 +28,7 @@ using FileWriterBase = WriterModule::Base;
 /// See parent class for documentation.
 class NDAr_Writer : public FileWriterBase {
 public:
-  NDAr_Writer() : WriterModule::Base(false, "NXlog") {}
+  NDAr_Writer() : WriterModule::Base("NDAr", false, "NXlog") {}
   ~NDAr_Writer() override = default;
 
   void config_post_processing() override;

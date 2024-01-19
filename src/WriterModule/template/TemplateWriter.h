@@ -55,7 +55,7 @@ public:
   /// relatively high up in call hierarchy. You should for this reason probably
   /// try to avoid throwing exceptions here unless you encounter an
   /// unrecoverable state as any exceptions will cause the thread to exit.
-  WriterClass() : WriterModule::Base(false, "NXlog") { std::cout << "WriterClass::WriterClass()\n"; }
+  WriterClass() : WriterModule::Base("tplt", false, "NXlog") { std::cout << "WriterClass::WriterClass()\n"; }
 
   /// \brief Use to close datasets and return any other claimed resources.
   ///

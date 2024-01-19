@@ -27,7 +27,7 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void writeImpl(FlatbufferMessage const &Message) override;
 
-  f142_TestWriter() : WriterModule::Base(false, "NXlog") {}
+  f142_TestWriter() : WriterModule::Base("t142", false, "NXlog") {}
   ~f142_TestWriter() override = default;
 
 protected:

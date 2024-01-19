@@ -12,7 +12,7 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void writeImpl(FileWriter::FlatbufferMessage const &Message) override;
 
-  ep01_Writer() : WriterModule::Base(false, "NXlog") {}
+  ep01_Writer() : WriterModule::Base("ep01", false, "NXlog") {}
   ~ep01_Writer() override = default;
 
 private:
