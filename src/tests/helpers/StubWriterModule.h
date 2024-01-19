@@ -15,7 +15,7 @@ using WriterModule::InitResult;
 
 class StubWriterModule : public WriterModule::Base {
 public:
-  StubWriterModule() : WriterModule::Base(false, "NXlog") {}
+  StubWriterModule() : WriterModule::Base("stub", false, "NXlog") {}
   InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/) const override {
     return InitResult::OK;
   }

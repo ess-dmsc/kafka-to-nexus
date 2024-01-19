@@ -25,7 +25,7 @@ namespace ADAr {
 /// See parent class for documentation.
 class ADAr_Writer : public WriterModule::Base {
 public:
-  ADAr_Writer() : WriterModule::Base(false, "NXlog") {}
+  ADAr_Writer() : WriterModule::Base("ADAr", false, "NXlog") {}
   ~ADAr_Writer() override = default;
 
   void config_post_processing() override;

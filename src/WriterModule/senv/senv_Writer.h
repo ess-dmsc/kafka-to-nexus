@@ -34,7 +34,8 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
 class senv_Writer : public FileWriterBase {
 public:
   senv_Writer()
-      : FileWriterBase(false, "NXlog", {"epics_con_info", "alarm_info"}) {}
+      : FileWriterBase("senv", false, "NXlog",
+                       {"epics_con_info", "alarm_info"}) {}
   ~senv_Writer() override = default;
 
   void config_post_processing() override;

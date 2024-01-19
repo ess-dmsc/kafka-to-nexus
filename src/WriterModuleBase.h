@@ -33,15 +33,20 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class Base {
 public:
-  Base(bool AcceptRepeatedTimestamps, std::string_view const &NX_class,
+  Base(std::string_view WriterModuleId, bool AcceptRepeatedTimestamps,
+       std::string_view const &NX_class,
        std::vector<std::string> ExtraModules = {});
 
   virtual ~Base() {
     if (WriteCount == 0) {
       LOG_ERROR("WriterModule finished but no writes were performed (module={} "
                 "topic={} source={})",
-                WriterModule.getValue(), Topic.getValue(),
-                SourceName.getValue());
+                WriterModuleId, Topic.getValue(), SourceName.getValue());
+    } else {
+      LOG_TRACE(
+          "WriterModule finished successfully, {} writes performed (module={} "
+          "topic={} source={})",
+          WriteCount, WriterModuleId, Topic.getValue(), SourceName.getValue());
     }
   }
 
@@ -141,6 +146,7 @@ private:
   std::vector<std::string> FoundExtraModules;
 
 protected:
+  std::string_view WriterModuleId;
   JsonConfig::Field<std::string> SourceName{this, "source", ""};
   JsonConfig::Field<std::string> Topic{this, "topic", ""};
   JsonConfig::Field<std::string> WriterModule{this, "writer_module", ""};

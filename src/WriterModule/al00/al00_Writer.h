@@ -36,7 +36,7 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void writeImpl(FlatbufferMessage const &Message) override;
 
-  al00_Writer() : WriterModule::Base(false, "NXlog") {}
+  al00_Writer() : WriterModule::Base("al00", false, "NXlog") {}
   ~al00_Writer() override = default;
 
 protected:
