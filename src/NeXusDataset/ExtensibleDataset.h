@@ -278,8 +278,24 @@ private:
 };
 
 class MultiDimDatasetBase : public hdf5::node::ChunkedDataset {
+protected:
+  std::string Name = "value";
+private:
+  void _construct(const hdf5::node::Group &Parent, const Mode CMode) {
+    if (Mode::Create == CMode) {
+      throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): "
+                               "Can only open datasets, not create.");
+    }
+    if (Mode::Open == CMode) {
+      Dataset::operator=(Parent.get_dataset(Name));
+    } else {
+      throw std::runtime_error(
+          "MultiDimDatasetBase::MultiDimDatasetBase(): Unknown mode.");
+    }
+  }
 public:
   MultiDimDatasetBase() = default;
+  explicit MultiDimDatasetBase(std::string Name): Name(std::move(Name)) {}
 
   /// \brief Open a dataset.
   ///
@@ -288,17 +304,13 @@ public:
   /// \param CMode If the dataset should be created or opened. Note that it is
   /// not possible to create a dataset with this class. \throws
   /// std::runtime_error If creation of a dataset is attempted.
-  MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode)
+  MultiDimDatasetBase(const hdf5::node::Group &Parent, std::string Name, const Mode CMode)
+      : hdf5::node::ChunkedDataset(), Name(std::move(Name)) {
+    _construct(Parent, CMode);
+  }
+  MultiDimDatasetBase(const hdf5::node::Group &Parent, const Mode CMode)
       : hdf5::node::ChunkedDataset() {
-    if (Mode::Create == CMode) {
-      throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): "
-                               "Can only open datasets, not create.");
-    } else if (Mode::Open == CMode) {
-      Dataset::operator=(Parent.get_dataset("value"));
-    } else {
-      throw std::runtime_error(
-          "MultiDimDatasetBase::MultiDimDatasetBase(): Unknown mode.");
-    }
+    _construct(Parent, CMode);
   }
 
   /// \brief Get the dimensions of the dataset.
@@ -353,22 +365,8 @@ public:
 ///
 /// \tparam DataType The (primitive) type that is (to be) stored in the dataset.
 template <class DataType> class MultiDimDataset : public MultiDimDatasetBase {
-public:
-  MultiDimDataset() = default;
-  /// \brief Will create or open dataset with the given name.
-  ///
-  /// When opening a dataset, some of the paramaters will be ignored.
-  ///
-  /// \param Parent The group/node of the dataset in.
-  /// \note This parameter is ignored when opening an existing dataset.
-  /// \param CMode Should the dataset be opened or created.
-  /// \param Shape The shape of the array in the NDArray. This vector
-  /// will be prepended with one dimension to allow for adding of data.
-  /// \param ChunkSize The chunk size (as number of elements) of the dataset,
-  /// ignored if the dataset is opened.
-  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode,
-                  hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize)
-      : MultiDimDatasetBase() {
+  void _construct(hdf5::node::Group const &Parent, Mode CMode,
+                  hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize) {
     if (Mode::Create == CMode) {
       Shape.insert(Shape.begin(), 0);
       hdf5::Dimensions MaxSize(Shape.size(),
@@ -399,14 +397,37 @@ public:
         VectorChunkSize[0] = 1024;
       }
       Dataset::operator=(hdf5::node::ChunkedDataset(
-          Parent, "value", hdf5::datatype::create<DataType>(),
+          Parent, Name, hdf5::datatype::create<DataType>(),
           hdf5::dataspace::Simple(Shape, MaxSize), VectorChunkSize));
     } else if (Mode::Open == CMode) {
-      Dataset::operator=(Parent.get_dataset("value"));
+      Dataset::operator=(Parent.get_dataset(Name));
     } else {
       throw std::runtime_error(
           "MultiDimDataset::MultiDimDataset(): Unknown mode.");
     }
+  }
+public:
+  MultiDimDataset() = default;
+  /// \brief Will create or open dataset with the given name.
+  ///
+  /// When opening a dataset, some of the paramaters will be ignored.
+  ///
+  /// \param Parent The group/node of the dataset in.
+  /// \param CMode Should the dataset be opened or created.
+  /// \note This parameter is ignored when opening an existing dataset.
+  /// \param Shape The shape of the array in the NDArray. This vector
+  /// will be prepended with one dimension to allow for adding of data.
+  /// \param ChunkSize The chunk size (as number of elements) of the dataset,
+  /// ignored if the dataset is opened.
+  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode,
+                  hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize)
+      : MultiDimDatasetBase() {
+    _construct(Parent, CMode, Shape, ChunkSize);
+  }
+  MultiDimDataset(hdf5::node::Group const &Parent, std::string Name, Mode CMode,
+                  hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize)
+      : MultiDimDatasetBase(std::move(Name)) {
+    _construct(Parent, CMode, Shape, ChunkSize);
   }
 
   /// \brief Open a dataset.
@@ -419,6 +440,8 @@ public:
   /// \param CMode Should the dataset be opened or created.
   MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode)
       : MultiDimDatasetBase(Parent, CMode) {}
+  MultiDimDataset(hdf5::node::Group const &Parent, std::string Name, Mode CMode)
+      : MultiDimDatasetBase(Parent, std::move(Name), CMode) {}
 };
 
 } // namespace NeXusDataset
