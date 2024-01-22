@@ -14,6 +14,7 @@ set(writer_module_SRC
     al00_WriterTests.cpp
     ep01_WriterTests.cpp
     mdat_WriterTests.cpp
+    da00_WriterTests.cpp
 )
 
 add_library(writer_module OBJECT ${writer_module_SRC})
