@@ -47,11 +47,6 @@ InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
         Create,                  // NOLINT(bugprone-unused-raii)
         ChunkSize);              // NOLINT(bugprone-unused-raii)
 
-    NeXusDataset::EventTimeZeroIndex( // NOLINT(bugprone-unused-raii)
-        HDFGroup,                     // NOLINT(bugprone-unused-raii)
-        Create,                       // NOLINT(bugprone-unused-raii)
-        ChunkSize);                   // NOLINT(bugprone-unused-raii)
-
     NeXusDataset::EventIndex( // NOLINT(bugprone-unused-raii)
         HDFGroup,             // NOLINT(bugprone-unused-raii)
         Create,               // NOLINT(bugprone-unused-raii)
@@ -82,7 +77,6 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
     EventTimeOffset = NeXusDataset::EventTimeOffset(HDFGroup, Open);
     EventId = NeXusDataset::EventId(HDFGroup, Open);
     EventTimeZero = NeXusDataset::EventTimeZero(HDFGroup, Open);
-    EventTimeZeroIndex = NeXusDataset::EventTimeZeroIndex(HDFGroup, Open);
     EventIndex = NeXusDataset::EventIndex(HDFGroup, Open);
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
@@ -101,26 +95,26 @@ void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));
   EventId.appendArray(
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->pixel_id()));
-  if (EventMsgFlatbuffer->time_of_flight()->size() !=
-      EventMsgFlatbuffer->pixel_id()->size()) {
-    LOG_WARN("written data lengths differ");
+  auto CurrentNumberOfEvents = EventMsgFlatbuffer->pixel_id()->size();
+  if (EventMsgFlatbuffer->time_of_flight()->size() != CurrentNumberOfEvents) {
+    LOG_WARN("ev44 message data lengths differ (time_of_flight={} pixel_id={})",
+             EventMsgFlatbuffer->time_of_flight()->size(),
+             CurrentNumberOfEvents);
   }
   const flatbuffers::Vector<int64_t> *CurrentRefTime =
       EventMsgFlatbuffer->reference_time();
 
-  auto CurrentNumberOfEvents = EventMsgFlatbuffer->pixel_id()->size();
   EventTimeZero.appendArray(getFBVectorAsArrayAdapter(CurrentRefTime));
-  EventTimeZeroIndex.appendArray(
+  EventIndex.appendArray(
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->reference_time_index()));
-  EventIndex.appendElement(EventsWritten);
   EventsWritten += CurrentNumberOfEvents;
-  if (EventsWritten > LastEventIndex + EventIndexInterval) {
+  if (EventsWritten > LastCueIndex + CueInterval) {
     auto LastRefTimeOffset = EventMsgFlatbuffer->time_of_flight()->operator[](
         CurrentNumberOfEvents - 1);
-    CueTimestampZero.appendElement(*CurrentRefTime->begin() +
+    CueTimestampZero.appendElement(*(CurrentRefTime->end() - 1) +
                                    LastRefTimeOffset);
     CueIndex.appendElement(EventsWritten - 1);
-    LastEventIndex = EventsWritten - 1;
+    LastCueIndex = EventsWritten - 1;
   }
   EventsWrittenMetadataField.setValue(EventsWritten);
 }

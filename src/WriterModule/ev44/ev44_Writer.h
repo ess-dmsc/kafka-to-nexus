@@ -33,7 +33,6 @@ public:
   NeXusDataset::EventTimeOffset EventTimeOffset;
   NeXusDataset::EventId EventId;
   NeXusDataset::EventTimeZero EventTimeZero;
-  NeXusDataset::EventTimeZeroIndex EventTimeZeroIndex;
   NeXusDataset::EventIndex EventIndex;
   NeXusDataset::CueIndex CueIndex;
   NeXusDataset::CueTimestampZero CueTimestampZero;
@@ -42,11 +41,11 @@ public:
                           MetaData::TrackerPtr const &Tracker) override;
 
 private:
-  JsonConfig::Field<uint64_t> EventIndexInterval{
-      this, "cue_interval", std::numeric_limits<uint64_t>::max()};
+  JsonConfig::Field<uint64_t> CueInterval{this, "cue_interval",
+                                          std::numeric_limits<uint64_t>::max()};
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1024 * 1024};
   uint64_t EventsWritten{0};
-  uint64_t LastEventIndex{0};
+  uint64_t LastCueIndex{0};
   MetaData::Value<uint64_t> EventsWrittenMetadataField;
 };
 } // namespace ev44
