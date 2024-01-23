@@ -42,9 +42,6 @@ public:
                           MetaData::TrackerPtr const &Tracker) override;
 
 private:
-  void
-  padDatasetsWithZeroesEqualToNumberOfEvents(FlatbufferMessage const &Message);
-
   JsonConfig::Field<uint64_t> EventIndexInterval{
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};

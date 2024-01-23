@@ -10,7 +10,6 @@
 // This filename is chosen such that it shows up in searches after the
 // case-sensitive flatbuffer schema identifier.
 
-#include <dtdb_adc_pulse_debug_generated.h>
 #include <ev44_events_generated.h>
 #include <gmock/gmock.h>
 
@@ -120,8 +119,6 @@ TEST_F(Event44WriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
 TEST_F(Event44WriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
     WriterModule::ev44::ev44_Writer Writer;
-    // Tell writer module to write ADC pulse debug data
-    Writer.parse_config(R"({"adc_pulse_debug": true})");
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
   }
   ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
