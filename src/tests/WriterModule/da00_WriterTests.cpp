@@ -20,6 +20,12 @@
   return ::testing::AssertionFailure() << "Dataset " << name << " " << message;
 }
 
+::testing::AssertionResult NodeHasAttribue(
+  hdf5::node::Group const &group, std::string const &name) {
+  if (!group.attributes.exists(name))
+    return DatasetTestFailed(group.link().path().operator std::string(), "has no attribute " + name);
+  return ::testing::AssertionSuccess();
+}
 template<class T=void>
 ::testing::AssertionResult DatasetIsValid(
   hdf5::node::Group const &group,
@@ -453,6 +459,9 @@ json make_da00_configuration_complete(){
     "source": "test_producer_name",
     "variables": ["signal"],
     "constants": ["x", "y"],
+    "attributes" : [
+        {"name": "test_attribute", "value": "test_value"}
+    ],
     "datasets": [
         {
           "name": "signal",
@@ -634,6 +643,9 @@ TEST_F(da00_WriterTestFixture, da00_WriterInit) {
     auto writer = da00_WriterStandIn();
     writer.parse_config(make_da00_configuration_complete().dump());
     writer.init_hdf(_group);
+  }
+  for (const auto & name: {"signal", "axes", "test_attribute"}) {
+    EXPECT_TRUE(NodeHasAttribue(_group, name));
   }
   for (const auto &name : {"signal", "x", "y", "time", "cue_index", "cue_timestamp_zero"}) {
     EXPECT_TRUE(DatasetIsValid(_group, name));

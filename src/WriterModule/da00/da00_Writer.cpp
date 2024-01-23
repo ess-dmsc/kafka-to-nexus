@@ -21,6 +21,8 @@
 #include <f142_logdata_generated.h>
 #include <trompeloeil.hpp>
 
+#include "da00_Attribute.h"
+
 namespace WriterModule::da00 {
 
 // Register the file writing part of this module.
@@ -151,10 +153,87 @@ void da00_Writer::handle_first_message(da00_DataArray const * da00) {
   }
 }
 
+void da00_Writer::handle_group_attributes(hdf5::node::Group &HDFGroup) const {
+    /*
+     * The config should specify attributes, but might not include the
+     * leading 'time' axis on a 'signal' dataset which is also a Variable.
+     * If the 'signal' is a Variable, then we should add the 'time' axis
+     * to the 'axes' attribute.
+     * If the 'axes' attribute is missing, we can try to create it from the
+     * Variable's `dim` attribute.
+     */
+    std::vector<AttributeConfig> attrs;
+    auto attrs_json = AttributesField.getValue();
+    attrs.reserve(attrs_json.size());
+    auto signal_is_variable{false}, signal_is_present{false};
+    std::string signal_name;
+    for (const auto &js : attrs_json) {
+      attrs.emplace_back(js);
+      if (attrs.back().name() == "signal") {
+        signal_is_present = true;
+        auto value = attrs.back().value();
+        if (value.is_string()) {
+          signal_name = value.get<std::string>();
+          if (std::find(VariableNames.begin(), VariableNames.end(), signal_name) !=
+              VariableNames.end()) {
+            signal_is_variable = true;
+          }
+        }
+      }
+    }
+    if (!signal_is_present && !VariableNames.empty()) {
+      signal_name = VariableNames.front();
+      auto signal_json = nlohmann::json::object();
+      signal_json["name"] = "signal";
+      signal_json["value"] = signal_name;
+      attrs.emplace_back(signal_json);
+      if (std::find(VariableNames.begin(), VariableNames.end(), signal_name) !=
+          VariableNames.end()) {
+        signal_is_variable = true;
+      }
+    }
+    if (attrs.end() == std::find_if(attrs.begin(), attrs.end(),
+                                    [](const AttributeConfig & attr){ return attr.name() == "axes"; })) {
+      if (auto f=VariableMap.find(signal_name); f != VariableMap.end()) {
+        auto axes = f->second.dims();
+        if (!axes.empty()) {
+          auto axes_json = nlohmann::json::object();
+          axes_json["name"] = "axes";
+          axes_json["value"] = axes;
+          attrs.emplace_back(axes_json);
+        }
+      }
+    }
+    auto axes_at = std::find_if(attrs.begin(), attrs.end(), [](const AttributeConfig & attr){ return attr.name() == "axes"; });
+    if (signal_is_variable && axes_at != attrs.end()) {
+      // find 'axes' if is an attribute, add 'time' before the other axes names
+      auto value = axes_at->value();
+      if (value.is_array()) {
+        auto axes = value.get<std::vector<std::string>>();
+        axes.insert(axes.begin(), "time");
+        auto new_value = nlohmann::json::array();
+        new_value = axes;
+        axes_at->value(new_value);
+      }
+    }
+    // all attributes _should_ be right (or as right as we can get them)
+    // So write them all into the group's attributes field
+    for (const auto & attr: attrs){
+      try {
+        attr.add_to_hdf5(HDFGroup);
+      } catch (std::exception &E) {
+        LOG_ERROR("Failed to add attribute `{}` to HDF file with error message: {}", attr.name(), E.what());
+      }
+    }
+}
+
+
 InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   const auto chunk_size = ChunkSize.operator hdf5::Dimensions().at(0);
   using NeXusDataset::Mode;
+  handle_group_attributes(HDFGroup);
   try {
+    /* Instantiate the children datasets */
     for (const auto & name: VariableNames){
       if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.is_buildable()) {
         auto unused = f->second.insert_variable_dataset(HDFGroup, ChunkSize);
@@ -178,7 +257,7 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
     NeXusDataset::CueTimestampZero(HDFGroup, Mode::Create, chunk_size); // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     LOG_ERROR(
-        R"(Unable to initialise areaDetector data tree in HDF file with error message: "{}")",
+        R"(Unable to initialise DataArray data tree in HDF file with error message: "{}")",
         E.what());
     return InitResult::ERROR;
   }

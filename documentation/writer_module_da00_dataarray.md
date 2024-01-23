@@ -20,6 +20,12 @@
 <td>              <td>dims <td>list[string]  <td>The names of the dimensions of the Variable.  <td>[] <tr>
 <td>              <td>shape   <td>list[int]  <td>The size of the histogram in each dimension.  <td>[] <tr>
 <td>              <td>data <td>list[number]  <td>The constant values of the Variable.          <td>[] <tr>
+<td>attributes    <td>        <td>list[dict]  <td>Detailing the HDF group attributes to write.  <td>[] <tr>
+<td>              <td>name        <td>string  <td>The name of the attribute.                      <td> <tr>
+<td>              <td>description <td>string  <td>The value of the attribute.                     <td> <tr>
+<td>              <td>source      <td>string  <td>The source of the attribute.                    <td> <tr>
+<td>              <td>data_type   <td>string  <td>The element type of the attribute value.  <td>"auto" <tr>
+<td>              <td>value         <td>JSON  <td>The value of the attribute.                     <td> <tr>
 </table>
 
 ### Notes on `variables` and `constants`
@@ -119,7 +125,7 @@ An abbreviated form utilizing dynamic completion of required dataset information
   "config": {
     "topic": "topic.with.multiple.sources",
     "source": "some_dataarray_producer",
-    "variables": ["signal", "signal_error", "auxiliary"],
+    "variables": ["signal", "signal_errors", "auxiliary"],
     "constants": ["x", "y"],
     "datasets": [
       {
@@ -129,7 +135,7 @@ An abbreviated form utilizing dynamic completion of required dataset information
         "shape": [1000, 1000]
       },
       {
-        "name": "signal_error",
+        "name": "signal_errors",
         "data_type": "float64",
         "dims": ["x", "y"],
         "shape": [1000, 1000]
@@ -167,8 +173,22 @@ without relying on information from received messages:
     "topic": "topic.with.multiple.sources",
     "source": "some_dataarray_producer",
     "dynamic": false,
-    "variables": ["signal", "signal_error", "auxiliary"],
+    "variables": ["signal", "signal_errors", "auxiliary"],
     "constants": ["x", "y"],
+    "attributes": [
+      {
+        "name": "signal",
+        "value": "signal"
+      },
+      {
+        "name": "auxiliary_signals",
+        "value": ["auxiliary"]
+      },
+      {
+        "name": "axes",
+        "value": ["x", "y"]
+      }
+    ],
     "datasets": [
       {
         "name": "signal",
@@ -179,7 +199,7 @@ without relying on information from received messages:
         "shape": [1000, 1000]
       },
       {
-        "name": "signal_error",
+        "name": "signal_errors",
         "unit": "counts",
         "label": "Uncertainty in the integrated intensity",
         "data_type": "float64",

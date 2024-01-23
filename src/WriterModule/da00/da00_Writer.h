@@ -19,15 +19,15 @@
 #include "Msg.h"
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
-#include "da00_Type.h"
 
+#include "da00_Type.h"
 #include "da00_Variable.h"
 
 namespace WriterModule::da00 {
 /// See parent class for documentation.
 class da00_Writer : public WriterModule::Base {
 public:
-  da00_Writer() : WriterModule::Base("da00", false, "NXlog") {}
+  da00_Writer() : WriterModule::Base("da00", false, "NXdata") {}
   ~da00_Writer() override = default;
 
   void config_post_processing() override;
@@ -50,10 +50,12 @@ protected:
   JsonConfig::Field<std::vector<std::string>> ConstantsField{this, "constants", {}};
   JsonConfig::Field<std::vector<nlohmann::json>> DatasetsField{this, "datasets", {}};
   JsonConfig::Field<bool> DynamicDatasets{this, "dynamic", true};
+  JsonConfig::Field<std::vector<nlohmann::json>> AttributesField{this, "attributes", {}};
   uint64_t CueCounter{0};
   bool isFirstMessage{true};
 // private:
   void handle_first_message(da00_DataArray const * da00);
+  void handle_group_attributes(hdf5::node::Group & HDFGroup) const;
   std::vector<std::string> VariableNames;
   std::vector<std::string> ConstantNames;
   std::map<std::string, VariableConfig> VariableMap;
