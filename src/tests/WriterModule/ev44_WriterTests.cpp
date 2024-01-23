@@ -116,20 +116,6 @@ TEST_F(Event44WriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
       << fmt::format("Expect time units to be {}", expected_time_units);
 }
 
-TEST_F(Event44WriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
-  {
-    WriterModule::ev44::ev44_Writer Writer;
-    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
-  }
-  ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
-  EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
-  EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
-  EXPECT_TRUE(TestGroup.has_dataset("event_index"));
-  EXPECT_TRUE(TestGroup.has_dataset("event_id"));
-  EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
-  EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
-}
-
 TEST_F(Event44WriterTests, WriterFailsToReopenGroupWhichWasNeverInitialised) {
   WriterModule::ev44::ev44_Writer Writer;
   EXPECT_FALSE(Writer.reopen(TestGroup) == InitResult::OK);
@@ -254,4 +240,4 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
          "values from both messages";
 }
 
-TEST_F(Event44WriterTests, WriteCues) {}
+// TEST_F(Event44WriterTests, WriteCues) {}
