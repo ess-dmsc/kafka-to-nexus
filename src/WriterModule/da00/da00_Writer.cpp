@@ -188,14 +188,14 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     for (const auto & name: VariableNames){
-      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.has_shape()){
+      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.is_buildable()){
         VariablePtrs[name] = f->second.reopen_variable_dataset(HDFGroup);
       } else {
         LOG_WARN("Variable {} dataset is not configured. Dataset created at first message if dynamic", name);
       }
     }
     for (const auto & name: ConstantNames){
-      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.has_shape()){
+      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.is_buildable()){
         ConstantPtrs[name] = f->second.reopen_constant_dataset(HDFGroup);
       } else {
         LOG_WARN("Constant {} dataset is not configured. Dataset created at first message if dynamic", name);

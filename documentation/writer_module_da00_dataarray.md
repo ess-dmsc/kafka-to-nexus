@@ -7,6 +7,7 @@
 <td colspan=2><b>Name</b>   <td><b>Type</b>  <td><b>Description</b>                <td><b>Default</b> <tr>
 <td>topic         <td>           <td>string  <td>The kafka topic to listen to for data.          <td> <tr>
 <td>source        <td>           <td>string  <td>The source (name) of the data to be written.    <td> <tr>
+<td>dynamic       <td>             <td>bool  <td>Whether the written datasets are dynamic.   <td>true <tr>
 <td>cue_interval  <td>              <td>int  <td>The number of messages between cues.        <td>1000 <tr>
 <td>chunk_size    <td>              <td>int  <td>The HDF5 chunk size.              <td>2<sup>20</sup> <tr>
 <td>variables     <td>     <td>list[string]  <td>The names of the Variable datasets to write.  <td>[] <tr>
@@ -52,13 +53,13 @@ The `datasets` configuration field is a list of dictionaries where each dictiona
 If a dictionary is provided with missing or default values, the behavior is as follows:
 
 | Field     | Type         | Missing ->  | Default ->               |
-|-----------|--------------|-------------|--------------------------|
+|-----------|--------------|-------------------------------|--------------------------|
 | name      | string       | Error       |                          |
 | unit      | string       | Default     | First message            |
 | label     | string       | Default     | First message            |
-| data_type | string       | Default     | First message            |
+| data_type | string       | Default if dynamic else Error | First message            |
 | dims      | list[string] | Default     | First message            |
-| shape     | list[int]    | Default     | First message            |
+| shape     | list[int]    | Default if dynamic else Error | First message            |
 | data      | *            | Default     | First message \| ignored |
 
 If a dictionary is provided with a name and otherwise all default or missing values, it has the same effect
@@ -69,7 +70,10 @@ or a object specification of the form `{"first": number, "last": number, "size":
 in which case it is interpreted as a range of values from `first` to `last` in steps of (`last` - `first`) / (`step` - 1).
 
 ### Notes on required values
-Any configuration field with a default value is optional, and may be omitted.
+If the `dyamic` configuration field is `true`, 
+then any configuration field with a default value is optional, and may be omitted.
+Otherwise, `variables` and `constants` are interpreted literally and 
+each `datasets` sub-field must define both `data_type` and `shape` to produce an HDF5 dataset.
 
 ## Examples
 
@@ -107,7 +111,7 @@ A slightly more useful configuration would specify the variable and constant Var
 }
 ```
 
-Finally, a somewhat realistic configuration would specify the expected contents of the buffered Variable objects
+An abbreviated form utilizing dynamic completion of required dataset information would be:
 
 ```json
 {
@@ -115,6 +119,54 @@ Finally, a somewhat realistic configuration would specify the expected contents 
   "config": {
     "topic": "topic.with.multiple.sources",
     "source": "some_dataarray_producer",
+    "variables": ["signal", "signal_error", "auxiliary"],
+    "constants": ["x", "y"],
+    "datasets": [
+      {
+        "name": "signal",
+        "data_type": "uint64",
+        "dims": ["x", "y"],
+        "shape": [1000, 1000]
+      },
+      {
+        "name": "signal_error",
+        "data_type": "float64",
+        "dims": ["x", "y"],
+        "shape": [1000, 1000]
+      },
+      {
+        "name": "auxiliary",
+        "data_type": "float32",
+        "dims": ["x", "y"],
+        "shape": [1000, 1000]
+      },
+      {
+        "name": "x",
+        "data_type": "float32",
+        "dims": ["x"],
+        "shape": [1000]
+      },
+      {
+        "name": "y",
+        "data_type": "float32",
+        "dims": ["y"],
+        "shape": [1000]
+      }
+    ]
+  }
+}
+```
+
+Finally, a somewhat realistic configuration would specify the expected contents of the buffered Variable objects
+without relying on information from received messages:
+
+```json
+{
+  "module": "da00",
+  "config": {
+    "topic": "topic.with.multiple.sources",
+    "source": "some_dataarray_producer",
+    "dynamic": false,
     "variables": ["signal", "signal_error", "auxiliary"],
     "constants": ["x", "y"],
     "datasets": [
