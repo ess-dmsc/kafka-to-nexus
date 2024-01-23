@@ -83,18 +83,25 @@ public:
   }
   virtual void writeToHDF5File(hdf5::node::Group RootNode) const override {
     std::lock_guard Lock(ValueMutex);
-    try {
+    if (WriteToFile) {
       auto UsedNode = get_group(RootNode, getPath());
-      if (WriteToFile) {
+      try {
         WriteToFile(UsedNode, getName(), MetaDataValue);
+      } catch (std::exception &E) {
+        LOG_ERROR(
+            R"(Failed to write HDF5 dataset "{}" with values "{}". The message was: {})",
+            getPath(), MetaDataValue, E.what());
+        throw;
       }
-      ValueBaseInternal::writeAttributesToHDF5File(
-          UsedNode.get_dataset(getName()));
-    } catch (std::exception &E) {
-      LOG_ERROR(
-          R"(Failed to write the value "{}" to the path "{}" in HDF5-file. The message was: {})",
-          MetaDataValue, getPath(), E.what());
-      throw;
+      try {
+        ValueBaseInternal::writeAttributesToHDF5File(
+            UsedNode.get_dataset(getName()));
+      } catch (std::exception &E) {
+        LOG_ERROR(
+            R"(Failed to write HDF5 attributes for path "{}". The message was: {})",
+            getPath(), E.what());
+        throw;
+      }
     }
   };
 

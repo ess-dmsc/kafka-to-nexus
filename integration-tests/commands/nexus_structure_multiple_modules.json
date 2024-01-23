@@ -41,7 +41,6 @@
                   "module": "f142_test",
                   "config": {
                     "source": "test_source_2",
-                    "value_units": "mm",
                     "topic": "TEST_sampleEnv"
                   }
                 }
