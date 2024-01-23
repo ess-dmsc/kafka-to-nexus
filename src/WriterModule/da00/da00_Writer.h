@@ -49,6 +49,7 @@ protected:
   JsonConfig::Field<std::vector<std::string>> VariablesField{this, "variables", {}};
   JsonConfig::Field<std::vector<std::string>> ConstantsField{this, "constants", {}};
   JsonConfig::Field<std::vector<nlohmann::json>> DatasetsField{this, "datasets", {}};
+  JsonConfig::Field<bool> DynamicDatasets{this, "dynamic", true};
   uint64_t CueCounter{0};
   bool isFirstMessage{true};
 // private:

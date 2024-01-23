@@ -60,141 +60,91 @@ void da00_Writer::config_post_processing() {
   }
 }
 
+template <typename... Args>
+static void warn_if(bool Condition, const std::string & fmt, const Args &... args) {
+  std::stringstream msg;
+  msg << fmt << " Using configured value.\n";
+  if (Condition) LOG_WARN(msg.str(), args...);
+}
 void da00_Writer::handle_first_message(da00_DataArray const * da00) {
+  auto dynamic = DynamicDatasets.getValue();
+  auto make_dataset = [&](const VariableConfig & vc){
+    if (!dynamic) {
+      LOG_ERROR("Variable {} is not configured and writer is static. Buffered data is ignored", vc.name());
+      return;
+      }
+    auto name = vc.name();
+    bool is_variable{true};
+    if (VariableNames.empty() && ConstantNames.empty()) {
+        // No specified variables or constants, so we record everything
+      VariablePtrs[name] = vc.insert_variable_dataset(Parent, ChunkSize);
+    } else if (std::find(ConstantNames.begin(), ConstantNames.end(), name) != ConstantNames.end()) {
+        // This is a specified constant, so we record it as such
+      ConstantPtrs[name] = vc.insert_constant_dataset(Parent);
+      is_variable = false;
+    } else if (std::find(VariableNames.begin(), VariableNames.end(), name) != VariableNames.end()){
+        // This is a specified variable, so we record it as such
+      VariablePtrs[name] = vc.insert_variable_dataset(Parent, ChunkSize);
+      } else {
+      LOG_WARN("Variable {} is not configured. Buffered data is ignored", name);
+      return;
+      }
+    VariableMap[name] = vc;
+    if (is_variable){
+      VariablePtrs[name]->refresh();
+  } else {
+      ConstantPtrs[name]->refresh();
+    }
+  };
+
   // deal with variable and constant datasets that were not (fully) configured:
   // Any variable that is not pre-configured is skipped
-  // (unless if there are _no_ preconfigured variables)
+  // (unless if there are _no_ pre-configured variables)
   if (VariableMap.empty() && VariablePtrs.empty() && ConstantPtrs.empty()) {
-    // *No* pre-configured variables, so we record everything from this message
-    for (const auto ptr : *da00->data()) {
-      auto var = VariableConfig(ptr->name()->str());
-      // check for unit, label, data_type, shape, dims, (data)
-      if (ptr->unit() != nullptr) var.unit(ptr->unit()->str());
-      if (ptr->label() != nullptr) var.label(ptr->label()->str());
-      if (ptr->shape() != nullptr) {
-        VariableConfig::dim_t const shape{ptr->shape()->begin(), ptr->shape()->end()};
-        var.shape(shape);
-      } else {
-        // find the size of the data, use that as the shape
-        auto size = ptr->data()->size();
-        var.shape({size});
-      }
-      var.type(ptr->data_type());
-      std::vector<std::string> dims;
-      dims.reserve(var.shape().size());
-      if (ptr->dims() != nullptr) {
-        for (const auto dim : *ptr->dims()) {
-          dims.push_back(dim->str());
-        }
-      } else {
-        for (size_t i=0; i<var.shape().size(); ++i) {
-          dims.push_back(fmt::format("dim{}", i));
-        }
-      }
-      var.dims(dims);
-      if (ConstantNames.empty() && VariableNames.empty()) {
-        // No specified variables or constants, so we record everything
-        VariableMap[var.name()] = var;
-        VariablePtrs[var.name()] = var.insert_variable_dataset(Parent, ChunkSize);
-      } else if (std::find(ConstantNames.begin(), ConstantNames.end(), var.name()) != ConstantNames.end()) {
-        // This is a specified constant, so we record it as such
-        VariableMap[var.name()] = var;
-        ConstantPtrs[var.name()] = var.insert_constant_dataset(Parent);
-      } else if (std::find(VariableNames.begin(), VariableNames.end(), var.name()) != VariableNames.end()){
-        // This is a specified variable, so we record it as such
-        VariableMap[var.name()] = var;
-        VariablePtrs[var.name()] = var.insert_variable_dataset(Parent, ChunkSize);
-      } else {
-        LOG_WARN("Variable {} is not configured. Buffered data is ignored", var.name());
-      }
-    }
-  } else {
-    // TODO Consider skipping all of this, and just using the configured values?
-    // Check if each message-variable is a variable or constant,
-    // update their parameters if neccessary (and replace their dataset...)
+    if (dynamic) {
+      // *No* pre-configured variables, so we record everything
     for (const auto ptr: *da00->data()) {
-      auto name{ptr->name()->str()};
-      auto pair = VariableMap.find(name);
-      if (pair == VariableMap.end()) {
-        LOG_WARN("Variable {} is not configured. Buffered data is ignored", name);
-        continue;
+        LOG_DEBUG("Handling first case variable {}", ptr->name()->str());
+        make_dataset(VariableConfig(ptr));
       }
-      auto & v = pair->second;
-      // check for unit, label, data_type, shape, dims, (data)
-      bool updated{false};
-      if (const auto has = v.has_unit(); !has && ptr->unit() != nullptr) {
-        v.unit(ptr->unit()->str());
-        updated = true;
-      } else if (has && ptr->unit() != nullptr && v.unit() != ptr->unit()->str()) {
-        LOG_WARN("Unit for variable {} is not consistent. Using configured value.", name);
-      }
-      if (const auto has = v.has_label(); !has && ptr->label() != nullptr) {
-        v.label(ptr->label()->str());
-        updated = true;
-      } else if (has && ptr->label() != nullptr && v.label() != ptr->label()->str()) {
-        LOG_WARN("Label for variable {} is not consistent. Using configured value.", name);
-      }
-      if (const auto has = v.has_type(); !has) {
-        v.type(ptr->data_type());
-        updated = true;
-      } else if (v.type() != dtype_to_da00_type(ptr->data_type())) {
-        LOG_WARN("Data type for variable {} is not consistent. Using configured value.", name);
-      }
-      if (const auto has = v.has_shape(); !has && ptr->shape() != nullptr) {
-        VariableConfig::dim_t const shape{ptr->shape()->begin(), ptr->shape()->end()};
-        v.shape(shape);
-        updated = true;
-      } else if (has && ptr->shape() != nullptr) {
-        if (VariableConfig::dim_t const shape{ptr->shape()->begin(), ptr->shape()->end()}; v.shape() != shape) {
-          LOG_WARN("Shape for variable {} is not consistent. Using configured value.", name);
-        }
-      }
-      if (const auto has = v.has_dims(); !has && ptr->dims() != nullptr) {
-        std::vector<std::string> dims;
-        dims.reserve(v.shape().size());
-        for (const auto dim : *ptr->dims()) {
-          dims.push_back(dim->str());
-        }
-        v.dims(dims);
-        updated = true;
-      } else if (has && ptr->dims() != nullptr) {
-        size_t i{0};
-        const auto & dims = v.dims();
-        if (ptr->dims()->size() != dims.size()) {
-          LOG_WARN("Number of dimensions for variable {} is not consistent. Using configured value.", name);
-        }
-        if (ptr->dims()->size() <= dims.size()) {
-          for (const auto dim : *ptr->dims()) {
-            if (dims[i] != dim->str()) {
-              LOG_WARN("Dimension {} for variable {} is not consistent. Using configured value.", i, name);
-            }
-            ++i;
+    } else {
+      LOG_ERROR("No configuration for static writer. Buffered da00 data is ignored");
           }
         } else {
-          LOG_ERROR("Buffer has more dims than configuration for {}", name);
+    // Check if each message-variable is a variable or constant,
+    // update their parameters (and create their datasets) if necessary
+    for (const auto ptr: *da00->data()) {
+      LOG_DEBUG("Handle second case variable {}", ptr->name()->str());
+      auto fb = VariableConfig(ptr);
+      auto p = VariableMap.find(fb.name());
+      if (p == VariableMap.end()) continue;
+      auto & v = p->second;
+      auto inconsistent_changed = v.update_from(fb, true);
+      // if no dataset has been made for this Variable yet, we must make it now
+      if (auto f = VariablePtrs.find(fb.name()); f == VariablePtrs.end()) {
+        if (auto g = ConstantPtrs.find(fb.name()); g == ConstantPtrs.end()) {
+          make_dataset(v);
+          inconsistent_changed.second = false; // no need to update the dataset
         }
       }
-      if (auto f = VariablePtrs.find(name); f != VariablePtrs.end()) {
-        if (updated) {
-          Parent.remove(name);
-          VariablePtrs[name] = v.insert_variable_dataset(Parent, ChunkSize);
+      if (auto f = VariablePtrs.find(fb.name()); f != VariablePtrs.end()) {
+        if (inconsistent_changed.second) {
+          v.update_variable(f->second);
         }
-      } else if (auto g = ConstantPtrs.find(name); g != ConstantPtrs.end()) {
+      } else if (auto g = ConstantPtrs.find(fb.name()); g != ConstantPtrs.end()) {
         // check for data consistency
         bool needs_data{false};
         if (const auto has = v.has_data(); !has && ptr->data() != nullptr) {
           needs_data = true;
         } else if (has && ptr->data() != nullptr) {
-          if (!v.compare_data(std::vector(ptr->data()->begin(), ptr->data()->end()))){
-            LOG_WARN("Data for constant {} is not consistent. Using configured value.", name);
+          warn_if(!v.compare_data(std::vector(ptr->data()->begin(), ptr->data()->end())),
+            "Data for constant {} is not consistent.", fb.name());
           }
-        }
-        if (updated) {
-          Parent.remove(name);
-          ConstantPtrs[name] = v.insert_constant_dataset(Parent);
+        if (inconsistent_changed.second) {
+          v.update_constant(g->second);
         }
         if (needs_data) {
-          v.write_constant_dataset(ConstantPtrs[name], ptr->data()->Data(), ptr->data()->size());
+          v.write_constant_dataset(g->second, ptr->data()->Data(), ptr->data()->size());
         }
       }
     }
@@ -206,17 +156,21 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
   using NeXusDataset::Mode;
   try {
     for (const auto & name: VariableNames){
-      if (auto f = VariableMap.find(name); f != VariableMap.end()) {
+      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.is_buildable()) {
         auto unused = f->second.insert_variable_dataset(HDFGroup, ChunkSize);
+      } else if (f != VariableMap.end()) {
+        LOG_WARN("Variable {} was configured without shape. Will insert dataset at first message if dynamic", name);
       } else {
-        LOG_WARN("Variable {} is not configured. Will insert dataset at first message", name);
+        LOG_WARN("Variable {} is not configured. Will insert dataset at first message if dynamic", name);
       }
     }
     for (const auto & name: ConstantNames){
-      if (auto f = VariableMap.find(name); f != VariableMap.end()) {
+      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.is_buildable()) {
         auto unused = f->second.insert_constant_dataset(HDFGroup);
+      } else if (f != VariableMap.end()) {
+        LOG_WARN("Constant {} was configured without shape. Will insert dataset at first message if dynamic", name);
       } else {
-        LOG_WARN("Constant {} is not configured. Will insert dataset at first message", name);
+        LOG_WARN("Constant {} is not configured. Will insert dataset at first message if dynamic", name);
       }
     }
     NeXusDataset::Time(HDFGroup, Mode::Create, chunk_size); // NOLINT(bugprone-unused-raii)
@@ -234,17 +188,17 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     for (const auto & name: VariableNames){
-      if (auto f = VariableMap.find(name); f != VariableMap.end()){
+      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.has_shape()){
         VariablePtrs[name] = f->second.reopen_variable_dataset(HDFGroup);
       } else {
-        LOG_WARN("Variable {} is not configured. Will insert dataset at first message", name);
+        LOG_WARN("Variable {} dataset is not configured. Dataset created at first message if dynamic", name);
       }
     }
     for (const auto & name: ConstantNames){
-      if (auto f = VariableMap.find(name); f != VariableMap.end()){
+      if (auto f = VariableMap.find(name); f != VariableMap.end() && f->second.has_shape()){
         ConstantPtrs[name] = f->second.reopen_constant_dataset(HDFGroup);
       } else {
-        LOG_WARN("Constant {} is not configured. Will insert dataset at first message", name);
+        LOG_WARN("Constant {} dataset is not configured. Dataset created at first message if dynamic", name);
       }
     }
     CueIndex = NeXusDataset::CueIndex(HDFGroup, NeXusDataset::Mode::Open);

@@ -66,6 +66,15 @@ template<class T=void>
   std::vector<hsize_t> const &shape,
   std::vector<hsize_t> const &maximum_shape) {
   const auto dataset = group.get_dataset(name);
+  // If the shape is empty, the dataset is a scalar:
+  auto dataspace_type = dataset.dataspace().type();
+  if (dataspace_type == hdf5::dataspace::Type::Scalar) {
+    if (shape.empty()) return ::testing::AssertionSuccess();
+    std::stringstream message;
+    message << "has wrong dataspace type, " << dataspace_type << " != " << hdf5::dataspace::Type::Scalar;
+    return DatasetTestFailed(name, message.str());
+  }
+  // otherwise it is a simple dataspace: (no other types implemented)
   auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<hsize_t>());
   if (dataset.dataspace().size() != size) {
     std::stringstream message;
@@ -94,6 +103,26 @@ template<class T=void>
   return ::testing::AssertionSuccess();
 }
 
+template<class T=void>
+::testing::AssertionResult DatasetHasDims(
+    hdf5::node::Group const & group,
+    std::string const & name,
+    std::vector<std::string> const & expected){
+  const auto dataset = group.get_dataset(name);
+  if (!dataset.attributes.exists("axes"))
+    return DatasetTestFailed(name, "has no 'axes' attribute");
+  auto dims = dataset.attributes["axes"];
+  if (dims.dataspace().size() != static_cast<hssize_t>(expected.size()))
+    return DatasetTestFailed(name, "has wrong number of 'axes' dims");
+  std::vector<std::string> ds_dims(dims.dataspace().size());
+  dims.read(ds_dims);
+  if (ds_dims != expected)
+    return DatasetTestFailed(name, "has wrong 'axes' dims attribute");
+  std::cout << "Dataset " << name << " has dims: [";
+        for (auto const & dim : ds_dims) std::cout << " " << dim;
+        std::cout << " ]" << std::endl;
+  return ::testing::AssertionSuccess();
+}
 template<class T>
 ::testing::AssertionResult DatasetHasData(
   hdf5::node::Group const &group,
@@ -455,6 +484,53 @@ json make_da00_configuration_complete(){
   })""");
 }
 
+json make_da00_configuration_partial(){
+  return json::parse(R"""({
+    "topic": "test.topic.name",
+    "source": "test_producer_name",
+    "variables": ["signal"],
+    "constants": ["x", "y"],
+    "datasets": [
+        {
+          "name": "signal",
+          "dims": ["x", "y"]
+        },
+        {
+          "name": "x",
+          "dims": ["x"]
+        },
+        {
+          "name": "y",
+          "dims": ["y"]
+        }
+      ]
+  })""");
+}
+
+
+json make_da00_configuration_preconfigure_minimal(){
+  return json::parse(R"""({
+    "topic": "test.topic.name",
+    "source": "test_producer_name",
+    "variables": ["signal"],
+    "constants": ["x", "y"],
+    "datasets": [
+        {
+          "name": "signal",
+          "data_type": "uint64",
+          "shape": [3, 3]
+        },
+        {
+          "name": "x",
+          "shape": [4],
+        },
+        {
+          "name": "y",
+          "shape": [3],
+        }
+      ]
+  })""");
+}
 
 json make_da00_configuration_abbreviated(){
   return json::parse(R"""({
@@ -628,9 +704,11 @@ TEST_F(da00_WriterTestFixture, da00_WriterConfigReopenGroupsHaveCorrectShape) {
   }
   const std::vector<hsize_t> signal_shape{0, 3, 3}, x_shape{4}, y_shape{3};
   const std::vector<hsize_t> max_signal_shape{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
+  const std::vector<std::string> signal_dims={"x", "y"};
   EXPECT_TRUE(DatasetHasUnit(_group, "signal", "counts"));
   EXPECT_TRUE(DatasetHasLabel(_group, "signal", "Integrated counts on strip detector"));
   EXPECT_TRUE(DatasetHasShape(_group, "signal", signal_shape, max_signal_shape));
+  EXPECT_TRUE(DatasetHasDims(_group, "signal", signal_dims));
 
   const auto x_data = std::vector<float>{{10.0, 20.1, 30.2, 40.3}};
   const auto y_data = std::vector<std::int8_t>{{9, 6, 3}};
@@ -644,6 +722,19 @@ TEST_F(da00_WriterTestFixture, da00_WriterConfigReopenGroupsHaveCorrectShape) {
   EXPECT_TRUE(DatasetHasData(_group, "y", y_data));
   const std::vector<hsize_t> time_shape{0}, max_time_shape{H5S_UNLIMITED};
   EXPECT_TRUE(DatasetHasShape(_group, "time", time_shape, max_time_shape));
+}
+
+TEST_F(da00_WriterTestFixture, da00_WriterInitPartialConfig) {
+  {
+    auto writer = da00_WriterStandIn();
+    writer.parse_config(make_da00_configuration_partial().dump());
+    writer.init_hdf(_group);
+  }
+  for (const auto & dataset : {"signal", "x", "y"})
+    EXPECT_FALSE(DatasetIsValid(_group, dataset));
+  for (const auto &name : {"time", "cue_index", "cue_timestamp_zero"}) {
+    EXPECT_TRUE(DatasetIsValid(_group, name));
+  }
 }
 
 TEST_F(da00_WriterTestFixture, da00_WriterInitAbbreviatedConfig) {
@@ -750,6 +841,39 @@ TEST_F(da00_WriterTestFixture, da00_WriterWriteCopiesData){
     ASSERT_THAT(std::vector(data.data() + i, data.data() + i + sent.size()),
       ::testing::ElementsAreArray(sent));
   }
+}
+
+TEST_F(da00_WriterTestFixture, da00_WriterWritePartialDefinesPropertiesAndShape){
+  using hdf5::dataspace::Simple;
+  auto message = FileWriter::FlatbufferMessage(_buffer.data(), _buffer.size());
+  constexpr int write_count{101};
+  {
+    auto writer = da00_WriterStandIn();
+    writer.parse_config(make_da00_configuration_partial().dump());
+    writer.init_hdf(_group);
+    writer.reopen(_group);
+    for (int i=0; i<write_count; ++i) EXPECT_NO_THROW(writer.write(message));
+    EXPECT_EQ(write_count, writer.Timestamp.dataspace().size());
+  }
+  for (const auto &name : {"signal", "x", "y", "time", "cue_index", "cue_timestamp_zero"}) {
+    EXPECT_TRUE(DatasetIsValid(_group, name));
+  }
+  // variables are extended, and the constant shapes are defied by the first message
+  const std::vector<hsize_t> signal_shape{write_count, 3, 3}, x_shape{4}, y_shape{3};
+  const std::vector<hsize_t> max_signal_shape{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
+  const auto x_data = std::vector<float>{{10.0, 20.1, 30.2, 40.3}};
+  const auto y_data = std::vector<std::int8_t>{{9, 6, 3}};
+
+  EXPECT_TRUE(DatasetHasUnit(_group, "signal", "counts"));
+  EXPECT_TRUE(DatasetHasShape(_group, "signal", signal_shape, max_signal_shape));
+  EXPECT_TRUE(DatasetHasUnit(_group, "x", "cm"));
+  EXPECT_TRUE(DatasetHasLabel(_group, "x", "Binned position along x-axis"));
+  EXPECT_TRUE(DatasetHasShape(_group, "x", x_shape, x_shape));
+  EXPECT_TRUE(DatasetHasData(_group, "x", x_data));
+  EXPECT_TRUE(DatasetHasUnit(_group, "y", "fm"));
+  EXPECT_TRUE(DatasetHasLabel(_group, "y", "Position along y-axis"));
+  EXPECT_TRUE(DatasetHasShape(_group, "y", y_shape, y_shape));
+  EXPECT_TRUE(DatasetHasData(_group, "y", y_data));
 }
 
 TEST_F(da00_WriterTestFixture, da00_WriterWriteMinimalExtendsShape){

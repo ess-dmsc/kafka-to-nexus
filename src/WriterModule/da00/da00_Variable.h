@@ -52,6 +52,28 @@ public:
     }
     return *this;
   }
+  explicit VariableConfig(Variable const * buffer) {
+    _name = buffer->name()->str();
+    if (buffer->unit()) _unit = buffer->unit()->str();
+    if (buffer->label()) _label = buffer->label()->str();
+    _type = dtype_to_da00_type(buffer->data_type());
+    if (buffer->shape()) {
+      auto shape = std::vector<hsize_t>(buffer->shape()->begin(), buffer->shape()->end());
+      if (!shape.empty()) _shape = shape;
+    }
+    if (buffer->dims()) {
+      auto dims = std::vector<std::string>();
+      dims.reserve(buffer->dims()->size());
+      for (const auto & dim : *buffer->dims()) {
+        dims.push_back(dim->str());
+      }
+      if (!dims.empty()) _dims = dims;
+    }
+    //if (buffer->data()) _data = buffer->data()->DataAsJson();
+    if (!is_consistent()) {
+      LOG_WARN("Inconsistent variable config for variable {}.", _name);
+    }
+  }
   VariableConfig & operator=(VariableConfig const & other)= default;
   VariableConfig(VariableConfig const & other)= default;
   VariableConfig(VariableConfig && other)= default;
@@ -62,6 +84,7 @@ public:
   [[nodiscard]] bool has_shape() const {return _shape.has_value();}
   [[nodiscard]] bool has_dims() const {return _dims.has_value();}
   [[nodiscard]] bool has_data() const {return _data.has_value();}
+  [[nodiscard]] bool is_buildable() const {return has_type() && has_shape();}
   [[nodiscard]] auto const & name() const {return _name;}
   [[nodiscard]] auto const & unit() const {return _unit.value();}
   [[nodiscard]] auto const & label() const {return _label.value();}
@@ -100,6 +123,60 @@ public:
     return true;
   }
 
+  std::pair<bool, bool> update_from(const VariableConfig & other, bool force) {
+    bool inconsistent{false}, changed{false};
+    if (name() != other.name()) {
+      LOG_DEBUG("Variable name mismatch for variable {}. Expected {}, got {}.", name(), name(), other.name());
+      return std::make_pair(false, false);
+    }
+    if (has_unit() && other.has_unit() && unit() != other.unit()) {
+      LOG_DEBUG("Unit mismatch for variable {}. Expected {}, got {}.", name(), unit(), other.unit());
+      inconsistent = true;
+      if (force) unit(other.unit());
+    } else if (!has_unit()) {
+      changed = true;
+      unit(other.unit());
+    }
+    if (has_label() && other.has_label() && label() != other.label()) {
+      LOG_DEBUG("Label mismatch for variable {}. Expected {}, got {}.", name(), label(), other.label());
+      inconsistent = true;
+      if (force) label(other.label());
+    } else if (!has_label()) {
+      changed = true;
+      label(other.label());
+    }
+    if (has_type() && other.has_type() && type() != other.type()) {
+      LOG_DEBUG("Type mismatch for variable {}. Expected {}, got {}.", name(), type(), other.type());
+      inconsistent = true;
+      if (force) type(other.type());
+    } else if (!has_type()) {
+      changed = true;
+      type(other.type());
+    }
+    if (has_shape() && other.has_shape() && shape() != other.shape()) {
+      std::stringstream ts, os;
+      ts << "["; for (auto const & t : shape()) ts << t << ", "; ts << "]";
+      os << "["; for (auto const & o : other.shape()) os << o << ", "; os << "]";
+      LOG_DEBUG("Shape mismatch for variable {}. Expected {}, got {}.", name(), ts.str(), os.str());
+      inconsistent = true;
+      if (force) shape(other.shape());
+    } else if (!has_shape()) {
+      changed = true;
+      shape(other.shape());
+    }
+    if (has_dims() && other.has_dims() && dims() != other.dims()) {
+      std::stringstream ts, os;
+      ts << "["; for (auto const & t : dims()) ts << t << ", "; ts << "]";
+      os << "["; for (auto const & o : other.dims()) os << o << ", "; os << "]";
+      LOG_DEBUG("Dims mismatch for variable {}. Expected {}, got {}.", name(), ts.str(), os.str());
+      inconsistent = true;
+      if (force) dims(other.dims());
+    } else if (!has_dims()) {
+      changed = false;
+      dims(other.dims());
+    }
+    return std::make_pair(inconsistent, changed || (force && inconsistent));
+  }
 private:
   template<class DataType>
   auto constant_dataset(group_t const & group) const {
@@ -108,7 +185,10 @@ private:
     if (has_unit()) dataset->attributes.create_from("units", _unit.value());
     if (has_label()) dataset->attributes.create_from("label", _label.value());
     if (has_dims()) dataset->attributes.create_from("axes", _dims.value());
-    if (has_data()) dataset->write(data<DataType>());
+    if (has_data()) {
+      LOG_DEBUG("Writing constant dataset {} from std::vector.\n", name());
+      dataset->write(data<DataType>());
+    }
     return dataset;
   }
   template<class DataType>
@@ -118,7 +198,8 @@ private:
     if (count * sizeof(DataType) != bytes * sizeof(uint8_t)) {
       LOG_ERROR("Buffer size mismatch for variable {}. Expected {} bytes, got {} bytes.", name(), count * sizeof(DataType), bytes * sizeof(uint8_t));
     }
-    auto array = hdf5::ArrayAdapter<const DataType>(reinterpret_cast<const DataType *>(data), bytes);
+    auto array = std::vector(reinterpret_cast<const DataType *>(data), reinterpret_cast<const DataType *>(data) + count);
+    LOG_DEBUG("Writing constant dataset {} from buffer via ArrayAdapter.\n", name());
     dataset->write(array);
   }
   template<class DataType>
@@ -305,6 +386,157 @@ public:
       if (our[i] != other[i]) return false;
     }
     return true;
+  }
+
+  template<class Dataset>
+  void update_dataset(Dataset & dataset) const {
+    if (has_unit()) {
+      if (dataset->attributes.exists("units")) {
+        std::string var_units;
+        dataset->attributes["units"].read(var_units);
+        if (var_units != _unit.value()) {
+          LOG_ERROR("Unit mismatch for dataset {}. (new={}, was={})", name(), _unit.value(), var_units);
+          dataset->attributes["units"].write(unit());
+        }
+      } else {
+        dataset->attributes.create_from("units", _unit.value());
+      }
+    }
+    if (has_label()) {
+      if (dataset->attributes.exists("label")) {
+        std::string var_label;
+        dataset->attributes["label"].read(var_label);
+        if (var_label != _label.value()) {
+          LOG_ERROR("Label mismatch for dataset {}. (new={}, was={})", name(), _label.value(), var_label);
+          dataset->attributes["label"].write(label());
+        }
+      } else {
+        dataset->attributes.create_from("label", _label.value());
+      }
+    }
+    if (has_dims()) {
+      if (dataset->attributes.exists("axes")) {
+        // Why is the h5cpp way of doing this complicated,
+        // when HighFive can resize the vector internally?
+        auto ax = dataset->attributes["axes"];
+        auto ds = ax.dataspace();
+        std::vector<std::string> var_axes(ds.size());
+        ax.read(var_axes);
+        if (var_axes != dims()) {
+          LOG_ERROR("Axes mismatch for dataset {}. (new={}, was={})", name(),
+                    dims(), var_axes);
+          dataset->attributes["axes"].write(dims());
+        }
+      } else {
+        dataset->attributes.create_from("axes", _dims.value());
+      }
+    }
+  }
+  void update_variable(variable_t & variable) const {
+    using namespace hdf5::dataspace;
+    update_dataset(variable);
+    if (has_shape()) {
+      auto sh = shape();
+      sh.insert(sh.begin(), 1);
+      auto ds = variable->dataspace();
+      bool resize{false};
+      if (ds.type() == Type::Scalar) {
+        LOG_ERROR("Variable dataset {} has non-scalar dataspace.", name());
+        resize = true;
+      } else {
+        auto simple = Simple(ds);
+        if (simple.rank() != sh.size()) {
+          LOG_ERROR("Variable dataset {} has different rank than new config.", name());
+          resize = true;
+        } else {
+          sh[0] = simple.current_dimensions()[0];
+          if (simple.current_dimensions() != sh) {
+            LOG_ERROR("Variable dataset {} has different shape than new config.", name());
+            resize = true;
+          }
+        }
+      }
+      if (resize) {
+        variable->resize(sh);
+      }
+    }
+  }
+  void update_constant(constant_t & constant) const {
+    using namespace hdf5::dataspace;
+    update_dataset(constant);
+    if (has_shape()) {
+      auto ds = constant->dataspace();
+      bool resize{false};
+      bool replace{false};
+      if (ds.type() == Type::Scalar && !shape().empty()) {
+        LOG_ERROR("Constant dataset {} has scalar dataspace but new config shape is not scalar.", name());
+        replace = true;
+        // somehow replace the dataspace in teh dataset?
+      }
+      if (ds.type() == Type::Simple && Simple(ds).current_dimensions() != shape()) {
+        LOG_ERROR("Constant dataset {} has different shape than new config.", name());
+        resize = true;
+        auto max_size = Simple(ds).maximum_dimensions();
+        auto max_count = std::accumulate(max_size.cbegin(), max_size.cend(), 1, std::multiplies<>());
+        auto count = std::accumulate(shape().cbegin(), shape().cend(), 1, std::multiplies<>());
+        if (count > max_count) {
+          LOG_ERROR("Constant dataset {} too small maximum size {} < {}.", name(), max_count, count);
+          // somehow replace the dataspace
+          replace = true;
+        }
+      }
+      if (resize || replace) {
+        auto dataspace = Simple(shape(), shape());
+        auto datatype = constant->datatype();
+        auto link = constant->link();
+        auto attrs = constant->attributes;
+        hdf5::node::remove(*constant);
+        auto dataset = std::make_unique<hdf5::node::Dataset>(link.parent(), link.path(), datatype, dataspace);
+        constant = std::move(dataset);
+      }
+      // if (replace || resize) {
+      //   auto nds = constant->dataspace();
+      //   if (nds.type() == Type::Scalar) {
+      //     LOG_ERROR("Constant dataset {} still has scalar dataspace.", name());
+      //     throw std::runtime_error("Resizing will fail.");
+      //   }
+      //   auto max_shape = Simple(nds).maximum_dimensions();
+      //   auto max_count = std::accumulate(max_shape.cbegin(), max_shape.cend(), 1, std::multiplies<>());
+      //   auto count = std::accumulate(shape().cbegin(), shape().cend(), 1, std::multiplies<>());
+      //   if (count > max_count) {
+      //     LOG_ERROR("Constant dataset {} too small maximum size {} < {}.", name(), max_count, count);
+      //     throw std::runtime_error("Resizing will fail.");
+      //   }
+      //
+      //   // resize only ever works for chunked dataspaces but our 'constant'
+      //   // datasets only ever have fully contiguos dataspaces so this always
+      //   // throws an error?
+      //   constant->resize(shape());
+      // }
+    }
+  }
+  template<class T>
+  void update_constant(constant_t & constant, const std::vector<T> & data) const {
+    update_constant(constant);
+    std::vector<T> var_data;
+    constant->read(var_data);
+    if (var_data.size() != data.size()) {
+      LOG_ERROR("Constant dataset {} has different size than new data.", name());
+    }
+    bool same{true};
+    if constexpr (std::is_integral_v<T>) {
+      same = var_data == data;
+    } else {
+      for (size_t i=0; i<data.size(); ++i) {
+        auto diff = var_data[i] - data[i];
+        auto total = var_data[i] + data[i];
+        same &= std::abs(diff / total) < 1e-6;
+      }
+    }
+    if (!same) {
+      LOG_ERROR("Constant dataset {} has different data than new data.", name());
+      constant->write(data);
+    }
   }
 
 };
