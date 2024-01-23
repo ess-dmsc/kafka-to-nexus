@@ -44,7 +44,7 @@ public:
 private:
   JsonConfig::Field<uint64_t> EventIndexInterval{
       this, "cue_interval", std::numeric_limits<uint64_t>::max()};
-  JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
+  JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1024 * 1024};
   uint64_t EventsWritten{0};
   uint64_t LastEventIndex{0};
   MetaData::Value<uint64_t> EventsWrittenMetadataField;
