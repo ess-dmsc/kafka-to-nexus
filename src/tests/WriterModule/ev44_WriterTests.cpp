@@ -117,9 +117,7 @@ TEST_F(Event44WriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
       << fmt::format("Expect time units to be {}", expected_time_units);
 }
 
-TEST_F(
-    Event44WriterTests,
-    WriterInitialisesFileWithNXEventDataDatasetsAndAdcDatasetsWhenRequested) {
+TEST_F(Event44WriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
     WriterModule::ev44::ev44_Writer Writer;
     // Tell writer module to write ADC pulse debug data
@@ -258,3 +256,5 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
       << "Expected event_id dataset to contain the detector ID "
          "values from both messages";
 }
+
+TEST_F(Event44WriterTests, WriteCues) {}
