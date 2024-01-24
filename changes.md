@@ -2,6 +2,7 @@
 
 ## Next version
 
+- Fix: ev44 module does not support multiple reference_time (pulse time)
 
 ## v6.2.0
 

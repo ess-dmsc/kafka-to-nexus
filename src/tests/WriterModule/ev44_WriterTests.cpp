@@ -281,4 +281,53 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
          "values from both messages";
 }
 
-TEST_F(Event44WriterTests, WriteCues) {}
+TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
+  // Create a single event message with data we can later check is recorded in
+  // the file
+  std::vector<int32_t> TimeOfFlight1 = {101, 102, 201};
+  std::vector<int32_t> TimeOfFlight2 = {301, 302, 303, 401, 501, 502};
+  std::vector<int32_t> DetectorID1 = {101, 102, 201};
+  std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
+  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int64_t> ReferenceTime2 = {3000, 4000, 5000};
+  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
+  std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
+  auto MessageBuffer1 =
+      generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
+                             ReferenceTime1, ReferenceTimeIndex1);
+  FileWriter::FlatbufferMessage TestMessage1(MessageBuffer1.data(),
+                                             MessageBuffer1.size());
+  auto MessageBuffer2 =
+      generateFlatbufferData("TestSource", 2, TimeOfFlight2, DetectorID2,
+                             ReferenceTime2, ReferenceTimeIndex2);
+  FileWriter::FlatbufferMessage TestMessage2(MessageBuffer2.data(),
+                                             MessageBuffer2.size());
+
+  // Create writer and give it the message to write
+  {
+    WriterModule::ev44::ev44_Writer Writer;
+    Writer.setCueInterval(1);
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage1));
+    EXPECT_NO_THROW(Writer.write(TestMessage2));
+  } // These braces are required due to "h5.cpp"
+
+  // Read data from the file
+  auto CueTimestampZeroDataset = TestGroup.get_dataset("cue_timestamp_zero");
+  auto CueIndexDataset = TestGroup.get_dataset("cue_index");
+  std::vector<int32_t> CueTimestampZero(
+      CueTimestampZeroDataset.dataspace().size());
+  std::vector<int32_t> CueIndex(CueIndexDataset.dataspace().size());
+  CueTimestampZeroDataset.read(CueTimestampZero);
+  CueIndexDataset.read(CueIndex);
+
+  std::vector<int32_t> ExpectedCueTimestampZero = {2201, 5502};
+  EXPECT_THAT(CueTimestampZero, testing::ContainerEq(ExpectedCueTimestampZero))
+      << "Expected cue_timestamp_zero dataset to contain the timestamps "
+         "calculated from pulse time plus offset";
+  std::vector<int32_t> ExpectedCueIndex = {2, 8};
+  EXPECT_THAT(CueIndex, testing::ContainerEq(ExpectedCueIndex))
+      << "Expected cue_index dataset to contain the indices of the last event "
+         "of every message";
+}

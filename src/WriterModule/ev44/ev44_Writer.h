@@ -40,9 +40,12 @@ public:
   void register_meta_data(hdf5::node::Group const &HDFGroup,
                           MetaData::TrackerPtr const &Tracker) override;
 
+  void setCueInterval(uint64_t interval) {
+    CueInterval.setValue("", std::to_string(interval));
+  }
+
 private:
-  JsonConfig::Field<uint64_t> CueInterval{this, "cue_interval",
-                                          std::numeric_limits<uint64_t>::max()};
+  JsonConfig::Field<uint64_t> CueInterval{this, "cue_interval", 100'000'000};
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1024 * 1024};
   uint64_t EventsWritten{0};
   uint64_t LastCueIndex{0};
