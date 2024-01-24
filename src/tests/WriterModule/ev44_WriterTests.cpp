@@ -95,10 +95,6 @@ TEST_F(Event44WriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
     Writer.parse_config("{}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
   }
-  ASSERT_TRUE(File->hdfGroup().has_group(TestGroupName));
-  EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
-  EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
-
   std::string const expected_time_units = "ns";
 
   std::string time_zero_units;
@@ -113,6 +109,14 @@ TEST_F(Event44WriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
       time_offset_units))
       << "Expect units attribute to be present on the event_time_zero dataset";
   EXPECT_EQ(time_offset_units, expected_time_units)
+      << fmt::format("Expect time units to be {}", expected_time_units);
+
+  std::string cue_timestamp_zero_units;
+  EXPECT_NO_THROW(TestGroup["cue_timestamp_zero"].attributes["units"].read(
+      cue_timestamp_zero_units))
+      << "Expect units attribute to be present on the cue_timestamp_zero "
+         "dataset";
+  EXPECT_EQ(cue_timestamp_zero_units, expected_time_units)
       << fmt::format("Expect time units to be {}", expected_time_units);
 }
 
@@ -240,4 +244,4 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
          "values from both messages";
 }
 
-// TEST_F(Event44WriterTests, WriteCues) {}
+TEST_F(Event44WriterTests, WriteCues) {}
