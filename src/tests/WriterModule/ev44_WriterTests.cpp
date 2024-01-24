@@ -24,17 +24,17 @@ using namespace WriterModule::ev44;
 
 flatbuffers::DetachedBuffer generateFlatbufferData(
     std::string const &SourceName = "TestSource", uint64_t const MessageID = 0,
-    std::vector<int32_t> const &TimeOfFlight = {0, 1, 2},
-    std::vector<int32_t> const &DetectorID = {0, 1, 2},
-    std::vector<int64_t> const &reference_time = {34151332, 65271216, 73474746},
-    std::vector<int32_t> const &reference_time_index = {0, 1, 2}) {
+    std::vector<int32_t> const &TimeOfFlight = {101, 102, 201},
+    std::vector<int32_t> const &DetectorID = {101, 102, 201},
+    std::vector<int64_t> const &ReferenceTime = {1000, 2000},
+    std::vector<int32_t> const &ReferenceTimeIndex = {0, 2}) {
   flatbuffers::FlatBufferBuilder builder;
 
   auto FBSourceNameOffset = builder.CreateString(SourceName);
   auto FBTimeOfFlightOffset = builder.CreateVector(TimeOfFlight);
   auto FBDetectorIDOffset = builder.CreateVector(DetectorID);
-  auto FBReferenceTime = builder.CreateVector(reference_time);
-  auto FBReferenceTimeIndex = builder.CreateVector(reference_time_index);
+  auto FBReferenceTime = builder.CreateVector(ReferenceTime);
+  auto FBReferenceTimeIndex = builder.CreateVector(ReferenceTimeIndex);
 
   Event44MessageBuilder MessageBuilder(builder);
   MessageBuilder.add_source_name(FBSourceNameOffset);
@@ -50,10 +50,17 @@ flatbuffers::DetachedBuffer generateFlatbufferData(
   return builder.Release();
 }
 
-/// Modifies the input vector such that it is the concatenation of itself with
-/// itself
-template <typename T> void repeatVector(std::vector<T> &InputVector) {
-  InputVector.insert(InputVector.end(), InputVector.begin(), InputVector.end());
+template <typename T>
+std::vector<T> concatenateVectors(const std::vector<T> &Vector1,
+                                  const std::vector<T> &Vector2) {
+  std::vector<T> ConcatenatedVector;
+  ConcatenatedVector.reserve(Vector1.size() +
+                             Vector2.size()); // Pre-allocate memory
+  ConcatenatedVector.insert(ConcatenatedVector.end(), Vector1.begin(),
+                            Vector1.end());
+  ConcatenatedVector.insert(ConcatenatedVector.end(), Vector2.begin(),
+                            Vector2.end());
+  return ConcatenatedVector;
 }
 
 class Event44WriterTests : public ::testing::Test {
@@ -141,10 +148,13 @@ TEST_F(Event44WriterTests,
        WriterSuccessfullyRecordsEventDataFromSingleMessage) {
   // Create a single event message with data we can later check is recorded in
   // the file
-  std::vector<int32_t> const TimeOfFlight = {0, 1, 2};
-  std::vector<int32_t> const DetectorID = {3, 4, 5};
+  std::vector<int32_t> const TimeOfFlight = {101, 102, 201};
+  std::vector<int32_t> const DetectorID = {101, 102, 201};
+  std::vector<int64_t> const ReferenceTime = {1000, 2000};
+  std::vector<int32_t> const ReferenceTimeIndex = {0, 2};
   auto MessageBuffer =
-      generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID);
+      generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
+                             ReferenceTime, ReferenceTimeIndex);
   FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
                                             MessageBuffer.size());
 
@@ -175,15 +185,15 @@ TEST_F(Event44WriterTests,
   EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
       << "Expected event_time_offset dataset to contain the time of flight "
          "values from the message";
-  EXPECT_EQ(EventTimeZero.size(), 3U)
-      << "Expected event_time_zero to contain a "
-         "single value, as we wrote a single "
-         "message";
-  EXPECT_EQ(EventIndex.size(), 1U)
-      << "Expected event_index to contain a single "
-         "value, as we wrote a single message";
-  EXPECT_EQ(EventIndex[0], 0) << "Expected single event_index value to be zero "
-                                 "as we wrote only one message";
+  EXPECT_THAT(EventTimeZero, testing::ContainerEq(ReferenceTime))
+      << "Expected event_time_zero dataset to contain the pulse time "
+         "values from the message";
+  EXPECT_THAT(EventIndex, testing::ContainerEq(ReferenceTimeIndex))
+      << "Expected event_index dataset to contain the index of first event for "
+         "the corresponding pulse ";
+  EXPECT_EQ(EventIndex[0], 0)
+      << "Expected first event_index value to be zero "
+         "as the first pulse is always about the first message";
   EXPECT_THAT(EventID, testing::ContainerEq(DetectorID))
       << "Expected event_id dataset to contain the detector ID "
          "values from the message";
@@ -192,20 +202,32 @@ TEST_F(Event44WriterTests,
 TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   // Create a single event message with data we can later check is recorded in
   // the file
-  std::vector<int32_t> TimeOfFlight = {0, 1, 2};
-  std::vector<int32_t> DetectorID = {3, 4, 5};
-  auto MessageBuffer =
-      generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID);
-  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
-                                            MessageBuffer.size());
+  std::vector<int32_t> TimeOfFlight1 = {101, 102, 201};
+  std::vector<int32_t> TimeOfFlight2 = {301, 302, 303, 401, 501, 502};
+  std::vector<int32_t> DetectorID1 = {101, 102, 201};
+  std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
+  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int64_t> ReferenceTime2 = {3000, 4000, 5000};
+  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
+  std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
+  auto MessageBuffer1 =
+      generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
+                             ReferenceTime1, ReferenceTimeIndex1);
+  FileWriter::FlatbufferMessage TestMessage1(MessageBuffer1.data(),
+                                             MessageBuffer1.size());
+  auto MessageBuffer2 =
+      generateFlatbufferData("TestSource", 2, TimeOfFlight2, DetectorID2,
+                             ReferenceTime2, ReferenceTimeIndex2);
+  FileWriter::FlatbufferMessage TestMessage2(MessageBuffer2.data(),
+                                             MessageBuffer2.size());
 
   // Create writer and give it the message to write
   {
     WriterModule::ev44::ev44_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage));
-    EXPECT_NO_THROW(Writer.write(TestMessage));
+    EXPECT_NO_THROW(Writer.write(TestMessage1));
+    EXPECT_NO_THROW(Writer.write(TestMessage2));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file
@@ -223,23 +245,38 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   EventIndexDataset.read(EventIndex);
   EventIDDataset.read(EventID);
 
-  // Repeat the input value vectors as the same message should be written twice
-  repeatVector(TimeOfFlight);
-  repeatVector(DetectorID);
+  // Duplicate events
+  std::vector<int32_t> ExpectedTimeOfFlight =
+      concatenateVectors(TimeOfFlight1, TimeOfFlight2);
+  std::vector<int32_t> ExpectedDetectorID =
+      concatenateVectors(DetectorID1, DetectorID2);
+  std::vector<int64_t> ExpectedReferenceTime =
+      concatenateVectors(ReferenceTime1, ReferenceTime2);
+  std::vector<int32_t> ExpectedReferenceTimeIndex;
+  int32_t numberOfEventsInFirstMessage =
+      static_cast<int32_t>(DetectorID1.size());
+  for (int32_t value : ReferenceTimeIndex1) {
+    ExpectedReferenceTimeIndex.push_back(value);
+  }
+  for (int32_t value : ReferenceTimeIndex2) {
+    ExpectedReferenceTimeIndex.push_back(value + numberOfEventsInFirstMessage);
+  }
 
   // Test data in file matches what we originally put in the message
-  EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
+  EXPECT_THAT(EventTimeOffset, testing::ContainerEq(ExpectedTimeOfFlight))
       << "Expected event_time_offset dataset to contain the time of flight "
          "values from both messages";
-  EXPECT_EQ(EventTimeZero.size(), 6U)
-      << "Expected event_time_zero to contain a "
-         "two values, as we wrote two "
-         "messages";
-  EXPECT_EQ(EventIndex.size(), 2U) << "Expected event_index to contain two "
-                                      "values, as we wrote two messages";
-  EXPECT_EQ(EventIndex[1], 3) << "Expected second message to start at index 3 "
-                                 "as there were 3 events in the first message";
-  EXPECT_THAT(EventID, testing::ContainerEq(DetectorID))
+  EXPECT_THAT(EventTimeZero, testing::ContainerEq(ExpectedReferenceTime))
+      << "Expected event_time_zero dataset to contain the pulse time "
+         "values from the message";
+  EXPECT_THAT(EventIndex, testing::ContainerEq(ExpectedReferenceTimeIndex))
+      << "Expected event_index dataset to contain the index of first event for "
+         "the corresponding pulse ";
+  EXPECT_EQ(EventIndex[ReferenceTime1.size()], numberOfEventsInFirstMessage)
+      << "Expected the firts event_index for the second message to start at an "
+         "index "
+         "equal to the number of events in the first message ";
+  EXPECT_THAT(EventID, testing::ContainerEq(ExpectedDetectorID))
       << "Expected event_id dataset to contain the detector ID "
          "values from both messages";
 }

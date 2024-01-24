@@ -105,8 +105,16 @@ void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
       EventMsgFlatbuffer->reference_time();
 
   EventTimeZero.appendArray(getFBVectorAsArrayAdapter(CurrentRefTime));
-  EventIndex.appendArray(
-      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->reference_time_index()));
+
+  // Shift incoming reference_time_index by the number of events already stored
+  auto MessageReferenceTimeIndex = EventMsgFlatbuffer->reference_time_index();
+  std::vector<uint32_t> ModifiedReferenceTimeIndex;
+  ModifiedReferenceTimeIndex.reserve(MessageReferenceTimeIndex->size());
+  for (auto value : *MessageReferenceTimeIndex) {
+    ModifiedReferenceTimeIndex.push_back(value + EventsWritten);
+  }
+  EventIndex.appendArray(ModifiedReferenceTimeIndex);
+
   EventsWritten += CurrentNumberOfEvents;
   if (EventsWritten > LastCueIndex + CueInterval) {
     auto LastRefTimeOffset = EventMsgFlatbuffer->time_of_flight()->operator[](
