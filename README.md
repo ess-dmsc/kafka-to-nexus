@@ -117,7 +117,14 @@ Conan will install all the other required packages.
 
 ### Add the Conan remote repositories
 
-Follow the README [here](https://github.com/ess-dmsc/conan-configuration)
+Follow the README [here](https://github.com/ess-dmsc/conan-configuration).
+
+If you are not building on CentOS 7, set compiler.libcxx to libstdc++11 in the settings section of your Conan profile:
+
+```bash
+# Assuming profile is named "default"
+conan profile update settings.compiler.libcxx=libstdc++11 default
+```
 
 ### Build
 
