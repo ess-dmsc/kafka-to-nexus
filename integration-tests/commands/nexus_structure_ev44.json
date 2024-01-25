@@ -37,7 +37,8 @@
                   "module": "ev44",
                   "config": {
                     "source": "ev44_source",
-                    "topic": "ev44_topic"
+                    "topic": "ev44_topic",
+                    "cue_interval": "3"
                   }
                 }
               ]

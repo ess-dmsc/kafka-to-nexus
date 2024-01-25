@@ -60,11 +60,6 @@ EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
   }
 }
 
-EventTimeZeroIndex::EventTimeZeroIndex(hdf5::node::Group const &Parent,
-                                       Mode CMode, size_t ChunkSize)
-    : ExtensibleDataset<std::uint32_t>(Parent, "event_time_zero_index", CMode,
-                                       ChunkSize) {}
-
 EventIndex::EventIndex(hdf5::node::Group const &Parent, Mode CMode,
                        size_t ChunkSize)
     : ExtensibleDataset<std::uint32_t>(Parent, "event_index", CMode,

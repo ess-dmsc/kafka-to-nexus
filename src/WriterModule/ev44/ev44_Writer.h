@@ -33,7 +33,6 @@ public:
   NeXusDataset::EventTimeOffset EventTimeOffset;
   NeXusDataset::EventId EventId;
   NeXusDataset::EventTimeZero EventTimeZero;
-  NeXusDataset::EventTimeZeroIndex EventTimeZeroIndex;
   NeXusDataset::EventIndex EventIndex;
   NeXusDataset::CueIndex CueIndex;
   NeXusDataset::CueTimestampZero CueTimestampZero;
@@ -41,15 +40,15 @@ public:
   void register_meta_data(hdf5::node::Group const &HDFGroup,
                           MetaData::TrackerPtr const &Tracker) override;
 
-private:
-  void
-  padDatasetsWithZeroesEqualToNumberOfEvents(FlatbufferMessage const &Message);
+  void setCueInterval(uint64_t interval) {
+    CueInterval.setValue("", std::to_string(interval));
+  }
 
-  JsonConfig::Field<uint64_t> EventIndexInterval{
-      this, "cue_interval", std::numeric_limits<uint64_t>::max()};
-  JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1 << 20};
+private:
+  JsonConfig::Field<uint64_t> CueInterval{this, "cue_interval", 100'000'000};
+  JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1024 * 1024};
   uint64_t EventsWritten{0};
-  uint64_t LastEventIndex{0};
+  uint64_t LastCueIndex{0};
   MetaData::Value<uint64_t> EventsWrittenMetadataField;
 };
 } // namespace ev44

@@ -135,21 +135,6 @@ public:
              size_t ChunkSize = 1024);
 };
 
-/// \brief Represents the Index into the array for the start of the neutron
-/// events linked to the corresponding pulse/reference time.
-class EventTimeZeroIndex : public ExtensibleDataset<std::uint32_t> {
-public:
-  EventTimeZeroIndex() = default;
-  /// \brief Create the event_time_zero_index dataset of NXevent_data.
-  ////
-  /// \param Parent The group/node where the dataset exists or should be
-  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
-  /// size in number of elements for this dataset (if/when creating it). \throws
-  /// std::runtime_error if dataset already exists.
-  EventTimeZeroIndex(hdf5::node::Group const &Parent, Mode CMode,
-                     size_t ChunkSize = 1024);
-};
-
 /// \brief Represents the (radiation) detector event reference timestamp dataset
 /// in a NXevent_data.
 class EventTimeZero : public ExtensibleDataset<std::uint64_t> {
