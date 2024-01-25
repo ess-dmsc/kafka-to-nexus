@@ -10,6 +10,7 @@ set(datasets_INC
         ExtensibleDataset.h
         AdcDatasets.h
         EpicsAlarmDatasets.h
+        GrowthDataset.h
         )
 
 add_library(NeXusDataset OBJECT

@@ -58,9 +58,6 @@ public:
       out.resize(size);
       for (ssize_t i = 0; i < size; ++i) out[i] = first + static_cast<T>(i) * step;
     }
-//    if (out.size() < 2) {
-//      throw std::runtime_error("Edges must be specified as an array of values or as min/max values");
-//    }
     return out;
   }
 };

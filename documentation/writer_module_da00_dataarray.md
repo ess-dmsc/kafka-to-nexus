@@ -2,84 +2,54 @@
 
 ## Stream configuration fields
 
-<table>
-<tr>
-<td colspan=2><b>Name</b>   <td><b>Type</b>  <td><b>Description</b>                <td><b>Default</b> <tr>
-<td>topic         <td>           <td>string  <td>The kafka topic to listen to for data.          <td> <tr>
-<td>source        <td>           <td>string  <td>The source (name) of the data to be written.    <td> <tr>
-<td>dynamic       <td>             <td>bool  <td>Whether the written datasets are dynamic.   <td>true <tr>
-<td>cue_interval  <td>              <td>int  <td>The number of messages between cues.        <td>1000 <tr>
-<td>chunk_size    <td>              <td>int  <td>The HDF5 chunk size.              <td>2<sup>20</sup> <tr>
-<td>variables     <td>     <td>list[string]  <td>The names of the Variable datasets to write.  <td>[] <tr>
-<td>constants     <td>     <td>list[string]  <td>The names of the Constant datasets to write.  <td>[] <tr>
-<td>datasets      <td>       <td>list[dict]  <td>Detailing the variable and constant datasets. <td>[] <tr>
-<td>              <td>name       <td>string  <td>The name of the dataset.                        <td> <tr>
-<td>              <td>unit       <td>string  <td>The unit along this dimension.            <td>"auto" <tr>
-<td>              <td>label      <td>string  <td>The label of the dimension.               <td>"auto" <tr>
-<td>              <td>data_type  <td>string  <td>The element type of the written data.     <td>"auto" <tr>
-<td>              <td>dims <td>list[string]  <td>The names of the dimensions of the Variable.  <td>[] <tr>
-<td>              <td>shape   <td>list[int]  <td>The size of the histogram in each dimension.  <td>[] <tr>
-<td>              <td>data <td>list[number]  <td>The constant values of the Variable.          <td>[] <tr>
-<td>attributes    <td>        <td>list[dict]  <td>Detailing the HDF group attributes to write.  <td>[] <tr>
-<td>              <td>name        <td>string  <td>The name of the attribute.                      <td> <tr>
-<td>              <td>description <td>string  <td>The value of the attribute.                     <td> <tr>
-<td>              <td>source      <td>string  <td>The source of the attribute.                    <td> <tr>
-<td>              <td>data_type   <td>string  <td>The element type of the attribute value.  <td>"auto" <tr>
-<td>              <td>value         <td>JSON  <td>The value of the attribute.                     <td> <tr>
-</table>
+### da00_DataArray table
+| Field Name   | Type                | Description                                  | Default        |
+|--------------|---------------------|----------------------------------------------|----------------|
+| topic        | string              | The kafka topic to listen to for data.       |                |
+| source       | string              | The source (name) of the data to be written. |                |
+| title        | string              | The title of the HDF5 group.                 |                |
+| cue_interval | int                 | The number of messages between cues.         | 1000           |
+| chunk_size   | int                 | The HDF5 chunk size.                         | 2<sup>20</sup> |
+| variables    | list[da00_Variable] | The variable datasets to writer              | []             |
+| constants    | list[da00_Variable] | The constant datasets to write.              | []             |
+| attributes   | list[da00_Variable] | The group attributes to write.               | []             |
 
-### Notes on `variables` and `constants`
-The `variables` and `constants` configuration fields are lists of the names of buffered DataArray Variables to write into the HDF5 file.
-A DataArray buffer may contain any number of Variables, each of which comprises
 
-| Field     | Type         | Description                                 | Constant |
-|-----------|--------------|---------------------------------------------|----------|
-| name      | string       | The name of the Variable                    | Yes      |
-| unit      | string       | The unit of the contained values (optional) | Yes      |
-| label     | string       | A label describing the Variable (optional)  | Yes      |
-| data_type | string       | The type of the contained values            | Yes      |
-| dims      | list[string] | The names of the dimensions of the Variable | Yes      |
-| shape     | list[int]    | The size of the Variable in each dimension  | Yes      |
-| data      | *            | The values of the Variable                  | Maybe    |
-
+### Notes on `variables`, `constants`, `attributes`
 Most fields in the buffered messages (received in a single write-request) must be constant.
-The `data` field is the only exception, and may contain different values in each message if 
-the name of the Variable is listed in the `variables` configuration field.
+The `data` field in `da00_Variable` is the only exception, and may contain different values in each message if 
+the object is listed in the `variables` `da00_DataArray` field.
 
 Since the contained values may change, `variables` are written to time-series datasets in the HDF5 file.
 In contrast, `constants` must contain the same value in every message, so are written to scalar datasets in the HDF5 file.
+Finally, `attributes` are special constant datasets that are written to the HDF5 group attributes;
+they should be small and contain metadata about the group.
 
-### Notes on `datasets` sub-fields
-The buffered Variable objects contain all information required to reconstruct full arrays and write them to HDF5.
-However, it may be necessary to _confirm_ that the buffered information matches expectations,
-so the `datasets` configuration field is provided to specify the expected Variable contents for buffered objects
-listed in `variables` and `constants`.
 
-The `datasets` configuration field is a list of dictionaries where each dictionary has contentes listed above.
-If a dictionary is provided with missing or default values, the behavior is as follows:
-
-| Field     | Type         | Missing ->  | Default ->               |
-|-----------|--------------|-------------------------------|--------------------------|
-| name      | string       | Error       |                          |
-| unit      | string       | Default     | First message            |
-| label     | string       | Default     | First message            |
-| data_type | string       | Default if dynamic else Error | First message            |
-| dims      | list[string] | Default     | First message            |
-| shape     | list[int]    | Default if dynamic else Error | First message            |
-| data      | *            | Default     | First message \| ignored |
-
-If a dictionary is provided with a name and otherwise all default or missing values, it has the same effect
-as if the dictionary was omitted from the `datasets` configuration field.
+### da00_Variable table
+| Field Name         | Type         | Description                                   | Mutable | Missing               | `null`                    |
+|--------------------|--------------|-----------------------------------------------|---------|-----------------------|---------------------------|
+| name               | string       | The name of the dataset or attribute.         | No      | Error                 | Error                     |  
+| unit               | string       | The unit along this dimension.                | No      | Omitted               | Fixed-size, first message | 
+| label              | string       | The label of the dimension.                   | No      | Omitted               | Fixed-size, first message |
+| source             | string       | The source (name) of the data to be written.  | No      | Omitted               | Fixed-size, first message |
+| data_type          | string       | The element type of the written data.         | No      | `type(data)` or Error | Error                     |
+| axes               | list[string] | The names of the dimensions of the Variable   | No      | Omitted               | Fixed-size, first message | 
+| shape              | list[int]    | The size of the histogram in each dimension   | No      | Default               | Error                     | 
+| data (variables)   | *            | Ignored for variable datasets (unless `null`) | Yes     | Ignored               | Error                     |
+| data (constants)   | *            | The constant values of the Variable.          | No      | First message         | First message             |
+| data (attributes)  | *            | The constant values of the Variable.          | No      | First message         | First message             |
 
 The `data` field is special, in that it can _either_ be a vector of values
 or a object specification of the form `{"first": number, "last": number, "size": number}`,
 in which case it is interpreted as a range of values from `first` to `last` in steps of (`last` - `first`) / (`step` - 1).
+For `variables` listed objects, the `data` field is ignored since it is _always_ set by the received message.
+For `constants` and `attributes` the `data` field can be omitted if the `data_type` and `shape` fields are set;
+similarly, `data_type` and/or `shape` can be omitted if `data` is set, in which case the type and shape are inferred from the data.
 
-### Notes on required values
-If the `dyamic` configuration field is `true`, 
-then any configuration field with a default value is optional, and may be omitted.
-Otherwise, `variables` and `constants` are interpreted literally and 
-each `datasets` sub-field must define both `data_type` and `shape` to produce an HDF5 dataset.
+Since the `name`, `data_type`, `shape` and whether the object is a `variable` or `constant` are necessary to define
+an appropriate HDF5 dataset, these fields or information from which they can be inferred are required in the
+configuration for any object that is not listed in the `variables` or `constants` field of the `da00_DataArray`.
 
 ## Examples
 
@@ -94,74 +64,47 @@ We can write the `da00_DataArray` stream to HDF with a child in the `nexus_struc
   "module": "da00",
   "config": {
     "topic": "topic.with.multiple.sources",
-    "source": "some_dataarray_producer"
-  }
-}
-```
-
-This will follow all defaults, which writes all Variables present _in the first message_ to the HDF5 file as
-time-series datasets.
-
-A slightly more useful configuration would specify the variable and constant Variable objects that should be written
-
-
-```json
-{
-  "module": "da00",
-  "config": {
-    "topic": "other.topic.with.multiple.sources",
-    "source": "another_dataarray_producer",
-    "variables": ["var1", "var2", "var3"],
-    "constants": ["const1", "const2", "const3"]
-  }
-}
-```
-
-An abbreviated form utilizing dynamic completion of required dataset information would be:
-
-```json
-{
-  "module": "da00",
-  "config": {
-    "topic": "topic.with.multiple.sources",
     "source": "some_dataarray_producer",
-    "variables": ["signal", "signal_errors", "auxiliary"],
-    "constants": ["x", "y"],
-    "datasets": [
+    "variables": [
       {
         "name": "signal",
         "data_type": "uint64",
-        "dims": ["x", "y"],
+        "axes": ["x", "y"],
         "shape": [1000, 1000]
       },
       {
         "name": "signal_errors",
         "data_type": "float64",
-        "dims": ["x", "y"],
+        "axes": ["x", "y"],
         "shape": [1000, 1000]
       },
       {
         "name": "auxiliary",
         "data_type": "float32",
-        "dims": ["x", "y"],
+        "axes": ["x", "y"],
         "shape": [1000, 1000]
-      },
+      }
+    ],
+    "constants": [
       {
         "name": "x",
         "data_type": "float32",
-        "dims": ["x"],
+        "axes": ["x"],
         "shape": [1000]
       },
       {
         "name": "y",
         "data_type": "float32",
-        "dims": ["y"],
+        "axes": ["y"],
         "shape": [1000]
       }
     ]
   }
 }
 ```
+In the above example, the `data_type` and `shape` fields are required in each `variables` and `constants` object
+since they do not include `data`. The `axes` field could be read from the received messages, but is included
+in the configuration for clarity.
 
 Finally, a somewhat realistic configuration would specify the expected contents of the buffered Variable objects
 without relying on information from received messages:
@@ -172,30 +115,31 @@ without relying on information from received messages:
   "config": {
     "topic": "topic.with.multiple.sources",
     "source": "some_dataarray_producer",
-    "dynamic": false,
-    "variables": ["signal", "signal_errors", "auxiliary"],
-    "constants": ["x", "y"],
     "attributes": [
       {
         "name": "signal",
-        "value": "signal"
+        "data": "signal"
       },
       {
         "name": "auxiliary_signals",
-        "value": ["auxiliary"]
+        "data": ["auxiliary"]
       },
       {
         "name": "axes",
-        "value": ["x", "y"]
+        "data": ["x", "y"]
+      },
+      {
+        "name": "title",
+        "data": "Some cool title for this data group"
       }
     ],
-    "datasets": [
+    "variables": [
       {
         "name": "signal",
         "unit": "counts",
         "label": "Integrated intensity on the detector",
         "data_type": "uint64",
-        "dims": ["x", "y"],
+        "axes": ["x", "y"],
         "shape": [1000, 1000]
       },
       {
@@ -203,7 +147,7 @@ without relying on information from received messages:
         "unit": "counts",
         "label": "Uncertainty in the integrated intensity",
         "data_type": "float64",
-        "dims": ["x", "y"],
+        "axes": ["x", "y"],
         "shape": [1000, 1000]
       },
       {
@@ -211,15 +155,16 @@ without relying on information from received messages:
         "unit": "degrees",
         "label": "The scattering angle of each pixel",
         "data_type": "float32",
-        "dims": ["x", "y"],
+        "axes": ["x", "y"],
         "shape": [1000, 1000]
-      },
+      }],
+    "constants": [
       {
         "name": "x",
         "unit": "cm",
         "label": "Position along the x-axis",
         "data_type": "float32",
-        "dims": ["x"],
+        "axes": ["x"],
         "shape": [1000],
         "data": {"first":  0.0, "last":  99.9, "size": 1000}
       },
@@ -228,7 +173,7 @@ without relying on information from received messages:
         "unit": "cm",
         "label": "Position along the y-axis",
         "data_type": "float32",
-        "dims": ["y"],
+        "axes": ["y"],
         "shape": [1000],
         "data": [0.0, 0.1, 0.2, ..., 99.9]
       }

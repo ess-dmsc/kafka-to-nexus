@@ -2,6 +2,7 @@
 
 ## Next version
 
+- Add support for the `da01` DataArray schema.
 
 ## v6.2.0
 
