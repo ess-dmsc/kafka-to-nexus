@@ -51,6 +51,14 @@ public:
       if (!axes.empty()) _axes = axes;
     }
     if (cfg.contains("data")) _data = cfg["data"];
+    if (!_dtype.has_value() && _data.has_value()) {
+      _dtype = guess_dtype(_data.value());
+      LOG_ERROR("No data type specified for variable {}. Guessing type {}.", _name, _dtype.value());
+    }
+    if (!_shape.has_value() && _data.has_value()) {
+      _shape = get_shape(_data.value());
+      LOG_ERROR("No shape specified for variable {}. Guessing shape {}.", _name, _shape.value());
+    }
     if (!is_consistent()) {
       LOG_WARN("Inconsistent variable config for variable {}.", _name);
     }

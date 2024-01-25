@@ -27,19 +27,7 @@ public:
     if (config.contains("data_type")){
       _type = string_to_da00_dtype(config["data_type"]);
     } else {
-      auto x = config["data"];
-      if (x.is_array()) x = x[0];
-      if (x.is_number_unsigned()){
-        _type = dtype_t::uint64;
-      } else if (x.is_number_integer()){
-        _type = dtype_t::int64;
-      } else if (x.is_number_float()){
-        _type = dtype_t::float64;
-      } else if (x.is_string()){
-        _type = dtype_t::c_string;
-      } else {
-        throw std::runtime_error("AttributeConfig: could not determine data type of " + config["data"].dump());
-      }
+      _type = guess_dtype(config["data"]);
     }
     _data = config["data"];
   }

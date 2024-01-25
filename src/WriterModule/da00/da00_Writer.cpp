@@ -153,15 +153,20 @@ void da00_Writer::handle_group_attributes(hdf5::node::Group &HDFGroup) const {
   if (attrs.end() == std::find_if(attrs.begin(), attrs.end(),
                                   [](const AttributeConfig & attr){ return attr.name() == "axes"; })) {
     if (auto f= VariableConfigMap.find(signal_name); f != VariableConfigMap.end()) {
-      auto axes = f->second.axes();
-      if (!axes.empty()) {
-        auto axes_json = nlohmann::json::object();
-        axes_json["name"] = "axes";
-        axes_json["data"] = axes;
-        attrs.emplace_back(axes_json);
+      if (!f->second.has_axes()){
+        LOG_ERROR("Configuration for Variable {} has no axes!", signal_name);
+      } else {
+        auto axes = f->second.axes();
+        if (!axes.empty()) {
+          auto axes_json = nlohmann::json::object();
+          axes_json["name"] = "axes";
+          axes_json["data"] = axes;
+          attrs.emplace_back(axes_json);
+        }
       }
     }
   }
+
   // find the "axes" again, in case pointers were invalidated
   // if the signal is a Variable, then add 'time' to the 'axes' attribute
   if (auto axes_at = std::find_if(attrs.begin(), attrs.end(), [](const AttributeConfig & attr){ return attr.name() == "axes"; });
@@ -205,9 +210,11 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
       }
     }
     for (const auto & [name, config]: ConstantConfigMap) {
-      if (config.has_dtype() && config.has_shape()) {
+      if ((config.has_dtype() && config.has_shape()) || config.has_data()) {
         auto unused = config.insert_constant_dataset(HDFGroup);
       } else {
+        if (!config.has_data())
+          LOG_ERROR("Constant {} configuration lacks data. Can not insert dataset", name);
         if (!config.has_dtype())
           LOG_ERROR("Constant {} configuration lacks data_type. Can not insert dataset", name);
         if (!config.has_shape())
@@ -239,9 +246,11 @@ InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
       }
     }
     for (const auto & [name, config]: ConstantConfigMap) {
-      if (config.has_dtype() && config.has_shape()) {
+      if ((config.has_dtype() && config.has_shape()) || config.has_data()) {
         ConstantPtrs[name] = config.reopen_constant_dataset(HDFGroup);
       } else {
+        if (!config.has_data())
+          LOG_ERROR("Constant {} configuration lacks data. Can not reopen dataset", name);
         if (!config.has_dtype())
           LOG_ERROR("Constant {} configuration lacks data_type. Can not reopen dataset", name);
         if (!config.has_shape())
