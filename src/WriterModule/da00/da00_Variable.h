@@ -6,12 +6,13 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "NeXusDataset/GrowthDataset.h"
 #include "da00_Edge.h"
+#include "da00_String.h"
 
 namespace WriterModule::da00 {
 
 class VariableConfig {
 public:
-  using key_t = std::string;
+  using key_t = StringConfig;
   using shape_t = std::vector<hsize_t>;
   using dtype_t = da00_dtype;
   using dim_t = hdf5::Dimensions;
@@ -20,34 +21,32 @@ public:
   using variable_t = std::unique_ptr<NeXusDataset::MultiDimDatasetBase>;
   using constant_t = std::unique_ptr<hdf5::node::Dataset>;
 private:
-  key_t _name;
+  std::string _name;
   std::optional<key_t> _unit;
   std::optional<key_t> _label;
   std::optional<key_t> _source;
   std::optional<dtype_t> _dtype;
   std::optional<shape_t> _shape;
-  std::optional<std::vector<key_t>> _axes;
+  std::optional<std::vector<std::string>> _axes;
   std::optional<nlohmann::json> _data;
 
 public:
   VariableConfig() = default;
-  explicit VariableConfig(key_t name) : _name(std::move(name)) {}
+  explicit VariableConfig(std::string name) : _name(std::move(name)) {}
   VariableConfig & operator=(std::string const & config){
-    key_t def{"auto"};
     auto cfg = nlohmann::json::parse(config);
-    auto is_not_def = [&](auto const & key){return cfg.contains(key) && def != cfg[key];};
     _name = cfg["name"];
-    if (is_not_def("unit")) _unit = cfg["unit"];
-    if (is_not_def("label")) _label = cfg["label"];
-    if (is_not_def("source")) _source = cfg["source"];
-    if (is_not_def("data_type"))
-      _dtype = string_to_da00_dtype(cfg["data_type"].get<key_t>());
+    if (cfg.contains("unit")) _unit = key_t(cfg["unit"]);
+    if (cfg.contains("label")) _label = key_t(cfg["label"]);
+    if (cfg.contains("source")) _source = key_t(cfg["source"]);
+    if (cfg.contains("data_type"))
+      _dtype = string_to_da00_dtype(cfg["data_type"].get<std::string>());
     if (cfg.contains("shape")){
       auto shape = cfg["shape"].get<shape_t>();
       if (!shape.empty()) _shape = shape;
     }
     if (cfg.contains("axes")){
-      auto axes = cfg["axes"].get<std::vector<key_t>>();
+      auto axes = cfg["axes"].get<std::vector<std::string>>();
       if (!axes.empty()) _axes = axes;
     }
     if (cfg.contains("data")) _data = cfg["data"];
@@ -66,17 +65,17 @@ public:
   }
   explicit VariableConfig(da00_Variable const * buffer) {
     _name = buffer->name()->str();
-    if (buffer->unit()) _unit = buffer->unit()->str();
-    if (buffer->label()) _label = buffer->label()->str();
+    if (buffer->unit()) _unit = key_t(buffer->unit()->str());
+    if (buffer->label()) _label = key_t(buffer->label()->str());
     _dtype = buffer->data_type();
     if (buffer->shape()) {
       auto shape = std::vector<hsize_t>(buffer->shape()->begin(), buffer->shape()->end());
       if (!shape.empty()) _shape = shape;
     }
-    if (buffer->dims()) {
+    if (buffer->axes()) {
       auto dims = std::vector<std::string>();
-      dims.reserve(buffer->dims()->size());
-      for (const auto & dim : *buffer->dims()) {
+      dims.reserve(buffer->axes()->size());
+      for (const auto & dim : *buffer->axes()) {
         dims.push_back(dim->str());
       }
       if (!dims.empty())
@@ -128,13 +127,13 @@ public:
     return cfg.edges<T>();
   }
   void name(std::string n) {_name = std::move(n);}
-  void unit(std::string u) {_unit = std::move(u);}
-  void label(std::string l) {_label = std::move(l);}
-  void source(std::string s) {_source = std::move(s);}
+  void unit(std::string u) {_unit = key_t(std::move(u));}
+  void label(std::string l) {_label = key_t(std::move(l));}
+  void source(std::string s) {_source = key_t(std::move(s));}
   void dtype(dtype_t t) { _dtype = t;}
-  void dtype(const key_t & t) { _dtype = string_to_da00_dtype(t);}
+  void dtype(const std::string & t) { _dtype = string_to_da00_dtype(t);}
   void shape(std::vector<hsize_t> s) {_shape = std::move(s);}
-  void dims(std::vector<key_t> d) { _axes = std::move(d);}
+  void dims(std::vector<std::string> d) { _axes = std::move(d);}
 
   [[nodiscard]] bool is_consistent() const {
     if (has_axes() && has_shape()) {
@@ -152,29 +151,29 @@ public:
       LOG_DEBUG("Variable name mismatch for variable {}. Expected {}, got {}.", name(), name(), other.name());
       return std::make_pair(false, false);
     }
-    if (has_unit() && other.has_unit() && unit() != other.unit()) {
-      LOG_DEBUG("Unit mismatch for variable {}. Expected {}, got {}.", name(), unit(), other.unit());
-      inconsistent = true;
-      if (force) unit(other.unit());
-    } else if (!has_unit() && other.has_unit()) {
+    if (has_unit() && other.has_unit()) {
+      auto ic = _unit.value().update_from(other.unit(), force);
+      inconsistent |= ic.first;
+      changed |= ic.second;
+    } else if (other.has_unit()) {
       changed = true;
-      unit(other.unit());
+      _unit = other.unit();
     }
-    if (has_label() && other.has_label() && label() != other.label()) {
-      LOG_DEBUG("Label mismatch for variable {}. Expected {}, got {}.", name(), label(), other.label());
-      inconsistent = true;
-      if (force) label(other.label());
-    } else if (!has_label() && other.has_label()) {
+    if (has_label() && other.has_label()) {
+      auto ic = _label.value().update_from(other.label(), force);
+      inconsistent |= ic.first;
+      changed |= ic.second;
+    } else if (other.has_label()) {
       changed = true;
-      label(other.label());
+      _label = other.label();
     }
-    if (has_source() && other.has_source() && source() != other.source()) {
-      LOG_DEBUG("Source mismatch for variable {}. Expected {}, got {}.", name(), source(), other.source());
-      inconsistent = true;
-      if (force) source(other.source());
-    } else if (!has_source() && other.has_source()) {
+    if (has_source() && other.has_source()) {
+      auto ic = _source.value().update_from(other.source(), force);
+      inconsistent |= ic.first;
+      changed |= ic.second;
+    } else if (other.has_source()) {
       changed = true;
-      source(other.source());
+      _source = other.source();
     }
     if (has_dtype() && other.has_dtype() && dtype() != other.dtype()) {
       LOG_DEBUG("Data type mismatch for variable {}. Expected {}, got {}.", name(), dtype(), other.dtype());
@@ -212,10 +211,16 @@ public:
 private:
   template <class Dataset>
   void add_dataset_attributes(Dataset & dataset, const std::string & axes_spec) const {
-    // TODO write fixed-size attributes in case we don't have 'real' values?
-    if (has_unit()) dataset->attributes.create_from("units", unit());
-    if (has_label()) dataset->attributes.create_from("long_name", label());
-    if (!axes_spec.empty()) dataset->attributes.create_from("axes", axes_spec);
+    // Write fixed-size attributes in case we don't have 'real' values (yet)
+    if (has_unit()) unit().insert_attribute(dataset, "units");
+    if (has_label()) label().insert_attribute(dataset, "long_name");
+    if (has_source()) source().insert_attribute(dataset, "source");
+    //
+    if (!axes_spec.empty()) {
+      auto datatype =  hdf5::datatype::String::fixed(axes_spec.size());
+      auto attr = dataset->attributes.create("axes", datatype, hdf5::dataspace::Scalar());
+      attr.write(axes_spec, datatype);
+    }
   }
 
   template<class DataType>
@@ -385,7 +390,7 @@ public:
     }
     // check provided and expected axis names
     if (has_axes()) {
-      const auto axis_dims = fb->dims(); // dimension _names_
+      const auto axis_dims = fb->axes(); // dimension _names_
       if (axis_dims->size() != axes().size()) {
         LOG_WARN("Axis dimension count mismatch for {}: (configuration={}, buffer={})",
           name(), axes().size(), axis_dims->size());
@@ -432,93 +437,93 @@ public:
   }
 
   template<class Dataset>
-  void update_dataset(Dataset & dataset) const {
-    if (has_unit()) {
-      if (dataset->attributes.exists("units")) {
-        std::string var_units;
-        dataset->attributes["units"].read(var_units);
-        if (var_units != _unit.value()) {
-          LOG_ERROR("Unit mismatch for dataset {}. (new={}, was={})", name(), _unit.value(), var_units);
-          dataset->attributes["units"].write(unit());
+  void update_dataset_attributes(Dataset & dataset, const bool SingeWriterMultipleReader = true) const {
+    auto do_update = [&](const std::optional<key_t> & obj, const std::string & attr) {
+      if (obj.has_value() && obj.value().has_value()){
+        if (dataset->attributes.exists(attr)) {
+          std::string var_obj;
+          dataset->attributes[attr].read(var_obj);
+          const auto last = var_obj.find('\0');
+          if (last != std::string::npos) var_obj.resize(last);
+          if (var_obj != obj.value().value()) {
+            LOG_DEBUG("Mismatch for dataset {}. (new={}, was={})", name(), obj.value(), var_obj);
+            auto datatype = dataset->attributes[attr].datatype();
+            dataset->attributes[attr].write(obj.value().value(), datatype);
         }
-      } else {
-        dataset->attributes.create_from("units", _unit.value());
+        } else if (!SingeWriterMultipleReader) {
+          // only allowed to _create_ attributes if not SWMR-mode
+          obj.value().insert_attribute(dataset, attr);
       }
     }
-    if (has_label()) {
-      if (dataset->attributes.exists("label")) {
-        std::string var_label;
-        dataset->attributes["label"].read(var_label);
-        if (var_label != _label.value()) {
-          LOG_ERROR("Label mismatch for dataset {}. (new={}, was={})", name(), _label.value(), var_label);
-          dataset->attributes["label"].write(label());
-        }
-      } else {
-        dataset->attributes.create_from("label", _label.value());
-      }
-    }
-    if (has_source()){
-      if (dataset->attributes.exists("source")) {
-        std::string var_source;
-        dataset->attributes["source"].read(var_source);
-        if (var_source != _source.value()) {
-          LOG_ERROR("Source mismatch for dataset {}. (new={}, was={})", name(), _source.value(), var_source);
-          dataset->attributes["source"].write(source());
-        }
-      } else {
-        dataset->attributes.create_from("source", _source.value());
-      }
-    }
+    };
+    do_update(_unit, "units");
+    do_update(_label, "long_name");
+    do_update(_source, "source");
     if (has_axes()) {
       if (dataset->attributes.exists("axes")) {
-        // Why is the h5cpp way of doing this complicated,
-        // when HighFive can resize the vector internally?
-        auto ax = dataset->attributes["axes"];
-        auto ds = ax.dataspace();
-        std::vector<std::string> var_axes(ds.size());
-        ax.read(var_axes);
-        if (var_axes != axes()) {
-          LOG_ERROR("Axes mismatch for dataset {}. (new={}, was={})", name(),
+        // @axes is a colon delimited list of axis names
+        std::string var_axes;
+        dataset->attributes["axes"].read(var_axes);
+        const auto last = var_axes.find('\0');
+        if (last != std::string::npos) var_axes.resize(last);
+        if (var_axes != colsepaxes()) {
+          LOG_DEBUG("Axes mismatch for dataset {}. (new={}, was={})", name(),
                     axes(), var_axes);
-          dataset->attributes["axes"].write(colsepaxes());
+          dataset->attributes["axes"].write(colsepaxes(), dataset->attributes["axes"].datatype());
         }
-      } else {
-        dataset->attributes.create_from("axes", colsepaxes());
+      } else if (!SingeWriterMultipleReader) {
+        // like StringConfig, use fixed-size string attributes
+        auto to_write = colsepaxes();
+        auto datatype = hdf5::datatype::String::fixed(to_write.size());
+        auto attr = dataset->attributes.create("axes", datatype, hdf5::dataspace::Scalar());
+        attr.write(to_write, datatype);
       }
     }
   }
-  void update_variable(variable_t & variable) const {
+  void update_variable(variable_t & variable, const bool SingeWriterMultipleReader = true) const {
     using namespace hdf5::dataspace;
-    update_dataset(variable);
+    update_dataset_attributes(variable, SingeWriterMultipleReader);
     if (has_shape()) {
       auto sh = shape();
       sh.insert(sh.begin(), 1);
       auto ds = variable->dataspace();
       bool resize{false};
       if (ds.type() == Type::Scalar) {
-        LOG_ERROR("Variable dataset {} has non-scalar dataspace.", name());
-        resize = true;
+        LOG_ERROR("Variable dataset {} has scalar dataspace.", name());
+        // resizing never allowed
       } else {
         auto simple = Simple(ds);
         if (simple.rank() != sh.size()) {
           LOG_ERROR("Variable dataset {} has different rank than new config.", name());
-          resize = true;
+          // we can never change the rank of an existing dataset
         } else {
           sh[0] = simple.current_dimensions()[0];
           if (simple.current_dimensions() != sh) {
-            LOG_ERROR("Variable dataset {} has different shape than new config.", name());
+            LOG_WARN("Variable dataset {} has different shape than new config.", name());
             resize = true;
+          }
+          if (resize){
+            auto max_size = simple.maximum_dimensions();
+            for (size_t i = 0; i < sh.size(); ++i) {
+              if (sh[i] > max_size[i]) {
+                LOG_ERROR("Variable dataset {} too small along {}, max {} <  request {}.", name(), i, max_size[i], sh[i]);
+                // we can never change the maximum size of an existing dataset
+                resize = false;
+              }
+            }
           }
         }
       }
+      // if resizing is true, the new shape fits inside of the maximum extent
+      // of the dataset -- which is allowed in SWMR-mode and non-SMWR-mode.
       if (resize) {
         variable->resize(sh);
       }
     }
   }
-  void update_constant(constant_t & constant) const {
+  void update_constant(constant_t & constant, const bool SingleWriterMultipleReader = true) const {
     using namespace hdf5::dataspace;
-    update_dataset(constant);
+    update_dataset_attributes(constant, SingleWriterMultipleReader);
     if (has_shape()) {
       auto ds = constant->dataspace();
       bool resize{false};
@@ -526,7 +531,7 @@ public:
       if (ds.type() == Type::Scalar && !shape().empty()) {
         LOG_ERROR("Constant dataset {} has scalar dataspace but new config shape is not scalar.", name());
         replace = true;
-        // somehow replace the dataspace in teh dataset?
+        // somehow replace the dataspace in the dataset?
       }
       if (ds.type() == Type::Simple && Simple(ds).current_dimensions() != shape()) {
         LOG_ERROR("Constant dataset {} has different shape than new config.", name());
@@ -540,7 +545,8 @@ public:
           replace = true;
         }
       }
-      if (resize || replace) {
+      // resizing/reshaping non-extensible datasets is not possible in SWMR-mode
+      if (!SingleWriterMultipleReader && (resize || replace)) {
         auto dataspace = Simple(shape(), shape());
         auto datatype = constant->datatype();
         auto link = constant->link();
@@ -549,25 +555,6 @@ public:
         auto dataset = std::make_unique<hdf5::node::Dataset>(link.parent(), link.path(), datatype, dataspace);
         constant = std::move(dataset);
       }
-      // if (replace || resize) {
-      //   auto nds = constant->dataspace();
-      //   if (nds.type() == Type::Scalar) {
-      //     LOG_ERROR("Constant dataset {} still has scalar dataspace.", name());
-      //     throw std::runtime_error("Resizing will fail.");
-      //   }
-      //   auto max_shape = Simple(nds).maximum_dimensions();
-      //   auto max_count = std::accumulate(max_shape.cbegin(), max_shape.cend(), 1, std::multiplies<>());
-      //   auto count = std::accumulate(shape().cbegin(), shape().cend(), 1, std::multiplies<>());
-      //   if (count > max_count) {
-      //     LOG_ERROR("Constant dataset {} too small maximum size {} < {}.", name(), max_count, count);
-      //     throw std::runtime_error("Resizing will fail.");
-      //   }
-      //
-      //   // resize only ever works for chunked dataspaces but our 'constant'
-      //   // datasets only ever have fully contiguos dataspaces so this always
-      //   // throws an error?
-      //   constant->resize(shape());
-      // }
     }
   }
   template<class T>
@@ -604,14 +591,15 @@ template<> struct fmt::formatter<WriterModule::da00::VariableConfig> {
   constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
   template<class FormatContext>
   auto format(const WriterModule::da00::VariableConfig &c, FormatContext &ctx) {
-    auto unit = c.has_unit() ? c.unit() : "none";
-    auto label = c.has_label() ? c.label() : "none";
+    auto unit = c.has_unit() ? fmt::format(c.unit(), ctx) : "none";
+    auto label = c.has_label() ? fmt::format(c.label(), ctx) : "none";
+    auto source = c.has_source() ? fmt::format(c.source(), ctx) : "none";
     auto type = c.has_dtype() ? c.dtype() : da00_dtype::none;
     auto shape = c.has_shape() ? c.shape() : std::vector<hsize_t>{};
     auto dims = c.has_axes() ? c.axes() : std::vector<std::string>{};
     auto data = c.has_data() ? c.json_data() : nlohmann::json{};
     return format_to(ctx.out(),
-       "VariableConfig(name={}, unit={}, label={}, type={}, shape={}, axes={}, data={})",
-       c.name(), unit, label, type, shape, dims, data);
+       "VariableConfig(name={}, unit={}, label={}, source={}, type={}, shape={}, axes={}, data={})",
+       c.name(), unit, label, source, type, shape, dims, data);
   }
 };

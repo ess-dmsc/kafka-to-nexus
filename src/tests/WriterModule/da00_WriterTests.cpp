@@ -37,15 +37,21 @@ static ::testing::AssertionResult NodeIsValid(
   return ::testing::AssertionSuccess();
 }
 
+static std::string get_fixed_string(const hdf5::attribute::Attribute & attr) {
+  std::string value;
+  attr.read(value);
+  auto pos = value.find('\0');
+  if (pos != std::string::npos) value.resize(pos);
+  return value;
+}
 static ::testing::AssertionResult NodeHasLabel(
   hdf5::node::Group const &group,
   const std::string & name,
   std::string_view label) {
   auto dataset = group.get_dataset(name);
   if (!dataset.attributes.exists("long_name")) return NodeTestFailed(name, "has no long_name attribute");
-  std::string value;
-  dataset.attributes["long_name"].read(value);
-  if (value != label) return NodeTestFailed(name, "has wrong long_name attribute");
+  auto value = get_fixed_string(dataset.attributes["long_name"]);
+  if (value != label) return NodeTestFailed(name, fmt::format( "has wrong long_name attribute; {} != {}", value, label));
   return ::testing::AssertionSuccess();
 }
 
@@ -55,9 +61,8 @@ static ::testing::AssertionResult NodeHasUnit(
   std::string_view unit) {
   const auto dataset = group.get_dataset(name);
   if (!dataset.attributes.exists("units")) return NodeTestFailed(name, "has no unit attribute");
-  std::string ds_unit;
-  dataset.attributes["units"].read(ds_unit);
-  if (ds_unit != unit) return NodeTestFailed(name, "has wrong unit attribute");
+  auto ds_unit = get_fixed_string(dataset.attributes["units"]);
+  if (ds_unit != unit) return NodeTestFailed(name, fmt::format("has wrong unit attribute; {} != {}", ds_unit, unit));
   return ::testing::AssertionSuccess();
 }
 
@@ -503,32 +508,6 @@ static json make_da00_configuration_complete(){
 }
 
 
-//
-//static json make_da00_configuration_preconfigure_minimal(){
-//  return json::parse(R"""({
-//    "topic": "test.topic.name",
-//    "source": "test_producer_name",
-//    "variables": ["signal"],
-//    "constants": ["x", "y"],
-//    "datasets": [
-//        {
-//          "name": "signal",
-//          "data_type": "uint64",
-//          "shape": [3, 3]
-//        },
-//        {
-//          "name": "x",
-//          "shape": [4],
-//        },
-//        {
-//          "name": "y",
-//          "shape": [3],
-//        }
-//      ]
-//  })""");
-//}
-
-
 static json make_da00_configuration_abbreviated(){
   return json::parse(R"""({
     "topic": "test.topic.name",
@@ -536,8 +515,8 @@ static json make_da00_configuration_abbreviated(){
     "variables": [
         {
           "name": "signal",
-          "unit": "counts",
-          "label": "Integrated counts on strip detector",
+          "unit": {"size": 1024},
+          "label": {"size": 1024},
           "data_type": "uint64",
           "axes": ["x", "y"],
           "shape": [3, 3]
@@ -546,8 +525,8 @@ static json make_da00_configuration_abbreviated(){
     "constants": [
         {
           "name": "x",
-          "unit": "cm",
-          "label": "Binned position along x-axis",
+          "unit": {"size": 1024},
+          "label": {"size": 1024},
           "data_type": "float32",
           "axes": ["x"],
           "shape": [4],
@@ -555,8 +534,8 @@ static json make_da00_configuration_abbreviated(){
         },
         {
           "name": "y",
-          "unit": "fm",
-          "label": "Position along y-axis",
+          "unit": {"size": 1024},
+          "label": {"size": 1024},
           "data_type": "int8",
           "axes": ["y"],
           "shape": [3],
@@ -721,12 +700,12 @@ TEST_F(da00_WriterTestFixture, da00_WriterInitAbbreviatedConfig) {
   const std::vector<hsize_t> x_shape{4}, y_shape{3};
   const auto x_data = std::vector<float>{{10.0, 20.1, 30.2, 40.3}};
   const auto y_data = std::vector<std::int8_t>{{9, 6, 3}};
-  EXPECT_TRUE(NodeHasUnit(_group, "x", "cm"));
-  EXPECT_TRUE(NodeHasLabel(_group, "x", "Binned position along x-axis"));
+  EXPECT_TRUE(NodeHasUnit(_group, "x", ""));
+  EXPECT_TRUE(NodeHasLabel(_group, "x", ""));
   EXPECT_TRUE(NodeHasShape(_group, "x", x_shape, x_shape));
   EXPECT_TRUE(NodeHasData(_group, "x", x_data));
-  EXPECT_TRUE(NodeHasUnit(_group, "y", "fm"));
-  EXPECT_TRUE(NodeHasLabel(_group, "y", "Position along y-axis"));
+  EXPECT_TRUE(NodeHasUnit(_group, "y", ""));
+  EXPECT_TRUE(NodeHasLabel(_group, "y", ""));
   EXPECT_TRUE(NodeHasShape(_group, "y", y_shape, y_shape));
   EXPECT_TRUE(NodeHasData(_group, "y", y_data));
 }
@@ -778,19 +757,29 @@ TEST_F(da00_WriterTestFixture, da00_WriterWriteCopiesData){
   }
 }
 
-//
-// enum class FileCreationLocation {agnostic, memory, disk};
-// hdf5::file::File createFile(const std::string& name, FileCreationLocation location) {
-//     using FCL = FileCreationLocation;
-//     hdf5::property::FileAccessList FAL;
-//     if (location == FCL::agnostic) location = FCL::memory;
-//     if (location == FCL::memory) {
-//       FAL.driver(hdf5::file::MemoryDriver());
-//     }
-//     return hdf5::file::create(name, hdf5::file::AccessFlags::Truncate,
-//                               hdf5::property::FileCreationList(), FAL);
-// }
-//
-// TEST_F(da00_VariableConfigTestFixture, VariableCreateHDFStructure){
-//
-// }
+TEST_F(da00_WriterTestFixture, da00_WriterFillsInAttributes) {
+  auto message = FileWriter::FlatbufferMessage(_buffer.data(), _buffer.size());
+  {
+    auto writer = da00_WriterStandIn();
+    writer.parse_config(make_da00_configuration_abbreviated().dump());
+    writer.init_hdf(_group);
+    writer.reopen(_group);
+    constexpr int write_count{10};
+    for (int i=0; i<write_count; ++i) EXPECT_NO_THROW(writer.write(message));
+    EXPECT_EQ(write_count, writer.Timestamp.dataspace().size());
+  }
+  for (const auto &name : {"signal", "x", "y", "time", "cue_index", "cue_timestamp_zero"}) {
+    EXPECT_TRUE(NodeIsValid(_group, name));
+  }
+  const std::vector<hsize_t> x_shape{4}, y_shape{3};
+  const auto x_data = std::vector<float>{{10.0, 20.1, 30.2, 40.3}};
+  const auto y_data = std::vector<std::int8_t>{{9, 6, 3}};
+  EXPECT_TRUE(NodeHasUnit(_group, "x", "cm"));
+  EXPECT_TRUE(NodeHasLabel(_group, "x", "Binned position along x-axis"));
+  EXPECT_TRUE(NodeHasShape(_group, "x", x_shape, x_shape));
+  EXPECT_TRUE(NodeHasData(_group, "x", x_data));
+  EXPECT_TRUE(NodeHasUnit(_group, "y", "fm"));
+  EXPECT_TRUE(NodeHasLabel(_group, "y", "Position along y-axis"));
+  EXPECT_TRUE(NodeHasShape(_group, "y", y_shape, y_shape));
+  EXPECT_TRUE(NodeHasData(_group, "y", y_data));
+}

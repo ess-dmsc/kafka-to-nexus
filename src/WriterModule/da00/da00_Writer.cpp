@@ -72,8 +72,14 @@ void da00_Writer::handle_first_message(da00_DataArray const * da00) {
       if (inconsistent_changed.first)
         LOG_WARN("Variable {} is configured with inconsistent data", fb.name());
       if (inconsistent_changed.second) {
+        LOG_DEBUG("Variable {} changed, find it's dataset and update it", fb.name());
         if (auto f = VariablePtrs.find(fb.name()); f != VariablePtrs.end()) {
           v.update_variable(f->second);
+        } else {
+          LOG_ERROR("Unable to find dataset to update for Variable {}", fb.name());
+          for (const auto & [name, dptr] : VariablePtrs) {
+            LOG_ERROR("Found dataset for Variable {}", name);
+          }
         }
       }
     }
@@ -94,11 +100,17 @@ void da00_Writer::handle_first_message(da00_DataArray const * da00) {
                 "Data for constant {} is not consistent.", fb.name());
       }
       if (inconsistent_changed.second || needs_data){
+        LOG_INFO("Constant {} changed or needs data written into it, find it's dataset and update it", fb.name());
         if (auto f= ConstantPtrs.find(fb.name()); f != ConstantPtrs.end()){
           if (inconsistent_changed.second)
             v.update_constant(f->second);
           if (needs_data)
             v.write_constant_dataset(f->second, ptr->data()->Data(), ptr->data()->size());
+        } else {
+          LOG_ERROR("Unable to find dataset to update for Constant {}", fb.name());
+          for (const auto & [name, dptr] : ConstantPtrs) {
+            LOG_ERROR("Found dataset for Constant {}", name);
+          }
         }
       }
     }

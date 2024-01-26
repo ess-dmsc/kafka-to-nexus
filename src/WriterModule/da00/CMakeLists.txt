@@ -9,6 +9,7 @@ set(da00_INC
         "da00_Edge.h"
         "da00_Variable.h"
         "da00_Attribute.h"
+        "da00_String.h"
 )
 
 create_writer_module(da00)
