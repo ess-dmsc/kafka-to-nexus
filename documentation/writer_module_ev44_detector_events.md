@@ -42,3 +42,7 @@ Example `nexus_structure` to write radiation detector events:
 | Map from each pulse time to the first event of that pulse | `[j]`       | `reference_time_index` | `[j]`                | `event_index`        |
 | Array of timestamps for indexing                    | `[k]`           | (configured in JSON `cue_interval`) | `[k]` | `cue_timestamp_zero`  |
 | Array of event indexes corresponding to each timestamp in cue_timestamp_zero | `[k]` | (configured in JSON `cue_interval`) | `[k]` | `cue_index` |
+
+
+Note that flatbuffer messages with `event_time_zero` but empty `event_id` will not be written to file.
+
