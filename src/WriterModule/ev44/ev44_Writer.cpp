@@ -91,40 +91,43 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
 
 void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEvent44Message(Message.data());
-  EventTimeOffset.appendArray(
-      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));
-  EventId.appendArray(
-      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->pixel_id()));
   auto CurrentNumberOfEvents = EventMsgFlatbuffer->pixel_id()->size();
   if (EventMsgFlatbuffer->time_of_flight()->size() != CurrentNumberOfEvents) {
     LOG_WARN("ev44 message data lengths differ (time_of_flight={} pixel_id={})",
              EventMsgFlatbuffer->time_of_flight()->size(),
              CurrentNumberOfEvents);
   }
-  const flatbuffers::Vector<int64_t> *CurrentRefTime =
-      EventMsgFlatbuffer->reference_time();
+  EventTimeOffset.appendArray(
+      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));
+  EventId.appendArray(
+      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->pixel_id()));
+  if (CurrentNumberOfEvents > 0) {
+    const flatbuffers::Vector<int64_t> *CurrentRefTime =
+        EventMsgFlatbuffer->reference_time();
 
-  EventTimeZero.appendArray(getFBVectorAsArrayAdapter(CurrentRefTime));
+    EventTimeZero.appendArray(getFBVectorAsArrayAdapter(CurrentRefTime));
 
-  // Shift incoming reference_time_index by the number of events already stored
-  auto MessageReferenceTimeIndex = EventMsgFlatbuffer->reference_time_index();
-  std::vector<uint32_t> ModifiedReferenceTimeIndex;
-  ModifiedReferenceTimeIndex.reserve(MessageReferenceTimeIndex->size());
-  for (auto value : *MessageReferenceTimeIndex) {
-    ModifiedReferenceTimeIndex.push_back(value + EventsWritten);
+    // Shift incoming reference_time_index by the number of events already
+    // stored
+    auto MessageReferenceTimeIndex = EventMsgFlatbuffer->reference_time_index();
+    std::vector<uint32_t> ModifiedReferenceTimeIndex;
+    ModifiedReferenceTimeIndex.reserve(MessageReferenceTimeIndex->size());
+    for (auto value : *MessageReferenceTimeIndex) {
+      ModifiedReferenceTimeIndex.push_back(value + EventsWritten);
+    }
+    EventIndex.appendArray(ModifiedReferenceTimeIndex);
+
+    EventsWritten += CurrentNumberOfEvents;
+    if (EventsWritten > LastCueIndex + CueInterval) {
+      auto LastRefTimeOffset = EventMsgFlatbuffer->time_of_flight()->operator[](
+          CurrentNumberOfEvents - 1);
+      CueTimestampZero.appendElement(*(CurrentRefTime->end() - 1) +
+                                     LastRefTimeOffset);
+      CueIndex.appendElement(EventsWritten - 1);
+      LastCueIndex = EventsWritten - 1;
+    }
+    EventsWrittenMetadataField.setValue(EventsWritten);
   }
-  EventIndex.appendArray(ModifiedReferenceTimeIndex);
-
-  EventsWritten += CurrentNumberOfEvents;
-  if (EventsWritten > LastCueIndex + CueInterval) {
-    auto LastRefTimeOffset = EventMsgFlatbuffer->time_of_flight()->operator[](
-        CurrentNumberOfEvents - 1);
-    CueTimestampZero.appendElement(*(CurrentRefTime->end() - 1) +
-                                   LastRefTimeOffset);
-    CueIndex.appendElement(EventsWritten - 1);
-    LastCueIndex = EventsWritten - 1;
-  }
-  EventsWrittenMetadataField.setValue(EventsWritten);
 }
 
 void ev44_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
