@@ -63,7 +63,7 @@ static void warn_if(bool Condition, const std::string & fmt, const Args &... arg
 
 void da00_Writer::handle_first_message(da00_DataArray const * da00) {
   if (!VariableConfigMap.empty()){
-    for (const auto ptr: *da00->variables()){
+    for (const auto ptr: *da00->data()){
       auto fb = VariableConfig(ptr);
       auto p = VariableConfigMap.find(fb.name());
       if (p == VariableConfigMap.end()) continue;
@@ -85,7 +85,7 @@ void da00_Writer::handle_first_message(da00_DataArray const * da00) {
     }
   }
   if (!ConstantConfigMap.empty()) {
-    for (const auto ptr: *da00->variables()){
+    for (const auto ptr: *da00->data()){
       auto fb = VariableConfig(ptr);
       auto p = ConstantConfigMap.find(fb.name());
       if (p == ConstantConfigMap.end()) continue;
@@ -287,9 +287,8 @@ void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     handle_first_message(da00_obj);
     isFirstMessage = false;
   }
-  // const auto CurrentTimestamp = da00->timestamp();
-  // go through the buffered Variables and write non-constants:
-  for (const auto ptr: *da00_obj->variables()) {
+  // go through the buffered data and write non-constants:
+  for (const auto ptr: *da00_obj->data()) {
     auto name = ptr->name()->str();
     if (auto f = VariablePtrs.find(name); f != VariablePtrs.end()) {
       if (!f->second->is_valid()) {
