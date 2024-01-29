@@ -91,11 +91,11 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
 
 void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEvent44Message(Message.data());
-  auto CurrentNumberOfEvents = EventMsgFlatbuffer->pixel_id()->size();
-  if (EventMsgFlatbuffer->time_of_flight()->size() != CurrentNumberOfEvents) {
+  auto CurrentNumberOfEvents = EventMsgFlatbuffer->time_of_flight()->size();
+  if (EventMsgFlatbuffer->pixel_id()->size() > 0 &&
+      EventMsgFlatbuffer->pixel_id()->size() != CurrentNumberOfEvents) {
     LOG_WARN("ev44 message data lengths differ (time_of_flight={} pixel_id={})",
-             EventMsgFlatbuffer->time_of_flight()->size(),
-             CurrentNumberOfEvents);
+             CurrentNumberOfEvents, EventMsgFlatbuffer->pixel_id()->size());
   }
   EventTimeOffset.appendArray(
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));
