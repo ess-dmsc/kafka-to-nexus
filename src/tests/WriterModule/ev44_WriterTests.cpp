@@ -199,6 +199,60 @@ TEST_F(Event44WriterTests,
          "values from the message";
 }
 
+TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataWithoutPixelIds) {
+  // in ev44 time_of_flight is mandatory if events are present, but pixel_id
+  // can be empty
+  std::vector<int32_t> const TimeOfFlight = {101, 102, 201};
+  std::vector<int32_t> const DetectorID = {};
+  std::vector<int64_t> const ReferenceTime = {1000, 2000};
+  std::vector<int32_t> const ReferenceTimeIndex = {0, 2};
+  auto MessageBuffer =
+      generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
+                             ReferenceTime, ReferenceTimeIndex);
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
+                                            MessageBuffer.size());
+
+  // Create writer and give it the message to write
+  {
+    WriterModule::ev44::ev44_Writer Writer;
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage));
+  } // These braces are required due to "h5.cpp"
+
+  // Read data from the file
+  auto EventTimeOffsetDataset = TestGroup.get_dataset("event_time_offset");
+  auto EventTimeZeroDataset = TestGroup.get_dataset("event_time_zero");
+  auto EventIndexDataset = TestGroup.get_dataset("event_index");
+  auto EventIDDataset = TestGroup.get_dataset("event_id");
+  std::vector<int32_t> EventTimeOffset(
+      EventTimeOffsetDataset.dataspace().size());
+  std::vector<int64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
+  std::vector<int32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<int32_t> EventID(EventIDDataset.dataspace().size());
+  EventTimeOffsetDataset.read(EventTimeOffset);
+  EventTimeZeroDataset.read(EventTimeZero);
+  EventIndexDataset.read(EventIndex);
+  EventIDDataset.read(EventID);
+
+  // Test data in file matches what we originally put in the message
+  EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
+      << "Expected event_time_offset dataset to contain the time of flight "
+         "values from the message";
+  EXPECT_THAT(EventTimeZero, testing::ContainerEq(ReferenceTime))
+      << "Expected event_time_zero dataset to contain the pulse time "
+         "values from the message";
+  EXPECT_THAT(EventIndex, testing::ContainerEq(ReferenceTimeIndex))
+      << "Expected event_index dataset to contain the index of first event for "
+         "the corresponding pulse ";
+  EXPECT_EQ(EventIndex[0], 0)
+      << "Expected first event_index value to be zero "
+         "as the first pulse is always about the first message";
+  EXPECT_THAT(EventID, testing::ContainerEq(DetectorID))
+      << "Expected event_id dataset to contain the detector ID "
+         "values from the message";
+}
+
 TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   // Create a single event message with data we can later check is recorded in
   // the file
@@ -292,8 +346,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
   std::vector<int64_t> ReferenceTime2 = {2500}; // pulse time is present
   std::vector<int64_t> ReferenceTime3 = {3000, 4000, 5000};
   std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
-  std::vector<int32_t> ReferenceTimeIndex2 = {
-      999}; // unclear what is the value that the EFU will put here
+  std::vector<int32_t> ReferenceTimeIndex2 = {-1};
   std::vector<int32_t> ReferenceTimeIndex3 = {0, 3, 4};
   auto MessageBuffer1 =
       generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
