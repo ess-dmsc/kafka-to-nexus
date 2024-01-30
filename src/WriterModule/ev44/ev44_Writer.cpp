@@ -14,6 +14,7 @@
 #include "ev44_Writer.h"
 #include "helper.h"
 #include "json.h"
+#include <algorithm>
 
 namespace {
 template <typename DataType>
@@ -109,13 +110,13 @@ void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
 
     // Shift incoming reference_time_index by the number of events already
     // stored
-    auto MessageReferenceTimeIndex = EventMsgFlatbuffer->reference_time_index();
-    std::vector<uint32_t> ModifiedReferenceTimeIndex;
-    ModifiedReferenceTimeIndex.reserve(MessageReferenceTimeIndex->size());
-    for (auto value : *MessageReferenceTimeIndex) {
-      ModifiedReferenceTimeIndex.push_back(value + EventsWritten);
-    }
-    EventIndex.appendArray(ModifiedReferenceTimeIndex);
+    auto ReferenceTimeIndex = EventMsgFlatbuffer->reference_time_index();
+    ShiftedReferenceTimeIndex.resize(ReferenceTimeIndex->size());
+    std::transform(
+        ReferenceTimeIndex->begin(), ReferenceTimeIndex->end(),
+        ShiftedReferenceTimeIndex.begin(),
+        [this](const int32_t elem) { return elem + this->EventsWritten; });
+    EventIndex.appendArray(ShiftedReferenceTimeIndex);
 
     EventsWritten += CurrentNumberOfEvents;
     if (EventsWritten > LastCueIndex + CueInterval) {
@@ -132,7 +133,7 @@ void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
 
 void ev44_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
                                      const MetaData::TrackerPtr &Tracker) {
-  EventsWrittenMetadataField = MetaData::Value<uint64_t>(HDFGroup, "events");
+  EventsWrittenMetadataField = MetaData::Value<int64_t>(HDFGroup, "events");
   Tracker->registerMetaData(EventsWrittenMetadataField);
 }
 
