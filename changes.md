@@ -3,6 +3,7 @@
 ## Next version
 
 - Fix: ev44 module does not support multiple reference_time (pulse time)
+- Fix: ev44 module should not write pulse times for which there were no events
 
 ## v6.2.0
 
