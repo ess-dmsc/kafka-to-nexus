@@ -14,6 +14,7 @@
 #include "ev44_Writer.h"
 #include "helper.h"
 #include "json.h"
+#include <algorithm>
 
 namespace {
 template <typename DataType>
