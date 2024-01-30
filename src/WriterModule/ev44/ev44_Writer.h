@@ -45,11 +45,16 @@ public:
   }
 
 private:
-  JsonConfig::Field<uint64_t> CueInterval{this, "cue_interval", 100'000'000};
+  JsonConfig::Field<int64_t> CueInterval{this, "cue_interval", 100'000'000};
   JsonConfig::Field<uint64_t> ChunkSize{this, "chunk_size", 1024 * 1024};
-  uint64_t EventsWritten{0};
-  uint64_t LastCueIndex{0};
-  MetaData::Value<uint64_t> EventsWrittenMetadataField;
+  int64_t EventsWritten{0};
+  int64_t LastCueIndex{-1};
+  MetaData::Value<int64_t> EventsWrittenMetadataField;
+
+  // Buffer where ReferenceTimeIndex of every message is shifted by the number
+  // of EventsWritten before storing it on file. Using a member variable to
+  // reduce memory allocations.
+  std::vector<int64_t> ShiftedReferenceTimeIndex;
 };
 } // namespace ev44
 } // namespace WriterModule
