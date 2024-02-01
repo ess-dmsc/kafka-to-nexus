@@ -293,6 +293,14 @@ private:
     dataset->appendArray(array, shape);
   }
 
+  template<class DataType>
+  void append_missing_variable(variable_t & dataset) const {
+    using nl = std::numeric_limits<DataType>;
+    auto shape = this->shape();
+    auto count = std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<>());
+    std::vector<DataType> missing(count, nl::has_quiet_NaN ? nl::quiet_NaN() : (nl::max)());
+    dataset->appendArray(missing, shape);
+  }
 
 public:
   auto insert_constant_dataset(group_t const & group) const {
@@ -403,6 +411,25 @@ public:
       }
     }
     return call_map[fb->data_type()]();
+  }
+  auto variable_append_missing(variable_t & dataset) const {
+    std::map<dtype_t, std::function<void()>> call_map {
+            {dtype_t::int8, [&](){append_missing_variable<std::int8_t>(dataset);}},
+            {dtype_t::uint8, [&](){append_missing_variable<std::uint8_t>(dataset);}},
+            {dtype_t::int16, [&](){append_missing_variable<std::int16_t>(dataset);}},
+            {dtype_t::uint16, [&](){append_missing_variable<std::uint16_t>(dataset);}},
+            {dtype_t::int32, [&](){append_missing_variable<std::int32_t>(dataset);}},
+            {dtype_t::uint32, [&](){append_missing_variable<std::uint32_t>(dataset);}},
+            {dtype_t::int64, [&](){append_missing_variable<std::int64_t>(dataset);}},
+            {dtype_t::uint64, [&](){append_missing_variable<std::uint64_t>(dataset);}},
+            {dtype_t::float32, [&](){append_missing_variable<std::float_t>(dataset);}},
+            {dtype_t::float64, [&](){append_missing_variable<std::double_t>(dataset);}},
+            {dtype_t::c_string, [&](){append_missing_variable<char>(dataset);}}
+    };
+    if (!has_dtype()) {
+      LOG_ERROR("Can not append missing data for {} without data_type!", name());
+    }
+    return call_map[dtype()]();
   }
 
 

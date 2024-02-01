@@ -520,6 +520,20 @@ static json make_da00_configuration_abbreviated(){
           "data_type": "uint64",
           "axes": ["x", "y"],
           "shape": [3, 3]
+        },
+        {
+          "name": "signal_error",
+          "unit": {"size": 1024},
+          "label": {"size": 1024},
+          "data_type": "float64",
+          "axes": ["x", "y"],
+          "shape": [3, 3]
+        },
+        {
+          "name": "gain",
+          "data_type": "uint32",
+          "axes": ["x"],
+          "shape": [3]
         }
       ],
     "constants": [
@@ -694,7 +708,7 @@ TEST_F(da00_WriterTestFixture, da00_WriterInitAbbreviatedConfig) {
     writer.parse_config(make_da00_configuration_abbreviated().dump());
     writer.init_hdf(_group);
   }
-  for (const auto &name : {"signal", "x", "y", "time", "cue_index", "cue_timestamp_zero"}) {
+  for (const auto &name : {"signal", "signal_error", "gain", "x", "y", "time", "cue_index", "cue_timestamp_zero"}) {
     EXPECT_TRUE(NodeIsValid(_group, name));
   }
   const std::vector<hsize_t> x_shape{4}, y_shape{3};
@@ -768,8 +782,29 @@ TEST_F(da00_WriterTestFixture, da00_WriterFillsInAttributes) {
     for (int i=0; i<write_count; ++i) EXPECT_NO_THROW(writer.write(message));
     EXPECT_EQ(write_count, writer.Timestamp.dataspace().size());
   }
-  for (const auto &name : {"signal", "x", "y", "time", "cue_index", "cue_timestamp_zero"}) {
+  for (const auto &name : {"signal", "signal_error", "gain", "x", "y", "time", "cue_index", "cue_timestamp_zero"}) {
     EXPECT_TRUE(NodeIsValid(_group, name));
+  }
+  {
+    // the FlatbufferMessage does not include "signal_error" at all
+    // This should produce log messages, and fill the dataset with non-signaling
+    // NaN values (since it is float64 valued)
+    const auto shape = hdf5::dataspace::Simple(_group.get_dataset("signal_error").dataspace());
+    std::vector<double> data(shape.size());
+    _group.get_dataset("signal_error").read(data);
+    for (auto const & x: data) {
+      EXPECT_TRUE(std::isnan(x));
+    }
+  }
+  {
+    // the messages also do not contain "gain", which should be substituted
+    // by 2^32-1 since it is uint32 valued
+    const auto shape = hdf5::dataspace::Simple(_group.get_dataset("gain").dataspace());
+    std::vector<std::uint32_t> data(shape.size());
+    _group.get_dataset("gain").read(data);
+    for (auto const & x: data) {
+      EXPECT_EQ(x, (std::numeric_limits<std::uint32_t>::max)());
+    }
   }
   const std::vector<hsize_t> x_shape{4}, y_shape{3};
   const auto x_data = std::vector<float>{{10.0, 20.1, 30.2, 40.3}};

@@ -288,6 +288,8 @@ void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     isFirstMessage = false;
   }
   // go through the buffered data and write non-constants:
+  std::vector<std::string> variable_order;
+  variable_order.reserve(VariablePtrs.size());
   for (const auto ptr: *da00_obj->data()) {
     auto name = ptr->name()->str();
     if (auto f = VariablePtrs.find(name); f != VariablePtrs.end()) {
@@ -295,9 +297,27 @@ void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
         LOG_ERROR("Variable {} dataset pointer is not valid. Buffered data is ignored", name);
       }
       VariableConfigMap[name].variable_append(f->second, ptr);
+      variable_order.push_back(name);
     } else {
       LOG_DEBUG("Buffer Variable {} is not a configured dataset. Buffered data is ignored", name);
     }
+  }
+  if (variable_order.size() != VariablePtrs.size()) {
+    std::stringstream message;
+    if (VariablePtrs.size() - variable_order.size() > 1) {
+      message << "Buffered data is missing variables ";
+    } else {
+      message << "Buffered data is missing variable ";
+    }
+    for (auto & [name, ptr]: VariablePtrs) {
+      if (std::find(variable_order.begin(), variable_order.end(), name) == variable_order.end()) {
+        VariableConfigMap[name].variable_append_missing(ptr);
+        message << name << ", ";
+      }
+    }
+    auto str = message.str();
+    str.erase(str.size() - 2);
+    LOG_ERROR(str);
   }
   Timestamp.appendElement(da00_obj->timestamp());
   if (++CueCounter == CueInterval) {
