@@ -7,5 +7,4 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "JobCreator.h"
 #include <gtest/gtest.h>
