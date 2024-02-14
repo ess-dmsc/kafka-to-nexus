@@ -115,13 +115,6 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
 
 using LogLevel = Log::Severity;
 
-struct CmdResponse {
-  Log::Severity LogLevel;
-  int StatusCode{0};
-  bool SendResponse;
-  std::function<std::string()> MessageString;
-};
-
 bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
                          std::string &ErrorStr) {
   try {
@@ -162,120 +155,22 @@ void checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
 void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
                                  bool IsJobPoolCommand) {
   try {
-    std::string ExceptionMessage;
     StartMessage StartJob;
-    std::vector<std::pair<std::function<bool()>, CmdResponse>> CommandSteps;
-    CommandSteps.push_back(
-        {[&]() {
-           return extractStartMessage(CommandMsg, StartJob, ExceptionMessage);
-         },
-         {LogLevel::Warning, 0, false, [&]() {
-            return fmt::format(
-                "Failed to extract start command from flatbuffer. The "
-                "error was: {}",
-                ExceptionMessage);
-          }}});
-
-    CommandSteps.push_back(
-        {[&]() {
-           return not(IsJobPoolCommand xor (StartJob.ServiceID != ServiceId));
-         },
-         {LogLevel::Debug, 0, false, [&]() {
-            return fmt::format(
-                R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
-                ServiceId, StartJob.ServiceID);
-          }}});
-
-    /// \note This test should never return false as consumption of new jobs
-    /// should only be possible when the current one is finished. However, there
-    /// is an indication that in some cases jobs will be consumed regardless.
-    /// This statement is made 2022-03-21
-    CommandSteps.push_back({[&]() { return not IsWritingNow(); },
-                            {LogLevel::Error, 400, true, [&]() {
-                               return fmt::format(
-                                   "Rejected start command as there is "
-                                   "currently a write job in progress.");
-                             }}});
-
-    CommandSteps.push_back(
-        {[&]() {
-           if (not StartJob.ControlTopic.empty()) {
-             if (IsJobPoolCommand) {
-               LOG_INFO(
-                   R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
-                   StartJob.ControlTopic, StartJob.StartTime);
-               CommandSource = std::make_unique<CommandListener>(
-                   uri::URI{CommandTopicAddress, StartJob.ControlTopic},
-                   KafkaSettings, StartJob.StartTime);
-               AltCommandResponse = std::make_unique<FeedbackProducer>(
-                   ServiceId,
-                   uri::URI{CommandTopicAddress, StartJob.ControlTopic},
-                   KafkaSettings);
-               std::swap(CommandResponse, AltCommandResponse);
-               UsingAltTopic = true;
-             } else {
-               return false;
-             }
-           }
-           return true;
-         },
-         {LogLevel::Error, 400, true, [&]() {
-            return fmt::format(
-                R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
-                StartJob.ControlTopic);
-          }}});
-
-    CommandSteps.push_back(
-        {[&]() { return isValidUUID(StartJob.JobID); },
-         {LogLevel::Warning, 400, true, [&]() {
-            return fmt::format(
-                R"(Rejected start command as the job id was invalid (it was: "{}").)",
-                StartJob.JobID);
-          }}});
-
-    CommandSteps.push_back(
-        {[&]() {
-           try {
-             DoStart(StartJob);
-             NexusStructure = StartJob.NexusStructure;
-           } catch (std::exception const &E) {
-             ExceptionMessage = E.what();
-             return false;
-           }
-           return true;
-         },
-         {LogLevel::Error, 500, true, [&]() {
-            return fmt::format(
-                "Failed to start filewriting job. The failure message was: {}",
-                ExceptionMessage);
-          }}});
 
     ActionResult SendResult{ActionResult::Success};
-    CmdResponse OutcomeValue{
-        LogLevel::Info, 201, true, [&]() {
-          return fmt::format(
-              "Started write job with start time {} and stop time {}.",
-              toUTCDateTime(StartJob.StartTime),
-              toUTCDateTime(StartJob.StopTime));
-        }};
-
-    for (auto const &Step : CommandSteps) {
-      // cppcheck-suppress useStlAlgorithm
-      if (not Step.first()) {
-        OutcomeValue = Step.second;
-        SendResult = ActionResult::Failure;
-        break;
-      }
+    CmdResponse ValidationResponse =
+        validateStartCommand(CommandMsg, StartJob, IsJobPoolCommand);
+    if (ValidationResponse.StatusCode >= 400) {
+      SendResult = ActionResult::Failure;
     }
 
     checkMsgTimeStampAgainstWallClock(CommandMsg.getMetaData().timestamp());
-
-    Log::Msg(OutcomeValue.LogLevel, OutcomeValue.MessageString());
-    if (OutcomeValue.SendResponse) {
+    Log::Msg(ValidationResponse.LogLevel, ValidationResponse.MessageString());
+    if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
-          StartJob.StopTime, OutcomeValue.StatusCode,
-          OutcomeValue.MessageString());
+          StartJob.StopTime, ValidationResponse.StatusCode,
+          ValidationResponse.MessageString());
     }
     if (SendResult == ActionResult::Failure) {
       revertCommandTopic();
@@ -283,6 +178,96 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
   } catch (std::exception &E) {
     LOG_CRITICAL("Unable to process start command, error was: {}", E.what());
   }
+}
+
+CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
+                                          StartMessage &StartJob,
+                                          bool IsJobPoolCommand) {
+  std::string ExceptionMessage;
+  if (not extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
+    return CmdResponse{
+        LogLevel::Warning, 400, false, [&]() {
+          return fmt::format(
+              "Failed to extract start command from flatbuffer. The "
+              "error was: {}",
+              ExceptionMessage);
+        }};
+  }
+
+  if (not(IsJobPoolCommand xor (StartJob.ServiceID != ServiceId))) {
+    return CmdResponse{
+        LogLevel::Debug, 400, false, [&]() {
+          return fmt::format(
+              R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
+              ServiceId, StartJob.ServiceID);
+        }};
+  }
+
+  /// \note This test should never return false as consumption of new jobs
+  /// should only be possible when the current one is finished. However, there
+  /// is an indication that in some cases jobs will be consumed regardless.
+  /// This statement is made 2022-03-21
+  if (IsWritingNow()) {
+    return CmdResponse{LogLevel::Error, 400, true, [&]() {
+                         return fmt::format(
+                             "Rejected start command as there is "
+                             "currently a write job in progress.");
+                       }};
+  }
+
+  if (not StartJob.ControlTopic.empty()) {
+    if (IsJobPoolCommand) {
+      LOG_INFO(
+          R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
+          StartJob.ControlTopic, StartJob.StartTime);
+      CommandSource = std::make_unique<CommandListener>(
+          uri::URI{CommandTopicAddress, StartJob.ControlTopic}, KafkaSettings,
+          StartJob.StartTime);
+      AltCommandResponse = std::make_unique<FeedbackProducer>(
+          ServiceId, uri::URI{CommandTopicAddress, StartJob.ControlTopic},
+          KafkaSettings);
+      std::swap(CommandResponse, AltCommandResponse);
+      UsingAltTopic = true;
+    } else {
+      return CmdResponse{
+          LogLevel::Error, 400, true, [&]() {
+            return fmt::format(
+                R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
+                StartJob.ControlTopic);
+          }};
+    }
+  }
+
+  if (not isValidUUID(StartJob.JobID)) {
+    return CmdResponse{
+        LogLevel::Warning, 400, true, [&]() {
+          return fmt::format(
+              R"(Rejected start command as the job id was invalid (it was: "{}").)",
+              StartJob.JobID);
+        }};
+  }
+
+  try {
+    DoStart(StartJob);
+    NexusStructure = StartJob.NexusStructure;
+  } catch (std::exception const &E) {
+    ExceptionMessage = E.what();
+    return CmdResponse{LogLevel::Error, 500, true, [&]() {
+                         return fmt::format(
+                             "Failed to start filewriting job. The "
+                             "failure message was: {}",
+                             ExceptionMessage);
+                       }};
+  }
+
+  // Success
+  return CmdResponse{
+      LogLevel::Info, 201, true, [&]() {
+        return fmt::format(
+            "Started write job with start time {} and stop time {}.",
+            toUTCDateTime(StartJob.StartTime),
+            toUTCDateTime(StartJob.StopTime));
+      }};
 }
 
 bool extractStopMessage(FileWriter::Msg const &CommandMsg, StopMessage &Msg,
@@ -371,9 +356,9 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
            return true;
          },
          {LogLevel::Error, 500, true, [&]() {
-            return fmt::format(
-                "Failed to execute stop command. The failure message was: {}",
-                ResponseMessage);
+            return fmt::format("Failed to execute stop command. The "
+                               "failure message was: {}",
+                               ResponseMessage);
           }}});
     ActionResult SendResult{ActionResult::Success};
 

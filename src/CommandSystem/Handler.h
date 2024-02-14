@@ -27,6 +27,13 @@ using StopNowFuncType = std::function<void()>;
 using IsWritingFuncType = std::function<bool()>;
 using GetJobIdFuncType = std::function<std::string()>;
 
+struct CmdResponse {
+  Log::Severity LogLevel;
+  int StatusCode{0};
+  bool SendResponse;
+  std::function<std::string()> MessageString;
+};
+
 class HandlerBase {
 public:
   HandlerBase() = default;
@@ -86,6 +93,15 @@ private:
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   void handleStartCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
+
+  /// \brief Validate start command.
+  ///
+  /// \param CommandMsg Kafka message.
+  /// \param StartJob Returns the parsed start message as a StartMessage struct.
+  /// \return Metadata about the success/failure after processing the command.
+  CmdResponse validateStartCommand(const FileWriter::Msg &CommandMsg,
+                                   StartMessage &StartJob,
+                                   bool IsJobPoolCommand);
 
   /// \brief Validate and process stop command.
   ///
