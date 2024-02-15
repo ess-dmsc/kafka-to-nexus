@@ -2,8 +2,8 @@ version: "3.5"
 
 services:
   kafka:
-    container_name: kafka
-    hostname: kafka
+    container_name: ${FILEWRITER_KAFKA_CONTAINER_NAME:-kafka}
+    hostname: ${FILEWRITER_KAFKA_CONTAINER_NAME:-kafka}
     image: confluentinc/cp-kafka:7.4.3
     deploy:
       resources:
@@ -28,7 +28,7 @@ services:
       KAFKA_LOG_RETENTION_MS: -1  # keep data forever, required for tests involving fake "historical" data
       ## listeners
       KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9093
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://kafka:9093
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://${FILEWRITER_KAFKA_CONTAINER_NAME:-kafka}:9092,OUTSIDE://${FILEWRITER_KAFKA_CONTAINER_NAME:-kafka}:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
     healthcheck:
@@ -39,8 +39,8 @@ services:
       start_period: 10s
 
   zookeeper:
-    container_name: zookeeper
-    hostname: zookeeper
+    container_name: ${FILEWRITER_ZOOKEEPER_CONTAINER_NAME:-zookeeper}
+    hostname: ${FILEWRITER_ZOOKEEPER_CONTAINER_NAME:-zookeeper}
     image: confluentinc/cp-zookeeper:7.4.3
     deploy:
       resources:
@@ -54,7 +54,7 @@ services:
       - frontend
 
   filewriter:
-    container_name: filewriter
+    container_name: ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter}
     image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
     depends_on:
       kafka:
