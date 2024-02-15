@@ -26,6 +26,16 @@ Handler::Handler(std::string const &ServiceIdentifier,
       CommandResponse(std::make_unique<FeedbackProducer>(
           ServiceIdentifier, CommandTopicUri, Settings)),
       CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
+Handler::Handler(std::string const &ServiceIdentifier,
+                 Kafka::BrokerSettings const &Settings,
+                 uri::URI CommandTopicUri,
+                 std::unique_ptr<JobListener> JobConsumer,
+                 std::unique_ptr<CommandListener> CommandConsumer,
+                 std::unique_ptr<FeedbackProducerBase> Response)
+    : ServiceId(ServiceIdentifier), JobPool(std::move(JobConsumer)),
+      CommandSource(std::move(CommandConsumer)),
+      CommandResponse(std::move(Response)),
+      CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
 
 void Handler::loopFunction() {
   if (not IsWritingNow()) {

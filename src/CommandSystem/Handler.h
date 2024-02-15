@@ -59,7 +59,8 @@ public:
   Handler(std::string const &ServiceIdentifier,
           Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
           uri::URI CommandTopicUri);
-  Handler(std::string ServiceIdentifier,
+  Handler(std::string const &ServiceIdentifier,
+          Kafka::BrokerSettings const &Settings, uri::URI CommandTopicUri,
           std::unique_ptr<JobListener> JobConsumer,
           std::unique_ptr<CommandListener> CommandConsumer,
           std::unique_ptr<FeedbackProducerBase> Response);

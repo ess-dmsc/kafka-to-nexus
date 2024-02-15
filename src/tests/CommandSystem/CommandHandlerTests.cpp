@@ -77,7 +77,8 @@ protected:
     feedbackProducerMock_ = std::make_unique<FeedbackProducerMock>();
 
     handlerUnderTest_ = std::make_unique<Handler>(
-        "ServiceIdentifier", std::move(jobListenerMock_),
+        "ServiceIdentifier", Kafka::BrokerSettings{},
+        uri::URI("localhost:1111/no_topic_here"), std::move(jobListenerMock_),
         std::move(commandListenerMock_), std::move(feedbackProducerMock_));
   }
 };
