@@ -30,7 +30,7 @@ docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c 'scl ena
 
 echo "Creating Kafka topics..."
 while read topic; do
-  docker exec kafka bash -c "kafka-topics --bootstrap-server localhost:9092 --create --topic $topic"
+  docker exec ${FILEWRITER_KAFKA_CONTAINER_NAME:-kafka} bash -c "kafka-topics --bootstrap-server localhost:9092 --create --topic $topic"
 done < topics.txt
 
 echo "Preparation completed!"
