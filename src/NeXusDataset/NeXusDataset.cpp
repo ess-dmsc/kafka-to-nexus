@@ -26,6 +26,15 @@ Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
   }
 }
 
+SignedTime::SignedTime(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
+    : ExtensibleDataset<std::int64_t>(Parent, "time", CMode, ChunkSize) {
+  if (Mode::Create == CMode) {
+    auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
+    StartAttr.write("1970-01-01T00:00:00Z");
+    auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
+    UnitAttr.write("ns");
+  }
+}
 DoubleValue::DoubleValue(hdf5::node::Group const &Parent,
                          NeXusDataset::Mode CMode, size_t ChunkSize)
     : NeXusDataset::ExtensibleDataset<double>(Parent, "value", CMode,
@@ -38,6 +47,18 @@ CueIndex::CueIndex(hdf5::node::Group const &Parent, Mode CMode,
 CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
                                    size_t ChunkSize)
     : ExtensibleDataset<std::uint64_t>(Parent, "cue_timestamp_zero", CMode,
+                                       ChunkSize) {
+  if (Mode::Create == CMode) {
+    auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
+    StartAttr.write("1970-01-01T00:00:00Z");
+    auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
+    UnitAttr.write("ns");
+  }
+}
+
+SignedCueTimestampZero::SignedCueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
+                                   size_t ChunkSize)
+    : ExtensibleDataset<std::int64_t>(Parent, "cue_timestamp_zero", CMode,
                                        ChunkSize) {
   if (Mode::Create == CMode) {
     auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");

@@ -26,6 +26,9 @@
 namespace WriterModule::da00 {
 /// See parent class for documentation.
 class da00_Writer : public WriterModule::Base {
+  using timestamp_t = NeXusDataset::SignedTime;
+  using cueindex_t = NeXusDataset::CueIndex;
+  using cuezero_t = NeXusDataset::SignedCueTimestampZero;
 public:
   da00_Writer() : WriterModule::Base("da00", false, "NXdata") {}
   ~da00_Writer() override = default;
@@ -38,9 +41,9 @@ public:
 
   void writeImpl(FileWriter::FlatbufferMessage const &Message) override;
 
-  NeXusDataset::Time Timestamp;
-  NeXusDataset::CueIndex CueIndex;
-  NeXusDataset::CueTimestampZero CueTimestampZero;
+  timestamp_t Timestamp;
+  cueindex_t CueIndex;
+  cuezero_t CueTimestampZero;
 
 protected:
   // register config keys, parsed and filled-in by parent class

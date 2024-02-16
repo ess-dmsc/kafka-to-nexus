@@ -269,9 +269,9 @@ InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
           LOG_ERROR("Constant {} configuration lacks shape. Can not reopen dataset", name);
       }
     }
-    CueIndex = NeXusDataset::CueIndex(HDFGroup, NeXusDataset::Mode::Open);
-    CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
-    Timestamp = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
+    CueIndex = cueindex_t(HDFGroup, NeXusDataset::Mode::Open);
+    CueTimestampZero = cuezero_t(HDFGroup, NeXusDataset::Mode::Open);
+    Timestamp = timestamp_t(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
     LOG_ERROR(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
