@@ -1,7 +1,6 @@
 default:
   tags:
     - docker
-    - dc-zone
   artifacts:
     expire_in: 1 week
 
