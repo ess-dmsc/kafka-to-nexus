@@ -48,8 +48,40 @@ public:
 };
 
 /// \brief Class for representing a timestamp (NeXus) dataset where the
-/// timestamps are in ns since UNIX epoch.
-class Time : public ExtensibleDataset<std::uint64_t> {
+/// timestamps are in ns since UNIX epoch., and the created dataset _always_
+/// has attributes for 'start' and 'units'
+template<class T=std::uint64_t>
+class Timestamp : public ExtensibleDataset<T> {
+public:
+  Timestamp() = default;
+  Timestamp(std::string && name, hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024)
+  : ExtensibleDataset<T>(Parent, std::move(name), CMode, ChunkSize) {
+    if (Mode::Create == CMode) {
+      auto StartAttr = ExtensibleDatasetBase::attributes.create<std::string>("start");
+      StartAttr.write("1970-01-01T00:00:00Z");
+      auto UnitAttr = ExtensibleDatasetBase::attributes.create<std::string>("units");
+      UnitAttr.write("ns");
+    }
+  }
+};
+
+/// \brief Class for representing ns timestamps.
+template<class T=std::uint64_t>
+class TypedTime: public Timestamp<T> {
+public:
+  TypedTime() = default;
+  /// \brief Create the time dataset of NXLog.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  TypedTime(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024)
+    : Timestamp<T>("time", Parent, CMode, ChunkSize) {}
+};
+
+/// \brief Class for representing unsigned-integer ns timestamps.
+class Time: public TypedTime<> {
 public:
   Time() = default;
   /// \brief Create the time dataset of NXLog.
@@ -58,21 +90,8 @@ public:
   /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
   /// size in number of elements for this dataset (if/when creating it). \throws
   /// std::runtime_error if dataset already exists.
-  Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
-};
-
-/// \brief Class for representing a timestamp (NeXus) dataset where the
-/// timestamps are in ns since UNIX epoch using signed integers.
-class SignedTime : public ExtensibleDataset<std::int64_t> {
-public:
-  SignedTime() = default;
-  /// \brief Create the time dataset of NXLog.
-  ///
-  /// \param Parent The group/node where the dataset exists or should be
-  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
-  /// size in number of elements for this dataset (if/when creating it). \throws
-  /// std::runtime_error if dataset already exists.
-  SignedTime(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
+  Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024)
+    : TypedTime<>(Parent, CMode, ChunkSize) {}
 };
 /// \brief Represents the index register for searching a large NXlog
 /// (relatively) quickly based on timestamp.
@@ -91,7 +110,23 @@ public:
 
 /// \brief Represents the timestamp register for searching a large NXlog
 /// (relatively) quickly.
-class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
+template <class T=std::uint64_t>
+class TypedCueTimestampZero: public Timestamp<T> {
+public:
+  TypedCueTimestampZero() = default;
+  /// \brief Create the cue_timestamp_zero dataset of NXLog and NXevent_data.
+  ///
+  /// \param Parent The group/node where the dataset exists or should be
+  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
+  /// size in number of elements for this dataset (if/when creating it). \throws
+  /// std::runtime_error if dataset already exists.
+  TypedCueTimestampZero(hdf5::node::Group const& Parent, Mode CMode, size_t ChunkSize=1024):
+  Timestamp<T>("cue_timestamp_zero", Parent, CMode, ChunkSize) {}
+};
+
+/// \brief Represents the timestamp register for searching a large NXlog
+/// (relatively) quickly.
+class CueTimestampZero: public TypedCueTimestampZero<> {
 public:
   CueTimestampZero() = default;
   /// \brief Create the cue_timestamp_zero dataset of NXLog and NXevent_data.
@@ -100,23 +135,8 @@ public:
   /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
   /// size in number of elements for this dataset (if/when creating it). \throws
   /// std::runtime_error if dataset already exists.
-  CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
-                   size_t ChunkSize = 1024);
-};
-
-/// \brief Represents the timestamp register for searching a large NXlog
-/// (relatively) quickly.
-class SignedCueTimestampZero : public ExtensibleDataset<std::int64_t> {
-public:
-  SignedCueTimestampZero() = default;
-  /// \brief Create the cue_timestamp_zero dataset of NXLog and NXevent_data.
-  ///
-  /// \param Parent The group/node where the dataset exists or should be
-  /// created. \param CMode Create or open dataset. \param ChunkSize The chunk
-  /// size in number of elements for this dataset (if/when creating it). \throws
-  /// std::runtime_error if dataset already exists.
-  SignedCueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
-                   size_t ChunkSize = 1024);
+  CueTimestampZero(hdf5::node::Group const& Parent, Mode CMode, size_t ChunkSize=1024):
+  TypedCueTimestampZero<>(Parent, CMode, ChunkSize) {}
 };
 
 /// \brief Represents the (radiation) detector event id dataset in a

@@ -26,9 +26,9 @@
 namespace WriterModule::da00 {
 /// See parent class for documentation.
 class da00_Writer : public WriterModule::Base {
-  using timestamp_t = NeXusDataset::SignedTime;
+  using timestamp_t = NeXusDataset::TypedTime<std::int64_t>;
   using cueindex_t = NeXusDataset::CueIndex;
-  using cuezero_t = NeXusDataset::SignedCueTimestampZero;
+  using cuezero_t = NeXusDataset::TypedCueTimestampZero<std::int64_t>;
 public:
   da00_Writer() : WriterModule::Base("da00", false, "NXdata") {}
   ~da00_Writer() override = default;
