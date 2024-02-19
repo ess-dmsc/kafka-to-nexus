@@ -10,7 +10,7 @@
 #include "kafka-to-nexus.h"
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
-#include "HDFVersionCheck.h"
+#include "HDF5/HDFVersionCheck.h"
 #include "JobCreator.h"
 #include "Metrics/CarbonSink.h"
 #include "Metrics/LogSink.h"

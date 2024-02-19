@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "MultiVector.h"
+#include "HDF5/MultiVector.h"
 #include <gtest/gtest.h>
 
 TEST(MultiVectorTest, Dimensions1) {

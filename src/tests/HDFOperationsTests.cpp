@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "helpers/HDFFileTestHelper.h"
 #include <gtest/gtest.h>
 #include <iostream>

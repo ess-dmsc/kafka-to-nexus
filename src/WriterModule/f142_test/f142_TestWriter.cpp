@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "f142_TestWriter.h"
-#include "HDFFile.h"
+#include "HDF5/HDFFile.h"
 #include "WriterRegistrar.h"
 
 namespace WriterModule {

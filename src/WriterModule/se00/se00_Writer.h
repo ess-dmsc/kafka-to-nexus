@@ -15,7 +15,7 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "HDFFile.h"
+#include "HDF5/HDFFile.h"
 #include "JsonConfig/Field.h"
 #include "Msg.h"
 #include "NeXusDataset/NeXusDataset.h"

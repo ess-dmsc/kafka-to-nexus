@@ -12,7 +12,7 @@
 #include "JobCreator.h"
 #include "CommandSystem/Parser.h"
 #include "FileWriterTask.h"
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "Msg.h"
 #include "StreamController.h"
 #include "WriterModule/mdat/mdat_Writer.h"

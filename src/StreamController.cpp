@@ -1,6 +1,6 @@
 #include "StreamController.h"
 #include "FileWriterTask.h"
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
 #include "Stream/Partition.h"

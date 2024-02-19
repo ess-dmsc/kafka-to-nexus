@@ -9,7 +9,7 @@
 
 #include "ns10_Writer.h"
 #include "FlatbufferMessage.h"
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "WriterRegistrar.h"
 #include <ns10_cache_entry_generated.h>
 

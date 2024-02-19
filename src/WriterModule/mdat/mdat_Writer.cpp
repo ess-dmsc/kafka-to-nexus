@@ -9,9 +9,9 @@
 
 #include "mdat_Writer.h"
 #include "FileWriterTask.h"
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "ModuleHDFInfo.h"
-#include "MultiVector.h"
+#include "HDF5/MultiVector.h"
 #include "TimeUtility.h"
 #include "json.h"
 

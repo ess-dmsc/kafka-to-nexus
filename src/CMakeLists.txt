@@ -75,8 +75,8 @@ set(kafka_to_nexus_SRC
         FileWriterTask.cpp
         Source.cpp
         FlatbufferReader.cpp
-        HDFFile.cpp
-        HDFAttributes.cpp
+        HDF5/HDFFile.cpp
+        HDF5/HDFAttributes.cpp
         Kafka/Consumer.cpp
         Kafka/Producer.cpp
         Kafka/ProducerTopic.cpp
@@ -105,8 +105,8 @@ set(kafka_to_nexus_SRC
         Stream/SourceFilter.cpp
         Stream/Partition.cpp
         Stream/Topic.cpp
-        HDFOperations.cpp
-        HDFVersionCheck.cpp
+        HDF5/HDFOperations.cpp
+        HDF5/HDFVersionCheck.cpp
         CommandSystem/CommandListener.cpp
         TimeUtility.cpp
         JsonConfig/Field.cpp
@@ -125,8 +125,8 @@ set(kafka_to_nexus_INC
         CommandSystem/Parser.h
         FileWriterTask.h
         FlatbufferReader.h
-        HDFFile.h
-        HDFAttributes.h
+        HDF5/HDFFile.h
+        HDF5/HDFAttributes.h
         WriterModuleBase.h
         helper.h
         json.h
@@ -178,8 +178,8 @@ set(kafka_to_nexus_INC
         Stream/Topic.h
         ThreadedExecutor.h
         TimeUtility.h
-        HDFOperations.h
-        HDFVersionCheck.h
+        HDF5/HDFOperations.h
+        HDF5/HDFVersionCheck.h
         ModuleSettings.h
         ModuleHDFInfo.h
         CommandSystem/CommandListener.h
@@ -187,7 +187,7 @@ set(kafka_to_nexus_INC
         CommandSystem/JobListener.h
         JsonConfig/Field.h
         JsonConfig/FieldHandler.h
-        MultiVector.h
+        HDF5/MultiVector.h
         SetThreadName.h
         MetaData/Tracker.h
         MetaData/Value.h

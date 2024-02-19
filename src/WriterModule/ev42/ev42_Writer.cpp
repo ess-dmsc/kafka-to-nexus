@@ -9,7 +9,7 @@
 
 #include <ev42_events_generated.h>
 
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "WriterRegistrar.h"
 #include "ev42_Writer.h"
 #include "helper.h"

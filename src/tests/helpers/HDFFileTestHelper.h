@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "HDFFile.h"
+#include "HDF5/HDFFile.h"
 #include "MainOpt.h"
 #include <h5cpp/hdf5.hpp>
 

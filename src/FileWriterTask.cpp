@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FileWriterTask.h"
-#include "HDFFile.h"
+#include "HDF5/HDFFile.h"
 #include "Source.h"
 #include "helper.h"
 #include "logger.h"

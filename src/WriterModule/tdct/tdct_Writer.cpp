@@ -13,7 +13,7 @@
 /// \brief Implement classes required for writing chopper time stamps.
 
 #include "tdct_Writer.h"
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "WriterRegistrar.h"
 #include <tdct_timestamps_generated.h>
 

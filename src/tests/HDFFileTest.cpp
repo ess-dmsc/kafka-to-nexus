@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "HDFFile.h"
+#include "HDF5/HDFFile.h"
 #include <filesystem>
 #include <gtest/gtest.h>
 

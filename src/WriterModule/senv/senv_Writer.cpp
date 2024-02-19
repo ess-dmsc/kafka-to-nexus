@@ -14,7 +14,7 @@
 
 #include "helper.h"
 
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "WriterRegistrar.h"
 #include "senv_Writer.h"
 #include <senv_data_generated.h>

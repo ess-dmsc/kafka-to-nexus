@@ -15,7 +15,7 @@
 #include "helper.h"
 
 #include "ADAr_Writer.h"
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "WriterRegistrar.h"
 #include <ADAr_area_detector_array_generated.h>
 

@@ -14,7 +14,7 @@
 
 #include "helper.h"
 
-#include "HDFOperations.h"
+#include "HDF5/HDFOperations.h"
 #include "WriterRegistrar.h"
 #include "se00_Writer.h"
 #include <se00_data_generated.h>

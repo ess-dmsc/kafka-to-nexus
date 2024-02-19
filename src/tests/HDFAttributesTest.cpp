@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "HDFAttributes.h"
+#include "HDF5/HDFAttributes.h"
 #include "TimeUtility.h"
 #include "helpers/HDFFileTestHelper.h"
 #include <gtest/gtest.h>

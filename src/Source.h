@@ -10,7 +10,7 @@
 #pragma once
 
 #include "FlatbufferReader.h"
-#include "HDFFile.h"
+#include "HDF5/HDFFile.h"
 #include "WriterModuleBase.h"
 #include "logger.h"
 #include <string>
