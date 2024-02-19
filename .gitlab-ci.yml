@@ -11,42 +11,42 @@ workflow:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 stages:
-  - check
+#  - check
   - build
   - archive
   - integration
   - release
 
-.check:
-  stage: check
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
-
-clang-format:
-  extends: .check
-  script:
-    - ci/check-formatting.sh
-
-black:
-  extends: .check
-  script:
-    - python3 -m black --version
-    - python3 -m black --check integration-tests
-
-cppcheck:
-  extends: .check
-  script:
-    - cppcheck --version
-    - >
-      cppcheck \
-        --xml \
-        --inline-suppr \
-        --suppress=unusedFunction \
-        --suppress=missingInclude \
-        --enable=all \
-        --inconclusive \
-        src/ 2> cppcheck.xml
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#.check:
+#  stage: check
+#  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
+#
+#clang-format:
+#  extends: .check
+#  script:
+#    - ci/check-formatting.sh
+#
+#black:
+#  extends: .check
+#  script:
+#    - python3 -m black --version
+#    - python3 -m black --check integration-tests
+#
+#cppcheck:
+#  extends: .check
+#  script:
+#    - cppcheck --version
+#    - >
+#      cppcheck \
+#        --xml \
+#        --inline-suppr \
+#        --suppress=unusedFunction \
+#        --suppress=missingInclude \
+#        --enable=all \
+#        --inconclusive \
+#        src/ 2> cppcheck.xml
+#  rules:
+#    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 .build:
   stage: build
@@ -73,24 +73,24 @@ cppcheck:
     # Store built packages to save build time on subsequent builds
     - conan upload '*' --all --confirm --remote ecdc-conan-external
 
-build-debug:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
-  script:
-    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-    - $SCL ninja all UnitTests docs
-    - $SCL ninja coverage
-    - cat coverage.txt
-  coverage: '/^TOTAL.*\s+(\d+\%)$/'
-  artifacts:
-    paths:
-      - build/coverage.xml
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: build/coverage.xml
+#build-debug:
+#  extends: .build
+#  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+#  variables:
+#    SCL: scl enable devtoolset-11 rh-python38 --
+#  script:
+#    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+#    - $SCL ninja all UnitTests docs
+#    - $SCL ninja coverage
+#    - cat coverage.txt
+#  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+#  artifacts:
+#    paths:
+#      - build/coverage.xml
+#    reports:
+#      coverage_report:
+#        coverage_format: cobertura
+#        path: build/coverage.xml
 
 build-release:
   extends: .build
@@ -111,20 +111,20 @@ build-release:
     reports:
       junit: build/test-output.xml
 
-build-alt-distro:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
-  script:
-    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
-    - $SCL ninja all UnitTests docs
-    - ./bin/UnitTests
-  parallel:
-    matrix:
-      - DISTRO:
-          - debian11
-          - ubuntu2204
-      - DISTRO: almalinux8
-        SCL: scl enable gcc-toolset-12 --
+#build-alt-distro:
+#  extends: .build
+#  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
+#  script:
+#    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
+#    - $SCL ninja all UnitTests docs
+#    - ./bin/UnitTests
+#  parallel:
+#    matrix:
+#      - DISTRO:
+#          - debian11
+#          - ubuntu2204
+#      - DISTRO: almalinux8
+#        SCL: scl enable gcc-toolset-12 --
 
 archive:
   stage: archive

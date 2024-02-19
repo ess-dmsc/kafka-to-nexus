@@ -26,7 +26,7 @@ docker cp ../integration-tests ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewrite
 echo "Installing dependencies..."
 docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c 'tar xzvf kafka-to-nexus.tar.gz'
 docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c 'scl enable rh-python38 -- python -m venv venv'
-docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c 'scl enable rh-python38 -- venv/bin/pip install -r integration-tests/requirements.txt'
+docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c 'scl enable rh-python38 -- venv/bin/pip install --proxy="$https_proxy" -r integration-tests/requirements.txt'
 
 echo "Creating Kafka topics..."
 while read topic; do
