@@ -85,11 +85,13 @@ Command::StartMessage extractStartMessage(Msg const &CommandMessage,
         time_point(std::chrono::milliseconds{RunStartData->stop_time()});
   }
   Result.NexusStructure = RunStartData->nexus_structure()->str();
-  size_t posStart =Result.NexusStructure.find("##", 0);
+  size_t posStart = Result.NexusStructure.find("##", 0);
   while (posStart != std::string::npos) {
     size_t posEnd = Result.NexusStructure.find("##", posStart);
-    std::string extractedFilename = Result.NexusStructure.substr(posStart, posEnd - posStart);
-    Result.NexusStructure.replace(posStart, posEnd - posStart + 2, openExtraJSON(extractedFilename));
+    std::string extractedFilename =
+        Result.NexusStructure.substr(posStart, posEnd - posStart);
+    Result.NexusStructure.replace(posStart, posEnd - posStart + 2,
+                                  openExtraJSON(extractedFilename));
     size_t posStart = Result.NexusStructure.find("##", posEnd + 2);
   }
   Result.JobID = RunStartData->job_id()->str();
