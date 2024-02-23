@@ -12,6 +12,7 @@
 
 #include <6s4t_run_stop_generated.h>
 #include <answ_action_response_generated.h>
+#include <fstream>
 #include <pl72_run_start_generated.h>
 #include <sstream>
 #include <wrdn_finished_writing_generated.h>
@@ -50,6 +51,21 @@ void checkRequiredFieldsArePresent(const RunStart *RunStartData) {
 namespace Command::Parser {
 using FileWriter::Msg;
 
+std::string openExtraJSON(std::string filename) {
+  std::ifstream extraFile(filename, std::ios::in | std::ios::binary);
+  if (extraFile) {
+    std::string jsonStr;
+    extraFile.seekg(0, std::ios::end);
+    jsonStr.resize(extraFile.tellg());
+    extraFile.seekg(0, std::ios::beg);
+    extraFile.read(&jsonStr[0], jsonStr.size());
+    extraFile.close();
+    return (jsonStr);
+  }
+  throw std::runtime_error(
+      "Extra JSON supplied but file could not be opened:\n" + filename);
+}
+
 Command::StartMessage extractStartMessage(Msg const &CommandMessage,
                                           time_point DefaultStartTime) {
   Command::StartMessage Result;
@@ -69,6 +85,13 @@ Command::StartMessage extractStartMessage(Msg const &CommandMessage,
         time_point(std::chrono::milliseconds{RunStartData->stop_time()});
   }
   Result.NexusStructure = RunStartData->nexus_structure()->str();
+  size_t posStart =Result.NexusStructure.find("##", 0);
+  while (posStart != std::string::npos) {
+    size_t posEnd = Result.NexusStructure.find("##", posStart);
+    std::string extractedFilename = Result.NexusStructure.substr(posStart, posEnd - posStart);
+    Result.NexusStructure.replace(posStart, posEnd - posStart + 2, openExtraJSON(extractedFilename));
+    size_t posStart = Result.NexusStructure.find("##", posEnd + 2);
+  }
   Result.JobID = RunStartData->job_id()->str();
   if (RunStartData->service_id() != nullptr) {
     Result.ServiceID = RunStartData->service_id()->str();
