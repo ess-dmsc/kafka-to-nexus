@@ -92,7 +92,7 @@ Command::StartMessage extractStartMessage(Msg const &CommandMessage,
         Result.NexusStructure.substr(posStart, posEnd - posStart);
     Result.NexusStructure.replace(posStart, posEnd - posStart + 2,
                                   openExtraJSON(extractedFilename));
-    size_t posStart = Result.NexusStructure.find("##", posEnd + 2);
+    posStart = Result.NexusStructure.find("##", posEnd + 2);
   }
   Result.JobID = RunStartData->job_id()->str();
   if (RunStartData->service_id() != nullptr) {
