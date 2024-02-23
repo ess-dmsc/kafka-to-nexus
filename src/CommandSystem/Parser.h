@@ -23,6 +23,7 @@ using FileWriter::Msg;
 namespace Command {
 
 namespace Parser {
+std::string openExtraJSON(std::string filename);
 /// \brief Extract the information from the start command.
 ///
 /// \param JSONCommand The JSON Command.
