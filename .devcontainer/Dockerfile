@@ -45,7 +45,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependency manager Conan
-RUN pip3 install "conan<2" pre-commit black
+RUN pip3 install "conan<2" pre-commit
 # RUN pip3 install conan \
 #     && conan profile new default --detect \
 #     && conan profile update settings.compiler.libcxx=libstdc++11 default
