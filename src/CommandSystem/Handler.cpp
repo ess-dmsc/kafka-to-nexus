@@ -261,14 +261,14 @@ CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
     NexusStructure = StartJob.NexusStructure;
   } catch (std::exception const &E) {
     ExceptionMessage = E.what();
+
     return CmdResponse{
-      LogLevel::Error, 500, true,
-      [ExceptionMessage = std::move(ExceptionMessage)]() {
-        return fmt::format(
-            "Failed to start filewriting job. The failure message was: {}",
-            ExceptionMessage);
-      }
-    };
+        LogLevel::Error, 500, true,
+        [ExceptionMessage = std::move(ExceptionMessage)]() {
+          return fmt::format(
+              "Failed to start filewriting job. The failure message was: {}",
+              ExceptionMessage);
+        }};
   }
 
   // Success
