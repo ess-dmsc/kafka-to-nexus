@@ -204,7 +204,7 @@ CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
         }};
   }
 
-  if (not(IsJobPoolCommand xor (StartJob.ServiceID != ServiceId))) {
+  if (IsJobPoolCommand xor (StartJob.ServiceID != ServiceId)) {
     return CmdResponse{
         LogLevel::Debug, 400, false, [&]() {
           return fmt::format(
@@ -226,19 +226,7 @@ CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
   }
 
   if (not StartJob.ControlTopic.empty()) {
-    if (IsJobPoolCommand) {
-      LOG_INFO(
-          R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
-          StartJob.ControlTopic, StartJob.StartTime);
-      CommandSource = std::make_unique<CommandListener>(
-          uri::URI{CommandTopicAddress, StartJob.ControlTopic}, KafkaSettings,
-          StartJob.StartTime);
-      AltCommandResponse = std::make_unique<FeedbackProducer>(
-          ServiceId, uri::URI{CommandTopicAddress, StartJob.ControlTopic},
-          KafkaSettings);
-      std::swap(CommandResponse, AltCommandResponse);
-      UsingAltTopic = true;
-    } else {
+    if (not IsJobPoolCommand) {
       return CmdResponse{
           LogLevel::Error, 400, true, [&]() {
             return fmt::format(
@@ -246,6 +234,17 @@ CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
                 StartJob.ControlTopic);
           }};
     }
+    LOG_INFO(
+        R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
+        StartJob.ControlTopic, StartJob.StartTime);
+    CommandSource = std::make_unique<CommandListener>(
+        uri::URI{CommandTopicAddress, StartJob.ControlTopic}, KafkaSettings,
+        StartJob.StartTime);
+    AltCommandResponse = std::make_unique<FeedbackProducer>(
+        ServiceId, uri::URI{CommandTopicAddress, StartJob.ControlTopic},
+        KafkaSettings);
+    std::swap(CommandResponse, AltCommandResponse);
+    UsingAltTopic = true;
   }
 
   if (not isValidUUID(StartJob.JobID)) {
