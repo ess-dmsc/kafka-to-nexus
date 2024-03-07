@@ -29,11 +29,20 @@ public:
       //             Event.broker_id(), Event.broker_name(), Event.str());
       break;
     case RdKafka::Event::EVENT_LOG:
-      Log::FmtMsg(
-          LogLevels.at(Event.severity()),
-          "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
-          Event.broker_id(), Event.broker_name(), Event.severity(), Event.fac(),
-          Event.str());
+      if (std::string(Event.fac()).find("CONFWARN") != std::string::npos) {
+        // Override severity of CONFWARN messages
+        Log::FmtMsg(
+            Log::Severity::Debug,
+            "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
+            Event.broker_id(), Event.broker_name(), Event.severity(),
+            Event.fac(), Event.str());
+      } else {
+        Log::FmtMsg(
+            LogLevels.at(Event.severity()),
+            "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
+            Event.broker_id(), Event.broker_name(), Event.severity(),
+            Event.fac(), Event.str());
+      }
       break;
     default:
       Log::FmtMsg(LogLevels.at(Event.severity()), "Kafka Event {} ({}): {}",
