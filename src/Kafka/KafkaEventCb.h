@@ -29,8 +29,12 @@ public:
       //             Event.broker_id(), Event.broker_name(), Event.str());
       break;
     case RdKafka::Event::EVENT_LOG:
+      // Override severity of CONFWARN messages
+      auto LogLevel = (std::string(Event.fac()).find("CONFWARN") != std::string::npos)
+                      ? Log::Severity::Debug
+                      : LogLevels.at(Event.severity());
       Log::FmtMsg(
-          LogLevels.at(Event.severity()),
+          Loglevel,
           "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
           Event.broker_id(), Event.broker_name(), Event.severity(), Event.fac(),
           Event.str());
