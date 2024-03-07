@@ -34,7 +34,7 @@ public:
                       ? Log::Severity::Debug
                       : LogLevels.at(Event.severity());
       Log::FmtMsg(
-          Loglevel,
+          LogLevel,
           "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
           Event.broker_id(), Event.broker_name(), Event.severity(), Event.fac(),
           Event.str());
