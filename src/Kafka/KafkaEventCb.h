@@ -34,14 +34,14 @@ public:
         Log::FmtMsg(
             Log::Severity::Debug,
             "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
-            Event.broker_id(), Event.broker_name(), Event.severity(), Event.fac(),
-            Event.str());
+            Event.broker_id(), Event.broker_name(), Event.severity(),
+            Event.fac(), Event.str());
       } else {
         Log::FmtMsg(
             LogLevels.at(Event.severity()),
             "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
-            Event.broker_id(), Event.broker_name(), Event.severity(), Event.fac(),
-            Event.str());
+            Event.broker_id(), Event.broker_name(), Event.severity(),
+            Event.fac(), Event.str());
       }
       break;
     default:
