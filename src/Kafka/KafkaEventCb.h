@@ -17,10 +17,7 @@ public:
   void event_cb(RdKafka::Event &Event) override {
     switch (Event.type()) {
     case RdKafka::Event::EVENT_ERROR:
-      Log::FmtMsg(LogLevels.at(Event.severity()),
-                  "Kafka EVENT_ERROR id: {}  broker: {}  errorname: {}  "
-                  "errorstring: {}",
-                  Event.broker_id(), Event.broker_name(),
+      Log::FmtMsg(LogLevels.at(Event.severity()), "Kafka EVENT_ERROR {} [{}]",
                   RdKafka::err2str(Event.err()), Event.str());
       break;
     case RdKafka::Event::EVENT_STATS:
