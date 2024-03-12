@@ -81,13 +81,19 @@ public:
   bool isUsingAlternativeTopic() const { return UsingAltTopic; }
 
 protected:
-  /// \brief Validate payload of start command.
+  /// \brief Initiates writing.
   ///
-  /// \param StartJob Returns the parsed start message as a StartMessage struct.
+  /// \param StartJob The start message as a StartMessage struct.
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse processStart(StartMessage &StartJob, bool IsJobPoolCommand);
+  CmdResponse startWriting(StartMessage &StartJob, bool IsJobPoolCommand);
+
+  /// \brief Stops writing.
+  ///
+  /// \param StopJob The stop message as a StopMessage struct.
+  /// \return Metadata about the success/failure after processing the command.
+  CmdResponse stopWriting(StopMessage &StopJob);
 
 private:
   /// \brief Parse a command message and route it to appropriate handling
@@ -98,28 +104,36 @@ private:
   /// pool or the command topic.
   void handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
 
-  /// \brief Validate and process start command.
+  /// \brief Handle start command.
   ///
   /// \param CommandMsg Kafka message.
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   void handleStartCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
 
-  /// \brief Validate start command.
+  /// \brief Validate command and start writing.
   ///
   /// \param CommandMsg Kafka message.
   /// \param StartJob Returns the parsed start message as a StartMessage struct.
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse processStartMessage(const FileWriter::Msg &CommandMsg,
+  CmdResponse startWritingProcess(const FileWriter::Msg &CommandMsg,
                                   StartMessage &StartJob,
                                   bool IsJobPoolCommand);
 
-  /// \brief Validate and process stop command.
+  /// \brief Handle stop command.
   ///
   /// \param CommandMsg Kafka message.
   void handleStopCommand(FileWriter::Msg CommandMsg);
+
+  /// \brief Validate command and start writing.
+  ///
+  /// \param CommandMsg Kafka message.
+  /// \param StopJob Returns the parsed stop message as a StopMessage struct.
+  /// \return Metadata about the success/failure after processing the command.
+  CmdResponse stopWritingProcess(const FileWriter::Msg &CommandMsg,
+                                 StopMessage &StopJob);
 
   std::string const ServiceId;
   std::string NexusStructure;
