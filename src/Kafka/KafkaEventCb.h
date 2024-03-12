@@ -40,17 +40,11 @@ public:
           break;
         }
         // Override severity of the remaining CONFWARN messages
-        Log::FmtMsg(
-            Log::Severity::Debug,
-            "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
-            Event.broker_id(), Event.broker_name(), Event.severity(),
-            Event.fac(), Event.str());
+        Log::FmtMsg(Log::Severity::Debug, "Kafka Log {} {}", Event.fac(),
+                    Event.str());
       } else {
-        Log::FmtMsg(
-            LogLevels.at(Event.severity()),
-            "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
-            Event.broker_id(), Event.broker_name(), Event.severity(),
-            Event.fac(), Event.str());
+        Log::FmtMsg(LogLevels.at(Event.severity()), "Kafka Log {} {}",
+                    Event.fac(), Event.str());
       }
       break;
     default:
