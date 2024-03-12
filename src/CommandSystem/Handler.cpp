@@ -226,6 +226,7 @@ CmdResponse Handler::processStartMessage(const FileWriter::Msg &CommandMsg,
 CmdResponse Handler::processStart(StartMessage &StartJob,
                                   bool IsJobPoolCommand) {
   std::string ExceptionMessage;
+
   if (IsJobPoolCommand && !StartJob.ServiceID.empty() &&
       StartJob.ServiceID != ServiceId) {
     return CmdResponse{
@@ -269,6 +270,7 @@ CmdResponse Handler::processStart(StartMessage &StartJob,
         }};
   }
 
+  // Start job
   try {
     DoStart(StartJob);
     NexusStructure = StartJob.NexusStructure;
