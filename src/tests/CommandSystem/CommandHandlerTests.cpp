@@ -73,7 +73,7 @@ public:
   // Inherit constructors
   using Handler::Handler;
   // Expose some members as public
-  using Handler::validateStartCommandMessage;
+  using Handler::processStart;
 };
 
 class HandlerTest : public ::testing::Test {
@@ -109,8 +109,8 @@ protected:
 TEST_F(HandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
   handlerUnderTest_->registerIsWritingFunction([]() -> bool { return true; });
   for (bool isPoolCommand : {false, true}) {
-    CmdResponse cmdResponse = handlerUnderTest_->validateStartCommandMessage(
-        startMessage_, isPoolCommand);
+    CmdResponse cmdResponse =
+        handlerUnderTest_->processStart(startMessage_, isPoolCommand);
     EXPECT_TRUE(cmdResponse.SendResponse);
     EXPECT_TRUE(isErrorResponse(cmdResponse));
   }
@@ -118,7 +118,7 @@ TEST_F(HandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
 
 TEST_F(HandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
@@ -126,7 +126,7 @@ TEST_F(HandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
 TEST_F(HandlerTest, validateStartCommandFromJobPoolAndMismatchingServiceId) {
   startMessage_.ServiceID = "another_service_id";
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
@@ -134,7 +134,7 @@ TEST_F(HandlerTest, validateStartCommandFromJobPoolAndMismatchingServiceId) {
 TEST_F(HandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
   startMessage_.ServiceID = serviceId_;
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
@@ -142,7 +142,7 @@ TEST_F(HandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
 TEST_F(HandlerTest, validateStartCommandRejectsControlTopicIfNotFromJobPool) {
   startMessage_.ControlTopic = "some_topic";
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, false);
+      handlerUnderTest_->processStart(startMessage_, false);
   EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -152,7 +152,7 @@ TEST_F(HandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
   EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
   startMessage_.ControlTopic = "some_topic";
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
   EXPECT_TRUE(handlerUnderTest_->isUsingAlternativeTopic());
 }
@@ -160,7 +160,7 @@ TEST_F(HandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
 TEST_F(HandlerTest, validateStartCommandAcceptsValidJobID) {
   startMessage_.JobID = "321e4567-e89b-12d3-a456-426614174000";
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
@@ -168,7 +168,7 @@ TEST_F(HandlerTest, validateStartCommandAcceptsValidJobID) {
 TEST_F(HandlerTest, validateStartCommandRejectsInvalidJobID) {
   startMessage_.JobID = "123";
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
@@ -179,14 +179,14 @@ TEST_F(HandlerTest, validateStartCommandReportsExceptionUponJobStart) {
         throw std::runtime_error("Some error");
       });
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(HandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
   CmdResponse cmdResponse =
-      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+      handlerUnderTest_->processStart(startMessage_, true);
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
   EXPECT_EQ(cmdResponse.StatusCode, 201);

@@ -186,7 +186,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 
     ActionResult SendResult{ActionResult::Success};
     CmdResponse ValidationResponse =
-        validateStartCommand(CommandMsg, StartJob, IsJobPoolCommand);
+        processStartMessage(CommandMsg, StartJob, IsJobPoolCommand);
     if (ValidationResponse.StatusCode >= 400) {
       SendResult = ActionResult::Failure;
     }
@@ -207,9 +207,9 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
   }
 }
 
-CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
-                                          StartMessage &StartJob,
-                                          bool IsJobPoolCommand) {
+CmdResponse Handler::processStartMessage(const FileWriter::Msg &CommandMsg,
+                                         StartMessage &StartJob,
+                                         bool IsJobPoolCommand) {
   std::string ExceptionMessage;
   if (not extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
     return CmdResponse{
@@ -220,11 +220,11 @@ CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
               ExceptionMessage);
         }};
   }
-  return validateStartCommandMessage(StartJob, IsJobPoolCommand);
+  return processStart(StartJob, IsJobPoolCommand);
 }
 
-CmdResponse Handler::validateStartCommandMessage(StartMessage &StartJob,
-                                                 bool IsJobPoolCommand) {
+CmdResponse Handler::processStart(StartMessage &StartJob,
+                                  bool IsJobPoolCommand) {
   std::string ExceptionMessage;
   if (IsJobPoolCommand && !StartJob.ServiceID.empty() &&
       StartJob.ServiceID != ServiceId) {

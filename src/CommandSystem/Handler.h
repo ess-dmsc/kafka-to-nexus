@@ -87,8 +87,7 @@ protected:
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse validateStartCommandMessage(StartMessage &StartJob,
-                                          bool IsJobPoolCommand);
+  CmdResponse processStart(StartMessage &StartJob, bool IsJobPoolCommand);
 
 private:
   /// \brief Parse a command message and route it to appropriate handling
@@ -113,9 +112,9 @@ private:
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse validateStartCommand(const FileWriter::Msg &CommandMsg,
-                                   StartMessage &StartJob,
-                                   bool IsJobPoolCommand);
+  CmdResponse processStartMessage(const FileWriter::Msg &CommandMsg,
+                                  StartMessage &StartJob,
+                                  bool IsJobPoolCommand);
 
   /// \brief Validate and process stop command.
   ///
