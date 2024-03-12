@@ -8,6 +8,17 @@ Commands are sent through Kafka via the broker and topic specified by the
 
 Note: some example commands can be found in the system tests.
 
+## Message types
+
+There are 5 types of messages:
+
+- [pl72 (run start)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/pl72_run_start.fbs): Command to start file-writing.
+- [6s4t (run stop)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/6s4t_run_stop.fbs): Command to set the stop time of file-writing (**optional, the "run start" message can already contain a stop time**).
+- [anws (command answer)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/answ_action_response.fbs): Reply to start/stop commands (the command can be accepted or rejected).
+- [x5f2 (status)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/x5f2_status.fbs): Periodic status reports sent by the file-writer.
+- [wrdn (finished writing)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/wrdn_finished_writing.fbs): Reports the completion of a file-writing job (the job may have succeeded or failed).
+
+
 ## Command to start writing
 
 The start command consists of a number of parameters which are defined as key-value pairs in the JSON.
