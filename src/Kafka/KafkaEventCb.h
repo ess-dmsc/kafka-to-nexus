@@ -30,7 +30,16 @@ public:
       break;
     case RdKafka::Event::EVENT_LOG:
       if (std::string(Event.fac()).find("CONFWARN") != std::string::npos) {
-        // Override severity of CONFWARN messages
+        // Skip some configuration warnings entirely
+        if (std::string(Event.str())
+                    .find("is a producer property and will be ignored by this "
+                          "consumer") != std::string::npos ||
+            std::string(Event.str())
+                    .find("is a consumer property and will be ignored by this "
+                          "producer") != std::string::npos) {
+          break;
+        }
+        // Override severity of the remaining CONFWARN messages
         Log::FmtMsg(
             Log::Severity::Debug,
             "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
