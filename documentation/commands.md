@@ -1,9 +1,10 @@
 # Commands
 
-Commands in the form of JSON messages are used to start and stop file writing.
+Commands encoded via [streaming-data-types](https://github.com/ess-dmsc/streaming-data-types)
+are used to start and stop file writing.
 
 Commands are sent through Kafka via the broker and topic specified by the
-`--command-uri` option.
+`--command-status-uri` option.
 
 Note: some example commands can be found in the system tests.
 
