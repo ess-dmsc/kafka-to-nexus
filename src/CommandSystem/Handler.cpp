@@ -83,6 +83,21 @@ void Handler::revertCommandTopic() {
   }
 }
 
+void Handler::switchCommandTopic(std::string_view ControlTopic,
+                                 time_point const StartTime) {
+  LOG_INFO(
+      R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
+      ControlTopic, StartTime);
+  CommandSource = std::make_unique<CommandListener>(
+      uri::URI{CommandTopicAddress, std::string(ControlTopic)}, KafkaSettings,
+      StartTime);
+  AltCommandResponse = std::make_unique<FeedbackProducer>(
+      ServiceId, uri::URI{CommandTopicAddress, std::string(ControlTopic)},
+      KafkaSettings);
+  std::swap(CommandResponse, AltCommandResponse);
+  UsingAltTopic = true;
+}
+
 void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
                                     nlohmann::json Metadata) {
   Metadata["hdf_structure"] = NexusStructure;
@@ -147,15 +162,17 @@ bool isValidUUID(std::string const &UUIDStr) {
   return false;
 }
 
-/// Warn if the message time differs significantly to the current time.
+/// Warn if the Kafka message time is not from the immediate past.
 ///
-/// It does not necessarily mean something is wrong, it could be
-/// that an old file is being rewritten, for example.
+/// It does not necessarily mean something is wrong,
+/// but it indicates that a command was queued for some time.
 ///
 /// \param MsgTime
-void checkMsgTimeStampAgainstWallClock(time_point MsgTime) {
-  if (system_clock::now() > MsgTime + 15s) {
-    LOG_WARN(fmt::format("Start command's timestamp may be bad (it was: {}, "
+void warnIfMessageIsOld(time_point MsgTime) {
+  if (system_clock::now() > MsgTime + 120s) {
+    LOG_WARN(fmt::format("Start command's message timestamp is not very "
+                         "recent, the command was queued for some time"
+                         "(command created at: {}, "
                          "current time: {}).",
                          toUTCDateTime(MsgTime),
                          toUTCDateTime(system_clock::now())));
@@ -174,7 +191,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
       SendResult = ActionResult::Failure;
     }
 
-    checkMsgTimeStampAgainstWallClock(CommandMsg.getMetaData().timestamp());
+    warnIfMessageIsOld(CommandMsg.getMetaData().timestamp());
     Log::Msg(ValidationResponse.LogLevel, ValidationResponse.MessageString());
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
@@ -203,8 +220,14 @@ CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
               ExceptionMessage);
         }};
   }
+  return validateStartCommandMessage(StartJob, IsJobPoolCommand);
+}
 
-  if (IsJobPoolCommand xor (StartJob.ServiceID != ServiceId)) {
+CmdResponse Handler::validateStartCommandMessage(StartMessage &StartJob,
+                                                 bool IsJobPoolCommand) {
+  std::string ExceptionMessage;
+  if (IsJobPoolCommand && !StartJob.ServiceID.empty() &&
+      StartJob.ServiceID != ServiceId) {
     return CmdResponse{
         LogLevel::Debug, 400, false, [&]() {
           return fmt::format(
@@ -234,17 +257,7 @@ CmdResponse Handler::validateStartCommand(const FileWriter::Msg &CommandMsg,
                 StartJob.ControlTopic);
           }};
     }
-    LOG_INFO(
-        R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
-        StartJob.ControlTopic, StartJob.StartTime);
-    CommandSource = std::make_unique<CommandListener>(
-        uri::URI{CommandTopicAddress, StartJob.ControlTopic}, KafkaSettings,
-        StartJob.StartTime);
-    AltCommandResponse = std::make_unique<FeedbackProducer>(
-        ServiceId, uri::URI{CommandTopicAddress, StartJob.ControlTopic},
-        KafkaSettings);
-    std::swap(CommandResponse, AltCommandResponse);
-    UsingAltTopic = true;
+    switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
   }
 
   if (not isValidUUID(StartJob.JobID)) {

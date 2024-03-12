@@ -78,6 +78,17 @@ public:
                                    std::string const &ErrorMessage) override;
 
   void loopFunction() override;
+  bool isUsingAlternativeTopic() const { return UsingAltTopic; }
+
+protected:
+  /// \brief Validate payload of start command.
+  ///
+  /// \param StartJob Returns the parsed start message as a StartMessage struct.
+  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
+  /// pool or the command topic.
+  /// \return Metadata about the success/failure after processing the command.
+  CmdResponse validateStartCommandMessage(StartMessage &StartJob,
+                                          bool IsJobPoolCommand);
 
 private:
   /// \brief Parse a command message and route it to appropriate handling
@@ -99,6 +110,8 @@ private:
   ///
   /// \param CommandMsg Kafka message.
   /// \param StartJob Returns the parsed start message as a StartMessage struct.
+  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
+  /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse validateStartCommand(const FileWriter::Msg &CommandMsg,
                                    StartMessage &StartJob,
@@ -108,13 +121,14 @@ private:
   ///
   /// \param CommandMsg Kafka message.
   void handleStopCommand(FileWriter::Msg CommandMsg);
+
   std::string const ServiceId;
   std::string NexusStructure;
   StartFuncType DoStart{[](auto) {
     throw std::runtime_error("DoStart(): Not set/implemented.");
   }};
   StopTimeFuncType DoSetStopTime{[](auto) {
-    throw std::runtime_error("DosetStopTime(): Not set/implemented.");
+    throw std::runtime_error("DoSetStopTime(): Not set/implemented.");
   }};
   StopNowFuncType DoStopNow{
       []() { throw std::runtime_error("DoStopNow(): Not set/implemented."); }};
@@ -124,6 +138,10 @@ private:
   GetJobIdFuncType GetJobId{[]() -> std::string {
     throw std::runtime_error("GetJobId(): Not set/implemented.");
   }};
+
+  /// \brief Switch to an alternative command topic.
+  void switchCommandTopic(std::string_view ControlTopic,
+                          time_point const StartTime);
 
   /// \brief Revert to the default command topic if an alternative topic
   /// has been configured.

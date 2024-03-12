@@ -10,8 +10,14 @@
 #include "CommandSystem/FeedbackProducerBase.h"
 #include "CommandSystem/Handler.h"
 #include <gtest/gtest.h>
+#include <trompeloeil.hpp>
+#include <uuid.h>
 
 using namespace Command;
+
+bool isErrorResponse(const CmdResponse &response) {
+  return response.StatusCode >= 400;
+}
 
 class JobListenerMock : public JobListener {
 public:
@@ -62,12 +68,22 @@ public:
   }
 };
 
+class HandlerStandIn : public Handler {
+public:
+  // Inherit constructors
+  using Handler::Handler;
+  // Expose some members as public
+  using Handler::validateStartCommandMessage;
+};
+
 class HandlerTest : public ::testing::Test {
 protected:
   std::unique_ptr<JobListenerMock> jobListenerMock_;
   std::unique_ptr<CommandListenerMock> commandListenerMock_;
   std::unique_ptr<FeedbackProducerMock> feedbackProducerMock_;
-  std::unique_ptr<Handler> handlerUnderTest_;
+  std::unique_ptr<HandlerStandIn> handlerUnderTest_;
+  StartMessage startMessage_;
+  std::string serviceId_ = "service_id_123";
 
   void SetUp() override {
     jobListenerMock_ = std::make_unique<JobListenerMock>(
@@ -76,13 +92,102 @@ protected:
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
     feedbackProducerMock_ = std::make_unique<FeedbackProducerMock>();
 
-    handlerUnderTest_ = std::make_unique<Handler>(
-        "ServiceIdentifier", Kafka::BrokerSettings{},
+    handlerUnderTest_ = std::make_unique<HandlerStandIn>(
+        serviceId_, Kafka::BrokerSettings{},
         uri::URI("localhost:1111/no_topic_here"), std::move(jobListenerMock_),
         std::move(commandListenerMock_), std::move(feedbackProducerMock_));
+    handlerUnderTest_->registerIsWritingFunction(
+        []() -> bool { return false; });
+    handlerUnderTest_->registerStartFunction(
+        []([[maybe_unused]] auto startMessage) -> void {});
+
+    // Use a valid JobID in the base start message
+    startMessage_.JobID = "123e4567-e89b-12d3-a456-426614174000";
   }
 };
 
-TEST_F(HandlerTest, handleStartCommand) {}
+TEST_F(HandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
+  handlerUnderTest_->registerIsWritingFunction([]() -> bool { return true; });
+  for (bool isPoolCommand : {false, true}) {
+    CmdResponse cmdResponse = handlerUnderTest_->validateStartCommandMessage(
+        startMessage_, isPoolCommand);
+    EXPECT_TRUE(cmdResponse.SendResponse);
+    EXPECT_TRUE(isErrorResponse(cmdResponse));
+  }
+}
 
-TEST_F(HandlerTest, handleStopCommand) {}
+TEST_F(HandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_FALSE(isErrorResponse(cmdResponse));
+}
+
+TEST_F(HandlerTest, validateStartCommandFromJobPoolAndMismatchingServiceId) {
+  startMessage_.ServiceID = "another_service_id";
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_FALSE(cmdResponse.SendResponse);
+  EXPECT_TRUE(isErrorResponse(cmdResponse));
+}
+
+TEST_F(HandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
+  startMessage_.ServiceID = serviceId_;
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_FALSE(isErrorResponse(cmdResponse));
+}
+
+TEST_F(HandlerTest, validateStartCommandRejectsControlTopicIfNotFromJobPool) {
+  startMessage_.ControlTopic = "some_topic";
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, false);
+  EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_TRUE(isErrorResponse(cmdResponse));
+}
+
+TEST_F(HandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
+  EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
+  startMessage_.ControlTopic = "some_topic";
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_FALSE(isErrorResponse(cmdResponse));
+  EXPECT_TRUE(handlerUnderTest_->isUsingAlternativeTopic());
+}
+
+TEST_F(HandlerTest, validateStartCommandAcceptsValidJobID) {
+  startMessage_.JobID = "321e4567-e89b-12d3-a456-426614174000";
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_FALSE(isErrorResponse(cmdResponse));
+}
+
+TEST_F(HandlerTest, validateStartCommandRejectsInvalidJobID) {
+  startMessage_.JobID = "123";
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_TRUE(isErrorResponse(cmdResponse));
+}
+
+TEST_F(HandlerTest, validateStartCommandReportsExceptionUponJobStart) {
+  handlerUnderTest_->registerStartFunction(
+      []([[maybe_unused]] auto startMessage) -> void {
+        throw std::runtime_error("Some error");
+      });
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_TRUE(isErrorResponse(cmdResponse));
+}
+
+TEST_F(HandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
+  CmdResponse cmdResponse =
+      handlerUnderTest_->validateStartCommandMessage(startMessage_, true);
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_FALSE(isErrorResponse(cmdResponse));
+  EXPECT_EQ(cmdResponse.StatusCode, 201);
+}
