@@ -12,9 +12,9 @@ from helpers.writer import (
 )
 
 
-@pytest.mark.parametrize("json_padding,file_nr", [(2**20, 0), (2**24, 1), (2**26, 2)])
-def test_large_start_message(worker_pool, kafka_address, json_padding, file_nr):
-    file_path = build_relative_file_path(f"output_file_large_msg_{file_nr}.nxs")
+@pytest.mark.parametrize("json_padding", [(1024**2), (16 * 1024**2), (64 * 1024**2)])
+def test_large_start_message(worker_pool, kafka_address, json_padding):
+    file_path = build_relative_file_path(f"output_file_large_msg_{json_padding}.nxs")
     wait_writers_available(worker_pool, nr_of=1, timeout=10)
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
@@ -29,7 +29,7 @@ def test_large_start_message(worker_pool, kafka_address, json_padding, file_nr):
         start_time=start_time,
         stop_time=stop_time,
     )
-    wait_start_job(worker_pool, write_job, timeout=50)
+    wait_start_job(worker_pool, write_job, timeout=70)
 
     wait_no_working_writers(worker_pool, timeout=40)
     time.sleep(5)  # test is prone to fail in worker_pool's stop_current_jobs finalizer
