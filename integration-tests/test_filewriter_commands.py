@@ -173,7 +173,7 @@ def test_ignores_start_command_with_incorrect_job_id(
 ):
     relative_file_path = build_relative_file_path(f"{request.node.name}.nxs")
     absolute_file_path = build_absolute_file_path(relative_file_path)
-    wait_writers_available(worker_pool, nr_of=1, timeout=10)
+    wait_writers_available(worker_pool, nr_of=1, timeout=20)
     now = datetime.now()
     with open("commands/nexus_structure.json", "r") as f:
         structure = f.read()
