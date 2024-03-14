@@ -3,8 +3,14 @@
 Commands encoded via [streaming-data-types](https://github.com/ess-dmsc/streaming-data-types)
 are used to start and stop file writing.
 
-Commands are sent through Kafka via the broker and topic specified by the
+All commands are sent through Kafka via the broker and topic specified by the
 `--command-status-uri` option.
+
+Start commands can also be sent via the topic specified by
+`--job-pool-uri`, where a pool of file-writers can be
+configured to consume jobs from a common topic.
+When a pool is used, the start command typically specifies
+a separate topic (in the `control_topic` field) that will be used for further communication related to the job.
 
 
 ## Message types
