@@ -109,6 +109,7 @@ protected:
 
 TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
   handlerUnderTest_->registerIsWritingFunction([]() -> bool { return true; });
+
   for (bool isPoolCommand : {false, true}) {
     CmdResponse cmdResponse =
         handlerUnderTest_->startWriting(startMessage_, isPoolCommand);
@@ -120,6 +121,7 @@ TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
@@ -127,16 +129,20 @@ TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
 TEST_F(StartHandlerTest,
        validateStartCommandFromJobPoolAndMismatchingServiceId) {
   startMessage_.ServiceID = "another_service_id";
+
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
   startMessage_.ServiceID = serviceId_;
+
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
@@ -144,8 +150,10 @@ TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
 TEST_F(StartHandlerTest,
        validateStartCommandRejectsControlTopicIfNotFromJobPool) {
   startMessage_.ControlTopic = "some_topic";
+
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, false);
+
   EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -154,24 +162,30 @@ TEST_F(StartHandlerTest,
 TEST_F(StartHandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
   EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
   startMessage_.ControlTopic = "some_topic";
+
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_FALSE(isErrorResponse(cmdResponse));
   EXPECT_TRUE(handlerUnderTest_->isUsingAlternativeTopic());
 }
 
 TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
   startMessage_.JobID = "321e4567-e89b-12d3-a456-426614174000";
+
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandRejectsInvalidJobID) {
   startMessage_.JobID = "123";
+
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
@@ -181,8 +195,10 @@ TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
       []([[maybe_unused]] auto startMessage) -> void {
         throw std::runtime_error("Some error");
       });
+
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
@@ -190,6 +206,7 @@ TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
 TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
   CmdResponse cmdResponse =
       handlerUnderTest_->startWriting(startMessage_, true);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
   EXPECT_EQ(cmdResponse.StatusCode, 201);
@@ -229,7 +246,9 @@ protected:
 
 TEST_F(StopHandlerTest, validateStopCommandWithNoCurrentJobAndEmptyServiceID) {
   handlerUnderTest_->registerIsWritingFunction([]() -> bool { return false; });
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
@@ -238,7 +257,9 @@ TEST_F(StopHandlerTest,
        validateStopCommandWithNoCurrentJobAndMatchingServiceID) {
   stopMessage_.ServiceID = serviceId_;
   handlerUnderTest_->registerIsWritingFunction([]() -> bool { return false; });
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
@@ -247,21 +268,29 @@ TEST_F(StopHandlerTest,
        validateStopCommandWithNoCurrentJobAndMismatchingServiceID) {
   stopMessage_.ServiceID = "another_service_id";
   handlerUnderTest_->registerIsWritingFunction([]() -> bool { return false; });
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+  EXPECT_FALSE(
+      isErrorResponse(cmdResponse)); // mismatching service ids get tested first
 }
 
 TEST_F(StopHandlerTest, validateStopCommandWithMismatchingServiceId) {
   stopMessage_.ServiceID = "another_service_id";
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+  EXPECT_FALSE(
+      isErrorResponse(cmdResponse)); // mismatching service ids get tested first
 }
 
 TEST_F(StopHandlerTest, validateStopCommandWithMatchingServiceId) {
   stopMessage_.ServiceID = serviceId_;
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
@@ -270,7 +299,9 @@ TEST_F(StopHandlerTest,
        validateStopCommandWithMismatchingJobIdAndEmptyServiceID) {
   handlerUnderTest_->registerGetJobIdFunction(
       []() -> std::string { return "different_job_id"; });
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
@@ -280,31 +311,40 @@ TEST_F(StopHandlerTest,
   stopMessage_.ServiceID = serviceId_;
   handlerUnderTest_->registerGetJobIdFunction(
       []() -> std::string { return "different_job_id"; });
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StopHandlerTest,
-       validateStopCommandWithMismatchingJobIDAndMismatchingServiceId) {
+       validateStopCommandWithMismatchingJobIDAndMismatchingServiceID) {
   stopMessage_.ServiceID = "another_service_id";
   handlerUnderTest_->registerGetJobIdFunction(
       []() -> std::string { return "different_job_id"; });
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+  EXPECT_FALSE(
+      isErrorResponse(cmdResponse)); // mismatching service ids get tested first
 }
 
 TEST_F(StopHandlerTest, validateStopCommandWithInvalidCommandID) {
   stopMessage_.CommandID = "invalid";
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StopHandlerTest, validateStopCommandImmediateStop) {
   stopMessage_.StopTime = time_point{0ms};
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
   EXPECT_EQ(cmdResponse.StatusCode, 201);
@@ -313,7 +353,9 @@ TEST_F(StopHandlerTest, validateStopCommandImmediateStop) {
 TEST_F(StopHandlerTest, validateStopCommandSetStopTime) {
   stopMessage_.StopTime =
       std::chrono::system_clock::now() + std::chrono::minutes(5);
+
   CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
   EXPECT_EQ(cmdResponse.StatusCode, 201);
