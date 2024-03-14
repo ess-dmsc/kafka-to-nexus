@@ -6,7 +6,6 @@ are used to start and stop file writing.
 Commands are sent through Kafka via the broker and topic specified by the
 `--command-status-uri` option.
 
-Note: some example commands can be found in the system tests.
 
 ## Message types
 
@@ -15,50 +14,12 @@ There are 5 types of messages:
 - [pl72 (run start)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/pl72_run_start.fbs): Command to start file-writing.
 - [6s4t (run stop)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/6s4t_run_stop.fbs): Command to set the stop time of file-writing (**optional, the "run start" message can already contain a stop time**).
 - [anws (command answer)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/answ_action_response.fbs): Reply to start/stop commands (the command can be accepted or rejected).
-- [x5f2 (status)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/x5f2_status.fbs): Periodic status reports sent by the file-writer.
 - [wrdn (finished writing)](https://github.com/ess-dmsc/streaming-data-types/blob/7e80bde7c64f13235ac21f8da9ae86bb40cc2c97/schemas/wrdn_finished_writing.fbs): Reports the completion of a file-writing job (the job may have succeeded or failed).
 
 
-## Command to start writing
-
-The start command consists of a number of parameters which are defined as key-value pairs in the JSON.
-
-Required:
-
-- cmd: The command name, must be `filewriter_new`
-- job_id: A unique identifier for the request, a UUID for example
-- broker: The Kafka broker to use for data.
-- file_attributes: Dictionary specifying the details of the file to be written:
-    * file_name: The file name
-- nexus_structure: Defines the structure of the NeXus file to be written
-
-Optional:
-
-- start_time: The start time in milliseconds (UNIX epoch) for data to be written from. If not supplied then the timestamp of the Kafka message containing the start command is used.
-- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. If not supplied then file writing continues until a stop command is received
-- service_id: The identifier for the instance of the file-writer that should handle this command. Only needed if multiple file-writers present.
 
 
-An example command with the `nexus_structure` skipped for brevity:
-
-```json
-{
-  "cmd": "FileWriter_new",
-  "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
-  "broker": "localhost:9092",
-  "start_time": 1547198055000,
-  "stop_time": 1547200800000,
-  "service_id": "filewriter1",
-  "file_attributes": {
-    "file_name": "my_nexus_file.h5"
-  } ,
-  "nexus_structure": {
-    # Skipped for brevity
-  }
-}
-```
-
-### Defining a NeXus structure
+## Defining a NeXus structure in the RunStart command
 
 The `nexus_structure` represents the HDF root object of the file to be written.
 For more detailed information on all aspects of HDF5 see the [official HDF5 documentation](https://portal.hdfgroup.org/display/HDF5/HDF5).
@@ -127,12 +88,6 @@ The (stream/writer) module definition instructs the file-writer that there is da
               "topic": "my_test_topic"
             }
           }
-        ],
-        "attributes": [
-          {
-            "NX_class": "NXtransformations",
-            "unit": "mm"
-          }
         ]
       }
     ]
@@ -145,13 +100,16 @@ In the example above, a group called my_test_group is defined which in turn has 
 The parameters for the stream/module definition are:
 
 - module: The either the file identifier of a FlatBuffers schema in the [streaming-data-types](https://github.com/ess-dmsc/streaming-data-types) repository that was used to serialise the data or another identifier if there exists multiple writer modules for the same schema.
-- dtype: The type of the data. The possible types are defined in the schema declared in the `writer_module`. Program allows both `type` and `dtype` spellings for better Python usability. **Note** that not all the writer modules take this parameter. 
+- dtype: The type of the data. The possible types are defined in the schema declared in the `writer_module`.  **Note** that not all the writer modules take this parameter. 
 - source: The name of the data source. For example, the EPICS PV name.
 - topic: The Kafka topic where the data can be found.
 
 Note also that some module specific parameters exists. You can find the documentation on individual writer modules in this directory.
 
-A NX_class value will be assigned to the group containing the dataset automatically. If you want to override this assignment, set the corresponding attribute of the group.
+A NX_class value will be assigned to the group containing the dataset automatically. 
+
+Attributes should not be assigned at the `"group"` level. The file-writer module owns the group and any attributes must be created from inside module. The module's arguments can be used to pass any
+information that needs to be written as an attribute.
 
 
 #### Static datasets
@@ -232,30 +190,6 @@ For example:
 }
 ```
 
-## Command to stop writing
-
-The stop command consists of a number of parameters which are defined as key-value pairs in the JSON.
-
-Required:
-
-- cmd: The command name, must be `filewriter_stop`
-- job_id: A unique identifier for the request, a UUID for example. Should be the same as used in the start command
-
-Optional:
-
-- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. If not supplied then the Kafka message time is used
-- service_id: The identifier for the instance of the file-writer that should handle this command. Only needed if multiple file-writers present
-
-For example:
-
-```json
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
-  "stop_time": 1547200800000,
-  "service_id": "filewriter1"
-}
-```
 
 ## Single Writer Multiple Reader
 
