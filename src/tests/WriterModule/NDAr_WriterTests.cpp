@@ -232,7 +232,7 @@ TEST_F(AreaDetectorWriter, WriterWriteTest) {
   Temp.reopen(UsedGroup);
   EXPECT_NO_THROW(Temp.write(Message));
   EXPECT_NO_THROW(Temp.write(Message));
-  EXPECT_EQ(2, Temp.Timestamp.get_current_size());
+  EXPECT_EQ(2, Temp.Timestamp.current_size());
 }
 
 TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
@@ -247,11 +247,11 @@ TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
   for (int i = 0; i < 5; i++) {
     EXPECT_NO_THROW(Writer.write(Message));
     if (i < 2) {
-      EXPECT_EQ(0, Writer.CueTimestampIndex.get_current_size());
-      EXPECT_EQ(0, Writer.CueTimestamp.get_current_size());
+      EXPECT_EQ(0, Writer.CueTimestampIndex.current_size());
+      EXPECT_EQ(0, Writer.CueTimestamp.current_size());
     } else {
-      EXPECT_EQ(1, Writer.CueTimestampIndex.get_current_size());
-      EXPECT_EQ(1, Writer.CueTimestamp.get_current_size());
+      EXPECT_EQ(1, Writer.CueTimestampIndex.current_size());
+      EXPECT_EQ(1, Writer.CueTimestamp.current_size());
     }
   }
 }
@@ -284,12 +284,12 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
     EXPECT_NO_THROW(Writer.write(Message));
   }
   std::vector<std::uint64_t> CueIndexValues(
-      Writer.CueTimestampIndex.get_current_size());
+      Writer.CueTimestampIndex.current_size());
   Writer.CueTimestampIndex.read_data(CueIndexValues);
   std::vector<std::uint64_t> CueTimestamps(
-      Writer.CueTimestamp.get_current_size());
+      Writer.CueTimestamp.current_size());
   Writer.CueTimestamp.read_data(CueTimestamps);
-  std::vector<std::uint64_t> Timestamps(Writer.Timestamp.get_current_size());
+  std::vector<std::uint64_t> Timestamps(Writer.Timestamp.current_size());
   Writer.Timestamp.read_data(Timestamps);
   EXPECT_EQ(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0)));
   EXPECT_NE(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0) + 1));

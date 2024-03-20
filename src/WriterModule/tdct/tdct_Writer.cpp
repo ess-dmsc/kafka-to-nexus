@@ -74,7 +74,7 @@ void tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     return;
   }
   hdf5::ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);
-  auto CueIndexValue = Timestamp.get_current_size();
+  auto CueIndexValue = Timestamp.current_size();
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
   CueTimestamp.appendElement(FbPointer->timestamps()->operator[](0));
   Timestamp.appendArray(CArray);

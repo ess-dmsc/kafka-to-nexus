@@ -347,11 +347,11 @@ TEST_F(f142WriteData, WriteOneElement) {
   auto FlatbufferData =
       f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
-  EXPECT_EQ(TestWriter.Timestamp.get_current_size(), 0);
+  EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
-  ASSERT_EQ(TestWriter.Timestamp.get_current_size(), 1);
+  ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);
@@ -372,11 +372,11 @@ TEST_F(f142WriteData, WriteOneDefaultValueElement) {
   auto FlatbufferData =
       f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
-  EXPECT_EQ(TestWriter.Timestamp.get_current_size(), 0);
+  EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
-  ASSERT_EQ(TestWriter.Timestamp.get_current_size(), 1);
+  ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);
@@ -485,9 +485,9 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
 
   // When alarm status is NO_CHANGE nothing should be recorded in the alarm
   // datasets
-  EXPECT_EQ(TestWriter.AlarmTime.get_current_size(), 0);
+  EXPECT_EQ(TestWriter.AlarmTime.current_size(), 0);
   EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 0);
-  EXPECT_EQ(TestWriter.AlarmSeverity.get_current_size(), 0);
+  EXPECT_EQ(TestWriter.AlarmSeverity.current_size(), 0);
 }
 
 struct AlarmWritingTestInfo {
@@ -522,9 +522,9 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
 
   // When alarm status is something other than NO_CHANGE, it should be recorded
   // in the alarm datasets
-  EXPECT_EQ(TestWriter.AlarmTime.get_current_size(), 1);
+  EXPECT_EQ(TestWriter.AlarmTime.current_size(), 1);
   EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 1);
-  EXPECT_EQ(TestWriter.AlarmSeverity.get_current_size(), 1);
+  EXPECT_EQ(TestWriter.AlarmSeverity.current_size(), 1);
 
   std::vector<uint64_t> WrittenAlarmTimes(1);
   TestWriter.AlarmTime.read_data(WrittenAlarmTimes);

@@ -88,7 +88,7 @@ void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
 
   Timestamp.appendElement(std::lround(1e9 * CurrentTimestamp));
   if (++CueCounter == CueInterval) {
-    CueTimestampIndex.appendElement(Timestamp.get_current_size() - 1);
+    CueTimestampIndex.appendElement(Timestamp.current_size() - 1);
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }

@@ -148,26 +148,27 @@ public:
 
   /// \brief Open a dataset.
   ///
-  /// \param Parent The group/node where the dataset to be opened is located.
-  /// \param Name Tha name of the dataset in the HDF5 structure.
-  /// \param CMode If the dataset should be created or opened. Note that it is
+  /// \param parent The group/node where the dataset to be opened is located.
+  /// \param name The name of the dataset in the HDF5 structure.
+  /// \param mode If the dataset should be created or opened. Note that it is
   /// not possible to create a dataset with this class. \throws
   /// std::runtime_error if creation of a dataset is attempted.
-  ExtensibleDatasetBase(const hdf5::node::Group &Parent, std::string Name,
-                        Mode CMode) {
-    if (Mode::Create == CMode) {
+  ExtensibleDatasetBase(hdf5::node::Group const &parent, std::string const &name,
+                        Mode mode) {
+    if (Mode::Create == mode) {
       throw std::runtime_error(
           "ExtensibleDatasetBase::ExtensibleDatasetBase(): "
           "Can only open datasets, not create.");
-    } else if (Mode::Open == CMode) {
-      dataset_ = Parent.get_dataset(Name);
+    } else if (Mode::Open == mode) {
+      dataset_ = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "ExtensibleDatasetBase::ExtensibleDatasetBase(): Unknown mode.");
     }
   }
 
-  [[nodiscard]] hssize_t get_current_size() const {
+  /// Gets the current size of the dataset.
+  [[nodiscard]] hssize_t current_size() const {
     return dataset_.dataspace().size();
   }
 
@@ -196,43 +197,43 @@ public:
   }
 
   /// Append data to dataset that is contained in some sort of container.
-  template <typename T> void appendArray(T const &NewData) {
-    dataset_.extent(0, NewData.size());
-    hdf5::dataspace::Hyperslab Selection{
-        {NrOfElements}, {static_cast<unsigned long long>(NewData.size())}};
-    dataset_.write(NewData, Selection);
-    NrOfElements += NewData.size();
+  template <typename T> void appendArray(T const &data) {
+    dataset_.extent(0, data.size());
+    hdf5::dataspace::Hyperslab selection{
+        {NrOfElements}, {static_cast<unsigned long long>(data.size())}};
+    dataset_.write(data, selection);
+    NrOfElements += data.size();
   }
 
   /// Append single scalar values to dataset.
-  template <typename T> void appendElement(T const &NewElement) {
+  template <typename T> void appendElement(T const &element) {
     dataset_.extent(0, 1);
-    hdf5::dataspace::Hyperslab Selection{{NrOfElements}, {1}};
-    dataset_.write(NewElement, Selection);
+    hdf5::dataspace::Hyperslab selection{{NrOfElements}, {1}};
+    dataset_.write(element, selection);
     NrOfElements += 1;
   }
 
   template <class DataType>
-  void appendArray(hdf5::ArrayAdapter<const DataType> const &NewData) {
-    if (NewData.size() == 0) {
+  void appendArray(hdf5::ArrayAdapter<const DataType> const &data) {
+    if (data.size() == 0) {
       return;
     }
-    NewDimensions[0] = NrOfElements + NewData.size();
+    NewDimensions[0] = NrOfElements + data.size();
     dataset_.resize(NewDimensions);
     ArraySelection.offset({NrOfElements});
-    ArraySelection.block({static_cast<unsigned long long>(NewData.size())});
+    ArraySelection.block({static_cast<unsigned long long>(data.size())});
 
-    ArrayDataSpace.dimensions({NewData.size()}, {NewData.size()});
-    hdf5::dataspace::Dataspace FileSpace = dataset_.dataspace();
-    FileSpace.selection(hdf5::dataspace::SelectionOperation::Set,
+    ArrayDataSpace.dimensions({data.size()}, {data.size()});
+    hdf5::dataspace::Dataspace file_space = dataset_.dataspace();
+    file_space.selection(hdf5::dataspace::SelectionOperation::Set,
                         ArraySelection);
-    hdf5::datatype::Datatype ArrayValueType{hdf5::datatype::create(DataType())};
-    dataset_.write(NewData, ArrayValueType, ArrayDataSpace, FileSpace, Dtpl);
+    hdf5::datatype::Datatype array_value_type{hdf5::datatype::create(DataType())};
+    dataset_.write(data, array_value_type, ArrayDataSpace, file_space, Dtpl);
 
-    NrOfElements += NewData.size();
+    NrOfElements += data.size();
   }
 
-  size_t size() const { return NrOfElements; }
+  [[nodiscard]] size_t size() const { return NrOfElements; }
 
 protected:
   hdf5::node::Dataset dataset_;

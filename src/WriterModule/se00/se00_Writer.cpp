@@ -140,7 +140,7 @@ void msgTypeIsConfigType(se00_Writer::Type ConfigType, ValueUnion MsgType) {
 
 void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = Getse00_SampleEnvironmentData(Message.data());
-  auto CueIndexValue = Value->get_current_size();
+  auto CueIndexValue = Value->current_size();
   auto ValuesType = FbPointer->values_type();
 
   if (not HasCheckedMessageType) {

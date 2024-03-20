@@ -321,11 +321,11 @@ TEST_F(f144Init, WriteOneElement) {
                                               FlatbufferData.second);
   EXPECT_EQ(FlatbufferMsg.getFlatbufferID(), "f144");
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
-  EXPECT_EQ(TestWriter.Timestamp.get_current_size(), 0);
-  EXPECT_EQ(TestWriter.Timestamp.get_current_size(), 0);
+  EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
+  EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FlatbufferMsg);
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
-  ASSERT_EQ(TestWriter.Timestamp.get_current_size(), 1);
+  ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);
@@ -346,11 +346,11 @@ TEST_F(f144Init, WriteOneDefaultValueElement) {
   auto FlatbufferData =
       f144_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
-  EXPECT_EQ(TestWriter.Timestamp.get_current_size(), 0);
+  EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
-  ASSERT_EQ(TestWriter.Timestamp.get_current_size(), 1);
+  ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);

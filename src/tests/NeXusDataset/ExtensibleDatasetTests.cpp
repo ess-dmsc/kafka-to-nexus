@@ -266,7 +266,7 @@ TEST_F(DatasetCreation, AppendDataOnce) {
   NeXusDataset::ExtensibleDataset<std::uint16_t> TestDataset(
       RootGroup, "SomeDataset", NeXusDataset::Mode::Create, ChunkSize);
   TestDataset.appendArray(SomeData);
-  auto DataspaceSize = TestDataset.get_current_size();
+  auto DataspaceSize = TestDataset.current_size();
   EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size());
   std::vector<std::uint16_t> Buffer(DataspaceSize);
   TestDataset.read_data(Buffer);
@@ -282,7 +282,7 @@ TEST_F(DatasetCreation, AppendDataTwice) {
       RootGroup, "SomeDataset", NeXusDataset::Mode::Create, ChunkSize);
   TestDataset.appendArray(SomeData);
   TestDataset.appendArray(SomeData);
-  auto DataspaceSize = TestDataset.get_current_size();
+  auto DataspaceSize = TestDataset.current_size();
   EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size() * 2);
   std::vector<std::uint16_t> Buffer(DataspaceSize);
   TestDataset.read_data(Buffer);
@@ -301,7 +301,7 @@ TEST_F(DatasetCreation, AppendArrayAdpaterDataTwice) {
       SomeData.data(), static_cast<size_t>(SomeData.size())};
   TestDataset.appendArray(TempAdapter);
   TestDataset.appendArray(TempAdapter);
-  auto DataspaceSize = TestDataset.get_current_size();
+  auto DataspaceSize = TestDataset.current_size();
   EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size() * 2);
   std::vector<std::uint16_t> Buffer(DataspaceSize);
   TestDataset.read_data(Buffer);
