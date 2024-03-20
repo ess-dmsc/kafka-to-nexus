@@ -34,7 +34,7 @@ We currently use Doxygen for documentation, but try to keep it as simple as poss
 We used to follow the [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html) for naming conventions but in 
 practice it was found to be difficult to read, so we are switching to a style similar to Python, e.g.,:
 - lower snake-case for variable and function names
-- Capitalised words for class names
+- capitalised words for class names
 
 Private class members should have a trailing underscore.
 
