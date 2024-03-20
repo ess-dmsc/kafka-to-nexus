@@ -19,7 +19,7 @@ To summarise:
 ### Branch naming
 The names should start with the ticket number and contain a brief description. For example:
 
-`DM-1014_byebye_dead_code`
+`ECDC-1014_byebye_dead_code`
 
 ### Pull requests
 There is a template for pull requests. This should contain enough information for the reviewer to be able to review the code efficiently.
@@ -28,9 +28,18 @@ There is a template for pull requests. This should contain enough information fo
 
 ### Style
 We use `clang-format` v3.9 LLVM default style.
-We also follow the LLVM coding standards for naming conventions etc. and use Doxygen for documentation.
+We try to follow the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/) where possible.
+We currently use Doxygen for documentation, but try to keep it as simple as possible.
 
-Please refer to [LLVM documentation](https://llvm.org/docs/CodingStandards.html).
+We used to follow the [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html) for naming conventions but in 
+practice it was found to be difficult to read, so we are switching to a style similar to Python, e.g.,:
+- lower snake-case for variable and function names
+- capitalised words for class names
+
+Private class members should have a trailing underscore.
+
+As we are migrating the style, one will see code in both styles. We suggest just fixing the style for code local to your
+current work. Eventually, we will eliminate the LLVM style.
 
 ### Unit tests
 Unit tests should be written/modified for any code added or changed (within reason, of course).
