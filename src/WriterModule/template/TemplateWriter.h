@@ -126,7 +126,7 @@ public:
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
   // cppcheck-suppress functionStatic
-  WriterModule::InitResult init_hdf(hdf5::node::Group &) const override {
+  WriterModule::InitResult init_hdf(hdf5::node::Group &) override {
     std::cout << "WriterClass::init_hdf()\n";
     return WriterModule::InitResult::OK;
   }

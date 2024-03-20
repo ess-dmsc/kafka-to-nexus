@@ -27,14 +27,14 @@ public:
   ns10_Writer() : WriterModule::Base("ns10", false, "NXlog") {}
   ~ns10_Writer() override = default;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   void writeImpl(FileWriter::FlatbufferMessage const &Message) override;
 
 protected:
-  NeXusDataset::DoubleValue Values;
+  NeXusDataset::DoubleValue value;
   NeXusDataset::Time Timestamp;
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;

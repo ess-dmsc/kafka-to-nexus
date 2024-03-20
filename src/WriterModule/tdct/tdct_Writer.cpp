@@ -24,7 +24,7 @@ namespace tdct {
 static WriterModule::Registry::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct", "tdct");
 
-InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
@@ -74,7 +74,7 @@ void tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     return;
   }
   hdf5::ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);
-  auto CueIndexValue = Timestamp.dataspace().size();
+  auto CueIndexValue = Timestamp.get_current_size();
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
   CueTimestamp.appendElement(FbPointer->timestamps()->operator[](0));
   Timestamp.appendArray(CArray);

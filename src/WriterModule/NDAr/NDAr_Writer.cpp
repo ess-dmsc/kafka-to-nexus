@@ -53,7 +53,7 @@ void NDAr_Writer::config_post_processing() {
 }
 
 WriterModule::InitResult
-NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions().at(0);
   try {
     initValueDataset(HDFGroup);
@@ -147,7 +147,7 @@ void NDAr_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {
-    CueTimestampIndex.appendElement(Timestamp.dataspace().size() - 1);
+    CueTimestampIndex.appendElement(Timestamp.get_current_size() - 1);
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }

@@ -46,7 +46,7 @@ void ADAr_Writer::config_post_processing() {
   }
 }
 
-InitResult ADAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult ADAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions().at(0);
   try {
     initValueDataset(HDFGroup);
@@ -194,7 +194,7 @@ void ADAr_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {
-    CueTimestampIndex.appendElement(Timestamp.dataspace().size() - 1);
+    CueTimestampIndex.appendElement(Timestamp.get_current_size() - 1);
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }

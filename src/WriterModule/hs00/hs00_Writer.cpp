@@ -23,7 +23,7 @@ void hs00_Writer::config_post_processing() {
   TheWriterUntyped = createFromDataType();
 }
 
-InitResult hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");

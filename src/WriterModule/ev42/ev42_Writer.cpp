@@ -55,7 +55,7 @@ void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
       ChunkSize);                 // NOLINT(bugprone-unused-raii)
 }
 
-InitResult ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
 

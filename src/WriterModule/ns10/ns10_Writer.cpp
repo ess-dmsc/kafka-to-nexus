@@ -21,10 +21,10 @@ static WriterModule::Registry::Registrar<ns10_Writer> RegisterWriter("ns10",
 
 using FileWriterBase = WriterModule::Base;
 
-InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    NeXusDataset::DoubleValue(      // NOLINT(bugprone-unused-raii)
+    value = NeXusDataset::DoubleValue(      // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
@@ -51,7 +51,7 @@ InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 
 WriterModule::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
-    Values = NeXusDataset::DoubleValue(HDFGroup, NeXusDataset::Mode::Open);
+    value = NeXusDataset::DoubleValue(HDFGroup, NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(HDFGroup, NeXusDataset::Mode::Open);
@@ -77,7 +77,7 @@ void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
 
   try {
     double ConvertedValue = std::stod(Value->str());
-    Values.appendElement(ConvertedValue);
+    value.appendElement(ConvertedValue);
   } catch (std::invalid_argument const &Exception) {
     LOG_ERROR("Could not convert string value to double: '{}'", Value->str());
     throw;
@@ -88,7 +88,7 @@ void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
 
   Timestamp.appendElement(std::lround(1e9 * CurrentTimestamp));
   if (++CueCounter == CueInterval) {
-    CueTimestampIndex.appendElement(Timestamp.dataspace().size() - 1);
+    CueTimestampIndex.appendElement(Timestamp.get_current_size() - 1);
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }
