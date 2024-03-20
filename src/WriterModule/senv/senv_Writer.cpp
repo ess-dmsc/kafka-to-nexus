@@ -26,8 +26,7 @@ namespace senv {
 static WriterModule::Registry::Registrar<senv_Writer>
     RegisterSenvWriter("senv", "senv");
 
-WriterModule::InitResult
-senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     initValueDataset(HDFGroup);
     auto &CurrentGroup = HDFGroup;
@@ -55,8 +54,8 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = std::make_unique<NeXusDataset::ExtensibleDatasetBase>(CurrentGroup, "value",
-                                                NeXusDataset::Mode::Open);
+    Value = std::make_unique<NeXusDataset::ExtensibleDatasetBase>(
+        CurrentGroup, "value", NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);

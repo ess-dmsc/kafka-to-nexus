@@ -25,23 +25,16 @@ namespace WriterModule::se00 {
 static WriterModule::Registry::Registrar<se00_Writer>
     RegisterSenvWriter("se00", "se00");
 
-WriterModule::InitResult
-se00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult se00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     initValueDataset(HDFGroup);
     auto const &CurrentGroup = HDFGroup;
-    Timestamp = NeXusDataset::Time(
-        CurrentGroup,
-        NeXusDataset::Mode::Create,
-        ChunkSize);
+    Timestamp =
+        NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Create, ChunkSize);
     CueTimestampIndex = NeXusDataset::CueIndex(
-        CurrentGroup,
-        NeXusDataset::Mode::Create,
-        ChunkSize);
+        CurrentGroup, NeXusDataset::Mode::Create, ChunkSize);
     CueTimestamp = NeXusDataset::CueTimestampZero(
-        CurrentGroup,
-        NeXusDataset::Mode::Create,
-        ChunkSize);
+        CurrentGroup, NeXusDataset::Mode::Create, ChunkSize);
   } catch (std::exception &E) {
     LOG_ERROR(
         R"(Unable to initialise fast sample environment data tree in HDF file with error message: "{}")",
@@ -54,8 +47,8 @@ se00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 WriterModule::InitResult se00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = std::make_unique<NeXusDataset::ExtensibleDatasetBase>(CurrentGroup, "value",
-                                                NeXusDataset::Mode::Open);
+    Value = std::make_unique<NeXusDataset::ExtensibleDatasetBase>(
+        CurrentGroup, "value", NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
@@ -268,4 +261,4 @@ void se00_Writer::initValueDataset(hdf5::node::Group const &Parent) {
   Value.swap(temporary);
 }
 
-} // namespace WriterModule
+} // namespace WriterModule::se00

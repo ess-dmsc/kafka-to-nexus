@@ -153,8 +153,8 @@ public:
   /// \param mode If the dataset should be created or opened. Note that it is
   /// not possible to create a dataset with this class. \throws
   /// std::runtime_error if creation of a dataset is attempted.
-  ExtensibleDatasetBase(hdf5::node::Group const &parent, std::string const &name,
-                        Mode mode) {
+  ExtensibleDatasetBase(hdf5::node::Group const &parent,
+                        std::string const &name, Mode mode) {
     if (Mode::Create == mode) {
       throw std::runtime_error(
           "ExtensibleDatasetBase::ExtensibleDatasetBase(): "
@@ -176,8 +176,7 @@ public:
   /// Only for use in tests.
   ///
   /// \param buffer
-  template <typename T>
-  void read_data(std::vector<T> &buffer){
+  template <typename T> void read_data(std::vector<T> &buffer) {
     dataset_.read(buffer);
   }
 
@@ -185,16 +184,11 @@ public:
   /// Only for use in tests.
   ///
   /// \param buffer
-  template <typename T>
-  void read_data(T &buffer){
-    dataset_.read(buffer);
-  }
+  template <typename T> void read_data(T &buffer) { dataset_.read(buffer); }
 
   /// Access the underlying dataset.
   /// Only for use in tests.
-  hdf5::node::Dataset const & dataset() {
-    return dataset_;
-  }
+  hdf5::node::Dataset const &dataset() { return dataset_; }
 
   /// Append data to dataset that is contained in some sort of container.
   template <typename T> void appendArray(T const &data) {
@@ -226,8 +220,9 @@ public:
     ArrayDataSpace.dimensions({data.size()}, {data.size()});
     hdf5::dataspace::Dataspace file_space = dataset_.dataspace();
     file_space.selection(hdf5::dataspace::SelectionOperation::Set,
-                        ArraySelection);
-    hdf5::datatype::Datatype array_value_type{hdf5::datatype::create(DataType())};
+                         ArraySelection);
+    hdf5::datatype::Datatype array_value_type{
+        hdf5::datatype::create(DataType())};
     dataset_.write(data, array_value_type, ArrayDataSpace, file_space, Dtpl);
 
     NrOfElements += data.size();

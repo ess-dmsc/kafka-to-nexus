@@ -286,8 +286,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
   std::vector<std::uint64_t> CueIndexValues(
       Writer.CueTimestampIndex.current_size());
   Writer.CueTimestampIndex.read_data(CueIndexValues);
-  std::vector<std::uint64_t> CueTimestamps(
-      Writer.CueTimestamp.current_size());
+  std::vector<std::uint64_t> CueTimestamps(Writer.CueTimestamp.current_size());
   Writer.CueTimestamp.read_data(CueTimestamps);
   std::vector<std::uint64_t> Timestamps(Writer.Timestamp.current_size());
   Writer.Timestamp.read_data(Timestamps);

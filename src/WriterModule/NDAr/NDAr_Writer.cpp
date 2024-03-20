@@ -52,8 +52,7 @@ void NDAr_Writer::config_post_processing() {
   }
 }
 
-WriterModule::InitResult
-NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto DefaultChunkSize = ChunkSize.operator hdf5::Dimensions().at(0);
   try {
     initValueDataset(HDFGroup);
