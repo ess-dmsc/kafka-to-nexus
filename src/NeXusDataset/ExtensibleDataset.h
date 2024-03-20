@@ -167,8 +167,32 @@ public:
     }
   }
 
-  hssize_t get_current_size() const {
+  [[nodiscard]] hssize_t get_current_size() const {
     return dataset_.dataspace().size();
+  }
+
+  /// Read the current data in the dataset.
+  /// Only for use in tests.
+  ///
+  /// \param buffer
+  template <typename T>
+  void read_data(std::vector<T> &buffer){
+    dataset_.read(buffer);
+  }
+
+  /// Read the current data in the dataset.
+  /// Only for use in tests.
+  ///
+  /// \param buffer
+  template <typename T>
+  void read_data(T &buffer){
+    dataset_.read(buffer);
+  }
+
+  /// Access the underlying dataset.
+  /// Only for use in tests.
+  hdf5::node::Dataset const & dataset() {
+    return dataset_;
   }
 
   /// Append data to dataset that is contained in some sort of container.
@@ -209,11 +233,6 @@ public:
   }
 
   size_t size() const { return NrOfElements; }
-
-//  template <typename AttributeType>
-//  hdf5::attribute::Attribute create_attribute(std::string const &name){
-//    return dataset_.attributes.create<AttributeType>(name);
-//  }
 
 protected:
   hdf5::node::Dataset dataset_;

@@ -22,7 +22,7 @@ public:
     UsedGroup = RootGroup.create_group(GroupName);
     NeXusDataset::ExtensibleDataset<int> TempDataset(
         UsedGroup, DatasetName, NeXusDataset::Mode::Create);
-    UsedDataset = TempDataset.link().parent().get_dataset(DatasetName);
+    UsedDataset = TempDataset.dataset().link().parent().get_dataset(DatasetName);
   }
   std::string const GroupName{"SomeGroupName"};
   std::string const DatasetName{"SomeDatasetName"};

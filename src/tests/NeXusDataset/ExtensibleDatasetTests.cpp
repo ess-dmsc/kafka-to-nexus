@@ -266,10 +266,10 @@ TEST_F(DatasetCreation, AppendDataOnce) {
   NeXusDataset::ExtensibleDataset<std::uint16_t> TestDataset(
       RootGroup, "SomeDataset", NeXusDataset::Mode::Create, ChunkSize);
   TestDataset.appendArray(SomeData);
-  auto DataspaceSize = TestDataset.dataspace().size();
+  auto DataspaceSize = TestDataset.get_current_size();
   EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size());
   std::vector<std::uint16_t> Buffer(DataspaceSize);
-  TestDataset.read(Buffer);
+  TestDataset.read_data(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(Buffer.at(i), SomeData.at(i));
   }
@@ -282,10 +282,10 @@ TEST_F(DatasetCreation, AppendDataTwice) {
       RootGroup, "SomeDataset", NeXusDataset::Mode::Create, ChunkSize);
   TestDataset.appendArray(SomeData);
   TestDataset.appendArray(SomeData);
-  auto DataspaceSize = TestDataset.dataspace().size();
+  auto DataspaceSize = TestDataset.get_current_size();
   EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size() * 2);
   std::vector<std::uint16_t> Buffer(DataspaceSize);
-  TestDataset.read(Buffer);
+  TestDataset.read_data(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(Buffer.at(i), SomeData.at(i % SomeData.size()))
         << "Failed at i = " << i;
@@ -301,10 +301,10 @@ TEST_F(DatasetCreation, AppendArrayAdpaterDataTwice) {
       SomeData.data(), static_cast<size_t>(SomeData.size())};
   TestDataset.appendArray(TempAdapter);
   TestDataset.appendArray(TempAdapter);
-  auto DataspaceSize = TestDataset.dataspace().size();
+  auto DataspaceSize = TestDataset.get_current_size();
   EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size() * 2);
   std::vector<std::uint16_t> Buffer(DataspaceSize);
-  TestDataset.read(Buffer);
+  TestDataset.read_data(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(Buffer.at(i), SomeData.at(i % SomeData.size()))
         << "Failed at i = " << i;

@@ -347,16 +347,16 @@ TEST_F(f142WriteData, WriteOneElement) {
   auto FlatbufferData =
       f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
-  EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.Timestamp.get_current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
-  ASSERT_EQ(TestWriter.Timestamp.dataspace().size(), 1);
+  ASSERT_EQ(TestWriter.Timestamp.get_current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);
   std::vector<std::uint64_t> WrittenTimes(1);
-  TestWriter.Timestamp.read(WrittenTimes);
+  TestWriter.Timestamp.read_data(WrittenTimes);
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
 
@@ -372,16 +372,16 @@ TEST_F(f142WriteData, WriteOneDefaultValueElement) {
   auto FlatbufferData =
       f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
   EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
-  EXPECT_EQ(TestWriter.Timestamp.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.Timestamp.get_current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
   ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
-  ASSERT_EQ(TestWriter.Timestamp.dataspace().size(), 1);
+  ASSERT_EQ(TestWriter.Timestamp.get_current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);
   std::vector<std::uint64_t> WrittenTimes(1);
-  TestWriter.Timestamp.read(WrittenTimes);
+  TestWriter.Timestamp.read_data(WrittenTimes);
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
 
@@ -430,14 +430,14 @@ TEST_F(f142WriteData, WriteCueIndex) {
   ASSERT_EQ(TestWriter.CueTimestampZero.size(), 2u);
   std::vector<uint32_t> WrittenCueIndices(2);
   std::vector<uint64_t> WrittenCueTimestamps(2);
-  TestWriter.CueIndex.read(WrittenCueIndices);
-  TestWriter.CueTimestampZero.read(WrittenCueTimestamps);
+  TestWriter.CueIndex.read_data(WrittenCueIndices);
+  TestWriter.CueTimestampZero.read_data(WrittenCueTimestamps);
   std::vector<uint32_t> ExpectedIndices{3, 7};
   std::vector<uint64_t> ExpectedTimestamps{13, 17};
   EXPECT_EQ(WrittenCueIndices, ExpectedIndices);
   EXPECT_EQ(WrittenCueTimestamps, ExpectedTimestamps);
   std::vector<uint64_t> WrittenTimestamps(10);
-  TestWriter.Timestamp.read(WrittenTimestamps);
+  TestWriter.Timestamp.read_data(WrittenTimestamps);
   for (unsigned int j = 0; j < WrittenCueIndices.size(); j++) {
     EXPECT_EQ(WrittenCueTimestamps[j], WrittenTimestamps[WrittenCueIndices[j]]);
   }
@@ -485,9 +485,9 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
 
   // When alarm status is NO_CHANGE nothing should be recorded in the alarm
   // datasets
-  EXPECT_EQ(TestWriter.AlarmTime.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.AlarmTime.get_current_size(), 0);
   EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 0);
-  EXPECT_EQ(TestWriter.AlarmSeverity.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.AlarmSeverity.get_current_size(), 0);
 }
 
 struct AlarmWritingTestInfo {
@@ -522,12 +522,12 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
 
   // When alarm status is something other than NO_CHANGE, it should be recorded
   // in the alarm datasets
-  EXPECT_EQ(TestWriter.AlarmTime.dataspace().size(), 1);
+  EXPECT_EQ(TestWriter.AlarmTime.get_current_size(), 1);
   EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 1);
-  EXPECT_EQ(TestWriter.AlarmSeverity.dataspace().size(), 1);
+  EXPECT_EQ(TestWriter.AlarmSeverity.get_current_size(), 1);
 
   std::vector<uint64_t> WrittenAlarmTimes(1);
-  TestWriter.AlarmTime.read(WrittenAlarmTimes);
+  TestWriter.AlarmTime.read_data(WrittenAlarmTimes);
   EXPECT_EQ(WrittenAlarmTimes.at(0), TestAlarm.Timestamp);
 
   std::string WrittenAlarmStatusTemporary;
@@ -540,7 +540,7 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
   EXPECT_EQ(WrittenAlarmStatus, TestAlarm.ExpectedStatusString);
 
   std::vector<std::int16_t> WrittenAlarmSeverity(1);
-  TestWriter.AlarmSeverity.read(WrittenAlarmSeverity);
+  TestWriter.AlarmSeverity.read_data(WrittenAlarmSeverity);
   EXPECT_EQ(WrittenAlarmSeverity.at(0),
             F142SeverityToAl00Severity[static_cast<std::int16_t>(
                 TestAlarm.Severity)]);

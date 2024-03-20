@@ -34,7 +34,7 @@ public:
   void writeImpl(FileWriter::FlatbufferMessage const &Message) override;
 
 protected:
-  NeXusDataset::DoubleValue value;
+  NeXusDataset::DoubleValue Values;
   NeXusDataset::Time Timestamp;
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;

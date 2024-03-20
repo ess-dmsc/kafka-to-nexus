@@ -232,7 +232,7 @@ TEST_F(AreaDetectorWriter, WriterWriteTest) {
   Temp.reopen(UsedGroup);
   EXPECT_NO_THROW(Temp.write(Message));
   EXPECT_NO_THROW(Temp.write(Message));
-  EXPECT_EQ(2, Temp.Timestamp.dataspace().size());
+  EXPECT_EQ(2, Temp.Timestamp.get_current_size());
 }
 
 TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
@@ -247,11 +247,11 @@ TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
   for (int i = 0; i < 5; i++) {
     EXPECT_NO_THROW(Writer.write(Message));
     if (i < 2) {
-      EXPECT_EQ(0, Writer.CueTimestampIndex.dataspace().size());
-      EXPECT_EQ(0, Writer.CueTimestamp.dataspace().size());
+      EXPECT_EQ(0, Writer.CueTimestampIndex.get_current_size());
+      EXPECT_EQ(0, Writer.CueTimestamp.get_current_size());
     } else {
-      EXPECT_EQ(1, Writer.CueTimestampIndex.dataspace().size());
-      EXPECT_EQ(1, Writer.CueTimestamp.dataspace().size());
+      EXPECT_EQ(1, Writer.CueTimestampIndex.get_current_size());
+      EXPECT_EQ(1, Writer.CueTimestamp.get_current_size());
     }
   }
 }
@@ -284,13 +284,13 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
     EXPECT_NO_THROW(Writer.write(Message));
   }
   std::vector<std::uint64_t> CueIndexValues(
-      Writer.CueTimestampIndex.dataspace().size());
-  Writer.CueTimestampIndex.read(CueIndexValues);
+      Writer.CueTimestampIndex.get_current_size());
+  Writer.CueTimestampIndex.read_data(CueIndexValues);
   std::vector<std::uint64_t> CueTimestamps(
-      Writer.CueTimestamp.dataspace().size());
-  Writer.CueTimestamp.read(CueTimestamps);
-  std::vector<std::uint64_t> Timestamps(Writer.Timestamp.dataspace().size());
-  Writer.Timestamp.read(Timestamps);
+      Writer.CueTimestamp.get_current_size());
+  Writer.CueTimestamp.read_data(CueTimestamps);
+  std::vector<std::uint64_t> Timestamps(Writer.Timestamp.get_current_size());
+  Writer.Timestamp.read_data(Timestamps);
   EXPECT_EQ(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0)));
   EXPECT_NE(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0) + 1));
   EXPECT_NE(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0) - 1));
@@ -316,7 +316,7 @@ TEST_F(AreaDetectorWriter, WriterTimeStampTest) {
       tempNDArr->epicsTS()->secPastEpoch(), tempNDArr->epicsTS()->nsec());
   Writer.write(Message);
   std::uint64_t storedTs{11111};
-  Writer.Timestamp.read(storedTs);
+  Writer.Timestamp.read_data(storedTs);
   EXPECT_EQ(compTs, storedTs);
 }
 
