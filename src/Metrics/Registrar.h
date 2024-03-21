@@ -10,10 +10,16 @@ namespace Metrics {
 
 class Metric;
 
+class IRegistrar {
+public:
+  virtual void registerMetric(Metric &NewMetric,
+                      std::vector<LogTo> const &SinkTypes) const = 0;
+};
+
 /// Register and metrics to be reported via a specified sink
 /// Manages metrics name prefixes
 /// Deregistration of metric happens via Metric's destructor
-class Registrar {
+class Registrar : public IRegistrar {
 public:
   Registrar(std::string MetricsPrefix,
             std::vector<std::shared_ptr<Reporter>> Reporters)
@@ -24,7 +30,7 @@ public:
   };
 
   void registerMetric(Metric &NewMetric,
-                      std::vector<LogTo> const &SinkTypes) const;
+                      std::vector<LogTo> const &SinkTypes) const override;
 
   Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
 
