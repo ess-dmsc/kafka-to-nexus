@@ -15,13 +15,22 @@
 
 namespace MetaData {
 
-using TrackerPtr = std::shared_ptr<Tracker>;
+class ITracker {
+public:
+  virtual ~ITracker() noexcept = default;
+  virtual void registerMetaData(MetaData::ValueBase NewMetaData) = 0;
+  virtual void clearMetaData() = 0;
+  virtual void writeToJSONDict(nlohmann::json &JSONNode) const = 0;
+  virtual void writeToHDF5File(hdf5::node::Group RootNode) const = 0;
+};
+
+using TrackerPtr = std::shared_ptr<ITracker>;
 
 /// \brief Used to store the pointers to metadata variables.
 ///
 /// The (almost) sole for this class to exist is so that we can automatically
 /// write (or do whatever) to the metadata when its destructor is called.
-class Tracker {
+class Tracker : public ITracker {
 public:
   Tracker() = default;
   void registerMetaData(MetaData::ValueBase NewMetaData);
