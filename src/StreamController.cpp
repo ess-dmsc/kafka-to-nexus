@@ -13,13 +13,13 @@ StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
     FileWriter::StreamerOptions const &Settings,
-    Metrics::Registrar const &Registrar, MetaData::TrackerPtr const &Tracker)
+    Metrics::Registrar *Registrar, MetaData::TrackerPtr const &Tracker)
 
     : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
       StreamMetricRegistrar(Registrar),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
-                   Registrar.getNewRegistrar("stream")),
+                   Registrar->getNewRegistrar("stream")),
       StreamerOptions(Settings), MetaDataTracker(Tracker) {
   MdatWriter->setStartTime(Settings.StartTimestamp);
   MdatWriter->setStopTime(Settings.StopTimestamp);

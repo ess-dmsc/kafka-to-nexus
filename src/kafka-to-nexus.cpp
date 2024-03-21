@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
             Options->StreamerConfiguration.BrokerSettings, Options->JobPoolURI,
             Options->CommandBrokerURI),
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
-        UsedRegistrar);
+        &UsedRegistrar);
   };
 
   Status::StatusService status(Options->ServerStatusPort);

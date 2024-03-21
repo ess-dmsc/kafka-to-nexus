@@ -17,7 +17,7 @@ namespace FileWriter {
 
 Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
                std::unique_ptr<Status::StatusReporterBase> Reporter,
-               Metrics::Registrar const &Registrar)
+               Metrics::Registrar *Registrar)
     : MainConfig(Config), CommandAndControl(std::move(Listener)),
       Reporter(std::move(Reporter)), MasterMetricsRegistrar(Registrar) {
   CommandAndControl->registerGetJobIdFunction(
@@ -34,7 +34,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
   CurrentStateMetric = static_cast<int64_t>(getCurrentState());
-  MasterMetricsRegistrar.registerMetric(CurrentStateMetric,
+  MasterMetricsRegistrar->registerMetric(CurrentStateMetric,
                                         {Metrics::LogTo::CARBON});
 }
 

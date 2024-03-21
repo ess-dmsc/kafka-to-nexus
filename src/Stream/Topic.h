@@ -26,7 +26,7 @@ namespace Stream {
 class Topic {
 public:
   Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
-        SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
+        SrcToDst Map, MessageWriter *Writer, Metrics::Registrar *RegisterMetric,
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway,
         std::function<bool()> AreStreamersPausedFunction,

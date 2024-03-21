@@ -18,7 +18,7 @@ namespace Stream {
 
 Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              SrcToDst Map, MessageWriter *Writer,
-             Metrics::Registrar &RegisterMetric, time_point StartTime,
+             Metrics::Registrar *RegisterMetric, time_point StartTime,
              duration StartTimeLeeway, time_point StopTime,
              duration StopTimeLeeway,
              std::function<bool()> AreStreamersPausedFunction,
@@ -28,7 +28,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
       StopLeeway(StopTimeLeeway),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
-      Registrar(RegisterMetric.getNewRegistrar(Topic)),
+      Registrar(RegisterMetric->getNewRegistrar(Topic)),
       AreStreamersPausedFunction(AreStreamersPausedFunction),
       ConsumerCreator(std::move(CreateConsumers)) {}
 
