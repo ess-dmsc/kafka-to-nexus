@@ -20,7 +20,7 @@ InitResult ep01_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-InitResult ep01_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult ep01_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::ConnectionStatusTime(HDFGroup,

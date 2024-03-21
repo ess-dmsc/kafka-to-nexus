@@ -21,25 +21,25 @@ static WriterModule::Registry::Registrar<ns10_Writer> RegisterWriter("ns10",
 
 using FileWriterBase = WriterModule::Base;
 
-InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    NeXusDataset::DoubleValue(      // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
-    NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
-    NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
-    NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
+    Values = NeXusDataset::DoubleValue( // NOLINT(bugprone-unused-raii)
+        CurrentGroup,                   // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create,     // NOLINT(bugprone-unused-raii)
+        ChunkSize);                     // NOLINT(bugprone-unused-raii)
+    NeXusDataset::Time(                 // NOLINT(bugprone-unused-raii)
+        CurrentGroup,                   // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create,     // NOLINT(bugprone-unused-raii)
+        ChunkSize);                     // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueIndex(             // NOLINT(bugprone-unused-raii)
+        CurrentGroup,                   // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create,     // NOLINT(bugprone-unused-raii)
+        ChunkSize);                     // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueTimestampZero(     // NOLINT(bugprone-unused-raii)
+        CurrentGroup,                   // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create,     // NOLINT(bugprone-unused-raii)
+        ChunkSize);                     // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
     LOG_ERROR(
         R"(Unable to initialise areaDetector data tree in HDF file with error message: "{}")",
@@ -88,7 +88,7 @@ void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
 
   Timestamp.appendElement(std::lround(1e9 * CurrentTimestamp));
   if (++CueCounter == CueInterval) {
-    CueTimestampIndex.appendElement(Timestamp.dataspace().size() - 1);
+    CueTimestampIndex.appendElement(Timestamp.current_size() - 1);
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }

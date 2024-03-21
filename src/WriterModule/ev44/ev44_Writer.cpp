@@ -29,7 +29,7 @@ namespace ev44 {
 
 using nlohmann::json;
 
-InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
 

@@ -31,7 +31,7 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class f142_Writer : public WriterModule::Base {
 public:
   /// Implements writer module interface.
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   /// Implements writer module interface.
   void config_post_processing() override;
   /// Implements writer module interface.

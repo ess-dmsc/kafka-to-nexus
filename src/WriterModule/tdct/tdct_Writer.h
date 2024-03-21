@@ -31,7 +31,7 @@ public:
                            {"epics_con_info", "alarm_info"}) {}
   ~tdct_Writer() override = default;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

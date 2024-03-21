@@ -89,7 +89,7 @@ void f142_Writer::config_post_processing() {
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
-InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,

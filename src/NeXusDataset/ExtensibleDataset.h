@@ -141,74 +141,97 @@ enum class Mode { Create, Open };
 ///
 /// This base class is used in order to have templated child classes that can
 /// override/inherit the member functions of this class.
-class ExtensibleDatasetBase : public hdf5::node::ChunkedDataset {
+class ExtensibleDatasetBase {
 public:
   /// \brief Constructor.
   ExtensibleDatasetBase() = default;
 
   /// \brief Open a dataset.
   ///
-  /// \param Parent The group/node where the dataset to be opened is located.
-  /// \param Name Tha name of the dataset in the HDF5 structure.
-  /// \param CMode If the dataset should be created or opened. Note that it is
+  /// \param parent The group/node where the dataset to be opened is located.
+  /// \param name The name of the dataset in the HDF5 structure.
+  /// \param mode If the dataset should be created or opened. Note that it is
   /// not possible to create a dataset with this class. \throws
-  /// std::runtime_error If creation of a dataset is attempted.
-  ExtensibleDatasetBase(const hdf5::node::Group &Parent, std::string Name,
-                        Mode CMode)
-      : hdf5::node::ChunkedDataset() {
-    if (Mode::Create == CMode) {
+  /// std::runtime_error if creation of a dataset is attempted.
+  ExtensibleDatasetBase(hdf5::node::Group const &parent,
+                        std::string const &name, Mode mode) {
+    if (Mode::Create == mode) {
       throw std::runtime_error(
           "ExtensibleDatasetBase::ExtensibleDatasetBase(): "
           "Can only open datasets, not create.");
-    } else if (Mode::Open == CMode) {
-      Dataset::operator=(Parent.get_dataset(Name));
+    } else if (Mode::Open == mode) {
+      dataset_ = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "ExtensibleDatasetBase::ExtensibleDatasetBase(): Unknown mode.");
     }
   }
 
+  /// Gets the current size of the dataset.
+  [[nodiscard]] hssize_t current_size() const {
+    return dataset_.dataspace().size();
+  }
+
+  /// Read the current data in the dataset.
+  /// Only for use in tests.
+  ///
+  /// \param buffer
+  template <typename T> void read_data(std::vector<T> &buffer) {
+    dataset_.read(buffer);
+  }
+
+  /// Read the current data in the dataset.
+  /// Only for use in tests.
+  ///
+  /// \param buffer
+  template <typename T> void read_data(T &buffer) { dataset_.read(buffer); }
+
+  /// Access the underlying dataset.
+  /// Only for use in tests.
+  hdf5::node::Dataset const &dataset() { return dataset_; }
+
   /// Append data to dataset that is contained in some sort of container.
-  template <typename T> void appendArray(T const &NewData) {
-    Dataset::extent(0,
-                    NewData.size()); // Extend size() element along dimenions 0
-    hdf5::dataspace::Hyperslab Selection{
-        {NrOfElements}, {static_cast<unsigned long long>(NewData.size())}};
-    write(NewData, Selection);
-    NrOfElements += NewData.size();
+  template <typename T> void appendArray(T const &data) {
+    dataset_.extent(0, data.size());
+    hdf5::dataspace::Hyperslab selection{
+        {NrOfElements}, {static_cast<unsigned long long>(data.size())}};
+    dataset_.write(data, selection);
+    NrOfElements += data.size();
   }
 
   /// Append single scalar values to dataset.
-  template <typename T> void appendElement(T const &NewElement) {
-    Dataset::extent(0, 1); // Extend by 1 element along dimenions 0
-    hdf5::dataspace::Hyperslab Selection{{NrOfElements}, {1}};
-    write(NewElement, Selection);
+  template <typename T> void appendElement(T const &element) {
+    dataset_.extent(0, 1);
+    hdf5::dataspace::Hyperslab selection{{NrOfElements}, {1}};
+    dataset_.write(element, selection);
     NrOfElements += 1;
   }
 
   template <class DataType>
-  void appendArray(hdf5::ArrayAdapter<const DataType> const &NewData) {
-    if (NewData.size() == 0) {
+  void appendArray(hdf5::ArrayAdapter<const DataType> const &data) {
+    if (data.size() == 0) {
       return;
     }
-    NewDimensions[0] = NrOfElements + NewData.size();
-    Dataset::resize(NewDimensions);
+    NewDimensions[0] = NrOfElements + data.size();
+    dataset_.resize(NewDimensions);
     ArraySelection.offset({NrOfElements});
-    ArraySelection.block({static_cast<unsigned long long>(NewData.size())});
+    ArraySelection.block({static_cast<unsigned long long>(data.size())});
 
-    ArrayDataSpace.dimensions({NewData.size()}, {NewData.size()});
-    hdf5::dataspace::Dataspace FileSpace = dataspace();
-    FileSpace.selection(hdf5::dataspace::SelectionOperation::Set,
-                        ArraySelection);
-    hdf5::datatype::Datatype ArrayValueType{hdf5::datatype::create(DataType())};
-    write(NewData, ArrayValueType, ArrayDataSpace, FileSpace, Dtpl);
+    ArrayDataSpace.dimensions({data.size()}, {data.size()});
+    hdf5::dataspace::Dataspace file_space = dataset_.dataspace();
+    file_space.selection(hdf5::dataspace::SelectionOperation::Set,
+                         ArraySelection);
+    hdf5::datatype::Datatype array_value_type{
+        hdf5::datatype::create(DataType())};
+    dataset_.write(data, array_value_type, ArrayDataSpace, file_space, Dtpl);
 
-    NrOfElements += NewData.size();
+    NrOfElements += data.size();
   }
 
-  size_t size() const { return NrOfElements; }
+  [[nodiscard]] size_t size() const { return NrOfElements; }
 
 protected:
+  hdf5::node::Dataset dataset_;
   hdf5::dataspace::Simple ArrayDataSpace;
   hdf5::Dimensions NewDimensions{0};
   hdf5::dataspace::Hyperslab ArraySelection{{0}, {1}};
@@ -231,15 +254,15 @@ public:
                     Mode CMode, size_t ChunkSize = 1024)
       : ExtensibleDatasetBase() {
     if (Mode::Create == CMode) {
-      Dataset::operator=(hdf5::node::ChunkedDataset(
+      dataset_ = hdf5::node::ChunkedDataset(
           Parent, Name, hdf5::datatype::create<DataType>(),
           hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::unlimited}),
           {
               static_cast<unsigned long long>(ChunkSize),
-          }));
+          });
     } else if (Mode::Open == CMode) {
-      Dataset::operator=(Parent.get_dataset(Name));
-      NrOfElements = static_cast<size_t>(dataspace().size());
+      dataset_ = Parent.get_dataset(Name);
+      NrOfElements = static_cast<size_t>(dataset_.dataspace().size());
     } else {
       throw std::runtime_error(
           "ExtensibleDataset::ExtensibleDataset(): Unknown mode.");
