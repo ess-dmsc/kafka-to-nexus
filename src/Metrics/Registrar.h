@@ -14,6 +14,7 @@ class IRegistrar {
 public:
   virtual void registerMetric(Metric &NewMetric,
                       std::vector<LogTo> const &SinkTypes) const = 0;
+  virtual ~IRegistrar() noexcept = default;
 };
 
 /// Register and metrics to be reported via a specified sink
