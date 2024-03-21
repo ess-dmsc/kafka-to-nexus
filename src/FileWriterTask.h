@@ -38,10 +38,10 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  explicit FileWriterTask(Metrics::Registrar const &Registrar,
+  explicit FileWriterTask(Metrics::IRegistrar const *Registrar,
                           MetaData::TrackerPtr const &Tracker)
       : MetaDataTracker(Tracker), FileSizeMB("", "approx_file_size_mb") {
-    Registrar.registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
+    Registrar->registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
     MetaDataTracker->registerMetaData(FileSizeMB);
   }
 
