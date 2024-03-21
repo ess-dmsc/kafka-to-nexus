@@ -19,8 +19,7 @@
 #include "senv_Writer.h"
 #include <senv_data_generated.h>
 
-namespace WriterModule {
-namespace senv {
+namespace WriterModule::senv {
 
 // Register the file writing part of this module
 static WriterModule::Registry::Registrar<senv_Writer>
@@ -247,5 +246,4 @@ void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) {
   Value.swap(temporary);
 }
 
-} // namespace senv
-} // namespace WriterModule
+}

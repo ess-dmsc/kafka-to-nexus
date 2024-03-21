@@ -22,8 +22,7 @@
 #include <optional>
 #include <vector>
 
-namespace WriterModule {
-namespace f144 {
+namespace WriterModule::f144 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 class f144_Writer : public WriterModule::Base {
@@ -94,5 +93,4 @@ protected:
   bool HasCheckedMessageType{false};
 };
 
-} // namespace f144
-} // namespace WriterModule
+}

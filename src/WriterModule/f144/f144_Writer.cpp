@@ -402,4 +402,4 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
 static WriterModule::Registry::Registrar<f144_Writer> RegisterWriter("f144",
                                                                      "f144");
 
-} // namespace WriterModule::f144
+}

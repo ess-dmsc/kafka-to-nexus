@@ -441,4 +441,4 @@ void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
 static WriterModule::Registry::Registrar<f142_Writer> RegisterWriter("f142",
                                                                      "f142");
 
-} // namespace WriterModule::f142
+}

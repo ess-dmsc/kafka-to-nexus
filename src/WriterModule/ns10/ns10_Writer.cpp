@@ -13,8 +13,7 @@
 #include "WriterRegistrar.h"
 #include <ns10_cache_entry_generated.h>
 
-namespace WriterModule {
-namespace ns10 {
+namespace WriterModule::ns10 {
 
 static WriterModule::Registry::Registrar<ns10_Writer> RegisterWriter("ns10",
                                                                      "ns10");
@@ -94,5 +93,4 @@ void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   }
 }
 
-} // namespace ns10
-} // namespace WriterModule
+}

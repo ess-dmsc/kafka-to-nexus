@@ -19,8 +19,7 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace tdct {
+namespace WriterModule::tdct {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 /// See parent class for documentation.
@@ -43,5 +42,4 @@ protected:
   NeXusDataset::CueTimestampZero CueTimestamp;
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
 };
-} // namespace tdct
-} // namespace WriterModule
+}

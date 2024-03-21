@@ -19,8 +19,7 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace ns10 {
+namespace WriterModule::ns10 {
 
 class ns10_Writer : public WriterModule::Base {
 public:
@@ -43,5 +42,4 @@ protected:
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 };
 
-} // namespace ns10
-} // namespace WriterModule
+}

@@ -17,8 +17,7 @@
 #include "WriterRegistrar.h"
 #include <tdct_timestamps_generated.h>
 
-namespace WriterModule {
-namespace tdct {
+namespace WriterModule::tdct {
 
 // Register the file writing part of this module
 static WriterModule::Registry::Registrar<tdct_Writer>
@@ -80,5 +79,4 @@ void tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   Timestamp.appendArray(CArray);
 }
 
-} // namespace tdct
-} // namespace WriterModule
+}

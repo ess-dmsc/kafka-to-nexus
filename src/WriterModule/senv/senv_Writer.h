@@ -21,8 +21,7 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace senv {
+namespace WriterModule::senv {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = WriterModule::Base;
 
@@ -68,5 +67,4 @@ protected:
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "int64"};
   bool HasCheckedMessageType{false};
 };
-} // namespace senv
-} // namespace WriterModule
+}

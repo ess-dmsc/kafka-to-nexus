@@ -18,8 +18,7 @@
 #include <NDAr_NDArray_schema_generated.h>
 #include <numeric>
 
-namespace WriterModule {
-namespace NDAr {
+namespace WriterModule::NDAr {
 
 // Register the file writing part of this module.
 static WriterModule::Registry::Registrar<NDAr_Writer>
@@ -189,5 +188,4 @@ void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) const {
   };
   CreateValuesMap.at(ElementType)();
 }
-} // namespace NDAr
-} // namespace WriterModule
+}

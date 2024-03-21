@@ -23,8 +23,7 @@ getFBVectorAsArrayAdapter(const flatbuffers::Vector<DataType> *Data) {
 }
 } // namespace
 
-namespace WriterModule {
-namespace ev42 {
+namespace WriterModule::ev42 {
 
 using nlohmann::json;
 
@@ -228,5 +227,4 @@ void ev42_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
 static WriterModule::Registry::Registrar<ev42_Writer> RegisterWriter("ev42",
                                                                      "ev42");
 
-} // namespace ev42
-} // namespace WriterModule
+}

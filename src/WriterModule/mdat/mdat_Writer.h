@@ -71,4 +71,4 @@ private:
   std::vector<std::string> const AllowedNames{StartTime, EndTime};
   std::unordered_map<std::string, Writable> Writables;
 };
-} // namespace WriterModule::mdat
+}

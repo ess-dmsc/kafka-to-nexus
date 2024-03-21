@@ -20,8 +20,7 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace NDAr {
+namespace WriterModule::NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = WriterModule::Base;
 
@@ -68,5 +67,4 @@ protected:
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
 };
-} // namespace NDAr
-} // namespace WriterModule
+}
