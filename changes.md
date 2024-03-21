@@ -4,6 +4,7 @@
 
 - Fix: ev44 module does not support multiple reference_time (pulse time)
 - Fix: ev44 module should not write pulse times for which there were no events
+- Refactor start/stop command handler to add unit tests
 - Remove some librdkafka warnings from logs and simplify logging format of Kafka events
 
 ## v6.2.0
