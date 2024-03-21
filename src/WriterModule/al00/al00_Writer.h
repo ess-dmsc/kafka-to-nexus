@@ -29,7 +29,7 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 class al00_Writer : public WriterModule::Base {
 public:
   /// Implements writer module interface.
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

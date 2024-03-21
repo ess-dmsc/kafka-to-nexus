@@ -21,7 +21,7 @@ namespace WriterModule::al00 {
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
-InitResult al00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+InitResult al00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::AlarmMsg(HDFGroup, Create);

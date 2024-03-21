@@ -19,30 +19,22 @@
 #include "se00_Writer.h"
 #include <se00_data_generated.h>
 
-namespace WriterModule {
-namespace se00 {
+namespace WriterModule::se00 {
 
 // Register the file writing part of this module
 static WriterModule::Registry::Registrar<se00_Writer>
     RegisterSenvWriter("se00", "se00");
 
-WriterModule::InitResult
-se00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
+WriterModule::InitResult se00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   try {
     initValueDataset(HDFGroup);
-    auto &CurrentGroup = HDFGroup;
-    NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
-    NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
-    NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
-        CurrentGroup,               // NOLINT(bugprone-unused-raii)
-        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-        ChunkSize);                 // NOLINT(bugprone-unused-raii)
+    auto const &CurrentGroup = HDFGroup;
+    Timestamp =
+        NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Create, ChunkSize);
+    CueTimestampIndex = NeXusDataset::CueIndex(
+        CurrentGroup, NeXusDataset::Mode::Create, ChunkSize);
+    CueTimestamp = NeXusDataset::CueTimestampZero(
+        CurrentGroup, NeXusDataset::Mode::Create, ChunkSize);
   } catch (std::exception &E) {
     LOG_ERROR(
         R"(Unable to initialise fast sample environment data tree in HDF file with error message: "{}")",
@@ -55,8 +47,8 @@ se00_Writer::init_hdf(hdf5::node::Group &HDFGroup) const {
 WriterModule::InitResult se00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = NeXusDataset::ExtensibleDatasetBase(CurrentGroup, "value",
-                                                NeXusDataset::Mode::Open);
+    Value = std::make_unique<NeXusDataset::ExtensibleDatasetBase>(
+        CurrentGroup, "value", NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
@@ -141,7 +133,7 @@ void msgTypeIsConfigType(se00_Writer::Type ConfigType, ValueUnion MsgType) {
 
 void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = Getse00_SampleEnvironmentData(Message.data());
-  auto CueIndexValue = Value.dataspace().size();
+  auto CueIndexValue = Value->current_size();
   auto ValuesType = FbPointer->values_type();
 
   if (not HasCheckedMessageType) {
@@ -154,53 +146,53 @@ void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   case ValueUnion::Int8Array: {
     auto ValuePtr = FbPointer->values_as_Int8Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
     break;
   }
   case ValueUnion::UInt8Array: {
     auto ValuePtr = FbPointer->values_as_UInt8Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::Int16Array: {
     auto ValuePtr = FbPointer->values_as_Int16Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::UInt16Array: {
     auto ValuePtr = FbPointer->values_as_UInt16Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::Int32Array: {
     auto ValuePtr = FbPointer->values_as_Int32Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::UInt32Array: {
     auto ValuePtr = FbPointer->values_as_UInt32Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::Int64Array: {
     auto ValuePtr = FbPointer->values_as_Int64Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::UInt64Array: {
     auto ValuePtr = FbPointer->values_as_UInt64Array()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::FloatArray: {
     auto ValuePtr = FbPointer->values_as_FloatArray()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   case ValueUnion::DoubleArray: {
     auto ValuePtr = FbPointer->values_as_DoubleArray()->value();
     NrOfElements = ValuePtr->size();
-    Value.appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
+    Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   default:
     LOG_WARN("Unknown data type in flatbuffer.");
@@ -226,34 +218,47 @@ void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
 }
 
 template <typename Type>
-std::unique_ptr<hdf5::node::ChunkedDataset>
+std::unique_ptr<NeXusDataset::ExtensibleDatasetBase>
 makeIt(hdf5::node::Group const &Parent, size_t const &ChunkSize) {
   return std::make_unique<NeXusDataset::ExtensibleDataset<Type>>(
       Parent, "value", NeXusDataset::Mode::Create, ChunkSize);
 }
 
-void se00_Writer::initValueDataset(hdf5::node::Group const &Parent) const {
-  using OpenFuncType =
-      std::function<std::unique_ptr<hdf5::node::ChunkedDataset>()>;
-  std::map<Type, OpenFuncType> CreateValuesMap{
-      {Type::int8, [&]() { return makeIt<std::int8_t>(Parent, ChunkSize); }},
-      {Type::uint8, [&]() { return makeIt<std::uint8_t>(Parent, ChunkSize); }},
-      {Type::int16, [&]() { return makeIt<std::int16_t>(Parent, ChunkSize); }},
-      {Type::uint16,
-       [&]() { return makeIt<std::uint16_t>(Parent, ChunkSize); }},
-      {Type::int32, [&]() { return makeIt<std::int32_t>(Parent, ChunkSize); }},
-      {Type::uint32,
-       [&]() { return makeIt<std::uint32_t>(Parent, ChunkSize); }},
-      {Type::int64, [&]() { return makeIt<std::int64_t>(Parent, ChunkSize); }},
-      {Type::uint64,
-       [&]() { return makeIt<std::uint64_t>(Parent, ChunkSize); }},
-      {Type::float32,
-       [&]() { return makeIt<std::float_t>(Parent, ChunkSize); }},
-      {Type::float64,
-       [&]() { return makeIt<std::double_t>(Parent, ChunkSize); }},
-  };
-  CreateValuesMap.at(ElementType)();
+void se00_Writer::initValueDataset(hdf5::node::Group const &Parent) {
+  std::unique_ptr<NeXusDataset::ExtensibleDatasetBase> temporary = nullptr;
+  switch (ElementType) {
+  case Type::int8:
+    temporary = makeIt<std::int8_t>(Parent, ChunkSize);
+    break;
+  case Type::uint8:
+    temporary = makeIt<std::uint8_t>(Parent, ChunkSize);
+    break;
+  case Type::int16:
+    temporary = makeIt<std::int16_t>(Parent, ChunkSize);
+    break;
+  case Type::uint16:
+    temporary = makeIt<std::uint16_t>(Parent, ChunkSize);
+    break;
+  case Type::int32:
+    temporary = makeIt<std::int32_t>(Parent, ChunkSize);
+    break;
+  case Type::uint32:
+    temporary = makeIt<std::uint32_t>(Parent, ChunkSize);
+    break;
+  case Type::int64:
+    temporary = makeIt<std::int64_t>(Parent, ChunkSize);
+    break;
+  case Type::uint64:
+    temporary = makeIt<std::uint64_t>(Parent, ChunkSize);
+    break;
+  case Type::float32:
+    temporary = makeIt<std::float_t>(Parent, ChunkSize);
+    break;
+  case Type::float64:
+    temporary = makeIt<std::double_t>(Parent, ChunkSize);
+    break;
+  }
+  Value.swap(temporary);
 }
 
-} // namespace se00
-} // namespace WriterModule
+} // namespace WriterModule::se00

@@ -22,7 +22,7 @@ public:
   ev44_Writer()
       : WriterModule::Base("ev44", true, "NXevent_data"),
         EventsWrittenMetadataField("", "events") {}
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// \brief Write flatbuffer message.

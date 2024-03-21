@@ -23,8 +23,7 @@ public:
   WriterModuleStandIn(std::vector<std::string> const &ExtraModules = {})
       : WriterModule::Base("test", true, "test", ExtraModules) {}
   ~WriterModuleStandIn() = default;
-  MAKE_CONST_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &),
-                   override);
+  MAKE_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &));
   MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(writeImpl, void(FileWriter::FlatbufferMessage const &), override);
 };

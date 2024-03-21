@@ -96,7 +96,7 @@ public:
   /// \param HDFGroup The \p HDFGroup into which this module
   /// should write its data.
   /// \return The result.
-  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup) const = 0;
+  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup) = 0;
 
   /// \brief Reopen the HDF objects which are used by this writer module.
   ///

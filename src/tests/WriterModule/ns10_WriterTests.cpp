@@ -157,7 +157,7 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
   Writer.write(Message);
 
   uint64_t storedTs{11111};
-  Writer.Timestamp.read(storedTs);
+  Writer.Timestamp.read_data(storedTs);
   EXPECT_EQ(storedTs, 123456000000ul);
 }
 
@@ -186,7 +186,7 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
   Writer.write(Message);
 
   double storedValue;
-  Writer.Values.read(storedValue);
+  Writer.Values.read_data(storedValue);
   EXPECT_EQ(10.01, storedValue);
 }
 
@@ -217,7 +217,7 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
   }
 
   uint32_t Index;
-  EXPECT_NO_THROW(Writer.CueTimestampIndex.read(Index));
+  EXPECT_NO_THROW(Writer.CueTimestampIndex.read_data(Index));
 }
 
 TEST_F(NicosCacheWriterTest, ThrowsIfValueCannotBeCastToDouble) {

@@ -40,7 +40,7 @@ public:
 
   void config_post_processing() override;
 
-  InitResult init_hdf(hdf5::node::Group &HDFGroup) const override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
@@ -60,9 +60,9 @@ public:
   };
 
 protected:
-  void initValueDataset(hdf5::node::Group const &Parent) const;
+  void initValueDataset(hdf5::node::Group const &Parent);
   Type ElementType{Type::int64};
-  NeXusDataset::ExtensibleDatasetBase Value;
+  std::unique_ptr<NeXusDataset::ExtensibleDatasetBase> Value;
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
