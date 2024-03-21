@@ -16,7 +16,6 @@ set(UnitTests_SRC
         helpers/RunStartStopHelpers.cpp
         JsonTests.cpp
         URITests.cpp
-        CommandHandlerTests.cpp
         MessageTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
@@ -43,6 +42,7 @@ set(UnitTests_SRC
         StatusReporterTests.cpp
         helpers/StatusHelpers.cpp
         HelperTests.cpp
+        CommandSystem/CommandHandlerTests.cpp
         CommandSystem/CommandParserTests.cpp
         CommandSystem/CommandListenerTests.cpp
         TimeUtilityTest.cpp
