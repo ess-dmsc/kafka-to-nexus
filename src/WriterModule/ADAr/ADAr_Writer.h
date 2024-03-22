@@ -20,8 +20,7 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace ADAr {
+namespace WriterModule::ADAr {
 /// See parent class for documentation.
 class ADAr_Writer : public WriterModule::Base {
 public:
@@ -64,5 +63,4 @@ protected:
   NeXusDataset::CueTimestampZero CueTimestamp;
   bool HasCheckedMessageType{false};
 };
-} // namespace ADAr
-} // namespace WriterModule
+} // namespace WriterModule::ADAr

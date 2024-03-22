@@ -24,8 +24,7 @@
 #include <optional>
 #include <vector>
 
-namespace WriterModule {
-namespace f142 {
+namespace WriterModule::f142 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 class f142_Writer : public WriterModule::Base {
@@ -117,5 +116,4 @@ inline std::unordered_map<std::int16_t, std::int16_t>
         {static_cast<std::int16_t>(AlarmSeverity::NO_CHANGE),
          static_cast<std::int16_t>(Severity::INVALID)}};
 
-} // namespace f142
-} // namespace WriterModule
+} // namespace WriterModule::f142

@@ -19,8 +19,7 @@
 #include "WriterRegistrar.h"
 #include <ADAr_area_detector_array_generated.h>
 
-namespace WriterModule {
-namespace ADAr {
+namespace WriterModule::ADAr {
 
 // Register the file writing part of this module.
 static WriterModule::Registry::Registrar<ADAr_Writer>
@@ -237,5 +236,4 @@ void ADAr_Writer::initValueDataset(hdf5::node::Group const &Parent) const {
   };
   CreateValuesMap.at(ElementType)();
 }
-} // namespace ADAr
-} // namespace WriterModule
+} // namespace WriterModule::ADAr

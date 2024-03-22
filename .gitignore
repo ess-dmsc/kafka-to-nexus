@@ -1,6 +1,7 @@
 _build/
 /build*/
 /cmake-build-*/
+_ninja/
 .idea/
 *__pycache__*
 *.user

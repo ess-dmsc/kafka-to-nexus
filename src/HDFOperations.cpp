@@ -219,24 +219,11 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
     auto DCPL = hdf5::property::DatasetCreationList();
     auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
                                        DataSpace, DCPL);
-    try {
-
-      try {
-        Dataset.write(Data);
-      } catch (std::exception const &E) {
-        std::throw_with_nested(std::runtime_error(
-            fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
-                        std::string(Node.link().path()), E.what())));
-      }
-    } catch (std::exception const &E) {
-      std::throw_with_nested(std::runtime_error(
-          fmt::format("Failed populate_blob for numeric attribute {} in {}: {}",
-                      Name, std::string(Node.link().path()), E.what())));
-    }
+    Dataset.write(Data);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
+    throw std::runtime_error(
         fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
-                    std::string(Node.link().path()), E.what())));
+                    std::string(Node.link().path()), E.what()));
   }
 }
 
@@ -258,7 +245,7 @@ void writeStringDataset(hdf5::node::Group const &Parent,
     auto ErrorStr = fmt::format(
         "Failed to write variable-size string dataset {}/{}. Message was: {}",
         std::string(Parent.link().path()), Name, e.what());
-    std::throw_with_nested(std::runtime_error(ErrorStr));
+    throw std::runtime_error(ErrorStr);
   }
 }
 
@@ -273,36 +260,24 @@ void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
                          const std::string &Name,
                          nlohmann::json const &Values) {
-  try {
-    std::map<std::string, std::function<void()>> WriteDatasetMap{
-        {"uint8",
-         [&]() { writeNumericDataset<uint8_t>(Parent, Name, Values); }},
-        {"uint16",
-         [&]() { writeNumericDataset<uint16_t>(Parent, Name, Values); }},
-        {"uint32",
-         [&]() { writeNumericDataset<uint32_t>(Parent, Name, Values); }},
-        {"uint64",
-         [&]() { writeNumericDataset<uint64_t>(Parent, Name, Values); }},
-        {"int8", [&]() { writeNumericDataset<int8_t>(Parent, Name, Values); }},
-        {"int16",
-         [&]() { writeNumericDataset<int16_t>(Parent, Name, Values); }},
-        {"int32",
-         [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
-        {"int", [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
-        {"int64",
-         [&]() { writeNumericDataset<int64_t>(Parent, Name, Values); }},
-        {"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},
-        {"double",
-         [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
-        {"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
-    };
-    WriteDatasetMap.at(DataType)();
-  } catch (std::exception const &e) {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Failed dataset write in {}/{}. Type={}. "
-        "Message was: {}",
-        std::string(Parent.link().path()), Name, DataType, e.what())));
-  }
+  std::map<std::string, std::function<void()>> WriteDatasetMap{
+      {"uint8", [&]() { writeNumericDataset<uint8_t>(Parent, Name, Values); }},
+      {"uint16",
+       [&]() { writeNumericDataset<uint16_t>(Parent, Name, Values); }},
+      {"uint32",
+       [&]() { writeNumericDataset<uint32_t>(Parent, Name, Values); }},
+      {"uint64",
+       [&]() { writeNumericDataset<uint64_t>(Parent, Name, Values); }},
+      {"int8", [&]() { writeNumericDataset<int8_t>(Parent, Name, Values); }},
+      {"int16", [&]() { writeNumericDataset<int16_t>(Parent, Name, Values); }},
+      {"int32", [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
+      {"int", [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
+      {"int64", [&]() { writeNumericDataset<int64_t>(Parent, Name, Values); }},
+      {"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},
+      {"double", [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
+      {"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
+  };
+  WriteDatasetMap.at(DataType)();
 }
 
 class JSONDataset : public JsonConfig::FieldHandler {

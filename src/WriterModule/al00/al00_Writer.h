@@ -22,8 +22,7 @@
 #include <optional>
 #include <vector>
 
-namespace WriterModule {
-namespace al00 {
+namespace WriterModule::al00 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 class al00_Writer : public WriterModule::Base {
@@ -45,5 +44,4 @@ protected:
   NeXusDataset::AlarmMsg AlarmMsg;
 };
 
-} // namespace al00
-} // namespace WriterModule
+} // namespace WriterModule::al00

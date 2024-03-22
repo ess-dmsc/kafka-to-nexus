@@ -13,8 +13,7 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace ev42 {
+namespace WriterModule::ev42 {
 
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
@@ -59,5 +58,4 @@ private:
   uint64_t LastEventIndex{0};
   MetaData::Value<uint64_t> EventsWrittenMetadataField;
 };
-} // namespace ev42
-} // namespace WriterModule
+} // namespace WriterModule::ev42

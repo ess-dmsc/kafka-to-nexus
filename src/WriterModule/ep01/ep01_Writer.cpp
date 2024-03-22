@@ -3,8 +3,7 @@
 #include "WriterRegistrar.h"
 #include <ep01_epics_connection_generated.h>
 
-namespace WriterModule {
-namespace ep01 {
+namespace WriterModule::ep01 {
 
 InitResult ep01_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
@@ -47,5 +46,4 @@ void ep01_Writer::writeImpl(FileWriter::FlatbufferMessage const &Message) {
 static WriterModule::Registry::Registrar<ep01_Writer>
     RegisterWriter("ep01", "epics_con_info");
 
-} // namespace ep01
-} // namespace WriterModule
+} // namespace WriterModule::ep01
