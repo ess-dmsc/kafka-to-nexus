@@ -12,8 +12,7 @@
 #include "NeXusDataset/NeXusDataset.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace ev44 {
+namespace WriterModule::ev44 {
 
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 /// \brief Write module for the ev44 flatbuffer schema.
@@ -56,5 +55,4 @@ private:
   // reduce memory allocations.
   std::vector<int64_t> ShiftedReferenceTimeIndex;
 };
-} // namespace ev44
-} // namespace WriterModule
+} // namespace WriterModule::ev44

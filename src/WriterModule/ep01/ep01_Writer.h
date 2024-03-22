@@ -3,8 +3,7 @@
 #include "ConnectionStatusDatasets.h"
 #include "WriterModuleBase.h"
 
-namespace WriterModule {
-namespace ep01 {
+namespace WriterModule::ep01 {
 
 class ep01_Writer final : public WriterModule::Base {
 public:
@@ -20,5 +19,4 @@ private:
   NeXusDataset::ConnectionStatus StatusDataset;
 };
 
-} // namespace ep01
-} // namespace WriterModule
+} // namespace WriterModule::ep01
