@@ -25,11 +25,14 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
                      Metrics::Registrar *Registrar,
                      MetaData::TrackerPtr const &Tracker);
 
+std::vector<ModuleSettings> extractModuleInformationFromJson(
+    std::vector<ModuleHDFInfo> const &ModuleHDFInfoList);
+
 // Note: The functions below are "private" helper functions.
 
 void addStreamSourceToWriterModule(
     std::vector<ModuleSettings> &StreamSettingsList,
-    std::unique_ptr<FileWriterTask> &Task);
+    FileWriterTask &Task);
 
 std::vector<ModuleHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
