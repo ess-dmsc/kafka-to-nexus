@@ -188,4 +188,4 @@ void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) const {
   };
   CreateValuesMap.at(ElementType)();
 }
-}
+} // namespace WriterModule::NDAr

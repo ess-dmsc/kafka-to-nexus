@@ -116,4 +116,4 @@ inline std::unordered_map<std::int16_t, std::int16_t>
         {static_cast<std::int16_t>(AlarmSeverity::NO_CHANGE),
          static_cast<std::int16_t>(Severity::INVALID)}};
 
-}
+} // namespace WriterModule::f142

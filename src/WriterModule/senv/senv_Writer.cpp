@@ -246,4 +246,4 @@ void senv_Writer::initValueDataset(hdf5::node::Group const &Parent) {
   Value.swap(temporary);
 }
 
-}
+} // namespace WriterModule::senv

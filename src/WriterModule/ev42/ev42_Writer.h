@@ -58,4 +58,4 @@ private:
   uint64_t LastEventIndex{0};
   MetaData::Value<uint64_t> EventsWrittenMetadataField;
 };
-}
+} // namespace WriterModule::ev42

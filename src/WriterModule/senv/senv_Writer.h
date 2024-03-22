@@ -67,4 +67,4 @@ protected:
   JsonConfig::Field<std::string> DataType{this, {"type", "dtype"}, "int64"};
   bool HasCheckedMessageType{false};
 };
-}
+} // namespace WriterModule::senv

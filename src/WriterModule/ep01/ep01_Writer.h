@@ -19,4 +19,4 @@ private:
   NeXusDataset::ConnectionStatus StatusDataset;
 };
 
-}
+} // namespace WriterModule::ep01

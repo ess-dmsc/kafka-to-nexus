@@ -42,4 +42,4 @@ protected:
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 1024};
 };
 
-}
+} // namespace WriterModule::ns10

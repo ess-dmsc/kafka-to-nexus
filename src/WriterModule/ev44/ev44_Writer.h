@@ -55,4 +55,4 @@ private:
   // reduce memory allocations.
   std::vector<int64_t> ShiftedReferenceTimeIndex;
 };
-} // namespace WriterModule
+} // namespace WriterModule::ev44

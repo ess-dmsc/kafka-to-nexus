@@ -44,4 +44,4 @@ protected:
   NeXusDataset::AlarmMsg AlarmMsg;
 };
 
-} // namespace WriterModule
+} // namespace WriterModule::al00

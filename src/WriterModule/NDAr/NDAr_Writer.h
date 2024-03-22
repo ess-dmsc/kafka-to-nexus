@@ -67,4 +67,4 @@ protected:
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
 };
-}
+} // namespace WriterModule::NDAr

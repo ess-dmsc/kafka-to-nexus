@@ -79,4 +79,4 @@ void tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   Timestamp.appendArray(CArray);
 }
 
-}
+} // namespace WriterModule::tdct

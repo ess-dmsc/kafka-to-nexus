@@ -139,4 +139,4 @@ void ev44_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,
 static WriterModule::Registry::Registrar<ev44_Writer> RegisterWriter("ev44",
                                                                      "ev44");
 
-} // namespace WriterModule
+} // namespace WriterModule::ev44

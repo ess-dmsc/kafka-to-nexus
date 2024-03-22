@@ -91,4 +91,4 @@ mdat_Writer::extractName(std::string const &configJson) {
   }
   return {};
 }
-}
+} // namespace WriterModule::mdat

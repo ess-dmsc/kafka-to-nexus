@@ -42,4 +42,4 @@ protected:
   NeXusDataset::CueTimestampZero CueTimestamp;
   JsonConfig::Field<size_t> ChunkSize{this, "chunk_size", 4096};
 };
-}
+} // namespace WriterModule::tdct

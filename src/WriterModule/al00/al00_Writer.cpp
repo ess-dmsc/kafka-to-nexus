@@ -71,4 +71,4 @@ void al00_Writer::writeImpl(FlatbufferMessage const &Message) {
 static WriterModule::Registry::Registrar<al00_Writer>
     RegisterWriter("al00", "alarm_info");
 
-}
+} // namespace WriterModule::al00

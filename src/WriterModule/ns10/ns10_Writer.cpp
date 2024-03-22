@@ -93,4 +93,4 @@ void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   }
 }
 
-}
+} // namespace WriterModule::ns10

@@ -63,4 +63,4 @@ protected:
   NeXusDataset::CueTimestampZero CueTimestamp;
   bool HasCheckedMessageType{false};
 };
-}
+} // namespace WriterModule::ADAr

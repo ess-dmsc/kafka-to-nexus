@@ -93,4 +93,4 @@ protected:
   bool HasCheckedMessageType{false};
 };
 
-}
+} // namespace WriterModule::f144
