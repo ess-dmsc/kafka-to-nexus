@@ -47,7 +47,7 @@ public:
                    std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
                    FileWriter::StreamerOptions const &Settings,
                    Metrics::Registrar const &Registrar,
-                   MetaData::TrackerPtr const &Tracker);
+                   MetaData::TrackerPtr Tracker);
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;
