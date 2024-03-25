@@ -22,10 +22,6 @@ namespace Kafka {
 
 class MetadataEnquirer {
 public:
-  const RdKafka::TopicMetadata *
-  findTopicMetadata(const std::string &Topic,
-                 const RdKafka::Metadata *KafkaMetadata);
-
   std::vector<std::pair<int, int64_t>>
   getOffsetForTime(std::string const &Broker, std::string const &Topic,
                        std::vector<int> const &Partitions, time_point Time,
@@ -39,7 +35,11 @@ public:
                                      duration TimeOut,
                                      BrokerSettings BrokerSettings);
 private:
-  std::unique_ptr<RdKafka::Handle>
+  const RdKafka::TopicMetadata *
+  findTopicMetadata(const std::string &Topic,
+                    const RdKafka::Metadata *KafkaMetadata);
+
+  std::unique_ptr<RdKafka::Consumer>
   getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings);
 
   std::vector<int> extractPartitionIDs(RdKafka::TopicMetadata const * TopicMetaData);

@@ -27,7 +27,7 @@ MetadataEnquirer::findTopicMetadata(const std::string &Topic,
   return *Iterator;
 }
 
-std::unique_ptr<RdKafka::Handle>
+std::unique_ptr<RdKafka::Consumer>
 MetadataEnquirer::getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings) {
   auto Conf = std::unique_ptr<RdKafka::Conf>(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
@@ -47,7 +47,7 @@ MetadataEnquirer::getKafkaHandle(std::string Broker, BrokerSettings BrokerSettin
     throw MetadataException(fmt::format(
         R"(Got error when configuring metadata brokers: "{}")", ErrorStr));
   }
-  auto KafkaConsumer = std::unique_ptr<RdKafka::Handle>(
+  auto KafkaConsumer = std::unique_ptr<RdKafka::Consumer>(
       RdKafka::Consumer::create(Conf.get(), ErrorStr));
   if (KafkaConsumer == nullptr) {
     throw MetadataException("Unable to create kafka handle.");

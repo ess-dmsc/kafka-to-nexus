@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Kafka/BrokerSettings.h"
-#include "Kafka/MetaDataQueryImpl.h"
 #include "helpers/RdKafkaMocks.h"
 #include <gtest/gtest.h>
 
