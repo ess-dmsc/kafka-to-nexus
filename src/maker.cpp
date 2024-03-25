@@ -8,7 +8,7 @@
 #include <iostream>
 #include <memory>
 
-std::string example_json = R"(
+std::string const example_json = R"(
 {
 	"children": [{
 		"name": "entry",
