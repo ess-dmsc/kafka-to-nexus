@@ -10,13 +10,13 @@
 #pragma once
 
 #include "Kafka/BrokerSettings.h"
+#include "Kafka/MetadataException.h"
 #include "TimeUtility.h"
 #include <chrono>
+#include <fmt/format.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <set>
 #include <string>
-#include "Kafka/MetadataException.h"
-#include <fmt/format.h>
 
 namespace Kafka {
 
@@ -25,17 +25,17 @@ public:
   const RdKafka::TopicMetadata *
   findKafkaTopic(const std::string &Topic,
                  const RdKafka::Metadata *KafkaMetadata) {
-      const auto *Topics = KafkaMetadata->topics();
-      auto Iterator =
-          std::find_if(Topics->cbegin(), Topics->cend(),
-                       [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
-                         return TopicMetadata->topic() == Topic;
-                       });
-      if (Iterator == Topics->end()) {
-        throw MetadataException(
-            fmt::format(R"(Topic "{}" not listed by broker.)", Topic));
-      }
-      return *Iterator;
+    const auto *Topics = KafkaMetadata->topics();
+    auto Iterator =
+        std::find_if(Topics->cbegin(), Topics->cend(),
+                     [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
+                       return TopicMetadata->topic() == Topic;
+                     });
+    if (Iterator == Topics->end()) {
+      throw MetadataException(
+          fmt::format(R"(Topic "{}" not listed by broker.)", Topic));
+    }
+    return *Iterator;
   }
 
   template <class KafkaHandle, class KafkaConf>
@@ -141,12 +141,12 @@ public:
     return ReturnVector;
   }
 
-  template <class KafkaHandle>
-  std::set<std::string> getTopicListImpl(std::string const &Broker,
-                                         duration TimeOut,
-                                         BrokerSettings BrokerSettings) {
-    auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
-        Broker, BrokerSettings);
+  std::set<std::string> getTopicList(std::string const &Broker,
+                                     duration TimeOut,
+                                     BrokerSettings BrokerSettings) {
+    auto Handle =
+        MetadataEnquirer().getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>(
+            Broker, BrokerSettings);
     std::string ErrorStr;
     auto TimeOutInMs = toMilliSeconds(TimeOut);
     RdKafka::Metadata *MetadataPtr{nullptr};
@@ -180,8 +180,4 @@ std::vector<int> getPartitionsForTopic(std::string const &Broker,
                                        std::string const &Topic,
                                        duration TimeOut,
                                        BrokerSettings BrokerSettings);
-
-std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut,
-                                   BrokerSettings BrokerSettings);
-
 } // namespace Kafka
