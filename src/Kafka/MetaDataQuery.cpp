@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Kafka/MetaDataQuery.h"
-#include "Kafka/MetaDataQueryImpl.h"
 #include "Kafka/MetadataException.h"
 
 namespace Kafka {
