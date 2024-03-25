@@ -23,7 +23,7 @@ std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> const &Partitions, time_point Time,
                  duration TimeOut, BrokerSettings BrokerSettings) {
-  return getOffsetForTimeImpl<RdKafka::Consumer>(Broker, Topic, Partitions,
+  return MetadataEnquirer().getOffsetForTimeImpl<RdKafka::Consumer>(Broker, Topic, Partitions,
                                                  Time, TimeOut, BrokerSettings);
 }
 

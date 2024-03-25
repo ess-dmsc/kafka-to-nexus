@@ -55,47 +55,49 @@ public:
     }
     return KafkaConsumer;
   }
+
+  template <class KafkaHandle>
+  std::vector<std::pair<int, int64_t>>
+  getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
+                       std::vector<int> const &Partitions, time_point Time,
+                       duration TimeOut, BrokerSettings BrokerSettings) {
+    auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+        Broker, BrokerSettings);
+    auto UsedTime = toMilliSeconds(Time);
+    std::vector<std::unique_ptr<RdKafka::TopicPartition>> TopicPartitions;
+    std::vector<RdKafka::TopicPartition *> TopicPartitionsRaw;
+    for (const auto &PartitionId : Partitions) {
+      auto CTopicPartition = std::unique_ptr<RdKafka::TopicPartition>(
+          RdKafka::TopicPartition::create(Topic, PartitionId, UsedTime));
+      TopicPartitionsRaw.emplace_back(CTopicPartition.get());
+      TopicPartitions.push_back(std::move(CTopicPartition));
+    }
+
+    auto TimeOutInMs = toMilliSeconds(TimeOut);
+
+    auto ReturnCode = Handle->offsetsForTimes(TopicPartitionsRaw, TimeOutInMs);
+    if (ReturnCode != RdKafka::ERR_NO_ERROR) {
+      throw MetadataException("Failed to query broker for offset corresponding "
+                              "to timestamp. Error code was: " +
+                              std::to_string(ReturnCode));
+    }
+    std::vector<std::pair<int, int64_t>> ReturnSet;
+    for (const auto &CTopicPartition : TopicPartitions) {
+      if (CTopicPartition->err() != RdKafka::ERR_NO_ERROR) {
+        throw MetadataException(
+            "Error for partition " +
+            std::to_string(CTopicPartition->partition()) +
+            " when retrieving offset for timestamp. Error code was: " +
+            std::to_string(CTopicPartition->err()));
+      }
+      ReturnSet.emplace_back(std::make_pair(CTopicPartition->partition(),
+                                            CTopicPartition->offset()));
+    }
+    return ReturnSet;
+  }
 };
 
-template <class KafkaHandle>
-std::vector<std::pair<int, int64_t>>
-getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
-                     std::vector<int> const &Partitions, time_point Time,
-                     duration TimeOut, BrokerSettings BrokerSettings) {
-  auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
-      Broker, BrokerSettings);
-  auto UsedTime = toMilliSeconds(Time);
-  std::vector<std::unique_ptr<RdKafka::TopicPartition>> TopicPartitions;
-  std::vector<RdKafka::TopicPartition *> TopicPartitionsRaw;
-  for (const auto &PartitionId : Partitions) {
-    auto CTopicPartition = std::unique_ptr<RdKafka::TopicPartition>(
-        RdKafka::TopicPartition::create(Topic, PartitionId, UsedTime));
-    TopicPartitionsRaw.emplace_back(CTopicPartition.get());
-    TopicPartitions.push_back(std::move(CTopicPartition));
-  }
 
-  auto TimeOutInMs = toMilliSeconds(TimeOut);
-
-  auto ReturnCode = Handle->offsetsForTimes(TopicPartitionsRaw, TimeOutInMs);
-  if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    throw MetadataException("Failed to query broker for offset corresponding "
-                            "to timestamp. Error code was: " +
-                            std::to_string(ReturnCode));
-  }
-  std::vector<std::pair<int, int64_t>> ReturnSet;
-  for (const auto &CTopicPartition : TopicPartitions) {
-    if (CTopicPartition->err() != RdKafka::ERR_NO_ERROR) {
-      throw MetadataException(
-          "Error for partition " +
-          std::to_string(CTopicPartition->partition()) +
-          " when retrieving offset for timestamp. Error code was: " +
-          std::to_string(CTopicPartition->err()));
-    }
-    ReturnSet.emplace_back(std::make_pair(CTopicPartition->partition(),
-                                          CTopicPartition->offset()));
-  }
-  return ReturnSet;
-}
 
 template <typename MetaDataType>
 std::vector<int> extractPartitinIDs(MetaDataType TopicMetaData) {
