@@ -23,7 +23,7 @@ namespace Kafka {
 class MetadataEnquirer {
 public:
   const RdKafka::TopicMetadata *
-  findKafkaTopic(const std::string &Topic,
+  findTopicMetadata(const std::string &Topic,
                  const RdKafka::Metadata *KafkaMetadata) {
     const auto *Topics = KafkaMetadata->topics();
     auto Iterator =
@@ -133,7 +133,7 @@ public:
           "{}. Error was: {}",
           Broker, Topic, RdKafka::err2str(ReturnCode)));
     }
-    auto TopicMetaData = MetadataEnquirer().findKafkaTopic(Topic, MetadataPtr);
+    auto TopicMetaData = MetadataEnquirer().findTopicMetadata(Topic, MetadataPtr);
     auto ReturnVector = MetadataEnquirer().extractPartitionIDs(TopicMetaData);
     delete MetadataPtr;
     return ReturnVector;
@@ -164,8 +164,4 @@ public:
     return TopicNames;
   }
 };
-
-const RdKafka::TopicMetadata *
-findTopicMetadata(const std::string &Topic,
-                  const RdKafka::Metadata *KafkaMetadata);
 } // namespace Kafka

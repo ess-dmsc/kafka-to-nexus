@@ -147,7 +147,7 @@ Consumer::getTopicMetadata(const std::string &Topic,
         R"(Failed to query broker for available partitions on topic "{}". Error was: {})",
         Topic, RdKafka::err2str(ReturnCode)));
   }
-  return findTopicMetadata(Topic, MetadataPtr);
+  return Kafka::MetadataEnquirer().findTopicMetadata(Topic, MetadataPtr);
 }
 
 std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {

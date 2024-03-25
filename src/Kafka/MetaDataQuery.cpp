@@ -12,9 +12,4 @@
 
 namespace Kafka {
 
-const RdKafka::TopicMetadata *
-findTopicMetadata(const std::string &Topic,
-                  const RdKafka::Metadata *KafkaMetadata) {
-  return MetadataEnquirer().findKafkaTopic(Topic, KafkaMetadata);
-}
 } // namespace Kafka
