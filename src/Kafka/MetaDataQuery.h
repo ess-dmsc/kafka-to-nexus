@@ -26,15 +26,10 @@ public:
   findTopicMetadata(const std::string &Topic,
                  const RdKafka::Metadata *KafkaMetadata);
 
-  std::unique_ptr<RdKafka::Handle>
-  getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings);
-
   std::vector<std::pair<int, int64_t>>
   getOffsetForTime(std::string const &Broker, std::string const &Topic,
                        std::vector<int> const &Partitions, time_point Time,
                        duration TimeOut, BrokerSettings BrokerSettings);
-
-  std::vector<int> extractPartitionIDs(RdKafka::TopicMetadata const * TopicMetaData);
 
   std::vector<int>
   getPartitionsForTopic(std::string const &Broker, std::string const &Topic,
@@ -43,5 +38,10 @@ public:
   std::set<std::string> getTopicList(std::string const &Broker,
                                      duration TimeOut,
                                      BrokerSettings BrokerSettings);
+private:
+  std::unique_ptr<RdKafka::Handle>
+  getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings);
+
+  std::vector<int> extractPartitionIDs(RdKafka::TopicMetadata const * TopicMetaData);
 };
 } // namespace Kafka
