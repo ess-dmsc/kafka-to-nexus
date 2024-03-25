@@ -58,8 +58,8 @@ ConsumerFactory::createConsumer(const BrokerSettings &Settings) {
 
 std::shared_ptr<ConsumerInterface>
 ConsumerFactory::createConsumerAtOffset(BrokerSettings const &settings,
-                                std::string const &topic, int partition_id,
-                                int64_t offset) {
+                                        std::string const &topic,
+                                        int partition_id, int64_t offset) {
   auto consumer = createConsumer(settings);
   consumer->addPartitionAtOffset(topic, partition_id, offset);
   return consumer;
