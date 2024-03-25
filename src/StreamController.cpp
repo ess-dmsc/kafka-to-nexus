@@ -1,6 +1,5 @@
 #include "StreamController.h"
 
-#include <utility>
 #include "FileWriterTask.h"
 #include "HDFOperations.h"
 #include "Kafka/MetaDataQuery.h"
@@ -9,6 +8,7 @@
 #include "TimeUtility.h"
 #include "helper.h"
 #include "logger.h"
+#include <utility>
 
 namespace FileWriter {
 StreamController::StreamController(
