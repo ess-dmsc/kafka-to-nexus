@@ -106,7 +106,7 @@ std::vector<std::pair<int, int64_t>> Topic::getOffsetForTimeInternal(
     std::string const &Broker, std::string const &Topic,
     std::vector<int> const &Partitions, time_point Time, duration TimeOut,
     Kafka::BrokerSettings BrokerSettings) const {
-  return Kafka::getOffsetForTime(Broker, Topic, Partitions, Time, TimeOut,
+  return Kafka::MetadataEnquirer().getOffsetForTime(Broker, Topic, Partitions, Time, TimeOut,
                                  BrokerSettings);
 }
 

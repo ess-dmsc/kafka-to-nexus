@@ -17,12 +17,4 @@ findTopicMetadata(const std::string &Topic,
                   const RdKafka::Metadata *KafkaMetadata) {
   return MetadataEnquirer().findKafkaTopic(Topic, KafkaMetadata);
 }
-
-std::vector<std::pair<int, int64_t>>
-getOffsetForTime(std::string const &Broker, std::string const &Topic,
-                 std::vector<int> const &Partitions, time_point Time,
-                 duration TimeOut, BrokerSettings BrokerSettings) {
-  return MetadataEnquirer().getOffsetForTimeImpl<RdKafka::Consumer>(
-      Broker, Topic, Partitions, Time, TimeOut, BrokerSettings);
-}
 } // namespace Kafka

@@ -67,12 +67,11 @@ public:
     return KafkaConsumer;
   }
 
-  template <class KafkaHandle>
   std::vector<std::pair<int, int64_t>>
-  getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
+  getOffsetForTime(std::string const &Broker, std::string const &Topic,
                        std::vector<int> const &Partitions, time_point Time,
                        duration TimeOut, BrokerSettings BrokerSettings) {
-    auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+    auto Handle = MetadataEnquirer().getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>(
         Broker, BrokerSettings);
     auto UsedTime = toMilliSeconds(Time);
     std::vector<std::unique_ptr<RdKafka::TopicPartition>> TopicPartitions;
@@ -169,9 +168,4 @@ public:
 const RdKafka::TopicMetadata *
 findTopicMetadata(const std::string &Topic,
                   const RdKafka::Metadata *KafkaMetadata);
-
-std::vector<std::pair<int, int64_t>>
-getOffsetForTime(std::string const &Broker, std::string const &Topic,
-                 std::vector<int> const &Partitions, time_point Time,
-                 duration TimeOut, BrokerSettings BrokerSettings);
 } // namespace Kafka
