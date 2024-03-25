@@ -13,7 +13,7 @@ class Metric;
 class IRegistrar {
 public:
   virtual void registerMetric(Metric &NewMetric,
-                      std::vector<LogTo> const &SinkTypes) const = 0;
+                              std::vector<LogTo> const &SinkTypes) const = 0;
   virtual ~IRegistrar() noexcept = default;
 };
 

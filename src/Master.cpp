@@ -35,7 +35,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
   CurrentStateMetric = static_cast<int64_t>(getCurrentState());
   MasterMetricsRegistrar->registerMetric(CurrentStateMetric,
-                                        {Metrics::LogTo::CARBON});
+                                         {Metrics::LogTo::CARBON});
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {

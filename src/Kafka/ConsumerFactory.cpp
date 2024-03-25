@@ -56,8 +56,8 @@ ConsumerFactory::createConsumer(const BrokerSettings &Settings) {
   return Kafka::createConsumer(Settings);
 }
 
-std::unique_ptr<ConsumerInterface>
-ConsumerFactory::createConsumer(BrokerSettings const &settings,
+std::shared_ptr<ConsumerInterface>
+ConsumerFactory::createConsumerAtOffset(BrokerSettings const &settings,
                                 std::string const &topic, int partition_id,
                                 int64_t offset) {
   auto consumer = createConsumer(settings);

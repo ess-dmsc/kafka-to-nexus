@@ -160,7 +160,7 @@ void Topic::createStreams(
     auto CRegistrar =
         Registrar.getNewRegistrar("partition_" + std::to_string(partition_id));
     auto Consumer =
-        ConsumerCreator->createConsumer(Settings, Topic, partition_id, offset);
+        ConsumerCreator->createConsumerAtOffset(Settings, Topic, partition_id, offset);
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), partition_id, Topic, DataMap, WriterPtr,
         CRegistrar, StartConsumeTime, StopConsumeTime, StopLeeway,

@@ -12,8 +12,8 @@ namespace FileWriter {
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
-    FileWriter::StreamerOptions const &Settings,
-    Metrics::Registrar *Registrar, MetaData::TrackerPtr const &Tracker)
+    FileWriter::StreamerOptions const &Settings, Metrics::Registrar *Registrar,
+    MetaData::TrackerPtr const &Tracker)
 
     : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
       StreamMetricRegistrar(Registrar),

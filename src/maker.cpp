@@ -200,7 +200,8 @@ int main(int argc, char **argv) {
 
   FileWriter::addStreamSourceToWriterModule(stream_settings, fw_task);
 
-  // Skip the streamcontroller, topics and partitions bits and jump straight to the writing for now
+  // Skip the streamcontroller, topics and partitions bits and jump straight to
+  // the writing for now
   send_f144_data_to_source(fw_task, "delay_source_chopper", 123, 123456);
   send_f144_data_to_source(fw_task, "delay_source_chopper", 124, 123457);
 

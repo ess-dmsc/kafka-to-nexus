@@ -31,8 +31,7 @@ std::vector<ModuleSettings> extractModuleInformationFromJson(
 // Note: The functions below are "private" helper functions.
 
 void addStreamSourceToWriterModule(
-    std::vector<ModuleSettings> &StreamSettingsList,
-    FileWriterTask &Task);
+    std::vector<ModuleSettings> &StreamSettingsList, FileWriterTask &Task);
 
 std::vector<ModuleHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
