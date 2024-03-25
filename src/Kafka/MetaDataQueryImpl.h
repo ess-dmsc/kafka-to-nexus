@@ -27,46 +27,43 @@ public:
   findKafkaTopic(const std::string &Topic,
                  const RdKafka::Metadata *KafkaMetadata);
 
-};
-
-
-
-template <class KafkaHandle, class KafkaConf>
-std::unique_ptr<RdKafka::Handle> getKafkaHandle(std::string Broker,
-                                                BrokerSettings BrokerSettings) {
-  auto Conf =
-      std::unique_ptr<KafkaConf>(KafkaConf::create(RdKafka::Conf::CONF_GLOBAL));
-  std::string ErrorStr;
-  auto iter = BrokerSettings.KafkaConfiguration.begin();
-  while (iter != BrokerSettings.KafkaConfiguration.end()) {
-    if (Conf->set(iter->first, iter->second, ErrorStr) !=
+  template <class KafkaHandle, class KafkaConf>
+  std::unique_ptr<RdKafka::Handle>
+  getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings) {
+    auto Conf = std::unique_ptr<KafkaConf>(
+        KafkaConf::create(RdKafka::Conf::CONF_GLOBAL));
+    std::string ErrorStr;
+    auto iter = BrokerSettings.KafkaConfiguration.begin();
+    while (iter != BrokerSettings.KafkaConfiguration.end()) {
+      if (Conf->set(iter->first, iter->second, ErrorStr) !=
+          RdKafka::Conf::CONF_OK) {
+        throw MetadataException(fmt::format(
+            R"(Got error when configuring metadata brokers "{}" setting: "{}")",
+            iter->first, ErrorStr));
+      }
+      ++iter;
+    }
+    if (Conf->set("metadata.broker.list", Broker, ErrorStr) !=
         RdKafka::Conf::CONF_OK) {
       throw MetadataException(fmt::format(
-          R"(Got error when configuring metadata brokers "{}" setting: "{}")",
-          iter->first, ErrorStr));
+          R"(Got error when configuring metadata brokers: "{}")", ErrorStr));
     }
-    ++iter;
+    auto KafkaConsumer = std::unique_ptr<RdKafka::Handle>(
+        KafkaHandle::create(Conf.get(), ErrorStr));
+    if (KafkaConsumer == nullptr) {
+      throw MetadataException("Unable to create kafka handle.");
+    }
+    return KafkaConsumer;
   }
-  if (Conf->set("metadata.broker.list", Broker, ErrorStr) !=
-      RdKafka::Conf::CONF_OK) {
-    throw MetadataException(fmt::format(
-        R"(Got error when configuring metadata brokers: "{}")", ErrorStr));
-  }
-  auto KafkaConsumer = std::unique_ptr<RdKafka::Handle>(
-      KafkaHandle::create(Conf.get(), ErrorStr));
-  if (KafkaConsumer == nullptr) {
-    throw MetadataException("Unable to create kafka handle.");
-  }
-  return KafkaConsumer;
-}
+};
 
 template <class KafkaHandle>
 std::vector<std::pair<int, int64_t>>
 getOffsetForTimeImpl(std::string const &Broker, std::string const &Topic,
                      std::vector<int> const &Partitions, time_point Time,
                      duration TimeOut, BrokerSettings BrokerSettings) {
-  auto Handle =
-      getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker, BrokerSettings);
+  auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+      Broker, BrokerSettings);
   auto UsedTime = toMilliSeconds(Time);
   std::vector<std::unique_ptr<RdKafka::TopicPartition>> TopicPartitions;
   std::vector<RdKafka::TopicPartition *> TopicPartitionsRaw;
@@ -113,8 +110,8 @@ template <class KafkaHandle, class KafkaTopic>
 std::vector<int>
 getPartitionsForTopicImpl(std::string const &Broker, std::string const &Topic,
                           duration TimeOut, BrokerSettings BrokerSettings) {
-  auto Handle =
-      getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker, BrokerSettings);
+  auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+      Broker, BrokerSettings);
   std::string ErrorStr;
   auto TopicObj = std::unique_ptr<RdKafka::Topic>(
       KafkaTopic::create(Handle.get(), Topic, nullptr, ErrorStr));
@@ -138,8 +135,8 @@ template <class KafkaHandle>
 std::set<std::string> getTopicListImpl(std::string const &Broker,
                                        duration TimeOut,
                                        BrokerSettings BrokerSettings) {
-  auto Handle =
-      getKafkaHandle<KafkaHandle, RdKafka::Conf>(Broker, BrokerSettings);
+  auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+      Broker, BrokerSettings);
   std::string ErrorStr;
   auto TimeOutInMs = toMilliSeconds(TimeOut);
   RdKafka::Metadata *MetadataPtr{nullptr};
