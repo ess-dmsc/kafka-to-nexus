@@ -113,7 +113,7 @@ std::vector<std::pair<int, int64_t>> Topic::getOffsetForTimeInternal(
 std::vector<int> Topic::getPartitionsForTopicInternal(
     std::string const &Broker, std::string const &Topic, duration TimeOut,
     Kafka::BrokerSettings BrokerSettings) const {
-  return Kafka::getPartitionsForTopic(Broker, Topic, TimeOut, BrokerSettings);
+  return Kafka::MetadataEnquirer().getPartitionsForTopic(Broker, Topic, TimeOut, BrokerSettings);
 }
 
 void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,

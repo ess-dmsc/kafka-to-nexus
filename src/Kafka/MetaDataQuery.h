@@ -116,15 +116,14 @@ public:
     return ReturnVector;
   }
 
-  template <class KafkaHandle, class KafkaTopic>
   std::vector<int>
-  getPartitionsForTopicImpl(std::string const &Broker, std::string const &Topic,
+  getPartitionsForTopic(std::string const &Broker, std::string const &Topic,
                             duration TimeOut, BrokerSettings BrokerSettings) {
-    auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+    auto Handle = MetadataEnquirer().getKafkaHandle<RdKafka::Consumer, RdKafka::Conf>(
         Broker, BrokerSettings);
     std::string ErrorStr;
     auto TopicObj = std::unique_ptr<RdKafka::Topic>(
-        KafkaTopic::create(Handle.get(), Topic, nullptr, ErrorStr));
+        RdKafka::Topic::create(Handle.get(), Topic, nullptr, ErrorStr));
     auto TimeOutInMs = toMilliSeconds(TimeOut);
     RdKafka::Metadata *MetadataPtr{nullptr};
     auto ReturnCode =
@@ -175,9 +174,4 @@ std::vector<std::pair<int, int64_t>>
 getOffsetForTime(std::string const &Broker, std::string const &Topic,
                  std::vector<int> const &Partitions, time_point Time,
                  duration TimeOut, BrokerSettings BrokerSettings);
-
-std::vector<int> getPartitionsForTopic(std::string const &Broker,
-                                       std::string const &Topic,
-                                       duration TimeOut,
-                                       BrokerSettings BrokerSettings);
 } // namespace Kafka

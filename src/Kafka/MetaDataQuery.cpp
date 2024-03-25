@@ -25,13 +25,4 @@ getOffsetForTime(std::string const &Broker, std::string const &Topic,
   return MetadataEnquirer().getOffsetForTimeImpl<RdKafka::Consumer>(
       Broker, Topic, Partitions, Time, TimeOut, BrokerSettings);
 }
-
-std::vector<int> getPartitionsForTopic(std::string const &Broker,
-                                       std::string const &Topic,
-                                       duration TimeOut,
-                                       BrokerSettings BrokerSettings) {
-  return MetadataEnquirer()
-      .getPartitionsForTopicImpl<RdKafka::Consumer, RdKafka::Topic>(
-          Broker, Topic, TimeOut, BrokerSettings);
-}
 } // namespace Kafka
