@@ -16,7 +16,7 @@ namespace Kafka {
 const RdKafka::TopicMetadata *
 findTopicMetadata(const std::string &Topic,
                   const RdKafka::Metadata *KafkaMetadata) {
-  return findKafkaTopic(Topic, KafkaMetadata);
+  return MetadataEnquirer().findKafkaTopic(Topic, KafkaMetadata);
 }
 
 std::vector<std::pair<int, int64_t>>

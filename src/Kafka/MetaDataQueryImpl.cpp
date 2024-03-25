@@ -13,7 +13,7 @@
 
 namespace Kafka {
 const RdKafka::TopicMetadata *
-findKafkaTopic(const std::string &Topic,
+MetadataEnquirer::findKafkaTopic(const std::string &Topic,
                const RdKafka::Metadata *KafkaMetadata) {
   const auto *Topics = KafkaMetadata->topics();
   auto Iterator =

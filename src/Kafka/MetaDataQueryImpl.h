@@ -21,9 +21,15 @@
 
 namespace Kafka {
 
-const RdKafka::TopicMetadata *
-findKafkaTopic(const std::string &Topic,
-               const RdKafka::Metadata *KafkaMetadata);
+class MetadataEnquirer {
+public:
+  const RdKafka::TopicMetadata *
+  findKafkaTopic(const std::string &Topic,
+                 const RdKafka::Metadata *KafkaMetadata);
+
+};
+
+
 
 template <class KafkaHandle, class KafkaConf>
 std::unique_ptr<RdKafka::Handle> getKafkaHandle(std::string Broker,
@@ -122,7 +128,7 @@ getPartitionsForTopicImpl(std::string const &Broker, std::string const &Topic,
         "{}. Error was: {}",
         Broker, Topic, RdKafka::err2str(ReturnCode)));
   }
-  auto TopicMetaData = findKafkaTopic(Topic, MetadataPtr);
+  auto TopicMetaData = MetadataEnquirer().findKafkaTopic(Topic, MetadataPtr);
   auto ReturnVector = extractPartitinIDs(TopicMetaData);
   delete MetadataPtr;
   return ReturnVector;
