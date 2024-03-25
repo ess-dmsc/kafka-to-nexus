@@ -104,32 +104,32 @@ public:
     }
     return ReturnVector;
   }
-};
 
-template <class KafkaHandle, class KafkaTopic>
-std::vector<int>
-getPartitionsForTopicImpl(std::string const &Broker, std::string const &Topic,
-                          duration TimeOut, BrokerSettings BrokerSettings) {
-  auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
-      Broker, BrokerSettings);
-  std::string ErrorStr;
-  auto TopicObj = std::unique_ptr<RdKafka::Topic>(
-      KafkaTopic::create(Handle.get(), Topic, nullptr, ErrorStr));
-  auto TimeOutInMs = toMilliSeconds(TimeOut);
-  RdKafka::Metadata *MetadataPtr{nullptr};
-  auto ReturnCode =
-      Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
-  if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    throw MetadataException(fmt::format(
-        "Failed to query broker {} for available partitions on topic "
-        "{}. Error was: {}",
-        Broker, Topic, RdKafka::err2str(ReturnCode)));
+  template <class KafkaHandle, class KafkaTopic>
+  std::vector<int>
+  getPartitionsForTopicImpl(std::string const &Broker, std::string const &Topic,
+                            duration TimeOut, BrokerSettings BrokerSettings) {
+    auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+        Broker, BrokerSettings);
+    std::string ErrorStr;
+    auto TopicObj = std::unique_ptr<RdKafka::Topic>(
+        KafkaTopic::create(Handle.get(), Topic, nullptr, ErrorStr));
+    auto TimeOutInMs = toMilliSeconds(TimeOut);
+    RdKafka::Metadata *MetadataPtr{nullptr};
+    auto ReturnCode =
+        Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
+    if (ReturnCode != RdKafka::ERR_NO_ERROR) {
+      throw MetadataException(fmt::format(
+          "Failed to query broker {} for available partitions on topic "
+          "{}. Error was: {}",
+          Broker, Topic, RdKafka::err2str(ReturnCode)));
+    }
+    auto TopicMetaData = MetadataEnquirer().findKafkaTopic(Topic, MetadataPtr);
+    auto ReturnVector = MetadataEnquirer().extractPartitionIDs(TopicMetaData);
+    delete MetadataPtr;
+    return ReturnVector;
   }
-  auto TopicMetaData = MetadataEnquirer().findKafkaTopic(Topic, MetadataPtr);
-  auto ReturnVector = MetadataEnquirer().extractPartitionIDs(TopicMetaData);
-  delete MetadataPtr;
-  return ReturnVector;
-}
+};
 
 template <class KafkaHandle>
 std::set<std::string> getTopicListImpl(std::string const &Broker,
