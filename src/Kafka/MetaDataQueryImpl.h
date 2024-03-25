@@ -95,18 +95,16 @@ public:
     }
     return ReturnSet;
   }
-};
 
-
-
-template <typename MetaDataType>
-std::vector<int> extractPartitinIDs(MetaDataType TopicMetaData) {
-  std::vector<int> ReturnVector;
-  for (auto const &Partition : *TopicMetaData->partitions()) {
-    ReturnVector.push_back(Partition->id());
+  template <typename MetaDataType>
+  std::vector<int> extractPartitionIDs(MetaDataType TopicMetaData) {
+    std::vector<int> ReturnVector;
+    for (auto const &Partition : *TopicMetaData->partitions()) {
+      ReturnVector.push_back(Partition->id());
+    }
+    return ReturnVector;
   }
-  return ReturnVector;
-}
+};
 
 template <class KafkaHandle, class KafkaTopic>
 std::vector<int>
@@ -128,7 +126,7 @@ getPartitionsForTopicImpl(std::string const &Broker, std::string const &Topic,
         Broker, Topic, RdKafka::err2str(ReturnCode)));
   }
   auto TopicMetaData = MetadataEnquirer().findKafkaTopic(Topic, MetadataPtr);
-  auto ReturnVector = extractPartitinIDs(TopicMetaData);
+  auto ReturnVector = MetadataEnquirer().extractPartitionIDs(TopicMetaData);
   delete MetadataPtr;
   return ReturnVector;
 }
