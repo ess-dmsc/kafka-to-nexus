@@ -21,6 +21,9 @@ class ConsumerFactoryInterface {
 public:
   virtual std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) = 0;
+  virtual std::unique_ptr<ConsumerInterface>
+  createConsumer(BrokerSettings const &settings, std::string const &topic,
+                 int partition_id, int64_t offset) = 0;
   virtual ~ConsumerFactoryInterface() = default;
 };
 
@@ -28,6 +31,9 @@ class ConsumerFactory : public ConsumerFactoryInterface {
 public:
   std::unique_ptr<ConsumerInterface>
   createConsumer(BrokerSettings const &Settings) override;
+  std::unique_ptr<ConsumerInterface>
+  createConsumer(BrokerSettings const &settings, std::string const &topic,
+                 int partition_id, int64_t offset) override;
   ~ConsumerFactory() override = default;
 };
 
@@ -38,6 +44,16 @@ public:
     UNUSED_ARG(Settings);
     return std::unique_ptr<ConsumerInterface>(new StubConsumer());
   };
+  std::unique_ptr<ConsumerInterface>
+  createConsumer(BrokerSettings const &settings, std::string const &topic,
+                 int partition_id, int64_t offset) override {
+    UNUSED_ARG(settings);
+    UNUSED_ARG(topic);
+    UNUSED_ARG(partition_id);
+    UNUSED_ARG(offset);
+    return std::unique_ptr<ConsumerInterface>(new StubConsumer());
+  }
+
   ~StubConsumerFactory() override = default;
 };
 } // namespace Kafka
