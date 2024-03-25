@@ -80,7 +80,7 @@ std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 
 void StreamController::getTopicNames() {
   try {
-    auto TopicNames = Kafka::getTopicList(
+    auto TopicNames = Kafka::MetadataEnquirer().getTopicList(
         StreamerOptions.BrokerSettings.Address, CurrentMetadataTimeOut,
         StreamerOptions.BrokerSettings);
     Executor.sendLowPriorityWork([=]() { initStreams(TopicNames); });

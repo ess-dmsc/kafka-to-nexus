@@ -10,29 +10,41 @@
 #pragma once
 
 #include "Kafka/BrokerSettings.h"
+#include "Kafka/MetadataException.h"
 #include "TimeUtility.h"
 #include <chrono>
+#include <fmt/format.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <set>
 #include <string>
 
 namespace Kafka {
 
-const RdKafka::TopicMetadata *
-findTopicMetadata(const std::string &Topic,
-                  const RdKafka::Metadata *KafkaMetadata);
+class MetadataEnquirer {
+public:
+  std::vector<std::pair<int, int64_t>>
+  getOffsetForTime(std::string const &Broker, std::string const &Topic,
+                   std::vector<int> const &Partitions, time_point Time,
+                   duration TimeOut, BrokerSettings BrokerSettings);
 
-std::vector<std::pair<int, int64_t>>
-getOffsetForTime(std::string const &Broker, std::string const &Topic,
-                 std::vector<int> const &Partitions, time_point Time,
-                 duration TimeOut, BrokerSettings BrokerSettings);
+  std::vector<int> getPartitionsForTopic(std::string const &Broker,
+                                         std::string const &Topic,
+                                         duration TimeOut,
+                                         BrokerSettings BrokerSettings);
 
-std::vector<int> getPartitionsForTopic(std::string const &Broker,
-                                       std::string const &Topic,
-                                       duration TimeOut,
-                                       BrokerSettings BrokerSettings);
+  std::set<std::string> getTopicList(std::string const &Broker,
+                                     duration TimeOut,
+                                     BrokerSettings BrokerSettings);
 
-std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut,
-                                   BrokerSettings BrokerSettings);
+private:
+  const RdKafka::TopicMetadata *
+  findTopicMetadata(const std::string &Topic,
+                    const RdKafka::Metadata *KafkaMetadata);
 
+  std::unique_ptr<RdKafka::Consumer>
+  getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings);
+
+  std::vector<int>
+  extractPartitionIDs(RdKafka::TopicMetadata const *TopicMetaData);
+};
 } // namespace Kafka
