@@ -32,7 +32,7 @@ public:
                duration StopTimeLeeway,
                std::function<bool()> AreStreamersPausedFunction,
                std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
-      : Stream::Topic(Settings, Topic, Map, Writer, RegisterMetric, StartTime,
+      : Stream::Topic(Settings, Topic, Map, Writer, &RegisterMetric, StartTime,
                       StartTimeLeeway, StopTime, StopTimeLeeway,
                       AreStreamersPausedFunction, std::move(CreateConsumers)) {}
   virtual void checkIfDoneTask() override {

@@ -76,7 +76,7 @@ public:
 
     UnderTest = std::make_unique<FileWriter::Master>(
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
-        Registrar);
+        &Registrar);
 
     std::filesystem::path FullFilePath = Config.getHDFOutputPrefix();
     FullFilePath.append(StartCmd.Filename);

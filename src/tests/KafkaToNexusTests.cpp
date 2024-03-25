@@ -21,9 +21,9 @@ public:
   FileWriterMasterMock(MainOpt &Config,
                        std::unique_ptr<Command::HandlerBase> Listener,
                        std::unique_ptr<Status::StatusReporterBase> Reporter,
-                       Metrics::Registrar const &Registrar)
+                       Metrics::Registrar &Registrar)
       : FileWriter::Master(Config, std::move(Listener), std::move(Reporter),
-                           Registrar){};
+                           &Registrar){};
   MAKE_MOCK0(stopNow, void(), override);
   MAKE_MOCK0(writingIsFinished, bool(), override);
 };
