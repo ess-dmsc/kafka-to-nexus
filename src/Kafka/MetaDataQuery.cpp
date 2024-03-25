@@ -9,6 +9,7 @@
 
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
+#include <algorithm>
 
 namespace Kafka {
 const RdKafka::TopicMetadata *
