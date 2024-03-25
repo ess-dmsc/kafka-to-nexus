@@ -38,7 +38,8 @@ std::vector<int> getPartitionsForTopic(std::string const &Broker,
 
 std::set<std::string> getTopicList(std::string const &Broker, duration TimeOut,
                                    BrokerSettings BrokerSettings) {
-  return getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut, BrokerSettings);
+  return MetadataEnquirer().getTopicListImpl<RdKafka::Consumer>(Broker, TimeOut,
+                                                                BrokerSettings);
 }
 
 } // namespace Kafka

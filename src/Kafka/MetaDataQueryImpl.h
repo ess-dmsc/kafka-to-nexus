@@ -129,30 +129,31 @@ public:
     delete MetadataPtr;
     return ReturnVector;
   }
-};
 
-template <class KafkaHandle>
-std::set<std::string> getTopicListImpl(std::string const &Broker,
-                                       duration TimeOut,
-                                       BrokerSettings BrokerSettings) {
-  auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
-      Broker, BrokerSettings);
-  std::string ErrorStr;
-  auto TimeOutInMs = toMilliSeconds(TimeOut);
-  RdKafka::Metadata *MetadataPtr{nullptr};
-  auto ReturnCode = Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
-  if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    throw MetadataException(fmt::format(
-        "Failed to query broker for available partitions. Error code was: {}",
-        ReturnCode));
+  template <class KafkaHandle>
+  std::set<std::string> getTopicListImpl(std::string const &Broker,
+                                         duration TimeOut,
+                                         BrokerSettings BrokerSettings) {
+    auto Handle = MetadataEnquirer().getKafkaHandle<KafkaHandle, RdKafka::Conf>(
+        Broker, BrokerSettings);
+    std::string ErrorStr;
+    auto TimeOutInMs = toMilliSeconds(TimeOut);
+    RdKafka::Metadata *MetadataPtr{nullptr};
+    auto ReturnCode =
+        Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
+    if (ReturnCode != RdKafka::ERR_NO_ERROR) {
+      throw MetadataException(fmt::format(
+          "Failed to query broker for available partitions. Error code was: {}",
+          ReturnCode));
+    }
+    auto Topics = MetadataPtr->topics();
+    std::set<std::string> TopicNames;
+    for (auto const &CTopic : *Topics) {
+      TopicNames.emplace(CTopic->topic());
+    }
+    delete MetadataPtr;
+    return TopicNames;
   }
-  auto Topics = MetadataPtr->topics();
-  std::set<std::string> TopicNames;
-  for (auto const &CTopic : *Topics) {
-    TopicNames.emplace(CTopic->topic());
-  }
-  delete MetadataPtr;
-  return TopicNames;
-}
+};
 
 } // namespace Kafka
