@@ -82,7 +82,6 @@ set(kafka_to_nexus_SRC
         Kafka/ProducerTopic.cpp
         Kafka/ConsumerFactory.cpp
         Kafka/MetaDataQuery.cpp
-        Kafka/MetaDataQueryImpl.cpp
         helper.cpp
         URI.cpp
         FlatbufferMessage.cpp
@@ -141,7 +140,6 @@ set(kafka_to_nexus_INC
         Kafka/MetadataException.h
         Kafka/ConsumerFactory.h
         Kafka/MetaDataQuery.h
-        Kafka/MetaDataQueryImpl.h
         kafka-to-nexus.h
         logger.h
         MainOpt.h

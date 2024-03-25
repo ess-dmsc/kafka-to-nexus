@@ -122,7 +122,8 @@ bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
                      std::string Broker, duration TimeOut,
                      Kafka::BrokerSettings BrokerSettings) {
   try {
-    auto ListOfTopics = Kafka::getTopicList(Broker, TimeOut, BrokerSettings);
+    auto ListOfTopics =
+        Kafka::MetadataEnquirer().getTopicList(Broker, TimeOut, BrokerSettings);
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           R"(Unable to find job pool topic with name "{}".)", PoolTopic);

@@ -29,7 +29,6 @@ set(UnitTests_SRC
         Metrics/CarbonTestServer.cpp
         Metrics/MetricsReporterTest.cpp
         Metrics/LogSinkTest.cpp
-        MetaDataQueryTests.cpp
         Stream/PartitionFilterTest.cpp
         Stream/MessageWriterTests.cpp
         Stream/SourceFilterTest.cpp
