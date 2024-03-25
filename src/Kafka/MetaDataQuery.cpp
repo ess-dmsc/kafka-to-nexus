@@ -13,7 +13,7 @@
 namespace Kafka {
 const RdKafka::TopicMetadata *
 MetadataEnquirer::findTopicMetadata(const std::string &Topic,
-                  const RdKafka::Metadata *KafkaMetadata) {
+                                    const RdKafka::Metadata *KafkaMetadata) {
   const auto *Topics = KafkaMetadata->topics();
   auto Iterator =
       std::find_if(Topics->cbegin(), Topics->cend(),
@@ -28,7 +28,8 @@ MetadataEnquirer::findTopicMetadata(const std::string &Topic,
 }
 
 std::unique_ptr<RdKafka::Consumer>
-MetadataEnquirer::getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings) {
+MetadataEnquirer::getKafkaHandle(std::string Broker,
+                                 BrokerSettings BrokerSettings) {
   auto Conf = std::unique_ptr<RdKafka::Conf>(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
   std::string ErrorStr;
@@ -55,12 +56,11 @@ MetadataEnquirer::getKafkaHandle(std::string Broker, BrokerSettings BrokerSettin
   return KafkaConsumer;
 }
 
-std::vector<std::pair<int, int64_t>>
-MetadataEnquirer::getOffsetForTime(std::string const &Broker, std::string const &Topic,
-                 std::vector<int> const &Partitions, time_point Time,
-                 duration TimeOut, BrokerSettings BrokerSettings) {
-  auto Handle = MetadataEnquirer().getKafkaHandle(
-      Broker, BrokerSettings);
+std::vector<std::pair<int, int64_t>> MetadataEnquirer::getOffsetForTime(
+    std::string const &Broker, std::string const &Topic,
+    std::vector<int> const &Partitions, time_point Time, duration TimeOut,
+    BrokerSettings BrokerSettings) {
+  auto Handle = MetadataEnquirer().getKafkaHandle(Broker, BrokerSettings);
   auto UsedTime = toMilliSeconds(Time);
   std::vector<std::unique_ptr<RdKafka::TopicPartition>> TopicPartitions;
   std::vector<RdKafka::TopicPartition *> TopicPartitionsRaw;
@@ -94,7 +94,8 @@ MetadataEnquirer::getOffsetForTime(std::string const &Broker, std::string const 
   return ReturnSet;
 }
 
-std::vector<int> MetadataEnquirer::extractPartitionIDs(RdKafka::TopicMetadata const * TopicMetaData) {
+std::vector<int> MetadataEnquirer::extractPartitionIDs(
+    RdKafka::TopicMetadata const *TopicMetaData) {
   std::vector<int> ReturnVector;
   for (auto const &Partition : *TopicMetaData->partitions()) {
     ReturnVector.push_back(Partition->id());
@@ -102,11 +103,10 @@ std::vector<int> MetadataEnquirer::extractPartitionIDs(RdKafka::TopicMetadata co
   return ReturnVector;
 }
 
-std::vector<int>
-MetadataEnquirer::getPartitionsForTopic(std::string const &Broker, std::string const &Topic,
-                      duration TimeOut, BrokerSettings BrokerSettings) {
-  auto Handle = MetadataEnquirer().getKafkaHandle(
-      Broker, BrokerSettings);
+std::vector<int> MetadataEnquirer::getPartitionsForTopic(
+    std::string const &Broker, std::string const &Topic, duration TimeOut,
+    BrokerSettings BrokerSettings) {
+  auto Handle = MetadataEnquirer().getKafkaHandle(Broker, BrokerSettings);
   std::string ErrorStr;
   auto TopicObj = std::unique_ptr<RdKafka::Topic>(
       RdKafka::Topic::create(Handle.get(), Topic, nullptr, ErrorStr));
@@ -126,17 +126,14 @@ MetadataEnquirer::getPartitionsForTopic(std::string const &Broker, std::string c
   return ReturnVector;
 }
 
-std::set<std::string> MetadataEnquirer::getTopicList(std::string const &Broker,
-                                   duration TimeOut,
-                                   BrokerSettings BrokerSettings) {
-  auto Handle =
-      MetadataEnquirer().getKafkaHandle(
-          Broker, BrokerSettings);
+std::set<std::string>
+MetadataEnquirer::getTopicList(std::string const &Broker, duration TimeOut,
+                               BrokerSettings BrokerSettings) {
+  auto Handle = MetadataEnquirer().getKafkaHandle(Broker, BrokerSettings);
   std::string ErrorStr;
   auto TimeOutInMs = toMilliSeconds(TimeOut);
   RdKafka::Metadata *MetadataPtr{nullptr};
-  auto ReturnCode =
-      Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
+  auto ReturnCode = Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException(fmt::format(
         "Failed to query broker for available partitions. Error code was: {}",
