@@ -14,6 +14,8 @@
 #include "logger.h"
 #include <Kafka/MetadataException.h>
 
+#include <utility>
+
 namespace Stream {
 
 Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
@@ -22,6 +24,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              duration StartTimeLeeway, time_point StopTime,
              duration StopTimeLeeway,
              std::function<bool()> AreStreamersPausedFunction,
+             std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
              std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
@@ -29,7 +32,8 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
       StopLeeway(StopTimeLeeway),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
       Registrar(RegisterMetric.getNewRegistrar(Topic)),
-      AreStreamersPausedFunction(AreStreamersPausedFunction),
+      AreStreamersPausedFunction(std::move(AreStreamersPausedFunction)),
+      metadata_enquirer_(std::move(metadata_enquirer)),
       ConsumerCreator(std::move(CreateConsumers)) {}
 
 void Topic::start() {
@@ -106,15 +110,15 @@ std::vector<std::pair<int, int64_t>> Topic::getOffsetForTimeInternal(
     std::string const &Broker, std::string const &Topic,
     std::vector<int> const &Partitions, time_point Time, duration TimeOut,
     Kafka::BrokerSettings BrokerSettings) const {
-  return Kafka::MetadataEnquirer().getOffsetForTime(
-      Broker, Topic, Partitions, Time, TimeOut, BrokerSettings);
+  return metadata_enquirer_->getOffsetForTime(Broker, Topic, Partitions, Time,
+                                              TimeOut, BrokerSettings);
 }
 
 std::vector<int> Topic::getPartitionsForTopicInternal(
     std::string const &Broker, std::string const &Topic, duration TimeOut,
     Kafka::BrokerSettings BrokerSettings) const {
-  return Kafka::MetadataEnquirer().getPartitionsForTopic(Broker, Topic, TimeOut,
-                                                         BrokerSettings);
+  return metadata_enquirer_->getPartitionsForTopic(Broker, Topic, TimeOut,
+                                                   BrokerSettings);
 }
 
 void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,

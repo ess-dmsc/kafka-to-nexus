@@ -139,7 +139,8 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
         StreamerOptions.BrokerSettings, CItem.first, CItem.second,
         &WriterThread, StreamMetricRegistrar, CStartTime,
         StreamerOptions.BeforeStartTime, CStopTime,
-        StreamerOptions.AfterStopTime, CheckStreamersPausedLambda);
+        StreamerOptions.AfterStopTime, CheckStreamersPausedLambda,
+        metadata_enquirer_);
     CTopic->start();
     Streamers.emplace_back(std::move(CTopic));
   }

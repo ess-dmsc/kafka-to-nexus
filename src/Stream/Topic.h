@@ -11,6 +11,7 @@
 
 #include "Kafka/BrokerSettings.h"
 #include "Kafka/ConsumerFactory.h"
+#include "Kafka/MetaDataQuery.h"
 #include "Metrics/Registrar.h"
 #include "Partition.h"
 #include "Stream/MessageWriter.h"
@@ -30,6 +31,7 @@ public:
         time_point StartTime, duration StartTimeLeeway, time_point StopTime,
         duration StopTimeLeeway,
         std::function<bool()> AreStreamersPausedFunction,
+        std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
         std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
             std::make_unique<Kafka::ConsumerFactory>());
 
@@ -109,6 +111,7 @@ protected:
   virtual time_point getCurrentTime() const { return system_clock::now(); }
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
+  std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer_;
   std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
   ThreadedExecutor Executor{false, "topic"}; // Must be last
 };
