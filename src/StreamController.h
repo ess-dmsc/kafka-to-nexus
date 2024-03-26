@@ -44,13 +44,15 @@ public:
 /// \brief The StreamController's task is to coordinate the different Streamers.
 class StreamController : public IStreamController {
 public:
-  StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
-                   std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
-                   FileWriter::StreamerOptions const &Settings,
-                   Metrics::Registrar const &Registrar,
-                   MetaData::TrackerPtr Tracker,
-                   std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
-                       std::make_shared<Kafka::MetadataEnquirer>());
+  StreamController(
+      std::unique_ptr<FileWriterTask> FileWriterTask,
+      std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
+      FileWriter::StreamerOptions const &Settings,
+      Metrics::Registrar const &Registrar, MetaData::TrackerPtr Tracker,
+      std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
+          std::make_shared<Kafka::MetadataEnquirer>(),
+      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
+          std::make_shared<Kafka::ConsumerFactory>());
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;
@@ -147,6 +149,7 @@ private:
   FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
   std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer_;
+  std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory_;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
 

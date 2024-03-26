@@ -32,8 +32,7 @@ public:
         duration StopTimeLeeway,
         std::function<bool()> AreStreamersPausedFunction,
         std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
-        std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers =
-            std::make_unique<Kafka::ConsumerFactory>());
+        std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory);
 
   /// \brief Must be called after the constructor.
   /// \note This function exist in order to make unit testing possible.
@@ -112,7 +111,7 @@ protected:
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
   std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer_;
-  std::unique_ptr<Kafka::ConsumerFactoryInterface> ConsumerCreator;
+  std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory_;
   ThreadedExecutor Executor{false, "topic"}; // Must be last
 };
 } // namespace Stream

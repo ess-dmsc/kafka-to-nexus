@@ -25,7 +25,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              duration StopTimeLeeway,
              std::function<bool()> AreStreamersPausedFunction,
              std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
-             std::unique_ptr<Kafka::ConsumerFactoryInterface> CreateConsumers)
+             std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
     : KafkaSettings(Settings), TopicName(Topic), DataMap(std::move(Map)),
       WriterPtr(Writer), StartConsumeTime(StartTime),
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
@@ -34,7 +34,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
       Registrar(RegisterMetric.getNewRegistrar(Topic)),
       AreStreamersPausedFunction(std::move(AreStreamersPausedFunction)),
       metadata_enquirer_(std::move(metadata_enquirer)),
-      ConsumerCreator(std::move(CreateConsumers)) {}
+      consumer_factory_(std::move(consumer_factory)) {}
 
 void Topic::start() {
   Executor.sendWork([=]() { initMetadataCalls(KafkaSettings, TopicName); });
@@ -164,7 +164,7 @@ void Topic::createStreams(
   for (const auto &CParOffset : PartitionOffsets) {
     auto CRegistrar = Registrar.getNewRegistrar(
         "partition_" + std::to_string(CParOffset.first));
-    auto Consumer = ConsumerCreator->createConsumer(Settings);
+    auto Consumer = consumer_factory_->createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,

@@ -16,15 +16,16 @@ StreamController::StreamController(
     std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
     FileWriter::StreamerOptions const &Settings,
     Metrics::Registrar const &Registrar, MetaData::TrackerPtr Tracker,
-    std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer)
-
+    std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
+    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
     : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
       StreamMetricRegistrar(Registrar),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
-      metadata_enquirer_(std::move(metadata_enquirer)) {
+      metadata_enquirer_(std::move(metadata_enquirer)),
+      consumer_factory_(std::move(consumer_factory)) {
   MdatWriter->setStartTime(Settings.StartTimestamp);
   MdatWriter->setStopTime(Settings.StopTimestamp);
   Executor.sendLowPriorityWork([=]() {
@@ -140,7 +141,7 @@ void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
         &WriterThread, StreamMetricRegistrar, CStartTime,
         StreamerOptions.BeforeStartTime, CStopTime,
         StreamerOptions.AfterStopTime, CheckStreamersPausedLambda,
-        metadata_enquirer_);
+        metadata_enquirer_, consumer_factory_);
     CTopic->start();
     Streamers.emplace_back(std::move(CTopic));
   }
