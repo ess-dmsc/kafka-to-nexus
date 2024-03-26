@@ -111,7 +111,7 @@ public:
 private:
   bool StopNow{false};
   void getTopicNames();
-  void initStreams(std::set<std::string> KnownTopicNames);
+  void initStreams(std::set<std::string> known_topic_names);
   void performPeriodicChecks();
   void checkIfStreamsAreDone();
   void throttleIfWriteQueueIsFull();

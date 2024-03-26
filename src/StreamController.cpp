@@ -104,46 +104,45 @@ void StreamController::getTopicNames() {
   }
 }
 
-void StreamController::initStreams(std::set<std::string> KnownTopicNames) {
-  std::map<std::string, Stream::SrcToDst> TopicSrcMap;
-  std::string GetTopicsErrorString;
-  for (auto &Src : WriterTask->sources()) {
-    if (KnownTopicNames.find(Src.topic()) != KnownTopicNames.end()) {
-      TopicSrcMap[Src.topic()].push_back(
-          {Src.getSrcHash(), Src.getModuleHash(), Src.getWriterPtr(),
-           Src.sourcename(), Src.flatbufferID(), Src.writerModuleID(),
-           Src.getWriterPtr()->acceptsRepeatedTimestamps()});
+void StreamController::initStreams(std::set<std::string> known_topic_names) {
+  std::map<std::string, Stream::SrcToDst> topic_src_map;
+  std::string errors_collector;
+  for (auto &src : WriterTask->sources()) {
+    if (known_topic_names.find(src.topic()) != known_topic_names.end()) {
+      topic_src_map[src.topic()].push_back(
+          {src.getSrcHash(), src.getModuleHash(), src.getWriterPtr(),
+           src.sourcename(), src.flatbufferID(), src.writerModuleID(),
+           src.getWriterPtr()->acceptsRepeatedTimestamps()});
     } else {
-      GetTopicsErrorString += fmt::format(
+      errors_collector += fmt::format(
           "Unable to set up consumer for source {} on topic {} as this "
           "topic does not exist. ",
-          Src.sourcename(), Src.topic());
+          src.sourcename(), src.topic());
     }
   }
-  if (not GetTopicsErrorString.empty()) {
-    LOG_ERROR(GetTopicsErrorString);
-    std::lock_guard Guard(ErrorMsgMutex);
-    ErrorMessage = GetTopicsErrorString;
+  if (!errors_collector.empty()) {
+    LOG_ERROR(errors_collector);
+    std::lock_guard guard(ErrorMsgMutex);
+    ErrorMessage = errors_collector;
     HasError = true;
     return;
   }
-  auto CheckStreamersPausedLambda =
+  auto check_streamers_paused_func =
       [&StreamersPausedConst = std::as_const(StreamersPaused)]() -> bool {
     return StreamersPausedConst.load(std::memory_order_relaxed);
   };
-  for (auto &CItem : TopicSrcMap) {
-    auto CStartTime =
+  for (auto &[topic_name, source_map] : topic_src_map) {
+    auto start_time =
         std::chrono::system_clock::time_point(StreamerOptions.StartTimestamp);
-    auto CStopTime =
+    auto stop_time =
         std::chrono::system_clock::time_point(StreamerOptions.StopTimestamp);
-    auto CTopic = std::make_unique<Stream::Topic>(
-        StreamerOptions.BrokerSettings, CItem.first, CItem.second,
-        &WriterThread, StreamMetricRegistrar, CStartTime,
-        StreamerOptions.BeforeStartTime, CStopTime,
-        StreamerOptions.AfterStopTime, CheckStreamersPausedLambda,
+    auto topic = std::make_unique<Stream::Topic>(
+        StreamerOptions.BrokerSettings, topic_name, source_map, &WriterThread,
+        StreamMetricRegistrar, start_time, StreamerOptions.BeforeStartTime,
+        stop_time, StreamerOptions.AfterStopTime, check_streamers_paused_func,
         metadata_enquirer_, consumer_factory_);
-    CTopic->start();
-    Streamers.emplace_back(std::move(CTopic));
+    topic->start();
+    Streamers.emplace_back(std::move(topic));
   }
   Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
 }
