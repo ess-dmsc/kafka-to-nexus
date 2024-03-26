@@ -13,6 +13,7 @@
 #pragma once
 
 #include "FileWriterTask.h"
+#include "Kafka/MetaDataQuery.h"
 #include "MainOpt.h"
 #include "MetaData/HDF5DataWriter.h"
 #include "MetaData/Tracker.h"
@@ -47,7 +48,9 @@ public:
                    std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
                    FileWriter::StreamerOptions const &Settings,
                    Metrics::Registrar const &Registrar,
-                   MetaData::TrackerPtr Tracker);
+                   MetaData::TrackerPtr Tracker,
+                   std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
+                       std::make_shared<Kafka::MetadataEnquirer>());
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;
@@ -143,6 +146,7 @@ private:
   Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
+  std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer_;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
 

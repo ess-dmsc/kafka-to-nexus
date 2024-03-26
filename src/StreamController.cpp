@@ -15,14 +15,16 @@ StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
     FileWriter::StreamerOptions const &Settings,
-    Metrics::Registrar const &Registrar, MetaData::TrackerPtr Tracker)
+    Metrics::Registrar const &Registrar, MetaData::TrackerPtr Tracker,
+    std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer)
 
     : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
       StreamMetricRegistrar(Registrar),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar.getNewRegistrar("stream")),
-      StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)) {
+      StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
+      metadata_enquirer_(std::move(metadata_enquirer)) {
   MdatWriter->setStartTime(Settings.StartTimestamp);
   MdatWriter->setStopTime(Settings.StopTimestamp);
   Executor.sendLowPriorityWork([=]() {
@@ -82,7 +84,7 @@ std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 
 void StreamController::getTopicNames() {
   try {
-    auto TopicNames = Kafka::MetadataEnquirer().getTopicList(
+    auto TopicNames = metadata_enquirer_->getTopicList(
         StreamerOptions.BrokerSettings.Address, CurrentMetadataTimeOut,
         StreamerOptions.BrokerSettings);
     Executor.sendLowPriorityWork([=]() { initStreams(TopicNames); });
