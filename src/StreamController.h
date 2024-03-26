@@ -13,6 +13,7 @@
 #pragma once
 
 #include "FileWriterTask.h"
+#include "Kafka/MetaDataQuery.h"
 #include "MainOpt.h"
 #include "MetaData/HDF5DataWriter.h"
 #include "MetaData/Tracker.h"
@@ -43,11 +44,15 @@ public:
 /// \brief The StreamController's task is to coordinate the different Streamers.
 class StreamController : public IStreamController {
 public:
-  StreamController(std::unique_ptr<FileWriterTask> FileWriterTask,
-                   std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
-                   FileWriter::StreamerOptions const &Settings,
-                   Metrics::Registrar const &Registrar,
-                   MetaData::TrackerPtr Tracker);
+  StreamController(
+      std::unique_ptr<FileWriterTask> FileWriterTask,
+      std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
+      FileWriter::StreamerOptions const &Settings,
+      Metrics::Registrar const &Registrar, MetaData::TrackerPtr Tracker,
+      std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
+          std::make_shared<Kafka::MetadataEnquirer>(),
+      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
+          std::make_shared<Kafka::ConsumerFactory>());
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;
@@ -106,15 +111,11 @@ public:
 private:
   bool StopNow{false};
   void getTopicNames();
-  void initStreams(std::set<std::string> KnownTopicNames);
+  void initStreams(std::set<std::string> known_topic_names);
   void performPeriodicChecks();
   void checkIfStreamsAreDone();
   void throttleIfWriteQueueIsFull();
-  void writeStartTime();
-  void writeStopTime();
-  void writeTimePointAsIso8601String(std::string const &Path,
-                                     std::string const &Name,
-                                     time_point const &Value);
+
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};
   std::atomic<bool> StreamersPaused{false};
@@ -143,6 +144,8 @@ private:
   Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
+  std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer_;
+  std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory_;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
 
