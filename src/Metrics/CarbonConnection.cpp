@@ -95,8 +95,8 @@ void Connection::Impl::reconnect(ReconnectDelay Delay) {
   setState(Status::ADDR_RETRY_WAIT);
 }
 
-void Connection::Impl::receiveHandler(asio::error_code const &Error,
-                                      [[maybe_unused]] std::size_t BytesReceived) {
+void Connection::Impl::receiveHandler(
+    asio::error_code const &Error, [[maybe_unused]] std::size_t BytesReceived) {
   if (Error) {
     Socket.close();
     reconnect(ReconnectDelay::SHORT);

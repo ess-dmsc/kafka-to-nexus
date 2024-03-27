@@ -96,15 +96,15 @@ public:
     return {PollStatus::TimedOut, FileWriter::Msg()};
   };
 
-  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic, [[maybe_unused]] int PartitionId,
-                            [[maybe_unused]] int64_t Offset) override {
-  };
+  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic,
+                            [[maybe_unused]] int PartitionId,
+                            [[maybe_unused]] int64_t Offset) override{};
 
   void addTopic([[maybe_unused]] std::string const &Topic) override {}
 
-  void assignAllPartitions([[maybe_unused]] std::string const &Topic,
-                           [[maybe_unused]] time_point const &StartTimestamp) override {
-  }
+  void assignAllPartitions(
+      [[maybe_unused]] std::string const &Topic,
+      [[maybe_unused]] time_point const &StartTimestamp) override {}
 
   const RdKafka::TopicMetadata *
   getTopicMetadata([[maybe_unused]] const std::string &Topic,
