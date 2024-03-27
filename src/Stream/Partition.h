@@ -42,7 +42,7 @@ class Partition {
 public:
   Partition() = default;
 
-  Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
+  Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::IRegistrar *RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
@@ -119,7 +119,7 @@ protected:
   virtual void sleep(const duration Duration) const;
 
   virtual void processMessage(FileWriter::Msg const &Message);
-  std::unique_ptr<Kafka::ConsumerInterface> ConsumerPtr;
+  std::shared_ptr<Kafka::ConsumerInterface> ConsumerPtr;
   int PartitionID{-1};
   bool PartitionTimeOutLogged{false};
   std::string Topic{"not_initialized"};
