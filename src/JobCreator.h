@@ -40,6 +40,9 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
 ModuleSettings
 extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo);
 
+std::vector<ModuleSettings> extractModuleInformationFromJson(
+    std::vector<ModuleHDFInfo> const &ModuleHDFInfoList);
+
 std::unique_ptr<WriterModule::Base>
 generateWriterInstance(ModuleSettings const &StreamInfo);
 
