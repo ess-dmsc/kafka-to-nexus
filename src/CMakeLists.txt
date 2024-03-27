@@ -208,12 +208,11 @@ add_subdirectory(AccessMessageMetadata)
 add_subdirectory(NeXusDataset)
 
 set(sources
-        kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         $<TARGET_OBJECTS:NeXusDataset>
         ${WRITER_MODULES}
         ${FB_METADATA_EXTRACTORS})
-add_executable(kafka-to-nexus ${sources})
+add_executable(kafka-to-nexus ${sources} kafka-to-nexus.cpp)
 target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
 target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 target_link_libraries(kafka-to-nexus ${libraries_common})
