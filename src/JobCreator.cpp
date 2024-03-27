@@ -81,7 +81,7 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
 }
 
 /// Helper to extract information about the provided links and streams.
-static std::vector<ModuleSettings> extractModuleInformationFromJson(
+std::vector<ModuleSettings> extractModuleInformationFromJson(
     std::vector<ModuleHDFInfo> const &ModuleHDFInfoList) {
   std::vector<ModuleSettings> SettingsList;
   for (auto const &ModuleHDFInfo : ModuleHDFInfoList) {
