@@ -24,7 +24,6 @@ public:
   virtual void writeToHDF5File(hdf5::node::Group RootNode) const = 0;
 };
 
-
 using TrackerPtr = std::shared_ptr<ITracker>;
 
 /// \brief Used to store the pointers to metadata variables.
