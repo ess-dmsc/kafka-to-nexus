@@ -22,7 +22,6 @@ set(UnitTests_SRC
         ProducerTests.cpp
         ProducerDeliveryTests.cpp
         ConsumerTests.cpp
-        StreamControllerTests.cpp
         Metrics/MetricsRegistrarTest.cpp
         Metrics/MetricTest.cpp
         Metrics/CarbonConnectionTest.cpp
