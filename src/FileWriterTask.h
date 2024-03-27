@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace FileWriter {
@@ -38,10 +39,11 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  explicit FileWriterTask(Metrics::Registrar const &Registrar,
-                          MetaData::TrackerPtr const &Tracker)
-      : MetaDataTracker(Tracker), FileSizeMB("", "approx_file_size_mb") {
-    Registrar.registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
+  explicit FileWriterTask(Metrics::IRegistrar *Registrar,
+                          MetaData::TrackerPtr Tracker)
+      : MetaDataTracker(std::move(Tracker)),
+        FileSizeMB("", "approx_file_size_mb") {
+    Registrar->registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
     MetaDataTracker->registerMetaData(FileSizeMB);
   }
 

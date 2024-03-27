@@ -19,7 +19,7 @@
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
   MessageWriterStandIn()
-      : MessageWriter([]() {}, 1s, Metrics::Registrar("", {})) {}
+      : MessageWriter([]() {}, 1s, std::make_unique<Metrics::Registrar>("")) {}
   MAKE_MOCK1(addMessage, void(Stream::Message const &), override);
 };
 
@@ -27,8 +27,10 @@ class SourceFilterStandIn : public Stream::SourceFilter {
 public:
   SourceFilterStandIn(time_point Start, time_point Stop,
                       bool AcceptRepeatedTimestamp,
-                      Stream::MessageWriter *Writer, Metrics::Registrar Reg)
-      : SourceFilter(Start, Stop, AcceptRepeatedTimestamp, Writer, Reg) {}
+                      Stream::MessageWriter *Writer,
+                      std::unique_ptr<Metrics::IRegistrar> Reg)
+      : SourceFilter(Start, Stop, AcceptRepeatedTimestamp, Writer,
+                     std::move(Reg)) {}
   using SourceFilter::MessagesDiscarded;
   using SourceFilter::MessagesReceived;
   using SourceFilter::MessagesTransmitted;
@@ -40,11 +42,11 @@ class SourceFilterTest : public ::testing::Test {
 public:
   time_point StartTime{std::chrono::system_clock::now()};
   MessageWriterStandIn Writer;
-  Metrics::Registrar SomeRegistrar{"test_reg", {}};
   auto getTestFilter(bool AcceptRepeatedTimestamp = true) {
     return std::make_unique<SourceFilterStandIn>(
         StartTime, std::chrono::system_clock::time_point::max(),
-        AcceptRepeatedTimestamp, &Writer, SomeRegistrar);
+        AcceptRepeatedTimestamp, &Writer,
+        std::make_unique<Metrics::Registrar>("test_reg"));
   }
 };
 

@@ -27,7 +27,7 @@ class TopicStandIn : public Stream::Topic {
 public:
   TopicStandIn(Kafka::BrokerSettings Settings, std::string const &Topic,
                Stream::SrcToDst Map, Stream::MessageWriter *Writer,
-               Metrics::Registrar &RegisterMetric, time_point StartTime,
+               Metrics::IRegistrar *RegisterMetric, time_point StartTime,
                duration StartTimeLeeway, time_point StopTime,
                duration StopTimeLeeway,
                std::function<bool()> AreStreamersPausedFunction,
@@ -110,15 +110,16 @@ class TopicTest : public ::testing::Test {
 public:
   auto createTestedInstance() {
     return std::make_unique<TopicStandIn>(
-        KafkaSettings, UsedTopicName, Map, nullptr, Registrar, Start, 5s, Stop,
-        5s, []() { return false; },
+        KafkaSettings, UsedTopicName, Map, nullptr, Registrar.get(), Start, 5s,
+        Stop, 5s, []() { return false; },
         std::make_unique<Kafka::StubConsumerFactory>());
   }
   std::string const UsedTopicName{"some_topic_or_another"};
   Kafka::BrokerSettings KafkaSettings;
   time_point Start{std::chrono::system_clock::now()};
   time_point Stop{std::chrono::system_clock::time_point::max()};
-  Metrics::Registrar Registrar{"some_name", {}};
+  std::unique_ptr<Metrics::IRegistrar> Registrar =
+      std::make_unique<Metrics::Registrar>("some_name");
   Stream::SrcToDst Map;
 };
 
@@ -277,8 +278,9 @@ TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
 class PartitionStandInAlt : public Stream::Partition {
 public:
   PartitionStandInAlt()
-      : Stream::Partition({}, 0, "", {}, nullptr, Metrics::Registrar("", {}),
-                          {}, {}, {}, {}, []() { return false; }) {}
+      : Stream::Partition({}, 0, "", {}, nullptr,
+                          std::make_unique<Metrics::Registrar>("").get(), {},
+                          {}, {}, {}, []() { return false; }) {}
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
 

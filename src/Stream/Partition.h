@@ -44,7 +44,7 @@ public:
 
   Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
-            Metrics::Registrar RegisterMetric, time_point Start,
+            Metrics::IRegistrar *RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
             std::function<bool()> AreStreamersPausedFunction);
   virtual ~Partition() = default;

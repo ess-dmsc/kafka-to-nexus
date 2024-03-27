@@ -20,7 +20,7 @@ namespace Stream {
 
 Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
              SrcToDst Map, MessageWriter *Writer,
-             Metrics::Registrar &RegisterMetric, time_point StartTime,
+             Metrics::IRegistrar *RegisterMetric, time_point StartTime,
              duration StartTimeLeeway, time_point StopTime,
              duration StopTimeLeeway,
              std::function<bool()> AreStreamersPausedFunction,
@@ -31,7 +31,7 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
       StartLeeway(StartTimeLeeway), StopConsumeTime(StopTime),
       StopLeeway(StopTimeLeeway),
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
-      Registrar(RegisterMetric.getNewRegistrar(Topic)),
+      Registrar(RegisterMetric->getNewRegistrar(Topic)),
       AreStreamersPausedFunction(std::move(AreStreamersPausedFunction)),
       metadata_enquirer_(std::move(metadata_enquirer)),
       consumer_factory_(std::move(consumer_factory)) {}
@@ -162,13 +162,13 @@ void Topic::createStreams(
     Kafka::BrokerSettings const &Settings, std::string const &Topic,
     std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
   for (const auto &CParOffset : PartitionOffsets) {
-    auto CRegistrar = Registrar.getNewRegistrar(
+    auto CRegistrar = Registrar->getNewRegistrar(
         "partition_" + std::to_string(CParOffset.first));
     auto Consumer = consumer_factory_->createConsumer(Settings);
     Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,
-        CRegistrar, StartConsumeTime, StopConsumeTime, StopLeeway,
+        CRegistrar.get(), StartConsumeTime, StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout, AreStreamersPausedFunction);
     TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));

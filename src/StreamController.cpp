@@ -14,15 +14,15 @@ namespace FileWriter {
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
-    FileWriter::StreamerOptions const &Settings,
-    Metrics::Registrar const &Registrar, MetaData::TrackerPtr Tracker,
+    FileWriter::StreamerOptions const &Settings, Metrics::IRegistrar *Registrar,
+    MetaData::TrackerPtr Tracker,
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
     : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
-      StreamMetricRegistrar(Registrar),
+      StreamMetricRegistrar(Registrar->getNewRegistrar("")),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
-                   Registrar.getNewRegistrar("stream")),
+                   Registrar->getNewRegistrar("stream.writer")),
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
       metadata_enquirer_(std::move(metadata_enquirer)),
       consumer_factory_(std::move(consumer_factory)) {
@@ -138,8 +138,9 @@ void StreamController::initStreams(std::set<std::string> known_topic_names) {
         std::chrono::system_clock::time_point(StreamerOptions.StopTimestamp);
     auto topic = std::make_unique<Stream::Topic>(
         StreamerOptions.BrokerSettings, topic_name, source_map, &WriterThread,
-        StreamMetricRegistrar, start_time, StreamerOptions.BeforeStartTime,
-        stop_time, StreamerOptions.AfterStopTime, check_streamers_paused_func,
+        StreamMetricRegistrar.get(), start_time,
+        StreamerOptions.BeforeStartTime, stop_time,
+        StreamerOptions.AfterStopTime, check_streamers_paused_func,
         metadata_enquirer_, consumer_factory_);
     topic->start();
     Streamers.emplace_back(std::move(topic));

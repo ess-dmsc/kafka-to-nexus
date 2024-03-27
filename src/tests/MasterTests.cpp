@@ -76,7 +76,7 @@ public:
 
     UnderTest = std::make_unique<FileWriter::Master>(
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
-        Registrar);
+        std::make_unique<Metrics::Registrar>("some_prefix"));
 
     std::filesystem::path FullFilePath = Config.getHDFOutputPrefix();
     FullFilePath.append(StartCmd.Filename);
@@ -94,7 +94,7 @@ public:
     }
   }
   MainOpt Config;
-  Metrics::Registrar Registrar{"no_prefix", {}};
+
   void TearDown() override { UnderTest.reset(); }
   StatusReporterStandIn *StatusReporter;
   std::unique_ptr<FileWriter::Master> UnderTest;

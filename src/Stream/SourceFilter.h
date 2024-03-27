@@ -27,7 +27,7 @@ public:
   SourceFilter() = default;
   SourceFilter(time_point StartTime, time_point StopTime,
                bool AcceptRepeatedTimestamps, MessageWriter *Destination,
-               Metrics::Registrar RegisterMetric);
+               std::unique_ptr<Metrics::IRegistrar> RegisterMetric);
   virtual ~SourceFilter();
   void addDestinationPtr(Message::DestPtrType NewDestination) {
     DestIDs.push_back(NewDestination);
@@ -55,6 +55,7 @@ protected:
   bool IsDone{false};
   FileWriter::FlatbufferMessage BufferedMessage;
   std::vector<Message::DestPtrType> DestIDs;
+  std::unique_ptr<Metrics::IRegistrar> Registrar;
   Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
                                     "Flatbuffer failed validation.",
                                     Metrics::Severity::ERROR};

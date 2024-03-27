@@ -34,7 +34,7 @@ class MessageWriter {
 public:
   explicit MessageWriter(std::function<void()> FlushFunction,
                          duration FlushIntervalTime,
-                         Metrics::Registrar const &MetricReg);
+                         std::unique_ptr<Metrics::IRegistrar> registrar);
 
   virtual ~MessageWriter();
 
@@ -74,7 +74,7 @@ protected:
   Metrics::Metric ApproxQueuedWrites{"approx_queued_writes",
                                      "Approximate number of writes queued up."};
   std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
-  Metrics::Registrar Registrar;
+  std::unique_ptr<Metrics::IRegistrar> registrar_;
 
   using JobType = std::function<void()>;
   moodycamel::ConcurrentQueue<JobType> WriteJobs;
