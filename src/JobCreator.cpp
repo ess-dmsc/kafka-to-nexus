@@ -118,7 +118,7 @@ extractMdatModules(std::vector<ModuleHDFInfo> &Modules) {
 
 std::unique_ptr<IStreamController>
 createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
-                     Metrics::Registrar Registrar,
+                     Metrics::IRegistrar *Registrar,
                      MetaData::TrackerPtr const &Tracker) {
   auto Task = std::make_unique<FileWriterTask>(Registrar, Tracker);
   Task->setJobId(StartInfo.JobID);

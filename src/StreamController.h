@@ -48,7 +48,7 @@ public:
       std::unique_ptr<FileWriterTask> FileWriterTask,
       std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
       FileWriter::StreamerOptions const &Settings,
-      Metrics::Registrar const &Registrar, MetaData::TrackerPtr Tracker,
+      Metrics::IRegistrar *Registrar, MetaData::TrackerPtr Tracker,
       std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
           std::make_shared<Kafka::MetadataEnquirer>(),
       std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
@@ -140,7 +140,7 @@ private:
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<WriterModule::mdat::mdat_Writer> MdatWriter{nullptr};
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
-  Metrics::Registrar StreamMetricRegistrar;
+  std::unique_ptr<Metrics::IRegistrar> StreamMetricRegistrar;
   Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;

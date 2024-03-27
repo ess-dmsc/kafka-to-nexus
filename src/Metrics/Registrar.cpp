@@ -24,7 +24,8 @@ void Registrar::registerMetric(Metric &NewMetric,
   }
 }
 
-Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
+std::unique_ptr<IRegistrar>
+Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
   std::vector<std::shared_ptr<Reporter>> Reporters;
   Reporters.reserve(ReporterList.size());
 
@@ -32,7 +33,7 @@ Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
     // cppcheck-suppress useStlAlgorithm
     Reporters.push_back(SinkTypeAndReporter.second);
   }
-  return {prependPrefix(MetricsPrefix), Reporters};
+  return std::make_unique<Registrar>(prependPrefix(MetricsPrefix), Reporters);
 }
 
 std::string Registrar::prependPrefix(std::string const &Name) const {

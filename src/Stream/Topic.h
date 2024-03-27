@@ -27,9 +27,9 @@ namespace Stream {
 class Topic {
 public:
   Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
-        SrcToDst Map, MessageWriter *Writer, Metrics::Registrar &RegisterMetric,
-        time_point StartTime, duration StartTimeLeeway, time_point StopTime,
-        duration StopTimeLeeway,
+        SrcToDst Map, MessageWriter *Writer,
+        Metrics::IRegistrar *RegisterMetric, time_point StartTime,
+        duration StartTimeLeeway, time_point StopTime, duration StopTimeLeeway,
         std::function<bool()> AreStreamersPausedFunction,
         std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
         std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory);
@@ -72,7 +72,7 @@ protected:
   time_point StopConsumeTime;
   duration StopLeeway;
   duration CurrentMetadataTimeOut;
-  Metrics::Registrar Registrar;
+  std::unique_ptr<Metrics::IRegistrar> Registrar;
   std::function<bool()> AreStreamersPausedFunction;
 
   // This intermediate function is required for unit testing.

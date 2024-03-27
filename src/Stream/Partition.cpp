@@ -14,7 +14,7 @@ namespace Stream {
 
 Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                      int Partition, std::string TopicName, SrcToDst const &Map,
-                     MessageWriter *Writer, Metrics::Registrar RegisterMetric,
+                     MessageWriter *Writer, Metrics::IRegistrar *RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway,
                      duration KafkaErrorTimeout,
                      std::function<bool()> AreStreamersPausedFunction)
@@ -41,7 +41,7 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                             std::make_unique<SourceFilter>(
                                 Start, Stop,
                                 SrcDestInfo.AcceptsRepeatedTimestamps, Writer,
-                                RegisterMetric.getNewRegistrar(
+                                RegisterMetric->getNewRegistrar(
                                     SrcDestInfo.getMetricsNameString())));
     }
     TempFilterMap[SrcDestInfo.WriteHash]->addDestinationPtr(
@@ -53,26 +53,26 @@ Partition::Partition(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
     MsgFilters.emplace_back(UsedHash, std::move(Item.second));
   }
 
-  RegisterMetric.registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
-  RegisterMetric.registerMetric(
+  RegisterMetric->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
+  RegisterMetric->registerMetric(
       KafkaErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(EndOfPartition, {Metrics::LogTo::CARBON});
-  RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
-  RegisterMetric.registerMetric(MessagesProcessed, {Metrics::LogTo::CARBON});
-  RegisterMetric.registerMetric(
+  RegisterMetric->registerMetric(EndOfPartition, {Metrics::LogTo::CARBON});
+  RegisterMetric->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
+  RegisterMetric->registerMetric(MessagesProcessed, {Metrics::LogTo::CARBON});
+  RegisterMetric->registerMetric(
       BadOffsets, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(
+  RegisterMetric->registerMetric(
       FlatbufferErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(
+  RegisterMetric->registerMetric(
       BadFlatbufferTimestampErrors,
       {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(
+  RegisterMetric->registerMetric(
       UnknownFlatbufferIdErrors,
       {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(
+  RegisterMetric->registerMetric(
       NotValidFlatbufferErrors,
       {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(
+  RegisterMetric->registerMetric(
       BufferTooSmallErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
 

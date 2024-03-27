@@ -25,14 +25,12 @@ class StreamControllerTests : public ::testing::Test {
 public:
   void SetUp() override {
     FileWriterTask = std::make_unique<FileWriter::FileWriterTask>(
-        TestRegistrar,
-
-        std::make_shared<MetaData::Tracker>());
+        TestRegistrar.get(), std::make_shared<MetaData::Tracker>());
     FileWriterTask->setJobId(JobId);
     StreamController = std::make_unique<FileWriter::StreamController>(
         std::move(FileWriterTask),
         std::make_unique<WriterModule::mdat::mdat_Writer>(),
-        FileWriter::StreamerOptions(), Metrics::Registrar("some-app", {}),
+        FileWriter::StreamerOptions(), TestRegistrar.get(),
         std::make_shared<MetaData::Tracker>());
   };
   std::string JobId = "TestID";
@@ -43,7 +41,8 @@ public:
   std::shared_ptr<Metrics::Reporter> TestReporter{
       new Metrics::Reporter(std::move(TestSink), 10ms)};
   std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
-  Metrics::Registrar TestRegistrar{"Test", TestReporters};
+  std::unique_ptr<Metrics::IRegistrar> TestRegistrar =
+      std::make_unique<Metrics::Registrar>("Test", TestReporters);
 };
 
 TEST_F(StreamControllerTests, getJobIdReturnsCorrectValue) {

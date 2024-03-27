@@ -20,10 +20,10 @@ class FileWriterMasterMock : public FileWriter::Master {
 public:
   FileWriterMasterMock(MainOpt &Config,
                        std::unique_ptr<Command::HandlerBase> Listener,
-                       std::unique_ptr<Status::StatusReporterBase> Reporter,
-                       Metrics::Registrar const &Registrar)
-      : FileWriter::Master(Config, std::move(Listener), std::move(Reporter),
-                           Registrar){};
+                       std::unique_ptr<Status::StatusReporterBase> Reporter)
+      : FileWriter::Master(
+            Config, std::move(Listener), std::move(Reporter),
+            std::make_unique<Metrics::Registrar>("some_prefix")){};
   MAKE_MOCK0(stopNow, void(), override);
   MAKE_MOCK0(writingIsFinished, bool(), override);
 };
@@ -86,8 +86,7 @@ public:
     ALLOW_CALL(*StatusReporter, setJSONMetaDataGenerator(_));
 
     MasterPtr = std::make_unique<FileWriterMasterMock>(
-        Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
-        Registrar);
+        Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter));
     MasterMockPtr = dynamic_cast<FileWriterMasterMock *>(MasterPtr.get());
   }
   MainOpt Config;

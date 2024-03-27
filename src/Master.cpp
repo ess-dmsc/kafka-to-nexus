@@ -17,9 +17,10 @@ namespace FileWriter {
 
 Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
                std::unique_ptr<Status::StatusReporterBase> Reporter,
-               Metrics::Registrar const &Registrar)
+               std::unique_ptr<Metrics::IRegistrar> Registrar)
     : MainConfig(Config), CommandAndControl(std::move(Listener)),
-      Reporter(std::move(Reporter)), MasterMetricsRegistrar(Registrar) {
+      Reporter(std::move(Reporter)),
+      MasterMetricsRegistrar(std::move(Registrar)) {
   CommandAndControl->registerGetJobIdFunction(
       [&]() { return this->getCurrentStatus().JobId; });
   CommandAndControl->registerStartFunction(
@@ -34,8 +35,8 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
   CurrentStateMetric = static_cast<int64_t>(getCurrentState());
-  MasterMetricsRegistrar.registerMetric(CurrentStateMetric,
-                                        {Metrics::LogTo::CARBON});
+  MasterMetricsRegistrar->registerMetric(CurrentStateMetric,
+                                         {Metrics::LogTo::CARBON});
 }
 
 void Master::startWriting(Command::StartInfo const &StartInfo) {
@@ -47,7 +48,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
   try {
     MetaDataTracker->clearMetaData();
     CurrentStreamController = createFileWritingJob(
-        StartInfo, MainConfig, MasterMetricsRegistrar, MetaDataTracker);
+        StartInfo, MainConfig, MasterMetricsRegistrar.get(), MetaDataTracker);
     CurrentMetadata = StartInfo.Metadata;
     if (not StartInfo.ControlTopic.empty()) {
       Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);

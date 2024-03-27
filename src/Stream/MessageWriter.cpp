@@ -11,8 +11,10 @@
 ///
 
 #include "MessageWriter.h"
+
 #include "SetThreadName.h"
 #include "WriterModuleBase.h"
+#include <utility>
 
 namespace Stream {
 
@@ -28,19 +30,18 @@ static const ModuleHash UnknownModuleHash{
 
 MessageWriter::MessageWriter(std::function<void()> FlushFunction,
                              duration FlushIntervalTime,
-                             Metrics::Registrar const &MetricReg)
-    : FlushDataFunction(FlushFunction),
-      Registrar(MetricReg.getNewRegistrar("writer")),
-      FlushInterval(FlushIntervalTime),
+                             std::unique_ptr<Metrics::IRegistrar> registrar)
+    : FlushDataFunction(std::move(FlushFunction)),
+      registrar_(std::move(registrar)), FlushInterval(FlushIntervalTime),
       WriterThread(&MessageWriter::threadFunction, this) {
-  Registrar.registerMetric(WritesDone, {Metrics::LogTo::CARBON});
-  Registrar.registerMetric(WriteErrors,
-                           {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  Registrar.registerMetric(ApproxQueuedWrites, {Metrics::LogTo::CARBON});
+  registrar_->registerMetric(WritesDone, {Metrics::LogTo::CARBON});
+  registrar_->registerMetric(WriteErrors,
+                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar_->registerMetric(ApproxQueuedWrites, {Metrics::LogTo::CARBON});
   ModuleErrorCounters[UnknownModuleHash] = std::make_unique<Metrics::Metric>(
       "error_unknown", "Unknown flatbuffer message.", Metrics::Severity::ERROR);
-  Registrar.registerMetric(*ModuleErrorCounters[UnknownModuleHash],
-                           {Metrics::LogTo::LOG_MSG});
+  registrar_->registerMetric(*ModuleErrorCounters[UnknownModuleHash],
+                             {Metrics::LogTo::LOG_MSG});
 }
 
 MessageWriter::~MessageWriter() {
@@ -74,8 +75,8 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
             "error_" + Msg.getSourceName() + "_" + Msg.getFlatbufferID();
         ModuleErrorCounters[UsedHash] = std::make_unique<Metrics::Metric>(
             Name, Description, Metrics::Severity::ERROR);
-        Registrar.registerMetric(*ModuleErrorCounters[UsedHash],
-                                 {Metrics::LogTo::LOG_MSG});
+        registrar_->registerMetric(*ModuleErrorCounters[UsedHash],
+                                   {Metrics::LogTo::LOG_MSG});
       }
     }
     (*ModuleErrorCounters[UsedHash])++;

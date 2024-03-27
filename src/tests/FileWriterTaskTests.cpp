@@ -18,11 +18,12 @@ public:
   std::shared_ptr<Metrics::Reporter> TestReporter{
       new Metrics::Reporter(std::move(TestSink), 10ms)};
   std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
-  Metrics::Registrar TestRegistrar{"Test", TestReporters};
+  std::unique_ptr<Metrics::IRegistrar> TestRegistrar =
+      std::make_unique<Metrics::Registrar>("Test", TestReporters);
 };
 
 TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(TestRegistrar,
+  FileWriter::FileWriterTask Task(TestRegistrar.get(),
                                   std::make_shared<MetaData::Tracker>());
 
   Task.setFullFilePath("SomePrefix", "File.hdf");
@@ -31,7 +32,7 @@ TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
 }
 
 TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(TestRegistrar,
+  FileWriter::FileWriterTask Task(TestRegistrar.get(),
                                   std::make_shared<MetaData::Tracker>());
 
   Task.setFullFilePath("/", "File.hdf");
@@ -40,7 +41,7 @@ TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
 }
 
 TEST_F(FileWriterTask, AddingSourceAddsToTopics) {
-  FileWriter::FileWriterTask Task(TestRegistrar,
+  FileWriter::FileWriterTask Task(TestRegistrar.get(),
                                   std::make_shared<MetaData::Tracker>());
   FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);
 
@@ -50,7 +51,7 @@ TEST_F(FileWriterTask, AddingSourceAddsToTopics) {
 }
 
 TEST_F(FileWriterTask, SettingJobIdSetsID) {
-  FileWriter::FileWriterTask Task(TestRegistrar,
+  FileWriter::FileWriterTask Task(TestRegistrar.get(),
                                   std::make_shared<MetaData::Tracker>());
   std::string NewId = "NewID";
 
