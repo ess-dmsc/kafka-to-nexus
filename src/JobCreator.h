@@ -29,7 +29,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
 void addStreamSourceToWriterModule(
     std::vector<ModuleSettings> &StreamSettingsList,
-    std::unique_ptr<FileWriterTask> &Task);
+    FileWriterTask &Task);
 
 std::vector<ModuleHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);

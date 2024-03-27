@@ -22,17 +22,19 @@ namespace Kafka {
 
 class MetadataEnquirer {
 public:
-  std::vector<std::pair<int, int64_t>>
+  virtual ~MetadataEnquirer() = default;
+
+  virtual std::vector<std::pair<int, int64_t>>
   getOffsetForTime(std::string const &Broker, std::string const &Topic,
                    std::vector<int> const &Partitions, time_point Time,
                    duration TimeOut, BrokerSettings BrokerSettings);
 
-  std::vector<int> getPartitionsForTopic(std::string const &Broker,
+  virtual std::vector<int> getPartitionsForTopic(std::string const &Broker,
                                          std::string const &Topic,
                                          duration TimeOut,
                                          BrokerSettings BrokerSettings);
 
-  std::set<std::string> getTopicList(std::string const &Broker,
+  virtual std::set<std::string> getTopicList(std::string const &Broker,
                                      duration TimeOut,
                                      BrokerSettings BrokerSettings);
 
