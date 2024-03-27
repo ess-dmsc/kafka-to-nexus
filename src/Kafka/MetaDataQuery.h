@@ -30,13 +30,13 @@ public:
                    duration TimeOut, BrokerSettings BrokerSettings);
 
   virtual std::vector<int> getPartitionsForTopic(std::string const &Broker,
-                                         std::string const &Topic,
-                                         duration TimeOut,
-                                         BrokerSettings BrokerSettings);
+                                                 std::string const &Topic,
+                                                 duration TimeOut,
+                                                 BrokerSettings BrokerSettings);
 
   virtual std::set<std::string> getTopicList(std::string const &Broker,
-                                     duration TimeOut,
-                                     BrokerSettings BrokerSettings);
+                                             duration TimeOut,
+                                             BrokerSettings BrokerSettings);
 
 private:
   const RdKafka::TopicMetadata *
