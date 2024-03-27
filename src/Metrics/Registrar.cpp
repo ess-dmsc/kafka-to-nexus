@@ -10,16 +10,16 @@ void Registrar::registerMetric(Metric &NewMetric,
   if (NewMetric.getName().empty()) {
     throw std::runtime_error("Metrics cannot be registered with an empty name");
   }
-  for (auto const &SinkTypeAndReporter : ReporterList) {
+  for (auto const &[log_to, reporter] : ReporterList) {
     if (std::find(SinkTypes.begin(), SinkTypes.end(),
-                  SinkTypeAndReporter.first) != SinkTypes.end()) {
+                  log_to) != SinkTypes.end()) {
       std::string NewName = prependPrefix(NewMetric.getName());
 
-      if (!SinkTypeAndReporter.second->addMetric(NewMetric, NewName)) {
+      if (!reporter->addMetric(NewMetric, NewName)) {
         throw std::runtime_error(
             "Metric with same full name is already registered");
       }
-      NewMetric.setDeregistrationDetails(NewName, SinkTypeAndReporter.second);
+      NewMetric.setDeregistrationDetails(NewName, reporter);
     }
   }
 }
