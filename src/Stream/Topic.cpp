@@ -161,13 +161,13 @@ void Topic::checkIfDoneTask() {
 void Topic::createStreams(
     Kafka::BrokerSettings const &Settings, std::string const &Topic,
     std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
-  for (const auto &CParOffset : PartitionOffsets) {
-    auto CRegistrar = Registrar->getNewRegistrar(
-        "partition_" + std::to_string(CParOffset.first));
-    auto Consumer = consumer_factory_->createConsumer(Settings);
-    Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
+  for (const auto &[partition, offset] : PartitionOffsets) {
+    auto CRegistrar =
+        Registrar->getNewRegistrar("partition_" + std::to_string(partition));
+    auto Consumer = consumer_factory_->createConsumerAtOffset(
+        Settings, Topic, partition, offset);
     auto TempPartition = std::make_unique<Partition>(
-        std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,
+        std::move(Consumer), partition, Topic, DataMap, WriterPtr,
         CRegistrar.get(), StartConsumeTime, StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout, AreStreamersPausedFunction);
     TempPartition->start();
