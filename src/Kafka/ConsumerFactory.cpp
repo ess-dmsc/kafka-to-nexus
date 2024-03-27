@@ -51,7 +51,7 @@ std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings) {
   return createConsumer(Settings, Settings.Address);
 }
 
-std::unique_ptr<ConsumerInterface>
+std::shared_ptr<ConsumerInterface>
 ConsumerFactory::createConsumer(const BrokerSettings &Settings) {
   return Kafka::createConsumer(Settings);
 }
