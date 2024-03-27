@@ -34,8 +34,7 @@ public:
 class StubConsumerFactory : public ConsumerFactoryInterface {
 public:
   std::unique_ptr<ConsumerInterface>
-  createConsumer(BrokerSettings const &Settings) override {
-    UNUSED_ARG(Settings);
+  createConsumer([[maybe_unused]] BrokerSettings const &Settings) override {
     return std::unique_ptr<ConsumerInterface>(new StubConsumer());
   };
   ~StubConsumerFactory() override = default;
