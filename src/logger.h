@@ -83,8 +83,6 @@ template <> struct fmt::formatter<time_point> {
 //clang-format on
 };
 
-#define UNUSED_ARG(x) (void)x;
-
 namespace uri {
 struct URI;
 }
