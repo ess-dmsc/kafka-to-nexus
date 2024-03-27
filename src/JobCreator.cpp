@@ -182,7 +182,7 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
   Task->writeLinks(LinkSettingsList);
   Task->switchToWriteMode();
 
-  addStreamSourceToWriterModule(StreamSettingsList, Task);
+  addStreamSourceToWriterModule(StreamSettingsList, *Task);
 
   Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
   Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
@@ -199,12 +199,12 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
-                                   std::unique_ptr<FileWriterTask> &Task) {
+                                   FileWriterTask &Task) {
 
   for (auto &StreamSettings : StreamSettingsList) {
     try {
       try {
-        auto RootGroup = Task->hdfGroup();
+        auto RootGroup = Task.hdfGroup();
         auto StreamGroup = hdf5::node::get_group(
             RootGroup, StreamSettings.ModuleHDFInfoObj.HDFParentName);
         auto Err = StreamSettings.WriterModule->reopen({StreamGroup});
@@ -223,7 +223,7 @@ void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
       Source ThisSource(StreamSettings.Source, FoundModule.second.Id,
                         FoundModule.second.Name, StreamSettings.Topic,
                         std::move(StreamSettings.WriterModule));
-      Task->addSource(std::move(ThisSource));
+      Task.addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
       LOG_WARN(
           "Exception while initializing writer module {} for source {}: {}",
