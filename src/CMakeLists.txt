@@ -221,4 +221,9 @@ target_link_libraries(kafka-to-nexus ${libraries_common})
 target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
 target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11.0>>:c++fs>)
 
+add_executable(maker ${sources} maker_main.cpp)
+target_compile_definitions(maker PRIVATE ${compile_defs_common})
+target_include_directories(maker PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+target_link_libraries(maker ${libraries_common})
+
 add_subdirectory(tests)
