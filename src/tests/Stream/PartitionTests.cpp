@@ -27,7 +27,7 @@ public:
   SourceFilterStandInAlt()
       : SourceFilter(std::chrono::system_clock::now(),
                      std::chrono::system_clock::now(), true, nullptr,
-                     Metrics::Registrar("some_reg", {})) {}
+                     std::make_unique<Metrics::Registrar>("some_prefix")) {}
   MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage Message),
              override);
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
@@ -54,14 +54,13 @@ public:
   PartitionStandIn(std::unique_ptr<Kafka::ConsumerInterface> Consumer,
                    int Partition, std::string TopicName,
                    Stream::SrcToDst const &Map, Stream::MessageWriter *Writer,
-                   Metrics::Registrar RegisterMetric, time_point Start,
-                   time_point Stop, duration StopLeeway,
+                   time_point Start, time_point Stop, duration StopLeeway,
                    duration KafkaErrorTimeout,
                    std::function<bool()> AreStreamersPausedFunction)
-      : Stream::Partition(std::move(Consumer), Partition, std::move(TopicName),
-                          Map, Writer, std::move(RegisterMetric), Start, Stop,
-                          StopLeeway, KafkaErrorTimeout,
-                          AreStreamersPausedFunction) {}
+      : Stream::Partition(
+            std::move(Consumer), Partition, std::move(TopicName), Map, Writer,
+            std::make_unique<Metrics::Registrar>("some_prefix").get(), Start,
+            Stop, StopLeeway, KafkaErrorTimeout, AreStreamersPausedFunction) {}
   void addPollTask() override {
     // Do nothing as don't want to automatically poll again
   }
@@ -94,7 +93,8 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
 class MessageWriterStandIn : public Stream::MessageWriter {
 public:
   MessageWriterStandIn()
-      : Stream::MessageWriter([]() {}, 1s, Metrics::Registrar("test", {})) {}
+      : Stream::MessageWriter(
+            []() {}, 1s, std::make_unique<Metrics::Registrar>("some_prefix")) {}
   void addMessage(Stream::Message const &) override {}
 
 protected:
@@ -112,8 +112,8 @@ public:
     Kafka::BrokerSettings BrokerSettingsForTest;
     auto Temp = std::make_unique<PartitionStandIn>(
         std::make_unique<Kafka::MockConsumer>(BrokerSettingsForTest),
-        UsedPartitionId, TopicName, UsedMap, nullptr, Registrar, Start,
-        StopTime, StopLeeway, ErrorTimeout, AreStreamersPausedFunction);
+        UsedPartitionId, TopicName, UsedMap, nullptr, Start, StopTime,
+        StopLeeway, ErrorTimeout, AreStreamersPausedFunction);
     Stop = StopTime;
     Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->ConsumerPtr.get());
     return Temp;
@@ -135,7 +135,6 @@ public:
   time_point Stop{std::chrono::system_clock::time_point::max()};
   duration StopLeeway{5s};
   duration ErrorTimeout{10s};
-  Metrics::Registrar Registrar{"some_name", {}};
   std::array<char, 9> SomeData{'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z', 'z'};
 };
 

@@ -14,15 +14,16 @@ namespace Stream {
 SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
                            bool AcceptRepeatedTimestamps,
                            MessageWriter *Destination,
-                           Metrics::Registrar RegisterMetric)
+                           std::unique_ptr<Metrics::IRegistrar> RegisterMetric)
     : Start(StartTime), Stop(StopTime),
-      WriteRepeatedTimestamps(AcceptRepeatedTimestamps), Dest(Destination) {
-  RegisterMetric.registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
-  RegisterMetric.registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
-  RegisterMetric.registerMetric(MessagesTransmitted, {Metrics::LogTo::CARBON});
-  RegisterMetric.registerMetric(MessagesDiscarded, {Metrics::LogTo::CARBON});
-  RegisterMetric.registerMetric(RepeatedTimestamp, {Metrics::LogTo::CARBON});
+      WriteRepeatedTimestamps(AcceptRepeatedTimestamps), Dest(Destination),
+      Registrar(std::move(RegisterMetric)) {
+  Registrar->registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
+  Registrar->registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
+  Registrar->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
+  Registrar->registerMetric(MessagesTransmitted, {Metrics::LogTo::CARBON});
+  Registrar->registerMetric(MessagesDiscarded, {Metrics::LogTo::CARBON});
+  Registrar->registerMetric(RepeatedTimestamp, {Metrics::LogTo::CARBON});
 }
 
 SourceFilter::~SourceFilter() { sendBufferedMessage(); }

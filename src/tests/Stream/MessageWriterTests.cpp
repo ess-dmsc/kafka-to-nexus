@@ -36,7 +36,6 @@ public:
         RegisterIt1("ep01", "epics_con_info");
   }
   WriterModuleStandIn WriterModule;
-  Metrics::Registrar MetReg{"some_prefix", {}};
 };
 
 using trompeloeil::_;
@@ -86,7 +85,8 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
-    Stream::MessageWriter Writer{[]() {}, 1s, MetReg};
+    Stream::MessageWriter Writer{
+        []() {}, 1s, std::make_unique<Metrics::Registrar>("some_prefix")};
     Writer.addMessage(SomeMessage);
     Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 1);
@@ -105,7 +105,8 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
-    Stream::MessageWriter Writer{[]() {}, 1s, MetReg};
+    Stream::MessageWriter Writer{
+        []() {}, 1s, std::make_unique<Metrics::Registrar>("some_prefix")};
     Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
@@ -145,7 +146,8 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
   Stream::Message SomeMessage(
       reinterpret_cast<Stream::Message::DestPtrType>(&WriterModule), Msg);
   {
-    Stream::MessageWriter Writer{[]() {}, 1s, MetReg};
+    Stream::MessageWriter Writer{
+        []() {}, 1s, std::make_unique<Metrics::Registrar>("some_prefix")};
     Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });

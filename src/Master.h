@@ -37,7 +37,7 @@ class Master {
 public:
   Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
          std::unique_ptr<Status::StatusReporterBase> Reporter,
-         Metrics::Registrar const &Registrar);
+         std::unique_ptr<Metrics::IRegistrar> Registrar);
   virtual ~Master() = default;
 
   /// \brief Sets up command listener and handles any commands received.
@@ -64,7 +64,7 @@ private:
   std::unique_ptr<Command::HandlerBase> CommandAndControl;
   std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporterBase> Reporter;
-  Metrics::Registrar MasterMetricsRegistrar;
+  std::unique_ptr<Metrics::IRegistrar> MasterMetricsRegistrar;
   mutable std::mutex StatusMutex;
   Status::JobStatusInfo CurrentStatus;
   Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};

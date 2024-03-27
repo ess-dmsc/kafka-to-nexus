@@ -61,7 +61,7 @@ TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
       .RETURN(true);
   {
     Metric Ctr(Name, Desc, Sev);
-    TestRegistrarExtraPrefix.registerMetric(Ctr, {LogTo::LOG_MSG});
+    TestRegistrarExtraPrefix->registerMetric(Ctr, {LogTo::LOG_MSG});
   }
 }
 

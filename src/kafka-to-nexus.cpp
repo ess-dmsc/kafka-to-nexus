@@ -79,15 +79,17 @@ int main(int argc, char **argv) {
         std::make_unique<Metrics::CarbonSink>(HostName, Port), 10s));
   }
 
-  Metrics::Registrar MainRegistrar(ApplicationName, MetricsReporters);
   auto FQDN = getFQDN();
   std::replace(FQDN.begin(), FQDN.end(), '.', '_');
-  auto UsedRegistrar = MainRegistrar.getNewRegistrar(FQDN);
+  std::string metric_prefix = FQDN;
+
   if (Options->ServiceName.empty()) {
-    UsedRegistrar = UsedRegistrar.getNewRegistrar(Options->getServiceId());
+    metric_prefix += Options->getServiceId();
   } else {
-    UsedRegistrar = UsedRegistrar.getNewRegistrar(Options->ServiceName);
+    metric_prefix += Options->ServiceName;
   }
+  std::unique_ptr<Metrics::IRegistrar> registrar =
+      std::make_unique<Metrics::Registrar>(metric_prefix, MetricsReporters);
 
   std::signal(SIGHUP, [](int signal) { signal_handler(signal, RunState); });
   std::signal(SIGINT, [](int signal) { signal_handler(signal, RunState); });
@@ -103,7 +105,7 @@ int main(int argc, char **argv) {
             Options->StreamerConfiguration.BrokerSettings, Options->JobPoolURI,
             Options->CommandBrokerURI),
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
-        UsedRegistrar);
+        std::move(registrar));
   };
 
   Status::StatusService status(Options->ServerStatusPort);
