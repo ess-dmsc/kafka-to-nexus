@@ -40,10 +40,6 @@ public:
   [[nodiscard]] std::unique_ptr<IRegistrar>
   getNewRegistrar(std::string const &MetricsPrefix) const override;
 
-  Registrar(Registrar const &Other);
-
-  Registrar &operator=(Registrar const &Other);
-
 private:
   [[nodiscard]] std::string prependPrefix(std::string const &Name) const;
   std::string Prefix;
