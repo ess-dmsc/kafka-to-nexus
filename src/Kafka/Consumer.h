@@ -96,26 +96,19 @@ public:
     return {PollStatus::TimedOut, FileWriter::Msg()};
   };
 
-  void addPartitionAtOffset(std::string const &Topic, int PartitionId,
-                            int64_t Offset) override {
-    UNUSED_ARG(Topic);
-    UNUSED_ARG(PartitionId);
-    UNUSED_ARG(Offset);
+  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic, [[maybe_unused]] int PartitionId,
+                            [[maybe_unused]] int64_t Offset) override {
   };
 
-  void addTopic(std::string const &Topic) override { UNUSED_ARG(Topic); }
+  void addTopic([[maybe_unused]] std::string const &Topic) override {}
 
-  void assignAllPartitions(std::string const &Topic,
-                           time_point const &StartTimestamp) override {
-    UNUSED_ARG(Topic);
-    UNUSED_ARG(StartTimestamp);
+  void assignAllPartitions([[maybe_unused]] std::string const &Topic,
+                           [[maybe_unused]] time_point const &StartTimestamp) override {
   }
 
   const RdKafka::TopicMetadata *
-  getTopicMetadata(const std::string &Topic,
-                   RdKafka::Metadata *MetadataPtr) override {
-    UNUSED_ARG(Topic);
-    UNUSED_ARG(MetadataPtr);
+  getTopicMetadata([[maybe_unused]] const std::string &Topic,
+                   [[maybe_unused]] RdKafka::Metadata *MetadataPtr) override {
     return nullptr;
   }
 };

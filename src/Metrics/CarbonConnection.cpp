@@ -4,10 +4,6 @@
 #include <ciso646>
 #include <utility>
 
-namespace {
-#define UNUSED_ARG(x) (void)x;
-} // namespace
-
 namespace Metrics::Carbon {
 
 using namespace std::chrono_literals;
@@ -100,8 +96,7 @@ void Connection::Impl::reconnect(ReconnectDelay Delay) {
 }
 
 void Connection::Impl::receiveHandler(asio::error_code const &Error,
-                                      std::size_t BytesReceived) {
-  UNUSED_ARG(BytesReceived);
+                                      [[maybe_unused]] std::size_t BytesReceived) {
   if (Error) {
     Socket.close();
     reconnect(ReconnectDelay::SHORT);
