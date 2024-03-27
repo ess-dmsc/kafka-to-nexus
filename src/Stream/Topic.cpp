@@ -164,8 +164,7 @@ void Topic::createStreams(
   for (const auto &CParOffset : PartitionOffsets) {
     auto CRegistrar = Registrar->getNewRegistrar(
         "partition_" + std::to_string(CParOffset.first));
-    auto Consumer = consumer_factory_->createConsumer(Settings);
-    Consumer->addPartitionAtOffset(Topic, CParOffset.first, CParOffset.second);
+    auto Consumer = consumer_factory_->createConsumerAtOffset(Settings,Topic, CParOffset.first, CParOffset.second);
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), CParOffset.first, Topic, DataMap, WriterPtr,
         CRegistrar.get(), StartConsumeTime, StopConsumeTime, StopLeeway,

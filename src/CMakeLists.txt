@@ -208,12 +208,11 @@ add_subdirectory(AccessMessageMetadata)
 add_subdirectory(NeXusDataset)
 
 set(sources
-        kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         $<TARGET_OBJECTS:NeXusDataset>
         ${WRITER_MODULES}
         ${FB_METADATA_EXTRACTORS})
-add_executable(kafka-to-nexus ${sources})
+add_executable(kafka-to-nexus ${sources} kafka-to-nexus.cpp)
 target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
 target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 target_link_libraries(kafka-to-nexus ${libraries_common})
@@ -221,5 +220,10 @@ target_link_libraries(kafka-to-nexus ${libraries_common})
 # Link stdc++fs or c++experimental to get std::experimental::filesystem when necessary
 target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
 target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11.0>>:c++fs>)
+
+add_executable(maker ${sources} maker_main.cpp)
+target_compile_definitions(maker PRIVATE ${compile_defs_common})
+target_include_directories(maker PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+target_link_libraries(maker ${libraries_common})
 
 add_subdirectory(tests)
