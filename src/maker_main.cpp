@@ -70,26 +70,25 @@ std::string const example_json = R"(
 
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
-  void
-  registerMetric([[maybe_unused]] Metrics::Metric &NewMetric,
-                 [[maybe_unused]] std::vector<Metrics::LogTo> const &SinkTypes) const override {
-  }
+  void registerMetric([[maybe_unused]] Metrics::Metric &NewMetric,
+                      [[maybe_unused]] std::vector<Metrics::LogTo> const
+                          &SinkTypes) const override {}
 
-  [[nodiscard]] std::unique_ptr<Metrics::IRegistrar> getNewRegistrar([[maybe_unused]] std::string const &MetricsPrefix) const override
-  {
+  [[nodiscard]] std::unique_ptr<Metrics::IRegistrar> getNewRegistrar(
+      [[maybe_unused]] std::string const &MetricsPrefix) const override {
     return std::make_unique<FakeRegistrar>();
   }
 };
 
 class FakeTracker : public MetaData::ITracker {
 public:
-  void registerMetaData([[maybe_unused]] MetaData::ValueBase NewMetaData) override {
-  }
+  void
+  registerMetaData([[maybe_unused]] MetaData::ValueBase NewMetaData) override {}
   void clearMetaData() override {}
-  void writeToJSONDict([[maybe_unused]] nlohmann::json &JSONNode) const override {
-  }
-  void writeToHDF5File([[maybe_unused]] hdf5::node::Group RootNode) const override {
-  }
+  void
+  writeToJSONDict([[maybe_unused]] nlohmann::json &JSONNode) const override {}
+  void
+  writeToHDF5File([[maybe_unused]] hdf5::node::Group RootNode) const override {}
 };
 
 class StubConsumer : public Kafka::ConsumerInterface {
@@ -103,15 +102,15 @@ public:
     return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
   };
 
-  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic, [[maybe_unused]] int PartitionId,
-                            [[maybe_unused]] int64_t Offset) override {
-  };
+  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic,
+                            [[maybe_unused]] int PartitionId,
+                            [[maybe_unused]] int64_t Offset) override{};
 
-  void addTopic([[maybe_unused]] std::string const &Topic) override { }
+  void addTopic([[maybe_unused]] std::string const &Topic) override {}
 
-  void assignAllPartitions([[maybe_unused]] std::string const &Topic,
-                           [[maybe_unused]] time_point const &StartTimestamp) override {
-  }
+  void assignAllPartitions(
+      [[maybe_unused]] std::string const &Topic,
+      [[maybe_unused]] time_point const &StartTimestamp) override {}
 
   const RdKafka::TopicMetadata *
   getTopicMetadata([[maybe_unused]] const std::string &Topic,
@@ -127,8 +126,8 @@ public:
 
 class StubConsumerFactory : public Kafka::ConsumerFactoryInterface {
 public:
-  std::shared_ptr<Kafka::ConsumerInterface>
-  createConsumer([[maybe_unused]] Kafka::BrokerSettings const &settings) override {
+  std::shared_ptr<Kafka::ConsumerInterface> createConsumer(
+      [[maybe_unused]] Kafka::BrokerSettings const &settings) override {
     return {};
   }
   std::shared_ptr<Kafka::ConsumerInterface>
@@ -148,23 +147,26 @@ public:
 class StubMetadataEnquirer : public Kafka::MetadataEnquirer {
 public:
   ~StubMetadataEnquirer() override = default;
-  std::vector<std::pair<int, int64_t>>
-  getOffsetForTime([[maybe_unused]] std::string const &Broker, [[maybe_unused]] std::string const &Topic,
-                   [[maybe_unused]] std::vector<int> const &Partitions, [[maybe_unused]] time_point Time,
-                   [[maybe_unused]] duration TimeOut,
-                   [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
+  std::vector<std::pair<int, int64_t>> getOffsetForTime(
+      [[maybe_unused]] std::string const &Broker,
+      [[maybe_unused]] std::string const &Topic,
+      [[maybe_unused]] std::vector<int> const &Partitions,
+      [[maybe_unused]] time_point Time, [[maybe_unused]] duration TimeOut,
+      [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
     return {{0, 0}};
   };
 
-  std::vector<int>
-  getPartitionsForTopic([[maybe_unused]] std::string const &Broker, [[maybe_unused]] std::string const &Topic,
-                        [[maybe_unused]] duration TimeOut,
-                        [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
+  std::vector<int> getPartitionsForTopic(
+      [[maybe_unused]] std::string const &Broker,
+      [[maybe_unused]] std::string const &Topic,
+      [[maybe_unused]] duration TimeOut,
+      [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
     return {0};
   }
 
   std::set<std::string>
-  getTopicList([[maybe_unused]] std::string const &Broker, [[maybe_unused]] duration TimeOut,
+  getTopicList([[maybe_unused]] std::string const &Broker,
+               [[maybe_unused]] duration TimeOut,
                [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
     return {"local_motion"};
   }
@@ -207,14 +209,16 @@ void send_f144_data_to_source(FileWriter::FileWriterTask &fw_task,
   }
 }
 
-void add_message(StubConsumer * consumer, std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
-                 std::chrono::milliseconds timestamp, int64_t offset, int32_t partition) {
-   FileWriter::MessageMetaData metadata;
-   metadata.Timestamp = timestamp;
-   metadata.Offset = offset;
-   metadata.Partition = partition;
-   FileWriter::Msg message{flatbuffer.first.get(), flatbuffer.second, metadata};
-   consumer->messages.push_back(std::move(message));
+void add_message(StubConsumer *consumer,
+                 std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
+                 std::chrono::milliseconds timestamp, int64_t offset,
+                 int32_t partition) {
+  FileWriter::MessageMetaData metadata;
+  metadata.Timestamp = timestamp;
+  metadata.Offset = offset;
+  metadata.Partition = partition;
+  FileWriter::Msg message{flatbuffer.first.get(), flatbuffer.second, metadata};
+  consumer->messages.push_back(std::move(message));
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
@@ -223,13 +227,18 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   Metrics::IRegistrar *registrar = new FakeRegistrar();
   auto tracker = std::make_shared<FakeTracker>();
 
-  auto fw_task = std::make_unique<FileWriter::FileWriterTask>(registrar, tracker);
+  // TODO: this duplicated code in JobCreator, can we remove this duplication?
+  auto fw_task =
+      std::make_unique<FileWriter::FileWriterTask>(registrar, tracker);
   fw_task->setFullFilePath("", "example.hdf");
 
   std::vector<ModuleHDFInfo> module_info;
   fw_task->InitialiseHdf(example_json, module_info);
+  std::vector<ModuleHDFInfo> mdat_info =
+      FileWriter::extractMdatModules(module_info);
+  auto mdat_writer = std::make_unique<WriterModule::mdat::mdat_Writer>();
+  mdat_writer->defineMetadata(mdat_info);
 
-  // TODO: this duplicated code in JobCreator, can we remove this duplication?
   std::vector<ModuleSettings> module_settings =
       FileWriter::extractModuleInformationFromJson(module_info);
 
@@ -294,13 +303,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   MainOpt options;
   auto consumer_factory = std::make_shared<StubConsumerFactory>();
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
-  auto mdat_writer = std::make_unique<WriterModule::mdat::mdat_Writer>();
-//  mdat_writer->defineMetadata(mdatInfoList);
 
   auto stream_controller = std::make_unique<FileWriter::StreamController>(
-      std::move(fw_task), std::move(mdat_writer), options.StreamerConfiguration, registrar, tracker,
-      metadata_enquirer, consumer_factory
-  );
+      std::move(fw_task), std::move(mdat_writer), options.StreamerConfiguration,
+      registrar, tracker, metadata_enquirer, consumer_factory);
 
   int a = 0;
   std::cin >> a;
