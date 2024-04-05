@@ -232,8 +232,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
       std::make_unique<FileWriter::FileWriterTask>(registrar, tracker);
   fw_task->setFullFilePath("", "example.hdf");
 
-  std::vector<ModuleHDFInfo> module_info;
-  fw_task->InitialiseHdf(example_json, module_info);
+  std::vector<ModuleHDFInfo> module_info =
+      initializeHDF(*fw_task, example_json);
   std::vector<ModuleHDFInfo> mdat_info =
       FileWriter::extractMdatModules(module_info);
   auto mdat_writer = std::make_unique<WriterModule::mdat::mdat_Writer>();
