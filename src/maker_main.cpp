@@ -28,18 +28,18 @@ std::string const example_json = R"(
 					"type": "string"
 				}
 			},
-                        {
-                          "module": "mdat",
-                          "config": {
-                            "name": "start_time"
-                          }
-                        },
-                        {
-                          "module": "mdat",
-                          "config": {
-                            "name": "end_time"
-                          }
-                        },
+			{
+				"module": "mdat",
+				"config": {
+					"name": "start_time"
+				}
+			},
+			{
+				"module": "mdat",
+				"config": {
+					"name": "end_time"
+				}
+			},
 			{
 				"name": "instrument",
 				"type": "group",
