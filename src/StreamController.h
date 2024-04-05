@@ -36,6 +36,7 @@ public:
   virtual bool isDoneWriting() = 0;
   virtual void pauseStreamers() = 0;
   virtual void resumeStreamers() = 0;
+  virtual void start() = 0;
   virtual void stop() = 0;
   virtual bool hasErrorState() const = 0;
   virtual std::string errorMessage() = 0;
@@ -56,6 +57,11 @@ public:
   StreamController(StreamController &&) = delete;
   StreamController &operator=(const StreamController &) = delete;
   StreamController &operator=(StreamController &&) = delete;
+
+  /// \brief Start the streamers and, hence, the filewriting.
+  ///
+  /// MUST BE CALLED AFTER CONSTRUCTION!
+  void start() override;
 
   /// \brief Set the point in time that triggers
   /// the termination of the run.

@@ -235,6 +235,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
       metadata_enquirer, consumer_factory);
+  stream_controller->start();
 
   int a = 0;
   std::cin >> a;
