@@ -25,20 +25,22 @@ StreamController::StreamController(
                    Registrar->getNewRegistrar("stream.writer")),
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
       metadata_enquirer_(std::move(metadata_enquirer)),
-      consumer_factory_(std::move(consumer_factory)) {
-  MdatWriter->setStartTime(Settings.StartTimestamp);
-  MdatWriter->setStopTime(Settings.StopTimestamp);
-  Executor.sendLowPriorityWork([=]() {
-    CurrentMetadataTimeOut = Settings.BrokerSettings.MinMetadataTimeout;
-    getTopicNames();
-  });
-}
+      consumer_factory_(std::move(consumer_factory)) {}
 
 StreamController::~StreamController() {
   stop();
   MdatWriter->writeMetadata(WriterTask.get());
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
+}
+
+void StreamController::start() {
+  MdatWriter->setStartTime(StreamerOptions.StartTimestamp);
+  MdatWriter->setStopTime(StreamerOptions.StopTimestamp);
+  Executor.sendLowPriorityWork([=]() {
+    CurrentMetadataTimeOut = StreamerOptions.BrokerSettings.MinMetadataTimeout;
+    getTopicNames();
+  });
 }
 
 void StreamController::setStopTime(time_point const &StopTime) {
