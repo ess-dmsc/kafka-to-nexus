@@ -224,89 +224,22 @@ void add_message(StubConsumer *consumer,
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   std::cout << "hello from the maker app\n";
 
-  Metrics::IRegistrar *registrar = new FakeRegistrar();
+  std::unique_ptr<Metrics::IRegistrar> registrar =
+      std::make_unique<FakeRegistrar>();
   auto tracker = std::make_shared<FakeTracker>();
-
-  // TODO: this duplicated code in JobCreator, can we remove this duplication?
-  auto fw_task =
-      std::make_unique<FileWriter::FileWriterTask>(registrar, tracker);
-  fw_task->setFullFilePath("", "example.hdf");
-
-  std::vector<ModuleHDFInfo> module_info =
-      initializeHDF(*fw_task, example_json);
-  std::vector<ModuleHDFInfo> mdat_info =
-      FileWriter::extractMdatModules(module_info);
-  auto mdat_writer = std::make_unique<WriterModule::mdat::mdat_Writer>();
-  mdat_writer->defineMetadata(mdat_info);
-
-  std::vector<ModuleSettings> module_settings =
-      FileWriter::extractModuleInformationFromJson(module_info);
-
-  std::vector<ModuleSettings> stream_settings;
-  std::vector<ModuleSettings> link_settings;
-
-  for (auto &Item : module_settings) {
-    if (Item.isLink) {
-      link_settings.push_back(std::move(Item));
-    } else {
-      stream_settings.push_back(std::move(Item));
-    }
-  }
-
-  for (size_t i = 0; i < stream_settings.size(); ++i) {
-    auto &Item = stream_settings[i];
-    auto StreamGroup = hdf5::node::get_group(
-        fw_task->hdfGroup(), Item.ModuleHDFInfoObj.HDFParentName);
-    std::vector<ModuleSettings> TemporaryStreamSettings;
-    try {
-      Item.WriterModule = FileWriter::generateWriterInstance(Item);
-      for (auto const &ExtraModule :
-           Item.WriterModule->getEnabledExtraModules()) {
-        auto ItemCopy = Item.getCopyForExtraModule();
-        ItemCopy.Module = ExtraModule;
-        TemporaryStreamSettings.push_back(std::move(ItemCopy));
-      }
-      FileWriter::setWriterHDFAttributes(StreamGroup, Item);
-      Item.WriterModule->init_hdf(StreamGroup);
-    } catch (std::runtime_error const &E) {
-      auto ErrorMsg = fmt::format(
-          R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",
-          Item.ModuleHDFInfoObj.HDFParentName,
-          Item.ModuleHDFInfoObj.ConfigStream, E.what());
-      std::throw_with_nested(std::runtime_error(ErrorMsg));
-    }
-    try {
-      Item.WriterModule->register_meta_data(StreamGroup, tracker);
-    } catch (std::exception const &E) {
-      std::throw_with_nested(std::runtime_error(fmt::format(
-          R"(Exception encountered in WriterModule::Base::register_meta_data(). Module: "{}" Source: "{}"  Error message: {})",
-          Item.Module, Item.Source, E.what())));
-    }
-    std::transform(TemporaryStreamSettings.begin(),
-                   TemporaryStreamSettings.end(),
-                   std::back_inserter(stream_settings),
-                   [](auto &Element) { return std::move(Element); });
-  }
-
-  fw_task->writeLinks(link_settings);
-  fw_task->switchToWriteMode();
-
-  FileWriter::addStreamSourceToWriterModule(stream_settings, *fw_task);
-
-  // Skip the streamcontroller, topics and partitions bits and jump straight to
-  // the writing for now
-
-  //  send_f144_data_to_source(fw_task, "delay_source_chopper", 123, 123456);
-  //  send_f144_data_to_source(fw_task, "delay_source_chopper", 124, 123457);
-
-  // Create consumer factory and inject into stream controller
-  MainOpt options;
   auto consumer_factory = std::make_shared<StubConsumerFactory>();
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
 
-  auto stream_controller = std::make_unique<FileWriter::StreamController>(
-      std::move(fw_task), std::move(mdat_writer), options.StreamerConfiguration,
-      registrar, tracker, metadata_enquirer, consumer_factory);
+  Command::StartInfo start_info;
+  start_info.NexusStructure = example_json;
+  start_info.JobID = "some_job_id";
+
+  FileWriter::StreamerOptions streamer_options;
+  std::filesystem::path filepath{"example.hdf"};
+
+  auto stream_controller = FileWriter::createFileWritingJob(
+      start_info, streamer_options, filepath, registrar.get(), tracker,
+      metadata_enquirer, consumer_factory);
 
   int a = 0;
   std::cin >> a;
