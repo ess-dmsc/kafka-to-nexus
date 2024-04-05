@@ -28,6 +28,18 @@ std::string const example_json = R"(
 					"type": "string"
 				}
 			},
+                        {
+                          "module": "mdat",
+                          "config": {
+                            "name": "start_time"
+                          }
+                        },
+                        {
+                          "module": "mdat",
+                          "config": {
+                            "name": "end_time"
+                          }
+                        },
 			{
 				"name": "instrument",
 				"type": "group",
@@ -218,7 +230,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;
-  std::filesystem::path filepath{"example.hdf"};
+  std::filesystem::path filepath{"../example.hdf"};
 
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
