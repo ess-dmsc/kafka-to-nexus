@@ -192,23 +192,6 @@ create_f144_message_double(std::string const &source, double value,
   return {std::move(buffer), buffer_size};
 }
 
-void send_f144_data_to_source(FileWriter::FileWriterTask &fw_task,
-                              std::string const &source_name, double value,
-                              int64_t timestamp) {
-  auto [message, message_size] =
-      create_f144_message_double(source_name, value, timestamp);
-  FileWriter::FlatbufferMessage flatbuffer{message.get(), message_size};
-
-  auto &sources = fw_task.sources();
-
-  for (auto &source : sources) {
-    if (source.sourcename() == "delay:source:chopper" &&
-        source.writerModuleID() == "f144") {
-      source.getWriterPtr()->write(flatbuffer);
-    }
-  }
-}
-
 void add_message(StubConsumer *consumer,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
