@@ -23,7 +23,11 @@ namespace FileWriter {
 std::unique_ptr<IStreamController> createFileWritingJob(
     Command::StartInfo const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
-    MetaData::TrackerPtr const &Tracker);
+    MetaData::TrackerPtr const &Tracker,
+    std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
+        std::make_shared<Kafka::MetadataEnquirer>(),
+    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
+        std::make_shared<Kafka::ConsumerFactory>());
 
 // Note: The functions below are "private" helper functions.
 

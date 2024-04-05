@@ -119,7 +119,9 @@ extractMdatModules(std::vector<ModuleHDFInfo> &Modules) {
 std::unique_ptr<IStreamController> createFileWritingJob(
     Command::StartInfo const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
-    MetaData::TrackerPtr const &Tracker) {
+    MetaData::TrackerPtr const &Tracker,
+    std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
+    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory) {
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
 
@@ -186,7 +188,8 @@ std::unique_ptr<IStreamController> createFileWritingJob(
   LOG_INFO("Write file with job_id: {}", Task->jobID());
 
   return std::make_unique<StreamController>(
-      std::move(Task), std::move(mdatWriter), Settings, Registrar, Tracker);
+      std::move(Task), std::move(mdatWriter), Settings, Registrar, Tracker,
+      metadata_enquirer, consumer_factory);
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,

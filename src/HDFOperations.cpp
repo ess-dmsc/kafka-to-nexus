@@ -338,7 +338,6 @@ void createHDFStructures(
     std::vector<ModuleHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
 
   try {
-
     // The HDF object that we will maybe create at the current level.
     JSONHdfNode CNode(Value);
     if (CNode.Type.getUsedKey() == "type") {
@@ -377,7 +376,7 @@ void createHDFStructures(
         writeAttributesIfPresent(Parent.get_dataset(DatasetName), Value);
       } else {
         std::string pathstr;
-        for (auto &x : Path) {
+        for (auto const &x : Path) {
           // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
@@ -385,7 +384,7 @@ void createHDFStructures(
                                               CNode.Config.getValue().dump()});
       }
     }
-  } catch (const std::exception &e) {
+  } catch (std::exception const &e) {
     // Don't throw here as the file should continue writing
     LOG_ERROR(
         R"(Failed to create structure with path "{}" ({} levels deep). Message was: {})",
