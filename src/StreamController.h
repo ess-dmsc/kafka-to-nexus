@@ -49,10 +49,8 @@ public:
       std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
       FileWriter::StreamerOptions const &Settings,
       Metrics::IRegistrar *Registrar, MetaData::TrackerPtr Tracker,
-      std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
-          std::make_shared<Kafka::MetadataEnquirer>(),
-      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
-          std::make_shared<Kafka::ConsumerFactory>());
+      std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
+      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory);
   ~StreamController() override;
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;

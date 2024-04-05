@@ -14,34 +14,26 @@
 
 class FileWriterTask : public ::testing::Test {
 public:
-  std::unique_ptr<Metrics::Sink> TestSink{new Metrics::MockSink()};
+  std::unique_ptr<Metrics::Sink> TestSink{
+      std::make_unique<Metrics::MockSink>()};
   std::shared_ptr<Metrics::Reporter> TestReporter{
-      new Metrics::Reporter(std::move(TestSink), 10ms)};
+      std::make_shared<Metrics::Reporter>(std::move(TestSink), 10ms)};
   std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
   std::unique_ptr<Metrics::IRegistrar> TestRegistrar =
       std::make_unique<Metrics::Registrar>("Test", TestReporters);
 };
 
-TEST_F(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(TestRegistrar.get(),
+TEST_F(FileWriterTask, file_path_is_set) {
+  FileWriter::FileWriterTask Task("::some_id::", {"/example/filepath.hdf"},
+                                  TestRegistrar.get(),
                                   std::make_shared<MetaData::Tracker>());
 
-  Task.setFullFilePath("SomePrefix", "File.hdf");
-
-  ASSERT_EQ("SomePrefix/File.hdf", Task.filename());
+  ASSERT_EQ("/example/filepath.hdf", Task.filename());
 }
 
-TEST_F(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task(TestRegistrar.get(),
-                                  std::make_shared<MetaData::Tracker>());
-
-  Task.setFullFilePath("/", "File.hdf");
-
-  ASSERT_EQ("/File.hdf", Task.filename());
-}
-
-TEST_F(FileWriterTask, AddingSourceAddsToTopics) {
-  FileWriter::FileWriterTask Task(TestRegistrar.get(),
+TEST_F(FileWriterTask, adding_source_adds_to_topics) {
+  FileWriter::FileWriterTask Task("::some_id::", {"some_file_path.hdf"},
+                                  TestRegistrar.get(),
                                   std::make_shared<MetaData::Tracker>());
   FileWriter::Source Src("Src1", "Id1", "Id2", "Topic1", nullptr);
 
@@ -50,12 +42,10 @@ TEST_F(FileWriterTask, AddingSourceAddsToTopics) {
   ASSERT_EQ(1u, Task.sources().size());
 }
 
-TEST_F(FileWriterTask, SettingJobIdSetsID) {
-  FileWriter::FileWriterTask Task(TestRegistrar.get(),
+TEST_F(FileWriterTask, job_id_is_set) {
+  FileWriter::FileWriterTask Task("NewID", {"some_file_path.hdf"},
+                                  TestRegistrar.get(),
                                   std::make_shared<MetaData::Tracker>());
-  std::string NewId = "NewID";
 
-  Task.setJobId(NewId);
-
-  ASSERT_EQ(NewId, Task.jobID());
+  ASSERT_EQ("NewID", Task.jobID());
 }
