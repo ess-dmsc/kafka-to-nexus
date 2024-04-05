@@ -34,10 +34,8 @@ json hdf_parse(std::string const &Structure) {
 
 std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
-void FileWriterTask::setFullFilePath(std::string const &Prefix,
-                                     std::string const &Name) {
-  FullFilePath = std::filesystem::path(Prefix) /
-                 std::filesystem::path(Name).relative_path();
+void FileWriterTask::setFullFilePath(std::filesystem::path const &filepath) {
+  filepath_ = filepath;
 }
 
 void FileWriterTask::addSource(Source &&Source) {
@@ -49,40 +47,40 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
   auto NexusStructureJson = hdf_parse(NexusStructure);
   std::string ErrorString;
 
-  if (std::filesystem::exists(FullFilePath)) {
+  if (std::filesystem::exists(filepath_)) {
     ErrorString = fmt::format(
         R"(Failed to initialize HDF file "{}". Error was: "{}".)",
-        FullFilePath.string(),
+        filepath_.string(),
         "a file with that filename already exists in that directory. Delete "
         "the existing file or provide another filename");
     std::throw_with_nested(std::runtime_error(ErrorString));
-  } else if (not FullFilePath.has_filename()) {
+  } else if (not filepath_.has_filename()) {
     ErrorString =
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: "{}".)",
-                    FullFilePath.string(), "filename is empty");
+                    filepath_.string(), "filename is empty");
     std::throw_with_nested(std::runtime_error(ErrorString));
-  } else if (FullFilePath.has_parent_path() and
-             not std::filesystem::exists(FullFilePath.parent_path())) {
+  } else if (filepath_.has_parent_path() and
+             not std::filesystem::exists(filepath_.parent_path())) {
     ErrorString = fmt::format(
         R"(Failed to initialize HDF file "{}". Error was: The parent directory does not exist.)",
-        FullFilePath.string());
+        filepath_.string());
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 
   try {
-    LOG_INFO("Creating HDF file {}", FullFilePath.string());
-    File = std::make_unique<HDFFile>(FullFilePath, NexusStructureJson, HdfInfo,
+    LOG_INFO("Creating HDF file {}", filepath_.string());
+    File = std::make_unique<HDFFile>(filepath_, NexusStructureJson, HdfInfo,
                                      MetaDataTracker);
   } catch (std::exception const &E) {
     ErrorString =
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: {})",
-                    FullFilePath.string(), E.what());
+                    filepath_.string(), E.what());
     LOG_CRITICAL(ErrorString);
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 }
 
-std::string FileWriterTask::jobID() const { return JobId; }
+std::string FileWriterTask::jobID() const { return job_id_; }
 
 hdf5::node::Group FileWriterTask::hdfGroup() const {
   if (!File) {
@@ -101,9 +99,7 @@ void FileWriterTask::switchToWriteMode() {
 
 bool FileWriterTask::isInWriteMode() { return File->isSWMRMode(); }
 
-void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
-
-std::string FileWriterTask::filename() const { return FullFilePath.string(); }
+std::string FileWriterTask::filename() const { return filepath_.string(); }
 
 void FileWriterTask::writeLinks(
     const std::vector<ModuleSettings> &LinkSettingsList) {
@@ -120,11 +116,11 @@ void FileWriterTask::flushDataToFile() {
 
 void FileWriterTask::updateApproximateFileSize() {
   std::error_code ErrorCode;
-  auto size = std::filesystem::file_size(FullFilePath, ErrorCode);
+  auto size = std::filesystem::file_size(filepath_, ErrorCode);
   if (ErrorCode) {
     LOG_ERROR(
         R"(Unable to determine file size of the file "{}". The error was: {})",
-        FullFilePath.string(), ErrorCode.message());
+        filepath_.string(), ErrorCode.message());
     return;
   }
   auto SizeValue = int(std::ceil(size / (1024 * 1024)));

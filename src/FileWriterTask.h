@@ -39,10 +39,11 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  explicit FileWriterTask(Metrics::IRegistrar *Registrar,
+  explicit FileWriterTask(std::string job_id, std::filesystem::path filepath,
+                          Metrics::IRegistrar const *Registrar,
                           MetaData::TrackerPtr Tracker)
-      : MetaDataTracker(std::move(Tracker)),
-        FileSizeMB("", "approx_file_size_mb") {
+      : job_id_(std::move(job_id)), filepath_(std::move(filepath)),
+        MetaDataTracker(std::move(Tracker)) {
     Registrar->registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
     MetaDataTracker->registerMetaData(FileSizeMB);
   }
@@ -56,11 +57,6 @@ public:
   void InitialiseHdf(std::string const &NexusStructure,
                      std::vector<ModuleHDFInfo> &HdfInfo);
 
-  /// \brief  Set the `JobID`.
-  ///
-  /// \param Id The Id value to use.
-  void setJobId(const std::string &Id);
-
   /// \brief Add a source to the topics.
   ///
   /// \param Source The source to add.
@@ -68,9 +64,8 @@ public:
 
   /// \brief Set the filename.
   ///
-  /// \param Prefix The path prefix.
-  /// \param Name The filename (can include path).
-  void setFullFilePath(std::string const &Prefix, std::string const &Name);
+  /// \param filepath The filename (can include path).
+  void setFullFilePath(std::filesystem::path const &filepath);
 
   /// \brief Get the list of topics.
   ///
@@ -108,9 +103,10 @@ public:
   void updateApproximateFileSize();
 
 private:
-  std::filesystem::path FullFilePath;
+  std::string job_id_;
+  std::filesystem::path filepath_;
   MetaData::TrackerPtr MetaDataTracker;
-  MetaData::Value<uint32_t> FileSizeMB;
+  MetaData::Value<uint32_t> FileSizeMB{"", "approx_file_size_mb"};
   Metrics::Metric FileSizeMBMetric{"approx_file_size_mb",
                                    "Approximate size of file in MB."};
 
@@ -120,7 +116,6 @@ private:
   /// de-allocated.
   std::unique_ptr<HDFFile> File;
   std::vector<Source> SourceToModuleMap;
-  std::string JobId;
 };
 
 } // namespace FileWriter
