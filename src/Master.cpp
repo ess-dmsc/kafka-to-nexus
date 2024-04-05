@@ -60,6 +60,8 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     CurrentStreamController =
         createFileWritingJob(StartInfo, streamer_options, filepath,
                              MasterMetricsRegistrar.get(), MetaDataTracker);
+    CurrentStreamController->start();
+
     CurrentMetadata = StartInfo.Metadata;
     if (!StartInfo.ControlTopic.empty()) {
       Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);
