@@ -14,9 +14,10 @@
 
 class FileWriterTask : public ::testing::Test {
 public:
-  std::unique_ptr<Metrics::Sink> TestSink{new Metrics::MockSink()};
+  std::unique_ptr<Metrics::Sink> TestSink{
+      std::make_unique<Metrics::MockSink>()};
   std::shared_ptr<Metrics::Reporter> TestReporter{
-      new Metrics::Reporter(std::move(TestSink), 10ms)};
+      std::make_shared<Metrics::Reporter>(std::move(TestSink), 10ms)};
   std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
   std::unique_ptr<Metrics::IRegistrar> TestRegistrar =
       std::make_unique<Metrics::Registrar>("Test", TestReporters);
