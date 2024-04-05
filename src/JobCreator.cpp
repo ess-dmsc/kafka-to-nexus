@@ -120,9 +120,8 @@ std::unique_ptr<IStreamController> createFileWritingJob(
     Command::StartInfo const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
     MetaData::TrackerPtr const &Tracker) {
-  auto Task = std::make_unique<FileWriterTask>(Registrar, Tracker);
-  Task->setJobId(StartInfo.JobID);
-  Task->setFullFilePath(filepath);
+  auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
+                                               Registrar, Tracker);
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
