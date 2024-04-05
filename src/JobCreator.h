@@ -20,10 +20,10 @@
 
 namespace FileWriter {
 
-std::unique_ptr<IStreamController>
-createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
-                     Metrics::IRegistrar *Registrar,
-                     MetaData::TrackerPtr const &Tracker);
+std::unique_ptr<IStreamController> createFileWritingJob(
+    Command::StartInfo const &StartInfo, StreamerOptions const &Settings,
+    std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
+    MetaData::TrackerPtr const &Tracker);
 
 // Note: The functions below are "private" helper functions.
 

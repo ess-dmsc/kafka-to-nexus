@@ -116,13 +116,13 @@ extractMdatModules(std::vector<ModuleHDFInfo> &Modules) {
   return mdatInfoList;
 };
 
-std::unique_ptr<IStreamController>
-createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
-                     Metrics::IRegistrar *Registrar,
-                     MetaData::TrackerPtr const &Tracker) {
+std::unique_ptr<IStreamController> createFileWritingJob(
+    Command::StartInfo const &StartInfo, StreamerOptions const &Settings,
+    std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
+    MetaData::TrackerPtr const &Tracker) {
   auto Task = std::make_unique<FileWriterTask>(Registrar, Tracker);
   Task->setJobId(StartInfo.JobID);
-  Task->setFullFilePath(Settings.HDFOutputPrefix, StartInfo.Filename);
+  Task->setFullFilePath(filepath);
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure);
@@ -184,18 +184,10 @@ createFileWritingJob(Command::StartInfo const &StartInfo, MainOpt &Settings,
 
   addStreamSourceToWriterModule(StreamSettingsList, *Task);
 
-  Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
-  Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
-  // Ignore broker addresses sent in StartInfo message and use known broker
-  // instead. Temporarily we reuse the broker from JobPoolURI. See ECDC-3118.
-  Settings.StreamerConfiguration.BrokerSettings.Address =
-      Settings.JobPoolURI.HostPort;
-
   LOG_INFO("Write file with job_id: {}", Task->jobID());
 
   return std::make_unique<StreamController>(
-      std::move(Task), std::move(mdatWriter), Settings.StreamerConfiguration,
-      Registrar, Tracker);
+      std::move(Task), std::move(mdatWriter), Settings, Registrar, Tracker);
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,

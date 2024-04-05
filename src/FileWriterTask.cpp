@@ -34,10 +34,8 @@ json hdf_parse(std::string const &Structure) {
 
 std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
-void FileWriterTask::setFullFilePath(std::string const &Prefix,
-                                     std::string const &Name) {
-  FullFilePath = std::filesystem::path(Prefix) /
-                 std::filesystem::path(Name).relative_path();
+void FileWriterTask::setFullFilePath(std::filesystem::path const &filepath) {
+  FullFilePath = filepath;
 }
 
 void FileWriterTask::addSource(Source &&Source) {

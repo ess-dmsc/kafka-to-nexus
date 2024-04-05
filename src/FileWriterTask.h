@@ -68,9 +68,8 @@ public:
 
   /// \brief Set the filename.
   ///
-  /// \param Prefix The path prefix.
-  /// \param Name The filename (can include path).
-  void setFullFilePath(std::string const &Prefix, std::string const &Name);
+  /// \param filepath The filename (can include path).
+  void setFullFilePath(std::filesystem::path const &filepath);
 
   /// \brief Get the list of topics.
   ///

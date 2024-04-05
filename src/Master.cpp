@@ -47,10 +47,21 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
   }
   try {
     MetaDataTracker->clearMetaData();
-    CurrentStreamController = createFileWritingJob(
-        StartInfo, MainConfig, MasterMetricsRegistrar.get(), MetaDataTracker);
+
+    StreamerOptions streamer_options = MainConfig.StreamerConfiguration;
+    streamer_options.StartTimestamp = StartInfo.StartTime;
+    streamer_options.StopTimestamp = StartInfo.StopTime;
+    streamer_options.BrokerSettings.Address = MainConfig.JobPoolURI.HostPort;
+
+    std::filesystem::path const filepath =
+        std::filesystem::path(MainConfig.HDFOutputPrefix) /
+        std::filesystem::path(StartInfo.Filename).relative_path();
+
+    CurrentStreamController =
+        createFileWritingJob(StartInfo, streamer_options, filepath,
+                             MasterMetricsRegistrar.get(), MetaDataTracker);
     CurrentMetadata = StartInfo.Metadata;
-    if (not StartInfo.ControlTopic.empty()) {
+    if (!StartInfo.ControlTopic.empty()) {
       Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);
     }
     setCurrentStatus({Status::WorkerState::Writing, StartInfo.JobID,
