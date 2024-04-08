@@ -7,6 +7,7 @@
 #include <fmt/format.h>
 #include <iostream>
 #include <memory>
+#include <utility>
 
 using std::chrono_literals::operator""ms;
 
@@ -105,11 +106,17 @@ public:
 
 class StubConsumer : public Kafka::ConsumerInterface {
 public:
+  StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages)
+      : messages(std::move(messages)) {}
   ~StubConsumer() override = default;
 
   std::pair<Kafka::PollStatus, FileWriter::Msg> poll() override {
-    if (offset < messages.size()) {
-      return {Kafka::PollStatus::Message, std::move(messages[offset++])};
+    if (offset < messages->size()) {
+      auto temp = FileWriter::Msg{messages->at(offset).data(),
+                                  messages->at(offset).size(),
+                                  messages->at(offset).getMetaData()};
+      ++offset;
+      return {Kafka::PollStatus::Message, std::move(temp)};
     }
     return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
   };
@@ -133,7 +140,7 @@ public:
   size_t offset = 0;
   std::string topic;
   int32_t partition = 0;
-  std::vector<FileWriter::Msg> messages;
+  std::shared_ptr<std::vector<FileWriter::Msg>> messages;
 };
 
 class StubConsumerFactory : public Kafka::ConsumerFactoryInterface {
@@ -146,7 +153,7 @@ public:
   createConsumerAtOffset([[maybe_unused]] Kafka::BrokerSettings const &settings,
                          std::string const &topic, int partition_id,
                          [[maybe_unused]] int64_t offset) override {
-    auto consumer = std::make_shared<StubConsumer>();
+    auto consumer = std::make_shared<StubConsumer>(messages);
     consumer->topic = topic;
     consumer->partition = partition_id;
     consumers.emplace_back(topic, consumer);
@@ -154,6 +161,10 @@ public:
   }
   ~StubConsumerFactory() override = default;
   std::vector<std::tuple<std::string, std::shared_ptr<StubConsumer>>> consumers;
+
+  // One set of messages shared by all topics/consumers.
+  std::shared_ptr<std::vector<FileWriter::Msg>> messages =
+      std::make_shared<std::vector<FileWriter::Msg>>();
 };
 
 class StubMetadataEnquirer : public Kafka::MetadataEnquirer {
@@ -204,7 +215,7 @@ create_f144_message_double(std::string const &source, double value,
   return {std::move(buffer), buffer_size};
 }
 
-void add_message(StubConsumer *consumer,
+void add_message(StubConsumerFactory *consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
                  int32_t partition) {
@@ -212,8 +223,8 @@ void add_message(StubConsumer *consumer,
   metadata.Timestamp = timestamp;
   metadata.Offset = offset;
   metadata.Partition = partition;
-  FileWriter::Msg message{flatbuffer.first.get(), flatbuffer.second, metadata};
-  consumer->messages.push_back(std::move(message));
+  consumer_factory->messages->emplace_back(flatbuffer.first.get(),
+                                           flatbuffer.second, metadata);
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
@@ -224,6 +235,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   auto tracker = std::make_shared<FakeTracker>();
   auto consumer_factory = std::make_shared<StubConsumerFactory>();
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
+
+  // Pre-populate kafka messages
+  auto msg = create_f144_message_double("delay:source:chopper", 123, 1000);
+  add_message(consumer_factory.get(), std::move(msg), 1000ms, 0, 0);
+
+  msg = create_f144_message_double("delay:source:chopper", 456, 1100);
+  add_message(consumer_factory.get(), std::move(msg), 1100ms, 1, 0);
 
   Command::StartInfo start_info;
   start_info.NexusStructure = example_json;
@@ -237,19 +255,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
       metadata_enquirer, consumer_factory);
   stream_controller->start();
 
+  // TODO: pre-populate the consumers before starting the stream controller.
+
   int a = 0;
-  std::cin >> a;
-
-  // Now add some messages
-  auto msg = create_f144_message_double("delay:source:chopper", 123, 1000);
-
-  auto &[t, c] = consumer_factory->consumers[0];
-
-  add_message(c.get(), std::move(msg), 1000ms, 0, 0);
-
-  msg = create_f144_message_double("delay:source:chopper", 456, 1100);
-  add_message(c.get(), std::move(msg), 1100ms, 1, 0);
-
   std::cin >> a;
 
   return 0;
