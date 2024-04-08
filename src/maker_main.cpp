@@ -73,7 +73,23 @@ std::string const example_json = R"(
 								"dtype": "double"
 							}
 						}]
-					}]
+					},{
+                                                "name": "speed",
+                                                "type": "group",
+                                                "attributes": [{
+                                                        "name": "NX_class",
+                                                        "dtype": "string",
+                                                        "values": "NXlog"
+                                                }],
+                                                "children": [{
+                                                        "module": "f144",
+                                                        "config": {
+                                                                "source": "speed:source:chopper",
+                                                                "topic": "local_motion",
+                                                                "dtype": "double"
+                                                        }
+                                                }]
+                                                }]
 				}]
 			}
 		]
@@ -191,6 +207,7 @@ public:
   getTopicList([[maybe_unused]] std::string const &Broker,
                [[maybe_unused]] duration TimeOut,
                [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
+    // TODO: populate this list at runtime
     return {"local_motion"};
   }
 };
@@ -236,12 +253,18 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   auto consumer_factory = std::make_shared<StubConsumerFactory>();
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
 
-  // Pre-populate kafka messages
-  auto msg = create_f144_message_double("delay:source:chopper", 123, 1000);
+  // Pre-populate kafka messages - time-stamps must be in order!
+  auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
   add_message(consumer_factory.get(), std::move(msg), 1000ms, 0, 0);
 
-  msg = create_f144_message_double("delay:source:chopper", 456, 1100);
+  msg = create_f144_message_double("delay:source:chopper", 101, 1100);
   add_message(consumer_factory.get(), std::move(msg), 1100ms, 1, 0);
+
+  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
+  add_message(consumer_factory.get(), std::move(msg), 1200ms, 1, 0);
+
+  msg = create_f144_message_double("speed:source:chopper", 1010, 1250);
+  add_message(consumer_factory.get(), std::move(msg), 1250ms, 1, 0);
 
   Command::StartInfo start_info;
   start_info.NexusStructure = example_json;
