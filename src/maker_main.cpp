@@ -4,7 +4,6 @@
 #include "Metrics/Metric.h"
 #include "logger.h"
 #include <f144_logdata_generated.h>
-#include <fmt/format.h>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -69,7 +68,7 @@ std::string const example_json = R"(
 							"module": "f144",
 							"config": {
 								"source": "delay:source:chopper",
-								"topic": "local_motion",
+								"topic": "local_choppers",
 								"dtype": "double"
 							}
 						}]
@@ -122,7 +121,7 @@ public:
 
 class StubConsumer : public Kafka::ConsumerInterface {
 public:
-  StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages)
+  explicit StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages)
       : messages(std::move(messages)) {}
   ~StubConsumer() override = default;
 
@@ -208,13 +207,13 @@ public:
                [[maybe_unused]] duration TimeOut,
                [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
     // TODO: populate this list at runtime
-    return {"local_motion"};
+    return {"local_choppers", "local_motion"};
   }
 };
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_f144_message_double(std::string const &source, double value,
-                           int64_t timestamp) {
+                           int64_t timestamp_ms) {
   auto builder = flatbuffers::FlatBufferBuilder();
   auto source_name_offset = builder.CreateString(source);
   auto value_offset = CreateDouble(builder, value).Union();
@@ -222,7 +221,7 @@ create_f144_message_double(std::string const &source, double value,
   f144_LogDataBuilder f144_builder(builder);
   f144_builder.add_value(value_offset);
   f144_builder.add_source_name(source_name_offset);
-  f144_builder.add_timestamp(timestamp);
+  f144_builder.add_timestamp(timestamp_ms * 1000000);
   f144_builder.add_value_type(Value::Double);
   Finishf144_LogDataBuffer(builder, f144_builder.Finish());
 
@@ -246,7 +245,7 @@ void add_message(StubConsumerFactory *consumer_factory,
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   using std::chrono_literals::operator""ms;
-  std::cout << "hello from the maker app\n";
+  std::cout << "Starting writing\n";
 
   std::unique_ptr<Metrics::IRegistrar> registrar =
       std::make_unique<FakeRegistrar>();
@@ -255,17 +254,21 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
 
   // Pre-populate kafka messages - time-stamps must be in order?
+  int64_t offset = 0;
   auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
-  add_message(consumer_factory.get(), std::move(msg), 1000ms, 0, 0);
+  add_message(consumer_factory.get(), std::move(msg), 1000ms, offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 101, 1100);
-  add_message(consumer_factory.get(), std::move(msg), 1100ms, 1, 0);
+  add_message(consumer_factory.get(), std::move(msg), 1100ms, offset++, 0);
 
   msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
-  add_message(consumer_factory.get(), std::move(msg), 1200ms, 1, 0);
+  add_message(consumer_factory.get(), std::move(msg), 1200ms, offset++, 0);
 
   msg = create_f144_message_double("speed:source:chopper", 1010, 1250);
-  add_message(consumer_factory.get(), std::move(msg), 1250ms, 1, 0);
+  add_message(consumer_factory.get(), std::move(msg), 1250ms, offset++, 0);
+
+  msg = create_f144_message_double("delay:source:chopper", 102, 2100);
+  add_message(consumer_factory.get(), std::move(msg), 2100ms, offset++, 0);
 
   Command::StartInfo start_info;
   start_info.NexusStructure = example_json;
@@ -273,8 +276,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   FileWriter::StreamerOptions streamer_options;
   streamer_options.StartTimestamp = time_point{0ms};
-  streamer_options.StopTimestamp = time_point{2000ms};
-  std::filesystem::path filepath{"../example.hdf"};
+  streamer_options.StopTimestamp = time_point{1250ms};
+  std::filesystem::path filepath{"../../example.hdf"};
 
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
@@ -285,6 +288,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     std::cout << "Stream controller is writing\n";
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
+
+  std::cout << "Stream controller has finished writing\n";
 
   return 0;
 }
