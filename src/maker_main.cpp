@@ -245,6 +245,7 @@ void add_message(StubConsumerFactory *consumer_factory,
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+  using std::chrono_literals::operator""ms;
   std::cout << "hello from the maker app\n";
 
   std::unique_ptr<Metrics::IRegistrar> registrar =
@@ -253,7 +254,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   auto consumer_factory = std::make_shared<StubConsumerFactory>();
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
 
-  // Pre-populate kafka messages - time-stamps must be in order!
+  // Pre-populate kafka messages - time-stamps must be in order?
   auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
   add_message(consumer_factory.get(), std::move(msg), 1000ms, 0, 0);
 
@@ -271,6 +272,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;
+  streamer_options.StartTimestamp = time_point{0ms};
+  streamer_options.StopTimestamp = time_point{2000ms};
   std::filesystem::path filepath{"../example.hdf"};
 
   auto stream_controller = FileWriter::createFileWritingJob(
@@ -278,10 +281,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
       metadata_enquirer, consumer_factory);
   stream_controller->start();
 
-  // TODO: pre-populate the consumers before starting the stream controller.
-
-  int a = 0;
-  std::cin >> a;
+  while (!stream_controller->isDoneWriting()) {
+    std::cout << "Stream controller is writing\n";
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
 
   return 0;
 }
