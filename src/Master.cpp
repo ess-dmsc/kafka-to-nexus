@@ -101,11 +101,6 @@ void Master::setStopTime(time_point NewStopTime) {
   setStopTimeInternal(NewStopTime);
 }
 
-bool Master::hasWritingStopped() {
-  return CurrentStreamController != nullptr and
-         CurrentStreamController->isDoneWriting();
-}
-
 bool Master::writingIsFinished() {
   return CurrentStreamController == nullptr or
          CurrentStreamController->isDoneWriting();
@@ -113,8 +108,7 @@ bool Master::writingIsFinished() {
 
 void Master::run() {
   CommandAndControl->loopFunction();
-  // Handle error case
-  if (hasWritingStopped()) {
+  if (writingIsFinished()) {
     setToIdle();
   }
 }

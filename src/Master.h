@@ -71,6 +71,5 @@ private:
   std::string CurrentMetadata;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();
-  virtual bool hasWritingStopped();
 };
 } // namespace FileWriter
