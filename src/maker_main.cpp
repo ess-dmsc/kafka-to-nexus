@@ -3,6 +3,7 @@
 #include "MetaData/Tracker.h"
 #include "Metrics/Metric.h"
 #include "logger.h"
+#include <ep01_epics_connection_generated.h>
 #include <f144_logdata_generated.h>
 #include <iostream>
 #include <memory>
@@ -231,6 +232,24 @@ create_f144_message_double(std::string const &source, double value,
   return {std::move(buffer), buffer_size};
 }
 
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_ep01_message_double(std::string const &source, ConnectionInfo status,
+                           int64_t timestamp_ms) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+
+  EpicsPVConnectionInfoBuilder ep01_builder(builder);
+  ep01_builder.add_source_name(source_name_offset);
+  ep01_builder.add_timestamp(timestamp_ms);
+  ep01_builder.add_status(status);
+  FinishEpicsPVConnectionInfoBuffer(builder, ep01_builder.Finish());
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
 void add_message(StubConsumerFactory *consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
@@ -258,11 +277,19 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
   add_message(consumer_factory.get(), std::move(msg), 1000ms, offset++, 0);
 
+  msg = create_ep01_message_double("delay:source:chopper",
+                                   ConnectionInfo::CONNECTED, 1001);
+  add_message(consumer_factory.get(), std::move(msg), 1001ms, offset++, 0);
+
   msg = create_f144_message_double("delay:source:chopper", 101, 1100);
   add_message(consumer_factory.get(), std::move(msg), 1100ms, offset++, 0);
 
   msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
   add_message(consumer_factory.get(), std::move(msg), 1200ms, offset++, 0);
+
+  msg = create_ep01_message_double("speed:source:chopper",
+                                   ConnectionInfo::CONNECTED, 1201);
+  add_message(consumer_factory.get(), std::move(msg), 1201ms, offset++, 0);
 
   msg = create_f144_message_double("speed:source:chopper", 1010, 1250);
   add_message(consumer_factory.get(), std::move(msg), 1250ms, offset++, 0);
