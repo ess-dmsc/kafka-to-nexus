@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "../json.h"
 #include "WriterRegistrar.h"
 #include "helpers/StubWriterModule.h"
 #include <gtest/gtest.h>

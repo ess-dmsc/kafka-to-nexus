@@ -19,4 +19,4 @@ set(hs00_INC
     Exceptions.h
 )
 
-create_writer_module(hs00)
+#create_writer_module(hs00)

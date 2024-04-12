@@ -1,156 +1,95 @@
 set(kafka_to_nexus_SRC
-        StreamController.cpp
+        FlatbufferReader.cpp
+        Metrics/CarbonSink.cpp
+        Metrics/Reporter.cpp
+        Metrics/CarbonInterface.cpp
+        Metrics/Metric.cpp
+        Metrics/LogSink.cpp
+        Metrics/CarbonConnection.cpp
+        Metrics/Registrar.cpp
+        SetThreadName.cpp
+        Source.cpp
+        WriterModuleBase.cpp
+        JsonConfig/Field.cpp
+        JsonConfig/FieldHandler.cpp
+        FileWriterTask.cpp
+        Stream/PartitionFilter.cpp
+        Stream/MessageWriter.cpp
+        Stream/Topic.cpp
+        Stream/SourceFilter.cpp
+        Stream/Partition.cpp
+        TimeUtility.cpp
+        helper.cpp
+        URI.cpp
+        HDFOperations.cpp
+        Status/StatusReporter.cpp
+        Status/StatusReporterBase.cpp
+        Status/StatusService.cpp
         Master.cpp
-        logger.cpp
+        JobCreator.cpp
         CommandSystem/JobListener.cpp
         CommandSystem/CommandListener.cpp
         CommandSystem/FeedbackProducer.cpp
         CommandSystem/Handler.cpp
         CommandSystem/Parser.cpp
-        JobCreator.cpp
-        FileWriterTask.cpp
-        Source.cpp
-        FlatbufferReader.cpp
-        HDFFile.cpp
-        HDFAttributes.cpp
-        Kafka/Consumer.cpp
-        Kafka/Producer.cpp
         Kafka/ProducerTopic.cpp
-        Kafka/ConsumerFactory.cpp
         Kafka/MetaDataQuery.cpp
-        helper.cpp
-        URI.cpp
-        FlatbufferMessage.cpp
-        MainOpt.cpp
-        CLIOptions.cpp
-        StreamController.cpp
-        WriterRegistrar.cpp
-        Metrics/Reporter.cpp
-        Metrics/Registrar.cpp
-        Metrics/Metric.cpp
-        Metrics/CarbonInterface.cpp
-        Metrics/CarbonConnection.cpp
-        Metrics/LogSink.cpp
-        Metrics/CarbonSink.cpp
-        Status/StatusReporterBase.cpp
-        Stream/PartitionFilter.cpp
-        Status/StatusReporter.cpp
-        Status/StatusService.cpp
-        Stream/MessageWriter.cpp
-        Stream/SourceFilter.cpp
-        Stream/Partition.cpp
-        Stream/Topic.cpp
-        HDFOperations.cpp
-        HDFVersionCheck.cpp
-        CommandSystem/CommandListener.cpp
-        TimeUtility.cpp
-        JsonConfig/Field.cpp
-        JsonConfig/FieldHandler.cpp
-        SetThreadName.cpp
-        MetaData/Tracker.cpp
-        MetaData/HDF5DataWriter.cpp WriterModuleBase.cpp WriterModule/mdat/mdat_Writer.cpp)
-
-set(kafka_to_nexus_INC
-        JobCreator.h
-        CommandSystem/Commands.h
-        CommandSystem/JobListener.h
-        CommandSystem/CommandListener.h
-        CommandSystem/FeedbackProducer.h
-        CommandSystem/Handler.h
-        CommandSystem/Parser.h
-        FileWriterTask.h
-        FlatbufferReader.h
-        HDFFile.h
-        HDFAttributes.h
-        WriterModuleBase.h
-        helper.h
-        json.h
-        Kafka/BrokerSettings.h
-        Kafka/Consumer.h
-        Kafka/Producer.h
-        Kafka/ProducerTopic.h
-        Kafka/PollStatus.h
-        Kafka/ProducerStats.h
-        Kafka/ProducerMessage.h
-        Kafka/KafkaEventCb.h
-        Kafka/MetadataException.h
-        Kafka/ConsumerFactory.h
-        Kafka/MetaDataQuery.h
-        kafka-to-nexus.h
-        logger.h
-        MainOpt.h
-        Master.h
-        Msg.h
-        FlatbufferMessage.h
-        Source.h
-        StreamerOptions.h
-        StreamController.h
-        URI.h
-        CLIOptions.h
+        Kafka/Producer.cpp
         Kafka/ConfigureKafka.cpp
-        Kafka/ConfigureKafka.h
-        WriterRegistrar.h
-        Metrics/Registrar.h
-        Metrics/Metric.h
-        Metrics/CarbonInterface.h
-        Metrics/CarbonConnection.h
-        Metrics/Sink.h
-        Metrics/LogSink.h
-        Metrics/CarbonSink.h
-        Metrics/InternalMetric.h
-        Metrics/Reporter.h
-        Status/StatusInfo.h
-        Status/StatusReporter.h
-        Status/StatusService.h
-        Status/StatusReporterBase.h
-        Stream/PartitionFilter.h
-        Status/StatusReporterBase.h
-        Stream/MessageWriter.h
-        Stream/Message.h
-        Stream/SourceFilter.h
-        Stream/Partition.h
-        Stream/Topic.h
-        ThreadedExecutor.h
-        TimeUtility.h
-        HDFOperations.h
-        HDFVersionCheck.h
-        ModuleSettings.h
-        ModuleHDFInfo.h
-        CommandSystem/CommandListener.h
-        CommandSystem/FeedbackProducerBase.h
-        CommandSystem/JobListener.h
-        JsonConfig/Field.h
-        JsonConfig/FieldHandler.h
-        MultiVector.h
-        SetThreadName.h
-        MetaData/Tracker.h
-        MetaData/Value.h
-        MetaData/ValueInternal.h
-        MetaData/HDF5DataWriter.h WriterModule/mdat/mdat_Writer.h)
+        Kafka/ConsumerFactory.cpp
+        Kafka/Consumer.cpp
+        MainOpt.cpp
+        FlatbufferMessage.cpp
+        NeXusDataset/NeXusDataset.cpp
+        NeXusDataset/EpicsAlarmDatasets.cpp
+        NeXusDataset/AdcDatasets.cpp
+        NeXusDataset/ExtensibleDataset.cpp
+        StreamController.cpp
+        logger.cpp
+        WriterRegistrar.cpp
+        AccessMessageMetadata/NDAr/NDAr_Extractor.cpp
+        AccessMessageMetadata/hs00/hs00_Extractor.cpp
+        AccessMessageMetadata/ns10/ns10_Extractor.cpp
+        AccessMessageMetadata/tdct/tdct_Extractor.cpp
+        AccessMessageMetadata/template/TemplateExtractor.cpp
+        AccessMessageMetadata/ADAr/ADAr_Extractor.cpp
+        AccessMessageMetadata/ev44/ev44_Extractor.cpp
+        AccessMessageMetadata/ev42/ev42_Extractor.cpp
+        AccessMessageMetadata/f144/f144_Extractor.cpp
+        AccessMessageMetadata/f142/f142_Extractor.cpp
+        AccessMessageMetadata/se00/se00_Extractor.cpp
+        AccessMessageMetadata/al00/al00_Extractor.cpp
+        AccessMessageMetadata/senv/senv_Extractor.cpp
+        AccessMessageMetadata/ep01/ep01_Extractor.cpp
+        WriterModule/NDAr/NDAr_Writer.cpp
+        WriterModule/hs00/hs00_Writer.cpp
+        WriterModule/hs00/WriterTyped.cpp
+        WriterModule/hs00/Slice.cpp
+        WriterModule/hs00/HistogramRecord.cpp
+        WriterModule/hs00/Shape.cpp
+        WriterModule/hs00/Dimension.cpp
+        WriterModule/ns10/ns10_Writer.cpp
+        WriterModule/tdct/tdct_Writer.cpp
+        WriterModule/template/TemplateWriter.cpp
+        WriterModule/ADAr/ADAr_Writer.cpp
+        WriterModule/ev44/ev44_Writer.cpp
+        WriterModule/ev42/ev42_Writer.cpp
+        WriterModule/f144/f144_Writer.cpp
+        WriterModule/f142_test/f142_TestWriter.cpp
+        WriterModule/f142/f142_Writer.cpp
+        WriterModule/se00/se00_Writer.cpp
+        WriterModule/al00/al00_Writer.cpp
+        WriterModule/senv/senv_Writer.cpp
+        WriterModule/ep01/ep01_Writer.cpp
+        WriterModule/mdat/mdat_Writer.cpp
+        HDFVersionCheck.cpp
+        CLIOptions.cpp
+        MetaData/Tracker.cpp
+        MetaData/HDF5DataWriter.cpp
+        HDFAttributes.cpp
+        HDFFile.cpp
+        )
 
-
-
-add_library(filewriter_lib SHARED ${kafka_to_nexus_SRC} ${kafka_to_nexus_INC})
+add_library(filewriter_lib SHARED ${kafka_to_nexus_SRC})
 target_link_libraries(filewriter_lib PRIVATE ${CONAN_LIBS})
-
 target_include_directories(filewriter_lib PUBLIC .)
-
-#add_subdirectory(WriterModule)
-#add_subdirectory(AccessMessageMetadata)
-#add_subdirectory(NeXusDataset)
-#
-#set(sources
-#        $<TARGET_OBJECTS:kafka_to_nexus__objects>
-#        $<TARGET_OBJECTS:NeXusDataset>
-#        ${WRITER_MODULES}
-#        ${FB_METADATA_EXTRACTORS})
-#add_executable(kafka-to-nexus ${sources} kafka-to-nexus.cpp)
-#target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
-#target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-#target_link_libraries(kafka-to-nexus ${libraries_common})
-#
-## Link stdc++fs or c++experimental to get std::experimental::filesystem when necessary
-#target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
-#target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11.0>>:c++fs>)
-#
-#add_subdirectory(tests)
