@@ -11,7 +11,7 @@
 #include "HDFAttributes.h"
 #include "HDFOperations.h"
 #include "HDFVersionCheck.h"
-#include "Version.h"
+//#include "Version.h"
 #include "json.h"
 
 namespace FileWriter {
@@ -82,7 +82,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
                                   hdfFile().id().file_name().string());
     HDFAttributes::writeAttribute(
         RootGroup, "creator",
-        fmt::format("kafka-to-nexus commit {:.13}", GetVersion()));
+        fmt::format("kafka-to-nexus commit {:.13}", 123));
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {

@@ -1,67 +1,3 @@
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
-  message(STATUS "CMAKE_BUILD_TYPE was not specified")
-endif()
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-
-find_package(concurrentqueue)
-find_package(readerwriterqueue)
-find_package(RdKafka REQUIRED)
-find_package(HDF5 REQUIRED)
-find_package(flatbuffers)
-if (NOT flatbuffers_FOUND)
-  find_package(Flatbuffers)
-endif()
-find_package(fmt REQUIRED)
-find_package(h5cpp REQUIRED)
-find_package(streaming-data-types)
-find_package(date REQUIRED)
-find_package(asio REQUIRED)
-find_package(graylog-logger REQUIRED)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
-
-if (DEFINED _GLIBCXX_USE_CXX11_ABI)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=${_GLIBCXX_USE_CXX11_ABI}")
-endif()
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -D_GLIBCXX_USE_NANOSLEEP")
-
-if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.3")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
-endif()
-
-set(compile_defs_common "")
-
-set(path_include_common
-        ${CURL_INCLUDE_DIRS}
-        ${PROJECT_SOURCE_DIR}/src
-        )
-
-set(libraries_common
-        ${CURL_LIBRARIES}
-        date::date
-        fmt::fmt
-        RdKafka::rdkafka++
-        hdf5::hdf5
-        h5cpp::h5cpp
-        asio::asio
-        pthread
-        z
-        graylog-logger::graylog-logger
-        readerwriterqueue::readerwriterqueue
-        concurrentqueue::concurrentqueue
-        )
-
-if (APPLE)
-  conan_find_apple_frameworks(CF_LIBRARY "CoreFoundation" "")
-  list(APPEND libraries_common ${CF_LIBRARY})
-endif()
-
-list(APPEND compile_defs_common "HAS_REMOTE_API=0")
-
 set(kafka_to_nexus_SRC
         StreamController.cpp
         Master.cpp
@@ -112,7 +48,7 @@ set(kafka_to_nexus_SRC
         JsonConfig/FieldHandler.cpp
         SetThreadName.cpp
         MetaData/Tracker.cpp
-        MetaData/HDF5DataWriter.cpp WriterModuleBase.cpp)
+        MetaData/HDF5DataWriter.cpp WriterModuleBase.cpp WriterModule/mdat/mdat_Writer.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -190,35 +126,31 @@ set(kafka_to_nexus_INC
         MetaData/Tracker.h
         MetaData/Value.h
         MetaData/ValueInternal.h
-        MetaData/HDF5DataWriter.h)
+        MetaData/HDF5DataWriter.h WriterModule/mdat/mdat_Writer.h)
 
-add_library(kafka_to_nexus__objects OBJECT
-        ${kafka_to_nexus_SRC}
-        ${kafka_to_nexus_INC}
-        )
 
-target_compile_definitions(kafka_to_nexus__objects PRIVATE ${compile_defs_common})
-target_include_directories(kafka_to_nexus__objects PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
-set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
-set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
+add_library(filewriter_lib SHARED ${kafka_to_nexus_SRC} ${kafka_to_nexus_INC})
+target_link_libraries(filewriter_lib PRIVATE ${CONAN_LIBS})
 
-add_subdirectory(WriterModule)
-add_subdirectory(AccessMessageMetadata)
-add_subdirectory(NeXusDataset)
+target_include_directories(filewriter_lib PUBLIC .)
 
-set(sources
-        $<TARGET_OBJECTS:kafka_to_nexus__objects>
-        $<TARGET_OBJECTS:NeXusDataset>
-        ${WRITER_MODULES}
-        ${FB_METADATA_EXTRACTORS})
-add_executable(kafka-to-nexus ${sources} kafka-to-nexus.cpp)
-target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
-target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(kafka-to-nexus ${libraries_common})
-
-# Link stdc++fs or c++experimental to get std::experimental::filesystem when necessary
-target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
-target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11.0>>:c++fs>)
-
-add_subdirectory(tests)
+#add_subdirectory(WriterModule)
+#add_subdirectory(AccessMessageMetadata)
+#add_subdirectory(NeXusDataset)
+#
+#set(sources
+#        $<TARGET_OBJECTS:kafka_to_nexus__objects>
+#        $<TARGET_OBJECTS:NeXusDataset>
+#        ${WRITER_MODULES}
+#        ${FB_METADATA_EXTRACTORS})
+#add_executable(kafka-to-nexus ${sources} kafka-to-nexus.cpp)
+#target_compile_definitions(kafka-to-nexus PRIVATE ${compile_defs_common})
+#target_include_directories(kafka-to-nexus PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+#target_link_libraries(kafka-to-nexus ${libraries_common})
+#
+## Link stdc++fs or c++experimental to get std::experimental::filesystem when necessary
+#target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
+#target_link_libraries(kafka-to-nexus $<$<AND:$<CXX_COMPILER_ID:AppleClang>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11.0>>:c++fs>)
+#
+#add_subdirectory(tests)

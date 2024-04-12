@@ -17,35 +17,7 @@ create_version_header(
 
 # Extra warnings and treat warnings as errors
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
-
-set(HTML_COVERAGE_REPORT OFF CACHE BOOL "Generate test coverage report as html, find in <BUILD_DIR>/coverage/index.html")
-if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
-  include(CodeCoverage)
-  append_coverage_compiler_flags()
-  # Exclude tests and Metric sink implementations that do network IO from test coverage
-  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log* src/WriterModule/f142_test/)
-  if (HTML_COVERAGE_REPORT)
-    setup_target_for_coverage_gcovr_html(NAME coverage
-                                         EXECUTABLE UnitTests
-                                         EXCLUDE ${COVERAGE_EXCLUDE}
-                                         DEPENDENCIES UnitTests)
-  else()
-    setup_target_for_coverage_gcovr_xml(NAME coverage
-                                        EXECUTABLE UnitTests
-                                        EXCLUDE ${COVERAGE_EXCLUDE}
-                                        DEPENDENCIES UnitTests)
-  endif()
-endif()
-
-# Use gold linker if available on system (it is faster than default GNU linker)
-if (UNIX AND NOT APPLE)
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=gold -Wl,--version ERROR_QUIET OUTPUT_VARIABLE ld_version)
-  if ("${ld_version}" MATCHES "GNU gold")
-    message(STATUS "Using gold linker")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
-  endif()
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 
 if (APPLE)
   message(STATUS "Temporary suppressing deprecated warning (asio)")
@@ -77,29 +49,5 @@ else()
   message(FATAL_ERROR "Unrecognised option for CONAN, use AUTO, MANUAL or DISABLE")
 endif()
 
-set(SANITIZER "none" CACHE STRING "Sanitizer used to compile code with")
-set_property(CACHE SANITIZER PROPERTY STRINGS none address thread)
-if(SANITIZER STREQUAL "thread")
-  message(STATUS "Thread sanitizer selected")
-  set(SANITIZE_PARAMS "-fsanitize=thread")
-elseif(SANITIZER STREQUAL "address")
-  message(STATUS "Address sanitizer selected")
-  set(SANITIZE_PARAMS "-fsanitize=address,undefined -fno-omit-frame-pointer -g")
-elseif(SANITIZER STREQUAL "none")
-  message(STATUS "No sanitizer selected")
-  set(SANITIZE_PARAMS "")
-else()
-  message(FATAL_ERROR "Unknown sanitizer (${SANITIZER}) selected.")
-endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZE_PARAMS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SANITIZE_PARAMS}")
-set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZE_PARAMS}")
-
 add_subdirectory(src)
-
-option(RUN_DOXYGEN "Run doxygen" TRUE)
-if (RUN_DOXYGEN)
-configure_file(Doxygen.conf dg.conf)
-add_custom_target(docs COMMAND doxygen "${PROJECT_BINARY_DIR}/dg.conf" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
-endif()
+add_subdirectory(apps)
