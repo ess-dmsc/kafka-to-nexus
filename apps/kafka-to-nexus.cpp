@@ -17,7 +17,7 @@
 #include "Metrics/Registrar.h"
 #include "Metrics/Reporter.h"
 #include "Status/StatusInfo.h"
-//#include "Version.h"
+#include "Version.h"
 #include "WriterRegistrar.h"
 #include <CLI/CLI.hpp>
 
@@ -26,7 +26,7 @@ static std::atomic<RunStates> RunState{RunStates::Running};
 
 int main(int argc, char **argv) {
   std::string const ApplicationName = "kafka-to-nexus";
-  std::string const ApplicationVersion = "123";
+  std::string const ApplicationVersion = GetVersion();
   CLI::App App{fmt::format(
       "{} {:.7} (ESS, BrightnESS)\n"
       "https://github.com/ess-dmsc/kafka-to-nexus\n\n"
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
   }
 
   if (Options->PrintVersion) {
-    fmt::print("{}\n", 123);
+    fmt::print("{}\n", ApplicationVersion);
     return EXIT_SUCCESS;
   }
   App.clear();
