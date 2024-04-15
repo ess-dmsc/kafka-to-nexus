@@ -28,6 +28,25 @@ if (APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 endif()
 
+set(HTML_COVERAGE_REPORT OFF CACHE BOOL "Generate test coverage report as html, find in <BUILD_DIR>/coverage/index.html")
+if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
+  include(CodeCoverage)
+  append_coverage_compiler_flags()
+  # Exclude tests and Metric sink implementations that do network IO from test coverage
+  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log* src/WriterModule/f142_test/)
+  if (HTML_COVERAGE_REPORT)
+    setup_target_for_coverage_gcovr_html(NAME coverage
+            EXECUTABLE UnitTests
+            EXCLUDE ${COVERAGE_EXCLUDE}
+            DEPENDENCIES UnitTests)
+  else()
+    setup_target_for_coverage_gcovr_xml(NAME coverage
+            EXECUTABLE UnitTests
+            EXCLUDE ${COVERAGE_EXCLUDE}
+            DEPENDENCIES UnitTests)
+  endif()
+endif()
+
 set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
 set(CONAN_FILE "conanfile.txt" CACHE STRING "Name of the conanfile to use, must be placed in the project's conan directory")
 set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
