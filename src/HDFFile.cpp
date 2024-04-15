@@ -82,7 +82,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
                                   hdfFile().id().file_name().string());
     HDFAttributes::writeAttribute(
         RootGroup, "creator",
-        fmt::format("kafka-to-nexus commit {:.13}", 123));
+        fmt::format("kafka-to-nexus commit 123", 123));
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
