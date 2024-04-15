@@ -117,7 +117,7 @@ build-alt-distro:
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
   script:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
-    - $SCL ninja all UnitTests docs
+    - $SCL ninja all UnitTests
     - ./bin/UnitTests
   parallel:
     matrix:
