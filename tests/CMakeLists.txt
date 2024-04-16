@@ -84,6 +84,7 @@ find_package(streaming-data-types)
 find_package(date REQUIRED)
 find_package(asio REQUIRED)
 find_package(graylog-logger REQUIRED)
+find_package(trompeloeil REQUIRED)
 
 set(libraries_common
         ${CURL_LIBRARIES}
