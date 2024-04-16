@@ -119,6 +119,7 @@ build-alt-distro:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests
     - ./bin/UnitTests
+    - ./bin/kafka-to-nexus --version
   parallel:
     matrix:
       - DISTRO:
