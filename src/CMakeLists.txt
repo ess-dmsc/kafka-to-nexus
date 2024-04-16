@@ -90,6 +90,37 @@ set(kafka_to_nexus_SRC
         HDFFile.cpp
         )
 
+#find_package(concurrentqueue)
+#find_package(readerwriterqueue)
+#find_package(RdKafka REQUIRED)
+#find_package(HDF5 REQUIRED)
+#find_package(flatbuffers)
+#if (NOT flatbuffers_FOUND)
+#    find_package(Flatbuffers)
+#endif()
+#find_package(fmt REQUIRED)
+#find_package(h5cpp REQUIRED)
+#find_package(streaming-data-types)
+#find_package(date REQUIRED)
+#find_package(asio REQUIRED)
+#find_package(graylog-logger REQUIRED)
+#
+#set(libraries_common
+#        ${CURL_LIBRARIES}
+#        date::date
+#        fmt::fmt
+#        RdKafka::rdkafka++
+#        hdf5::hdf5
+#        h5cpp::h5cpp
+#        asio::asio
+#        pthread
+#        z
+#        graylog-logger::graylog-logger
+#        readerwriterqueue::readerwriterqueue
+#        concurrentqueue::concurrentqueue
+#        )
+
+
 add_library(filewriter_lib SHARED ${kafka_to_nexus_SRC})
-target_link_libraries(filewriter_lib PRIVATE ${CONAN_LIBS})
+target_link_libraries(filewriter_lib PUBLIC ${CONAN_LIBS})
 target_include_directories(filewriter_lib PUBLIC .)
