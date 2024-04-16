@@ -118,6 +118,7 @@ build-alt-distro:
   script:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests
+    - sh activate_build.sh
     - ./bin/UnitTests
   parallel:
     matrix:
