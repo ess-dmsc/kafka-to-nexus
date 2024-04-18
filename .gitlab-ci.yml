@@ -101,6 +101,7 @@ build-release:
   script:
     - $SCL ../ci/configure-release.sh .. .
     - $SCL ninja all UnitTests docs
+    - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
     paths:
@@ -118,7 +119,9 @@ build-alt-distro:
   script:
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests docs
+    - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests
+
   parallel:
     matrix:
       - DISTRO:
