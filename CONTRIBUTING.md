@@ -17,9 +17,11 @@ To summarise:
 - Create pull requests against 'main'.
 
 ### Branch naming
-The names should start with the ticket number and contain a brief description. For example:
+The names should start with the JIRA ticket number and contain a brief description. For example:
 
 `ECDC-1014_byebye_dead_code`
+
+Skip the ticket number if you don't have access to the ESS JIRA :)
 
 ### Pull requests
 There is a template for pull requests. This should contain enough information for the reviewer to be able to review the code efficiently.
@@ -47,3 +49,11 @@ Unit tests should be written/modified for any code added or changed (within reas
 ### Integration tests
 Integration tests should be written/modified for any changes that affect the "public" API of the application, i.e. anything 
 that affects another component of the data streaming pipeline.
+
+### Sanitizers
+To run one of the [sanitizers](https://github.com/google/sanitizers) add the appropriate flag to cmake:
+```bash
+cmake .. -DSANITIZER=address
+cmake .. -DSANITIZER=thread
+```
+Note: the thread and address sanitizers cannot be ran at the same time.

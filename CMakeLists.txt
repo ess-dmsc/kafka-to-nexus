@@ -1,7 +1,12 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.10)
 project("kafka-to-nexus")
 
 set(CMAKE_CXX_STANDARD 17)
+
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
+  message(STATUS "CMAKE_BUILD_TYPE was not specified so defaulting to DEBUG")
+endif()
 
 set(SRC_CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH ${SRC_CMAKE_MODULE_PATH})
@@ -9,14 +14,19 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 include(${SRC_CMAKE_MODULE_PATH}/Versioning.cmake)
 set_version()
-set(VERSION_INCLUDE_DIR ${CMAKE_BINARY_DIR}/version)
 create_version_header(
   ${SRC_CMAKE_MODULE_PATH}/templates/Version.h.in
-  ${VERSION_INCLUDE_DIR}/Version.h
+  ${PROJECT_SOURCE_DIR}/src/Version.h
 )
 
 # Extra warnings and treat warnings as errors
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -Wnon-virtual-dtor -Wcast-align -Wunused -Woverloaded-virtual -Wdouble-promotion -Wformat=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
+
+if (APPLE)
+  message(STATUS "Temporary suppressing deprecated warning (asio)")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+endif()
 
 set(HTML_COVERAGE_REPORT OFF CACHE BOOL "Generate test coverage report as html, find in <BUILD_DIR>/coverage/index.html")
 if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
@@ -26,14 +36,14 @@ if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
   set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log* src/WriterModule/f142_test/)
   if (HTML_COVERAGE_REPORT)
     setup_target_for_coverage_gcovr_html(NAME coverage
-                                         EXECUTABLE UnitTests
-                                         EXCLUDE ${COVERAGE_EXCLUDE}
-                                         DEPENDENCIES UnitTests)
+            EXECUTABLE UnitTests
+            EXCLUDE ${COVERAGE_EXCLUDE}
+            DEPENDENCIES UnitTests)
   else()
     setup_target_for_coverage_gcovr_xml(NAME coverage
-                                        EXECUTABLE UnitTests
-                                        EXCLUDE ${COVERAGE_EXCLUDE}
-                                        DEPENDENCIES UnitTests)
+            EXECUTABLE UnitTests
+            EXCLUDE ${COVERAGE_EXCLUDE}
+            DEPENDENCIES UnitTests)
   endif()
 endif()
 
@@ -45,11 +55,6 @@ if (UNIX AND NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
   endif()
-endif()
-
-if (APPLE)
-  message(STATUS "Temporary suppressing deprecated warning (asio)")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 endif()
 
 set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
@@ -79,27 +84,28 @@ endif()
 
 set(SANITIZER "none" CACHE STRING "Sanitizer used to compile code with")
 set_property(CACHE SANITIZER PROPERTY STRINGS none address thread)
-if(SANITIZER STREQUAL "thread")
+if(SANITIZER STREQUAL "none")
+elseif(SANITIZER STREQUAL "thread")
   message(STATUS "Thread sanitizer selected")
-  set(SANITIZE_PARAMS "-fsanitize=thread")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -g")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread -g")
+  set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=thread -g")
 elseif(SANITIZER STREQUAL "address")
   message(STATUS "Address sanitizer selected")
   set(SANITIZE_PARAMS "-fsanitize=address,undefined -fno-omit-frame-pointer -g")
-elseif(SANITIZER STREQUAL "none")
-  message(STATUS "No sanitizer selected")
-  set(SANITIZE_PARAMS "")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined -fno-omit-frame-pointer -g")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address,undefined -fno-omit-frame-pointer -g")
+  set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address,undefined -fno-omit-frame-pointer -g")
 else()
   message(FATAL_ERROR "Unknown sanitizer (${SANITIZER}) selected.")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZE_PARAMS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SANITIZE_PARAMS}")
-set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZE_PARAMS}")
-
 add_subdirectory(src)
+add_subdirectory(apps)
+add_subdirectory(tests)
 
 option(RUN_DOXYGEN "Run doxygen" TRUE)
 if (RUN_DOXYGEN)
-configure_file(Doxygen.conf dg.conf)
-add_custom_target(docs COMMAND doxygen "${PROJECT_BINARY_DIR}/dg.conf" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+  configure_file(Doxygen.conf dg.conf)
+  add_custom_target(docs COMMAND doxygen "${PROJECT_BINARY_DIR}/dg.conf" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()

@@ -19,3 +19,4 @@ venv
 .vscode.local/
 exampleconfig.ini
 compile_commands.json
+Version.h
