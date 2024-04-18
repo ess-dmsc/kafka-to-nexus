@@ -70,41 +70,9 @@ set(UnitTests_SRC
         HDFOperationsTests.cpp
         )
 
-find_package(concurrentqueue)
-find_package(readerwriterqueue)
-find_package(RdKafka REQUIRED)
-find_package(HDF5 REQUIRED)
-find_package(flatbuffers)
-if (NOT flatbuffers_FOUND)
-    find_package(Flatbuffers)
-endif()
-find_package(fmt REQUIRED)
-find_package(h5cpp REQUIRED)
-find_package(streaming-data-types)
-find_package(date REQUIRED)
-find_package(asio REQUIRED)
-find_package(graylog-logger REQUIRED)
-find_package(trompeloeil REQUIRED)
-
-set(libraries_common
-        ${CURL_LIBRARIES}
-        date::date
-        fmt::fmt
-        RdKafka::rdkafka++
-        hdf5::hdf5
-        h5cpp::h5cpp
-        asio::asio
-        pthread
-        z
-        graylog-logger::graylog-logger
-        readerwriterqueue::readerwriterqueue
-        concurrentqueue::concurrentqueue
-        )
-
 add_executable(UnitTests ${UnitTests_SRC})
 target_include_directories(UnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(UnitTests PRIVATE filewriter_lib ${libraries_common} trompeloeil::trompeloeil ${CONAN_LIBS_GTEST}
-        )
+target_link_libraries(UnitTests PRIVATE filewriter_lib ${CONAN_LIBS})
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
 
 enable_testing()
