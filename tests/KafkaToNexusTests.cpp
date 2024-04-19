@@ -10,7 +10,7 @@
 #include "Master.h"
 #include "Status/StatusReporter.h"
 #include "StreamController.h"
-#include "kafka-to-nexus.h"
+#include "../apps/kafka-to-nexus.h"
 #include <csignal>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
