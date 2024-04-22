@@ -3,6 +3,7 @@
 #include "MetaData/Tracker.h"
 #include "Metrics/Metric.h"
 #include "logger.h"
+#include <da00_dataarray_generated.h>
 #include <ep01_epics_connection_generated.h>
 #include <f144_logdata_generated.h>
 #include <iostream>
@@ -251,6 +252,40 @@ create_ep01_message_double(std::string const &source, ConnectionInfo status,
   return {std::move(buffer), buffer_size};
 }
 
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_da00_message(std::string const &source, int64_t timestamp_ms) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  builder.ForceDefaults(true);
+
+  auto source_name_offset = builder.CreateString(source);
+
+  auto var_name_offset = builder.CreateString("var_name");
+  auto var_unit_name_offset = builder.CreateString("units");
+  auto var_label_name_offset = builder.CreateString("label");
+  auto var_source_offset = builder.CreateString("source");
+  std::vector<uint8_t> var_data = {0, 1, 2, 3, 4};
+  std::vector<int64_t> var_shape = {5};
+  auto var_data_offset = builder.CreateVector(var_data);
+  auto var_shape_offset = builder.CreateVector(var_shape);
+
+  auto variable_offset = Createda00_Variable(
+      builder, var_name_offset, var_unit_name_offset, var_label_name_offset,
+      var_source_offset, da00_dtype::int32, 0, var_shape_offset,
+      var_data_offset);
+  std::vector<flatbuffers::Offset<da00_Variable>> variable_offsets = {
+      variable_offset};
+  auto variables = builder.CreateVector(variable_offsets);
+
+  auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ms,
+                                   variables);
+  builder.Finish(da00);
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
 void add_message(StubConsumerFactory *consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
@@ -297,6 +332,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   msg = create_f144_message_double("delay:source:chopper", 102, 2100);
   add_message(consumer_factory.get(), std::move(msg), 2100ms, offset++, 0);
+
+  msg = create_da00_message("fake::da00", 2200);
+  add_message(consumer_factory.get(), std::move(msg), 2200ms, offset++, 0);
 
   Command::StartInfo start_info;
   start_info.NexusStructure = example_json;
