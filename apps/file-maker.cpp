@@ -70,7 +70,8 @@ std::string const example_json = R"(
 							"config": {
 								"source": "delay:source:chopper",
 								"topic": "local_choppers",
-								"dtype": "double"
+								"dtype": "double",
+                                                                "value_units": "ns"
 							}
 						}]
 					},{
@@ -86,7 +87,8 @@ std::string const example_json = R"(
                                                         "config": {
                                                                 "source": "speed:source:chopper",
                                                                 "topic": "local_motion",
-                                                                "dtype": "double"
+                                                                "dtype": "double",
+                                                                "value_units": "Hz"
                                                         }
                                                 }]
                                                 }]

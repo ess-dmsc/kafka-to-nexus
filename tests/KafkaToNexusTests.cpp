@@ -7,10 +7,10 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "../apps/kafka-to-nexus.h"
 #include "Master.h"
 #include "Status/StatusReporter.h"
 #include "StreamController.h"
-#include "../apps/kafka-to-nexus.h"
 #include <csignal>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
