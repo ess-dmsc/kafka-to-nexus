@@ -57,3 +57,11 @@ cmake .. -DSANITIZER=address
 cmake .. -DSANITIZER=thread
 ```
 Note: the thread and address sanitizers cannot be ran at the same time.
+
+### File-maker app
+This is a tool to help developers play with file-writing without requiring Kafka. 
+
+For example: it is useful for exploring the behaviour of the writer modules.
+
+Note: it is currently a work in progress, so isn't very user friendly.
+
