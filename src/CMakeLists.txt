@@ -83,6 +83,8 @@ set(kafka_to_nexus_SRC
         WriterModule/senv/senv_Writer.cpp
         WriterModule/ep01/ep01_Writer.cpp
         WriterModule/mdat/mdat_Writer.cpp
+        WriterModule/da00/da00_Writer.cpp
+        WriterModule/da00/da00_Type.cpp
         HDFVersionCheck.cpp
         CLIOptions.cpp
         MetaData/Tracker.cpp

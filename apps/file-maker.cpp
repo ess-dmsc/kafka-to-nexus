@@ -278,7 +278,7 @@ create_da00_message(std::string const &source, int64_t timestamp_ms) {
 
   auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ms,
                                    variables);
-  builder.Finish(da00);
+  builder.Finish(da00, "da00");
 
   size_t buffer_size = builder.GetSize();
   auto buffer = std::make_unique<uint8_t[]>(buffer_size);
