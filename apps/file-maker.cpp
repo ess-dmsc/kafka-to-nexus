@@ -12,93 +12,168 @@
 
 using std::chrono_literals::operator""ms;
 
-std::string const example_json = R"(
-{
-	"children": [{
-		"name": "entry",
-		"type": "group",
-		"attributes": [{
-			"name": "NX_class",
-			"dtype": "string",
-			"values": "NXentry"
-		}],
-		"children": [{
-				"module": "dataset",
-				"config": {
-					"name": "title",
-					"values": "This is a title",
-					"type": "string"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"name": "start_time"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"name": "end_time"
-				}
-			},
-			{
-				"name": "instrument",
-				"type": "group",
-				"attributes": [{
-					"name": "NX_class",
-					"dtype": "string",
-					"values": "NXinstrument"
-				}],
-				"children": [{
-					"name": "mini_chopper",
-					"type": "group",
-					"attributes": [{
-						"name": "NX_class",
-						"dtype": "string",
-						"values": "NXdisk_chopper"
-					}],
-					"children": [{
-						"name": "delay",
-						"type": "group",
-						"attributes": [{
-							"name": "NX_class",
-							"dtype": "string",
-							"values": "NXlog"
-						}],
-						"children": [{
-							"module": "f144",
-							"config": {
-								"source": "delay:source:chopper",
-								"topic": "local_choppers",
-								"dtype": "double",
-                                                                "value_units": "ns"
-							}
-						}]
-					},{
-                                                "name": "speed",
-                                                "type": "group",
-                                                "attributes": [{
-                                                        "name": "NX_class",
-                                                        "dtype": "string",
-                                                        "values": "NXlog"
-                                                }],
-                                                "children": [{
-                                                        "module": "f144",
-                                                        "config": {
-                                                                "source": "speed:source:chopper",
-                                                                "topic": "local_motion",
-                                                                "dtype": "double",
-                                                                "value_units": "Hz"
-                                                        }
-                                                }]
-                                                }]
-				}]
-			}
-		]
-	}]
-}
-                             )";
+std::string const example_json = R"({
+"children": [
+  {
+    "name": "entry",
+    "type": "group",
+    "attributes": [
+      {
+        "name": "NX_class",
+        "dtype": "string",
+        "values": "NXentry"
+      }
+    ],
+    "children": [
+      {
+        "module": "dataset",
+        "config": {
+          "name": "title",
+          "values": "This is a title",
+          "type": "string"
+        }
+      },
+      {
+        "module": "mdat",
+        "config": {
+          "name": "start_time"
+        }
+      },
+      {
+        "module": "mdat",
+        "config": {
+          "name": "end_time"
+        }
+      },
+      {
+        "name": "instrument",
+        "type": "group",
+        "attributes": [
+          {
+            "name": "NX_class",
+            "dtype": "string",
+            "values": "NXinstrument"
+          }
+        ],
+        "children": [
+          {
+            "name": "mini_chopper",
+            "type": "group",
+            "attributes": [
+              {
+                "name": "NX_class",
+                "dtype": "string",
+                "values": "NXdisk_chopper"
+              }
+            ],
+            "children": [
+              {
+                "name": "delay",
+                "type": "group",
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "dtype": "string",
+                    "values": "NXlog"
+                  }
+                ],
+                "children": [
+                  {
+                    "module": "f144",
+                    "config": {
+                      "source": "delay:source:chopper",
+                      "topic": "local_choppers",
+                      "dtype": "double",
+                      "value_units": "ns"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "speed",
+                "type": "group",
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "dtype": "string",
+                    "values": "NXlog"
+                  }
+                ],
+                "children": [
+                  {
+                    "module": "da00",
+                    "config": {
+                      "source": "fake:da00:source",
+                      "topic": "local_motion",
+                      "attributes": [
+                        {
+                          "name": "test_attribute",
+                          "data": "test_value"
+                        }
+                      ],
+                      "variables": [
+                        {
+                          "name": "value",
+                          "unit": "counts",
+                          "label": "Integrated counts on strip detector",
+                          "data_type": "int32",
+                          "axes": [
+                            "x"
+                          ],
+                          "shape": [
+                            5
+                          ]
+                        }
+                      ],
+                      "constants": [
+                        {
+                          "name": "x",
+                          "unit": "cm",
+                          "label": "Binned position along x-axis",
+                          "data_type": "float32",
+                          "axes": [
+                            "x"
+                          ],
+                          "shape": [
+                            4
+                          ],
+                          "data": [
+                            10,
+                            20.1,
+                            30.2,
+                            40.3
+                          ]
+                        },
+                        {
+                          "name": "y",
+                          "unit": "fm",
+                          "label": "Position along y-axis",
+                          "data_type": "int8",
+                          "axes": [
+                            "y"
+                          ],
+                          "shape": [
+                            3
+                          ],
+                          "data": [
+                            9,
+                            6,
+                            3
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+} )";
 
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
@@ -253,25 +328,30 @@ create_ep01_message_double(std::string const &source, ConnectionInfo status,
 }
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
-create_da00_message(std::string const &source, int64_t timestamp_ms) {
+create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
+                           const std::vector<int32_t> &data) {
   auto builder = flatbuffers::FlatBufferBuilder();
   builder.ForceDefaults(true);
 
   auto source_name_offset = builder.CreateString(source);
+  auto var_name_offset = builder.CreateString("value");
 
-  auto var_name_offset = builder.CreateString("var_name");
-  auto var_unit_name_offset = builder.CreateString("units");
-  auto var_label_name_offset = builder.CreateString("label");
-  auto var_source_offset = builder.CreateString("source");
-  std::vector<uint8_t> var_data = {0, 1, 2, 3, 4};
-  std::vector<int64_t> var_shape = {5};
-  auto var_data_offset = builder.CreateVector(var_data);
+  auto var_axis = builder.CreateString("x");
+  std::vector<flatbuffers::Offset<flatbuffers::String>> var_axes_offset = {
+      var_axis};
+  auto var_axes = builder.CreateVector(var_axes_offset);
+
+  std::vector<int64_t> var_shape = {static_cast<int64_t>(data.size())};
   auto var_shape_offset = builder.CreateVector(var_shape);
 
-  auto variable_offset = Createda00_Variable(
-      builder, var_name_offset, var_unit_name_offset, var_label_name_offset,
-      var_source_offset, da00_dtype::int32, 0, var_shape_offset,
-      var_data_offset);
+  std::uint8_t *p_data;
+  auto payload =
+      builder.CreateUninitializedVector(data.size(), sizeof(data[0]), &p_data);
+  std::memcpy(p_data, data.data(), sizeof(data[0]) * data.size());
+
+  auto variable_offset =
+      Createda00_Variable(builder, var_name_offset, 0, 0, 0, da00_dtype::int32,
+                          var_axes, var_shape_offset, payload);
   std::vector<flatbuffers::Offset<da00_Variable>> variable_offsets = {
       variable_offset};
   auto variables = builder.CreateVector(variable_offsets);
@@ -279,6 +359,12 @@ create_da00_message(std::string const &source, int64_t timestamp_ms) {
   auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ms,
                                    variables);
   builder.Finish(da00, "da00");
+
+  auto verifier =
+      flatbuffers::Verifier(builder.GetBufferPointer(), builder.GetSize());
+  if (!Verifyda00_DataArrayBuffer(verifier)) {
+    throw std::runtime_error("could not verify da00");
+  }
 
   size_t buffer_size = builder.GetSize();
   auto buffer = std::make_unique<uint8_t[]>(buffer_size);
@@ -333,8 +419,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   msg = create_f144_message_double("delay:source:chopper", 102, 2100);
   add_message(consumer_factory.get(), std::move(msg), 2100ms, offset++, 0);
 
-  msg = create_da00_message("fake::da00", 2200);
+  msg = create_da00_message_int32s("fake:da00:source", 2200, {0, 1, 2, 3, 4});
   add_message(consumer_factory.get(), std::move(msg), 2200ms, offset++, 0);
+
+  msg = create_da00_message_int32s("fake:da00:source", 2300, {5, 6, 7, 8, 9});
+  add_message(consumer_factory.get(), std::move(msg), 2300ms, offset++, 0);
 
   Command::StartInfo start_info;
   start_info.NexusStructure = example_json;
