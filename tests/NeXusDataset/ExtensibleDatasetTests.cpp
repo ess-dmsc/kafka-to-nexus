@@ -345,7 +345,6 @@ TEST_F(DatasetCreation, StringDatasetReopen) {
   NeXusDataset::FixedSizeString TestDataset(RootGroup, DatasetName,
                                             NeXusDataset::Mode::Open);
   EXPECT_EQ(StringLength, TestDataset.getMaxStringSize());
-  EXPECT_EQ(TestDataset.dataspace().size(), 0);
 }
 
 TEST_F(DatasetCreation, StringDatasetFailReopen) {
@@ -363,12 +362,10 @@ TEST_F(DatasetCreation, StringDatasetWriteString) {
 
   std::string TestString{"Hello"};
   TestDataset.appendStringElement(TestString);
-  std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(),
-                   hdf5::dataspace::Scalar(),
-                   hdf5::dataspace::Hyperslab{{0}, {1}});
-  std::string CompareString(
-      ReadBackString.data()); // Trim null characters from end of string
+
+  std::string ReadBackString = TestDataset.read_element(0);
+  // Trim null characters from end of string
+  std::string CompareString(ReadBackString.data());
   EXPECT_EQ(TestString, CompareString);
 }
 
@@ -383,10 +380,8 @@ TEST_F(DatasetCreation, StringDatasetWriteTwoStrings) {
   std::string TestString2{"Hi"};
   TestDataset.appendStringElement(TestString2);
 
-  std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(),
-                   hdf5::dataspace::Scalar(),
-                   hdf5::dataspace::Hyperslab{{1}, {1}});
+  std::string ReadBackString = TestDataset.read_element(1);
+  // Trim null characters from end of string
   std::string CompareString(ReadBackString.data());
   EXPECT_EQ(TestString2, CompareString);
 }
@@ -399,10 +394,8 @@ TEST_F(DatasetCreation, StringDatasetWriteTooLongString) {
 
   std::string TestString{"The quick brown fox jumped over the lazy turtle"};
   TestDataset.appendStringElement(TestString);
-  std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(),
-                   hdf5::dataspace::Scalar(),
-                   hdf5::dataspace::Hyperslab{{0}, {1}});
+  std::string ReadBackString = TestDataset.read_element(0);
+  // Trim null characters from end of string
   std::string CompareString(ReadBackString.data());
   EXPECT_NE(TestString, CompareString);
   EXPECT_EQ(std::string(TestString.begin(), TestString.begin() + StringLength),

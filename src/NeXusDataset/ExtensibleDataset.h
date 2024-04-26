@@ -271,7 +271,7 @@ public:
 };
 
 /// \brief
-class FixedSizeString : public hdf5::node::ChunkedDataset {
+class FixedSizeString {
 public:
   FixedSizeString() = default;
   /// \brief Create/open a fixed string length datatset.
@@ -281,22 +281,44 @@ public:
   /// \param CMode Should the dataset be opened or created.
   /// \param StringSize What is the maximum number of characters in the string.
   /// \param ChunkSize The number of strings in one chunk.
-  FixedSizeString(const hdf5::node::Group &Parent, std::string Name, Mode CMode,
-                  size_t StringSize = 300, size_t ChunkSize = 1024);
+  FixedSizeString(hdf5::node::Group const &Parent, std::string const &Name,
+                  Mode CMode, size_t StringSize = 300, size_t ChunkSize = 1024);
 
   /// \brief Get max string size.
   ///
   /// \return The max string size.
-  constexpr size_t getMaxStringSize() const { return MaxStringSize; };
+  [[nodiscard]] constexpr size_t getMaxStringSize() const {
+    return MaxStringSize;
+  };
 
   /// \brief Append a new string to the dataset array
   ///
   /// \param InString The string that is to be appended to the dataset.
   void appendStringElement(std::string const &InString);
 
+  /// Gets the current size of the dataset.
+  [[nodiscard]] hssize_t current_size() const {
+    return dataset_.dataspace().size();
+  }
+
+  /// \brief Read a string element from the dataset array.
+  ///
+  /// Only exists for maintaining back-compatibility with unit tests.
+  /// Delete when a better way to test is found!
+  ///
+  /// \param offset The index of the element to read.
+  /// \return The string value.
+  std::string read_element(uint64_t offset) {
+    std::string result;
+    dataset_.read(result, dataset_.datatype(), hdf5::dataspace::Scalar(),
+                  hdf5::dataspace::Hyperslab{{offset}, {1}});
+    return result;
+  }
+
 private:
+  hdf5::node::Dataset dataset_;
   hdf5::datatype::String StringType;
-  size_t MaxStringSize;
+  size_t MaxStringSize{300};
   size_t NrOfStrings{0};
 };
 

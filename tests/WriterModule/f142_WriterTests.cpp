@@ -486,7 +486,7 @@ TEST_F(f142WriteData, WhenMessageContainsAlarmStatusOfNoChangeItIsNotWritten) {
   // When alarm status is NO_CHANGE nothing should be recorded in the alarm
   // datasets
   EXPECT_EQ(TestWriter.AlarmTime.current_size(), 0);
-  EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 0);
+  EXPECT_EQ(TestWriter.AlarmStatus.current_size(), 0);
   EXPECT_EQ(TestWriter.AlarmSeverity.current_size(), 0);
 }
 
@@ -523,17 +523,15 @@ TEST_P(f142WriteAlarms, WhenMessageContainsAnAlarmChangeItIsWritten) {
   // When alarm status is something other than NO_CHANGE, it should be recorded
   // in the alarm datasets
   EXPECT_EQ(TestWriter.AlarmTime.current_size(), 1);
-  EXPECT_EQ(TestWriter.AlarmStatus.dataspace().size(), 1);
+  EXPECT_EQ(TestWriter.AlarmStatus.current_size(), 1);
   EXPECT_EQ(TestWriter.AlarmSeverity.current_size(), 1);
 
   std::vector<uint64_t> WrittenAlarmTimes(1);
   TestWriter.AlarmTime.read_data(WrittenAlarmTimes);
   EXPECT_EQ(WrittenAlarmTimes.at(0), TestAlarm.Timestamp);
 
-  std::string WrittenAlarmStatusTemporary;
-  TestWriter.AlarmStatus.read(
-      WrittenAlarmStatusTemporary, TestWriter.AlarmStatus.datatype(),
-      hdf5::dataspace::Scalar(), hdf5::dataspace::Hyperslab{{0}, {1}});
+  std::string WrittenAlarmStatusTemporary =
+      TestWriter.AlarmStatus.read_element(0);
   std::string WrittenAlarmStatus(
       WrittenAlarmStatusTemporary
           .data()); // Trim null characters from end of string
