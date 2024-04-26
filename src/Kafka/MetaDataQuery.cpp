@@ -29,8 +29,8 @@ MetadataEnquirer::findTopicMetadata(const std::string &Topic,
 }
 
 std::unique_ptr<RdKafka::Consumer>
-MetadataEnquirer::getKafkaHandle(std::string Broker,
-                                 BrokerSettings BrokerSettings) {
+MetadataEnquirer::getKafkaHandle(std::string const &Broker,
+                                 BrokerSettings const &BrokerSettings) {
   auto Conf = std::unique_ptr<RdKafka::Conf>(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
   std::string ErrorStr;
@@ -60,7 +60,7 @@ MetadataEnquirer::getKafkaHandle(std::string Broker,
 std::vector<std::pair<int, int64_t>> MetadataEnquirer::getOffsetForTime(
     std::string const &Broker, std::string const &Topic,
     std::vector<int> const &Partitions, time_point Time, duration TimeOut,
-    BrokerSettings BrokerSettings) {
+    BrokerSettings const &BrokerSettings) {
   auto Handle = MetadataEnquirer().getKafkaHandle(Broker, BrokerSettings);
   auto UsedTime = toMilliSeconds(Time);
   std::vector<std::unique_ptr<RdKafka::TopicPartition>> TopicPartitions;
@@ -106,7 +106,7 @@ std::vector<int> MetadataEnquirer::extractPartitionIDs(
 
 std::vector<int> MetadataEnquirer::getPartitionsForTopic(
     std::string const &Broker, std::string const &Topic, duration TimeOut,
-    BrokerSettings BrokerSettings) {
+    BrokerSettings const &BrokerSettings) {
   auto Handle = MetadataEnquirer().getKafkaHandle(Broker, BrokerSettings);
   std::string ErrorStr;
   auto TopicObj = std::unique_ptr<RdKafka::Topic>(
@@ -129,7 +129,7 @@ std::vector<int> MetadataEnquirer::getPartitionsForTopic(
 
 std::set<std::string>
 MetadataEnquirer::getTopicList(std::string const &Broker, duration TimeOut,
-                               BrokerSettings BrokerSettings) {
+                               BrokerSettings const &BrokerSettings) {
   auto Handle = MetadataEnquirer().getKafkaHandle(Broker, BrokerSettings);
   std::string ErrorStr;
   auto TimeOutInMs = toMilliSeconds(TimeOut);

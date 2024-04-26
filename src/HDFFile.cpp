@@ -155,7 +155,8 @@ void HDFFile::addMetaData() {
   try {
     openInRegularMode();
     if (MetaDataTracker != nullptr) {
-      MetaDataTracker->writeToHDF5File(hdfFile().root());
+      auto root = hdfFile().root();
+      MetaDataTracker->writeToHDF5File(root);
     }
   } catch (std::exception const &E) {
     LOG_ERROR(

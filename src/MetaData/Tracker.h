@@ -21,7 +21,7 @@ public:
   virtual void registerMetaData(MetaData::ValueBase NewMetaData) = 0;
   virtual void clearMetaData() = 0;
   virtual void writeToJSONDict(nlohmann::json &JSONNode) const = 0;
-  virtual void writeToHDF5File(hdf5::node::Group RootNode) const = 0;
+  virtual void writeToHDF5File(hdf5::node::Group &RootNode) const = 0;
 };
 
 using TrackerPtr = std::shared_ptr<ITracker>;
@@ -36,7 +36,7 @@ public:
   void registerMetaData(MetaData::ValueBase NewMetaData) override;
   void clearMetaData() override;
   void writeToJSONDict(nlohmann::json &JSONNode) const override;
-  void writeToHDF5File(hdf5::node::Group RootNode) const override;
+  void writeToHDF5File(hdf5::node::Group &RootNode) const override;
 
 private:
   mutable std::mutex MetaDataMutex;

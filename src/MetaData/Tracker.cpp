@@ -30,7 +30,7 @@ void Tracker::writeToJSONDict(nlohmann::json &JSONNode) const {
   }
 }
 
-void Tracker::writeToHDF5File(hdf5::node::Group RootNode) const {
+void Tracker::writeToHDF5File(hdf5::node::Group &RootNode) const {
   std::lock_guard LockGuard(MetaDataMutex);
   int ErrorCounter{0};
   for (auto const &MetaData : KnownMetaData) {
