@@ -374,6 +374,7 @@ public:
     };
     if (has_dtype() && dtype() != fb->data_type()) {
       LOG_WARN("Data type mismatch for {}: (configuration={}, buffer={})", name(), dtype(), fb->data_type());
+      // TODO: return early? If the data doesn't match then it will crash?
     }
     // check provided and expected axis names
     if (has_axes()) {

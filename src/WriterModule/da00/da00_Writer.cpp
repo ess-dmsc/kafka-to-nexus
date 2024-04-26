@@ -58,7 +58,7 @@ static void warn_if(bool Condition, const std::string & fmt, const Args &... arg
   if (Condition) LOG_WARN(msg.str(), args...);
 }
 
-void da00_Writer::handle_first_message([[maybe_unused]]da00_DataArray const * da00) {
+void da00_Writer::handle_first_message(da00_DataArray const * da00) {
   if (!VariableConfigMap.empty()){
     for (const auto ptr: *da00->data()){
       auto fb = VariableConfig(ptr);
@@ -114,7 +114,7 @@ void da00_Writer::handle_first_message([[maybe_unused]]da00_DataArray const * da
   }
 }
 
-void da00_Writer::handle_group_attributes([[maybe_unused]]hdf5::node::Group &HDFGroup) const {
+void da00_Writer::handle_group_attributes(hdf5::node::Group &HDFGroup) const {
   /*
    * The config should specify attributes, but might not include the
    * leading 'time' axis on a 'signal' dataset which is also a Variable.
@@ -135,7 +135,8 @@ void da00_Writer::handle_group_attributes([[maybe_unused]]hdf5::node::Group &HDF
   std::vector<AttributeConfig> attrs;
   auto attrs_json = AttributesField.getValue();
   attrs.reserve(attrs_json.size());
-  auto signal_is_variable{false}, signal_is_present{false};
+  auto signal_is_variable{false};
+  auto signal_is_present{false};
   std::string signal_name;
   for (const auto &js : attrs_json) {
     attrs.emplace_back(js);
@@ -202,7 +203,7 @@ void da00_Writer::handle_group_attributes([[maybe_unused]]hdf5::node::Group &HDF
 }
 
 
-InitResult da00_Writer::init_hdf([[maybe_unused]]hdf5::node::Group &HDFGroup) {
+InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   const auto chunk_size = ChunkSize.operator hdf5::Dimensions().at(0);
   using NeXusDataset::Mode;
   handle_group_attributes(HDFGroup);
@@ -242,7 +243,7 @@ InitResult da00_Writer::init_hdf([[maybe_unused]]hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-InitResult da00_Writer::reopen([[maybe_unused]]hdf5::node::Group &HDFGroup) {
+InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     for (const auto & [name, config] : VariableConfigMap){
       if (config.has_dtype() && config.has_shape()) {
@@ -278,7 +279,7 @@ InitResult da00_Writer::reopen([[maybe_unused]]hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-void da00_Writer::writeImpl([[maybe_unused]]const FileWriter::FlatbufferMessage &Message) {
+void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   const auto da00_obj = Getda00_DataArray(Message.data());
   if (isFirstMessage) {
     handle_first_message(da00_obj);
