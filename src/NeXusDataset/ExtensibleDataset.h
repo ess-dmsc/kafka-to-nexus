@@ -27,7 +27,7 @@ public:
   using Type = std::int8_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT8)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT8))};
   }
 };
 
@@ -37,7 +37,7 @@ public:
   using Type = std::uint8_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT8)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT8))};
   }
 };
 
@@ -47,7 +47,7 @@ public:
   using Type = std::int16_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT16)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT16))};
   }
 };
 
@@ -57,7 +57,7 @@ public:
   using Type = std::uint16_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16))};
   }
 };
 
@@ -67,7 +67,7 @@ public:
   using Type = std::int32_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT32)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT32))};
   }
 };
 
@@ -77,7 +77,7 @@ public:
   using Type = std::uint32_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT32)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT32))};
   }
 };
 
@@ -87,7 +87,7 @@ public:
   using Type = float;
   using TypeClass = Float;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_FLOAT)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_FLOAT))};
   }
 };
 
@@ -97,7 +97,7 @@ public:
   using Type = double;
   using TypeClass = Float;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_DOUBLE)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_DOUBLE))};
   }
 };
 
@@ -107,7 +107,7 @@ public:
   using Type = char;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_CHAR)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_CHAR))};
   }
 };
 
@@ -117,7 +117,7 @@ public:
   using Type = std::int64_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT64)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT64))};
   }
 };
 
@@ -127,7 +127,7 @@ public:
   using Type = std::uint64_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64))};
   }
 };
 } // namespace hdf5::datatype
