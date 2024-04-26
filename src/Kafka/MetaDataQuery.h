@@ -27,16 +27,15 @@ public:
   virtual std::vector<std::pair<int, int64_t>>
   getOffsetForTime(std::string const &Broker, std::string const &Topic,
                    std::vector<int> const &Partitions, time_point Time,
-                   duration TimeOut, BrokerSettings BrokerSettings);
+                   duration TimeOut, BrokerSettings const &BrokerSettings);
 
-  virtual std::vector<int> getPartitionsForTopic(std::string const &Broker,
-                                                 std::string const &Topic,
-                                                 duration TimeOut,
-                                                 BrokerSettings BrokerSettings);
+  virtual std::vector<int>
+  getPartitionsForTopic(std::string const &Broker, std::string const &Topic,
+                        duration TimeOut, BrokerSettings const &BrokerSettings);
 
-  virtual std::set<std::string> getTopicList(std::string const &Broker,
-                                             duration TimeOut,
-                                             BrokerSettings BrokerSettings);
+  virtual std::set<std::string>
+  getTopicList(std::string const &Broker, duration TimeOut,
+               BrokerSettings const &BrokerSettings);
 
 private:
   const RdKafka::TopicMetadata *
@@ -44,7 +43,8 @@ private:
                     const RdKafka::Metadata *KafkaMetadata);
 
   std::unique_ptr<RdKafka::Consumer>
-  getKafkaHandle(std::string Broker, BrokerSettings BrokerSettings);
+  getKafkaHandle(std::string const &Broker,
+                 BrokerSettings const &BrokerSettings);
 
   std::vector<int>
   extractPartitionIDs(RdKafka::TopicMetadata const *TopicMetaData);

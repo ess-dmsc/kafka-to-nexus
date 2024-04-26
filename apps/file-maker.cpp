@@ -119,7 +119,8 @@ public:
   void
   writeToJSONDict([[maybe_unused]] nlohmann::json &JSONNode) const override {}
   void
-  writeToHDF5File([[maybe_unused]] hdf5::node::Group RootNode) const override {}
+  writeToHDF5File([[maybe_unused]] hdf5::node::Group &RootNode) const override {
+  }
 };
 
 class StubConsumer : public Kafka::ConsumerInterface {
@@ -193,7 +194,7 @@ public:
       [[maybe_unused]] std::string const &Topic,
       [[maybe_unused]] std::vector<int> const &Partitions,
       [[maybe_unused]] time_point Time, [[maybe_unused]] duration TimeOut,
-      [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
+      [[maybe_unused]] Kafka::BrokerSettings const &BrokerSettings) override {
     return {{0, 0}};
   };
 
@@ -201,14 +202,14 @@ public:
       [[maybe_unused]] std::string const &Broker,
       [[maybe_unused]] std::string const &Topic,
       [[maybe_unused]] duration TimeOut,
-      [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
+      [[maybe_unused]] Kafka::BrokerSettings const &BrokerSettings) override {
     return {0};
   }
 
-  std::set<std::string>
-  getTopicList([[maybe_unused]] std::string const &Broker,
-               [[maybe_unused]] duration TimeOut,
-               [[maybe_unused]] Kafka::BrokerSettings BrokerSettings) override {
+  std::set<std::string> getTopicList(
+      [[maybe_unused]] std::string const &Broker,
+      [[maybe_unused]] duration TimeOut,
+      [[maybe_unused]] Kafka::BrokerSettings const &BrokerSettings) override {
     // TODO: populate this list at runtime
     return {"local_choppers", "local_motion"};
   }
