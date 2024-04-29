@@ -175,11 +175,9 @@ public:
     auto consumer = std::make_shared<StubConsumer>(messages);
     consumer->topic = topic;
     consumer->partition = partition_id;
-    consumers.emplace_back(topic, consumer);
     return consumer;
   }
   ~StubConsumerFactory() override = default;
-  std::vector<std::tuple<std::string, std::shared_ptr<StubConsumer>>> consumers;
 
   // One set of messages shared by all topics/consumers.
   std::shared_ptr<std::vector<FileWriter::Msg>> messages =
