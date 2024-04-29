@@ -188,7 +188,7 @@ public:
 
   /// Access the underlying dataset.
   /// Only for use in tests.
-  hdf5::node::Dataset const &dataset() const { return dataset_; }
+  [[nodiscard]] hdf5::node::Dataset const &dataset() const { return dataset_; }
 
   /// Append data to dataset that is contained in some sort of container.
   template <typename T> void appendArray(T const &data) {
