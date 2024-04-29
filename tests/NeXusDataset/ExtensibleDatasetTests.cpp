@@ -31,24 +31,24 @@ TEST_F(DatasetCreation, MultiDimOpen) {
   {
     size_t ChunkSize{256};
     NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, {10, 10}, {ChunkSize});
+        RootGroup, "value", NeXusDataset::Mode::Create, {10, 10}, {ChunkSize});
   }
   EXPECT_NO_THROW(NeXusDataset::MultiDimDataset<int> ReOpened(
-      RootGroup, NeXusDataset::Mode::Open));
+      RootGroup, "value", NeXusDataset::Mode::Open));
 }
 
 TEST_F(DatasetCreation, MultiDimDArrChunkSizeAlt1) {
   NeXusDataset::MultiDimDataset<int> ADValues(
-      RootGroup, NeXusDataset::Mode::Create, {10, 10}, {5, 6, 4, 3});
-  auto ChunkDims = ADValues.creation_list().chunk();
+      RootGroup, "value", NeXusDataset::Mode::Create, {10, 10}, {5, 6, 4, 3});
+  auto ChunkDims = ADValues.chunk_info();
   auto ExpectedDims = hdf5::Dimensions{1024, 10, 10};
   EXPECT_EQ(ChunkDims, ExpectedDims);
 }
 
 TEST_F(DatasetCreation, MultiDimDArrChunkSizeAlt2) {
   NeXusDataset::MultiDimDataset<int> ADValues(
-      RootGroup, NeXusDataset::Mode::Create, {10, 10}, {10, 10, 10});
-  auto ChunkDims = ADValues.creation_list().chunk();
+      RootGroup, "value", NeXusDataset::Mode::Create, {10, 10}, {10, 10, 10});
+  auto ChunkDims = ADValues.chunk_info();
   auto ExpectedDims = hdf5::Dimensions{10, 10, 10};
   EXPECT_EQ(ChunkDims, ExpectedDims);
 }
@@ -57,22 +57,22 @@ TEST_F(DatasetCreation, MultiDimReOpen) {
   size_t ChunkSize{256};
   {
     NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, {10, 10}, {ChunkSize});
+        RootGroup, "value", NeXusDataset::Mode::Create, {10, 10}, {ChunkSize});
   }
   EXPECT_NO_THROW(NeXusDataset::MultiDimDataset<int>(
-      RootGroup, NeXusDataset::Mode::Open, {10, 10}, {ChunkSize}));
+      RootGroup, "value", NeXusDataset::Mode::Open, {10, 10}, {ChunkSize}));
 }
 
 TEST_F(DatasetCreation, MultiDimCreateFail) {
   // Fail if shape is not provided
   EXPECT_THROW(NeXusDataset::MultiDimDataset<int> ReOpened(
-                   RootGroup, NeXusDataset::Mode::Create),
+                   RootGroup, "value", NeXusDataset::Mode::Create),
                std::runtime_error);
 }
 
 TEST_F(DatasetCreation, MultiDimUnknownMode) {
   EXPECT_THROW(NeXusDataset::MultiDimDataset<int> ReOpened(
-                   RootGroup, NeXusDataset::Mode(-43536)),
+                   RootGroup, "value", NeXusDataset::Mode(-43536)),
                std::runtime_error);
 }
 
@@ -80,14 +80,13 @@ TEST_F(DatasetCreation, MultiDimCreationMaxSize) {
   hdf5::Dimensions DatasetDimensions{10, 10};
   {
     size_t ChunkSize{256};
-    NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
+    NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, "value",
+                                                NeXusDataset::Mode::Create,
+                                                DatasetDimensions, {ChunkSize});
   }
-  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup,
+  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, "value",
                                               NeXusDataset::Mode::Open);
-  auto DataSpace = ReOpened.dataspace();
-  hdf5::dataspace::Simple SomeSpace(DataSpace);
-  auto MaxDims = SomeSpace.maximum_dimensions();
+  auto MaxDims = ReOpened.max_dimensions();
   for (auto i : MaxDims) {
     EXPECT_EQ(
         i,
@@ -99,14 +98,13 @@ TEST_F(DatasetCreation, MultiDimCreationArrSize) {
   hdf5::Dimensions DatasetDimensions{10, 10};
   {
     size_t ChunkSize{256};
-    NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
+    NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, "value",
+                                                NeXusDataset::Mode::Create,
+                                                DatasetDimensions, {ChunkSize});
   }
-  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup,
+  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, "value",
                                               NeXusDataset::Mode::Open);
-  auto DataSpace = ReOpened.dataspace();
-  hdf5::dataspace::Simple SomeSpace(DataSpace);
-  auto NewDims = SomeSpace.current_dimensions();
+  auto NewDims = ReOpened.dimensions();
   DatasetDimensions.insert(DatasetDimensions.begin(), 0);
   EXPECT_EQ(DatasetDimensions, NewDims);
 }
@@ -116,13 +114,13 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize1) {
   hdf5::Dimensions DatasetDimensions{10, 10};
   size_t ChunkSize{256};
   {
-    NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
+    NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, "value",
+                                                NeXusDataset::Mode::Create,
+                                                DatasetDimensions, {ChunkSize});
   }
-  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup,
+  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, "value",
                                               NeXusDataset::Mode::Open);
-  auto CreationProperties = ReOpened.creation_list();
-  auto ChunkDims = CreationProperties.chunk();
+  auto ChunkDims = ReOpened.chunk_info();
   DatasetDimensions.insert(DatasetDimensions.begin(), ChunkSize / (10 * 10));
   EXPECT_EQ(ChunkDims, DatasetDimensions);
 }
@@ -132,13 +130,13 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize2) {
   hdf5::Dimensions DatasetDimensions{10, 10};
   hdf5::Dimensions ChunkSize = {100, 20, 20};
   {
-    NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
+    NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, "value",
+                                                NeXusDataset::Mode::Create,
+                                                DatasetDimensions, {ChunkSize});
   }
-  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup,
+  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, "value",
                                               NeXusDataset::Mode::Open);
-  auto CreationProperties = ReOpened.creation_list();
-  auto ChunkDims = CreationProperties.chunk();
+  auto ChunkDims = ReOpened.chunk_info();
   EXPECT_EQ(ChunkDims, ChunkSize);
 }
 
@@ -147,13 +145,13 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize3) {
   hdf5::Dimensions DatasetDimensions{10, 10};
   hdf5::Dimensions ChunkSize = {};
   {
-    NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
+    NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, "value",
+                                                NeXusDataset::Mode::Create,
+                                                DatasetDimensions, {ChunkSize});
   }
-  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup,
+  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, "value",
                                               NeXusDataset::Mode::Open);
-  auto CreationProperties = ReOpened.creation_list();
-  auto ChunkDims = CreationProperties.chunk();
+  auto ChunkDims = ReOpened.chunk_info();
   DatasetDimensions.insert(DatasetDimensions.begin(), 10);
   EXPECT_EQ(ChunkDims, DatasetDimensions);
 }
@@ -163,13 +161,13 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize4) {
   hdf5::Dimensions DatasetDimensions{10, 10};
   hdf5::Dimensions ChunkSize = {1, 2, 3, 4, 5};
   {
-    NeXusDataset::MultiDimDataset<int> ADValues(
-        RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
+    NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, "value",
+                                                NeXusDataset::Mode::Create,
+                                                DatasetDimensions, {ChunkSize});
   }
-  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup,
+  NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, "value",
                                               NeXusDataset::Mode::Open);
-  auto CreationProperties = ReOpened.creation_list();
-  auto ChunkDims = CreationProperties.chunk();
+  auto ChunkDims = ReOpened.chunk_info();
   DatasetDimensions.insert(DatasetDimensions.begin(), 1024);
   EXPECT_EQ(ChunkDims, DatasetDimensions);
 }
@@ -177,11 +175,11 @@ TEST_F(DatasetCreation, MultiDimCreationChunkSize4) {
 TEST_F(DatasetCreation, MultiDimAppendSameSize) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   NeXusDataset::MultiDimDataset<int> Dataset(
-      RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+      RootGroup, "value", NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{2, 4, 6, 8};
   Dataset.appendArray(TestData, DatasetDimensions);
   DatasetDimensions.insert(DatasetDimensions.begin(), 1);
-  EXPECT_EQ(DatasetDimensions, Dataset.get_extent());
+  EXPECT_EQ(DatasetDimensions, Dataset.dimensions());
   std::vector<int> StoredData(TestData.size());
   Dataset.read(StoredData);
   EXPECT_EQ(TestData, StoredData);
@@ -190,7 +188,7 @@ TEST_F(DatasetCreation, MultiDimAppendSameSize) {
 TEST_F(DatasetCreation, MultiDimAppendAnotherType) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   NeXusDataset::MultiDimDataset<double> Dataset(
-      RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+      RootGroup, "value", NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{2, 4, 6, 8};
   std::vector<double> CompareData{2, 4, 6, 8};
   Dataset.appendArray(TestData, DatasetDimensions);
@@ -203,11 +201,11 @@ TEST_F(DatasetCreation, MultiDimAppendSmallerSize1) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   auto AppendDims = hdf5::Dimensions{1, 2};
   NeXusDataset::MultiDimDataset<int> Dataset(
-      RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+      RootGroup, "value", NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8};
   Dataset.appendArray(TestData, AppendDims);
   DatasetDimensions.insert(DatasetDimensions.begin(), 1);
-  EXPECT_EQ(DatasetDimensions, Dataset.get_extent());
+  EXPECT_EQ(DatasetDimensions, Dataset.dimensions());
   TestData = std::vector<int>{6, 8, 0, 0};
   std::vector<int> StoredData(TestData.size());
   Dataset.read(StoredData);
@@ -217,7 +215,7 @@ TEST_F(DatasetCreation, MultiDimAppendSmallerSize1) {
 TEST_F(DatasetCreation, MultiDimAppendWrongRank) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   NeXusDataset::MultiDimDataset<int> Dataset(
-      RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+      RootGroup, "value", NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8};
   EXPECT_THROW(Dataset.appendArray(TestData, {2}), std::runtime_error);
 }
@@ -226,11 +224,11 @@ TEST_F(DatasetCreation, MultiDimAppendSmallerSize2) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   auto AppendDims = hdf5::Dimensions{2, 1};
   NeXusDataset::MultiDimDataset<int> Dataset(
-      RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+      RootGroup, "value", NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8};
   Dataset.appendArray(TestData, AppendDims);
   DatasetDimensions.insert(DatasetDimensions.begin(), 1);
-  EXPECT_EQ(DatasetDimensions, Dataset.get_extent());
+  EXPECT_EQ(DatasetDimensions, Dataset.dimensions());
   TestData = std::vector<int>{6, 0, 8, 0};
   std::vector<int> StoredData(TestData.size());
   Dataset.read(StoredData);
@@ -241,12 +239,12 @@ TEST_F(DatasetCreation, MultiDimAppendBiggerSize) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   auto AppendDims = hdf5::Dimensions{2, 3};
   NeXusDataset::MultiDimDataset<int> Dataset(
-      RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+      RootGroup, "value", NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8, 10, 12, 14, 16};
   Dataset.appendArray(TestData, AppendDims);
   DatasetDimensions.insert(DatasetDimensions.begin(), 1);
   DatasetDimensions[2] = 3;
-  EXPECT_EQ(DatasetDimensions, Dataset.get_extent());
+  EXPECT_EQ(DatasetDimensions, Dataset.dimensions());
   std::vector<int> StoredData(TestData.size());
   Dataset.read(StoredData);
   EXPECT_EQ(TestData, StoredData);
@@ -255,7 +253,7 @@ TEST_F(DatasetCreation, MultiDimAppendBiggerSize) {
 TEST_F(DatasetCreation, MultiDimAppendWrongDimensions) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   NeXusDataset::MultiDimDataset<int> Dataset(
-      RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+      RootGroup, "value", NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8};
   EXPECT_THROW(Dataset.appendArray(TestData, {2}), std::runtime_error);
 }
@@ -345,7 +343,6 @@ TEST_F(DatasetCreation, StringDatasetReopen) {
   NeXusDataset::FixedSizeString TestDataset(RootGroup, DatasetName,
                                             NeXusDataset::Mode::Open);
   EXPECT_EQ(StringLength, TestDataset.getMaxStringSize());
-  EXPECT_EQ(TestDataset.dataspace().size(), 0);
 }
 
 TEST_F(DatasetCreation, StringDatasetFailReopen) {
@@ -363,12 +360,10 @@ TEST_F(DatasetCreation, StringDatasetWriteString) {
 
   std::string TestString{"Hello"};
   TestDataset.appendStringElement(TestString);
-  std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(),
-                   hdf5::dataspace::Scalar(),
-                   hdf5::dataspace::Hyperslab{{0}, {1}});
-  std::string CompareString(
-      ReadBackString.data()); // Trim null characters from end of string
+
+  std::string ReadBackString = TestDataset.read_element(0);
+  // Trim null characters from end of string
+  std::string CompareString(ReadBackString.data());
   EXPECT_EQ(TestString, CompareString);
 }
 
@@ -383,10 +378,8 @@ TEST_F(DatasetCreation, StringDatasetWriteTwoStrings) {
   std::string TestString2{"Hi"};
   TestDataset.appendStringElement(TestString2);
 
-  std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(),
-                   hdf5::dataspace::Scalar(),
-                   hdf5::dataspace::Hyperslab{{1}, {1}});
+  std::string ReadBackString = TestDataset.read_element(1);
+  // Trim null characters from end of string
   std::string CompareString(ReadBackString.data());
   EXPECT_EQ(TestString2, CompareString);
 }
@@ -399,10 +392,8 @@ TEST_F(DatasetCreation, StringDatasetWriteTooLongString) {
 
   std::string TestString{"The quick brown fox jumped over the lazy turtle"};
   TestDataset.appendStringElement(TestString);
-  std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(),
-                   hdf5::dataspace::Scalar(),
-                   hdf5::dataspace::Hyperslab{{0}, {1}});
+  std::string ReadBackString = TestDataset.read_element(0);
+  // Trim null characters from end of string
   std::string CompareString(ReadBackString.data());
   EXPECT_NE(TestString, CompareString);
   EXPECT_EQ(std::string(TestString.begin(), TestString.begin() + StringLength),

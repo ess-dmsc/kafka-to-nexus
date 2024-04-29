@@ -27,7 +27,7 @@ public:
   using Type = std::int8_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT8)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT8))};
   }
 };
 
@@ -37,7 +37,7 @@ public:
   using Type = std::uint8_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT8)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT8))};
   }
 };
 
@@ -47,7 +47,7 @@ public:
   using Type = std::int16_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT16)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT16))};
   }
 };
 
@@ -57,7 +57,7 @@ public:
   using Type = std::uint16_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16))};
   }
 };
 
@@ -67,7 +67,7 @@ public:
   using Type = std::int32_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT32)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT32))};
   }
 };
 
@@ -77,7 +77,7 @@ public:
   using Type = std::uint32_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT32)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT32))};
   }
 };
 
@@ -87,7 +87,7 @@ public:
   using Type = float;
   using TypeClass = Float;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_FLOAT)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_FLOAT))};
   }
 };
 
@@ -97,7 +97,7 @@ public:
   using Type = double;
   using TypeClass = Float;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_DOUBLE)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_DOUBLE))};
   }
 };
 
@@ -107,7 +107,7 @@ public:
   using Type = char;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_CHAR)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_CHAR))};
   }
 };
 
@@ -117,7 +117,7 @@ public:
   using Type = std::int64_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT64)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_INT64))};
   }
 };
 
@@ -127,7 +127,7 @@ public:
   using Type = std::uint64_t;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
+    return {ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64))};
   }
 };
 } // namespace hdf5::datatype
@@ -188,7 +188,7 @@ public:
 
   /// Access the underlying dataset.
   /// Only for use in tests.
-  hdf5::node::Dataset const &dataset() { return dataset_; }
+  [[nodiscard]] hdf5::node::Dataset const &dataset() const { return dataset_; }
 
   /// Append data to dataset that is contained in some sort of container.
   template <typename T> void appendArray(T const &data) {
@@ -271,7 +271,7 @@ public:
 };
 
 /// \brief
-class FixedSizeString : public hdf5::node::ChunkedDataset {
+class FixedSizeString {
 public:
   FixedSizeString() = default;
   /// \brief Create/open a fixed string length datatset.
@@ -281,26 +281,48 @@ public:
   /// \param CMode Should the dataset be opened or created.
   /// \param StringSize What is the maximum number of characters in the string.
   /// \param ChunkSize The number of strings in one chunk.
-  FixedSizeString(const hdf5::node::Group &Parent, std::string Name, Mode CMode,
-                  size_t StringSize = 300, size_t ChunkSize = 1024);
+  FixedSizeString(hdf5::node::Group const &Parent, std::string const &Name,
+                  Mode CMode, size_t StringSize = 300, size_t ChunkSize = 1024);
 
   /// \brief Get max string size.
   ///
   /// \return The max string size.
-  constexpr size_t getMaxStringSize() const { return MaxStringSize; };
+  [[nodiscard]] constexpr size_t getMaxStringSize() const {
+    return MaxStringSize;
+  };
 
   /// \brief Append a new string to the dataset array
   ///
   /// \param InString The string that is to be appended to the dataset.
   void appendStringElement(std::string const &InString);
 
+  /// Gets the current size of the dataset.
+  [[nodiscard]] hssize_t current_size() const {
+    return dataset_.dataspace().size();
+  }
+
+  /// \brief Read a string element from the dataset array.
+  ///
+  /// Only exists for maintaining back-compatibility with unit tests.
+  /// Delete when a better way to test is found!
+  ///
+  /// \param offset The index of the element to read.
+  /// \return The string value.
+  [[nodiscard]] std::string read_element(uint64_t offset) const {
+    std::string result;
+    dataset_.read(result, dataset_.datatype(), hdf5::dataspace::Scalar(),
+                  hdf5::dataspace::Hyperslab{{offset}, {1}});
+    return result;
+  }
+
 private:
+  hdf5::node::Dataset dataset_;
   hdf5::datatype::String StringType;
-  size_t MaxStringSize;
+  size_t MaxStringSize{300};
   size_t NrOfStrings{0};
 };
 
-class MultiDimDatasetBase : public hdf5::node::ChunkedDataset {
+class MultiDimDatasetBase {
 public:
   MultiDimDatasetBase() = default;
 
@@ -311,27 +333,53 @@ public:
   /// \param CMode If the dataset should be created or opened. Note that it is
   /// not possible to create a dataset with this class. \throws
   /// std::runtime_error If creation of a dataset is attempted.
-  MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode)
-      : hdf5::node::ChunkedDataset() {
+  MultiDimDatasetBase(hdf5::node::Group const &parent, std::string const &name,
+                      Mode CMode) {
     if (Mode::Create == CMode) {
       throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): "
                                "Can only open datasets, not create.");
     } else if (Mode::Open == CMode) {
-      Dataset::operator=(Parent.get_dataset("value"));
+      dataset_ = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "MultiDimDatasetBase::MultiDimDatasetBase(): Unknown mode.");
     }
   }
 
-  /// \brief Get the dimensions of the dataset.
-  ///
-  /// \return The dimensions of the dataset. The returned type is
-  /// ≈std::vector<>.
-  hdf5::Dimensions get_extent() {
-    auto DataSpace = dataspace();
-    return hdf5::dataspace::Simple(DataSpace).current_dimensions();
+  [[nodiscard]] hdf5::datatype::Datatype datatype() const {
+    return dataset_.datatype();
   }
+
+  [[nodiscard]] std::vector<hsize_t> chunk_info() const {
+    return dataset_.creation_list().chunk();
+  }
+
+  /// \brief Read an attribute from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T>
+  void attribute(std::string const &name, T &result) const {
+    dataset_.attributes[name].read(result);
+  }
+
+  [[nodiscard]] bool attribute_exists(std::string const &name) const {
+    return dataset_.attributes.exists(name);
+  }
+
+  /// \brief Get the dimensions of the dataset.
+  [[nodiscard]] std::vector<hsize_t> dimensions() const {
+    return hdf5::dataspace::Simple(dataset_.dataspace()).current_dimensions();
+  }
+
+  /// \brief Get the maximum dimensions of the dataset.
+  [[nodiscard]] std::vector<hsize_t> max_dimensions() const {
+    return hdf5::dataspace::Simple(dataset_.dataspace()).maximum_dimensions();
+  }
+
+  /// \brief Read data from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T> void read(T &result) { dataset_.read(result); }
 
   /// \brief Append data to dataset that is contained in some sort of container.
   ///
@@ -343,7 +391,7 @@ public:
   /// correct for the current dataset.
   template <typename T>
   void appendArray(T const &NewData, hdf5::Dimensions Shape) {
-    auto CurrentExtent = get_extent();
+    auto CurrentExtent = dimensions();
     hdf5::Dimensions Origin(CurrentExtent.size(), 0);
     Origin[0] = CurrentExtent[0];
     ++CurrentExtent[0];
@@ -366,10 +414,13 @@ public:
                  i - 1);
       }
     }
-    Dataset::extent(CurrentExtent);
+    dataset_.extent(CurrentExtent);
     hdf5::dataspace::Hyperslab Selection{{Origin}, {Shape}};
-    write(NewData, Selection);
+    dataset_.write(NewData, Selection);
   }
+
+protected:
+  hdf5::node::Dataset dataset_;
 };
 
 /// \brief h5cpp dataset class that implements methods for appending data.
@@ -389,26 +440,27 @@ public:
   /// will be prepended with one dimension to allow for adding of data.
   /// \param ChunkSize The chunk size (as number of elements) of the dataset,
   /// ignored if the dataset is opened.
-  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode,
-                  hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize)
+  MultiDimDataset(hdf5::node::Group const &parent, std::string const &name,
+                  Mode CMode, hdf5::Dimensions shape,
+                  hdf5::Dimensions chunksize)
       : MultiDimDatasetBase() {
     if (Mode::Create == CMode) {
-      Shape.insert(Shape.begin(), 0);
-      hdf5::Dimensions MaxSize(Shape.size(),
+      shape.insert(shape.begin(), 0);
+      hdf5::Dimensions MaxSize(shape.size(),
                                hdf5::dataspace::Simple::unlimited);
       std::vector<hsize_t> VectorChunkSize;
-      if (ChunkSize.empty()) {
+      if (chunksize.empty()) {
         LOG_WARN("No chunk size given. Using the default value 1024.");
-        ChunkSize.emplace_back(1024);
+        chunksize.emplace_back(1024);
       }
-      if (ChunkSize.size() == Shape.size()) {
-        VectorChunkSize = ChunkSize;
-      } else if (ChunkSize.size() == 1 and Shape.size() > 1) {
-        VectorChunkSize = Shape;
+      if (chunksize.size() == shape.size()) {
+        VectorChunkSize = chunksize;
+      } else if (chunksize.size() == 1 && shape.size() > 1) {
+        VectorChunkSize = shape;
         auto ElementsPerRow =
-            std::accumulate(std::next(Shape.begin()), Shape.end(), 1,
+            std::accumulate(std::next(shape.begin()), shape.end(), 1,
                             [](auto a, auto b) { return a * b; });
-        auto NrOfRows = ChunkSize[0] / ElementsPerRow;
+        auto NrOfRows = chunksize[0] / ElementsPerRow;
         if (NrOfRows == 0) {
           NrOfRows = 1;
         }
@@ -417,15 +469,15 @@ public:
         LOG_ERROR("Unable to reconcile a data shape with {} dimensions "
                   "and chunk size with {} dimensions. Using default "
                   "values.",
-                  Shape.size(), ChunkSize.size());
-        VectorChunkSize = Shape;
+                  shape.size(), chunksize.size());
+        VectorChunkSize = shape;
         VectorChunkSize[0] = 1024;
       }
-      Dataset::operator=(hdf5::node::ChunkedDataset(
-          Parent, "value", hdf5::datatype::create<DataType>(),
-          hdf5::dataspace::Simple(Shape, MaxSize), VectorChunkSize));
+      dataset_ = (hdf5::node::ChunkedDataset(
+          parent, name, hdf5::datatype::create<DataType>(),
+          hdf5::dataspace::Simple(shape, MaxSize), VectorChunkSize));
     } else if (Mode::Open == CMode) {
-      Dataset::operator=(Parent.get_dataset("value"));
+      dataset_ = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "MultiDimDataset::MultiDimDataset(): Unknown mode.");
@@ -440,8 +492,9 @@ public:
   /// \note This parameter is ignored when opening an existing
   /// dataset.
   /// \param CMode Should the dataset be opened or created.
-  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode)
-      : MultiDimDatasetBase(Parent, CMode) {}
+  MultiDimDataset(hdf5::node::Group const &parent, std::string const &name,
+                  Mode CMode)
+      : MultiDimDatasetBase(parent, name, CMode) {}
 };
 
 } // namespace NeXusDataset

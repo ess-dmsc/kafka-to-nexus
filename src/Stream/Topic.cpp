@@ -103,7 +103,6 @@ void Topic::setErrorState(const std::string &Msg) {
   std::lock_guard Lock(ErrorMsgMutex);
   ErrorMessage = Msg;
   LOG_ERROR(ErrorMessage);
-  return;
 }
 
 std::vector<std::pair<int, int64_t>> Topic::getOffsetForTimeInternal(

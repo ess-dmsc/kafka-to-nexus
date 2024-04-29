@@ -216,12 +216,10 @@ TEST_F(AreaDetectorWriter, WriterDefaultValuesTest) {
   Temp.init_hdf(UsedGroup);
   Temp.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<double>(), Temp.Values->datatype());
-  auto Dataspace = hdf5::dataspace::Simple(Temp.Values->dataspace());
-  EXPECT_EQ(Dataspace.maximum_dimensions(),
+  EXPECT_EQ(Temp.Values->max_dimensions(),
             (hdf5::Dimensions{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED}));
-  EXPECT_EQ(Dataspace.current_dimensions(), (hdf5::Dimensions{0, 1, 1}));
-  auto CreationProperties = Temp.Values->creation_list();
-  auto ChunkDims = CreationProperties.chunk();
+  EXPECT_EQ(Temp.Values->dimensions(), (hdf5::Dimensions{0, 1, 1}));
+  auto ChunkDims = Temp.Values->chunk_info();
   EXPECT_EQ(ChunkDims, (hdf5::Dimensions{1048576, 1, 1}));
 }
 
@@ -301,8 +299,7 @@ TEST_F(AreaDetectorWriter, WriterDimensionsTest) {
   Writer.init_hdf(UsedGroup);
   Writer.reopen(UsedGroup);
   EXPECT_NO_THROW(Writer.write(Message));
-  auto Dataspace = hdf5::dataspace::Simple(Writer.Values->dataspace());
-  EXPECT_EQ((hdf5::Dimensions{1, 10, 12}), Dataspace.current_dimensions());
+  EXPECT_EQ((hdf5::Dimensions{1, 10, 12}), Writer.Values->dimensions());
 }
 
 TEST_F(AreaDetectorWriter, WriterTimeStampTest) {
@@ -461,8 +458,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
     return false;
   }
   std::vector<Type> dataFromFile(testData.size());
-  hdf5::Dimensions CDims =
-      hdf5::dataspace::Simple(Writer.Values->dataspace()).current_dimensions();
+  hdf5::Dimensions CDims = Writer.Values->dimensions();
   hdf5::Dimensions ExpectedDims{{1, 10, 10, 10}};
   EXPECT_EQ(CDims, ExpectedDims);
   Writer.Values->read(dataFromFile);
