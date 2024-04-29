@@ -308,7 +308,7 @@ public:
   ///
   /// \param offset The index of the element to read.
   /// \return The string value.
-  [[nodiscard]] std::string read_element(uint64_t offset) {
+  [[nodiscard]] std::string read_element(uint64_t offset) const {
     std::string result;
     dataset_.read(result, dataset_.datatype(), hdf5::dataspace::Scalar(),
                   hdf5::dataspace::Hyperslab{{offset}, {1}});
@@ -350,7 +350,7 @@ public:
   ///
   /// \return The dimensions of the dataset. The returned type is
   /// ≈std::vector<>.
-  hdf5::Dimensions get_extent() {
+  hdf5::Dimensions get_extent() const {
     auto DataSpace = dataspace();
     return hdf5::dataspace::Simple(DataSpace).current_dimensions();
   }
@@ -425,7 +425,7 @@ public:
       }
       if (ChunkSize.size() == Shape.size()) {
         VectorChunkSize = ChunkSize;
-      } else if (ChunkSize.size() == 1 and Shape.size() > 1) {
+      } else if (ChunkSize.size() == 1 && Shape.size() > 1) {
         VectorChunkSize = Shape;
         auto ElementsPerRow =
             std::accumulate(std::next(Shape.begin()), Shape.end(), 1,
