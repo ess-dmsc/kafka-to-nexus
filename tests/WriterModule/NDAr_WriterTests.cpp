@@ -461,7 +461,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   hdf5::Dimensions CDims = Writer.Values->dimensions();
   hdf5::Dimensions ExpectedDims{{1, 10, 10, 10}};
   EXPECT_EQ(CDims, ExpectedDims);
-  Writer.Values->dataset_.read(dataFromFile);
+  Writer.Values->read(dataFromFile);
   EXPECT_EQ(dataFromFile, testData);
   return true;
 }

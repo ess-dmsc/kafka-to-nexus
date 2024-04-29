@@ -353,8 +353,12 @@ public:
     return dataset_.creation_list().chunk();
   }
 
-  void attribute(std::string const &name, std::string &value) const {
-    dataset_.attributes[name].read(value);
+  /// \brief Read an attribute from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T>
+  void attribute(std::string const &name, T &result) const {
+    dataset_.attributes[name].read(result);
   }
 
   [[nodiscard]] bool attribute_exists(std::string const &name) const {
@@ -370,6 +374,11 @@ public:
   [[nodiscard]] std::vector<hsize_t> max_dimensions() const {
     return hdf5::dataspace::Simple(dataset_.dataspace()).maximum_dimensions();
   }
+
+  /// \brief Read data from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T> void read(T &result) { dataset_.read(result); }
 
   /// \brief Append data to dataset that is contained in some sort of container.
   ///
@@ -409,7 +418,7 @@ public:
     dataset_.write(NewData, Selection);
   }
 
-public:
+protected:
   hdf5::node::Dataset dataset_;
 };
 

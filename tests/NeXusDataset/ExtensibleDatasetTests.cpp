@@ -85,7 +85,7 @@ TEST_F(DatasetCreation, MultiDimCreationMaxSize) {
   }
   NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup,
                                               NeXusDataset::Mode::Open);
-  auto MaxDims = ReOpened.dimensions();
+  auto MaxDims = ReOpened.max_dimensions();
   for (auto i : MaxDims) {
     EXPECT_EQ(
         i,
