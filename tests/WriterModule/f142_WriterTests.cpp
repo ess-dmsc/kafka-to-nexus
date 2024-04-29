@@ -79,7 +79,7 @@ TEST_F(f142Init, CheckInitDataType) {
   f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
+  NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<double>());
 }
 
@@ -87,7 +87,7 @@ TEST_F(f142Init, CheckValueInitShape1) {
   f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
+  NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);
   EXPECT_EQ(hdf5::Dimensions({0, 1}), Value.dimensions());
 }
 
@@ -96,7 +96,7 @@ TEST_F(f142Init, CheckValueInitShape2) {
   TestWriter.ArraySize.setValue("", "10");
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
+  NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);
   EXPECT_EQ(hdf5::Dimensions({0, 10}), Value.dimensions());
 }
 
@@ -119,7 +119,7 @@ TEST_F(f142Init, CheckAllDataTypes) {
     auto CurrentGroup = RootGroup.create_group("Group" + std::to_string(Ctr++));
     TestWriter.ElementType = Type.first;
     TestWriter.init_hdf(CurrentGroup);
-    NeXusDataset::MultiDimDatasetBase Value(CurrentGroup, Open);
+    NeXusDataset::MultiDimDatasetBase Value(CurrentGroup, "value", Open);
     EXPECT_EQ(Type.second, Value.datatype());
   }
 }

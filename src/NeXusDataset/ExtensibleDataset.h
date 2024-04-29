@@ -333,12 +333,13 @@ public:
   /// \param CMode If the dataset should be created or opened. Note that it is
   /// not possible to create a dataset with this class. \throws
   /// std::runtime_error If creation of a dataset is attempted.
-  MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode) {
+  MultiDimDatasetBase(hdf5::node::Group const &parent, std::string const &name,
+                      Mode CMode) {
     if (Mode::Create == CMode) {
       throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): "
                                "Can only open datasets, not create.");
     } else if (Mode::Open == CMode) {
-      dataset_ = Parent.get_dataset("value");
+      dataset_ = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "MultiDimDatasetBase::MultiDimDatasetBase(): Unknown mode.");
@@ -439,26 +440,27 @@ public:
   /// will be prepended with one dimension to allow for adding of data.
   /// \param ChunkSize The chunk size (as number of elements) of the dataset,
   /// ignored if the dataset is opened.
-  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode,
-                  hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize)
+  MultiDimDataset(hdf5::node::Group const &parent, std::string const &name,
+                  Mode CMode, hdf5::Dimensions shape,
+                  hdf5::Dimensions chunksize)
       : MultiDimDatasetBase() {
     if (Mode::Create == CMode) {
-      Shape.insert(Shape.begin(), 0);
-      hdf5::Dimensions MaxSize(Shape.size(),
+      shape.insert(shape.begin(), 0);
+      hdf5::Dimensions MaxSize(shape.size(),
                                hdf5::dataspace::Simple::unlimited);
       std::vector<hsize_t> VectorChunkSize;
-      if (ChunkSize.empty()) {
+      if (chunksize.empty()) {
         LOG_WARN("No chunk size given. Using the default value 1024.");
-        ChunkSize.emplace_back(1024);
+        chunksize.emplace_back(1024);
       }
-      if (ChunkSize.size() == Shape.size()) {
-        VectorChunkSize = ChunkSize;
-      } else if (ChunkSize.size() == 1 && Shape.size() > 1) {
-        VectorChunkSize = Shape;
+      if (chunksize.size() == shape.size()) {
+        VectorChunkSize = chunksize;
+      } else if (chunksize.size() == 1 && shape.size() > 1) {
+        VectorChunkSize = shape;
         auto ElementsPerRow =
-            std::accumulate(std::next(Shape.begin()), Shape.end(), 1,
+            std::accumulate(std::next(shape.begin()), shape.end(), 1,
                             [](auto a, auto b) { return a * b; });
-        auto NrOfRows = ChunkSize[0] / ElementsPerRow;
+        auto NrOfRows = chunksize[0] / ElementsPerRow;
         if (NrOfRows == 0) {
           NrOfRows = 1;
         }
@@ -467,15 +469,15 @@ public:
         LOG_ERROR("Unable to reconcile a data shape with {} dimensions "
                   "and chunk size with {} dimensions. Using default "
                   "values.",
-                  Shape.size(), ChunkSize.size());
-        VectorChunkSize = Shape;
+                  shape.size(), chunksize.size());
+        VectorChunkSize = shape;
         VectorChunkSize[0] = 1024;
       }
       dataset_ = (hdf5::node::ChunkedDataset(
-          Parent, "value", hdf5::datatype::create<DataType>(),
-          hdf5::dataspace::Simple(Shape, MaxSize), VectorChunkSize));
+          parent, name, hdf5::datatype::create<DataType>(),
+          hdf5::dataspace::Simple(shape, MaxSize), VectorChunkSize));
     } else if (Mode::Open == CMode) {
-      dataset_ = Parent.get_dataset("value");
+      dataset_ = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "MultiDimDataset::MultiDimDataset(): Unknown mode.");
@@ -490,8 +492,9 @@ public:
   /// \note This parameter is ignored when opening an existing
   /// dataset.
   /// \param CMode Should the dataset be opened or created.
-  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode)
-      : MultiDimDatasetBase(Parent, CMode) {}
+  MultiDimDataset(hdf5::node::Group const &parent, std::string const &name,
+                  Mode CMode)
+      : MultiDimDatasetBase(parent, name, CMode) {}
 };
 
 } // namespace NeXusDataset
