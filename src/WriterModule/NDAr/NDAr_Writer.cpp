@@ -79,7 +79,7 @@ WriterModule::InitResult NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 WriterModule::InitResult NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     Values = std::make_unique<NeXusDataset::MultiDimDatasetBase>(
-        HDFGroup, NeXusDataset::Mode::Open);
+        HDFGroup, "value", NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(HDFGroup, NeXusDataset::Mode::Open);
@@ -156,7 +156,7 @@ std::unique_ptr<NeXusDataset::MultiDimDatasetBase>
 makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
        hdf5::Dimensions const &ChunkSize) {
   return std::make_unique<NeXusDataset::MultiDimDataset<Type>>(
-      Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);
+      Parent, "value", NeXusDataset::Mode::Create, Shape, ChunkSize);
 }
 
 void NDAr_Writer::initValueDataset(hdf5::node::Group const &Parent) const {

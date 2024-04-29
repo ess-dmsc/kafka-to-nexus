@@ -33,7 +33,7 @@ template <typename Type>
 void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
             hdf5::Dimensions const &ChunkSize) {
   NeXusDataset::MultiDimDataset<Type>( // NOLINT(bugprone-unused-raii)
-      Parent, NeXusDataset::Mode::Create, Shape,
+      Parent, "value", NeXusDataset::Mode::Create, Shape,
       ChunkSize); // NOLINT(bugprone-unused-raii)
 }
 
@@ -129,7 +129,7 @@ InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Timestamp = NeXusDataset::Time(HDFGroup, Open);
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
-    Values = NeXusDataset::MultiDimDatasetBase(HDFGroup, Open);
+    Values = NeXusDataset::MultiDimDatasetBase(HDFGroup, "value", Open);
     AlarmTime = NeXusDataset::AlarmTime(HDFGroup, Open);
     AlarmStatus = NeXusDataset::AlarmStatus(HDFGroup, Open);
     AlarmSeverity = NeXusDataset::AlarmSeverity(HDFGroup, Open);
