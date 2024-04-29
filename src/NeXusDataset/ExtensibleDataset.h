@@ -475,7 +475,7 @@ public:
           Parent, "value", hdf5::datatype::create<DataType>(),
           hdf5::dataspace::Simple(Shape, MaxSize), VectorChunkSize));
     } else if (Mode::Open == CMode) {
-      dataset_ = (Parent.get_dataset("value"));
+      dataset_ = Parent.get_dataset("value");
     } else {
       throw std::runtime_error(
           "MultiDimDataset::MultiDimDataset(): Unknown mode.");
@@ -492,8 +492,6 @@ public:
   /// \param CMode Should the dataset be opened or created.
   MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode)
       : MultiDimDatasetBase(Parent, CMode) {}
-
-  void read(std::vector<DataType> &output) const { dataset_.read(output); }
 };
 
 } // namespace NeXusDataset
