@@ -88,7 +88,7 @@ TEST_F(f142Init, CheckValueInitShape1) {
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
-  EXPECT_EQ(hdf5::Dimensions({0, 1}), Value.get_extent());
+  EXPECT_EQ(hdf5::Dimensions({0, 1}), Value.dimensions());
 }
 
 TEST_F(f142Init, CheckValueInitShape2) {
@@ -97,7 +97,7 @@ TEST_F(f142Init, CheckValueInitShape2) {
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
-  EXPECT_EQ(hdf5::Dimensions({0, 10}), Value.get_extent());
+  EXPECT_EQ(hdf5::Dimensions({0, 10}), Value.dimensions());
 }
 
 TEST_F(f142Init, CheckAllDataTypes) {
@@ -303,7 +303,7 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
   // THEN a units attributes is created on the value dataset with the specified
   // string
   std::string attribute_value;
-  EXPECT_NO_THROW(TestWriter.Values.attributes["units"].read(attribute_value))
+  EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
       << "Expect units attribute to be present on the value dataset";
   EXPECT_EQ(attribute_value, units_string) << "Expect units attribute to have "
                                               "the value specified in the JSON "
@@ -319,7 +319,7 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  EXPECT_FALSE(TestWriter.Values.attributes.exists("units"))
+  EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
       << "units attribute should not be created if the config string is empty";
 }
 
@@ -333,7 +333,7 @@ TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
   TestWriter.reopen(RootGroup);
 
   // THEN a units attributes is not created on the value dataset
-  EXPECT_FALSE(TestWriter.Values.attributes.exists("units"))
+  EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
       << "units attribute should not be created if it was not specified in the "
          "JSON config";
 }
@@ -346,14 +346,14 @@ TEST_F(f142WriteData, WriteOneElement) {
   std::uint64_t Timestamp{11};
   auto FlatbufferData =
       f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
-  EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
+  EXPECT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
-  ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
+  ASSERT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({1, 1}));
   ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
-  TestWriter.Values.read(WrittenValues);
+  TestWriter.Values.dataset_.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);
   std::vector<std::uint64_t> WrittenTimes(1);
   TestWriter.Timestamp.read_data(WrittenTimes);
@@ -371,14 +371,14 @@ TEST_F(f142WriteData, WriteOneDefaultValueElement) {
   std::uint64_t Timestamp{11};
   auto FlatbufferData =
       f142_schema::generateFlatbufferMessage(ElementValue, Timestamp);
-  EXPECT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({0, 1}));
+  EXPECT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({0, 1}));
   EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
-  ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 1}));
+  ASSERT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({1, 1}));
   ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
-  TestWriter.Values.read(WrittenValues);
+  TestWriter.Values.dataset_.read(WrittenValues);
   EXPECT_EQ(WrittenValues.at(0), ElementValue);
   std::vector<std::uint64_t> WrittenTimes(1);
   TestWriter.Timestamp.read_data(WrittenTimes);
@@ -407,9 +407,9 @@ TEST_F(f142WriteData, WriteOneArray) {
       generateFlatbufferArrayMessage(ElementValues, Timestamp);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
-  ASSERT_EQ(TestWriter.Values.get_extent(), hdf5::Dimensions({1, 3}));
+  ASSERT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({1, 3}));
   std::vector<double> WrittenValues(3);
-  TestWriter.Values.read(WrittenValues);
+  TestWriter.Values.dataset_.read(WrittenValues);
   EXPECT_EQ(WrittenValues, ElementValues);
 }
 
