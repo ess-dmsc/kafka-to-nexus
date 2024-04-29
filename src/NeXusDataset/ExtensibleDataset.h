@@ -188,7 +188,7 @@ public:
 
   /// Access the underlying dataset.
   /// Only for use in tests.
-  hdf5::node::Dataset const &dataset() { return dataset_; }
+  hdf5::node::Dataset const &dataset() const { return dataset_; }
 
   /// Append data to dataset that is contained in some sort of container.
   template <typename T> void appendArray(T const &data) {
@@ -308,7 +308,7 @@ public:
   ///
   /// \param offset The index of the element to read.
   /// \return The string value.
-  std::string read_element(uint64_t offset) {
+  [[nodiscard]] std::string read_element(uint64_t offset) {
     std::string result;
     dataset_.read(result, dataset_.datatype(), hdf5::dataspace::Scalar(),
                   hdf5::dataspace::Hyperslab{{offset}, {1}});
