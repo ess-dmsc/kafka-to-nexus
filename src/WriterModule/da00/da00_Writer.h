@@ -59,7 +59,7 @@ protected:
   std::map<std::string, VariableConfig> VariableConfigMap;
   std::map<std::string, VariableConfig> ConstantConfigMap;
   // unique pointers to the dataset objects
-  std::map<std::string, VariableConfig::variable_t> VariablePtrs;
-  std::map<std::string, VariableConfig::constant_t> ConstantPtrs;
+  std::map<std::string, VariableConfig::VariableDataset> VariablePtrs;
+  std::map<std::string, VariableConfig::ConstantDataset> ConstantPtrs;
 };
 } // namespace WriterModule::da00
