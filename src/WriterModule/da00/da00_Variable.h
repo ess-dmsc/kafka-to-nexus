@@ -85,28 +85,31 @@ public:
   VariableConfig() = default;
   explicit VariableConfig(std::string name) : name_(std::move(name)) {}
   VariableConfig &operator=(std::string const &config) {
-    auto cfg = nlohmann::json::parse(config);
-    name_ = cfg["name"];
-    if (cfg.contains("unit"))
-      unit_ = StringConfig(cfg["unit"]);
-    if (cfg.contains("label"))
-      label_ = StringConfig(cfg["label"]);
-    if (cfg.contains("source"))
-      source_ = StringConfig(cfg["source"]);
-    if (cfg.contains("data_type"))
-      dtype_ = string_to_da00_dtype(cfg["data_type"].get<std::string>());
-    if (cfg.contains("shape")) {
-      auto shape = cfg["shape"].get<std::vector<hsize_t>>();
-      if (!shape.empty())
+    auto json_config = nlohmann::json::parse(config);
+    name_ = json_config["name"];
+    if (json_config.contains("unit"))
+      unit_ = StringConfig(json_config["unit"]);
+    if (json_config.contains("label"))
+      label_ = StringConfig(json_config["label"]);
+    if (json_config.contains("source"))
+      source_ = StringConfig(json_config["source"]);
+    if (json_config.contains("data_type"))
+      dtype_ =
+          string_to_da00_dtype(json_config["data_type"].get<std::string>());
+    if (json_config.contains("shape")) {
+      auto shape = json_config["shape"].get<std::vector<hsize_t>>();
+      if (!shape.empty()) {
         shape_ = shape;
+      }
     }
-    if (cfg.contains("axes")) {
-      auto axes = cfg["axes"].get<std::vector<std::string>>();
-      if (!axes.empty())
+    if (json_config.contains("axes")) {
+      auto axes = json_config["axes"].get<std::vector<std::string>>();
+      if (!axes.empty()) {
         axes_ = axes;
+      }
     }
-    if (cfg.contains("data"))
-      data_ = cfg["data"];
+    if (json_config.contains("data"))
+      data_ = json_config["data"];
     if (!dtype_.has_value() && data_.has_value()) {
       dtype_ = guess_dtype(data_.value());
       LOG_ERROR("No data type specified for variable {}. Guessing type {}.",
@@ -144,7 +147,6 @@ public:
       if (!dims.empty())
         axes_ = dims;
     }
-    // if (buffer->data()) data_ = buffer->data()->DataAsJson();
     if (!is_consistent()) {
       LOG_WARN("Inconsistent variable config for variable {}.", name_);
     }
@@ -185,58 +187,57 @@ public:
     //     data = [1, 2, 3, ..., N],
     // or
     //     data = {min=1, max=N, size=N},
-    auto cfg = EdgeConfig();
+    EdgeConfig cfg = EdgeConfig();
     cfg = data_.value().dump();
     return cfg.edges<T>();
   }
-  void name(std::string n) { name_ = std::move(n); }
-  void unit(std::string u) { unit_ = StringConfig(std::move(u)); }
-  void label(std::string l) { label_ = StringConfig(std::move(l)); }
-  void source(std::string s) { source_ = StringConfig(std::move(s)); }
-  void dtype(da00_dtype t) { dtype_ = t; }
-  void dtype(const std::string &t) { dtype_ = string_to_da00_dtype(t); }
-  void shape(std::vector<hsize_t> s) { shape_ = std::move(s); }
-  void dims(std::vector<std::string> d) { axes_ = std::move(d); }
+  void name(std::string name) { name_ = std::move(name); }
+  void unit(std::string unit) { unit_ = StringConfig(std::move(unit)); }
+  void label(std::string label) { label_ = StringConfig(std::move(label)); }
+  void source(std::string source) { source_ = StringConfig(std::move(source)); }
+  void dtype(da00_dtype type) { dtype_ = type; }
+  void dtype(const std::string &type) { dtype_ = string_to_da00_dtype(type); }
+  void shape(std::vector<hsize_t> shape) { shape_ = std::move(shape); }
+  void dims(std::vector<std::string> dims) { axes_ = std::move(dims); }
 
   [[nodiscard]] bool is_consistent() const {
-    if (has_axes() && has_shape()) {
-      if (axes().size() != shape().size()) {
-        LOG_WARN("Consistency check failed for variable {}. Dims and shape "
-                 "have different sizes.",
-                 name());
-        return false;
-      }
+    if (has_axes() && has_shape() && axes().size() != shape().size()) {
+      LOG_WARN("Consistency check failed for variable {}. Dims and shape "
+               "have different sizes.",
+               name());
+      return false;
     }
     return true;
   }
 
   std::pair<bool, bool> update_from(const VariableConfig &other, bool force) {
-    bool inconsistent{false}, changed{false};
+    bool inconsistent{false};
+    bool changed{false};
     if (name() != other.name()) {
       LOG_DEBUG("Variable name mismatch for variable {}. Expected {}, got {}.",
                 name(), name(), other.name());
       return std::make_pair(false, false);
     }
     if (has_unit() && other.has_unit()) {
-      auto ic = unit_.value().update_from(other.unit(), force);
-      inconsistent |= ic.first;
-      changed |= ic.second;
+      auto [first, second] = unit_.value().update_from(other.unit(), force);
+      inconsistent |= first;
+      changed |= second;
     } else if (other.has_unit()) {
       changed = true;
       unit_ = other.unit();
     }
     if (has_label() && other.has_label()) {
-      auto ic = label_.value().update_from(other.label(), force);
-      inconsistent |= ic.first;
-      changed |= ic.second;
+      auto [first, second] = label_.value().update_from(other.label(), force);
+      inconsistent |= first;
+      changed |= second;
     } else if (other.has_label()) {
       changed = true;
       label_ = other.label();
     }
     if (has_source() && other.has_source()) {
-      auto ic = source_.value().update_from(other.source(), force);
-      inconsistent |= ic.first;
-      changed |= ic.second;
+      auto [first, second] = source_.value().update_from(other.source(), force);
+      inconsistent |= first;
+      changed |= second;
     } else if (other.has_source()) {
       changed = true;
       source_ = other.source();
@@ -252,7 +253,8 @@ public:
       dtype(other.dtype());
     }
     if (has_shape() && other.has_shape() && shape() != other.shape()) {
-      std::stringstream ts, os;
+      std::stringstream ts;
+      std::stringstream os;
       ts << "[";
       for (auto const &t : shape())
         ts << t << ", ";
@@ -271,7 +273,8 @@ public:
       shape(other.shape());
     }
     if (has_axes() && other.has_axes() && axes() != other.axes()) {
-      std::stringstream ts, os;
+      std::stringstream ts;
+      std::stringstream os;
       ts << "[";
       for (auto const &t : axes())
         ts << t << ", ";
@@ -292,21 +295,22 @@ public:
     return std::make_pair(inconsistent, changed || (force && inconsistent));
   }
 
-  template <class DataType> auto constant_dataset(hdf5::node::Group const &group) const {
-    auto sh = has_shape() ? shape() : hdf5::Dimensions{};
+  template <class DataType>
+  auto constant_dataset(hdf5::node::Group const &group) const {
+    auto initial_shape = has_shape() ? shape() : hdf5::Dimensions{};
     auto dataset = std::make_unique<hdf5::node::Dataset>(
-        group, name(), hdf5::datatype::create<DataType>(), hdf5::dataspace::Simple(sh, sh));
+        group, name(), hdf5::datatype::create<DataType>(),
+        hdf5::dataspace::Simple(initial_shape, initial_shape));
     add_dataset_attributes(dataset, has_axes() ? colsepaxes() : std::string());
     if (has_data())
       dataset->write(data<DataType>());
     return dataset;
   }
   template <class DataType>
-  void write_constant(ConstantDataset &dataset, const uint8_t *data,
+  void write_constant(ConstantDataset const &dataset, const uint8_t *data,
                       hsize_t bytes) const {
-    auto sh = shape();
-    auto count =
-        std::accumulate(sh.cbegin(), sh.cend(), 1, std::multiplies<>());
+    auto count = std::accumulate(shape().cbegin(), shape().cend(), 1,
+                                 std::multiplies<>());
     if (count * sizeof(DataType) != bytes * sizeof(uint8_t)) {
       LOG_ERROR("Buffer size mismatch for variable {}. Expected {} bytes, got "
                 "{} bytes.",
@@ -323,8 +327,9 @@ public:
   [[nodiscard]] VariableDataset
   variable_dataset(hdf5::node::Group const &group, hdf5::Dimensions chunk,
                    [[maybe_unused]] const bool fixed = true) const {
-    auto sh = has_shape() ? shape() : hdf5::Dimensions{};
-    auto dataset = create_chunked_dataset<DataType>(group, name(), sh, chunk);
+    auto initial_shape = has_shape() ? shape() : hdf5::Dimensions{};
+    auto dataset =
+        create_chunked_dataset<DataType>(group, name(), initial_shape, chunk);
     std::string axes_spec;
     if (has_axes())
       axes_spec = "time:" + colsepaxes();
@@ -333,7 +338,7 @@ public:
   }
 
   template <class DataType>
-  void append_variable(VariableDataset &dataset, const uint8_t *data,
+  void append_variable(VariableDataset const &dataset, const uint8_t *data,
                        const hdf5::Dimensions &shape) const {
     if (has_shape()) {
       const auto &my_shape = this->shape();
@@ -358,19 +363,22 @@ public:
   }
 
   template <class DataType>
-  void append_missing_variable(VariableDataset &dataset) const {
-    using nl = std::numeric_limits<DataType>;
+  void append_missing_variable(VariableDataset const &dataset) const {
+    auto upper_bound = std::numeric_limits<DataType>::has_quiet_NaN
+                           ? std::numeric_limits<DataType>::quiet_NaN()
+                           : (std::numeric_limits<DataType>::max)();
     auto shape = this->shape();
     auto count =
         std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<>());
-    std::vector<DataType> missing(count, nl::has_quiet_NaN ? nl::quiet_NaN()
-                                                           : (nl::max)());
+    std::vector<DataType> missing(count, upper_bound);
     appendArray(*dataset, missing, shape);
   }
 
-  auto insert_constant_dataset(hdf5::node::Group const &group) const {
+  std::unique_ptr<hdf5::node::Dataset>
+  insert_constant_dataset(hdf5::node::Group const &group) const {
     std::map<da00_dtype, std::function<ConstantDataset()>> call_map{
-        {da00_dtype::int8, [&]() { return constant_dataset<std::int8_t>(group); }},
+        {da00_dtype::int8,
+         [&]() { return constant_dataset<std::int8_t>(group); }},
         {da00_dtype::uint8,
          [&]() { return constant_dataset<std::uint8_t>(group); }},
         {da00_dtype::int16,
@@ -389,7 +397,8 @@ public:
          [&]() { return constant_dataset<std::float_t>(group); }},
         {da00_dtype::float64,
          [&]() { return constant_dataset<std::double_t>(group); }},
-        {da00_dtype::c_string, [&]() { return constant_dataset<char>(group); }}};
+        {da00_dtype::c_string,
+         [&]() { return constant_dataset<char>(group); }}};
     auto dtype = has_dtype() ? dtype_.value() : da00_dtype::float64;
     return call_map[dtype]();
   }
@@ -484,7 +493,8 @@ public:
     return call_map[dtype]();
   }
 
-  auto variable_append(VariableDataset &dataset, const da00_Variable *fb) const {
+  auto variable_append(VariableDataset &dataset,
+                       const da00_Variable *fb) const {
     const auto data = fb->data()->Data();
     const auto axis_shape = fb->shape(); // dimension sizes
     const auto shape = hdf5::Dimensions(axis_shape->begin(), axis_shape->end());
@@ -556,7 +566,8 @@ public:
          [&]() { append_missing_variable<std::float_t>(dataset); }},
         {da00_dtype::float64,
          [&]() { append_missing_variable<std::double_t>(dataset); }},
-        {da00_dtype::c_string, [&]() { append_missing_variable<char>(dataset); }}};
+        {da00_dtype::c_string,
+         [&]() { append_missing_variable<char>(dataset); }}};
     if (!has_dtype()) {
       LOG_ERROR("Can not append missing data for {} without data_type!",
                 name());
@@ -564,7 +575,8 @@ public:
     return call_map[dtype()]();
   }
 
-  [[nodiscard]] auto reopen_variable_dataset(hdf5::node::Group const &group) const {
+  [[nodiscard]] auto
+  reopen_variable_dataset(hdf5::node::Group const &group) const {
     if (!group.has_dataset(name())) {
       std::stringstream ss;
       ss << group.link().path();
@@ -741,7 +753,8 @@ public:
     }
   }
   template <class T>
-  void update_constant(ConstantDataset &constant, const std::vector<T> &data) const {
+  void update_constant(ConstantDataset &constant,
+                       const std::vector<T> &data) const {
     update_constant(constant);
     std::vector<T> var_data;
     constant->read(var_data);
