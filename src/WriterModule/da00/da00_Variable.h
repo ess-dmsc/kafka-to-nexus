@@ -46,35 +46,35 @@ create_chunked_dataset(hdf5::node::Group const &parent, std::string const &name,
 }
 
 template <typename T>
-void appendArray(hdf5::node::Dataset &dataset, T const &NewData,
-                 hdf5::Dimensions Shape) {
-  auto CurrentExtent =
+void appendArray(hdf5::node::Dataset &dataset, T const &new_data,
+                 hdf5::Dimensions shape) {
+  auto current_extent =
       hdf5::dataspace::Simple(dataset.dataspace()).current_dimensions();
-  hdf5::Dimensions Origin(CurrentExtent.size(), 0);
-  Origin[0] = CurrentExtent[0];
-  ++CurrentExtent[0];
-  Shape.insert(Shape.begin(), 1);
-  if (Shape.size() != CurrentExtent.size()) {
+  hdf5::Dimensions origin(current_extent.size(), 0);
+  origin[0] = current_extent[0];
+  ++current_extent[0];
+  shape.insert(shape.begin(), 1);
+  if (shape.size() != current_extent.size()) {
     LOG_ERROR("Data has {} dimension(s) and dataset has {} (+1) dimensions.",
-              Shape.size() - 1, CurrentExtent.size() - 1);
+              shape.size() - 1, current_extent.size() - 1);
     throw std::runtime_error(
         "Rank (dimensions) of data to be written is wrong.");
   }
-  for (size_t i = 1; i < Shape.size(); i++) {
-    if (Shape[i] > CurrentExtent[i]) {
+  for (size_t i = 1; i < shape.size(); i++) {
+    if (shape[i] > current_extent[i]) {
       LOG_WARN("Dimension {} of new data is larger than that of the "
                "dataset. Extending dataset.",
                i - 1);
-      CurrentExtent[i] = Shape[i];
-    } else if (Shape[i] < CurrentExtent[i]) {
+      current_extent[i] = shape[i];
+    } else if (shape[i] < current_extent[i]) {
       LOG_WARN("Dimension {} of new data is smaller than that of "
                "the dataset. Using 0 as a filler.",
                i - 1);
     }
   }
-  dataset.extent(CurrentExtent);
-  hdf5::dataspace::Hyperslab Selection{{Origin}, {Shape}};
-  dataset.write(NewData, Selection);
+  dataset.extent(current_extent);
+  hdf5::dataspace::Hyperslab selection{{origin}, {shape}};
+  dataset.write(new_data, selection);
 }
 
 class VariableConfig {
