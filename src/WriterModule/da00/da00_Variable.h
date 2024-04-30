@@ -12,37 +12,37 @@ namespace WriterModule::da00 {
 template <typename T>
 std::unique_ptr<hdf5::node::ChunkedDataset>
 create_chunked_dataset(hdf5::node::Group const &parent, std::string const &name,
-                       hdf5::Dimensions shape, hdf5::Dimensions chunksize) {
+                       hdf5::Dimensions shape, hdf5::Dimensions chunk_size) {
   shape.insert(shape.begin(), 0);
-  hdf5::Dimensions MaxSize(shape.size(), hdf5::dataspace::Simple::unlimited);
-  std::vector<hsize_t> VectorChunkSize;
-  if (chunksize.empty()) {
+  hdf5::Dimensions max_size(shape.size(), hdf5::dataspace::Simple::unlimited);
+
+  if (chunk_size.empty()) {
     LOG_WARN("No chunk size given. Using the default value 1024.");
-    chunksize.emplace_back(1024);
+    chunk_size.emplace_back(1024);
   }
-  if (chunksize.size() == shape.size()) {
-    VectorChunkSize = chunksize;
-  } else if (chunksize.size() == 1 && shape.size() > 1) {
-    VectorChunkSize = shape;
-    auto ElementsPerRow =
+  if (chunk_size.size() == shape.size()) {
+    // All normal - nothing to do
+  } else if (chunk_size.size() == 1 && shape.size() > 1) {
+    auto elements_per_row =
         std::accumulate(std::next(shape.begin()), shape.end(), 1,
                         [](auto a, auto b) { return a * b; });
-    auto NrOfRows = chunksize[0] / ElementsPerRow;
-    if (NrOfRows == 0) {
-      NrOfRows = 1;
+    auto num_rows = chunk_size[0] / elements_per_row;
+    if (num_rows == 0) {
+      num_rows = 1;
     }
-    VectorChunkSize[0] = NrOfRows;
+    chunk_size = shape;
+    chunk_size[0] = num_rows;
   } else {
     LOG_ERROR("Unable to reconcile a data shape with {} dimensions "
               "and chunk size with {} dimensions. Using default "
               "values.",
-              shape.size(), chunksize.size());
-    VectorChunkSize = shape;
-    VectorChunkSize[0] = 1024;
+              shape.size(), chunk_size.size());
+    chunk_size = shape;
+    chunk_size[0] = 1024;
   }
   return std::make_unique<hdf5::node::ChunkedDataset>(
       parent, name, hdf5::datatype::create<T>(),
-      hdf5::dataspace::Simple(shape, MaxSize), VectorChunkSize);
+      hdf5::dataspace::Simple(shape, max_size), chunk_size);
 }
 
 template <typename T>
