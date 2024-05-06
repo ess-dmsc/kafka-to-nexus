@@ -32,7 +32,7 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
   try {
     json const NexusStructure = json::parse(NexusStructureString);
     std::vector<ModuleHDFInfo> ModuleHDFInfoList;
-    Task.InitialiseHdf(NexusStructure.dump(), ModuleHDFInfoList);
+    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList);
     return ModuleHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
