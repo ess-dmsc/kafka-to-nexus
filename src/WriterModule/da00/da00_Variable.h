@@ -402,7 +402,8 @@ public:
     auto dtype = has_dtype() ? dtype_.value() : da00_dtype::float64;
     return call_map[dtype]();
   }
-  auto write_constant_dataset(ConstantDataset &dataset, const uint8_t *data,
+
+  void write_constant_dataset(ConstantDataset &dataset, const uint8_t *data,
                               hsize_t count) const {
     std::map<da00_dtype, std::function<void()>> call_map{
         {da00_dtype::int8,
@@ -428,11 +429,12 @@ public:
         {da00_dtype::c_string,
          [&]() { write_constant<char>(dataset, data, count); }}};
     auto dtype = has_dtype() ? dtype_.value() : da00_dtype::float64;
-    return call_map[dtype]();
+    call_map[dtype]();
   }
 
-  auto insert_variable_dataset(hdf5::node::Group const &group,
-                               const hdf5::Dimensions &chunk_size) const {
+  std::unique_ptr<hdf5::node::Dataset>
+  insert_variable_dataset(hdf5::node::Group const &group,
+                          const hdf5::Dimensions &chunk_size) const {
     std::map<da00_dtype, std::function<VariableDataset()>> call_map{
         {da00_dtype::int8,
          [&]() { return variable_dataset<std::int8_t>(group, chunk_size); }},
@@ -460,40 +462,7 @@ public:
     return call_map[dtype]();
   }
 
-  auto append_variable_dataset(VariableDataset &dataset, da00_dtype dtype,
-                               const uint8_t *data,
-                               const hdf5::Dimensions &shape) const {
-    std::map<da00_dtype, std::function<void()>> call_map{
-        {da00_dtype::int8,
-         [&]() { append_variable<std::int8_t>(dataset, data, shape); }},
-        {da00_dtype::uint8,
-         [&]() { append_variable<std::uint8_t>(dataset, data, shape); }},
-        {da00_dtype::int16,
-         [&]() { append_variable<std::int16_t>(dataset, data, shape); }},
-        {da00_dtype::uint16,
-         [&]() { append_variable<std::uint16_t>(dataset, data, shape); }},
-        {da00_dtype::int32,
-         [&]() { append_variable<std::int32_t>(dataset, data, shape); }},
-        {da00_dtype::uint32,
-         [&]() { append_variable<std::uint32_t>(dataset, data, shape); }},
-        {da00_dtype::int64,
-         [&]() { append_variable<std::int64_t>(dataset, data, shape); }},
-        {da00_dtype::uint64,
-         [&]() { append_variable<std::uint64_t>(dataset, data, shape); }},
-        {da00_dtype::float32,
-         [&]() { append_variable<std::float_t>(dataset, data, shape); }},
-        {da00_dtype::float64,
-         [&]() { append_variable<std::double_t>(dataset, data, shape); }},
-        {da00_dtype::c_string,
-         [&]() { append_variable<char>(dataset, data, shape); }}};
-    if (has_dtype() && dtype_.value() != dtype) {
-      LOG_WARN("Data type mismatch for {}: (configuration={}, buffer={})",
-               name(), dtype_.value(), dtype);
-    }
-    return call_map[dtype]();
-  }
-
-  auto variable_append(VariableDataset &dataset,
+  void variable_append(VariableDataset &dataset,
                        const da00_Variable *fb) const {
     const auto data = fb->data()->Data();
     const auto axis_shape = fb->shape(); // dimension sizes
@@ -542,9 +511,10 @@ public:
         }
       }
     }
-    return call_map[fb->data_type()]();
+    call_map[fb->data_type()]();
   }
-  auto variable_append_missing(VariableDataset &dataset) const {
+
+  void variable_append_missing(VariableDataset &dataset) const {
     std::map<da00_dtype, std::function<void()>> call_map{
         {da00_dtype::int8,
          [&]() { append_missing_variable<std::int8_t>(dataset); }},
@@ -572,10 +542,10 @@ public:
       LOG_ERROR("Can not append missing data for {} without data_type!",
                 name());
     }
-    return call_map[dtype()]();
+    call_map[dtype()]();
   }
 
-  [[nodiscard]] auto
+  [[nodiscard]] std::unique_ptr<hdf5::node::Dataset>
   reopen_variable_dataset(hdf5::node::Group const &group) const {
     if (!group.has_dataset(name())) {
       std::stringstream ss;
@@ -587,7 +557,7 @@ public:
     return std::make_unique<hdf5::node::Dataset>(group.get_dataset(name()));
   }
 
-  [[nodiscard]] auto reopen_constant_dataset(hdf5::node::Group &group) const {
+  [[nodiscard]] std::unique_ptr<hdf5::node::Dataset> reopen_constant_dataset(hdf5::node::Group &group) const {
     if (!group.has_dataset(name())) {
       std::stringstream ss;
       ss << group.link().path();
@@ -662,10 +632,11 @@ public:
     }
   }
   void update_variable(VariableDataset &variable,
-                       const bool SingeWriterMultipleReader = true) const {
+                       bool swmr_enabled = true) const {
     using namespace hdf5::dataspace;
-    update_dataset_attributes(variable, SingeWriterMultipleReader);
+    update_dataset_attributes(variable, swmr_enabled);
     if (has_shape()) {
+      // TODO: continue fixing names from here downwards
       auto sh = shape();
       sh.insert(sh.begin(), 1);
       auto ds = variable->dataspace();
@@ -708,9 +679,9 @@ public:
     }
   }
   void update_constant(ConstantDataset &constant,
-                       const bool SingleWriterMultipleReader = true) const {
+                       const bool swmr_enabled = true) const {
     using namespace hdf5::dataspace;
-    update_dataset_attributes(constant, SingleWriterMultipleReader);
+    update_dataset_attributes(constant, swmr_enabled);
     if (has_shape()) {
       auto ds = constant->dataspace();
       bool resize{false};
@@ -740,7 +711,7 @@ public:
         }
       }
       // resizing/reshaping non-extensible datasets is not possible in SWMR-mode
-      if (!SingleWriterMultipleReader && (resize || replace)) {
+      if (!swmr_enabled && (resize || replace)) {
         auto dataspace = Simple(shape(), shape());
         auto datatype = constant->datatype();
         auto link = constant->link();
