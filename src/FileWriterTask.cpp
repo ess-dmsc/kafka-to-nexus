@@ -17,21 +17,6 @@
 
 namespace FileWriter {
 
-namespace {
-
-using nlohmann::json;
-
-json hdf_parse(std::string const &Structure) {
-  try {
-    auto StructureDocument = json::parse(Structure);
-    return StructureDocument;
-  } catch (...) {
-    LOG_CRITICAL("JSON parse error: ", Structure);
-    throw FileWriter::ParseError(Structure);
-  }
-}
-} // namespace
-
 std::vector<Source> &FileWriterTask::sources() { return SourceToModuleMap; }
 
 void FileWriterTask::setFullFilePath(std::filesystem::path const &filepath) {
@@ -42,9 +27,8 @@ void FileWriterTask::addSource(Source &&Source) {
   SourceToModuleMap.push_back(std::move(Source));
 }
 
-void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
+void FileWriterTask::InitialiseHdf(nlohmann::json const &NexusStructure,
                                    std::vector<ModuleHDFInfo> &HdfInfo) {
-  auto NexusStructureJson = hdf_parse(NexusStructure);
   std::string ErrorString;
 
   if (std::filesystem::exists(filepath_)) {
@@ -69,7 +53,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
 
   try {
     LOG_INFO("Creating HDF file {}", filepath_.string());
-    File = std::make_unique<HDFFile>(filepath_, NexusStructureJson, HdfInfo,
+    File = std::make_unique<HDFFile>(filepath_, NexusStructure, HdfInfo,
                                      MetaDataTracker);
   } catch (std::exception const &E) {
     ErrorString =
