@@ -49,8 +49,7 @@ public:
       : FieldBase(RegistrarPtr, std::vector<KeyString>{Key}) {}
 
   virtual ~FieldBase() {}
-  virtual void setValue(std::string const &key,
-                        json const &newValue) = 0;
+  virtual void setValue(std::string const &key, json const &newValue) = 0;
   virtual void setValue(std::string const &Key,
                         std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
@@ -120,13 +119,12 @@ public:
         FieldType const &DefaultValue)
       : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
-
-  void setValue(const std::string& Key, const json& newValue) override {
-      if (newValue.is_string()) {
-          setValueImpl<FieldType>(Key, newValue.get<std::string>());
-      } else {
-          setValueImpl<FieldType>(Key, newValue);
-      }
+  void setValue(const std::string &Key, const json &newValue) override {
+    if (newValue.is_string()) {
+      setValueImpl<FieldType>(Key, newValue.get<std::string>());
+    } else {
+      setValueImpl<FieldType>(Key, newValue);
+    }
   }
 
   void setValue(std::string const &Key,
