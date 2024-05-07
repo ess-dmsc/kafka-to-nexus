@@ -49,6 +49,8 @@ public:
       : FieldBase(RegistrarPtr, std::vector<KeyString>{Key}) {}
 
   virtual ~FieldBase() {}
+  virtual void setValue(std::string const &key,
+                        json const &newValue) = 0;
   virtual void setValue(std::string const &Key,
                         std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
@@ -79,6 +81,12 @@ public:
   template <class FieldRegistrarType>
   ObsoleteField(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
       : FieldBase(RegistrarPtr, Key) {}
+
+  void setValue(std::string const &, json const &) override {
+    LOG_WARN(
+        R"(The field with the key(s) "{}" is obsolete. Any value set will be ignored.)",
+        getKeys());
+  }
 
   void setValue(std::string const &, std::string const &) override {
     LOG_WARN(
@@ -112,9 +120,19 @@ public:
         FieldType const &DefaultValue)
       : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
 
+
+  void setValue(const std::string& Key, const json& newValue) override {
+      if (newValue.is_string()) {
+          setValueImpl<FieldType>(Key, newValue.get<std::string>());
+      } else {
+          setValueImpl<FieldType>(Key, newValue);
+      }
+  }
+
   void setValue(std::string const &Key,
                 std::string const &ValueString) override {
-    setValueImpl<FieldType>(Key, ValueString);
+    auto Value = json::parse(ValueString);
+    setValueImpl<FieldType>(Key, Value);
   }
 
   FieldType getValue() const { return FieldValue; }
@@ -131,17 +149,15 @@ protected:
 private:
   template <typename T,
             std::enable_if_t<!std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &Key, std::string const &ValueString) {
-    auto JsonData = json::parse(ValueString);
-    setValueInternal(Key, JsonData.get<FieldType>());
+  void setValueImpl(std::string const &Key, nlohmann::json const &ValueString) {
+    setValueInternal(Key, ValueString.get<FieldType>());
   }
 
   template <typename T,
             std::enable_if_t<std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &Key, std::string const &ValueString) {
+  void setValueImpl(std::string const &Key, nlohmann::json const &ValueString) {
     try {
-      auto JsonData = json::parse(ValueString);
-      setValueInternal(Key, JsonData.get<FieldType>());
+      setValueInternal(Key, ValueString.get<FieldType>());
     } catch (json::exception const &) {
       setValueInternal(Key, ValueString);
     }
