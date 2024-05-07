@@ -12,7 +12,6 @@
 #include "logger.h"
 #include <nlohmann/json.hpp>
 #include <set>
-#include <iostream>
 
 namespace JsonConfig {
 

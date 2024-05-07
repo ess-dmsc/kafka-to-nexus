@@ -121,7 +121,8 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
         if (CurrentAttribute.Type.hasDefaultValue() and CValue.is_array()) {
           if (std::any_of(CValue.begin(), CValue.end(),
                           [](auto &A) { return A.is_string(); })) {
-            CurrentAttribute.Type.setValue(std::string("dtype"), std::string("string"));
+            CurrentAttribute.Type.setValue(std::string("dtype"),
+                                           std::string("string"));
           }
         }
         writeAttrOfSpecifiedType(CurrentAttribute.Type, Node,
