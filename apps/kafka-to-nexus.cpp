@@ -81,13 +81,15 @@ int main(int argc, char **argv) {
 
   auto FQDN = getFQDN();
   std::replace(FQDN.begin(), FQDN.end(), '.', '_');
-  std::string metric_prefix = FQDN;
+  std::string metric_prefix = ApplicationName + "." + FQDN;
 
+  std::string prefix_service_component;
   if (Options->ServiceName.empty()) {
-    metric_prefix += Options->getServiceId();
+    prefix_service_component = Options->getServiceId();
   } else {
-    metric_prefix += Options->ServiceName;
+    prefix_service_component = Options->ServiceName;
   }
+  metric_prefix += "." + prefix_service_component;
   std::unique_ptr<Metrics::IRegistrar> registrar =
       std::make_unique<Metrics::Registrar>(metric_prefix, MetricsReporters);
 
