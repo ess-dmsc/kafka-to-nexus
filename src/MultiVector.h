@@ -37,30 +37,41 @@ inline size_t posToIndex(Shape Dimensions, Shape Pos) {
 template <typename T> class MultiVector {
 public:
   MultiVector() = default;
-  explicit MultiVector(Shape Extent)
-      : Data(extentToSize(Extent)), Dimensions(Extent) {}
+  explicit MultiVector(Shape const &extent)
+      : Data(extentToSize(extent)), shape_(extent) {}
 
-  bool operator==(MultiVector<T> const &Other) const {
-    return Dimensions == Other.Dimensions and
-           std::equal(Data.cbegin(), Data.cend(), Other.Data.cbegin());
+  bool operator==(MultiVector<T> const &other) const {
+    return shape_ == other.shape_ &&
+           std::equal(Data.cbegin(), Data.cend(), other.Data.cbegin());
   }
 
-  T &at(Shape const &Index) {
-    if (Index.size() != Dimensions.size()) {
-      throw std::out_of_range("Number of dimensions is not equal.");
+  void set_value(Shape const &index, T const &value) {
+    check_index(index);
+    Data[(posToIndex(shape_, index))] = value;
+  }
+
+  T get_value(Shape const &index) {
+    check_index(index);
+    return Data[(posToIndex(shape_, index))];
+  }
+  [[nodiscard]] Shape getDimensions() const { return shape_; }
+  T *data() { return Data.data(); }
+  [[nodiscard]] size_t size() const { return Data.size(); }
+  std::vector<T> Data;
+
+private:
+  void check_index(Shape const &index) {
+    if (index.size() != shape_.size()) {
+      throw std::out_of_range("Shape dimensions are not equal.");
     }
-    for (size_t i = 0; i < Dimensions.size(); ++i) {
-      if (Index[i] >= Dimensions[i]) {
+    for (size_t i = 0; i < shape_.size(); ++i) {
+      if (index[i] >= shape_[i]) {
         throw std::out_of_range("Outside of range.");
       }
     }
-    return Data.operator[](posToIndex(Dimensions, Index));
   }
-  Shape getDimensions() const { return Dimensions; }
-  T *data() { return Data.data(); }
-  size_t size() const { return Data.size(); }
-  std::vector<T> Data;
-  Shape Dimensions;
+
+  Shape shape_;
 };
 
 namespace hdf5 {

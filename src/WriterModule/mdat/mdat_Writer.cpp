@@ -53,7 +53,7 @@ void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
                                    std::string const &Value) {
   try {
     auto StringVec = MultiVector<std::string>{{1}};
-    StringVec.at({0}) = Value;
+    StringVec.set_value({0}, Value);
     auto Group = hdf5::node::get_group(Task->hdfGroup(), Path);
     HDFOperations::writeStringDataset(Group, Name, StringVec);
   } catch (std::exception &Error) {

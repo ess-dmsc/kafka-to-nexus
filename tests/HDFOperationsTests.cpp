@@ -279,10 +279,10 @@ TEST_F(HDFStaticDataTest, StringArray) {
   MultiVector<std::string> DatasetValues({2, 2});
   HDFDataset.read(DatasetValues.Data);
   MultiVector<std::string> ExpectedDataset({2, 2});
-  ExpectedDataset.at({0, 0}) = "a";
-  ExpectedDataset.at({0, 1}) = "b";
-  ExpectedDataset.at({1, 0}) = "c";
-  ExpectedDataset.at({1, 1}) = "d";
+  ExpectedDataset.set_value({0, 0}, "a");
+  ExpectedDataset.set_value({0, 1}, "b");
+  ExpectedDataset.set_value({1, 0}, "c");
+  ExpectedDataset.set_value({1, 1}, "d");
   EXPECT_EQ(DatasetValues, ExpectedDataset);
 }
 

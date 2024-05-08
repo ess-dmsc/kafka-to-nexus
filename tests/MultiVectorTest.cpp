@@ -27,52 +27,52 @@ TEST(MultiVectorTest, Dimensions3) {
 
 TEST(MultiVectorTest, AccessTooFewDims) {
   MultiVector<int> TestVector({3, 4, 5});
-  EXPECT_THROW(TestVector.at({1, 2}), std::out_of_range);
+  EXPECT_THROW(TestVector.get_value({1, 2}), std::out_of_range);
 }
 
 TEST(MultiVectorTest, AccessTooManyDims) {
   MultiVector<int> TestVector({3, 4, 5});
-  EXPECT_THROW(TestVector.at({0, 0, 0, 0}), std::out_of_range);
+  EXPECT_THROW(TestVector.get_value({0, 0, 0, 0}), std::out_of_range);
 }
 
 TEST(MultiVectorTest, AccessOutsideOfRange) {
   MultiVector<int> TestVector({3, 4, 5});
-  EXPECT_THROW(TestVector.at({1, 4, 1}), std::out_of_range);
+  EXPECT_THROW(TestVector.get_value({1, 4, 1}), std::out_of_range);
 }
 
 TEST(MultiVectorTest, AccessWithinRange) {
   MultiVector<int> TestVector({3, 4, 5});
-  EXPECT_NO_THROW(TestVector.at({2, 3, 4}));
+  EXPECT_NO_THROW(TestVector.get_value({2, 3, 4}));
 }
 
 TEST(MultiVectorTest, SetAndGet) {
   MultiVector<int> TestVector({3, 4, 5});
-  TestVector.at({2, 3, 4}) = 42;
-  EXPECT_EQ(TestVector.at({2, 3, 4}), 42);
+  TestVector.set_value({2, 3, 4}, 42);
+  EXPECT_EQ(TestVector.get_value({2, 3, 4}), 42);
 }
 
 TEST(MultiVectorTest, SetValue1) {
   MultiVector<int> TestVector({2, 2});
-  TestVector.at({0, 0}) = 33;
-  TestVector.at({1, 1}) = 42;
+  TestVector.set_value({0, 0}, 33);
+  TestVector.set_value({1, 1}, 42);
   EXPECT_EQ(TestVector.Data, std::vector<int>({33, 0, 0, 42}));
 }
 
 TEST(MultiVectorTest, SetValue2) {
   MultiVector<int> TestVector({2, 2, 2});
-  TestVector.at({0, 0, 0}) = 33;
-  TestVector.at({1, 0, 0}) = 4;
-  TestVector.at({1, 1, 0}) = 3;
-  TestVector.at({0, 1, 1}) = 2;
-  TestVector.at({1, 0, 1}) = 1;
-  TestVector.at({1, 1, 1}) = 42;
+  TestVector.set_value({0, 0, 0}, 33);
+  TestVector.set_value({1, 0, 0}, 4);
+  TestVector.set_value({1, 1, 0}, 3);
+  TestVector.set_value({0, 1, 1}, 2);
+  TestVector.set_value({1, 0, 1}, 1);
+  TestVector.set_value({1, 1, 1}, 42);
   EXPECT_EQ(TestVector.Data, std::vector<int>({33, 0, 0, 2, 4, 1, 3, 42}));
 }
 
 TEST(MultiVectorTest, SetValue3) {
   MultiVector<int> TestVector({3, 3, 3, 3});
-  TestVector.at({0, 0, 0, 0}) = 11;
-  TestVector.at({2, 2, 2, 2}) = 44;
+  TestVector.set_value({0, 0, 0, 0}, 11);
+  TestVector.set_value({2, 2, 2, 2}, 44);
   std::vector<int> Comparison(3 * 3 * 3 * 3);
   Comparison.at(0) = 11;
   *std::prev(Comparison.end()) = 44;
@@ -81,6 +81,6 @@ TEST(MultiVectorTest, SetValue3) {
 
 TEST(MultiVectorTest, SetValue4) {
   MultiVector<int> TestVector({2, 2});
-  TestVector.at({1, 0}) = 33;
+  TestVector.set_value({1, 0}, 33);
   EXPECT_EQ(TestVector.Data, std::vector<int>({0, 0, 33, 0}));
 }
