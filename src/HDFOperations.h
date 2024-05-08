@@ -87,7 +87,7 @@ void populateMultiVector(nlohmann::json const &JsonObj,
       populateMultiVector(Element, TargetVector, CurrentPosition,
                           CurrentLevel + 1);
     } else {
-      TargetVector.at(CurrentPosition) = jsonElementConverter<T>(Element);
+      TargetVector.set_value(CurrentPosition, jsonElementConverter<T>(Element));
     }
     ++CurrentPosition[CurrentLevel];
   }
