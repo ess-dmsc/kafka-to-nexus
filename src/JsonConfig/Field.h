@@ -121,16 +121,22 @@ public:
 
   void setValue(const std::string &Key, const json &newValue) override {
     if (newValue.is_string()) {
-      setValueImpl<FieldType>(Key, newValue.get<std::string>());
+      setValueImpl(Key, newValue.get<std::string>());
     } else {
-      setValueImpl<FieldType>(Key, newValue);
+      setValueImpl(Key, newValue);
     }
   }
 
   void setValue(std::string const &Key,
                 std::string const &ValueString) override {
-    auto Value = json::parse(ValueString);
-    setValueImpl<FieldType>(Key, Value);
+    try {
+      auto Value = json::parse(ValueString);
+      setValueImpl(Key, Value);
+    } catch (json::type_error const &) {
+      setValueImpl(Key, ValueString);
+    } catch (json::parse_error const &) {
+      setValueImpl(Key, ValueString);
+    }
   }
 
   FieldType getValue() const { return FieldValue; }
@@ -145,14 +151,6 @@ protected:
   using FieldBase::makeRequired;
 
 private:
-  template <typename T,
-            std::enable_if_t<!std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &Key, nlohmann::json const &ValueString) {
-    setValueInternal(Key, ValueString.get<FieldType>());
-  }
-
-  template <typename T,
-            std::enable_if_t<std::is_same_v<std::string, T>, bool> = true>
   void setValueImpl(std::string const &Key, nlohmann::json const &ValueString) {
     try {
       setValueInternal(Key, ValueString.get<FieldType>());
@@ -160,6 +158,7 @@ private:
       setValueInternal(Key, ValueString);
     }
   }
+
   void setValueInternal(std::string const &Key, FieldType NewValue) {
     if (not GotDefault) {
       auto Keys = getKeys();

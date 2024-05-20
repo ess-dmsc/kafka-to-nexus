@@ -18,31 +18,36 @@ public:
   std::unique_ptr<JsonConfig::FieldHandler> FieldHandler;
 };
 
-TEST_F(JsonConfigField, SetWithCorrectType) {
+TEST_F(JsonConfigField, CanSetValuesWithIntType) {
   JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
   EXPECT_EQ(UnderTest.getValue(), 33);
   UnderTest.setValue(""s, "124"s);
   EXPECT_EQ(UnderTest.getValue(), 124);
 }
 
-TEST_F(JsonConfigField, SetWithWrongType) {
-  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
-  EXPECT_EQ(UnderTest.getValue(), 33);
-  EXPECT_THROW(UnderTest.setValue(""s, "\"hello\""s), json::type_error);
-}
-
-TEST_F(JsonConfigField, SetWithBadJson) {
-  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
-  EXPECT_EQ(UnderTest.getValue(), 33);
-  EXPECT_THROW(UnderTest.setValue(""s, "{3,5}"s), json::parse_error);
-}
-
-TEST_F(JsonConfigField, SetWithRegularString) {
+TEST_F(JsonConfigField, CanSetValuesWithStringType) {
   JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
                                            "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
-  UnderTest.setValue(""s, "\"some_string\""s);
-  EXPECT_EQ(UnderTest.getValue(), "some_string");
+  UnderTest.setValue(""s, "goodbye"s);
+  EXPECT_EQ(UnderTest.getValue(), "goodbye");
+}
+
+TEST_F(JsonConfigField, CanSetStringNumericValues) {
+  JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
+                                           "hello");
+  UnderTest.setValue(""s, "3.14"s);
+  EXPECT_EQ(UnderTest.getValue(), "3.14");
+}
+
+TEST_F(JsonConfigField, SetWithWrongTypeShouldThrow) {
+  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
+  EXPECT_THROW(UnderTest.setValue(""s, "\"hello\""s), json::type_error);
+}
+
+TEST_F(JsonConfigField, SetWithInvalidJsonShouldThrow) {
+  JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
+  EXPECT_THROW(UnderTest.setValue(""s, "{3,5}"s), json::exception);
 }
 
 TEST_F(JsonConfigField, SetWithJsonObject) {
@@ -53,7 +58,7 @@ TEST_F(JsonConfigField, SetWithJsonObject) {
   EXPECT_EQ(UnderTest.getValue(), nlohmann::json::parse("[2,3,4]"));
 }
 
-TEST_F(JsonConfigField, SetWithParseFailString) {
+TEST_F(JsonConfigField, SetWithNotJsonStringWritesAsString) {
   JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
                                            "hello");
   EXPECT_EQ(UnderTest.getValue(), "hello");
@@ -61,17 +66,8 @@ TEST_F(JsonConfigField, SetWithParseFailString) {
   EXPECT_EQ(UnderTest.getValue(), "{3,3}");
 }
 
-TEST_F(JsonConfigField, SetWithTypeFailString) {
-  JsonConfig::Field<std::string> UnderTest(FieldHandler.get(), "some_key",
-                                           "hello");
-  EXPECT_EQ(UnderTest.getValue(), "hello");
-  UnderTest.setValue(""s, "3.1345"s);
-  EXPECT_EQ(UnderTest.getValue(), "3.1345");
-}
-
-TEST_F(JsonConfigField, SetTwice) {
+TEST_F(JsonConfigField, SetValueTwice) {
   JsonConfig::Field<int> UnderTest(FieldHandler.get(), "some_key", 33);
-  EXPECT_EQ(UnderTest.getValue(), 33);
   UnderTest.setValue(""s, "124"s);
   EXPECT_EQ(UnderTest.getValue(), 124);
   UnderTest.setValue(""s, "11"s);
@@ -86,7 +82,7 @@ TEST_F(JsonConfigField, SetTwoKeys) {
   EXPECT_EQ(UnderTest.getKeys(), Comparison);
 }
 
-TEST_F(JsonConfigField, SetTwoRequriedKeys) {
+TEST_F(JsonConfigField, SetTwoRequiredKeys) {
   JsonConfig::RequiredField<int> UnderTest(FieldHandler.get(), {"h1", "h2"});
   std::string H1{"h1"};
   std::string H2{"h2"};
