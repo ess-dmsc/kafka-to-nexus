@@ -52,12 +52,12 @@ public:
   virtual void setValue(std::string const &key, json const &newValue) = 0;
   virtual void setValue(std::string const &Key,
                         std::string const &NewValue) = 0;
-  [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
+  [[nodiscard]] bool hasDefaultValue() const { return got_default; }
   [[nodiscard]] auto getKeys() const { return FieldKeys; }
   [[nodiscard]] bool isRequried() const { return FieldRequired; }
 
 protected:
-  bool GotDefault{true};
+  bool got_default{true};
   void makeRequired();
 
 private:
@@ -155,7 +155,7 @@ private:
   }
 
   void set_value_internal(std::string const &key, FieldType value) {
-    if (!GotDefault) {
+    if (!got_default) {
       auto keys = getKeys();
       auto keys_str =
           std::accumulate(std::next(keys.begin()), keys.end(), keys[0],
@@ -165,7 +165,7 @@ private:
           value_, value, keys_str);
     }
     used_key_ = key;
-    GotDefault = false;
+    got_default = false;
     value_ = value;
   }
 };
