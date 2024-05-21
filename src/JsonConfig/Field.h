@@ -109,70 +109,66 @@ public:
 template <class FieldType> class Field : public FieldBase {
 public:
   template <class FieldRegistrarType>
-  Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys,
-        FieldType const &DefaultValue)
-      : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
+  Field(FieldRegistrarType *registrar_ptr, std::vector<KeyString> const &keys,
+        FieldType const &value)
+      : FieldBase(registrar_ptr, keys), value_(value) {}
 
   // cppcheck-suppress functionStatic
   template <class FieldRegistrarType>
-  Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
-        FieldType const &DefaultValue)
-      : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
+  Field(FieldRegistrarType *registrar_ptr, KeyString const &key,
+        FieldType const &value)
+      : FieldBase(registrar_ptr, key), value_(value) {}
 
-  void setValue(const std::string &Key, const json &newValue) override {
-    if (newValue.is_string()) {
-      setValueImpl<FieldType>(Key, newValue.get<std::string>());
+  void setValue(const std::string &key, const json &value) override {
+    if (value.is_string()) {
+      set_value_impl<FieldType>(key, value.get<std::string>());
     } else {
-      setValueImpl<FieldType>(Key, newValue);
+      set_value_impl<FieldType>(key, value);
     }
   }
 
-  void setValue(std::string const &Key,
-                std::string const &ValueString) override {
-    auto Value = json::parse(ValueString);
-    setValueImpl<FieldType>(Key, Value);
+  void setValue(std::string const &key, std::string const &value) override {
+    set_value_impl<FieldType>(key, json::parse(value));
   }
 
-  FieldType getValue() const { return FieldValue; }
+  FieldType get_value() const { return value_; }
 
-  operator FieldType() const { return FieldValue; }
+  operator FieldType() const { return value_; }
 
-  std::string getUsedKey() const { return UsedKey; }
-
-protected:
-  std::string UsedKey;
-  FieldType FieldValue;
-  using FieldBase::makeRequired;
+  std::string get_key() const { return used_key_; }
 
 private:
+  FieldType value_;
+  std::string used_key_;
+
   template <typename T,
             std::enable_if_t<!std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &Key, nlohmann::json const &ValueString) {
-    setValueInternal(Key, ValueString.get<FieldType>());
+  void set_value_impl(std::string const &key, nlohmann::json const &json) {
+    set_value_internal(key, json.get<FieldType>());
   }
 
   template <typename T,
             std::enable_if_t<std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &Key, nlohmann::json const &ValueString) {
+  void set_value_impl(std::string const &key, nlohmann::json const &json) {
     try {
-      setValueInternal(Key, ValueString.get<FieldType>());
+      set_value_internal(key, json.get<FieldType>());
     } catch (json::exception const &) {
-      setValueInternal(Key, ValueString);
+      set_value_internal(key, json.dump());
     }
   }
-  void setValueInternal(std::string const &Key, FieldType NewValue) {
-    if (not GotDefault) {
-      auto Keys = getKeys();
-      auto AllKeys =
-          std::accumulate(std::next(Keys.begin()), Keys.end(), Keys[0],
+  void set_value_internal(std::string const &key, FieldType value) {
+    if (!GotDefault) {
+      auto keys = getKeys();
+      auto keys_str =
+          std::accumulate(std::next(keys.begin()), keys.end(), keys[0],
                           [](auto a, auto b) { return a + ", " + b; });
       LOG_WARN(
           R"(Replacing the previously given value of "{}" with "{}" in json config field with key(s): )",
-          FieldValue, NewValue, AllKeys);
+          value_, value, keys_str);
     }
-    UsedKey = Key;
+    used_key_ = key;
     GotDefault = false;
-    FieldValue = NewValue;
+    value_ = value;
   }
 };
 
