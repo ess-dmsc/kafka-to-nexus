@@ -121,14 +121,18 @@ public:
 
   void setValue(const std::string &key, const json &value) override {
     if (value.is_string()) {
-      set_value_impl<FieldType>(key, value.get<std::string>());
+      set_value_impl(key, value.get<std::string>());
     } else {
-      set_value_impl<FieldType>(key, value);
+      set_value_impl(key, value);
     }
   }
 
   void setValue(std::string const &key, std::string const &value) override {
-    set_value_impl<FieldType>(key, json::parse(value));
+    try {
+      set_value_impl(key, json::parse(value));
+    } catch (json::exception const &) {
+      set_value_impl(key, value);
+    }
   }
 
   FieldType get_value() const { return value_; }
@@ -141,12 +145,12 @@ private:
   FieldType value_;
   std::string used_key_;
 
-  template <typename T>
   void set_value_impl(std::string const &key, nlohmann::json const &json) {
-    if constexpr (std::is_same_v<std::string, T>) {
+    if constexpr (std::is_same_v<std::string, FieldType>) {
       try {
         set_value_internal(key, json.get<FieldType>());
       } catch (json::exception const &) {
+        // FieldType is a string but
         set_value_internal(key, json.dump());
       }
     } else {
