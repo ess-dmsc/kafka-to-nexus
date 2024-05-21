@@ -95,16 +95,14 @@ TEST_F(JsonConfigField, SetMultipleTimes) {
 
 TEST_F(JsonConfigField, SetTwoKeys) {
   JsonConfig::Field<int> UnderTest(FieldHandler.get(), {"h1", "h2"}, 33);
-  std::string H1{"h1"};
-  std::string H2{"h2"};
-  std::vector<std::string> Comparison{H1, H2};
+
+  std::vector<std::string> Comparison{"h1"s, "h2"s};
   EXPECT_EQ(UnderTest.getKeys(), Comparison);
 }
 
 TEST_F(JsonConfigField, SetTwoRequiredKeys) {
   JsonConfig::RequiredField<int> UnderTest(FieldHandler.get(), {"h1", "h2"});
-  std::string H1{"h1"};
-  std::string H2{"h2"};
-  std::vector<std::string> Comparison{H1, H2};
+
+  std::vector<std::string> Comparison{"h1"s, "h2"s};
   EXPECT_EQ(UnderTest.getKeys(), Comparison);
 }

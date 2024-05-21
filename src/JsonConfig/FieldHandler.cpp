@@ -51,7 +51,7 @@ void FieldHandler::processConfigData(nlohmann::json const &JsonObj) {
   }
   std::set<FieldBase *> MissingFields;
   for (auto &Field : FieldMap) {
-    if (Field.second->isRequried() and Field.second->hasDefaultValue()) {
+    if (Field.second->isRequired() and Field.second->hasDefaultValue()) {
       MissingFields.emplace(Field.second);
     }
   }

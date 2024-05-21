@@ -53,8 +53,8 @@ public:
   virtual void setValue(std::string const &Key,
                         std::string const &NewValue) = 0;
   [[nodiscard]] bool hasDefaultValue() const { return got_default; }
-  [[nodiscard]] auto getKeys() const { return FieldKeys; }
-  [[nodiscard]] bool isRequried() const { return FieldRequired; }
+  [[nodiscard]] std::vector<std::string> getKeys() const { return FieldKeys; }
+  [[nodiscard]] bool isRequired() const { return FieldRequired; }
 
 protected:
   bool got_default{true};
