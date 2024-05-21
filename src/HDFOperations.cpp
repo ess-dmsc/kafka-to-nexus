@@ -110,14 +110,14 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
       if (Node.attributes.exists(CurrentAttribute.Name)) {
         Node.attributes.remove(CurrentAttribute.Name);
         LOG_DEBUG(R"(Replacing (existing) attribute with key "{}".)",
-                  CurrentAttribute.Name.getValue());
+                  CurrentAttribute.Name.get_value());
       }
       if (CurrentAttribute.Type.hasDefaultValue() and
-          not CurrentAttribute.Value.getValue().is_array()) {
+          not CurrentAttribute.Value.get_value().is_array()) {
         writeScalarAttribute(Node, CurrentAttribute.Name,
                              CurrentAttribute.Value);
       } else {
-        auto CValue = CurrentAttribute.Value.getValue();
+        auto CValue = CurrentAttribute.Value.get_value();
         if (CurrentAttribute.Type.hasDefaultValue() and CValue.is_array()) {
           if (std::any_of(CValue.begin(), CValue.end(),
                           [](auto &A) { return A.is_string(); })) {
@@ -303,11 +303,11 @@ std::string writeDataset(hdf5::node::Group const &Parent,
 
   JSONDataset Dataset(Values);
 
-  auto UsedDataType = Dataset.DataType.getValue();
+  auto UsedDataType = Dataset.DataType.get_value();
 
   writeGenericDataset(UsedDataType, Parent, Dataset.Name,
-                      Dataset.Value.getValue());
-  return Dataset.Name.getValue();
+                      Dataset.Value.get_value());
+  return Dataset.Name.get_value();
 }
 
 class JSONHdfNode : public JsonConfig::FieldHandler {
@@ -341,9 +341,9 @@ void createHDFStructures(
   try {
     // The HDF object that we will maybe create at the current level.
     JSONHdfNode CNode(Value);
-    if (CNode.Type.getUsedKey() == "type") {
-      if (CNode.Type.getValue() == "group") {
-        if (CNode.Name.getValue().empty()) {
+    if (CNode.Type.get_key() == "type") {
+      if (CNode.Type.get_value() == "group") {
+        if (CNode.Name.get_value().empty()) {
           LOG_ERROR("HDF group name was empty/missing, ignoring.");
           return;
         }
@@ -353,8 +353,8 @@ void createHDFStructures(
           Path.push_back(CNode.Name);
           writeAttributesIfPresent(CurrentGroup, Value);
           if (not CNode.Children.hasDefaultValue() and
-              CNode.Children.getValue().is_array()) {
-            for (auto &Child : CNode.Children.getValue()) {
+              CNode.Children.get_value().is_array()) {
+            for (auto &Child : CNode.Children.get_value()) {
               createHDFStructures(Child, CurrentGroup, Level + 1,
                                   LinkCreationPropertyList, FixedStringHDFType,
                                   HDFStreamInfo, Path);
@@ -365,15 +365,15 @@ void createHDFStructures(
           Path.pop_back();
         } catch (std::exception const &e) {
           LOG_ERROR("Failed to create group  Name: {}. Message was: {}",
-                    CNode.Name.getValue(), e.what());
+                    CNode.Name.get_value(), e.what());
         }
       } else {
         LOG_ERROR("Unknown hdf node of type {}. Ignoring.",
-                  CNode.Type.getValue());
+                  CNode.Type.get_value());
       }
-    } else if (CNode.Type.getUsedKey() == "module") {
-      if (CNode.Type.getValue() == "dataset") {
-        auto DatasetName = writeDataset(Parent, CNode.Config.getValue());
+    } else if (CNode.Type.get_key() == "module") {
+      if (CNode.Type.get_value() == "dataset") {
+        auto DatasetName = writeDataset(Parent, CNode.Config.get_value());
         writeAttributesIfPresent(Parent.get_dataset(DatasetName), Value);
       } else {
         std::string pathstr;
@@ -381,8 +381,8 @@ void createHDFStructures(
           // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
-        HDFStreamInfo.push_back(ModuleHDFInfo{CNode.Type.getValue(), pathstr,
-                                              CNode.Config.getValue().dump()});
+        HDFStreamInfo.push_back(ModuleHDFInfo{CNode.Type.get_value(), pathstr,
+                                              CNode.Config.get_value().dump()});
       }
     }
   } catch (std::exception const &e) {
