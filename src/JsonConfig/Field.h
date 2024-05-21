@@ -121,7 +121,7 @@ public:
 
   operator FieldType() const { return FieldValue; }
 
-  std::string getUsedKey() const { return UsedKey; }
+  [[nodiscard]] std::string getUsedKey() const { return UsedKey; }
 
 protected:
   std::string UsedKey;
