@@ -141,21 +141,19 @@ private:
   FieldType value_;
   std::string used_key_;
 
-  template <typename T,
-            std::enable_if_t<!std::is_same_v<std::string, T>, bool> = true>
+  template <typename T>
   void set_value_impl(std::string const &key, nlohmann::json const &json) {
-    set_value_internal(key, json.get<FieldType>());
-  }
-
-  template <typename T,
-            std::enable_if_t<std::is_same_v<std::string, T>, bool> = true>
-  void set_value_impl(std::string const &key, nlohmann::json const &json) {
-    try {
+    if constexpr (std::is_same_v<std::string, T>) {
+      try {
+        set_value_internal(key, json.get<FieldType>());
+      } catch (json::exception const &) {
+        set_value_internal(key, json.dump());
+      }
+    } else {
       set_value_internal(key, json.get<FieldType>());
-    } catch (json::exception const &) {
-      set_value_internal(key, json.dump());
     }
   }
+
   void set_value_internal(std::string const &key, FieldType value) {
     if (!GotDefault) {
       auto keys = getKeys();
