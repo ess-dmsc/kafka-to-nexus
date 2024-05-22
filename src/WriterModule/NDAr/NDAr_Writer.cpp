@@ -47,7 +47,7 @@ void NDAr_Writer::config_post_processing() {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
     LOG_ERROR("Unknown type ({}), using the default (double).",
-              DataType.getValue());
+              DataType.get_value());
   }
 }
 

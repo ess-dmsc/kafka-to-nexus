@@ -85,7 +85,7 @@ TEST_F(f144Init, CheckValueInitShape1) {
 
 TEST_F(f144Init, CheckValueInitShape2) {
   f144_WriterStandIn TestWriter;
-  TestWriter.ArraySize.setValue("", "10");
+  TestWriter.ArraySize.setValue(std::string{""}, std::string{"10"});
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);

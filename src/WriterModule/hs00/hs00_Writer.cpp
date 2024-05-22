@@ -19,7 +19,7 @@ namespace hs00 {
 using nlohmann::json;
 
 void hs00_Writer::config_post_processing() {
-  Json = json::parse(R"({"shape":)" + ShapeField.getValue() + "}");
+  Json = json::parse(R"({"shape":)" + ShapeField.get_value() + "}");
   TheWriterUntyped = createFromDataType();
 }
 
@@ -67,8 +67,8 @@ WriterUntyped::ptr hs00_Writer::createFromDataType() {
   try {
     return DataTypeMap.at(DataTypeField)();
   } catch (std::out_of_range const &) {
-    throw std::runtime_error(
-        fmt::format("unimplemented data_type: {:s}", DataTypeField.getValue()));
+    throw std::runtime_error(fmt::format("unimplemented data_type: {:s}",
+                                         DataTypeField.get_value()));
   }
 }
 
@@ -83,8 +83,8 @@ WriterUntyped::ptr hs00_Writer::createFromEdgeType() {
   try {
     return EdgeTypeMap.at(EdgeTypeField)();
   } catch (std::out_of_range const &) {
-    throw std::runtime_error(
-        fmt::format("unimplemented edge_type: {:s}", EdgeTypeField.getValue()));
+    throw std::runtime_error(fmt::format("unimplemented edge_type: {:s}",
+                                         EdgeTypeField.get_value()));
   }
 }
 
@@ -108,7 +108,7 @@ WriterUntyped::ptr hs00_Writer::createFromErrorType() {
     return ErrorTypeMap.at(ErrorTypeField)();
   } catch (std::out_of_range const &) {
     throw std::runtime_error(fmt::format("unimplemented error_type: {:s}",
-                                         ErrorTypeField.getValue()));
+                                         ErrorTypeField.get_value()));
   }
 }
 
@@ -123,8 +123,8 @@ WriterUntyped::ptr hs00_Writer::reOpenFromDataType(hdf5::node::Group &Group) {
   try {
     return DataTypeMap.at(DataTypeField)();
   } catch (std::out_of_range const &) {
-    throw std::runtime_error(
-        fmt::format("unimplemented data_type: {:s}", DataTypeField.getValue()));
+    throw std::runtime_error(fmt::format("unimplemented data_type: {:s}",
+                                         DataTypeField.get_value()));
   }
 }
 
@@ -142,8 +142,8 @@ WriterUntyped::ptr hs00_Writer::reOpenFromEdgeType(hdf5::node::Group &Group) {
   try {
     return DataTypeMap.at(EdgeTypeField)();
   } catch (std::out_of_range const &) {
-    throw std::runtime_error(
-        fmt::format("unimplemented edge_type: {:s}", EdgeTypeField.getValue()));
+    throw std::runtime_error(fmt::format("unimplemented edge_type: {:s}",
+                                         EdgeTypeField.get_value()));
   }
 }
 
@@ -169,7 +169,7 @@ WriterUntyped::ptr hs00_Writer::reOpenFromErrorType(hdf5::node::Group &Group) {
     return DataTypeMap.at(ErrorTypeField)();
   } catch (std::out_of_range const &) {
     throw std::runtime_error(fmt::format("unimplemented error_type: {:s}",
-                                         ErrorTypeField.getValue()));
+                                         ErrorTypeField.get_value()));
   }
 }
 

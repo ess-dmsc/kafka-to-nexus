@@ -75,7 +75,7 @@ void se00_Writer::config_post_processing() {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
     LOG_ERROR("Unknown type ({}), using the default (int64).",
-              DataType.getValue());
+              DataType.get_value());
   }
 }
 
