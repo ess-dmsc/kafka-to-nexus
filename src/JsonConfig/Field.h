@@ -150,7 +150,9 @@ private:
       try {
         set_value_internal(key, json.get<FieldType>());
       } catch (json::exception const &) {
-        // FieldType is a string but
+        // FieldType is a string but the json doesn't represent a single string
+        // value (e.g. "hello") but a larger json object, so we just store the
+        // string representation
         set_value_internal(key, json.dump());
       }
     } else {
