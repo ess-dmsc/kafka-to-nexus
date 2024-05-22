@@ -79,10 +79,10 @@ void f142_Writer::config_post_processing() {
       {"long", Type::int64}};
 
   try {
-    ElementType = TypeMap.at(ToLower(DataType.getValue()));
+    ElementType = TypeMap.at(ToLower(DataType.get_value()));
   } catch (std::out_of_range &E) {
     LOG_WARN(R"(Unknown data type with name "{}". Using double.)",
-             DataType.getValue());
+             DataType.get_value());
   }
 }
 
@@ -107,7 +107,7 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
     NeXusDataset::AlarmTime(HDFGroup, Create);
     NeXusDataset::AlarmStatus(HDFGroup, Create);
     NeXusDataset::AlarmSeverity(HDFGroup, Create);
-    if (not Unit.getValue().empty()) {
+    if (not Unit.get_value().empty()) {
       HDFGroup["value"].attributes.create_from<std::string>("units", Unit);
     }
 
@@ -288,7 +288,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayByte:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int8_t>(Values, DataPtr, NrOfElements,
-                                                MetaData.getValue());
+                                                MetaData.get_value());
     break;
   case Value::Byte:
     CValuesInfo =
@@ -297,7 +297,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayUByte:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint8_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 MetaData.get_value());
     break;
   case Value::UByte:
     CValuesInfo =
@@ -306,7 +306,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayShort:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 MetaData.get_value());
     break;
   case Value::Short:
     CValuesInfo =
@@ -315,7 +315,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayUShort:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint16_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.getValue());
+                                                  MetaData.get_value());
     break;
   case Value::UShort:
     CValuesInfo =
@@ -324,7 +324,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayInt:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int32_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 MetaData.get_value());
     break;
   case Value::Int:
     CValuesInfo =
@@ -333,7 +333,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayUInt:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint32_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.getValue());
+                                                  MetaData.get_value());
     break;
   case Value::UInt:
     CValuesInfo =
@@ -342,7 +342,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayLong:
     extractArrayInfo();
     CValuesInfo = appendData<const std::int64_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.getValue());
+                                                 MetaData.get_value());
     break;
   case Value::Long:
     CValuesInfo =
@@ -351,7 +351,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayULong:
     extractArrayInfo();
     CValuesInfo = appendData<const std::uint64_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.getValue());
+                                                  MetaData.get_value());
     break;
   case Value::ULong:
     CValuesInfo =
@@ -360,7 +360,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayFloat:
     extractArrayInfo();
     CValuesInfo = appendData<const float>(Values, DataPtr, NrOfElements,
-                                          MetaData.getValue());
+                                          MetaData.get_value());
     break;
   case Value::Float:
     CValuesInfo = appendScalarData<const float, Float>(Values, LogDataMessage);
@@ -368,7 +368,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   case Value::ArrayDouble:
     extractArrayInfo();
     CValuesInfo = appendData<const double>(Values, DataPtr, NrOfElements,
-                                           MetaData.getValue());
+                                           MetaData.get_value());
     break;
   case Value::Double:
     CValuesInfo =
@@ -380,12 +380,12 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
   }
 
   ++NrOfWrites;
-  if ((NrOfWrites - LastIndexAtWrite) / ValueIndexInterval.getValue() > 0) {
+  if ((NrOfWrites - LastIndexAtWrite) / ValueIndexInterval.get_value() > 0) {
     LastIndexAtWrite = NrOfWrites;
     CueIndex.appendElement(NrOfWrites - 1);
     CueTimestampZero.appendElement(LogDataMessage->timestamp());
   }
-  if (MetaData.getValue()) {
+  if (MetaData.get_value()) {
     if (TotalNrOfElementsWritten == 0) {
       Min = CValuesInfo.Min;
       Max = CValuesInfo.Max;
@@ -422,7 +422,7 @@ void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
 void f142_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
                                      const MetaData::TrackerPtr &Tracker) {
 
-  if (MetaData.getValue()) {
+  if (MetaData.get_value()) {
     MetaDataMin = MetaData::Value<double>(HDFGroup, "minimum_value",
                                           MetaData::basicDatasetWriter<double>);
     Tracker->registerMetaData(MetaDataMin);

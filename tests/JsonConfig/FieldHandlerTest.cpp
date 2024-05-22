@@ -34,7 +34,7 @@ TEST_F(FieldHandlerFixture, SingleFieldSingleKey) {
   UnderTest.registerField(&TestField);
   auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey, NewValue);
   UnderTest.processConfigData(TestStr);
-  EXPECT_EQ(TestField.getValue(), NewValue);
+  EXPECT_EQ(TestField.get_value(), NewValue);
 }
 
 TEST_F(FieldHandlerFixture, SingleFieldMultipleKeys) {
@@ -47,7 +47,7 @@ TEST_F(FieldHandlerFixture, SingleFieldMultipleKeys) {
   UnderTest.registerField(&TestField);
   auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey2, NewValue);
   UnderTest.processConfigData(TestStr);
-  EXPECT_EQ(TestField.getValue(), NewValue);
+  EXPECT_EQ(TestField.get_value(), NewValue);
 }
 
 TEST_F(FieldHandlerFixture, MultipleFieldsMultipleKeys) {
@@ -64,8 +64,8 @@ TEST_F(FieldHandlerFixture, MultipleFieldsMultipleKeys) {
   UnderTest.registerField(&TestField2);
   auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey21, NewValue);
   UnderTest.processConfigData(TestStr);
-  EXPECT_EQ(TestField2.getValue(), NewValue);
-  EXPECT_EQ(TestField1.getValue(), DefaultValue1);
+  EXPECT_EQ(TestField2.get_value(), NewValue);
+  EXPECT_EQ(TestField1.get_value(), DefaultValue1);
 }
 
 TEST_F(FieldHandlerFixture, WrongKey) {
@@ -77,7 +77,7 @@ TEST_F(FieldHandlerFixture, WrongKey) {
   UnderTest.registerField(&TestField);
   auto TestStr = fmt::format(R"({{"{}":{}}})", "wrong_key", NewValue);
   UnderTest.processConfigData(TestStr);
-  EXPECT_EQ(TestField.getValue(), DefaultValue);
+  EXPECT_EQ(TestField.get_value(), DefaultValue);
 }
 
 TEST_F(FieldHandlerFixture, WrongKeyButFieldRequired) {
@@ -97,7 +97,7 @@ TEST_F(FieldHandlerFixture, CorrectKeyButWrongType) {
   UnderTest.registerField(&TestField);
   auto TestStr = fmt::format(R"({{"{}":"{}"}})", TestKey, "some_string");
   UnderTest.processConfigData(TestStr);
-  EXPECT_EQ(TestField.getValue(), DefaultValue);
+  EXPECT_EQ(TestField.get_value(), DefaultValue);
 }
 
 TEST_F(FieldHandlerFixture, CorrectKeyAndWrongTypeAndRequriedField) {
@@ -118,6 +118,6 @@ TEST_F(FieldHandlerFixture, IdenticalKeys) {
   UnderTest.registerField(&TestField2);
   auto TestStr = fmt::format(R"({{"{}":{}}})", TestKey, 3);
   UnderTest.processConfigData(TestStr);
-  EXPECT_EQ(TestField1.getValue(), 1);
-  EXPECT_EQ(TestField2.getValue(), 3);
+  EXPECT_EQ(TestField1.get_value(), 1);
+  EXPECT_EQ(TestField2.get_value(), 3);
 }

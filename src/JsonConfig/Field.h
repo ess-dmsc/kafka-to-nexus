@@ -49,14 +49,15 @@ public:
       : FieldBase(RegistrarPtr, std::vector<KeyString>{Key}) {}
 
   virtual ~FieldBase() {}
+  virtual void setValue(std::string const &key, json const &newValue) = 0;
   virtual void setValue(std::string const &Key,
                         std::string const &NewValue) = 0;
-  [[nodiscard]] bool hasDefaultValue() const { return GotDefault; }
-  [[nodiscard]] auto getKeys() const { return FieldKeys; }
-  [[nodiscard]] bool isRequried() const { return FieldRequired; }
+  [[nodiscard]] bool hasDefaultValue() const { return got_default; }
+  [[nodiscard]] std::vector<std::string> getKeys() const { return FieldKeys; }
+  [[nodiscard]] bool isRequired() const { return FieldRequired; }
 
 protected:
-  bool GotDefault{true};
+  bool got_default{true};
   void makeRequired();
 
 private:
@@ -80,6 +81,12 @@ public:
   ObsoleteField(FieldRegistrarType *RegistrarPtr, KeyString const &Key)
       : FieldBase(RegistrarPtr, Key) {}
 
+  void setValue(std::string const &, json const &) override {
+    LOG_WARN(
+        R"(The field with the key(s) "{}" is obsolete. Any value set will be ignored.)",
+        getKeys());
+  }
+
   void setValue(std::string const &, std::string const &) override {
     LOG_WARN(
         R"(The field with the key(s) "{}" is obsolete. Any value set will be ignored.)",
@@ -102,63 +109,70 @@ public:
 template <class FieldType> class Field : public FieldBase {
 public:
   template <class FieldRegistrarType>
-  Field(FieldRegistrarType *RegistrarPtr, std::vector<KeyString> const &Keys,
-        FieldType const &DefaultValue)
-      : FieldBase(RegistrarPtr, Keys), FieldValue(DefaultValue) {}
+  Field(FieldRegistrarType *registrar_ptr, std::vector<KeyString> const &keys,
+        FieldType const &value)
+      : FieldBase(registrar_ptr, keys), value_(value) {}
 
   // cppcheck-suppress functionStatic
   template <class FieldRegistrarType>
-  Field(FieldRegistrarType *RegistrarPtr, KeyString const &Key,
-        FieldType const &DefaultValue)
-      : FieldBase(RegistrarPtr, Key), FieldValue(DefaultValue) {}
+  Field(FieldRegistrarType *registrar_ptr, KeyString const &key,
+        FieldType const &value)
+      : FieldBase(registrar_ptr, key), value_(value) {}
 
-  void setValue(std::string const &Key,
-                std::string const &ValueString) override {
-    setValueImpl<FieldType>(Key, ValueString);
-  }
-
-  FieldType getValue() const { return FieldValue; }
-
-  operator FieldType() const { return FieldValue; }
-
-  [[nodiscard]] std::string getUsedKey() const { return UsedKey; }
-
-protected:
-  std::string UsedKey;
-  FieldType FieldValue;
-  using FieldBase::makeRequired;
-
-private:
-  template <typename T,
-            std::enable_if_t<!std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &Key, std::string const &ValueString) {
-    auto JsonData = json::parse(ValueString);
-    setValueInternal(Key, JsonData.get<FieldType>());
-  }
-
-  template <typename T,
-            std::enable_if_t<std::is_same_v<std::string, T>, bool> = true>
-  void setValueImpl(std::string const &Key, std::string const &ValueString) {
-    try {
-      auto JsonData = json::parse(ValueString);
-      setValueInternal(Key, JsonData.get<FieldType>());
-    } catch (json::exception const &) {
-      setValueInternal(Key, ValueString);
+  void setValue(const std::string &key, const json &value) override {
+    if (value.is_string()) {
+      set_value_impl(key, value.get<std::string>());
+    } else {
+      set_value_impl(key, value);
     }
   }
-  void setValueInternal(std::string const &Key, FieldType NewValue) {
-    if (not GotDefault) {
-      auto Keys = getKeys();
-      auto AllKeys =
-          std::accumulate(std::next(Keys.begin()), Keys.end(), Keys[0],
+
+  void setValue(std::string const &key, std::string const &value) override {
+    try {
+      set_value_impl(key, json::parse(value));
+    } catch (json::exception const &) {
+      set_value_impl(key, value);
+    }
+  }
+
+  FieldType get_value() const { return value_; }
+
+  operator FieldType() const { return value_; }
+
+  [[nodiscard]] std::string get_key() const { return used_key_; }
+
+private:
+  FieldType value_;
+  std::string used_key_;
+
+  void set_value_impl(std::string const &key, nlohmann::json const &json) {
+    if constexpr (std::is_same_v<std::string, FieldType>) {
+      try {
+        set_value_internal(key, json.get<FieldType>());
+      } catch (json::exception const &) {
+        // FieldType is a string but the json doesn't represent a single string
+        // value (e.g. "hello") but a larger json object, so we just store the
+        // string representation
+        set_value_internal(key, json.dump());
+      }
+    } else {
+      set_value_internal(key, json.get<FieldType>());
+    }
+  }
+
+  void set_value_internal(std::string const &key, FieldType value) {
+    if (!got_default) {
+      auto keys = getKeys();
+      auto keys_str =
+          std::accumulate(std::next(keys.begin()), keys.end(), keys[0],
                           [](auto a, auto b) { return a + ", " + b; });
       LOG_WARN(
           R"(Replacing the previously given value of "{}" with "{}" in json config field with key(s): )",
-          FieldValue, NewValue, AllKeys);
+          value_, value, keys_str);
     }
-    UsedKey = Key;
-    GotDefault = false;
-    FieldValue = NewValue;
+    used_key_ = key;
+    got_default = false;
+    value_ = value;
   }
 };
 
