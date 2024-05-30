@@ -22,16 +22,16 @@ class FeedbackProducer : public FeedbackProducerBase {
 public:
   FeedbackProducer(std::string const &ServiceIdentifier, uri::URI ResponseUri,
                    Kafka::BrokerSettings Settings);
-  FeedbackProducer(std::string const &ServiceIdentifier,
+  FeedbackProducer(std::string ServiceIdentifier,
                    std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
   void publishResponse(ActionResponse Command, ActionResult Result,
-                       std::string JobId, std::string CommandId,
+                       std::string const &JobId, std::string const &CommandId,
                        time_point StopTime, int StatusCode,
-                       std::string Description) override;
-  void publishStoppedMsg(ActionResult Result, std::string JobId,
-                         std::string Description,
+                       std::string const &Description) override;
+  void publishStoppedMsg(ActionResult Result, std::string const &JobId,
+                         std::string const &Description,
                          std::filesystem::path FilePath,
-                         std::string Metadata) override;
+                         std::string const &Metadata) override;
 
 private:
   std::string ServiceId;

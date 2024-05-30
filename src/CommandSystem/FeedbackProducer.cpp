@@ -12,6 +12,8 @@
 #include <answ_action_response_generated.h>
 #include <wrdn_finished_writing_generated.h>
 
+#include <utility>
+
 namespace Command {
 
 Kafka::BrokerSettings setBrokerAddress(Kafka::BrokerSettings Settings,
@@ -21,9 +23,10 @@ Kafka::BrokerSettings setBrokerAddress(Kafka::BrokerSettings Settings,
 }
 
 FeedbackProducer::FeedbackProducer(
-    const std::string &ServiceIdentifier,
+    std::string ServiceIdentifier,
     std::unique_ptr<Kafka::ProducerTopic> KafkaProducer)
-    : ServiceId(ServiceIdentifier), Producer(std::move(KafkaProducer)) {}
+    : ServiceId(std::move(ServiceIdentifier)),
+      Producer(std::move(KafkaProducer)) {}
 
 FeedbackProducer::FeedbackProducer(const std::string &ServiceIdentifier,
                                    uri::URI ResponseUri,
@@ -31,14 +34,15 @@ FeedbackProducer::FeedbackProducer(const std::string &ServiceIdentifier,
     : FeedbackProducer(ServiceIdentifier,
                        std::make_unique<Kafka::ProducerTopic>(
                            std::make_shared<Kafka::Producer>(setBrokerAddress(
-                               Settings, ResponseUri.HostPort)),
+                               std::move(Settings), ResponseUri.HostPort)),
                            ResponseUri.Topic)) {}
 
 void FeedbackProducer::publishResponse(ActionResponse Command,
-                                       ActionResult Result, std::string JobId,
-                                       std::string CommandId,
+                                       ActionResult Result,
+                                       std::string const &JobId,
+                                       std::string const &CommandId,
                                        time_point StopTime, int StatusCode,
-                                       std::string Description) {
+                                       std::string const &Description) {
   std::map<ActionResponse, ActionType> ActionMap{
       {ActionResponse::StartJob, ActionType::StartJob},
       {ActionResponse::SetStopTime, ActionType::SetStopTime}};
@@ -57,10 +61,11 @@ void FeedbackProducer::publishResponse(ActionResponse Command,
   Producer->produce(Builder.Release());
 }
 
-void FeedbackProducer::publishStoppedMsg(ActionResult Result, std::string JobId,
-                                         std::string Description,
+void FeedbackProducer::publishStoppedMsg(ActionResult Result,
+                                         std::string const &JobId,
+                                         std::string const &Description,
                                          std::filesystem::path FilePath,
-                                         std::string Metadata) {
+                                         std::string const &Metadata) {
   flatbuffers::FlatBufferBuilder Builder;
   std::map<ActionResult, bool> OutcomeMap{{ActionResult::Success, false},
                                           {ActionResult::Failure, true}};
