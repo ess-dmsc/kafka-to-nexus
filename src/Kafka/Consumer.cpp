@@ -179,6 +179,7 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
     // librdkafka docs)
     return {PollStatus::TimedOut, FileWriter::Msg()};
   case RdKafka::ERR__PARTITION_EOF:
+    // No more messages on the partition
     return {PollStatus::EndOfPartition, FileWriter::Msg()};
   default:
     // Everything else is an error
