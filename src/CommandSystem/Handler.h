@@ -57,11 +57,10 @@ public:
 class Handler : public HandlerBase {
 public:
   Handler(std::string const &ServiceIdentifier,
-          Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
-          uri::URI CommandTopicUri);
-  Handler(std::string const &ServiceIdentifier,
-          Kafka::BrokerSettings const &Settings, uri::URI CommandTopicUri,
-          std::unique_ptr<JobListener> JobConsumer,
+          Kafka::BrokerSettings const &Settings, const uri::URI &JobPoolUri,
+          const uri::URI &CommandTopicUri);
+  Handler(std::string ServiceIdentifier, Kafka::BrokerSettings Settings,
+          uri::URI CommandTopicUri, std::unique_ptr<JobListener> JobConsumer,
           std::unique_ptr<CommandListener> CommandConsumer,
           std::unique_ptr<FeedbackProducerBase> Response);
 
@@ -78,7 +77,7 @@ public:
                                    std::string const &ErrorMessage) override;
 
   void loopFunction() override;
-  bool isUsingAlternativeTopic() const { return UsingAltTopic; }
+  [[nodiscard]] bool isUsingAlternativeTopic() const { return UsingAltTopic; }
 
 protected:
   /// \brief Initiates writing.
@@ -93,7 +92,7 @@ protected:
   ///
   /// \param StopJob The stop message as a StopMessage struct.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse stopWriting(StopMessage &StopJob);
+  CmdResponse stopWriting(StopMessage const &StopJob);
 
 private:
   /// \brief Parse a command message and route it to appropriate handling
@@ -136,7 +135,6 @@ private:
                                  StopMessage &StopJob);
 
   std::string const ServiceId;
-  std::string NexusStructure;
   StartFuncType DoStart{[](auto) {
     throw std::runtime_error("DoStart(): Not set/implemented.");
   }};
