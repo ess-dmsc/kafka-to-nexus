@@ -30,7 +30,7 @@ struct SrcDstKey {
   std::string FlatbufferId;
   std::string WriterModuleId;
   bool AcceptsRepeatedTimestamps;
-  std::string getMetricsNameString() const {
+  [[nodiscard]] std::string getMetricsNameString() const {
     return SourceName + "_" + WriterModuleId;
   }
 };
