@@ -47,7 +47,7 @@ public:
   virtual void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) = 0;
 
   virtual void sendHasStoppedMessage(std::filesystem::path const &FilePath,
-                                     nlohmann::json Metadata) = 0;
+                                     std::string const &Metadata) = 0;
   virtual void sendErrorEncounteredMessage(std::string const &FileName,
                                            std::string const &Metadata,
                                            std::string const &ErrorMessage) = 0;
@@ -71,7 +71,7 @@ public:
   void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) override;
 
   void sendHasStoppedMessage(std::filesystem::path const &FilePath,
-                             nlohmann::json Metadata) override;
+                             std::string const &Metadata) override;
   void sendErrorEncounteredMessage(std::string const &FileName,
                                    std::string const &Metadata,
                                    std::string const &ErrorMessage) override;

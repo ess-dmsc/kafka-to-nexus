@@ -61,7 +61,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
                              MasterMetricsRegistrar.get(), MetaDataTracker);
     CurrentStreamController->start();
 
-    CurrentMetadata = StartInfo.Metadata;
+    metadata_from_start_msg = StartInfo.Metadata;
     if (!StartInfo.ControlTopic.empty()) {
       Reporter->useAlternativeStatusTopic(StartInfo.ControlTopic);
     }
@@ -119,27 +119,15 @@ void Master::run() {
 }
 
 void Master::setToIdle() {
+  auto writtenFilePath = getCurrentFilePath();
   if (CurrentStreamController->hasErrorState()) {
     CommandAndControl->sendErrorEncounteredMessage(
-        getCurrentFileName(), CurrentMetadata,
+        writtenFilePath, metadata_from_start_msg,
         CurrentStreamController->errorMessage());
   } else {
-    auto CurrentJSONStatus =
-        nlohmann::json::parse(Reporter->createJSONReport().dump());
-    auto StaticMetaData = nlohmann::json::object();
-    try {
-      StaticMetaData = nlohmann::json::parse(CurrentMetadata);
-    } catch (nlohmann::json::parse_error const &E) {
-      LOG_WARN("Failed to parse JSON metadata string from start message. "
-               "Skipping (metadata={})",
-               CurrentMetadata);
-    }
-    CurrentJSONStatus.update(StaticMetaData);
-    auto writtenFilePath = getCurrentFilePath();
-    LOG_INFO("Full path of file written: {} (filename from job: {})",
-             writtenFilePath.string(), getCurrentFileName());
+    LOG_INFO("Full path of file written: {}", writtenFilePath.string());
     CommandAndControl->sendHasStoppedMessage(writtenFilePath,
-                                             CurrentJSONStatus);
+                                             metadata_from_start_msg);
   }
   CurrentStreamController.reset(nullptr);
   MetaDataTracker->clearMetaData();

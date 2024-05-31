@@ -99,11 +99,11 @@ void Handler::switchCommandTopic(std::string_view ControlTopic,
 }
 
 void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
-                                    nlohmann::json Metadata) {
+                                    std::string const &Metadata) {
   LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={})",
             "Success", GetJobId(), FilePath.string());
   CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
-                                     FilePath, Metadata.dump());
+                                     FilePath, Metadata);
   revertCommandTopic();
 }
 

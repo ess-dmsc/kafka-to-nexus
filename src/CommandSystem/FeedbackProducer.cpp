@@ -29,7 +29,7 @@ FeedbackProducer::FeedbackProducer(
       Producer(std::move(KafkaProducer)) {}
 
 FeedbackProducer::FeedbackProducer(const std::string &ServiceIdentifier,
-                                   uri::URI ResponseUri,
+                                   uri::URI const &ResponseUri,
                                    Kafka::BrokerSettings Settings)
     : FeedbackProducer(ServiceIdentifier,
                        std::make_unique<Kafka::ProducerTopic>(
