@@ -50,7 +50,6 @@ public:
   Status::JobStatusInfo getCurrentStatus() const;
   Status::WorkerState getCurrentState() const;
   const Metrics::Metric &getCurrentStateMetric() const;
-  std::string getCurrentFileName() const;
   std::filesystem::path getCurrentFilePath() const;
   virtual void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);

@@ -155,11 +155,6 @@ const Metrics::Metric &Master::getCurrentStateMetric() const {
   return CurrentStateMetric;
 }
 
-std::string Master::getCurrentFileName() const {
-  std::lock_guard LockGuard(StatusMutex);
-  return CurrentStatus.Filename;
-}
-
 std::filesystem::path Master::getCurrentFilePath() const {
   std::lock_guard LockGuard(StatusMutex);
   return std::filesystem::path(MainConfig.getHDFOutputPrefix()) /
