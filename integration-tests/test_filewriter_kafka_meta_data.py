@@ -36,7 +36,7 @@ def test_end_message_metadata(
     current_jobs = worker_pool.list_known_jobs()
     for c_job in current_jobs:
         if c_job.job_id == write_job.job_id:
-            assert json.loads(c_job.metadata) == metadata
+            assert c_job.metadata == metadata
             return
 
     assert False, "Unable to find current job."
