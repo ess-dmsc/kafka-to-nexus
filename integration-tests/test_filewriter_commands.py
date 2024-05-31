@@ -33,6 +33,7 @@ def test_ignores_stop_command_with_incorrect_service_id(
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
+        metadata="{}",
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
@@ -75,6 +76,7 @@ def test_ignores_stop_command_with_incorrect_job_id(
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
+        metadata="{}",
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
@@ -111,6 +113,7 @@ def test_accepts_stop_command_with_correct_service_id(
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
+        metadata="{}",
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
@@ -150,6 +153,7 @@ def test_accepts_stop_command_with_empty_service_id(
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
+        metadata="{}",
     )
     start_cmd_handler = wait_start_job(worker_pool, write_job, timeout=20)
 
@@ -183,6 +187,7 @@ def test_ignores_start_command_with_incorrect_job_id(
         broker=kafka_address,
         start_time=now,
         stop_time=now + timedelta(days=30),
+        metadata="{}",
     )
     write_job.job_id = "invalid id"
     wait_fail_start_job(worker_pool, write_job, timeout=20)
@@ -206,6 +211,7 @@ def test_reject_bad_json(request, worker_pool, kafka_address):
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        metadata="{}",
     )
     fail_message = wait_fail_start_job(worker_pool, write_job, timeout=20)
     assert "NeXus structure JSON" in fail_message, (

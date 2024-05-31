@@ -1,3 +1,5 @@
+import json
+
 from datetime import datetime, timedelta
 from file_writer_control.WriteJob import WriteJob
 from helpers import build_relative_file_path
@@ -16,6 +18,7 @@ def test_end_message_metadata(
     now = datetime.now()
     start_time = now - timedelta(seconds=10)
     stop_time = now
+    metadata = {"data": 12345, "more_data": 23456}
 
     with open("commands/nexus_structure_static.json", "r") as f:
         structure = f.read()
@@ -25,6 +28,7 @@ def test_end_message_metadata(
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        metadata=json.dumps(metadata).encode('utf-8'),
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
@@ -32,11 +36,7 @@ def test_end_message_metadata(
     current_jobs = worker_pool.list_known_jobs()
     for c_job in current_jobs:
         if c_job.job_id == write_job.job_id:
-            assert "extra" in c_job.metadata
-            assert (
-                "hdf_structure" in c_job.metadata
-            ), f"Assert failed, got the metadata: {c_job.metadata}"
-            assert c_job.metadata["hdf_structure"] == structure
+            assert json.loads(c_job.metadata) == metadata
             return
 
     assert False, "Unable to find current job."
