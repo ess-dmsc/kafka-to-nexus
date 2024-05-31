@@ -20,8 +20,8 @@ namespace Command {
 
 class FeedbackProducer : public FeedbackProducerBase {
 public:
-  FeedbackProducer(std::string const &ServiceIdentifier, uri::URI const &ResponseUri,
-                   Kafka::BrokerSettings Settings);
+  FeedbackProducer(std::string const &ServiceIdentifier,
+                   uri::URI const &ResponseUri, Kafka::BrokerSettings Settings);
   FeedbackProducer(std::string ServiceIdentifier,
                    std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
   void publishResponse(ActionResponse Command, ActionResult Result,
