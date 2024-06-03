@@ -28,13 +28,14 @@ public:
   virtual ~FeedbackProducerBase() = default;
 
   virtual void publishResponse(ActionResponse Command, ActionResult Result,
-                               std::string JobId, std::string CommandId,
+                               std::string const &JobId,
+                               std::string const &CommandId,
                                time_point StopTime, int StatusCode,
-                               std::string Description) = 0;
-  virtual void publishStoppedMsg(ActionResult Result, std::string JobId,
-                                 std::string Description,
+                               std::string const &Description) = 0;
+  virtual void publishStoppedMsg(ActionResult Result, std::string const &JobId,
+                                 std::string const &Description,
                                  std::filesystem::path FilePath,
-                                 std::string Metadata) = 0;
+                                 std::string const &Metadata) = 0;
 };
 
 } // namespace Command

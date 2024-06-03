@@ -38,19 +38,21 @@ public:
   // Inherit constructors from FeedbackProducerBase
   using FeedbackProducerBase::FeedbackProducerBase;
 
-  void publishResponse([[maybe_unused]] ActionResponse command,
-                       [[maybe_unused]] ActionResult result,
-                       [[maybe_unused]] std::string jobId,
-                       [[maybe_unused]] std::string commandId,
-                       [[maybe_unused]] time_point stopTime,
-                       [[maybe_unused]] int statusCode,
-                       [[maybe_unused]] std::string description) override {}
+  void
+  publishResponse([[maybe_unused]] ActionResponse command,
+                  [[maybe_unused]] ActionResult result,
+                  [[maybe_unused]] std::string const &jobId,
+                  [[maybe_unused]] std::string const &commandId,
+                  [[maybe_unused]] time_point stopTime,
+                  [[maybe_unused]] int statusCode,
+                  [[maybe_unused]] std::string const &description) override {}
 
-  void publishStoppedMsg([[maybe_unused]] ActionResult result,
-                         [[maybe_unused]] std::string jobId,
-                         [[maybe_unused]] std::string description,
-                         [[maybe_unused]] std::filesystem::path filePath,
-                         [[maybe_unused]] std::string metadata) override {}
+  void
+  publishStoppedMsg([[maybe_unused]] ActionResult result,
+                    [[maybe_unused]] std::string const &jobId,
+                    [[maybe_unused]] std::string const &description,
+                    [[maybe_unused]] std::filesystem::path filePath,
+                    [[maybe_unused]] std::string const &metadata) override {}
 };
 
 class CommandListenerMock : public CommandListener {
