@@ -50,7 +50,6 @@ public:
   Status::JobStatusInfo getCurrentStatus() const;
   Status::WorkerState getCurrentState() const;
   const Metrics::Metric &getCurrentStateMetric() const;
-  std::string getCurrentFileName() const;
   std::filesystem::path getCurrentFilePath() const;
   virtual void stopNow();
   void startWriting(Command::StartInfo const &StartInfo);
@@ -68,7 +67,7 @@ private:
   mutable std::mutex StatusMutex;
   Status::JobStatusInfo CurrentStatus;
   Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};
-  std::string CurrentMetadata;
+  std::string metadata_from_start_msg;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();
   virtual bool hasWritingStopped();

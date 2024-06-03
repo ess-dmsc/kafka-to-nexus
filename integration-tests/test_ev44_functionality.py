@@ -49,6 +49,7 @@ def test_ev44_several_pulses(
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=20)
     wait_no_working_writers(worker_pool, timeout=30)

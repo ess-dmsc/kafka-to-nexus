@@ -40,7 +40,8 @@ public:
              override);
 
   MAKE_MOCK2(sendHasStoppedMessage,
-             void(const std::filesystem::path &, nlohmann::json), override);
+             void(const std::filesystem::path &, std::string const &),
+             override);
   MAKE_MOCK3(sendErrorEncounteredMessage,
              void(const std::string &, const std::string &,
                   const std::string &),

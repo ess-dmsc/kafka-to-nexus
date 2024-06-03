@@ -9,16 +9,16 @@
 
 #include "Handler.h"
 #include "FeedbackProducer.h"
-#include "Msg.h"
 #include "Parser.h"
-#include "TimeUtility.h"
 #include <uuid.h>
+
+#include <utility>
 
 namespace Command {
 
 Handler::Handler(std::string const &ServiceIdentifier,
-                 Kafka::BrokerSettings const &Settings, uri::URI JobPoolUri,
-                 uri::URI CommandTopicUri)
+                 Kafka::BrokerSettings const &Settings,
+                 const uri::URI &JobPoolUri, const uri::URI &CommandTopicUri)
     : ServiceId(ServiceIdentifier),
       JobPool(std::make_unique<JobListener>(JobPoolUri, Settings)),
       CommandSource(
@@ -26,19 +26,19 @@ Handler::Handler(std::string const &ServiceIdentifier,
       CommandResponse(std::make_unique<FeedbackProducer>(
           ServiceIdentifier, CommandTopicUri, Settings)),
       CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
-Handler::Handler(std::string const &ServiceIdentifier,
-                 Kafka::BrokerSettings const &Settings,
+Handler::Handler(std::string ServiceIdentifier, Kafka::BrokerSettings Settings,
                  uri::URI CommandTopicUri,
                  std::unique_ptr<JobListener> JobConsumer,
                  std::unique_ptr<CommandListener> CommandConsumer,
                  std::unique_ptr<FeedbackProducerBase> Response)
-    : ServiceId(ServiceIdentifier), JobPool(std::move(JobConsumer)),
+    : ServiceId(std::move(ServiceIdentifier)), JobPool(std::move(JobConsumer)),
       CommandSource(std::move(CommandConsumer)),
       CommandResponse(std::move(Response)),
-      CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
+      CommandTopicAddress(std::move(CommandTopicUri)),
+      KafkaSettings(std::move(Settings)) {}
 
 void Handler::loopFunction() {
-  if (not IsWritingNow()) {
+  if (!IsWritingNow()) {
     auto JobMsg = JobPool->pollForJob();
     if (JobMsg.first == Kafka::PollStatus::Message) {
       handleCommand(std::move(JobMsg.second), true);
@@ -99,12 +99,11 @@ void Handler::switchCommandTopic(std::string_view ControlTopic,
 }
 
 void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
-                                    nlohmann::json Metadata) {
-  Metadata["hdf_structure"] = NexusStructure;
+                                    std::string const &Metadata) {
   LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={})",
             "Success", GetJobId(), FilePath.string());
   CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
-                                     FilePath, Metadata.dump());
+                                     FilePath, Metadata);
   revertCommandTopic();
 }
 
@@ -123,9 +122,9 @@ void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
     handleStartCommand(std::move(CommandMsg), IsJobPoolCommand);
   } else if (Parser::isStopCommand(CommandMsg)) {
     handleStopCommand(std::move(CommandMsg));
-  } else if (Parser::isStatusMessage(CommandMsg) or
-             Parser::isAnswerMessage(CommandMsg) or
-             Parser::isWritingDoneMessage(CommandMsg) or
+  } else if (Parser::isStatusMessage(CommandMsg) ||
+             Parser::isAnswerMessage(CommandMsg) ||
+             Parser::isWritingDoneMessage(CommandMsg) ||
              Parser::isFileWriterHeartbeatMessage(CommandMsg)) {
     // Do nothing
   } else if (CommandMsg.size() < 8) {
@@ -154,12 +153,11 @@ bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
 bool isValidUUID(std::string const &UUIDStr) {
   try {
     auto const Id = uuids::uuid::from_string(UUIDStr);
-    return not Id->is_nil() and Id->version() != uuids::uuid_version::none and
+    return !Id->is_nil() && Id->version() != uuids::uuid_version::none &&
            Id->variant() == uuids::uuid_variant::rfc;
   } catch (std::system_error const &) {
     return false;
   }
-  return false;
 }
 
 /// Warn if the Kafka message time is not from the immediate past.
@@ -211,7 +209,7 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
                                          StartMessage &StartJob,
                                          bool IsJobPoolCommand) {
   std::string ExceptionMessage;
-  if (not extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
+  if (!extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
     return CmdResponse{
         LogLevel::Warning, 400, false, [ExceptionMessage]() {
           return fmt::format(
@@ -249,8 +247,8 @@ CmdResponse Handler::startWriting(StartMessage &StartJob,
                        }};
   }
 
-  if (not StartJob.ControlTopic.empty()) {
-    if (not IsJobPoolCommand) {
+  if (!StartJob.ControlTopic.empty()) {
+    if (!IsJobPoolCommand) {
       return CmdResponse{
           LogLevel::Error, 400, true, [StartJob]() {
             return fmt::format(
@@ -261,7 +259,7 @@ CmdResponse Handler::startWriting(StartMessage &StartJob,
     switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
   }
 
-  if (not isValidUUID(StartJob.JobID)) {
+  if (!isValidUUID(StartJob.JobID)) {
     return CmdResponse{
         LogLevel::Warning, 400, true, [StartJob]() {
           return fmt::format(
@@ -273,7 +271,6 @@ CmdResponse Handler::startWriting(StartMessage &StartJob,
   // Start job
   try {
     DoStart(StartJob);
-    NexusStructure = StartJob.NexusStructure;
   } catch (std::exception const &E) {
     ExceptionMessage = E.what();
 
@@ -330,8 +327,8 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
 
 CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
                                         StopMessage &StopJob) {
-  std::string ExceptionMessage;
-  if (not extractStopMessage(CommandMsg, StopJob, ExceptionMessage)) {
+  if (std::string ExceptionMessage;
+      !extractStopMessage(CommandMsg, StopJob, ExceptionMessage)) {
     return CmdResponse{
         LogLevel::Warning, 400, false, [ExceptionMessage]() {
           return fmt::format(
@@ -343,7 +340,7 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
   return stopWriting(StopJob);
 }
 
-CmdResponse Handler::stopWriting(StopMessage &StopCmd) {
+CmdResponse Handler::stopWriting(StopMessage const &StopCmd) {
   std::string ResponseMessage;
 
   if (!(StopCmd.ServiceID.empty()) && ServiceId != StopCmd.ServiceID) {

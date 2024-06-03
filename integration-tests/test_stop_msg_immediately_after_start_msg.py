@@ -29,6 +29,7 @@ def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(
         broker=kafka_address,
         start_time=now,
         control_topic="TEST_writer_commands_alternative",
+        metadata="{}",
     )
     # ECDC-3333 file-writer-control does not correctly handle jobs with
     # alternative command topics. For now we create a secondary WorkerJobPool
