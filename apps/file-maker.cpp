@@ -9,96 +9,24 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 using std::chrono_literals::operator""ms;
 
-std::string const example_json = R"(
-{
-	"children": [{
-		"name": "entry",
-		"type": "group",
-		"attributes": [{
-			"name": "NX_class",
-			"dtype": "string",
-			"values": "NXentry"
-		}],
-		"children": [{
-				"module": "dataset",
-				"config": {
-					"name": "title",
-					"values": "This is a title",
-					"type": "string"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"name": "start_time"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"name": "end_time"
-				}
-			},
-			{
-				"name": "instrument",
-				"type": "group",
-				"attributes": [{
-					"name": "NX_class",
-					"dtype": "string",
-					"values": "NXinstrument"
-				}],
-				"children": [{
-					"name": "mini_chopper",
-					"type": "group",
-					"attributes": [{
-						"name": "NX_class",
-						"dtype": "string",
-						"values": "NXdisk_chopper"
-					}],
-					"children": [{
-						"name": "delay",
-						"type": "group",
-						"attributes": [{
-							"name": "NX_class",
-							"dtype": "string",
-							"values": "NXlog"
-						}],
-						"children": [{
-							"module": "f144",
-							"config": {
-								"source": "delay:source:chopper",
-								"topic": "local_choppers",
-								"dtype": "double",
-                                                                "value_units": "ns"
-							}
-						}]
-					},{
-                                                "name": "speed",
-                                                "type": "group",
-                                                "attributes": [{
-                                                        "name": "NX_class",
-                                                        "dtype": "string",
-                                                        "values": "NXlog"
-                                                }],
-                                                "children": [{
-                                                        "module": "f144",
-                                                        "config": {
-                                                                "source": "speed:source:chopper",
-                                                                "topic": "local_motion",
-                                                                "dtype": "double",
-                                                                "value_units": "Hz"
-                                                        }
-                                                }]
-                                                }]
-				}]
-			}
-		]
-	}]
+
+std::string readJsonFromFile(const std::string& filePath) {
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filePath);
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    file.close();
+    return buffer.str();
 }
-                             )";
+
 
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
@@ -295,7 +223,15 @@ void add_message(StubConsumerFactory *consumer_factory,
                                            flatbuffer.second, metadata);
 }
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+int main(int argc, char **argv) {
+  if (argc != 3) {
+    std::cerr << "Usage: " << argv[0] << " <InstrumentName> <JsonFilePath>" << std::endl;
+    return 1;
+  }
+
+  std::string instrumentName = argv[1];
+  std::string jsonFilePath = argv[2];
+
   using std::chrono_literals::operator""ms;
   std::cout << "Starting writing\n";
 
@@ -331,23 +267,32 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   add_message(consumer_factory.get(), std::move(msg), 2100ms, offset++, 0);
 
   Command::StartInfo start_info;
+
+  //std::string jsonFilePath = "/home/jonas/code/nexus-json-templates/bifrost/bifrost.json";
+  std::string example_json = readJsonFromFile(jsonFilePath);
+
+  std::cout << "Loaded file\n";
+
   start_info.NexusStructure = example_json;
   start_info.JobID = "some_job_id";
+  start_info.InstrumentName = instrumentName;
 
   FileWriter::StreamerOptions streamer_options;
   streamer_options.StartTimestamp = time_point{0ms};
   streamer_options.StopTimestamp = time_point{1250ms};
   std::filesystem::path filepath{"../../example.hdf"};
 
+  //std::filesystem::path templatePath{"../../template_test.hdf"};
+
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
       metadata_enquirer, consumer_factory);
-  stream_controller->start();
+  // stream_controller->start();
 
-  while (!stream_controller->isDoneWriting()) {
-    std::cout << "Stream controller is writing\n";
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  }
+  // while (!stream_controller->isDoneWriting()) {
+  //   std::cout << "Stream controller is writing\n";
+  //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  // }
 
   std::cout << "Stream controller has finished writing\n";
 

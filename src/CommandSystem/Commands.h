@@ -25,6 +25,7 @@ struct StartInfo {
   time_point StartTime{0ms};
   time_point StopTime{time_point::max()};
   std::string ControlTopic;
+  std::string InstrumentName;
 };
 
 /// \brief A de-serialised "start writing" message.
