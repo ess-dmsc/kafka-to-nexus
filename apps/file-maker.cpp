@@ -8,6 +8,9 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 using std::chrono_literals::operator""ms;
 using namespace FlatBuffers;
@@ -102,8 +105,8 @@ std::string const example_json = R"(
 			}
 		]
 	}]
-}
-                             )";
+})";
+
 
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
@@ -175,6 +178,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"file-maker app"};
   std::string json_file;
   app.add_option("-f, --file", json_file, "The JSON file to load");
+  app.add_option("-i, --instrument", instrumentName, "The instrument name");
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
@@ -222,6 +226,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     start_info.NexusStructure = readJsonFromFile(json_file);
   } else {
     start_info.NexusStructure = example_json;
+  }
+  if (!instrumentName.empty()) {
+    start_info.InstrumentName = instrumentName;
   }
   start_info.JobID = "some_job_id";
 

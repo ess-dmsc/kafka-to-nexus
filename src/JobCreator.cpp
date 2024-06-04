@@ -28,11 +28,11 @@ namespace FileWriter {
 using nlohmann::json;
 
 std::vector<ModuleHDFInfo>
-initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
+initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString, std::filesystem::path const &TemplatePath) {
   try {
     json const NexusStructure = json::parse(NexusStructureString);
     std::vector<ModuleHDFInfo> ModuleHDFInfoList;
-    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList);
+    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList, TemplatePath);
     return ModuleHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
@@ -126,8 +126,15 @@ std::unique_ptr<StreamController> createFileWritingJob(
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
 
+  std::string const TemplateRootPath{"../../nexus_templates/"};
+  std::string const FolderName = StartInfo.InstrumentName;
+  std::string const FileName = StartInfo.InstrumentName + ".hdf";
+
+  std::filesystem::path TemplatePath{TemplateRootPath + FolderName + "/" +
+                                     FileName};
+
   std::vector<ModuleHDFInfo> ModuleHDFInfoList =
-      initializeHDF(*Task, StartInfo.NexusStructure);
+      initializeHDF(*Task, StartInfo.NexusStructure, TemplatePath);
   std::vector<ModuleHDFInfo> mdatInfoList =
       extractMdatModules(ModuleHDFInfoList);
 
@@ -192,6 +199,17 @@ std::unique_ptr<StreamController> createFileWritingJob(
       std::move(Task), std::move(mdatWriter), Settings, Registrar, Tracker,
       metadata_enquirer, consumer_factory);
 }
+
+
+void createFileWriterTemplate(
+    Command::StartInfo const &StartInfo, std::filesystem::path const &filepath,
+    Metrics::IRegistrar *Registrar, MetaData::TrackerPtr const &Tracker) {
+  auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
+                                               Registrar, Tracker);
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList =
+      initializeHDF(*Task, StartInfo.NexusStructure);
+}
+
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
                                    FileWriterTask &Task) {

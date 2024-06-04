@@ -48,7 +48,8 @@ public:
   HDFFile(std::filesystem::path const &FileName,
           nlohmann::json const &NexusStructure,
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
-          MetaData::TrackerPtr &TrackerPtr);
+          MetaData::TrackerPtr &TrackerPtr,
+          std::filesystem::path const &TemplatePath = "");
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
   void addMetaData();
   void openInSWMRMode();
@@ -59,7 +60,7 @@ public:
 
 private:
   bool SWMRMode{false};
-  void createFileInRegularMode();
+  void createFileInRegularMode(const std::string &TemplateFileName);
   void openFileInRegularMode();
   void openFileInSWMRMode();
   void closeFile();
