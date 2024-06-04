@@ -8,6 +8,9 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 using std::chrono_literals::operator""ms;
 using namespace FlatBuffers;
@@ -120,6 +123,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   start_info.NexusStructure = readJsonFromFile(json_file);
   if (!instrument_name.empty()) {
     start_info.InstrumentName = instrument_name;
+  }
+  if (!instrumentName.empty()) {
+    start_info.InstrumentName = instrumentName;
   }
   start_info.JobID = "some_job_id";
 

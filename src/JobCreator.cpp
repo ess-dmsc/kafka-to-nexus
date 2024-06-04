@@ -28,6 +28,7 @@ namespace FileWriter {
 using nlohmann::json;
 
 std::vector<ModuleHDFInfo>
+<<<<<<< HEAD
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
               std::filesystem::path const &template_path,
               std::string const &instrument_name) {
@@ -36,6 +37,13 @@ initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
     std::vector<ModuleHDFInfo> ModuleHDFInfoList;
     Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList, template_path,
                        instrument_name);
+=======
+initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString, std::filesystem::path const &TemplatePath) {
+  try {
+    json const NexusStructure = json::parse(NexusStructureString);
+    std::vector<ModuleHDFInfo> ModuleHDFInfoList;
+    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList, TemplatePath);
+>>>>>>> 2258ae1d (:osomewhat working)
     return ModuleHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
@@ -130,8 +138,20 @@ std::unique_ptr<StreamController> createFileWritingJob(
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
 
+<<<<<<< HEAD
   std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
       *Task, StartInfo.NexusStructure, template_path, StartInfo.InstrumentName);
+=======
+  std::string const TemplateRootPath{"../../nexus_templates/"};
+  std::string const FolderName = StartInfo.InstrumentName;
+  std::string const FileName = StartInfo.InstrumentName + ".hdf";
+
+  std::filesystem::path TemplatePath{TemplateRootPath + FolderName + "/" +
+                                     FileName};
+
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList =
+      initializeHDF(*Task, StartInfo.NexusStructure, TemplatePath);
+>>>>>>> 2258ae1d (:osomewhat working)
   std::vector<ModuleHDFInfo> mdatInfoList =
       extractMdatModules(ModuleHDFInfoList);
 
