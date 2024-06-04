@@ -377,16 +377,19 @@ void createHDFStructures(
           return;
         }
         try {
-          auto CurrentGroup =
-              Parent.create_group(CNode.Name, LinkCreationPropertyList);
-          Path.push_back(CNode.Name);
+          auto groupExists = Parent.has_group(CNode.Name.get_value());
+          LOG_DEBUG("Group {} exists: {}", CNode.Name.get_value(), groupExists);
+          hdf5::node::Group CurrentGroup;
+          if (!groupExists) {
+            CurrentGroup = Parent.create_group(CNode.Name.get_value(), LinkCreationPropertyList);
+          } else {
+            CurrentGroup = Parent.get_group(CNode.Name.get_value());
+          }
+          Path.push_back(CNode.Name.get_value());
           writeAttributesIfPresent(CurrentGroup, Value);
-          if (not CNode.Children.hasDefaultValue() and
-              CNode.Children.get_value().is_array()) {
+          if (!CNode.Children.hasDefaultValue() && CNode.Children.get_value().is_array()) {
             for (auto &Child : CNode.Children.get_value()) {
-              createHDFStructures(Child, CurrentGroup, Level + 1,
-                                  LinkCreationPropertyList, FixedStringHDFType,
-                                  HDFStreamInfo, Path);
+              createHDFStructures(Child, CurrentGroup, Level + 1, LinkCreationPropertyList, FixedStringHDFType, HDFStreamInfo, Path);
             }
           } else {
             Logger::Debug(
@@ -394,21 +397,30 @@ void createHDFStructures(
           }
           Path.pop_back();
         } catch (std::exception const &e) {
-          Logger::Error("Failed to create group  Name: {}. Message was: {}",
-                        CNode.Name.get_value(), e.what());
+          LOG_ERROR("Failed to create or access group. Name: {}. Message: {}. HDF5 Path: {}", CNode.Name.get_value(), e.what(), std::string(Parent.link().path()));
         }
       } else {
-        Logger::Error("Unknown hdf node of type {}. Ignoring.",
-                      CNode.Type.get_value());
+        LOG_ERROR("Unknown HDF node of type {}. Ignoring.", CNode.Type.get_value());
       }
     } else if (CNode.Type.get_key() == "module") {
       if (CNode.Type.get_value() == "dataset") {
-        auto DatasetName = writeDataset(Parent, CNode.Config.get_value());
-        writeAttributesIfPresent(Parent.get_dataset(DatasetName), Value);
+        try {
+          std::string datasetName = CNode.Config.get_value().at("name").get<std::string>();
+          if (!Parent.has_dataset(datasetName)) {
+            LOG_DEBUG("Creating dataset {} in group {}", datasetName, std::string(Parent.link().path()));
+            auto NewDataset = writeDataset(Parent, CNode.Config.get_value());
+            writeAttributesIfPresent(Parent.get_dataset(NewDataset), Value);
+          } else {
+            LOG_DEBUG("Dataset {} already exists in group {}", datasetName, std::string(Parent.link().path()));
+            auto ExistingDataset = Parent.get_dataset(datasetName);
+            writeAttributesIfPresent(ExistingDataset, Value);
+          }
+        } catch (const std::exception &e) {
+          LOG_ERROR("Failed to create or access dataset. Name: {}. Message: {}. HDF5 Path: {}", CNode.Name.get_value(), e.what(), std::string(Parent.link().path()));
+        }
       } else {
         std::string pathstr;
         for (auto const &x : Path) {
-          // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
         HDFStreamInfo.push_back(ModuleHDFInfo{CNode.Type.get_value(), pathstr,
@@ -416,10 +428,7 @@ void createHDFStructures(
       }
     }
   } catch (std::exception const &e) {
-    // Don't throw here as the file should continue writing
-    Logger::Error(
-        R"(Failed to create structure with path "{}" ({} levels deep). Message was: {})",
-        std::string(Parent.link().path()), Level, e.what());
+    LOG_ERROR("Failed to create structure with path \"{}\" ({} levels deep). Message: {}", std::string(Parent.link().path()), Level, e.what());
   }
 }
 

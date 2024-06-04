@@ -55,7 +55,8 @@ public:
   /// \param NexusStructure The structure of the NeXus file.
   /// \param HdfInfo The HDF information for the stream.
   void InitialiseHdf(nlohmann::json const &NexusStructure,
-                     std::vector<ModuleHDFInfo> &HdfInfo);
+                     std::vector<ModuleHDFInfo> &HdfInfo,
+                     std::filesystem::path const &TemplatePath = "");
 
   /// \brief Add a source to the topics.
   ///
