@@ -235,6 +235,27 @@ create_f144_message_double(std::string const &source, double value,
 }
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_f144_message_array_double(std::string const &source,
+                                 const std::vector<double> &values,
+                                 int64_t timestamp_ms) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+  auto values_offset = CreateArrayDoubleDirect(builder, &values).Union();
+
+  f144_LogDataBuilder f144_builder(builder);
+  f144_builder.add_value(values_offset);
+  f144_builder.add_source_name(source_name_offset);
+  f144_builder.add_timestamp(timestamp_ms * 1000000);
+  f144_builder.add_value_type(Value::ArrayDouble);
+  Finishf144_LogDataBuffer(builder, f144_builder.Finish());
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_ep01_message_double(std::string const &source, ConnectionInfo status,
                            int64_t timestamp_ms) {
   auto builder = flatbuffers::FlatBufferBuilder();
@@ -317,14 +338,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   msg = create_f144_message_double("delay:source:chopper", 101, 1100);
   add_message(consumer_factory.get(), std::move(msg), 1100ms, offset++, 0);
 
-  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
+  msg = create_f144_message_array_double("speed:source:chopper",
+                                         {1000, 1010, 1020}, 1200);
   add_message(consumer_factory.get(), std::move(msg), 1200ms, offset++, 0);
 
   msg = create_ep01_message_double("speed:source:chopper",
                                    ConnectionInfo::CONNECTED, 1201);
   add_message(consumer_factory.get(), std::move(msg), 1201ms, offset++, 0);
 
-  msg = create_f144_message_double("speed:source:chopper", 1010, 1250);
+  msg = create_f144_message_array_double("speed:source:chopper",
+                                         {2000, 2010, 2020}, 1250);
   add_message(consumer_factory.get(), std::move(msg), 1250ms, offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 102, 2100);
