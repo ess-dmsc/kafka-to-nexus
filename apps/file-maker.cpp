@@ -138,7 +138,12 @@ public:
       ++offset;
       return {Kafka::PollStatus::Message, std::move(temp)};
     }
-    return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
+    if (at_end_of_partition) {
+      return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
+    } else {
+      at_end_of_partition = true;
+      return {Kafka::PollStatus::EndOfPartition, FileWriter::Msg()};
+    }
   };
 
   void addPartitionAtOffset([[maybe_unused]] std::string const &Topic,
@@ -161,6 +166,7 @@ public:
   std::string topic;
   int32_t partition = 0;
   std::shared_ptr<std::vector<FileWriter::Msg>> messages;
+  bool at_end_of_partition = false;
 };
 
 class StubConsumerFactory : public Kafka::ConsumerFactoryInterface {
