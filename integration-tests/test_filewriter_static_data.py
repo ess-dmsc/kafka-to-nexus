@@ -34,7 +34,7 @@ def test_static_data_reaches_file(
 
     with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
-        assert file["entry/start_time"][()][0].decode("utf-8") == "2016-04-12T02:58:52"
+        assert file["entry/start_time"][()].decode("utf-8") == "2016-04-12T02:58:52"
         assert file["entry/end_time"][()][0].decode("utf-8") == "2016-04-12T03:29:11"
         assert np.array_equal(file["entry/test_vector1"][:], np.array([1, 2, 3]))
         assert np.array_equal(
