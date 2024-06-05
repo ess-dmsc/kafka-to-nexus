@@ -235,6 +235,27 @@ create_f144_message_double(std::string const &source, double value,
 }
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_f144_message_array_double(std::string const &source,
+                                 const std::vector<double> &values,
+                                 int64_t timestamp_ms) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+  auto value_offset = builder.CreateVector(values).Union();
+
+  f144_LogDataBuilder f144_builder(builder);
+  f144_builder.add_value(value_offset);
+  f144_builder.add_source_name(source_name_offset);
+  f144_builder.add_timestamp(timestamp_ms * 1000000);
+  f144_builder.add_value_type(Value::ArrayDouble);
+  Finishf144_LogDataBuffer(builder, f144_builder.Finish());
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_ep01_message_double(std::string const &source, ConnectionInfo status,
                            int64_t timestamp_ms) {
   auto builder = flatbuffers::FlatBufferBuilder();
