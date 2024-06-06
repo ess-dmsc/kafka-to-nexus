@@ -228,33 +228,55 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
   }
 }
 
-void writeStringDataset(hdf5::node::Group const &Parent,
-                        const std::string &Name,
-                        MultiVector<std::string> const &Values) {
+void writeStringDataset(hdf5::node::Group const &parent,
+                        std::string const &name, std::string const &value) {
   try {
-    auto DataType = hdf5::datatype::String::variable();
-    DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-    DataType.padding(hdf5::datatype::StringPad::NullTerm);
+    auto data_type = hdf5::datatype::String::variable();
+    data_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    data_type.padding(hdf5::datatype::StringPad::NullTerm);
 
-    auto Dims = Values.getDimensions();
-    auto Dataspace =
-        hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
-
-    Parent.create_dataset(Name, DataType, Dataspace)
-        .write(Values.Data, DataType, Dataspace);
+    auto const dataspace = hdf5::dataspace::Scalar();
+    auto dataset = parent.create_dataset(name, data_type, dataspace);
+    dataset.write(value, data_type, dataspace);
   } catch (const std::exception &e) {
-    auto ErrorStr = fmt::format(
+    auto const error_str = fmt::format(
+        "Failed to write dataset for string value {}/{}. Message was: {}",
+        std::string(parent.link().path()), name, e.what());
+    throw std::runtime_error(error_str);
+  }
+}
+
+void writeStringDataset(hdf5::node::Group const &parent,
+                        std::string const &name,
+                        MultiVector<std::string> const &values) {
+  try {
+    auto data_type = hdf5::datatype::String::variable();
+    data_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    data_type.padding(hdf5::datatype::StringPad::NullTerm);
+
+    auto const dims = values.getDimensions();
+    auto dataspace =
+        hdf5::dataspace::Simple(hdf5::Dimensions(dims.begin(), dims.end()));
+
+    parent.create_dataset(name, data_type, dataspace)
+        .write(values.Data, data_type, dataspace);
+  } catch (std::exception const &e) {
+    auto const error_str = fmt::format(
         "Failed to write variable-size string dataset {}/{}. Message was: {}",
-        std::string(Parent.link().path()), Name, e.what());
-    throw std::runtime_error(ErrorStr);
+        std::string(parent.link().path()), name, e.what());
+    throw std::runtime_error(error_str);
   }
 }
 
 void writeStringDatasetFromJson(hdf5::node::Group const &Parent,
                                 const std::string &Name,
                                 nlohmann::json const &Values) {
-  auto StringArray = jsonArrayToMultiArray<std::string>(Values);
-  writeStringDataset(Parent, Name, StringArray);
+  if (Values.is_array()) {
+    auto StringArray = jsonArrayToMultiArray<std::string>(Values);
+    writeStringDataset(Parent, Name, StringArray);
+  } else {
+    writeStringDataset(Parent, Name, Values.get<std::string>());
+  }
 }
 
 void writeGenericDataset(const std::string &DataType,
