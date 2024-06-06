@@ -42,7 +42,7 @@ def test_static_data_reaches_file(
         )
         assert file["entry/duration"][()] == 1817.0
         assert file["entry/features"][0] == 10138143369737381149
-        assert file["entry/user_1/affiliation"][()][0].decode("utf-8") == "ISIS, STFC"
+        assert file["entry/user_1/affiliation"][()].decode("utf-8") == "ISIS, STFC"
         assert np.allclose(
             file["entry/instrument/monitor1/transformations/location"].attrs["vector"],
             np.array([0.0, 0.0, -1.0]),
