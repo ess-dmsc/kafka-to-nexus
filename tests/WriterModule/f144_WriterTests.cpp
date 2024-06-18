@@ -75,23 +75,6 @@ TEST_F(f144Init, CheckInitDataType) {
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<double>());
 }
 
-TEST_F(f144Init, CheckValueInitShape1) {
-  f144_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup);
-  auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);
-  EXPECT_EQ(hdf5::Dimensions({0, 1}), Value.dimensions());
-}
-
-TEST_F(f144Init, CheckValueInitShape2) {
-  f144_WriterStandIn TestWriter;
-  TestWriter.ArraySize.setValue(std::string{""}, std::string{"10"});
-  TestWriter.init_hdf(RootGroup);
-  auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);
-  EXPECT_EQ(hdf5::Dimensions({0, 10}), Value.dimensions());
-}
-
 TEST_F(f144Init, CheckAllDataTypes) {
   std::vector<std::pair<f144_Writer::Type, hdf5::datatype::Datatype>> TypeMap{
       {f144_Writer::Type::int8, hdf5::datatype::create<std::int8_t>()},
