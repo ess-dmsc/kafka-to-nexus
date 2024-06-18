@@ -230,6 +230,26 @@ public:
 
   [[nodiscard]] size_t size() const { return NrOfElements; }
 
+  /// \brief Read an attribute from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T>
+  void attribute(std::string const &name, T &result) const {
+    dataset_.attributes[name].read(result);
+  }
+
+  /// \brief Check if an attribute exists/
+  ///
+  /// Note: only for use in tests!
+  [[nodiscard]] bool attribute_exists(std::string const &name) const {
+    return dataset_.attributes.exists(name);
+  }
+
+  /// \brief Read data from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T> void read(T &result) { dataset_.read(result); }
+
 protected:
   hdf5::node::Dataset dataset_;
   hdf5::dataspace::Simple ArrayDataSpace;

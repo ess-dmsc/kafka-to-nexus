@@ -29,34 +29,25 @@ struct ValuesInformation {
   uint64_t NrOfElements{0};
 };
 
-template <typename Type>
-void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
-            hdf5::Dimensions const &ChunkSize) {
-  NeXusDataset::MultiDimDataset<Type>( // NOLINT(bugprone-unused-raii)
-      Parent, "value", NeXusDataset::Mode::Create, Shape,
-      ChunkSize); // NOLINT(bugprone-unused-raii)
+template <typename Type> void makeIt(hdf5::node::Group const &Parent) {
+  NeXusDataset::ExtensibleDataset<Type>( // NOLINT(bugprone-unused-raii)
+      Parent, "value",
+      NeXusDataset::Mode::Create); // NOLINT(bugprone-unused-raii)
 }
 
-void initValueDataset(hdf5::node::Group const &Parent, Type ElementType,
-                      hdf5::Dimensions const &Shape,
-                      hdf5::Dimensions const &ChunkSize) {
+void initValueDataset(hdf5::node::Group const &Parent, Type ElementType) {
   using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
-      {Type::int8, [&]() { makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
-      {Type::uint8, [&]() { makeIt<std::uint8_t>(Parent, Shape, ChunkSize); }},
-      {Type::int16, [&]() { makeIt<std::int16_t>(Parent, Shape, ChunkSize); }},
-      {Type::uint16,
-       [&]() { makeIt<std::uint16_t>(Parent, Shape, ChunkSize); }},
-      {Type::int32, [&]() { makeIt<std::int32_t>(Parent, Shape, ChunkSize); }},
-      {Type::uint32,
-       [&]() { makeIt<std::uint32_t>(Parent, Shape, ChunkSize); }},
-      {Type::int64, [&]() { makeIt<std::int64_t>(Parent, Shape, ChunkSize); }},
-      {Type::uint64,
-       [&]() { makeIt<std::uint64_t>(Parent, Shape, ChunkSize); }},
-      {Type::float32,
-       [&]() { makeIt<std::float_t>(Parent, Shape, ChunkSize); }},
-      {Type::float64,
-       [&]() { makeIt<std::double_t>(Parent, Shape, ChunkSize); }},
+      {Type::int8, [&]() { makeIt<std::int8_t>(Parent); }},
+      {Type::uint8, [&]() { makeIt<std::uint8_t>(Parent); }},
+      {Type::int16, [&]() { makeIt<std::int16_t>(Parent); }},
+      {Type::uint16, [&]() { makeIt<std::uint16_t>(Parent); }},
+      {Type::int32, [&]() { makeIt<std::int32_t>(Parent); }},
+      {Type::uint32, [&]() { makeIt<std::uint32_t>(Parent); }},
+      {Type::int64, [&]() { makeIt<std::int64_t>(Parent); }},
+      {Type::uint64, [&]() { makeIt<std::uint64_t>(Parent); }},
+      {Type::float32, [&]() { makeIt<std::float_t>(Parent); }},
+      {Type::float64, [&]() { makeIt<std::double_t>(Parent); }},
   };
   CreateValuesMap.at(ElementType)();
 }
@@ -98,12 +89,9 @@ InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
                                    ChunkSize); // NOLINT(bugprone-unused-raii)
     NeXusDataset::CueIndex(HDFGroup, Create,
                            ChunkSize); // NOLINT(bugprone-unused-raii)
-    initValueDataset(HDFGroup, ElementType,
-                     {
-                         ArraySize,
-                     },
-                     {ChunkSize, ArraySize});
-    if (not Unit.get_value().empty()) {
+    initValueDataset(HDFGroup, ElementType);
+
+    if (!Unit.get_value().empty()) {
       HDFGroup["value"].attributes.create_from<std::string>("units", Unit);
     }
 
@@ -125,7 +113,7 @@ InitResult f144_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Timestamp = NeXusDataset::Time(HDFGroup, Open);
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
-    Values = NeXusDataset::MultiDimDatasetBase(HDFGroup, "value", Open);
+    Values = NeXusDataset::ExtensibleDatasetBase(HDFGroup, "value", Open);
   } catch (std::exception &E) {
     LOG_ERROR(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
@@ -133,28 +121,6 @@ InitResult f144_Writer::reopen(hdf5::node::Group &HDFGroup) {
     return InitResult::ERROR;
   }
   return InitResult::OK;
-}
-
-template <typename DataType, class DatasetType>
-ValuesInformation appendData(DatasetType &Dataset, const void *Pointer,
-                             size_t Size, bool GetArrayMetaData) {
-  if (Size == 0) {
-    return {};
-  }
-  auto DataArray = hdf5::ArrayAdapter<const DataType>(
-      reinterpret_cast<DataType *>(Pointer), Size);
-  Dataset.appendArray(DataArray, {Size});
-  double Min{double(DataArray.data()[0])};
-  double Max{double(DataArray.data()[0])};
-  double Sum{double(DataArray.data()[0])};
-  if (GetArrayMetaData) {
-    for (auto i = 1u; i < Size; ++i) {
-      Sum += double(DataArray.data()[i]);
-      Min = std::min(Min, double(DataArray.data()[i]));
-      Max = std::max(Max, double(DataArray.data()[i]));
-    }
-  }
-  return {Min, Max, Sum, Size};
 }
 
 template <typename FBValueType, typename ReturnType>
@@ -167,7 +133,7 @@ template <typename DataType, typename ValueType, class DatasetType>
 ValuesInformation appendScalarData(DatasetType &Dataset,
                                    const f144_LogData *LogDataMessage) {
   auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
-  Dataset.appendArray(hdf5::ArrayAdapter<const DataType>(&ScalarValue, 1), {1});
+  Dataset.template appendElement<DataType>(ScalarValue);
   return {double(ScalarValue), double(ScalarValue), double(ScalarValue), 1};
 }
 
@@ -231,7 +197,6 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
 
 void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto LogDataMessage = Getf144_LogData(Message.data());
-  size_t NrOfElements{1};
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();
 
@@ -240,103 +205,42 @@ void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
     HasCheckedMessageType = true;
   }
 
-  // Note that we are using our knowledge about flatbuffers here to minimise
-  // amount of code we have to write by using some pointer arithmetic.
-  auto DataPtr = reinterpret_cast<void const *>(
-      reinterpret_cast<uint8_t const *>(LogDataMessage->value()) + 4);
-
-  auto extractArrayInfo = [&NrOfElements, &DataPtr]() {
-    NrOfElements = *(reinterpret_cast<int const *>(DataPtr) + 1);
-    DataPtr = reinterpret_cast<void const *>(
-        reinterpret_cast<int const *>(DataPtr) + 2);
-  };
-
   ValuesInformation CValuesInfo;
   switch (Type) {
-  case Value::ArrayByte:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::int8_t>(Values, DataPtr, NrOfElements,
-                                                MetaData.get_value());
-    break;
   case Value::Byte:
     CValuesInfo =
         appendScalarData<const std::int8_t, Byte>(Values, LogDataMessage);
-    break;
-  case Value::ArrayUByte:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::uint8_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.get_value());
     break;
   case Value::UByte:
     CValuesInfo =
         appendScalarData<const std::uint8_t, UByte>(Values, LogDataMessage);
     break;
-  case Value::ArrayShort:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::int16_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.get_value());
-    break;
   case Value::Short:
     CValuesInfo =
         appendScalarData<const std::int16_t, Short>(Values, LogDataMessage);
-    break;
-  case Value::ArrayUShort:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::uint16_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.get_value());
     break;
   case Value::UShort:
     CValuesInfo =
         appendScalarData<const std::uint16_t, UShort>(Values, LogDataMessage);
     break;
-  case Value::ArrayInt:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::int32_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.get_value());
-    break;
   case Value::Int:
     CValuesInfo =
         appendScalarData<const std::int32_t, Int>(Values, LogDataMessage);
-    break;
-  case Value::ArrayUInt:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::uint32_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.get_value());
     break;
   case Value::UInt:
     CValuesInfo =
         appendScalarData<const std::uint32_t, UInt>(Values, LogDataMessage);
     break;
-  case Value::ArrayLong:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::int64_t>(Values, DataPtr, NrOfElements,
-                                                 MetaData.get_value());
-    break;
   case Value::Long:
     CValuesInfo =
         appendScalarData<const std::int64_t, Long>(Values, LogDataMessage);
-    break;
-  case Value::ArrayULong:
-    extractArrayInfo();
-    CValuesInfo = appendData<const std::uint64_t>(Values, DataPtr, NrOfElements,
-                                                  MetaData.get_value());
     break;
   case Value::ULong:
     CValuesInfo =
         appendScalarData<const std::uint64_t, ULong>(Values, LogDataMessage);
     break;
-  case Value::ArrayFloat:
-    extractArrayInfo();
-    CValuesInfo = appendData<const float>(Values, DataPtr, NrOfElements,
-                                          MetaData.get_value());
-    break;
   case Value::Float:
     CValuesInfo = appendScalarData<const float, Float>(Values, LogDataMessage);
-    break;
-  case Value::ArrayDouble:
-    extractArrayInfo();
-    CValuesInfo = appendData<const double>(Values, DataPtr, NrOfElements,
-                                           MetaData.get_value());
     break;
   case Value::Double:
     CValuesInfo =
@@ -375,7 +279,7 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
     MetaDataMin = MetaData::Value<double>(
         HDFGroup, "minimum_value", MetaData::basicDatasetWriter<double>,
         MetaData::basicAttributeWriter<std::string>);
-    if (not Unit.get_value().empty()) {
+    if (!Unit.get_value().empty()) {
       MetaDataMin.setAttribute("units", Unit.get_value());
     }
     Tracker->registerMetaData(MetaDataMin);
@@ -383,7 +287,7 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
     MetaDataMax = MetaData::Value<double>(
         HDFGroup, "maximum_value", MetaData::basicDatasetWriter<double>,
         MetaData::basicAttributeWriter<std::string>);
-    if (not Unit.get_value().empty()) {
+    if (!Unit.get_value().empty()) {
       MetaDataMax.setAttribute("units", Unit.get_value());
     }
     Tracker->registerMetaData(MetaDataMax);
@@ -391,7 +295,7 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
     MetaDataMean = MetaData::Value<double>(
         HDFGroup, "average_value", MetaData::basicDatasetWriter<double>,
         MetaData::basicAttributeWriter<std::string>);
-    if (not Unit.get_value().empty()) {
+    if (!Unit.get_value().empty()) {
       MetaDataMean.setAttribute("units", Unit.get_value());
     }
     Tracker->registerMetaData(MetaDataMean);

@@ -43,9 +43,7 @@ public:
 
   f144_Writer()
       : WriterModule::Base("f144", false, "NXlog",
-                           {"epics_con_info", "alarm_info"}),
-        MetaDataMin("", "minimum_value"), MetaDataMax("", "maximum_value"),
-        MetaDataMean("", "average_value") {}
+                           {"epics_con_info", "alarm_info"}) {}
   ~f144_Writer() override = default;
 
   enum class Type {
@@ -64,7 +62,7 @@ public:
 protected:
   Type ElementType{Type::float64};
 
-  NeXusDataset::MultiDimDatasetBase Values;
+  NeXusDataset::ExtensibleDatasetBase Values;
 
   /// Timestamps of the f144 updates.
   NeXusDataset::Time Timestamp;
@@ -83,10 +81,12 @@ protected:
   JsonConfig::Field<std::string> Unit{this, {"value_units", "unit"}, ""};
   JsonConfig::Field<bool> MetaData{this, "meta_data", true};
 
-  MetaData::Value<double> MetaDataMin;
-  MetaData::Value<double> MetaDataMax;
-  MetaData::Value<double> MetaDataMean;
-  double Min{0}, Max{0}, Sum{0};
+  MetaData::Value<double> MetaDataMin{"", "minimum_value"};
+  MetaData::Value<double> MetaDataMax{"", "maximum_value"};
+  MetaData::Value<double> MetaDataMean{"", "average_value"};
+  double Min{0};
+  double Max{0};
+  double Sum{0};
   uint64_t LastIndexAtWrite{0};
   uint64_t NrOfWrites{0};
   uint64_t TotalNrOfElementsWritten{0};
