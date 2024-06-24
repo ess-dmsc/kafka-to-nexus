@@ -1,4 +1,4 @@
-s DataArray writer module
+# DataArray writer module
 
 ## Stream configuration fields
 
@@ -10,7 +10,7 @@ s DataArray writer module
 | title        | string              | The title of the HDF5 group.                 |                |
 | cue_interval | int                 | The number of messages between cues.         | 1000           |
 | chunk_size   | int                 | The HDF5 chunk size.                         | 2<sup>20</sup> |
-| variables    | list[da00_Variable] | The variable datasets to writer              | []             |
+| variables    | list[da00_Variable] | The variable datasets to write.              | []             |
 | constants    | list[da00_Variable] | The constant datasets to write.              | []             |
 | attributes   | list[da00_Variable] | The group attributes to write.               | []             |
 
