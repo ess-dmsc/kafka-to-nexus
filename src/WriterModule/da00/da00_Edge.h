@@ -77,7 +77,6 @@ private:
   std::optional<nlohmann::json> _first;
   std::optional<nlohmann::json> _last;
   std::optional<ssize_t> _size;
-
 };
 } // namespace WriterModule::da00
 
