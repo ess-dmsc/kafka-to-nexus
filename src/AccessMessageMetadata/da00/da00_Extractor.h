@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/** Copyright (C) 2018 European Spallation Source ERIC */
 #pragma once
 
 #include "FlatbufferReader.h"
@@ -16,7 +15,7 @@ namespace AccessMessageMetadata {
 using FBMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
-/// \brief For extracting info from ah00 flatbuffer messages.
+/// \brief For extracting info from da00 flatbuffer messages.
 class da00_Extractor : public FBReaderBase {
 public:
   [[nodiscard]] bool verify(FBMessage const &Message) const override;

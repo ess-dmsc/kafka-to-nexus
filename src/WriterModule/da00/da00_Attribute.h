@@ -14,7 +14,7 @@ class AttributeConfig {
 
 public:
   AttributeConfig() = default;
-  explicit AttributeConfig(const nlohmann::json &config) {
+  explicit AttributeConfig(nlohmann::json const &config) {
     if (!config.contains("name")) {
       throw std::runtime_error("AttributeConfig: no name given");
     }
@@ -32,7 +32,7 @@ public:
     }
     _data = config["data"];
   }
-  AttributeConfig &operator=(const std::string &config) {
+  AttributeConfig &operator=(std::string const &config) {
     auto other = AttributeConfig(nlohmann::json::parse(config));
     *this = other;
     return *this;
@@ -48,13 +48,23 @@ public:
   }
   [[nodiscard]] bool has_source() const { return _source.has_value(); }
   [[nodiscard]] da00_dtype type() const { return _type; }
-  [[nodiscard]] const std::string &name() const { return _name; }
-  [[nodiscard]] const std::string &description() const {
+  [[nodiscard]] std::string const &name() const { return _name; }
+  [[nodiscard]] std::string const &description() const {
     return _description.value();
   }
-  [[nodiscard]] const std::string &source() const { return _source.value(); }
-  [[nodiscard]] const nlohmann::json &data() const { return _data; }
+  [[nodiscard]] std::string const &source() const { return _source.value(); }
+  [[nodiscard]] nlohmann::json const &data() const { return _data; }
   void data(nlohmann::json value) { _data = std::move(value); }
+
+  void add_to_hdf5(hdf5::node::Node &node) const {
+    if (data().is_array()) {
+      add_array_to_hdf5(node);
+    } else if (data().is_number() || data().is_string()) {
+      add_scalar_to_hdf5(node);
+    } else {
+      throw std::runtime_error("Attribute value is neither scalar nor array");
+    }
+  }
 
 private:
   std::string _name;
@@ -111,17 +121,6 @@ private:
          [&]() { _add_to_hdf5<std::vector<std::string>>(node); }},
     };
     type_map[type()]();
-  }
-
-public:
-  void add_to_hdf5(hdf5::node::Node &node) const {
-    if (data().is_array()) {
-      add_array_to_hdf5(node);
-    } else if (data().is_number() || data().is_string()) {
-      add_scalar_to_hdf5(node);
-    } else {
-      throw std::runtime_error("Attribute value is neither scalar nor array");
-    }
   }
 };
 } // namespace WriterModule::da00

@@ -30,7 +30,7 @@ da00_dtype WriterModule::da00::string_to_da00_dtype(const std::string &name) {
   return da00_dtype::none;
 }
 
-const char *WriterModule::da00::da00_dtype_to_string(const da00_dtype &type) {
+const char *WriterModule::da00::da00_dtype_to_string(da00_dtype const &type) {
   switch (type) {
   case da00_dtype::int8:
     return "int8";
@@ -59,7 +59,7 @@ const char *WriterModule::da00::da00_dtype_to_string(const da00_dtype &type) {
   }
 }
 
-da00_dtype WriterModule::da00::guess_dtype(const nlohmann::json &data) {
+da00_dtype WriterModule::da00::guess_dtype(nlohmann::json const &data) {
   if (data.is_object()) {
     if (data.contains("first") && data.contains("last") &&
         data.contains("size")) {
@@ -108,20 +108,7 @@ da00_dtype WriterModule::da00::guess_dtype(const nlohmann::json &data) {
   return da00_dtype::none;
 }
 
-std::vector<hsize_t> WriterModule::da00::get_shape(const nlohmann::json &data) {
-  // return an empty array if the data is scalar,
-  // otherwise an array (which we don't know the shape of) is a vector
-  //  if (data.is_object() && data.contains("shape")) {
-  //    auto shape = data["shape"];
-  //    if (shape.is_array()) {
-  //      std::vector<hsize_t> result;
-  //      for (auto &element : shape) {
-  //        if (!element.is_number_unsigned()) return {};
-  //        result.push_back(element.get<hsize_t>());
-  //      }
-  //      return result;
-  //    }
-  //  }
+std::vector<hsize_t> WriterModule::da00::get_shape(nlohmann::json const &data) {
   if (data.is_object() && data.contains("size")) {
     return {data["size"].get<hsize_t>()};
   }

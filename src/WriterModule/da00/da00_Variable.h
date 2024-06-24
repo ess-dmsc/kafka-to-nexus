@@ -83,60 +83,61 @@ public:
   using ConstantDataset = std::unique_ptr<hdf5::node::Dataset>;
 
   VariableConfig() = default;
-  explicit VariableConfig(std::string name) : name_(std::move(name)) {}
+  explicit VariableConfig(std::string name) : _name(std::move(name)) {}
   VariableConfig &operator=(std::string const &config) {
     auto json_config = nlohmann::json::parse(config);
-    name_ = json_config["name"];
+    _name = json_config["name"];
     if (json_config.contains("unit"))
-      unit_ = StringConfig(json_config["unit"]);
+      _unit = StringConfig(json_config["unit"]);
     if (json_config.contains("label"))
-      label_ = StringConfig(json_config["label"]);
+      _label = StringConfig(json_config["label"]);
     if (json_config.contains("source"))
-      source_ = StringConfig(json_config["source"]);
+      _source = StringConfig(json_config["source"]);
     if (json_config.contains("data_type"))
-      dtype_ =
+      _dtype =
           string_to_da00_dtype(json_config["data_type"].get<std::string>());
     if (json_config.contains("shape")) {
       auto shape = json_config["shape"].get<std::vector<hsize_t>>();
       if (!shape.empty()) {
-        shape_ = shape;
+        _shape = shape;
       }
     }
     if (json_config.contains("axes")) {
       auto axes = json_config["axes"].get<std::vector<std::string>>();
       if (!axes.empty()) {
-        axes_ = axes;
+        _axes = axes;
       }
     }
     if (json_config.contains("data"))
-      data_ = json_config["data"];
-    if (!dtype_.has_value() && data_.has_value()) {
-      dtype_ = guess_dtype(data_.value());
+      _data = json_config["data"];
+    if (!_dtype.has_value() && _data.has_value()) {
+      _dtype = guess_dtype(_data.value());
       LOG_ERROR("No data type specified for variable {}. Guessing type {}.",
-                name_, dtype_.value());
+                _name, _dtype.value());
     }
-    if (!shape_.has_value() && data_.has_value()) {
-      shape_ = get_shape(data_.value());
-      LOG_ERROR("No shape specified for variable {}. Guessing shape {}.", name_,
-                shape_.value());
+    if (!_shape.has_value() && _data.has_value()) {
+      _shape = get_shape(_data.value());
+      LOG_ERROR("No shape specified for variable {}. Guessing shape {}.", _name,
+                _shape.value());
     }
     if (!is_consistent()) {
-      LOG_WARN("Inconsistent variable config for variable {}.", name_);
+      LOG_WARN("Inconsistent variable config for variable {}.", _name);
     }
     return *this;
   }
+
   explicit VariableConfig(da00_Variable const *buffer) {
-    name_ = buffer->name()->str();
+    _name = buffer->name()->str();
     if (buffer->unit())
-      unit_ = StringConfig(buffer->unit()->str());
+      _unit = StringConfig(buffer->unit()->str());
     if (buffer->label())
-      label_ = StringConfig(buffer->label()->str());
-    dtype_ = buffer->data_type();
+      _label = StringConfig(buffer->label()->str());
+    _dtype = buffer->data_type();
     if (buffer->shape()) {
       auto shape = std::vector<hsize_t>(buffer->shape()->begin(),
                                         buffer->shape()->end());
       if (!shape.empty())
-        shape_ = shape;
+        _shape = shape;
     }
     if (buffer->axes()) {
       auto dims = std::vector<std::string>();
@@ -145,33 +146,34 @@ public:
         dims.push_back(dim->str());
       }
       if (!dims.empty())
-        axes_ = dims;
+        _axes = dims;
     }
     if (!is_consistent()) {
-      LOG_WARN("Inconsistent variable config for variable {}.", name_);
+      LOG_WARN("Inconsistent variable config for variable {}.", _name);
     }
   }
+
   VariableConfig &operator=(VariableConfig const &other) = default;
   VariableConfig(VariableConfig const &other) = default;
   VariableConfig(VariableConfig &&other) = default;
 
-  [[nodiscard]] bool has_unit() const { return unit_.has_value(); }
-  [[nodiscard]] bool has_label() const { return label_.has_value(); }
-  [[nodiscard]] bool has_source() const { return source_.has_value(); }
-  [[nodiscard]] bool has_dtype() const { return dtype_.has_value(); }
-  [[nodiscard]] bool has_shape() const { return shape_.has_value(); }
-  [[nodiscard]] bool has_axes() const { return axes_.has_value(); }
-  [[nodiscard]] bool has_data() const { return data_.has_value(); }
-  [[nodiscard]] auto const &name() const { return name_; }
-  [[nodiscard]] auto const &unit() const { return unit_.value(); }
-  [[nodiscard]] auto const &label() const { return label_.value(); }
-  [[nodiscard]] auto const &source() const { return source_.value(); }
-  [[nodiscard]] auto const &dtype() const { return dtype_.value(); }
-  [[nodiscard]] auto const &shape() const { return shape_.value(); }
-  [[nodiscard]] auto const &axes() const { return axes_.value(); }
+  [[nodiscard]] bool has_unit() const { return _unit.has_value(); }
+  [[nodiscard]] bool has_label() const { return _label.has_value(); }
+  [[nodiscard]] bool has_source() const { return _source.has_value(); }
+  [[nodiscard]] bool has_dtype() const { return _dtype.has_value(); }
+  [[nodiscard]] bool has_shape() const { return _shape.has_value(); }
+  [[nodiscard]] bool has_axes() const { return _axes.has_value(); }
+  [[nodiscard]] bool has_data() const { return _data.has_value(); }
+  [[nodiscard]] auto const &name() const { return _name; }
+  [[nodiscard]] auto const &unit() const { return _unit.value(); }
+  [[nodiscard]] auto const &label() const { return _label.value(); }
+  [[nodiscard]] auto const &source() const { return _source.value(); }
+  [[nodiscard]] auto const &dtype() const { return _dtype.value(); }
+  [[nodiscard]] auto const &shape() const { return _shape.value(); }
+  [[nodiscard]] auto const &axes() const { return _axes.value(); }
   [[nodiscard]] auto colsepaxes() const {
     std::stringstream ss;
-    auto axes = axes_.value();
+    auto axes = _axes.value();
     if (axes.empty())
       return ss.str();
     std::string sep = ":";
@@ -180,7 +182,8 @@ public:
     auto out = ss.str();
     return out.substr(0, out.size() - sep.size());
   }
-  [[nodiscard]] auto const &json_data() const { return data_.value(); }
+
+  [[nodiscard]] auto const &json_data() const { return _data.value(); }
 
   template <class T> [[nodiscard]] auto data() const {
     // Allow _either_
@@ -188,17 +191,17 @@ public:
     // or
     //     data = {min=1, max=N, size=N},
     EdgeConfig cfg = EdgeConfig();
-    cfg = data_.value().dump();
+    cfg = _data.value().dump();
     return cfg.edges<T>();
   }
-  void name(std::string name) { name_ = std::move(name); }
-  void unit(std::string unit) { unit_ = StringConfig(std::move(unit)); }
-  void label(std::string label) { label_ = StringConfig(std::move(label)); }
-  void source(std::string source) { source_ = StringConfig(std::move(source)); }
-  void dtype(da00_dtype type) { dtype_ = type; }
-  void dtype(const std::string &type) { dtype_ = string_to_da00_dtype(type); }
-  void shape(std::vector<hsize_t> shape) { shape_ = std::move(shape); }
-  void dims(std::vector<std::string> dims) { axes_ = std::move(dims); }
+  void name(std::string name) { _name = std::move(name); }
+  void unit(std::string unit) { _unit = StringConfig(std::move(unit)); }
+  void label(std::string label) { _label = StringConfig(std::move(label)); }
+  void source(std::string source) { _source = StringConfig(std::move(source)); }
+  void dtype(da00_dtype type) { _dtype = type; }
+  void dtype(const std::string &type) { _dtype = string_to_da00_dtype(type); }
+  void shape(std::vector<hsize_t> shape) { _shape = std::move(shape); }
+  void dims(std::vector<std::string> dims) { _axes = std::move(dims); }
 
   [[nodiscard]] bool is_consistent() const {
     if (has_axes() && has_shape() && axes().size() != shape().size()) {
@@ -219,28 +222,28 @@ public:
       return std::make_pair(false, false);
     }
     if (has_unit() && other.has_unit()) {
-      auto [first, second] = unit_.value().update_from(other.unit(), force);
+      auto [first, second] = _unit.value().update_from(other.unit(), force);
       inconsistent |= first;
       changed |= second;
     } else if (other.has_unit()) {
       changed = true;
-      unit_ = other.unit();
+      _unit = other.unit();
     }
     if (has_label() && other.has_label()) {
-      auto [first, second] = label_.value().update_from(other.label(), force);
+      auto [first, second] = _label.value().update_from(other.label(), force);
       inconsistent |= first;
       changed |= second;
     } else if (other.has_label()) {
       changed = true;
-      label_ = other.label();
+      _label = other.label();
     }
     if (has_source() && other.has_source()) {
-      auto [first, second] = source_.value().update_from(other.source(), force);
+      auto [first, second] = _source.value().update_from(other.source(), force);
       inconsistent |= first;
       changed |= second;
     } else if (other.has_source()) {
       changed = true;
-      source_ = other.source();
+      _source = other.source();
     }
     if (has_dtype() && other.has_dtype() && dtype() != other.dtype()) {
       LOG_DEBUG("Data type mismatch for variable {}. Expected {}, got {}.",
@@ -307,7 +310,7 @@ public:
     return dataset;
   }
   template <class DataType>
-  void write_constant(ConstantDataset const &dataset, const uint8_t *data,
+  void write_constant(ConstantDataset const &dataset, uint8_t const *data,
                       hsize_t bytes) const {
     auto count = std::accumulate(shape().cbegin(), shape().cend(), 1,
                                  std::multiplies<>());
@@ -326,7 +329,7 @@ public:
   template <class DataType>
   [[nodiscard]] VariableDataset
   variable_dataset(hdf5::node::Group const &group, hdf5::Dimensions chunk,
-                   [[maybe_unused]] const bool fixed = true) const {
+                   [[maybe_unused]] bool const fixed = true) const {
     auto initial_shape = has_shape() ? shape() : hdf5::Dimensions{};
     auto dataset =
         create_chunked_dataset<DataType>(group, name(), initial_shape, chunk);
@@ -338,10 +341,10 @@ public:
   }
 
   template <class DataType>
-  void append_variable(VariableDataset const &dataset, const uint8_t *data,
-                       const hdf5::Dimensions &shape) const {
+  void append_variable(VariableDataset const &dataset, uint8_t const *data,
+                       hdf5::Dimensions const &shape) const {
     if (has_shape()) {
-      const auto &my_shape = this->shape();
+      auto const &my_shape = this->shape();
       if (my_shape.size() != shape.size()) {
         LOG_ERROR("Shape mismatch for variable {}. Expected {} dimensions, got "
                   "{} dimensions.",
@@ -399,11 +402,11 @@ public:
          [&]() { return constant_dataset<std::double_t>(group); }},
         {da00_dtype::c_string,
          [&]() { return constant_dataset<char>(group); }}};
-    auto dtype = has_dtype() ? dtype_.value() : da00_dtype::float64;
+    auto dtype = has_dtype() ? _dtype.value() : da00_dtype::float64;
     return call_map[dtype]();
   }
 
-  void write_constant_dataset(ConstantDataset &dataset, const uint8_t *data,
+  void write_constant_dataset(ConstantDataset &dataset, uint8_t const *data,
                               hsize_t count) const {
     std::map<da00_dtype, std::function<void()>> call_map{
         {da00_dtype::int8,
@@ -428,13 +431,13 @@ public:
          [&]() { write_constant<std::double_t>(dataset, data, count); }},
         {da00_dtype::c_string,
          [&]() { write_constant<char>(dataset, data, count); }}};
-    auto dtype = has_dtype() ? dtype_.value() : da00_dtype::float64;
+    auto dtype = has_dtype() ? _dtype.value() : da00_dtype::float64;
     call_map[dtype]();
   }
 
   std::unique_ptr<hdf5::node::Dataset>
   insert_variable_dataset(hdf5::node::Group const &group,
-                          const hdf5::Dimensions &chunk_size) const {
+                          hdf5::Dimensions const &chunk_size) const {
     std::map<da00_dtype, std::function<VariableDataset()>> call_map{
         {da00_dtype::int8,
          [&]() { return variable_dataset<std::int8_t>(group, chunk_size); }},
@@ -458,15 +461,15 @@ public:
          [&]() { return variable_dataset<std::double_t>(group, chunk_size); }},
         {da00_dtype::c_string,
          [&]() { return variable_dataset<char>(group, chunk_size); }}};
-    auto dtype = has_dtype() ? dtype_.value() : da00_dtype::float64;
+    auto dtype = has_dtype() ? _dtype.value() : da00_dtype::float64;
     return call_map[dtype]();
   }
 
   void variable_append(VariableDataset &dataset,
-                       const da00_Variable *fb) const {
-    const auto data = fb->data()->Data();
-    const auto axis_shape = fb->shape(); // dimension sizes
-    const auto shape = hdf5::Dimensions(axis_shape->begin(), axis_shape->end());
+                       da00_Variable const *fb) const {
+    auto const data = fb->data()->Data();
+    auto const axis_shape = fb->shape(); // dimension sizes
+    auto const shape = hdf5::Dimensions(axis_shape->begin(), axis_shape->end());
     std::map<da00_dtype, std::function<void()>> call_map{
         {da00_dtype::int8,
          [&]() { append_variable<std::int8_t>(dataset, data, shape); }},
@@ -569,7 +572,7 @@ public:
     return std::make_unique<hdf5::node::Dataset>(group.get_dataset(name()));
   }
 
-  template <class T> bool compare_data(const std::vector<T> &other) const {
+  template <class T> bool compare_data(std::vector<T> const &other) const {
     auto our = data<T>();
     if (our.size() != other.size())
       return false;
@@ -583,7 +586,7 @@ public:
   template <class Dataset>
   void
   update_dataset_attributes(Dataset &dataset,
-                            const bool SingeWriterMultipleReader = true) const {
+                            bool const SingeWriterMultipleReader = true) const {
     auto do_update = [&](const std::optional<StringConfig> &obj,
                          const std::string &attr) {
       if (obj.has_value() && obj.value().has_value()) {
@@ -605,9 +608,9 @@ public:
         }
       }
     };
-    do_update(unit_, "units");
-    do_update(label_, "long_name");
-    do_update(source_, "source");
+    do_update(_unit, "units");
+    do_update(_label, "long_name");
+    do_update(_source, "source");
     if (has_axes()) {
       if (dataset->attributes.exists("axes")) {
         // @axes is a colon delimited list of axis names
@@ -679,6 +682,7 @@ public:
       }
     }
   }
+
   void update_constant(ConstantDataset &constant,
                        const bool swmr_enabled = true) const {
     using namespace hdf5::dataspace;
@@ -724,6 +728,7 @@ public:
       }
     }
   }
+
   template <class T>
   void update_constant(ConstantDataset &constant,
                        const std::vector<T> &data) const {
@@ -772,14 +777,14 @@ private:
   }
 
 private:
-  std::string name_;
-  std::optional<StringConfig> unit_;
-  std::optional<StringConfig> label_;
-  std::optional<StringConfig> source_;
-  std::optional<da00_dtype> dtype_;
-  std::optional<std::vector<hsize_t>> shape_;
-  std::optional<std::vector<std::string>> axes_;
-  std::optional<nlohmann::json> data_;
+  std::string _name;
+  std::optional<StringConfig> _unit;
+  std::optional<StringConfig> _label;
+  std::optional<StringConfig> _source;
+  std::optional<da00_dtype> _dtype;
+  std::optional<std::vector<hsize_t>> _shape;
+  std::optional<std::vector<std::string>> _axes;
+  std::optional<nlohmann::json> _data;
 };
 
 } // namespace WriterModule::da00

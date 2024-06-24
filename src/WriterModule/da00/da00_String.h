@@ -11,9 +11,6 @@
 namespace WriterModule::da00 {
 
 class StringConfig {
-  std::optional<std::string> _value;
-  std::optional<ssize_t> _size;
-
 public:
   StringConfig() = default;
   StringConfig &operator=(StringConfig const &other) = default;
@@ -76,7 +73,6 @@ public:
     return attr;
   }
 
-public:
   std::pair<bool, bool> update_from(const StringConfig &other, bool force) {
     bool inconsistent{false}, changed{false};
     if (other.has_value()) {
@@ -99,6 +95,9 @@ public:
     }
     return std::make_pair(inconsistent, changed);
   }
+private:
+  std::optional<std::string> _value;
+  std::optional<ssize_t> _size;
 };
 
 } // namespace WriterModule::da00
@@ -126,19 +125,3 @@ template <> struct fmt::formatter<WriterModule::da00::StringConfig> {
     return format_to(ctx.out(), ss.str());
   }
 };
-//
-// template<>
-// class hdf5::dataspace::TypeTrait<WriterModule::da00::StringConfig> {
-// public:
-//   using Type = WriterModule::da00::StringConfig;
-//   using TypeClass = hdf5::datatype::String;
-//   static TypeClass create(const Type & t = Type()) {
-//     auto ts = t.has_size() ? t.size() : 0;
-//     auto tv = t.has_value() ? static_cast<ssize_t>(t.value().size()) : 0;
-//     return TypeClass(hdf5::datatype::String::fixed(ts > tv ? ts : tv));
-//   }
-//   const static TypeClass & get(const Type & = Type()) {
-//     const static TypeClass & cref_ = create();
-//     return cref_;
-//   }
-// };

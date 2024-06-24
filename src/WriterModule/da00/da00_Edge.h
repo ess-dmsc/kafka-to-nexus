@@ -8,11 +8,6 @@
 namespace WriterModule::da00 {
 
 class EdgeConfig {
-  std::optional<nlohmann::json> _edges;
-  std::optional<nlohmann::json> _first;
-  std::optional<nlohmann::json> _last;
-  std::optional<ssize_t> _size;
-
 public:
   EdgeConfig() = default;
   EdgeConfig &operator=(std::string const &config) {
@@ -76,6 +71,13 @@ public:
     }
     return out;
   }
+
+private:
+  std::optional<nlohmann::json> _edges;
+  std::optional<nlohmann::json> _first;
+  std::optional<nlohmann::json> _last;
+  std::optional<ssize_t> _size;
+
 };
 } // namespace WriterModule::da00
 

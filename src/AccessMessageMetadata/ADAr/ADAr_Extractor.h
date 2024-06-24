@@ -7,11 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/** Copyright (C) 2018 European Spallation Source ERIC */
-
-/// \file
-/// \brief Define classes required to implement the ADC file writing module.
-
 #pragma once
 
 #include "FlatbufferReader.h"
