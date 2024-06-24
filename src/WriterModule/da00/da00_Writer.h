@@ -44,17 +44,21 @@ public:
 
 protected:
   // register config keys, parsed and filled-in by parent class
-  JsonConfig::Field<uint64_t> CueInterval{this, "cue_interval", (std::numeric_limits<uint64_t>::max)()};
+  JsonConfig::Field<uint64_t> CueInterval{
+      this, "cue_interval", (std::numeric_limits<uint64_t>::max)()};
   JsonConfig::Field<hdf5::Dimensions> ChunkSize{this, "chunk_size", {1 << 20}};
-  JsonConfig::Field<std::vector<nlohmann::json>> VariablesField{this, "variables", {}};
-  JsonConfig::Field<std::vector<nlohmann::json>> ConstantsField{this, "constants", {}};
-  JsonConfig::Field<std::vector<nlohmann::json>> AttributesField{this, "attributes", {}};
+  JsonConfig::Field<std::vector<nlohmann::json>> VariablesField{
+      this, "variables", {}};
+  JsonConfig::Field<std::vector<nlohmann::json>> ConstantsField{
+      this, "constants", {}};
+  JsonConfig::Field<std::vector<nlohmann::json>> AttributesField{
+      this, "attributes", {}};
   uint64_t CueCounter{0};
   uint64_t NrOfWrites{0};
   bool isFirstMessage{true};
   // private:
-  void handle_first_message(da00_DataArray const * da00);
-  void handle_group_attributes(hdf5::node::Group & HDFGroup) const;
+  void handle_first_message(da00_DataArray const *da00);
+  void handle_group_attributes(hdf5::node::Group &HDFGroup) const;
   // specifications for variable and constant datasets
   std::map<std::string, VariableConfig> VariableConfigMap;
   std::map<std::string, VariableConfig> ConstantConfigMap;

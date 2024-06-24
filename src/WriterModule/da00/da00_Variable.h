@@ -557,7 +557,8 @@ public:
     return std::make_unique<hdf5::node::Dataset>(group.get_dataset(name()));
   }
 
-  [[nodiscard]] std::unique_ptr<hdf5::node::Dataset> reopen_constant_dataset(hdf5::node::Group &group) const {
+  [[nodiscard]] std::unique_ptr<hdf5::node::Dataset>
+  reopen_constant_dataset(hdf5::node::Group &group) const {
     if (!group.has_dataset(name())) {
       std::stringstream ss;
       ss << group.link().path();
