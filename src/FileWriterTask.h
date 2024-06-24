@@ -42,7 +42,7 @@ public:
   explicit FileWriterTask(std::string job_id, std::filesystem::path filepath,
                           Metrics::IRegistrar const *Registrar,
                           MetaData::TrackerPtr Tracker)
-      : job_id_(std::move(job_id)), filepath_(std::move(filepath)),
+      : _job_id(std::move(job_id)), _filepath(std::move(filepath)),
         MetaDataTracker(std::move(Tracker)) {
     Registrar->registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
     MetaDataTracker->registerMetaData(FileSizeMB);
@@ -103,8 +103,8 @@ public:
   void updateApproximateFileSize();
 
 private:
-  std::string job_id_;
-  std::filesystem::path filepath_;
+  std::string _job_id;
+  std::filesystem::path _filepath;
   MetaData::TrackerPtr MetaDataTracker;
   MetaData::Value<uint32_t> FileSizeMB{"", "approx_file_size_mb"};
   Metrics::Metric FileSizeMBMetric{"approx_file_size_mb",

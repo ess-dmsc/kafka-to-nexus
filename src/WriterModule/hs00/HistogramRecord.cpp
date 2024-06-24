@@ -14,10 +14,10 @@
 namespace WriterModule {
 namespace hs00 {
 
-HistogramRecord HistogramRecord::create(size_t HDFIndex_, size_t TotalItems_) {
+HistogramRecord HistogramRecord::create(size_t HDFIndex, size_t TotalItems) {
   HistogramRecord TheHistogramRecord;
-  TheHistogramRecord.HDFIndex = HDFIndex_;
-  TheHistogramRecord.TotalItems = TotalItems_;
+  TheHistogramRecord.HDFIndex = HDFIndex;
+  TheHistogramRecord.TotalItems = TotalItems;
   return TheHistogramRecord;
 }
 
