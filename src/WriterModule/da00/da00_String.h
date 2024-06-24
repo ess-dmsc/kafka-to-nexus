@@ -95,6 +95,7 @@ public:
     }
     return std::make_pair(inconsistent, changed);
   }
+
 private:
   std::optional<std::string> _value;
   std::optional<ssize_t> _size;
