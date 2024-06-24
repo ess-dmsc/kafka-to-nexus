@@ -28,6 +28,7 @@ def test_large_start_message(worker_pool, kafka_address, json_padding):
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=70)
 
@@ -36,4 +37,4 @@ def test_large_start_message(worker_pool, kafka_address, json_padding):
 
     with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
-        assert file["entry/start_time"][()][0].decode("utf-8") == "2016-04-12T02:58:52"
+        assert file["entry/start_time"][()].decode("utf-8") == "2016-04-12T02:58:52"

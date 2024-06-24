@@ -19,9 +19,9 @@ UInt16Value::UInt16Value(hdf5::node::Group const &Parent, Mode CMode,
 Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::uint64_t>(Parent, "time", CMode, ChunkSize) {
   if (Mode::Create == CMode) {
-    auto StartAttr = dataset_.attributes.create<std::string>("start");
+    auto StartAttr = _dataset.attributes.create<std::string>("start");
     StartAttr.write("1970-01-01T00:00:00Z");
-    auto UnitAttr = dataset_.attributes.create<std::string>("units");
+    auto UnitAttr = _dataset.attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
 }
@@ -40,9 +40,9 @@ CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
     : ExtensibleDataset<std::uint64_t>(Parent, "cue_timestamp_zero", CMode,
                                        ChunkSize) {
   if (Mode::Create == CMode) {
-    auto StartAttr = dataset_.attributes.create<std::string>("start");
+    auto StartAttr = _dataset.attributes.create<std::string>("start");
     StartAttr.write("1970-01-01T00:00:00Z");
-    auto UnitAttr = dataset_.attributes.create<std::string>("units");
+    auto UnitAttr = _dataset.attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
 }
@@ -55,7 +55,7 @@ EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
     : ExtensibleDataset<std::uint32_t>(Parent, "event_time_offset", CMode,
                                        ChunkSize) {
   if (Mode::Create == CMode) {
-    auto UnitAttr = dataset_.attributes.create<std::string>("units");
+    auto UnitAttr = _dataset.attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
 }
@@ -70,9 +70,9 @@ EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
     : ExtensibleDataset<std::uint64_t>(Parent, "event_time_zero", CMode,
                                        ChunkSize) {
   if (Mode::Create == CMode) {
-    auto StartAttr = dataset_.attributes.create<std::string>("start");
+    auto StartAttr = _dataset.attributes.create<std::string>("start");
     StartAttr.write("1970-01-01T00:00:00Z");
-    auto UnitAttr = dataset_.attributes.create<std::string>("units");
+    auto UnitAttr = _dataset.attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
 }

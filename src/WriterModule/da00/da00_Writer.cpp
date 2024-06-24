@@ -44,8 +44,8 @@ static void fill_config_map(std::map<std::string, VariableConfig> &map,
 /// The default is to use double as the element type.
 void da00_Writer::config_post_processing() {
   try {
-    fill_config_map(VariableConfigMap, VariablesField.getValue());
-    fill_config_map(ConstantConfigMap, ConstantsField.getValue());
+    fill_config_map(VariableConfigMap, VariablesField.get_value());
+    fill_config_map(ConstantConfigMap, ConstantsField.get_value());
   } catch (std::exception &E) {
     LOG_ERROR("Failed to parse configuration with error message: {}", E.what());
     throw;
@@ -137,7 +137,7 @@ void da00_Writer::handle_group_attributes(hdf5::node::Group &HDFGroup) const {
    */
   // in case we need the first variable name (don't use the map to preserve
   // order)
-  auto variable_configs = VariablesField.getValue();
+  auto variable_configs = VariablesField.get_value();
   std::string first_variable_name;
   if (!variable_configs.empty()) {
     VariableConfig vc;
@@ -146,7 +146,7 @@ void da00_Writer::handle_group_attributes(hdf5::node::Group &HDFGroup) const {
   }
 
   std::vector<AttributeConfig> attrs;
-  auto attrs_json = AttributesField.getValue();
+  auto attrs_json = AttributesField.get_value();
   attrs.reserve(attrs_json.size());
   auto signal_is_variable{false};
   auto signal_is_present{false};

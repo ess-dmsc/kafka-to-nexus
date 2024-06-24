@@ -38,19 +38,21 @@ public:
   // Inherit constructors from FeedbackProducerBase
   using FeedbackProducerBase::FeedbackProducerBase;
 
-  void publishResponse([[maybe_unused]] ActionResponse command,
-                       [[maybe_unused]] ActionResult result,
-                       [[maybe_unused]] std::string jobId,
-                       [[maybe_unused]] std::string commandId,
-                       [[maybe_unused]] time_point stopTime,
-                       [[maybe_unused]] int statusCode,
-                       [[maybe_unused]] std::string description) override {}
+  void
+  publishResponse([[maybe_unused]] ActionResponse command,
+                  [[maybe_unused]] ActionResult result,
+                  [[maybe_unused]] std::string const &jobId,
+                  [[maybe_unused]] std::string const &commandId,
+                  [[maybe_unused]] time_point stopTime,
+                  [[maybe_unused]] int statusCode,
+                  [[maybe_unused]] std::string const &description) override {}
 
-  void publishStoppedMsg([[maybe_unused]] ActionResult result,
-                         [[maybe_unused]] std::string jobId,
-                         [[maybe_unused]] std::string description,
-                         [[maybe_unused]] std::filesystem::path filePath,
-                         [[maybe_unused]] std::string metadata) override {}
+  void
+  publishStoppedMsg([[maybe_unused]] ActionResult result,
+                    [[maybe_unused]] std::string const &jobId,
+                    [[maybe_unused]] std::string const &description,
+                    [[maybe_unused]] std::filesystem::path filePath,
+                    [[maybe_unused]] std::string const &metadata) override {}
 };
 
 class CommandListenerMock : public CommandListener {
@@ -79,40 +81,40 @@ public:
 
 class StartHandlerTest : public ::testing::Test {
 protected:
-  std::unique_ptr<JobListenerMock> jobListenerMock_;
-  std::unique_ptr<CommandListenerMock> commandListenerMock_;
-  std::unique_ptr<FeedbackProducerMock> feedbackProducerMock_;
-  std::unique_ptr<HandlerStandIn> handlerUnderTest_;
-  StartMessage startMessage_;
-  std::string serviceId_ = "service_id_123";
+  std::unique_ptr<JobListenerMock> _jobListenerMock;
+  std::unique_ptr<CommandListenerMock> _commandListenerMock;
+  std::unique_ptr<FeedbackProducerMock> _feedbackProducerMock;
+  std::unique_ptr<HandlerStandIn> _handlerUnderTest;
+  StartMessage _startMessage;
+  std::string _serviceId = "service_id_123";
 
   void SetUp() override {
-    jobListenerMock_ = std::make_unique<JobListenerMock>(
+    _jobListenerMock = std::make_unique<JobListenerMock>(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
-    commandListenerMock_ = std::make_unique<CommandListenerMock>(
+    _commandListenerMock = std::make_unique<CommandListenerMock>(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
-    feedbackProducerMock_ = std::make_unique<FeedbackProducerMock>();
+    _feedbackProducerMock = std::make_unique<FeedbackProducerMock>();
 
-    handlerUnderTest_ = std::make_unique<HandlerStandIn>(
-        serviceId_, Kafka::BrokerSettings{},
-        uri::URI("localhost:1111/no_topic_here"), std::move(jobListenerMock_),
-        std::move(commandListenerMock_), std::move(feedbackProducerMock_));
-    handlerUnderTest_->registerIsWritingFunction(
+    _handlerUnderTest = std::make_unique<HandlerStandIn>(
+        _serviceId, Kafka::BrokerSettings{},
+        uri::URI("localhost:1111/no_topic_here"), std::move(_jobListenerMock),
+        std::move(_commandListenerMock), std::move(_feedbackProducerMock));
+    _handlerUnderTest->registerIsWritingFunction(
         []() -> bool { return false; });
-    handlerUnderTest_->registerStartFunction(
+    _handlerUnderTest->registerStartFunction(
         []([[maybe_unused]] auto startMessage) -> void {});
 
     // Use a valid JobID in the base start message
-    startMessage_.JobID = "123e4567-e89b-12d3-a456-426614174000";
+    _startMessage.JobID = "123e4567-e89b-12d3-a456-426614174000";
   }
 };
 
 TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
-  handlerUnderTest_->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
 
   for (bool isPoolCommand : {false, true}) {
     CmdResponse cmdResponse =
-        handlerUnderTest_->startWriting(startMessage_, isPoolCommand);
+        _handlerUnderTest->startWriting(_startMessage, isPoolCommand);
     EXPECT_TRUE(cmdResponse.SendResponse);
     EXPECT_TRUE(isErrorResponse(cmdResponse));
   }
@@ -120,7 +122,7 @@ TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
 
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
@@ -128,20 +130,20 @@ TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
 
 TEST_F(StartHandlerTest,
        validateStartCommandFromJobPoolAndMismatchingServiceId) {
-  startMessage_.ServiceID = "another_service_id";
+  _startMessage.ServiceID = "another_service_id";
 
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
-  startMessage_.ServiceID = serviceId_;
+  _startMessage.ServiceID = _serviceId;
 
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
@@ -149,55 +151,55 @@ TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
 
 TEST_F(StartHandlerTest,
        validateStartCommandRejectsControlTopicIfNotFromJobPool) {
-  startMessage_.ControlTopic = "some_topic";
+  _startMessage.ControlTopic = "some_topic";
 
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, false);
+      _handlerUnderTest->startWriting(_startMessage, false);
 
-  EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
+  EXPECT_FALSE(_handlerUnderTest->isUsingAlternativeTopic());
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
-  EXPECT_FALSE(handlerUnderTest_->isUsingAlternativeTopic());
-  startMessage_.ControlTopic = "some_topic";
+  EXPECT_FALSE(_handlerUnderTest->isUsingAlternativeTopic());
+  _startMessage.ControlTopic = "some_topic";
 
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_FALSE(isErrorResponse(cmdResponse));
-  EXPECT_TRUE(handlerUnderTest_->isUsingAlternativeTopic());
+  EXPECT_TRUE(_handlerUnderTest->isUsingAlternativeTopic());
 }
 
 TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
-  startMessage_.JobID = "321e4567-e89b-12d3-a456-426614174000";
+  _startMessage.JobID = "321e4567-e89b-12d3-a456-426614174000";
 
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandRejectsInvalidJobID) {
-  startMessage_.JobID = "123";
+  _startMessage.JobID = "123";
 
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
-  handlerUnderTest_->registerStartFunction(
+  _handlerUnderTest->registerStartFunction(
       []([[maybe_unused]] auto startMessage) -> void {
         throw std::runtime_error("Some error");
       });
 
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -205,7 +207,7 @@ TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
 
 TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
   CmdResponse cmdResponse =
-      handlerUnderTest_->startWriting(startMessage_, true);
+      _handlerUnderTest->startWriting(_startMessage, true);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
@@ -214,40 +216,40 @@ TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
 
 class StopHandlerTest : public ::testing::Test {
 protected:
-  std::unique_ptr<JobListenerMock> jobListenerMock_;
-  std::unique_ptr<CommandListenerMock> commandListenerMock_;
-  std::unique_ptr<FeedbackProducerMock> feedbackProducerMock_;
-  std::unique_ptr<HandlerStandIn> handlerUnderTest_;
-  StopMessage stopMessage_;
-  std::string serviceId_ = "service_id_123";
+  std::unique_ptr<JobListenerMock> _jobListenerMock;
+  std::unique_ptr<CommandListenerMock> _commandListenerMock;
+  std::unique_ptr<FeedbackProducerMock> _feedbackProducerMock;
+  std::unique_ptr<HandlerStandIn> _handlerUnderTest;
+  StopMessage _stopMessage;
+  std::string _serviceId = "service_id_123";
 
   void SetUp() override {
-    jobListenerMock_ = std::make_unique<JobListenerMock>(
+    _jobListenerMock = std::make_unique<JobListenerMock>(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
-    commandListenerMock_ = std::make_unique<CommandListenerMock>(
+    _commandListenerMock = std::make_unique<CommandListenerMock>(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
-    feedbackProducerMock_ = std::make_unique<FeedbackProducerMock>();
-    handlerUnderTest_ = std::make_unique<HandlerStandIn>(
-        serviceId_, Kafka::BrokerSettings{},
-        uri::URI("localhost:1111/no_topic_here"), std::move(jobListenerMock_),
-        std::move(commandListenerMock_), std::move(feedbackProducerMock_));
-    handlerUnderTest_->registerIsWritingFunction([]() -> bool { return true; });
-    handlerUnderTest_->registerGetJobIdFunction(
-        [this]() -> std::string { return this->stopMessage_.JobID; });
-    handlerUnderTest_->registerStopNowFunction([]() -> void {});
-    handlerUnderTest_->registerSetStopTimeFunction(
+    _feedbackProducerMock = std::make_unique<FeedbackProducerMock>();
+    _handlerUnderTest = std::make_unique<HandlerStandIn>(
+        _serviceId, Kafka::BrokerSettings{},
+        uri::URI("localhost:1111/no_topic_here"), std::move(_jobListenerMock),
+        std::move(_commandListenerMock), std::move(_feedbackProducerMock));
+    _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+    _handlerUnderTest->registerGetJobIdFunction(
+        [this]() -> std::string { return this->_stopMessage.JobID; });
+    _handlerUnderTest->registerStopNowFunction([]() -> void {});
+    _handlerUnderTest->registerSetStopTimeFunction(
         []([[maybe_unused]] auto stopTime) -> void {});
 
     // Use a valid JobID and CommandID in the base stop message
-    stopMessage_.JobID = "123e4567-e89b-12d3-a456-426614174000";
-    stopMessage_.CommandID = "321e4567-e89b-12d3-a456-426614174000";
+    _stopMessage.JobID = "123e4567-e89b-12d3-a456-426614174000";
+    _stopMessage.CommandID = "321e4567-e89b-12d3-a456-426614174000";
   }
 };
 
 TEST_F(StopHandlerTest, validateStopCommandWithNoCurrentJobAndEmptyServiceID) {
-  handlerUnderTest_->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -255,10 +257,10 @@ TEST_F(StopHandlerTest, validateStopCommandWithNoCurrentJobAndEmptyServiceID) {
 
 TEST_F(StopHandlerTest,
        validateStopCommandWithNoCurrentJobAndMatchingServiceID) {
-  stopMessage_.ServiceID = serviceId_;
-  handlerUnderTest_->registerIsWritingFunction([]() -> bool { return false; });
+  _stopMessage.ServiceID = _serviceId;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -266,10 +268,10 @@ TEST_F(StopHandlerTest,
 
 TEST_F(StopHandlerTest,
        validateStopCommandWithNoCurrentJobAndMismatchingServiceID) {
-  stopMessage_.ServiceID = "another_service_id";
-  handlerUnderTest_->registerIsWritingFunction([]() -> bool { return false; });
+  _stopMessage.ServiceID = "another_service_id";
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_FALSE(
@@ -277,9 +279,9 @@ TEST_F(StopHandlerTest,
 }
 
 TEST_F(StopHandlerTest, validateStopCommandWithMismatchingServiceId) {
-  stopMessage_.ServiceID = "another_service_id";
+  _stopMessage.ServiceID = "another_service_id";
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_FALSE(
@@ -287,9 +289,9 @@ TEST_F(StopHandlerTest, validateStopCommandWithMismatchingServiceId) {
 }
 
 TEST_F(StopHandlerTest, validateStopCommandWithMatchingServiceId) {
-  stopMessage_.ServiceID = serviceId_;
+  _stopMessage.ServiceID = _serviceId;
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
@@ -297,10 +299,10 @@ TEST_F(StopHandlerTest, validateStopCommandWithMatchingServiceId) {
 
 TEST_F(StopHandlerTest,
        validateStopCommandWithMismatchingJobIdAndEmptyServiceID) {
-  handlerUnderTest_->registerGetJobIdFunction(
+  _handlerUnderTest->registerGetJobIdFunction(
       []() -> std::string { return "different_job_id"; });
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -308,11 +310,11 @@ TEST_F(StopHandlerTest,
 
 TEST_F(StopHandlerTest,
        validateStopCommandWithMismatchingJobIdAndMatchingServiceID) {
-  stopMessage_.ServiceID = serviceId_;
-  handlerUnderTest_->registerGetJobIdFunction(
+  _stopMessage.ServiceID = _serviceId;
+  _handlerUnderTest->registerGetJobIdFunction(
       []() -> std::string { return "different_job_id"; });
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -320,11 +322,11 @@ TEST_F(StopHandlerTest,
 
 TEST_F(StopHandlerTest,
        validateStopCommandWithMismatchingJobIDAndMismatchingServiceID) {
-  stopMessage_.ServiceID = "another_service_id";
-  handlerUnderTest_->registerGetJobIdFunction(
+  _stopMessage.ServiceID = "another_service_id";
+  _handlerUnderTest->registerGetJobIdFunction(
       []() -> std::string { return "different_job_id"; });
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_FALSE(
@@ -332,18 +334,18 @@ TEST_F(StopHandlerTest,
 }
 
 TEST_F(StopHandlerTest, validateStopCommandWithInvalidCommandID) {
-  stopMessage_.CommandID = "invalid";
+  _stopMessage.CommandID = "invalid";
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StopHandlerTest, validateStopCommandImmediateStop) {
-  stopMessage_.StopTime = time_point{0ms};
+  _stopMessage.StopTime = time_point{0ms};
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
@@ -351,10 +353,10 @@ TEST_F(StopHandlerTest, validateStopCommandImmediateStop) {
 }
 
 TEST_F(StopHandlerTest, validateStopCommandSetStopTime) {
-  stopMessage_.StopTime =
+  _stopMessage.StopTime =
       std::chrono::system_clock::now() + std::chrono::minutes(5);
 
-  CmdResponse cmdResponse = handlerUnderTest_->stopWriting(stopMessage_);
+  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));

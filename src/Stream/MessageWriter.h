@@ -74,7 +74,7 @@ protected:
   Metrics::Metric ApproxQueuedWrites{"approx_queued_writes",
                                      "Approximate number of writes queued up."};
   std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
-  std::unique_ptr<Metrics::IRegistrar> registrar_;
+  std::unique_ptr<Metrics::IRegistrar> _registrar;
 
   using JobType = std::function<void()>;
   moodycamel::ConcurrentQueue<JobType> WriteJobs;

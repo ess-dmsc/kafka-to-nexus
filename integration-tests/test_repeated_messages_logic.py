@@ -54,6 +54,7 @@ def test_repeated_messages(
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 

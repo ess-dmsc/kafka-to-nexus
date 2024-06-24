@@ -39,29 +39,33 @@ public:
   void forceStop();
 
   /// \brief Return true if forceStop() has been called.
-  bool hasForceStopBeenRequested() const;
+  [[nodiscard]] bool hasForceStopBeenRequested() const;
 
   /// \brief Applies the stop logic to the current poll status.
   /// \param CurrentPollStatus The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
   /// be halted.
-  bool shouldStopPartition(Kafka::PollStatus CurrentPollStatus);
+  [[nodiscard]] bool shouldStopPartition(Kafka::PollStatus CurrentPollStatus);
 
-  PartitionState currentPartitionState() const { return State; }
+  [[nodiscard]] PartitionState currentPartitionState() const { return State; }
 
   /// \brief Check if we currently have an error state.
-  bool hasErrorState() const { return State == PartitionState::ERROR; }
+  [[nodiscard]] bool hasErrorState() const {
+    return State == PartitionState::ERROR;
+  }
 
   /// \brief Check if time limit has been exceeded.
-  bool hasExceededTimeLimit() const;
+  [[nodiscard]] bool hasExceededTimeLimit() const;
 
   /// \brief Check if topic has timed out.
-  bool hasTopicTimedOut() const;
+  [[nodiscard]] bool hasTopicTimedOut() const;
 
   /// \brief Update status occurence time.
   void updateStatusOccurrenceTime(PartitionState ComparisonState);
 
-  time_point getStatusOccurrenceTime() const { return StatusOccurrenceTime; }
+  [[nodiscard]] time_point getStatusOccurrenceTime() const {
+    return StatusOccurrenceTime;
+  }
 
 protected:
   bool ForceStop{false};
@@ -70,6 +74,9 @@ protected:
   time_point StopTime{time_point::max()};
   duration StopLeeway{10s};
   duration TimeLimit{10s};
+
+private:
+  bool at_end_of_partition_{false};
 };
 
 } // namespace Stream

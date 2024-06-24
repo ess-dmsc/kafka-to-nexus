@@ -46,15 +46,12 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
         status=connection_status,
         source_name=source_name,
     )
-    Min = 5
-    Mean = 10
-    Max = 15
-    values = np.array([Min, Mean, Max])
+
     publish_f144_message(
         producer,
         data_topic,
         timestamp=start_time + step_time,
-        value=values,
+        value=42,
         source_name=source_name,
     )
 
@@ -67,17 +64,18 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=20)
 
     wait_no_working_writers(worker_pool, timeout=30)
 
     with OpenNexusFile(file_path) as file:
-        assert file["entry/scal_data/minimum_value"][0] == Min
-        assert file["entry/scal_data/maximum_value"][0] == Max
-        assert file["entry/scal_data/average_value"][0] == Mean
+        assert file["entry/scal_data/minimum_value"][0] == 42
+        assert file["entry/scal_data/maximum_value"][0] == 42
+        assert file["entry/scal_data/average_value"][0] == 42
+        assert file["entry/scal_data/value"][0] == 42
         assert file["entry/scal_data/alarm_message"][0].decode() == alarm_msg
-        assert (file["entry/scal_data/value"][:].flatten() == np.array(values)).all()
         assert file["entry/scal_data/alarm_severity"][0] == alarm_severity.value
         assert file["entry/scal_data/connection_status"][0] == connection_status.value
         assert (

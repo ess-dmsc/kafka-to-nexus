@@ -20,17 +20,17 @@ FixedSizeString::FixedSizeString(const hdf5::node::Group &Parent,
   StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   StringType.padding(hdf5::datatype::StringPad::NullTerm);
   if (Mode::Create == CMode) {
-    dataset_ = hdf5::node::ChunkedDataset(
+    _dataset = hdf5::node::ChunkedDataset(
         Parent, Name, StringType,
         hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::unlimited}),
         {
             static_cast<unsigned long long>(ChunkSize),
         });
   } else if (Mode::Open == CMode) {
-    dataset_ = Parent.get_dataset(Name);
-    hdf5::datatype::String Type(dataset_.datatype());
+    _dataset = Parent.get_dataset(Name);
+    hdf5::datatype::String Type(_dataset.datatype());
     MaxStringSize = Type.size();
-    NrOfStrings = static_cast<size_t>(dataset_.dataspace().size());
+    NrOfStrings = static_cast<size_t>(_dataset.dataspace().size());
   } else {
     throw std::runtime_error(
         "FixedSizeStringValue::FixedSizeStringValue(): Unknown mode.");
@@ -38,12 +38,12 @@ FixedSizeString::FixedSizeString(const hdf5::node::Group &Parent,
 }
 
 void FixedSizeString::appendStringElement(std::string const &InString) {
-  dataset_.extent(0, 1);
+  _dataset.extent(0, 1);
   hdf5::dataspace::Hyperslab Selection{{NrOfStrings}, {1}};
   hdf5::dataspace::Scalar ScalarSpace;
-  hdf5::dataspace::Dataspace FileSpace = dataset_.dataspace();
+  hdf5::dataspace::Dataspace FileSpace = _dataset.dataspace();
   FileSpace.selection(hdf5::dataspace::SelectionOperation::Set, Selection);
-  dataset_.write(InString, StringType, ScalarSpace, FileSpace);
+  _dataset.write(InString, StringType, ScalarSpace, FileSpace);
   NrOfStrings += 1;
 }
 

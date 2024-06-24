@@ -10,6 +10,7 @@
 #include "PartitionFilter.h"
 #include "Kafka/PollStatus.h"
 #include "Msg.h"
+#include <iostream>
 
 namespace Stream {
 
@@ -27,7 +28,7 @@ bool PartitionFilter::hasExceededTimeLimit() const {
 }
 
 bool PartitionFilter::hasTopicTimedOut() const {
-  return hasExceededTimeLimit() and State == PartitionState::TIMEOUT;
+  return hasExceededTimeLimit() && State == PartitionState::TIMEOUT;
 }
 
 void PartitionFilter::updateStatusOccurrenceTime(
@@ -48,13 +49,18 @@ bool PartitionFilter::shouldStopPartition(Kafka::PollStatus CurrentPollStatus) {
   }
   switch (CurrentPollStatus) {
   case Kafka::PollStatus::Message:
+    at_end_of_partition_ = false;
     State = PartitionState::DEFAULT;
     return false;
   case Kafka::PollStatus::EndOfPartition:
+    at_end_of_partition_ = true;
     State = PartitionState::END_OF_PARTITION;
-    return std::chrono::system_clock::now() > StopTime + StopLeeway;
+    return false;
   case Kafka::PollStatus::TimedOut:
     updateStatusOccurrenceTime(PartitionState::TIMEOUT);
+    if (!at_end_of_partition_) {
+      return false;
+    }
     return std::chrono::system_clock::now() > StopTime + StopLeeway;
   case Kafka::PollStatus::Error:
     updateStatusOccurrenceTime(PartitionState::ERROR);

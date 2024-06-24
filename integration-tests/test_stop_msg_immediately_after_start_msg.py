@@ -29,6 +29,7 @@ def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(
         broker=kafka_address,
         start_time=now,
         control_topic="TEST_writer_commands_alternative",
+        metadata="{}",
     )
     # ECDC-3333 file-writer-control does not correctly handle jobs with
     # alternative command topics. For now we create a secondary WorkerJobPool
@@ -50,4 +51,4 @@ def test_stop_msg_immediately_after_start_msg_on_alternative_command_topic(
     wait_no_working_writers(worker_pool, timeout=10)
     with OpenNexusFile(file_path) as file:
         assert not file.swmr_mode
-        assert file["entry/start_time"][()][0].decode("utf-8") == "2016-04-12T02:58:52"
+        assert file["entry/start_time"][()].decode("utf-8") == "2016-04-12T02:58:52"

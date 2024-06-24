@@ -38,7 +38,16 @@ practice it was found to be difficult to read, so we are switching to a style si
 - lower snake-case for variable and function names
 - capitalised words for class names
 
-Private class members should have a trailing underscore.
+Private class members should have a leading underscore and that must be followed by a lowercase letter.
+
+Regarding `const`, we try to stick to "east-const", e.g.
+```
+We prefer:
+  void do_something(std::string const &str);
+
+Rather than:
+  void do_something(const std::string &str);
+```
 
 As we are migrating the style, one will see code in both styles. We suggest just fixing the style for code local to your
 current work. Eventually, we will eliminate the LLVM style.

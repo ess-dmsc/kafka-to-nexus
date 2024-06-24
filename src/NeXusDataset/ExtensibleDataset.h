@@ -160,7 +160,7 @@ public:
           "ExtensibleDatasetBase::ExtensibleDatasetBase(): "
           "Can only open datasets, not create.");
     } else if (Mode::Open == mode) {
-      dataset_ = parent.get_dataset(name);
+      _dataset = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "ExtensibleDatasetBase::ExtensibleDatasetBase(): Unknown mode.");
@@ -169,7 +169,7 @@ public:
 
   /// Gets the current size of the dataset.
   [[nodiscard]] hssize_t current_size() const {
-    return dataset_.dataspace().size();
+    return _dataset.dataspace().size();
   }
 
   /// Read the current data in the dataset.
@@ -177,33 +177,33 @@ public:
   ///
   /// \param buffer
   template <typename T> void read_data(std::vector<T> &buffer) {
-    dataset_.read(buffer);
+    _dataset.read(buffer);
   }
 
   /// Read the current data in the dataset.
   /// Only for use in tests.
   ///
   /// \param buffer
-  template <typename T> void read_data(T &buffer) { dataset_.read(buffer); }
+  template <typename T> void read_data(T &buffer) { _dataset.read(buffer); }
 
   /// Access the underlying dataset.
   /// Only for use in tests.
-  [[nodiscard]] hdf5::node::Dataset const &dataset() const { return dataset_; }
+  [[nodiscard]] hdf5::node::Dataset const &dataset() const { return _dataset; }
 
   /// Append data to dataset that is contained in some sort of container.
   template <typename T> void appendArray(T const &data) {
-    dataset_.extent(0, data.size());
+    _dataset.extent(0, data.size());
     hdf5::dataspace::Hyperslab selection{
         {NrOfElements}, {static_cast<unsigned long long>(data.size())}};
-    dataset_.write(data, selection);
+    _dataset.write(data, selection);
     NrOfElements += data.size();
   }
 
   /// Append single scalar values to dataset.
   template <typename T> void appendElement(T const &element) {
-    dataset_.extent(0, 1);
+    _dataset.extent(0, 1);
     hdf5::dataspace::Hyperslab selection{{NrOfElements}, {1}};
-    dataset_.write(element, selection);
+    _dataset.write(element, selection);
     NrOfElements += 1;
   }
 
@@ -213,25 +213,45 @@ public:
       return;
     }
     NewDimensions[0] = NrOfElements + data.size();
-    dataset_.resize(NewDimensions);
+    _dataset.resize(NewDimensions);
     ArraySelection.offset({NrOfElements});
     ArraySelection.block({static_cast<unsigned long long>(data.size())});
 
     ArrayDataSpace.dimensions({data.size()}, {data.size()});
-    hdf5::dataspace::Dataspace file_space = dataset_.dataspace();
+    hdf5::dataspace::Dataspace file_space = _dataset.dataspace();
     file_space.selection(hdf5::dataspace::SelectionOperation::Set,
                          ArraySelection);
     hdf5::datatype::Datatype array_value_type{
         hdf5::datatype::create(DataType())};
-    dataset_.write(data, array_value_type, ArrayDataSpace, file_space, Dtpl);
+    _dataset.write(data, array_value_type, ArrayDataSpace, file_space, Dtpl);
 
     NrOfElements += data.size();
   }
 
   [[nodiscard]] size_t size() const { return NrOfElements; }
 
+  /// \brief Read an attribute from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T>
+  void attribute(std::string const &name, T &result) const {
+    _dataset.attributes[name].read(result);
+  }
+
+  /// \brief Check if an attribute exists/
+  ///
+  /// Note: only for use in tests!
+  [[nodiscard]] bool attribute_exists(std::string const &name) const {
+    return _dataset.attributes.exists(name);
+  }
+
+  /// \brief Read data from the dataset.
+  ///
+  /// Note: only for use in tests!
+  template <typename T> void read(T &result) { _dataset.read(result); }
+
 protected:
-  hdf5::node::Dataset dataset_;
+  hdf5::node::Dataset _dataset;
   hdf5::dataspace::Simple ArrayDataSpace;
   hdf5::Dimensions NewDimensions{0};
   hdf5::dataspace::Hyperslab ArraySelection{{0}, {1}};
@@ -254,15 +274,15 @@ public:
                     Mode CMode, size_t ChunkSize = 1024)
       : ExtensibleDatasetBase() {
     if (Mode::Create == CMode) {
-      dataset_ = hdf5::node::ChunkedDataset(
+      _dataset = hdf5::node::ChunkedDataset(
           Parent, Name, hdf5::datatype::create<DataType>(),
           hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::unlimited}),
           {
               static_cast<unsigned long long>(ChunkSize),
           });
     } else if (Mode::Open == CMode) {
-      dataset_ = Parent.get_dataset(Name);
-      NrOfElements = static_cast<size_t>(dataset_.dataspace().size());
+      _dataset = Parent.get_dataset(Name);
+      NrOfElements = static_cast<size_t>(_dataset.dataspace().size());
     } else {
       throw std::runtime_error(
           "ExtensibleDataset::ExtensibleDataset(): Unknown mode.");
@@ -298,7 +318,7 @@ public:
 
   /// Gets the current size of the dataset.
   [[nodiscard]] hssize_t current_size() const {
-    return dataset_.dataspace().size();
+    return _dataset.dataspace().size();
   }
 
   /// \brief Read a string element from the dataset array.
@@ -310,13 +330,13 @@ public:
   /// \return The string value.
   [[nodiscard]] std::string read_element(uint64_t offset) const {
     std::string result;
-    dataset_.read(result, dataset_.datatype(), hdf5::dataspace::Scalar(),
+    _dataset.read(result, _dataset.datatype(), hdf5::dataspace::Scalar(),
                   hdf5::dataspace::Hyperslab{{offset}, {1}});
     return result;
   }
 
 private:
-  hdf5::node::Dataset dataset_;
+  hdf5::node::Dataset _dataset;
   hdf5::datatype::String StringType;
   size_t MaxStringSize{300};
   size_t NrOfStrings{0};
@@ -339,7 +359,7 @@ public:
       throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): "
                                "Can only open datasets, not create.");
     } else if (Mode::Open == CMode) {
-      dataset_ = parent.get_dataset(name);
+      _dataset = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "MultiDimDatasetBase::MultiDimDatasetBase(): Unknown mode.");
@@ -347,11 +367,11 @@ public:
   }
 
   [[nodiscard]] hdf5::datatype::Datatype datatype() const {
-    return dataset_.datatype();
+    return _dataset.datatype();
   }
 
   [[nodiscard]] std::vector<hsize_t> chunk_info() const {
-    return dataset_.creation_list().chunk();
+    return _dataset.creation_list().chunk();
   }
 
   /// \brief Read an attribute from the dataset.
@@ -359,27 +379,27 @@ public:
   /// Note: only for use in tests!
   template <typename T>
   void attribute(std::string const &name, T &result) const {
-    dataset_.attributes[name].read(result);
+    _dataset.attributes[name].read(result);
   }
 
   [[nodiscard]] bool attribute_exists(std::string const &name) const {
-    return dataset_.attributes.exists(name);
+    return _dataset.attributes.exists(name);
   }
 
   /// \brief Get the dimensions of the dataset.
   [[nodiscard]] std::vector<hsize_t> dimensions() const {
-    return hdf5::dataspace::Simple(dataset_.dataspace()).current_dimensions();
+    return hdf5::dataspace::Simple(_dataset.dataspace()).current_dimensions();
   }
 
   /// \brief Get the maximum dimensions of the dataset.
   [[nodiscard]] std::vector<hsize_t> max_dimensions() const {
-    return hdf5::dataspace::Simple(dataset_.dataspace()).maximum_dimensions();
+    return hdf5::dataspace::Simple(_dataset.dataspace()).maximum_dimensions();
   }
 
   /// \brief Read data from the dataset.
   ///
   /// Note: only for use in tests!
-  template <typename T> void read(T &result) { dataset_.read(result); }
+  template <typename T> void read(T &result) { _dataset.read(result); }
 
   /// \brief Append data to dataset that is contained in some sort of container.
   ///
@@ -414,13 +434,13 @@ public:
                  i - 1);
       }
     }
-    dataset_.extent(CurrentExtent);
+    _dataset.extent(CurrentExtent);
     hdf5::dataspace::Hyperslab Selection{{Origin}, {Shape}};
-    dataset_.write(NewData, Selection);
+    _dataset.write(NewData, Selection);
   }
 
 protected:
-  hdf5::node::Dataset dataset_;
+  hdf5::node::Dataset _dataset;
 };
 
 /// \brief h5cpp dataset class that implements methods for appending data.
@@ -473,11 +493,11 @@ public:
         VectorChunkSize = shape;
         VectorChunkSize[0] = 1024;
       }
-      dataset_ = hdf5::node::ChunkedDataset(
+      _dataset = hdf5::node::ChunkedDataset(
           parent, name, hdf5::datatype::create<DataType>(),
           hdf5::dataspace::Simple(shape, MaxSize), VectorChunkSize);
     } else if (Mode::Open == CMode) {
-      dataset_ = parent.get_dataset(name);
+      _dataset = parent.get_dataset(name);
     } else {
       throw std::runtime_error(
           "MultiDimDataset::MultiDimDataset(): Unknown mode.");

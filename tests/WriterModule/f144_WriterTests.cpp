@@ -75,23 +75,6 @@ TEST_F(f144Init, CheckInitDataType) {
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<double>());
 }
 
-TEST_F(f144Init, CheckValueInitShape1) {
-  f144_WriterStandIn TestWriter;
-  TestWriter.init_hdf(RootGroup);
-  auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);
-  EXPECT_EQ(hdf5::Dimensions({0, 1}), Value.dimensions());
-}
-
-TEST_F(f144Init, CheckValueInitShape2) {
-  f144_WriterStandIn TestWriter;
-  TestWriter.ArraySize.setValue("", "10");
-  TestWriter.init_hdf(RootGroup);
-  auto Open = NeXusDataset::Mode::Open;
-  NeXusDataset::MultiDimDatasetBase Value(RootGroup, "value", Open);
-  EXPECT_EQ(hdf5::Dimensions({0, 10}), Value.dimensions());
-}
-
 TEST_F(f144Init, CheckAllDataTypes) {
   std::vector<std::pair<f144_Writer::Type, hdf5::datatype::Datatype>> TypeMap{
       {f144_Writer::Type::int8, hdf5::datatype::create<std::int8_t>()},
@@ -320,11 +303,10 @@ TEST_F(f144Init, WriteOneElement) {
   FileWriter::FlatbufferMessage FlatbufferMsg(FlatbufferData.first.get(),
                                               FlatbufferData.second);
   EXPECT_EQ(FlatbufferMsg.getFlatbufferID(), "f144");
-  EXPECT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({0, 1}));
-  EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
+  EXPECT_EQ(TestWriter.Values.size(), 0u);
   EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FlatbufferMsg);
-  ASSERT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({1, 1}));
+  EXPECT_EQ(TestWriter.Values.size(), 1u);
   ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
@@ -345,11 +327,11 @@ TEST_F(f144Init, WriteOneDefaultValueElement) {
   std::int64_t Timestamp{11};
   auto FlatbufferData =
       f144_schema::generateFlatbufferMessage(ElementValue, Timestamp);
-  EXPECT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({0, 1}));
+  EXPECT_EQ(TestWriter.Values.size(), 0u);
   EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
                                                  FlatbufferData.second));
-  ASSERT_EQ(TestWriter.Values.dimensions(), hdf5::Dimensions({1, 1}));
+  EXPECT_EQ(TestWriter.Values.size(), 1u);
   ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
   TestWriter.Values.read(WrittenValues);
@@ -357,4 +339,35 @@ TEST_F(f144Init, WriteOneDefaultValueElement) {
   std::vector<std::int64_t> WrittenTimes(1);
   TestWriter.Timestamp.read_data(WrittenTimes);
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
+}
+
+TEST_F(f144Init, WriteMultipleElements) {
+  f144_WriterStandIn TestWriter;
+  TestWriter.init_hdf(RootGroup);
+  TestWriter.reopen(RootGroup);
+  std::vector<double> values{3.14, 4.15, 5.16, 6.17};
+  std::vector<std::int64_t> timestamps{11, 12, 13, 14};
+
+  for (size_t i = 0; i < values.size(); ++i) {
+    auto [buffer, size] =
+        f144_schema::generateFlatbufferMessage(values[i], timestamps[i]);
+    FileWriter::FlatbufferMessage FlatbufferMsg(buffer.get(), size);
+    TestWriter.write(FlatbufferMsg);
+  }
+
+  std::vector<double> WrittenValues(values.size());
+  TestWriter.Values.read(WrittenValues);
+  std::vector<std::int64_t> WrittenTimes(timestamps.size());
+  TestWriter.Timestamp.read_data(WrittenTimes);
+
+  EXPECT_EQ(TestWriter.Values.size(), values.size());
+  EXPECT_EQ(WrittenValues[0], values[0]);
+  EXPECT_EQ(WrittenValues[1], values[1]);
+  EXPECT_EQ(WrittenValues[2], values[2]);
+  EXPECT_EQ(WrittenValues[3], values[3]);
+
+  EXPECT_EQ(WrittenTimes[0], timestamps[0]);
+  EXPECT_EQ(WrittenTimes[1], timestamps[1]);
+  EXPECT_EQ(WrittenTimes[2], timestamps[2]);
+  EXPECT_EQ(WrittenTimes[3], timestamps[3]);
 }

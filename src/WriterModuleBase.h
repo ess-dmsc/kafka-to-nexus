@@ -41,12 +41,13 @@ public:
     if (WriteCount == 0) {
       LOG_ERROR("WriterModule finished but no writes were performed (module={} "
                 "topic={} source={})",
-                WriterModuleId, Topic.getValue(), SourceName.getValue());
+                WriterModuleId, Topic.get_value(), SourceName.get_value());
     } else {
       LOG_TRACE(
           "WriterModule finished successfully, {} writes performed (module={} "
           "topic={} source={})",
-          WriteCount, WriterModuleId, Topic.getValue(), SourceName.getValue());
+          WriteCount, WriterModuleId, Topic.get_value(),
+          SourceName.get_value());
     }
   }
 
@@ -127,7 +128,7 @@ public:
   std::vector<std::string> getEnabledExtraModules() const {
     std::vector<std::string> ReturnModules;
     for (auto const &Item : FoundExtraModules) {
-      if (ExtraModuleEnabled.at(Item)->getValue()) {
+      if (ExtraModuleEnabled.at(Item)->get_value()) {
         ReturnModules.push_back(Item);
       }
     }
