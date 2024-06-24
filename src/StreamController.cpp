@@ -24,8 +24,8 @@ StreamController::StreamController(
                    Settings.DataFlushInterval,
                    Registrar->getNewRegistrar("stream.writer")),
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
-      metadata_enquirer_(std::move(metadata_enquirer)),
-      consumer_factory_(std::move(consumer_factory)) {}
+      _metadata_enquirer(std::move(metadata_enquirer)),
+      _consumer_factory(std::move(consumer_factory)) {}
 
 StreamController::~StreamController() {
   stop();
@@ -87,7 +87,7 @@ std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 
 void StreamController::getTopicNames() {
   try {
-    auto TopicNames = metadata_enquirer_->getTopicList(
+    auto TopicNames = _metadata_enquirer->getTopicList(
         StreamerOptions.BrokerSettings.Address, CurrentMetadataTimeOut,
         StreamerOptions.BrokerSettings);
     Executor.sendLowPriorityWork([=]() { initStreams(TopicNames); });
@@ -143,7 +143,7 @@ void StreamController::initStreams(std::set<std::string> known_topic_names) {
         StreamMetricRegistrar.get(), start_time,
         StreamerOptions.BeforeStartTime, stop_time,
         StreamerOptions.AfterStopTime, check_streamers_paused_func,
-        metadata_enquirer_, consumer_factory_);
+        _metadata_enquirer, _consumer_factory);
     topic->start();
     Streamers.emplace_back(std::move(topic));
   }

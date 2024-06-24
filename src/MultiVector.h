@@ -38,40 +38,40 @@ template <typename T> class MultiVector {
 public:
   MultiVector() = default;
   explicit MultiVector(Shape const &extent)
-      : Data(extentToSize(extent)), shape_(extent) {}
+      : Data(extentToSize(extent)), _shape(extent) {}
 
   bool operator==(MultiVector<T> const &other) const {
-    return shape_ == other.shape_ &&
+    return _shape == other._shape &&
            std::equal(Data.cbegin(), Data.cend(), other.Data.cbegin());
   }
 
   void set_value(Shape const &index, T const &value) {
     check_index(index);
-    Data[(posToIndex(shape_, index))] = value;
+    Data[(posToIndex(_shape, index))] = value;
   }
 
   T get_value(Shape const &index) {
     check_index(index);
-    return Data[(posToIndex(shape_, index))];
+    return Data[(posToIndex(_shape, index))];
   }
-  [[nodiscard]] Shape getDimensions() const { return shape_; }
+  [[nodiscard]] Shape getDimensions() const { return _shape; }
   T *data() { return Data.data(); }
   [[nodiscard]] size_t size() const { return Data.size(); }
   std::vector<T> Data;
 
 private:
   void check_index(Shape const &index) {
-    if (index.size() != shape_.size()) {
+    if (index.size() != _shape.size()) {
       throw std::out_of_range("Shape dimensions are not equal.");
     }
-    for (size_t i = 0; i < shape_.size(); ++i) {
-      if (index[i] >= shape_[i]) {
+    for (size_t i = 0; i < _shape.size(); ++i) {
+      if (index[i] >= _shape[i]) {
         throw std::out_of_range("Outside of range.");
       }
     }
   }
 
-  Shape shape_;
+  Shape _shape;
 };
 
 namespace hdf5 {
@@ -85,8 +85,8 @@ public:
     return TypeTrait<typename std::remove_const<T>::type>::create();
   }
   const static TypeClass &get(const Type & = Type()) {
-    const static TypeClass &cref_ = create();
-    return cref_;
+    const static TypeClass &cref = create();
+    return cref;
   }
 };
 
