@@ -110,8 +110,8 @@ protected:
   virtual time_point getCurrentTime() const { return system_clock::now(); }
 
   std::vector<std::unique_ptr<Partition>> ConsumerThreads;
-  std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer_;
-  std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory_;
+  std::shared_ptr<Kafka::MetadataEnquirer> _metadata_enquirer;
+  std::shared_ptr<Kafka::ConsumerFactoryInterface> _consumer_factory;
   ThreadedExecutor Executor{false, "topic"}; // Must be last
 };
 } // namespace Stream

@@ -33,8 +33,8 @@ Topic::Topic(Kafka::BrokerSettings const &Settings, std::string const &Topic,
       CurrentMetadataTimeOut(Settings.MinMetadataTimeout),
       Registrar(RegisterMetric->getNewRegistrar(Topic)),
       AreStreamersPausedFunction(std::move(AreStreamersPausedFunction)),
-      metadata_enquirer_(std::move(metadata_enquirer)),
-      consumer_factory_(std::move(consumer_factory)) {}
+      _metadata_enquirer(std::move(metadata_enquirer)),
+      _consumer_factory(std::move(consumer_factory)) {}
 
 void Topic::start() {
   Executor.sendWork([=]() { initMetadataCalls(KafkaSettings, TopicName); });
@@ -109,14 +109,14 @@ std::vector<std::pair<int, int64_t>> Topic::getOffsetForTimeInternal(
     std::string const &Broker, std::string const &Topic,
     std::vector<int> const &Partitions, time_point Time, duration TimeOut,
     Kafka::BrokerSettings BrokerSettings) const {
-  return metadata_enquirer_->getOffsetForTime(Broker, Topic, Partitions, Time,
+  return _metadata_enquirer->getOffsetForTime(Broker, Topic, Partitions, Time,
                                               TimeOut, BrokerSettings);
 }
 
 std::vector<int> Topic::getPartitionsForTopicInternal(
     std::string const &Broker, std::string const &Topic, duration TimeOut,
     Kafka::BrokerSettings BrokerSettings) const {
-  return metadata_enquirer_->getPartitionsForTopic(Broker, Topic, TimeOut,
+  return _metadata_enquirer->getPartitionsForTopic(Broker, Topic, TimeOut,
                                                    BrokerSettings);
 }
 
@@ -163,7 +163,7 @@ void Topic::createStreams(
   for (const auto &[partition, offset] : PartitionOffsets) {
     auto CRegistrar =
         Registrar->getNewRegistrar("partition_" + std::to_string(partition));
-    auto Consumer = consumer_factory_->createConsumerAtOffset(
+    auto Consumer = _consumer_factory->createConsumerAtOffset(
         Settings, Topic, partition, offset);
     auto TempPartition = std::make_unique<Partition>(
         std::move(Consumer), partition, Topic, DataMap, WriterPtr,

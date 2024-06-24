@@ -111,13 +111,13 @@ public:
   template <class FieldRegistrarType>
   Field(FieldRegistrarType *registrar_ptr, std::vector<KeyString> const &keys,
         FieldType const &value)
-      : FieldBase(registrar_ptr, keys), value_(value) {}
+      : FieldBase(registrar_ptr, keys), _value(value) {}
 
   // cppcheck-suppress functionStatic
   template <class FieldRegistrarType>
   Field(FieldRegistrarType *registrar_ptr, KeyString const &key,
         FieldType const &value)
-      : FieldBase(registrar_ptr, key), value_(value) {}
+      : FieldBase(registrar_ptr, key), _value(value) {}
 
   void setValue(const std::string &key, const json &value) override {
     if (value.is_string()) {
@@ -135,15 +135,15 @@ public:
     }
   }
 
-  FieldType get_value() const { return value_; }
+  FieldType get_value() const { return _value; }
 
-  operator FieldType() const { return value_; }
+  operator FieldType() const { return _value; }
 
-  [[nodiscard]] std::string get_key() const { return used_key_; }
+  [[nodiscard]] std::string get_key() const { return _used_key; }
 
 private:
-  FieldType value_;
-  std::string used_key_;
+  FieldType _value;
+  std::string _used_key;
 
   void set_value_impl(std::string const &key, nlohmann::json const &json) {
     if constexpr (std::is_same_v<std::string, FieldType>) {
@@ -168,11 +168,11 @@ private:
                           [](auto a, auto b) { return a + ", " + b; });
       LOG_WARN(
           R"(Replacing the previously given value of "{}" with "{}" in json config field with key(s): )",
-          value_, value, keys_str);
+          _value, value, keys_str);
     }
-    used_key_ = key;
+    _used_key = key;
     got_default = false;
-    value_ = value;
+    _value = value;
   }
 };
 

@@ -148,8 +148,8 @@ private:
   Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
-  std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer_;
-  std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory_;
+  std::shared_ptr<Kafka::MetadataEnquirer> _metadata_enquirer;
+  std::shared_ptr<Kafka::ConsumerFactoryInterface> _consumer_factory;
   ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
 };
 
