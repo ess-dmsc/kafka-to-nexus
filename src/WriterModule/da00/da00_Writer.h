@@ -56,7 +56,8 @@ protected:
   uint64_t CueCounter{0};
   uint64_t NrOfWrites{0};
   bool isFirstMessage{true};
-  // private:
+
+private:
   void handle_first_message(da00_DataArray const *da00);
   void handle_group_attributes(hdf5::node::Group &HDFGroup) const;
   // specifications for variable and constant datasets
