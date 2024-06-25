@@ -50,7 +50,8 @@ template <class T> da00_dtype get_dtype(T) {
   if constexpr (std::is_same_v<T, std::string>) {
     return da00_dtype::c_string;
   }
-  throw std::runtime_error("Unknown type provided to WriterModule::da00::get_dtype");
+  throw std::runtime_error(
+      "Unknown type provided to WriterModule::da00::get_dtype");
 }
 } // namespace WriterModule::da00
 
