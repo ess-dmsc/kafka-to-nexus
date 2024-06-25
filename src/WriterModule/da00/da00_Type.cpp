@@ -116,37 +116,3 @@ std::vector<hsize_t> WriterModule::da00::get_shape(nlohmann::json const &data) {
     return {};
   return {data.size()};
 }
-
-template <> da00_dtype WriterModule::da00::get_dtype(int8_t) {
-  return da00_dtype::int8;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(uint8_t) {
-  return da00_dtype::uint8;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(int16_t) {
-  return da00_dtype::int16;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(uint16_t) {
-  return da00_dtype::uint16;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(int32_t) {
-  return da00_dtype::int32;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(uint32_t) {
-  return da00_dtype::uint32;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(int64_t) {
-  return da00_dtype::int64;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(uint64_t) {
-  return da00_dtype::uint64;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(float) {
-  return da00_dtype::float32;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(double) {
-  return da00_dtype::float64;
-}
-template <> da00_dtype WriterModule::da00::get_dtype(char) {
-  return da00_dtype::c_string;
-}
