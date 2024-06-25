@@ -130,7 +130,6 @@ TEST(ConsumerAssignmentTest, Test1) {
   std::string ErrorString;
   auto KafkaConsumer = std::unique_ptr<RdKafka::KafkaConsumer>(
       RdKafka::KafkaConsumer::create(Conf.get(), ErrorString));
-  auto ConsumerPtr = KafkaConsumer.get();
   if (KafkaConsumer == nullptr) {
     LOG_CRITICAL("can not create kafka consumer: {}", ErrorString);
     throw std::runtime_error("can not create Kafka consumer");
@@ -140,7 +139,7 @@ TEST(ConsumerAssignmentTest, Test1) {
   std::vector<RdKafka::TopicPartition *> Assignments;
   TestConsumer->addPartitionAtOffset("some_topic1", 0, 0);
   TestConsumer->addPartitionAtOffset("some_topic2", 1, 0);
-  ConsumerPtr->assignment(Assignments);
+  KafkaConsumer->assignment(Assignments);
 
   std::cout << "Size of assignments: " << Assignments.size() << std::endl;
   for (auto const &Ass : Assignments) {

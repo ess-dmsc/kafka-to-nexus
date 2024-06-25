@@ -41,7 +41,7 @@ public:
   /// \note Nothing will be written until this is called.
   ///
   /// \param Task
-  void writeMetadata(FileWriter::FileWriterTask const *Task) const;
+  void writeMetadata(FileWriter::FileWriterTask const &Task) const;
 
 private:
   struct Writable {
@@ -53,7 +53,7 @@ private:
     }
   };
 
-  void static writeStringValue(FileWriter::FileWriterTask const *Task,
+  void static writeStringValue(FileWriter::FileWriterTask const &Task,
                                std::string const &Name, std::string const &Path,
                                std::string const &Value);
 
