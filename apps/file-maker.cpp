@@ -1,9 +1,9 @@
-#include <CLI/CLI.hpp>
 #include "FileWriterTask.h"
 #include "JobCreator.h"
 #include "MetaData/Tracker.h"
 #include "Metrics/Metric.h"
 #include "logger.h"
+#include <CLI/CLI.hpp>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
@@ -13,7 +13,7 @@
 
 using std::chrono_literals::operator""ms;
 
-std::string readJsonFromFile(const std::string& filePath) {
+std::string readJsonFromFile(const std::string &filePath) {
   std::ifstream file(filePath);
   if (!file.is_open()) {
     throw std::runtime_error("Unable to open file: " + filePath);
@@ -23,7 +23,6 @@ std::string readJsonFromFile(const std::string& filePath) {
   file.close();
   return buffer.str();
 }
-
 
 std::string const example_json = R"(
 {
@@ -340,8 +339,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   std::string json_file;
   app.add_option("-f, --file", json_file, "The JSON file to load");
   CLI11_PARSE(app, argc, argv);
-
-  std::cout << json_file << '\n';
 
   std::cout << "Starting writing\n";
 
