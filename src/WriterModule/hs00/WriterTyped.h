@@ -276,7 +276,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
       auto TypeUTF8 = hdf5::datatype::String(
           hdf5::datatype::create<std::string>().native_type());
       TypeUTF8.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-      auto CurrentSpaceMem = hdf5::dataspace::Simple({1}, {1});
+      auto CurrentSpaceMem = hdf5::dataspace::Scalar();
       Dataset.attributes.create("units", TypeUTF8, CurrentSpaceMem)
           .write(Dim.getUnit());
       if (Group.attributes.exists("NX_class")) {
