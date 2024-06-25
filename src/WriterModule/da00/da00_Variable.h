@@ -12,9 +12,15 @@ namespace WriterModule::da00 {
 template <typename T>
 std::unique_ptr<hdf5::node::ChunkedDataset>
 create_chunked_dataset(hdf5::node::Group const &parent, std::string const &name,
-                       hdf5::Dimensions shape, hdf5::Dimensions chunk_size) {
+                       hdf5::Dimensions shape, hdf5::Dimensions chunk_size,
+                       [[maybe_unused]] bool fixed) {
   shape.insert(shape.begin(), 0);
   hdf5::Dimensions max_size(shape.size(), hdf5::dataspace::Simple::unlimited);
+  if (fixed) {
+    // Only the first dimension should be unlimited
+    max_size = shape;
+    max_size[0] = hdf5::dataspace::Simple::unlimited;
+  }
 
   if (chunk_size.empty()) {
     LOG_WARN("No chunk size given. Using the default value 1024.");
@@ -331,8 +337,8 @@ public:
   variable_dataset(hdf5::node::Group const &group, hdf5::Dimensions chunk,
                    [[maybe_unused]] bool const fixed = true) const {
     auto initial_shape = has_shape() ? shape() : hdf5::Dimensions{};
-    auto dataset =
-        create_chunked_dataset<DataType>(group, name(), initial_shape, chunk);
+    auto dataset = create_chunked_dataset<DataType>(
+        group, name(), initial_shape, chunk, fixed);
     std::string axes_spec;
     if (has_axes())
       axes_spec = "time:" + colsepaxes();
