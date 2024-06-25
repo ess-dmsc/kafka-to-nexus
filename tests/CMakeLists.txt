@@ -60,6 +60,7 @@ set(UnitTests_SRC
         WriterModule/f142_WriterTests.cpp
         WriterModule/mdat_WriterTests.cpp
         WriterModule/ev42_WriterTests.cpp
+        WriterModule/da00_WriterTests.cpp
         TimeUtilityTest.cpp
         MetaData/TrackerTest.cpp
         MetaData/ValueTest.cpp
