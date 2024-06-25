@@ -3,6 +3,7 @@
 #include "MetaData/Tracker.h"
 #include "Metrics/Metric.h"
 #include "logger.h"
+#include <CLI/CLI.hpp>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
@@ -11,6 +12,17 @@
 #include <utility>
 
 using std::chrono_literals::operator""ms;
+
+std::string readJsonFromFile(const std::string &filePath) {
+  std::ifstream file(filePath);
+  if (!file.is_open()) {
+    throw std::runtime_error("Unable to open file: " + filePath);
+  }
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  file.close();
+  return buffer.str();
+}
 
 std::string const example_json = R"(
 {
@@ -323,7 +335,11 @@ void add_message(StubConsumerFactory *consumer_factory,
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
-  using std::chrono_literals::operator""ms;
+  CLI::App app{"file-maker app"};
+  std::string json_file;
+  app.add_option("-f, --file", json_file, "The JSON file to load");
+  CLI11_PARSE(app, argc, argv);
+
   std::cout << "Starting writing\n";
 
   std::unique_ptr<Metrics::IRegistrar> registrar =
@@ -360,7 +376,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   add_message(consumer_factory.get(), std::move(msg), 2100ms, offset++, 0);
 
   Command::StartInfo start_info;
-  start_info.NexusStructure = example_json;
+  if (!json_file.empty()) {
+    start_info.NexusStructure = readJsonFromFile(json_file);
+  } else {
+    start_info.NexusStructure = example_json;
+  }
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;
