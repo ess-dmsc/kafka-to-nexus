@@ -61,6 +61,7 @@ set(kafka_to_nexus_SRC
         AccessMessageMetadata/al00/al00_Extractor.cpp
         AccessMessageMetadata/senv/senv_Extractor.cpp
         AccessMessageMetadata/ep01/ep01_Extractor.cpp
+        AccessMessageMetadata/da00/da00_Extractor.cpp
         WriterModule/NDAr/NDAr_Writer.cpp
         WriterModule/hs00/hs00_Writer.cpp
         WriterModule/hs00/WriterTyped.cpp
@@ -82,6 +83,8 @@ set(kafka_to_nexus_SRC
         WriterModule/senv/senv_Writer.cpp
         WriterModule/ep01/ep01_Writer.cpp
         WriterModule/mdat/mdat_Writer.cpp
+        WriterModule/da00/da00_Writer.cpp
+        WriterModule/da00/da00_Type.cpp
         HDFVersionCheck.cpp
         CLIOptions.cpp
         MetaData/Tracker.cpp

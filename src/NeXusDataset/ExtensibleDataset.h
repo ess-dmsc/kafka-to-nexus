@@ -493,9 +493,9 @@ public:
         VectorChunkSize = shape;
         VectorChunkSize[0] = 1024;
       }
-      _dataset = (hdf5::node::ChunkedDataset(
+      _dataset = hdf5::node::ChunkedDataset(
           parent, name, hdf5::datatype::create<DataType>(),
-          hdf5::dataspace::Simple(shape, MaxSize), VectorChunkSize));
+          hdf5::dataspace::Simple(shape, MaxSize), VectorChunkSize);
     } else if (Mode::Open == CMode) {
       _dataset = parent.get_dataset(name);
     } else {
