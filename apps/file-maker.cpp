@@ -3,6 +3,7 @@
 #include "MetaData/Tracker.h"
 #include "Metrics/Metric.h"
 #include "logger.h"
+#include <CLI/CLI.hpp>
 #include <da00_dataarray_generated.h>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
@@ -12,6 +13,17 @@
 #include <utility>
 
 using std::chrono_literals::operator""ms;
+
+std::string readJsonFromFile(const std::string &filePath) {
+  std::ifstream file(filePath);
+  if (!file.is_open()) {
+    throw std::runtime_error("Unable to open file: " + filePath);
+  }
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  file.close();
+  return buffer.str();
+}
 
 std::string const example_json = R"(
 {
@@ -356,7 +368,7 @@ create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
   return {std::move(buffer), buffer_size};
 }
 
-void add_message(StubConsumerFactory *consumer_factory,
+void add_message(StubConsumerFactory &consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
                  int32_t partition) {
@@ -364,12 +376,16 @@ void add_message(StubConsumerFactory *consumer_factory,
   metadata.Timestamp = timestamp;
   metadata.Offset = offset;
   metadata.Partition = partition;
-  consumer_factory->messages->emplace_back(flatbuffer.first.get(),
-                                           flatbuffer.second, metadata);
+  consumer_factory.messages->emplace_back(flatbuffer.first.get(),
+                                          flatbuffer.second, metadata);
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
-  using std::chrono_literals::operator""ms;
+  CLI::App app{"file-maker app"};
+  std::string json_file;
+  app.add_option("-f, --file", json_file, "The JSON file to load");
+  CLI11_PARSE(app, argc, argv);
+
   std::cout << "Starting writing\n";
 
   std::unique_ptr<Metrics::IRegistrar> registrar =
@@ -381,32 +397,34 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   // Pre-populate kafka messages - time-stamps must be in order?
   int64_t offset = 0;
   auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
-  add_message(consumer_factory.get(), std::move(msg), 1000ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1000ms, offset++, 0);
 
   msg = create_ep01_message_double("delay:source:chopper",
                                    ConnectionInfo::CONNECTED, 1001);
-  add_message(consumer_factory.get(), std::move(msg), 1001ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1001ms, offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 101, 1100);
-  add_message(consumer_factory.get(), std::move(msg), 1100ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1100ms, offset++, 0);
 
-  msg = create_f144_message_array_double("speed:source:chopper",
-                                         {1000, 1010, 1020}, 1200);
-  add_message(consumer_factory.get(), std::move(msg), 1200ms, offset++, 0);
+  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
+  add_message(*consumer_factory, std::move(msg), 1200ms, offset++, 0);
 
   msg = create_ep01_message_double("speed:source:chopper",
                                    ConnectionInfo::CONNECTED, 1201);
-  add_message(consumer_factory.get(), std::move(msg), 1201ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1201ms, offset++, 0);
 
-  msg = create_f144_message_array_double("speed:source:chopper",
-                                         {2000, 2010, 2020}, 1250);
-  add_message(consumer_factory.get(), std::move(msg), 1250ms, offset++, 0);
+  msg = create_f144_message_double("speed:source:chopper", 2000, 1250);
+  add_message(*consumer_factory, std::move(msg), 1250ms, offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 102, 2100);
-  add_message(consumer_factory.get(), std::move(msg), 2100ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 2100ms, offset++, 0);
 
   Command::StartInfo start_info;
-  start_info.NexusStructure = example_json;
+  if (!json_file.empty()) {
+    start_info.NexusStructure = readJsonFromFile(json_file);
+  } else {
+    start_info.NexusStructure = example_json;
+  }
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;

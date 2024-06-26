@@ -35,7 +35,7 @@ void mdat_Writer::setWritableValueIfDefined(std::string const &Name,
   }
 }
 
-void mdat_Writer::writeMetadata(FileWriter::FileWriterTask const *Task) const {
+void mdat_Writer::writeMetadata(FileWriter::FileWriterTask const &Task) const {
   for (auto const &[Name, Value] : Writables) {
     if (std::find(AllowedNames.cbegin(), AllowedNames.cend(), Name) ==
         AllowedNames.end()) {
@@ -47,14 +47,14 @@ void mdat_Writer::writeMetadata(FileWriter::FileWriterTask const *Task) const {
   }
 }
 
-void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const *Task,
+void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const &Task,
                                    std::string const &Name,
                                    std::string const &Path,
                                    std::string const &Value) {
   try {
     auto StringVec = MultiVector<std::string>{{1}};
     StringVec.set_value({0}, Value);
-    auto Group = hdf5::node::get_group(Task->hdfGroup(), Path);
+    auto Group = hdf5::node::get_group(Task.hdfGroup(), Path);
     HDFOperations::writeStringDataset(Group, Name, StringVec);
   } catch (std::exception &Error) {
     LOG_ERROR("Failed to write mdat string value: {}", Error.what());
