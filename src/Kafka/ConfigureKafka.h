@@ -13,6 +13,6 @@
 #include <librdkafka/rdkafkacpp.h>
 
 namespace Kafka {
-void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
-                    Kafka::BrokerSettings Settings);
+void configureKafka(RdKafka::Conf &RdKafkaConfiguration,
+                    Kafka::BrokerSettings const &Settings);
 }

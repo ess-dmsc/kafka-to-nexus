@@ -13,8 +13,8 @@
 #include <logger.h>
 
 namespace Kafka {
-void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
-                    Kafka::BrokerSettings Settings) {
+void configureKafka(RdKafka::Conf &RdKafkaConfiguration,
+                    Kafka::BrokerSettings const &Settings) {
   std::string ErrorString;
   const std::regex RegexSensitiveKey(
       R"(ssl_key|.+password|.+secret|.+key\.pem)");
@@ -25,7 +25,7 @@ void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
     const auto LogValue = IsSensitive ? "<REDACTED>" : Value;
 
     if (RdKafka::Conf::ConfResult::CONF_OK !=
-        RdKafkaConfiguration->set(Key, Value, ErrorString)) {
+        RdKafkaConfiguration.set(Key, Value, ErrorString)) {
       LOG_WARN("Failure setting config: {} = {}", Key, LogValue);
     } else {
       DebugOutput += fmt::format(" {}={}", Key, LogValue);

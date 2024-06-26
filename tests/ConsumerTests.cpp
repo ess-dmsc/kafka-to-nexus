@@ -125,7 +125,7 @@ TEST(ConsumerAssignmentTest, Test1) {
 
   auto Conf = std::unique_ptr<RdKafka::Conf>(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
-  configureKafka(Conf.get(), SettingsCopy);
+  configureKafka(*Conf, SettingsCopy);
   auto EventCallback = std::make_unique<KafkaEventCb>();
   std::string ErrorString;
   auto KafkaConsumer = std::unique_ptr<RdKafka::KafkaConsumer>(

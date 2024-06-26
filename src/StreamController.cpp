@@ -29,7 +29,7 @@ StreamController::StreamController(
 
 StreamController::~StreamController() {
   stop();
-  MdatWriter->writeMetadata(WriterTask.get());
+  MdatWriter->writeMetadata(*WriterTask);
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
 }

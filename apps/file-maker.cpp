@@ -322,7 +322,7 @@ create_ev44_message(std::string const &source, int64_t message_id,
   return {std::move(buffer), buffer_size};
 }
 
-void add_message(StubConsumerFactory *consumer_factory,
+void add_message(StubConsumerFactory &consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
                  int32_t partition) {
@@ -330,8 +330,8 @@ void add_message(StubConsumerFactory *consumer_factory,
   metadata.Timestamp = timestamp;
   metadata.Offset = offset;
   metadata.Partition = partition;
-  consumer_factory->messages->emplace_back(flatbuffer.first.get(),
-                                           flatbuffer.second, metadata);
+  consumer_factory.messages->emplace_back(flatbuffer.first.get(),
+                                          flatbuffer.second, metadata);
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
@@ -351,29 +351,29 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   // Pre-populate kafka messages - time-stamps must be in order?
   int64_t offset = 0;
   auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
-  add_message(consumer_factory.get(), std::move(msg), 1000ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1000ms, offset++, 0);
 
   msg = create_ep01_message_double("delay:source:chopper",
                                    ConnectionInfo::CONNECTED, 1001);
-  add_message(consumer_factory.get(), std::move(msg), 1001ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1001ms, offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 101, 1100);
-  add_message(consumer_factory.get(), std::move(msg), 1100ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1100ms, offset++, 0);
 
   msg = create_f144_message_array_double("speed:source:chopper",
                                          {1000, 1010, 1020}, 1200);
-  add_message(consumer_factory.get(), std::move(msg), 1200ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1200ms, offset++, 0);
 
   msg = create_ep01_message_double("speed:source:chopper",
                                    ConnectionInfo::CONNECTED, 1201);
-  add_message(consumer_factory.get(), std::move(msg), 1201ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1201ms, offset++, 0);
 
   msg = create_f144_message_array_double("speed:source:chopper",
                                          {2000, 2010, 2020}, 1250);
-  add_message(consumer_factory.get(), std::move(msg), 1250ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1250ms, offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 102, 2100);
-  add_message(consumer_factory.get(), std::move(msg), 2100ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 2100ms, offset++, 0);
 
   Command::StartInfo start_info;
   if (!json_file.empty()) {
