@@ -4,6 +4,7 @@
 #include "Metrics/Metric.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
+#include <da00_dataarray_generated.h>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
@@ -322,6 +323,51 @@ create_ev44_message(std::string const &source, int64_t message_id,
   return {std::move(buffer), buffer_size};
 }
 
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
+                           const std::vector<int32_t> &data) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  builder.ForceDefaults(true);
+
+  auto source_name_offset = builder.CreateString(source);
+  auto var_name_offset = builder.CreateString("value");
+
+  auto var_axis = builder.CreateString("x");
+  std::vector<flatbuffers::Offset<flatbuffers::String>> var_axes_offset = {
+      var_axis};
+  auto var_axes = builder.CreateVector(var_axes_offset);
+
+  std::vector<int64_t> var_shape = {static_cast<int64_t>(data.size())};
+  auto var_shape_offset = builder.CreateVector(var_shape);
+
+  std::uint8_t *p_data;
+  auto payload =
+      builder.CreateUninitializedVector(data.size(), sizeof(data[0]), &p_data);
+  std::memcpy(p_data, data.data(), sizeof(data[0]) * data.size());
+
+  auto variable_offset =
+      Createda00_Variable(builder, var_name_offset, 0, 0, 0, da00_dtype::int32,
+                          var_axes, var_shape_offset, payload);
+  std::vector<flatbuffers::Offset<da00_Variable>> variable_offsets = {
+      variable_offset};
+  auto variables = builder.CreateVector(variable_offsets);
+
+  auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ms,
+                                   variables);
+  builder.Finish(da00, "da00");
+
+  auto verifier =
+      flatbuffers::Verifier(builder.GetBufferPointer(), builder.GetSize());
+  if (!Verifyda00_DataArrayBuffer(verifier)) {
+    throw std::runtime_error("could not verify da00");
+  }
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
 void add_message(StubConsumerFactory &consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
@@ -360,16 +406,14 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   msg = create_f144_message_double("delay:source:chopper", 101, 1100);
   add_message(*consumer_factory, std::move(msg), 1100ms, offset++, 0);
 
-  msg = create_f144_message_array_double("speed:source:chopper",
-                                         {1000, 1010, 1020}, 1200);
+  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
   add_message(*consumer_factory, std::move(msg), 1200ms, offset++, 0);
 
   msg = create_ep01_message_double("speed:source:chopper",
                                    ConnectionInfo::CONNECTED, 1201);
   add_message(*consumer_factory, std::move(msg), 1201ms, offset++, 0);
 
-  msg = create_f144_message_array_double("speed:source:chopper",
-                                         {2000, 2010, 2020}, 1250);
+  msg = create_f144_message_double("speed:source:chopper", 2000, 1250);
   add_message(*consumer_factory, std::move(msg), 1250ms, offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 102, 2100);

@@ -7,11 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/** Copyright (C) 2018 European Spallation Source ERIC */
-
-/// \file
-/// \brief Implement classes required to implement the ADC file writing module.
-
 #include "ADAr_Extractor.h"
 #include <ADAr_area_detector_array_generated.h>
 
