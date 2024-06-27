@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "kafka-to-nexus.h"
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
 #include "HDFVersionCheck.h"
@@ -16,13 +15,61 @@
 #include "Metrics/LogSink.h"
 #include "Metrics/Registrar.h"
 #include "Metrics/Reporter.h"
+#include "RunState.h"
 #include "Status/StatusInfo.h"
+#include "Status/StatusReporter.h"
+#include "Status/StatusService.h"
 #include "Version.h"
 #include "WriterRegistrar.h"
 #include <CLI/CLI.hpp>
 
 // These should only be visible in this translation unit
 static std::atomic<RunStates> RunState{RunStates::Running};
+
+std::unique_ptr<Status::StatusReporter>
+createStatusReporter(MainOpt const &MainConfig,
+                     std::string const &ApplicationName,
+                     std::string const &ApplicationVersion) {
+  Kafka::BrokerSettings BrokerSettings =
+      MainConfig.StreamerConfiguration.BrokerSettings;
+  BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
+  auto const StatusInformation =
+      Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,
+                                    ApplicationName,
+                                    ApplicationVersion,
+                                    getHostName(),
+                                    MainConfig.ServiceName,
+                                    MainConfig.getServiceId(),
+                                    getPID()};
+  return std::make_unique<Status::StatusReporter>(
+      BrokerSettings, MainConfig.CommandBrokerURI.Topic, StatusInformation);
+}
+
+bool tryToFindTopics(std::string const &PoolTopic,
+                     std::string const &CommandTopic, std::string const &Broker,
+                     duration TimeOut,
+                     Kafka::BrokerSettings const &BrokerSettings) {
+  try {
+    auto ListOfTopics =
+        Kafka::MetadataEnquirer().getTopicList(Broker, TimeOut, BrokerSettings);
+    if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
+      auto MsgString = fmt::format(
+          R"(Unable to find job pool topic with name "{}".)", PoolTopic);
+      LOG_CRITICAL(MsgString);
+      throw std::runtime_error(MsgString);
+    }
+    if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
+      auto MsgString = fmt::format(
+          R"(Unable to find command topic with name "{}".)", CommandTopic);
+      LOG_CRITICAL(MsgString);
+      throw std::runtime_error(MsgString);
+    }
+  } catch (MetadataException const &E) {
+    LOG_WARN("Meta data query failed with message: {}", E.what());
+    return false;
+  }
+  return true;
+}
 
 int main(int argc, char **argv) {
   std::string const ApplicationName = "kafka-to-nexus";
