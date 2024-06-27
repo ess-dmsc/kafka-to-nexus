@@ -7,12 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "Kafka/MetaDataQuery.h"
-#include "Kafka/MetadataException.h"
-#include "MainOpt.h"
+#pragma once
+
 #include "Master.h"
-#include "Status/StatusReporter.h"
-#include "Status/StatusService.h"
 #include "logger.h"
 #include <csignal>
 #include <string>
@@ -97,48 +94,4 @@ bool shouldStop(std::unique_ptr<FileWriter::Master> &MasterPtr,
     }
   }
   return false;
-}
-
-std::unique_ptr<Status::StatusReporter>
-createStatusReporter(MainOpt const &MainConfig,
-                     std::string const &ApplicationName,
-                     std::string const &ApplicationVersion) {
-  Kafka::BrokerSettings BrokerSettings =
-      MainConfig.StreamerConfiguration.BrokerSettings;
-  BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
-  auto const StatusInformation =
-      Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,
-                                    ApplicationName,
-                                    ApplicationVersion,
-                                    getHostName(),
-                                    MainConfig.ServiceName,
-                                    MainConfig.getServiceId(),
-                                    getPID()};
-  return std::make_unique<Status::StatusReporter>(
-      BrokerSettings, MainConfig.CommandBrokerURI.Topic, StatusInformation);
-}
-
-bool tryToFindTopics(std::string PoolTopic, std::string CommandTopic,
-                     std::string Broker, duration TimeOut,
-                     Kafka::BrokerSettings BrokerSettings) {
-  try {
-    auto ListOfTopics =
-        Kafka::MetadataEnquirer().getTopicList(Broker, TimeOut, BrokerSettings);
-    if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
-      auto MsgString = fmt::format(
-          R"(Unable to find job pool topic with name "{}".)", PoolTopic);
-      LOG_CRITICAL(MsgString);
-      throw std::runtime_error(MsgString);
-    }
-    if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
-      auto MsgString = fmt::format(
-          R"(Unable to find command topic with name "{}".)", CommandTopic);
-      LOG_CRITICAL(MsgString);
-      throw std::runtime_error(MsgString);
-    }
-  } catch (MetadataException const &E) {
-    LOG_WARN("Meta data query failed with message: {}", E.what());
-    return false;
-  }
-  return true;
 }
