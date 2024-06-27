@@ -200,7 +200,7 @@ void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();
 
-  if (not HasCheckedMessageType) {
+  if (!HasCheckedMessageType) {
     msgTypeIsConfigType(ElementType, Type);
     HasCheckedMessageType = true;
   }
@@ -247,6 +247,9 @@ void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
         appendScalarData<const double, Double>(Values, LogDataMessage);
     break;
   default:
+    LOG_WARN("f144 writer module no longer supports array types, so ignoring "
+             "message with source '{}'",
+             LogDataMessage->source_name()->str());
     throw WriterModule::WriterException(
         "Unknown data type in f144 flatbuffer.");
   }
