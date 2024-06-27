@@ -7,8 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "RunState.h"
 #include "Master.h"
+#include "RunState.h"
 #include "Status/StatusReporter.h"
 #include "StreamController.h"
 #include <csignal>
