@@ -10,29 +10,31 @@
 #include "Kafka/ConsumerFactory.h"
 
 #include "CommandListener.h"
+
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
 #include "Kafka/PollStatus.h"
 #include "Msg.h"
+#include <utility>
 
 namespace Command {
 
-CommandListener::CommandListener(uri::URI CommandTopicUri,
+CommandListener::CommandListener(uri::URI const &CommandTopicUri,
                                  Kafka::BrokerSettings Settings)
     : KafkaAddress(CommandTopicUri.HostPort),
-      CommandTopic(CommandTopicUri.Topic), KafkaSettings(Settings) {
+      CommandTopic(CommandTopicUri.Topic), KafkaSettings(std::move(Settings)) {
   KafkaSettings.Address = CommandTopicUri.HostPort;
 }
 
-CommandListener::CommandListener(uri::URI CommandTopicUri,
+CommandListener::CommandListener(uri::URI const &CommandTopicUri,
                                  Kafka::BrokerSettings Settings,
                                  time_point StartTimestamp)
     : KafkaAddress(CommandTopicUri.HostPort),
-      CommandTopic(CommandTopicUri.Topic), KafkaSettings(Settings),
+      CommandTopic(CommandTopicUri.Topic), KafkaSettings(std::move(Settings)),
       StartTimestamp(StartTimestamp) {}
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
-  if (not KafkaAddress.empty() and not CommandTopic.empty()) {
+  if (!KafkaAddress.empty() and !CommandTopic.empty()) {
     if (Consumer == nullptr) {
       setUpConsumer();
     } else {

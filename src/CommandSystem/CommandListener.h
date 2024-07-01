@@ -26,15 +26,16 @@ public:
   ///
   /// \param CommandTopicUri The URI/URL of the Kafka broker + topic to connect
   /// to for new commands. \param Settings Kafka (consumer) settings.
-  CommandListener(uri::URI CommandTopicUri, Kafka::BrokerSettings Settings);
+  CommandListener(uri::URI const &CommandTopicUri,
+                  Kafka::BrokerSettings Settings);
 
   /// \brief Constructor with specific StartTimestamp.
   ///
   /// \param CommandTopicUri The URI/URL of the Kafka broker + topic to connect
   /// to for new commands. \param Settings Kafka (consumer) settings. \param
   /// StartTimestamp Point in time to start listening for commands.
-  CommandListener(uri::URI CommandTopicUri, Kafka::BrokerSettings Settings,
-                  time_point StartTimestamp);
+  CommandListener(uri::URI const &CommandTopicUri,
+                  Kafka::BrokerSettings Settings, time_point StartTimestamp);
 
   /// \brief Destructor.
   virtual ~CommandListener() = default;
