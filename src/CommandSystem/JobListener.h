@@ -32,7 +32,7 @@ public:
   ///
   /// If we are currently not connected to the Kafka broker (for whatever
   /// reason), this function will try to connect. This will always result in a
-  /// timeout regardless of if the connection attempt was successfull.
+  /// timeout regardless of if the connection attempt was successful.
   ///
   /// \return Get a std::pair<> that contains the outcome of the message poll
   /// and the message if one was successfully received.
@@ -41,7 +41,7 @@ public:
   /// \brief Disconnect from the Kafka broker (topic) to prevent the consumer
   /// from receiving (job) messages that it will ignore.
   ///
-  /// This function should (probably) be called after a successfull call to
+  /// This function should (probably) be called after a successful call to
   /// pollForJob().
   virtual void disconnectFromPool();
 
