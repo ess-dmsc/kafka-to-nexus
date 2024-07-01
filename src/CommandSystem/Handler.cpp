@@ -244,6 +244,7 @@ CmdResponse Handler::startWriting(StartMessage &StartJob,
           }};
     }
     switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
+    CommandSource->try_connecting_to_topic();
   }
 
   if (!isValidUUID(StartJob.JobID)) {

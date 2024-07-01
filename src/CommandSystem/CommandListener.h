@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include "Kafka/Consumer.h"
 #include "Kafka/ConsumerFactory.h"
 #include "MainOpt.h"
@@ -36,7 +38,6 @@ public:
 
   /// \brief Constructor with specific start_timestamp.
   ///
-  /// \param command_topic_uri The URI/URL of the Kafka broker + topic to
   /// connect to for new commands.
   /// \param settings Kafka (consumer) settings.
   /// \param start_timestamp Point in time to start listening for commands.
@@ -58,6 +59,11 @@ public:
   /// \return Get a std::pair<> that contains the outcome of the message
   /// poll and the message if one was successfully received.
   virtual std::pair<Kafka::PollStatus, Msg> pollForCommand();
+
+  /// \brief Try connecting to the topic.
+  ///
+  /// Will throw an exception if it cannot connect.
+  void try_connecting_to_topic();
 
 protected:
   std::string const KafkaAddress;

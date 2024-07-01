@@ -57,4 +57,16 @@ void CommandListener::setUpConsumer() {
   }
 }
 
+void CommandListener::try_connecting_to_topic() {
+  try {
+    setUpConsumer();
+  } catch (std::exception const &error) {
+    auto const message =
+        fmt::format("Could not connect to command topic {}: {}", CommandTopic,
+                    error.what());
+    LOG_ERROR(message);
+    throw MetadataException(message);
+  }
+}
+
 } // namespace Command
