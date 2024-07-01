@@ -19,22 +19,26 @@
 
 namespace Command {
 
-CommandListener::CommandListener(uri::URI const &CommandTopicUri,
-                                 Kafka::BrokerSettings Settings)
-    : KafkaAddress(CommandTopicUri.HostPort),
-      CommandTopic(CommandTopicUri.Topic), KafkaSettings(std::move(Settings)) {
-  KafkaSettings.Address = CommandTopicUri.HostPort;
+CommandListener::CommandListener(
+    uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
+    : KafkaAddress(command_topic_uri.HostPort),
+      CommandTopic(command_topic_uri.Topic), KafkaSettings(std::move(settings)),
+      _consumer_factory(std::move(consumer_factory)) {
+  KafkaSettings.Address = command_topic_uri.HostPort;
 }
 
-CommandListener::CommandListener(uri::URI const &CommandTopicUri,
-                                 Kafka::BrokerSettings Settings,
-                                 time_point StartTimestamp)
-    : KafkaAddress(CommandTopicUri.HostPort),
-      CommandTopic(CommandTopicUri.Topic), KafkaSettings(std::move(Settings)),
-      StartTimestamp(StartTimestamp) {}
+CommandListener::CommandListener(
+    uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+    time_point start_timestamp,
+    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
+    : KafkaAddress(command_topic_uri.HostPort),
+      CommandTopic(command_topic_uri.Topic), KafkaSettings(std::move(settings)),
+      StartTimestamp(start_timestamp),
+      _consumer_factory(std::move(consumer_factory)) {}
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
-  if (!KafkaAddress.empty() and !CommandTopic.empty()) {
+  if (!KafkaAddress.empty() && !CommandTopic.empty()) {
     if (Consumer == nullptr) {
       setUpConsumer();
     } else {
@@ -45,13 +49,10 @@ std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
 }
 
 void CommandListener::setUpConsumer() {
+  Consumer = _consumer_factory->createConsumer(KafkaSettings);
   if (StartTimestamp < time_point::max()) {
-    // The CommandListener instance was created to process commands since a
-    // specific timestamp
-    Consumer = Kafka::createConsumer(KafkaSettings, KafkaAddress);
     Consumer->assignAllPartitions(CommandTopic, StartTimestamp);
   } else {
-    Consumer = Kafka::createConsumer(KafkaSettings, KafkaAddress);
     Consumer->addTopic(CommandTopic);
   }
 }
