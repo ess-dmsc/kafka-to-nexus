@@ -39,19 +39,25 @@ public:
   ~ConsumerFactory() override = default;
 };
 
-class StubConsumerFactory : public ConsumerFactoryInterface {
+class StubConsumerFactory : public Kafka::ConsumerFactoryInterface {
 public:
-  std::shared_ptr<ConsumerInterface>
-  createConsumer([[maybe_unused]] BrokerSettings const &Settings) override {
-    return std::make_shared<StubConsumer>();
-  };
+  std::shared_ptr<Kafka::ConsumerInterface> createConsumer(
+      [[maybe_unused]] Kafka::BrokerSettings const &settings) override {
+    return {};
+  }
   std::shared_ptr<Kafka::ConsumerInterface>
-  createConsumerAtOffset(Kafka::BrokerSettings const &settings,
-                         [[maybe_unused]] std::string const &topic,
-                         [[maybe_unused]] int partition_id,
+  createConsumerAtOffset([[maybe_unused]] Kafka::BrokerSettings const &settings,
+                         std::string const &topic, int partition_id,
                          [[maybe_unused]] int64_t offset) override {
-    return createConsumer(settings);
+    auto consumer = std::make_shared<StubConsumer>(messages);
+    consumer->topic = topic;
+    consumer->partition = partition_id;
+    return consumer;
   }
   ~StubConsumerFactory() override = default;
+
+  // One set of messages shared by all topics/consumers.
+  std::shared_ptr<std::vector<FileWriter::Msg>> messages =
+      std::make_shared<std::vector<FileWriter::Msg>>();
 };
 } // namespace Kafka
