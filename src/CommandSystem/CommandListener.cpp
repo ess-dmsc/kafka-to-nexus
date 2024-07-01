@@ -10,25 +10,27 @@
 #include "Kafka/ConsumerFactory.h"
 
 #include "CommandListener.h"
+
 #include "Kafka/MetaDataQuery.h"
 #include "Kafka/MetadataException.h"
 #include "Kafka/PollStatus.h"
 #include "Msg.h"
+#include <utility>
 
 namespace Command {
 
-CommandListener::CommandListener(uri::URI CommandTopicUri,
+CommandListener::CommandListener(uri::URI const &CommandTopicUri,
                                  Kafka::BrokerSettings Settings)
     : KafkaAddress(CommandTopicUri.HostPort),
-      CommandTopic(CommandTopicUri.Topic), KafkaSettings(Settings) {
+      CommandTopic(CommandTopicUri.Topic), KafkaSettings(std::move(Settings)) {
   KafkaSettings.Address = CommandTopicUri.HostPort;
 }
 
-CommandListener::CommandListener(uri::URI CommandTopicUri,
+CommandListener::CommandListener(uri::URI const &CommandTopicUri,
                                  Kafka::BrokerSettings Settings,
                                  time_point StartTimestamp)
     : KafkaAddress(CommandTopicUri.HostPort),
-      CommandTopic(CommandTopicUri.Topic), KafkaSettings(Settings),
+      CommandTopic(CommandTopicUri.Topic), KafkaSettings(std::move(Settings)),
       StartTimestamp(StartTimestamp) {}
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
@@ -51,6 +53,18 @@ void CommandListener::setUpConsumer() {
   } else {
     Consumer = Kafka::createConsumer(KafkaSettings, KafkaAddress);
     Consumer->addTopic(CommandTopic);
+  }
+}
+
+void CommandListener::try_connecting_to_topic() {
+  try {
+    setUpConsumer();
+  } catch (std::exception const &error) {
+    auto const message =
+        fmt::format("Could not connect to command topic {}: {}", CommandTopic,
+                    error.what());
+    LOG_ERROR(message);
+    throw MetadataException(message);
   }
 }
 
