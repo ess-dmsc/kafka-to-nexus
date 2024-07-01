@@ -10,11 +10,13 @@
 #include "Handler.h"
 #include "FeedbackProducer.h"
 #include "Parser.h"
+#include <iostream>
 #include <uuid.h>
 
 #include <utility>
 
 namespace Command {
+using LogLevel = Log::Severity;
 
 std::unique_ptr<Handler> Handler::create(std::string const &service_id,
                                          Kafka::BrokerSettings const &settings,
@@ -44,16 +46,18 @@ Handler::Handler(std::string service_id, Kafka::BrokerSettings settings,
 
 void Handler::loopFunction() {
   if (!IsWritingNow()) {
-    auto JobMsg = JobPool->pollForJob();
-    if (JobMsg.first == Kafka::PollStatus::Message) {
-      handleCommand(std::move(JobMsg.second), true);
+    auto [poll_status, message] = JobPool->pollForJob();
+    if (poll_status == Kafka::PollStatus::Message &&
+        Parser::isStartCommand(message)) {
+      handleStartCommand(std::move(message), true);
+      JobPool->disconnectFromPool();
     }
-  } else if (JobPool->isConnected()) {
-    JobPool->disconnectFromPool();
-  }
-  auto CommandMsg = CommandSource->pollForCommand();
-  if (CommandMsg.first == Kafka::PollStatus::Message) {
-    handleCommand(std::move(CommandMsg.second), false);
+  } else {
+    auto [poll_status, message] = CommandSource->pollForCommand();
+    if (poll_status == Kafka::PollStatus::Message &&
+        Parser::isStopCommand(message)) {
+      handleStopCommand(std::move(message));
+    }
   }
 }
 
@@ -121,28 +125,6 @@ void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                      ErrorMessage, FileName, Metadata);
   revertCommandTopic();
 }
-
-void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
-  if (Parser::isStartCommand(CommandMsg)) {
-    handleStartCommand(std::move(CommandMsg), IsJobPoolCommand);
-  } else if (Parser::isStopCommand(CommandMsg)) {
-    handleStopCommand(std::move(CommandMsg));
-  } else if (Parser::isStatusMessage(CommandMsg) ||
-             Parser::isAnswerMessage(CommandMsg) ||
-             Parser::isWritingDoneMessage(CommandMsg) ||
-             Parser::isFileWriterHeartbeatMessage(CommandMsg)) {
-    // Do nothing
-  } else if (CommandMsg.size() < 8) {
-    LOG_TRACE("Unable to handle message as it was too short ({} bytes).",
-              CommandMsg.size());
-  } else {
-    std::string SchemaId(reinterpret_cast<char const *>(CommandMsg.data()) + 4,
-                         4);
-    LOG_TRACE("Unable to handle (command) message of type: {}", SchemaId);
-  }
-}
-
-using LogLevel = Log::Severity;
 
 bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
                          std::string &ErrorStr) {
