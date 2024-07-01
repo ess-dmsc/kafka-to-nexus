@@ -16,26 +16,31 @@
 
 namespace Command {
 
-Handler::Handler(std::string const &ServiceIdentifier,
-                 Kafka::BrokerSettings const &Settings,
-                 const uri::URI &JobPoolUri, const uri::URI &CommandTopicUri)
-    : ServiceId(ServiceIdentifier),
-      JobPool(std::make_unique<JobListener>(JobPoolUri, Settings)),
-      CommandSource(
-          std::make_unique<CommandListener>(CommandTopicUri, Settings)),
-      CommandResponse(std::make_unique<FeedbackProducer>(
-          ServiceIdentifier, CommandTopicUri, Settings)),
-      CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
-Handler::Handler(std::string ServiceIdentifier, Kafka::BrokerSettings Settings,
-                 uri::URI CommandTopicUri,
-                 std::unique_ptr<JobListener> JobConsumer,
-                 std::unique_ptr<CommandListener> CommandConsumer,
-                 std::unique_ptr<FeedbackProducerBase> Response)
-    : ServiceId(std::move(ServiceIdentifier)), JobPool(std::move(JobConsumer)),
-      CommandSource(std::move(CommandConsumer)),
-      CommandResponse(std::move(Response)),
-      CommandTopicAddress(std::move(CommandTopicUri)),
-      KafkaSettings(std::move(Settings)) {}
+std::unique_ptr<Handler> Handler::create(std::string const &service_id,
+                                         Kafka::BrokerSettings const &settings,
+                                         const uri::URI &job_pool_uri,
+                                         const uri::URI &command_topic_uri) {
+  auto pool_listener = std::make_unique<JobListener>(job_pool_uri, settings);
+  auto command_listener =
+      std::make_unique<CommandListener>(command_topic_uri, settings);
+  std::unique_ptr<FeedbackProducerBase> command_response =
+      std::make_unique<FeedbackProducer>(service_id, command_topic_uri,
+                                         settings);
+  return std::make_unique<Handler>(
+      service_id, settings, command_topic_uri, std::move(pool_listener),
+      std::move(command_listener), std::move(command_response));
+}
+
+Handler::Handler(std::string service_id, Kafka::BrokerSettings settings,
+                 uri::URI const &command_topic_uri,
+                 std::unique_ptr<JobListener> pool_listener,
+                 std::unique_ptr<CommandListener> command_listener,
+                 std::unique_ptr<FeedbackProducerBase> command_response)
+    : ServiceId(std::move(service_id)), JobPool(std::move(pool_listener)),
+      CommandSource(std::move(command_listener)),
+      CommandResponse(std::move(command_response)),
+      CommandTopicAddress(command_topic_uri),
+      KafkaSettings(std::move(settings)) {}
 
 void Handler::loopFunction() {
   if (!IsWritingNow()) {

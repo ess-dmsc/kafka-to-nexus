@@ -56,13 +56,16 @@ public:
 
 class Handler : public HandlerBase {
 public:
-  Handler(std::string const &ServiceIdentifier,
-          Kafka::BrokerSettings const &Settings, const uri::URI &JobPoolUri,
-          const uri::URI &CommandTopicUri);
-  Handler(std::string ServiceIdentifier, Kafka::BrokerSettings Settings,
-          uri::URI CommandTopicUri, std::unique_ptr<JobListener> JobConsumer,
-          std::unique_ptr<CommandListener> CommandConsumer,
-          std::unique_ptr<FeedbackProducerBase> Response);
+  static std::unique_ptr<Handler> create(std::string const &ServiceIdentifier,
+                                         Kafka::BrokerSettings const &Settings,
+                                         const uri::URI &JobPoolUri,
+                                         const uri::URI &CommandTopicUri);
+
+  Handler(std::string service_id, Kafka::BrokerSettings settings,
+          uri::URI const &command_topic_uri,
+          std::unique_ptr<JobListener> pool_listener,
+          std::unique_ptr<CommandListener> command_listener,
+          std::unique_ptr<FeedbackProducerBase> command_response);
 
   void registerStartFunction(StartFuncType StartFunction) override;
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) override;
