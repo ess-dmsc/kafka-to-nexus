@@ -62,7 +62,7 @@ public:
                                          const uri::URI &CommandTopicUri);
 
   Handler(std::string service_id, Kafka::BrokerSettings settings,
-          uri::URI const &command_topic_uri,
+          uri::URI command_topic_uri,
           std::unique_ptr<JobListener> pool_listener,
           std::unique_ptr<CommandListener> command_listener,
           std::unique_ptr<FeedbackProducerBase> command_response);

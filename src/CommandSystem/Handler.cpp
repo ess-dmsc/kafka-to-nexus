@@ -32,14 +32,14 @@ std::unique_ptr<Handler> Handler::create(std::string const &service_id,
 }
 
 Handler::Handler(std::string service_id, Kafka::BrokerSettings settings,
-                 uri::URI const &command_topic_uri,
+                 uri::URI command_topic_uri,
                  std::unique_ptr<JobListener> pool_listener,
                  std::unique_ptr<CommandListener> command_listener,
                  std::unique_ptr<FeedbackProducerBase> command_response)
     : ServiceId(std::move(service_id)), JobPool(std::move(pool_listener)),
       CommandSource(std::move(command_listener)),
       CommandResponse(std::move(command_response)),
-      CommandTopicAddress(command_topic_uri),
+      CommandTopicAddress(std::move(command_topic_uri)),
       KafkaSettings(std::move(settings)) {}
 
 void Handler::loopFunction() {
