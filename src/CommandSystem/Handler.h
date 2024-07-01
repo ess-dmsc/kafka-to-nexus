@@ -95,14 +95,6 @@ protected:
   CmdResponse stopWriting(StopMessage const &StopJob);
 
 private:
-  /// \brief Parse a command message and route it to appropriate handling
-  /// method.
-  ///
-  /// \param CommandMsg Kafka message.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
-  /// pool or the command topic.
-  void handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
-
   /// \brief Handle start command.
   ///
   /// \param CommandMsg Kafka message.
