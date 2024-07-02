@@ -52,12 +52,13 @@ void mdat_Writer::write_string_value(FileWriter::FileWriterTask const &task,
                                      std::string const &path,
                                      std::string const &value) {
   try {
-    auto string_vec = MultiVector<std::string>{{1}};
-    string_vec.set_value({0}, value);
     auto group = hdf5::node::get_group(task.hdfGroup(), path);
-    HDFOperations::writeStringDataset(group, name, string_vec);
+    auto const data_space = hdf5::dataspace::Scalar();
+    auto const data_type = hdf5::datatype::create<std::string>();
+    auto dataset = group.create_dataset(name, data_type, data_space);
+    dataset.write(value, data_type, data_space);
   } catch (std::exception &error) {
-    LOG_ERROR("Failed to write mdat string value: {}", error.what());
+    LOG_ERROR("Failed to write mdat string value {}: {}", name, error.what());
   }
 }
 
