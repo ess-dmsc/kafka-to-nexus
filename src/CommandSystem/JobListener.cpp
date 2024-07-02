@@ -9,6 +9,8 @@
 
 #include <Kafka/ConsumerFactory.h>
 
+#include <utility>
+
 #include "JobListener.h"
 #include "Kafka/PollStatus.h"
 #include "Msg.h"
@@ -17,8 +19,11 @@ namespace Command {
 
 using std::string;
 
-JobListener::JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings)
-    : CommandListener(JobPoolUri, Settings) {
+JobListener::JobListener(
+    const uri::URI &job_pool_uri, Kafka::BrokerSettings settings,
+    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
+    : CommandListener(job_pool_uri, std::move(settings),
+                      std::move(consumer_factory)) {
   KafkaSettings.KafkaConfiguration["group.id"] = ConsumerGroupId;
   KafkaSettings.KafkaConfiguration["queued.min.messages"] = "1";
   KafkaSettings.KafkaConfiguration["enable.auto.commit"] = "true";

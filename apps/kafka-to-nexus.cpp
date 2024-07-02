@@ -149,10 +149,10 @@ int main(int argc, char **argv) {
   auto GenerateMaster = [&]() {
     return std::make_unique<FileWriter::Master>(
         *Options,
-        std::make_unique<Command::Handler>(
-            Options->getServiceId(),
-            Options->StreamerConfiguration.BrokerSettings, Options->JobPoolURI,
-            Options->CommandBrokerURI),
+        Command::Handler::create(Options->getServiceId(),
+                                 Options->StreamerConfiguration.BrokerSettings,
+                                 Options->JobPoolURI,
+                                 Options->CommandBrokerURI),
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
         std::move(registrar));
   };

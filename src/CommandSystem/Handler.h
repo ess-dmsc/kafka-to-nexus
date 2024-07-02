@@ -56,13 +56,16 @@ public:
 
 class Handler : public HandlerBase {
 public:
-  Handler(std::string const &ServiceIdentifier,
-          Kafka::BrokerSettings const &Settings, const uri::URI &JobPoolUri,
-          const uri::URI &CommandTopicUri);
-  Handler(std::string ServiceIdentifier, Kafka::BrokerSettings Settings,
-          uri::URI CommandTopicUri, std::unique_ptr<JobListener> JobConsumer,
-          std::unique_ptr<CommandListener> CommandConsumer,
-          std::unique_ptr<FeedbackProducerBase> Response);
+  static std::unique_ptr<Handler> create(std::string const &ServiceIdentifier,
+                                         Kafka::BrokerSettings const &Settings,
+                                         const uri::URI &JobPoolUri,
+                                         const uri::URI &CommandTopicUri);
+
+  Handler(std::string service_id, Kafka::BrokerSettings settings,
+          uri::URI command_topic_uri,
+          std::unique_ptr<JobListener> pool_listener,
+          std::unique_ptr<CommandListener> command_listener,
+          std::unique_ptr<FeedbackProducerBase> command_response);
 
   void registerStartFunction(StartFuncType StartFunction) override;
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) override;
@@ -95,14 +98,6 @@ protected:
   CmdResponse stopWriting(StopMessage const &StopJob);
 
 private:
-  /// \brief Parse a command message and route it to appropriate handling
-  /// method.
-  ///
-  /// \param CommandMsg Kafka message.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
-  /// pool or the command topic.
-  void handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
-
   /// \brief Handle start command.
   ///
   /// \param CommandMsg Kafka message.
@@ -151,7 +146,7 @@ private:
   }};
 
   /// \brief Switch to an alternative command topic.
-  void switchCommandTopic(std::string_view ControlTopic,
+  void switchCommandTopic(std::string const &ControlTopic,
                           time_point const StartTime);
 
   /// \brief Revert to the default command topic if an alternative topic
