@@ -10,45 +10,54 @@
 #include "Handler.h"
 #include "FeedbackProducer.h"
 #include "Parser.h"
+#include <iostream>
 #include <uuid.h>
 
 #include <utility>
 
 namespace Command {
+using LogLevel = Log::Severity;
 
-Handler::Handler(std::string const &ServiceIdentifier,
-                 Kafka::BrokerSettings const &Settings,
-                 const uri::URI &JobPoolUri, const uri::URI &CommandTopicUri)
-    : ServiceId(ServiceIdentifier),
-      JobPool(std::make_unique<JobListener>(JobPoolUri, Settings)),
-      CommandSource(
-          std::make_unique<CommandListener>(CommandTopicUri, Settings)),
-      CommandResponse(std::make_unique<FeedbackProducer>(
-          ServiceIdentifier, CommandTopicUri, Settings)),
-      CommandTopicAddress(CommandTopicUri), KafkaSettings(Settings) {}
-Handler::Handler(std::string ServiceIdentifier, Kafka::BrokerSettings Settings,
-                 uri::URI CommandTopicUri,
-                 std::unique_ptr<JobListener> JobConsumer,
-                 std::unique_ptr<CommandListener> CommandConsumer,
-                 std::unique_ptr<FeedbackProducerBase> Response)
-    : ServiceId(std::move(ServiceIdentifier)), JobPool(std::move(JobConsumer)),
-      CommandSource(std::move(CommandConsumer)),
-      CommandResponse(std::move(Response)),
-      CommandTopicAddress(std::move(CommandTopicUri)),
-      KafkaSettings(std::move(Settings)) {}
+std::unique_ptr<Handler> Handler::create(std::string const &service_id,
+                                         Kafka::BrokerSettings const &settings,
+                                         const uri::URI &job_pool_uri,
+                                         const uri::URI &command_topic_uri) {
+  auto pool_listener = std::make_unique<JobListener>(job_pool_uri, settings);
+  auto command_listener =
+      std::make_unique<CommandListener>(command_topic_uri, settings);
+  std::unique_ptr<FeedbackProducerBase> command_response =
+      std::make_unique<FeedbackProducer>(service_id, command_topic_uri,
+                                         settings);
+  return std::make_unique<Handler>(
+      service_id, settings, command_topic_uri, std::move(pool_listener),
+      std::move(command_listener), std::move(command_response));
+}
+
+Handler::Handler(std::string service_id, Kafka::BrokerSettings settings,
+                 uri::URI command_topic_uri,
+                 std::unique_ptr<JobListener> pool_listener,
+                 std::unique_ptr<CommandListener> command_listener,
+                 std::unique_ptr<FeedbackProducerBase> command_response)
+    : ServiceId(std::move(service_id)), JobPool(std::move(pool_listener)),
+      CommandSource(std::move(command_listener)),
+      CommandResponse(std::move(command_response)),
+      CommandTopicAddress(std::move(command_topic_uri)),
+      KafkaSettings(std::move(settings)) {}
 
 void Handler::loopFunction() {
   if (!IsWritingNow()) {
-    auto JobMsg = JobPool->pollForJob();
-    if (JobMsg.first == Kafka::PollStatus::Message) {
-      handleCommand(std::move(JobMsg.second), true);
+    auto [poll_status, message] = JobPool->pollForJob();
+    if (poll_status == Kafka::PollStatus::Message &&
+        Parser::isStartCommand(message)) {
+      handleStartCommand(std::move(message), true);
+      JobPool->disconnectFromPool();
     }
-  } else if (JobPool->isConnected()) {
-    JobPool->disconnectFromPool();
-  }
-  auto CommandMsg = CommandSource->pollForCommand();
-  if (CommandMsg.first == Kafka::PollStatus::Message) {
-    handleCommand(std::move(CommandMsg.second), false);
+  } else {
+    auto [poll_status, message] = CommandSource->pollForCommand();
+    if (poll_status == Kafka::PollStatus::Message &&
+        Parser::isStopCommand(message)) {
+      handleStopCommand(std::move(message));
+    }
   }
 }
 
@@ -76,21 +85,18 @@ void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
     LOG_INFO("Reverting to default command topic: {}",
              CommandTopicAddress.Topic);
-    CommandSource =
-        std::make_unique<CommandListener>(CommandTopicAddress, KafkaSettings);
+    CommandSource->change_topic(CommandTopicAddress.Topic);
     std::swap(AltCommandResponse, CommandResponse);
     UsingAltTopic = false;
   }
 }
 
-void Handler::switchCommandTopic(std::string_view ControlTopic,
+void Handler::switchCommandTopic(std::string const &ControlTopic,
                                  time_point const StartTime) {
   LOG_INFO(
       R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
       ControlTopic, StartTime);
-  CommandSource = std::make_unique<CommandListener>(
-      uri::URI{CommandTopicAddress, std::string(ControlTopic)}, KafkaSettings,
-      StartTime);
+  CommandSource->change_topic(ControlTopic, StartTime);
   AltCommandResponse = std::make_unique<FeedbackProducer>(
       ServiceId, uri::URI{CommandTopicAddress, std::string(ControlTopic)},
       KafkaSettings);
@@ -116,28 +122,6 @@ void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                      ErrorMessage, FileName, Metadata);
   revertCommandTopic();
 }
-
-void Handler::handleCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand) {
-  if (Parser::isStartCommand(CommandMsg)) {
-    handleStartCommand(std::move(CommandMsg), IsJobPoolCommand);
-  } else if (Parser::isStopCommand(CommandMsg)) {
-    handleStopCommand(std::move(CommandMsg));
-  } else if (Parser::isStatusMessage(CommandMsg) ||
-             Parser::isAnswerMessage(CommandMsg) ||
-             Parser::isWritingDoneMessage(CommandMsg) ||
-             Parser::isFileWriterHeartbeatMessage(CommandMsg)) {
-    // Do nothing
-  } else if (CommandMsg.size() < 8) {
-    LOG_TRACE("Unable to handle message as it was too short ({} bytes).",
-              CommandMsg.size());
-  } else {
-    std::string SchemaId(reinterpret_cast<char const *>(CommandMsg.data()) + 4,
-                         4);
-    LOG_TRACE("Unable to handle (command) message of type: {}", SchemaId);
-  }
-}
-
-using LogLevel = Log::Severity;
 
 bool extractStartMessage(FileWriter::Msg const &CommandMsg, StartMessage &Msg,
                          std::string &ErrorStr) {

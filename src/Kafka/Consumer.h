@@ -88,28 +88,52 @@ private:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 };
 
-class StubConsumer : public ConsumerInterface {
+class StubConsumer : public Kafka::ConsumerInterface {
 public:
+  explicit StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages)
+      : messages(std::move(messages)) {}
   ~StubConsumer() override = default;
 
-  std::pair<PollStatus, FileWriter::Msg> poll() override {
-    return {PollStatus::TimedOut, FileWriter::Msg()};
+  std::pair<Kafka::PollStatus, FileWriter::Msg> poll() override {
+    if (offset < messages->size()) {
+      auto temp = FileWriter::Msg{messages->at(offset).data(),
+                                  messages->at(offset).size(),
+                                  messages->at(offset).getMetaData()};
+      ++offset;
+      return {Kafka::PollStatus::Message, std::move(temp)};
+    }
+    if (at_end_of_partition) {
+      return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
+    } else {
+      at_end_of_partition = true;
+      return {Kafka::PollStatus::EndOfPartition, FileWriter::Msg()};
+    }
   };
 
-  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic,
-                            [[maybe_unused]] int PartitionId,
-                            [[maybe_unused]] int64_t Offset) override{};
+  void addPartitionAtOffset(std::string const &Topic, int PartitionId,
+                            [[maybe_unused]] int64_t Offset) override {
+    topic = Topic;
+    partition = PartitionId;
+  };
 
-  void addTopic([[maybe_unused]] std::string const &Topic) override {}
+  void addTopic(std::string const &Topic) override { topic = Topic; }
 
   void assignAllPartitions(
-      [[maybe_unused]] std::string const &Topic,
-      [[maybe_unused]] time_point const &StartTimestamp) override {}
+      std::string const &Topic,
+      [[maybe_unused]] time_point const &StartTimestamp) override {
+    topic = Topic;
+  }
 
   const RdKafka::TopicMetadata *
   getTopicMetadata([[maybe_unused]] const std::string &Topic,
                    [[maybe_unused]] RdKafka::Metadata *MetadataPtr) override {
     return nullptr;
   }
+
+  size_t offset = 0;
+  std::string topic;
+  int32_t partition = 0;
+  std::shared_ptr<std::vector<FileWriter::Msg>> messages;
+  bool at_end_of_partition = false;
 };
 } // namespace Kafka

@@ -137,73 +137,6 @@ public:
   }
 };
 
-class StubConsumer : public Kafka::ConsumerInterface {
-public:
-  explicit StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages)
-      : messages(std::move(messages)) {}
-  ~StubConsumer() override = default;
-
-  std::pair<Kafka::PollStatus, FileWriter::Msg> poll() override {
-    if (offset < messages->size()) {
-      auto temp = FileWriter::Msg{messages->at(offset).data(),
-                                  messages->at(offset).size(),
-                                  messages->at(offset).getMetaData()};
-      ++offset;
-      return {Kafka::PollStatus::Message, std::move(temp)};
-    }
-    if (at_end_of_partition) {
-      return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
-    } else {
-      at_end_of_partition = true;
-      return {Kafka::PollStatus::EndOfPartition, FileWriter::Msg()};
-    }
-  };
-
-  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic,
-                            [[maybe_unused]] int PartitionId,
-                            [[maybe_unused]] int64_t Offset) override{};
-
-  void addTopic([[maybe_unused]] std::string const &Topic) override {}
-
-  void assignAllPartitions(
-      [[maybe_unused]] std::string const &Topic,
-      [[maybe_unused]] time_point const &StartTimestamp) override {}
-
-  const RdKafka::TopicMetadata *
-  getTopicMetadata([[maybe_unused]] const std::string &Topic,
-                   [[maybe_unused]] RdKafka::Metadata *MetadataPtr) override {
-    return nullptr;
-  }
-
-  size_t offset = 0;
-  std::string topic;
-  int32_t partition = 0;
-  std::shared_ptr<std::vector<FileWriter::Msg>> messages;
-  bool at_end_of_partition = false;
-};
-
-class StubConsumerFactory : public Kafka::ConsumerFactoryInterface {
-public:
-  std::shared_ptr<Kafka::ConsumerInterface> createConsumer(
-      [[maybe_unused]] Kafka::BrokerSettings const &settings) override {
-    return {};
-  }
-  std::shared_ptr<Kafka::ConsumerInterface>
-  createConsumerAtOffset([[maybe_unused]] Kafka::BrokerSettings const &settings,
-                         std::string const &topic, int partition_id,
-                         [[maybe_unused]] int64_t offset) override {
-    auto consumer = std::make_shared<StubConsumer>(messages);
-    consumer->topic = topic;
-    consumer->partition = partition_id;
-    return consumer;
-  }
-  ~StubConsumerFactory() override = default;
-
-  // One set of messages shared by all topics/consumers.
-  std::shared_ptr<std::vector<FileWriter::Msg>> messages =
-      std::make_shared<std::vector<FileWriter::Msg>>();
-};
-
 class StubMetadataEnquirer : public Kafka::MetadataEnquirer {
 public:
   ~StubMetadataEnquirer() override = default;
@@ -368,7 +301,7 @@ create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
   return {std::move(buffer), buffer_size};
 }
 
-void add_message(StubConsumerFactory &consumer_factory,
+void add_message(Kafka::StubConsumerFactory &consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
                  std::chrono::milliseconds timestamp, int64_t offset,
                  int32_t partition) {
@@ -391,7 +324,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   std::unique_ptr<Metrics::IRegistrar> registrar =
       std::make_unique<FakeRegistrar>();
   auto tracker = std::make_shared<FakeTracker>();
-  auto consumer_factory = std::make_shared<StubConsumerFactory>();
+  auto consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
 
   // Pre-populate kafka messages - time-stamps must be in order?

@@ -26,13 +26,16 @@ public:
   ///
   /// \param JobPoolUri The URI/URL of the Kafka broker + topic to connect to
   /// for new jobs. \param Settings Kafka (consumer) settings.
-  JobListener(uri::URI JobPoolUri, Kafka::BrokerSettings Settings);
+  JobListener(
+      const uri::URI &JobPoolUri, Kafka::BrokerSettings Settings,
+      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
+          std::make_shared<Kafka::ConsumerFactory>());
 
   /// \brief Poll the Kafka topic for a new job.
   ///
   /// If we are currently not connected to the Kafka broker (for whatever
   /// reason), this function will try to connect. This will always result in a
-  /// timeout regardless of if the connection attempt was successfull.
+  /// timeout regardless of if the connection attempt was successful.
   ///
   /// \return Get a std::pair<> that contains the outcome of the message poll
   /// and the message if one was successfully received.
@@ -41,7 +44,7 @@ public:
   /// \brief Disconnect from the Kafka broker (topic) to prevent the consumer
   /// from receiving (job) messages that it will ignore.
   ///
-  /// This function should (probably) be called after a successfull call to
+  /// This function should (probably) be called after a successful call to
   /// pollForJob().
   virtual void disconnectFromPool();
 
