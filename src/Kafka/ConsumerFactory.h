@@ -43,8 +43,10 @@ class StubConsumerFactory : public Kafka::ConsumerFactoryInterface {
 public:
   std::shared_ptr<Kafka::ConsumerInterface> createConsumer(
       [[maybe_unused]] Kafka::BrokerSettings const &settings) override {
-    return {};
+    auto consumer = std::make_shared<StubConsumer>(messages);
+    return consumer;
   }
+
   std::shared_ptr<Kafka::ConsumerInterface>
   createConsumerAtOffset([[maybe_unused]] Kafka::BrokerSettings const &settings,
                          std::string const &topic, int partition_id,

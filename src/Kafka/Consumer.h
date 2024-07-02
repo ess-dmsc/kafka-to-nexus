@@ -110,15 +110,19 @@ public:
     }
   };
 
-  void addPartitionAtOffset([[maybe_unused]] std::string const &Topic,
-                            [[maybe_unused]] int PartitionId,
-                            [[maybe_unused]] int64_t Offset) override{};
+  void addPartitionAtOffset(std::string const &Topic, int PartitionId,
+                            [[maybe_unused]] int64_t Offset) override {
+    topic = Topic;
+    partition = PartitionId;
+  };
 
-  void addTopic([[maybe_unused]] std::string const &Topic) override {}
+  void addTopic(std::string const &Topic) override { topic = Topic; }
 
   void assignAllPartitions(
-      [[maybe_unused]] std::string const &Topic,
-      [[maybe_unused]] time_point const &StartTimestamp) override {}
+      std::string const &Topic,
+      [[maybe_unused]] time_point const &StartTimestamp) override {
+    topic = Topic;
+  }
 
   const RdKafka::TopicMetadata *
   getTopicMetadata([[maybe_unused]] const std::string &Topic,

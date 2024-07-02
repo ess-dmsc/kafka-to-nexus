@@ -85,21 +85,18 @@ void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
     LOG_INFO("Reverting to default command topic: {}",
              CommandTopicAddress.Topic);
-    CommandSource =
-        std::make_unique<CommandListener>(CommandTopicAddress, KafkaSettings);
+    CommandSource->change_topic(CommandTopicAddress.Topic);
     std::swap(AltCommandResponse, CommandResponse);
     UsingAltTopic = false;
   }
 }
 
-void Handler::switchCommandTopic(std::string_view ControlTopic,
+void Handler::switchCommandTopic(std::string const &ControlTopic,
                                  time_point const StartTime) {
   LOG_INFO(
       R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
       ControlTopic, StartTime);
-  CommandSource = std::make_unique<CommandListener>(
-      uri::URI{CommandTopicAddress, std::string(ControlTopic)}, KafkaSettings,
-      StartTime);
+  CommandSource->change_topic(ControlTopic, StartTime);
   AltCommandResponse = std::make_unique<FeedbackProducer>(
       ServiceId, uri::URI{CommandTopicAddress, std::string(ControlTopic)},
       KafkaSettings);
@@ -244,7 +241,6 @@ CmdResponse Handler::startWriting(StartMessage &StartJob,
           }};
     }
     switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
-    CommandSource->try_connecting_to_topic();
   }
 
   if (!isValidUUID(StartJob.JobID)) {

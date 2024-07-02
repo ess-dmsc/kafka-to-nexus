@@ -57,6 +57,13 @@ void CommandListener::setUpConsumer() {
   }
 }
 
+void CommandListener::change_topic(std::string const &new_topic,
+                                   time_point start_time) {
+  CommandTopic = new_topic;
+  StartTimestamp = start_time;
+  try_connecting_to_topic();
+}
+
 void CommandListener::try_connecting_to_topic() {
   try {
     setUpConsumer();

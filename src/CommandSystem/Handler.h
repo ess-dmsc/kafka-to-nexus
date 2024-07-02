@@ -146,7 +146,7 @@ private:
   }};
 
   /// \brief Switch to an alternative command topic.
-  void switchCommandTopic(std::string_view ControlTopic,
+  void switchCommandTopic(std::string const &ControlTopic,
                           time_point const StartTime);
 
   /// \brief Revert to the default command topic if an alternative topic

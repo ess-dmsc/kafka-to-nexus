@@ -60,20 +60,23 @@ public:
   /// poll and the message if one was successfully received.
   virtual std::pair<Kafka::PollStatus, Msg> pollForCommand();
 
-  /// \brief Try connecting to the topic.
+  /// \brief Try changing to the specified topic.
   ///
   /// Will throw an exception if it cannot connect.
-  void try_connecting_to_topic();
+  void change_topic(std::string const &new_topic,
+                    time_point start_time = time_point::max());
 
 protected:
   std::string const KafkaAddress;
-  std::string const CommandTopic;
+  std::string CommandTopic;
   Kafka::BrokerSettings KafkaSettings;
   void setUpConsumer();
   time_point StartTimestamp = time_point::max();
   std::shared_ptr<Kafka::ConsumerInterface> Consumer;
 
 private:
+  void try_connecting_to_topic();
+
   std::shared_ptr<Kafka::ConsumerFactoryInterface> _consumer_factory;
 };
 } // namespace Command
