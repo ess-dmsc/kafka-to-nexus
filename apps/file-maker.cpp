@@ -40,7 +40,7 @@ std::string const example_json = R"(
 				"config": {
 					"name": "title",
 					"values": "This is a title",
-					"type": "string"
+					"dtype": "string"
 				}
 			},
 			{
