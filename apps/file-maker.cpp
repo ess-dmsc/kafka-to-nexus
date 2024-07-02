@@ -46,13 +46,7 @@ std::string const example_json = R"(
 			{
 				"module": "mdat",
 				"config": {
-					"name": "start_time"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"name": "end_time"
+					"items": ["start_time", "end_time"]
 				}
 			},
 			{
