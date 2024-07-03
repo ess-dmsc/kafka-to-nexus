@@ -131,7 +131,7 @@ std::unique_ptr<IStreamController> createFileWritingJob(
       extractMdatModules(ModuleHDFInfoList);
 
   auto mdatWriter = std::make_unique<WriterModule::mdat::mdat_Writer>();
-  mdatWriter->defineMetadata(mdatInfoList);
+  mdatWriter->define_metadata(mdatInfoList);
 
   std::vector<ModuleSettings> SettingsList =
       extractModuleInformationFromJson(ModuleHDFInfoList);

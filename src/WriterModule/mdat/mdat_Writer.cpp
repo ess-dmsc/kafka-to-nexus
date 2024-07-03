@@ -16,77 +16,80 @@
 #include "json.h"
 
 namespace WriterModule::mdat {
-void mdat_Writer::defineMetadata(std::vector<ModuleHDFInfo> const &Modules) {
-  Writables = extractDetails(Modules);
+void mdat_Writer::define_metadata(std::vector<ModuleHDFInfo> const &modules) {
+  _writables = extract_details(modules);
 }
 
-void mdat_Writer::setStartTime(time_point startTime) {
-  setWritableValueIfDefined(StartTime, startTime);
+void mdat_Writer::set_start_time(time_point start_time) {
+  set_writable_value_if_defined(_start_time, start_time);
 }
 
-void mdat_Writer::setStopTime(time_point stopTime) {
-  setWritableValueIfDefined(EndTime, stopTime);
+void mdat_Writer::set_stop_time(time_point stop_time) {
+  set_writable_value_if_defined(_end_time, stop_time);
 }
 
-void mdat_Writer::setWritableValueIfDefined(std::string const &Name,
-                                            time_point const &Time) {
-  if (auto Result = Writables.find(Name); Result != Writables.end()) {
-    Result->second.Value = toUTCDateTime(Time);
+void mdat_Writer::set_writable_value_if_defined(const std::string &name,
+                                                const time_point &time) {
+  if (auto result = _writables.find(name); result != _writables.end()) {
+    result->second.value = toUTCDateTime(time);
   }
 }
 
-void mdat_Writer::writeMetadata(FileWriter::FileWriterTask const &Task) const {
-  for (auto const &[Name, Value] : Writables) {
-    if (std::find(AllowedNames.cbegin(), AllowedNames.cend(), Name) ==
-        AllowedNames.end()) {
+void mdat_Writer::write_metadata(FileWriter::FileWriterTask const &task) const {
+  for (auto const &[name, value] : _writables) {
+    if (std::find(_allowed_names.cbegin(), _allowed_names.cend(), name) ==
+        _allowed_names.end()) {
       continue;
     }
-    if (Value.isWritable()) {
-      writeStringValue(Task, Name, Value.Path, Value.Value);
+    if (value.isWritable()) {
+      write_string_value(task, name, value.path, value.value);
     }
   }
 }
 
-void mdat_Writer::writeStringValue(FileWriter::FileWriterTask const &Task,
-                                   std::string const &Name,
-                                   std::string const &Path,
-                                   std::string const &Value) {
+void mdat_Writer::write_string_value(FileWriter::FileWriterTask const &task,
+                                     std::string const &name,
+                                     std::string const &path,
+                                     std::string const &value) {
   try {
-    auto StringVec = MultiVector<std::string>{{1}};
-    StringVec.set_value({0}, Value);
-    auto Group = hdf5::node::get_group(Task.hdfGroup(), Path);
-    HDFOperations::writeStringDataset(Group, Name, StringVec);
-  } catch (std::exception &Error) {
-    LOG_ERROR("Failed to write mdat string value: {}", Error.what());
+    auto group = hdf5::node::get_group(task.hdfGroup(), path);
+    auto const data_space = hdf5::dataspace::Scalar();
+    auto const data_type = hdf5::datatype::create<std::string>();
+    auto dataset = group.create_dataset(name, data_type, data_space);
+    dataset.write(value, data_type, data_space);
+  } catch (std::exception &error) {
+    LOG_ERROR("Failed to write mdat string value {}: {}", name, error.what());
   }
 }
 
 std::unordered_map<std::string, mdat_Writer::Writable>
-mdat_Writer::extractDetails(std::vector<ModuleHDFInfo> const &Modules) const {
-  std::unordered_map<std::string, Writable> Details;
+mdat_Writer::extract_details(const std::vector<ModuleHDFInfo> &modules) const {
+  std::unordered_map<std::string, Writable> details;
 
-  for (auto const &Module : Modules) {
-    if (Module.WriterModule != "mdat") {
+  for (auto const &module : modules) {
+    if (module.WriterModule != "mdat") {
       continue;
     }
 
-    auto const name = extractName(Module.ConfigStream);
-    if (name && std::find(AllowedNames.begin(), AllowedNames.end(), name) !=
-                    AllowedNames.end()) {
-      Writable NewWritable;
-      NewWritable.Path = Module.HDFParentName;
-      Details[name.value()] = NewWritable;
+    auto const names = extract_names(module.ConfigStream);
+    for (auto const &name : names) {
+      if (std::find(_allowed_names.begin(), _allowed_names.end(), name) !=
+          _allowed_names.end()) {
+        Writable new_writable;
+        new_writable.path = module.HDFParentName;
+        details[name] = new_writable;
+      }
     }
   }
-  return Details;
+  return details;
 }
 
-std::optional<std::string>
-mdat_Writer::extractName(std::string const &configJson) {
-  nlohmann::json json = nlohmann::json::parse(configJson);
+std::vector<std::string>
+mdat_Writer::extract_names(const std::string &config_json) {
+  nlohmann::json json = nlohmann::json::parse(config_json);
   for (auto it = json.begin(); it != json.end(); ++it) {
-    if (it.key() == "name" && !it.value().empty()) {
-      return it.value();
+    if (it.key() == "items" && !it.value().empty()) {
+      return it->get<std::vector<std::string>>();
     }
   }
   return {};
