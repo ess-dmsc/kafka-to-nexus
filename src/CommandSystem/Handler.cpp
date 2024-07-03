@@ -23,8 +23,7 @@ std::unique_ptr<Handler> Handler::create(std::string const &service_id,
                                          const uri::URI &job_pool_uri,
                                          const uri::URI &command_topic_uri) {
   auto pool_listener = std::make_unique<JobListener>(job_pool_uri, settings);
-  auto command_listener =
-      std::make_unique<CommandListener>(command_topic_uri, settings);
+  auto command_listener = CommandListener::create(command_topic_uri, settings);
   std::unique_ptr<FeedbackProducerBase> command_response =
       std::make_unique<FeedbackProducer>(service_id, command_topic_uri,
                                          settings);

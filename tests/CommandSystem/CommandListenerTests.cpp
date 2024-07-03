@@ -11,14 +11,14 @@
 #include <gtest/gtest.h>
 
 TEST(CommandListener, TimeoutOnPoll) {
-  Command::CommandListener Listener(uri::URI("localhost:1111/no_topic_here"),
-                                    {});
+  auto Listener = Command::CommandListener::create(
+      uri::URI("localhost:1111/no_topic_here"), {});
   // Poll # one
-  auto PollResult = Listener.pollForCommand();
+  auto PollResult = Listener->pollForCommand();
   EXPECT_EQ(PollResult.first, Kafka::PollStatus::TimedOut);
   EXPECT_EQ(PollResult.second.size(), 0u);
   // Poll # two
-  PollResult = Listener.pollForCommand();
+  PollResult = Listener->pollForCommand();
   EXPECT_EQ(PollResult.first, Kafka::PollStatus::TimedOut);
   EXPECT_EQ(PollResult.second.size(), 0u);
 }

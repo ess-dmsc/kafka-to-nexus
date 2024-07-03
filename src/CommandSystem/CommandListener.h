@@ -22,20 +22,24 @@ namespace Command {
 
 using FileWriter::Msg;
 
-/// \brief Check for new commands on a command listener topic.
+/// \brief Listens for new commands on a command  topic.
 class CommandListener {
 public:
-  /// \brief Constructor.
+  /// \brief Create new instance.
   ///
-  /// connect to for new commands.
+  /// \param command_topic_uri The URI for the command topic.
   /// \param settings Kafka (consumer) settings.
   /// \param start_timestamp Point in time to start listening for commands.
   /// \param consumer_factory Factory for creating consumers.
-  CommandListener(
-      uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
-      time_point start_timestamp = time_point::max(),
-      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
-          std::make_shared<Kafka::ConsumerFactory>());
+  static std::unique_ptr<CommandListener>
+  create(uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+         time_point start_timestamp = time_point::max(),
+         std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
+             std::make_shared<Kafka::ConsumerFactory>()) {
+    return std::make_unique<CommandListener>(
+        command_topic_uri, std::move(settings), start_timestamp,
+        std::move(consumer_factory));
+  }
 
   /// \brief Destructor.
   virtual ~CommandListener() = default;
@@ -54,6 +58,20 @@ public:
   /// Will throw an exception if it cannot connect.
   void change_topic(std::string const &new_topic,
                     time_point start_time = time_point::max());
+
+  /// \brief Constructor.
+  ///
+  /// \note Prefer using create instead.
+  ///
+  /// \param command_topic_uri The URI for the command topic.
+  /// \param settings Kafka (consumer) settings.
+  /// \param start_timestamp Point in time to start listening for commands.
+  /// \param consumer_factory Factory for creating consumers.
+  CommandListener(
+      uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+      time_point start_timestamp = time_point::max(),
+      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
+          std::make_shared<Kafka::ConsumerFactory>());
 
 protected:
   std::string const KafkaAddress;
