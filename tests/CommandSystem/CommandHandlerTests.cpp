@@ -94,7 +94,7 @@ protected:
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
     _commandListener = std::make_unique<CommandListener>(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{},
-        std::make_shared<Kafka::StubConsumerFactory>());
+        time_point::max(), std::make_shared<Kafka::StubConsumerFactory>());
     _feedbackProducerMock = std::make_unique<FeedbackProducerMock>();
 
     _handlerUnderTest = std::make_unique<HandlerStandIn>(

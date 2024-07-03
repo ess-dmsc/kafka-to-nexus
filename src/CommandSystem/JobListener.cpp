@@ -22,7 +22,7 @@ using std::string;
 JobListener::JobListener(
     const uri::URI &job_pool_uri, Kafka::BrokerSettings settings,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
-    : CommandListener(job_pool_uri, std::move(settings),
+    : CommandListener(job_pool_uri, std::move(settings), time_point::max(),
                       std::move(consumer_factory)) {
   KafkaSettings.KafkaConfiguration["group.id"] = ConsumerGroupId;
   KafkaSettings.KafkaConfiguration["queued.min.messages"] = "1";

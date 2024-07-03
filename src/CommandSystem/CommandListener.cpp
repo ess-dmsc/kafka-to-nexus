@@ -21,15 +21,6 @@ namespace Command {
 
 CommandListener::CommandListener(
     uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
-    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
-    : KafkaAddress(command_topic_uri.HostPort),
-      CommandTopic(command_topic_uri.Topic), KafkaSettings(std::move(settings)),
-      _consumer_factory(std::move(consumer_factory)) {
-  KafkaSettings.Address = command_topic_uri.HostPort;
-}
-
-CommandListener::CommandListener(
-    uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
     time_point start_timestamp,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
     : KafkaAddress(command_topic_uri.HostPort),
