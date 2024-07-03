@@ -23,13 +23,7 @@ Example `nexus_structure` to write start and stop times:
           {
             "module": "mdat",
             "config": {
-              "name": "start_time"
-            }
-          },
-          {
-            "module": "mdat",
-            "config": {
-              "name": "end_time"
+              "items": ["start_time", "end_time"]
             }
           }
         ]
@@ -38,5 +32,3 @@ Example `nexus_structure` to write start and stop times:
   }
 }
 ```
-
-
