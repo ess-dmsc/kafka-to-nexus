@@ -102,13 +102,13 @@ def test_start_and_stop_time_are_in_the_past(
             (start_time + step_time).timestamp() * 1e9
         )  # ns
         assert (
-            file["entry/start_time"][0]
+            file["entry/start_time"][()]
             == file_start_time.astimezone(timezone.utc)
             .strftime("%Y-%m-%dT%H:%M:%S.000Z")
             .encode()
         )
         assert (
-            file["entry/end_time"][0]
+            file["entry/end_time"][()]
             == file_stop_time.astimezone(timezone.utc)
             .strftime("%Y-%m-%dT%H:%M:%S.000Z")
             .encode()

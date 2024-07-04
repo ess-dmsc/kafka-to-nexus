@@ -29,14 +29,14 @@ StreamController::StreamController(
 
 StreamController::~StreamController() {
   stop();
-  MdatWriter->writeMetadata(*WriterTask);
+  MdatWriter->write_metadata(*WriterTask);
   LOG_INFO("Stopped StreamController for file with id : {}",
            StreamController::getJobId());
 }
 
 void StreamController::start() {
-  MdatWriter->setStartTime(StreamerOptions.StartTimestamp);
-  MdatWriter->setStopTime(StreamerOptions.StopTimestamp);
+  MdatWriter->set_start_time(StreamerOptions.StartTimestamp);
+  MdatWriter->set_stop_time(StreamerOptions.StopTimestamp);
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = StreamerOptions.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
@@ -45,7 +45,7 @@ void StreamController::start() {
 
 void StreamController::setStopTime(time_point const &StopTime) {
   StreamerOptions.StopTimestamp = StopTime;
-  MdatWriter->setStopTime(StopTime);
+  MdatWriter->set_stop_time(StopTime);
   Executor.sendWork([=]() {
     for (auto &s : Streamers) {
       s->setStopTime(StopTime);

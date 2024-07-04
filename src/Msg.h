@@ -18,15 +18,17 @@ namespace FileWriter {
 
 /// \brief Structure for storing Kafka broker meta data.
 struct MessageMetaData {
-  std::chrono::milliseconds Timestamp{0};
-  auto timestamp() const {
+  [[nodiscard]] auto timestamp() const {
     return std::chrono::system_clock::time_point{Timestamp};
   }
+
+  std::chrono::milliseconds Timestamp{0};
   RdKafka::MessageTimestamp::MessageTimestampType TimestampType{
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_NOT_AVAILABLE};
   int64_t Offset{0};
   int32_t Partition{0};
+  std::string topic;
 };
 
 /// \brief A helper struct/class for storing Kafka messages that uses a unique

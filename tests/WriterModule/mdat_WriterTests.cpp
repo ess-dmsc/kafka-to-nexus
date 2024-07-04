@@ -15,16 +15,16 @@ TEST(mdatWriterTests, IgnoresSettingStartTimeIfNotInNotDefined) {
   std::vector<ModuleHDFInfo> MdatModules = {
       {"mdat", "/entry", "{\"name\":\"end_time\"}"}};
   WriterModule::mdat::mdat_Writer Writer;
-  Writer.defineMetadata(MdatModules);
+  Writer.define_metadata(MdatModules);
 
-  EXPECT_NO_THROW(Writer.setStartTime(time_point{123456ms}));
+  EXPECT_NO_THROW(Writer.set_start_time(time_point{123456ms}));
 }
 
 TEST(mdatWriterTests, IgnoresSettingEndTimeIfNotInNotDefined) {
   std::vector<ModuleHDFInfo> MdatModules = {
       {"mdat", "/entry", "{\"name\":\"start_time\"}"}};
   WriterModule::mdat::mdat_Writer Writer;
-  Writer.defineMetadata(MdatModules);
+  Writer.define_metadata(MdatModules);
 
-  EXPECT_NO_THROW(Writer.setStopTime(time_point{123456ms}));
+  EXPECT_NO_THROW(Writer.set_stop_time(time_point{123456ms}));
 }

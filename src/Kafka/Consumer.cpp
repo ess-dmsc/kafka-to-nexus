@@ -168,7 +168,8 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
   case RdKafka::ERR_NO_ERROR: {
     auto MetaData = FileWriter::MessageMetaData{
         std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
-        KafkaMsg->timestamp().type, KafkaMsg->offset(), KafkaMsg->partition()};
+        KafkaMsg->timestamp().type, KafkaMsg->offset(), KafkaMsg->partition(),
+        KafkaMsg->topic_name()};
     auto RetMsg =
         FileWriter::Msg(reinterpret_cast<const char *>(KafkaMsg->payload()),
                         KafkaMsg->len(), MetaData);

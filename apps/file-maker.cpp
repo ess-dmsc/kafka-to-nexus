@@ -40,19 +40,13 @@ std::string const example_json = R"(
 				"config": {
 					"name": "title",
 					"values": "This is a title",
-					"type": "string"
+					"dtype": "string"
 				}
 			},
 			{
 				"module": "mdat",
 				"config": {
-					"name": "start_time"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"name": "end_time"
+					"items": ["start_time", "end_time"]
 				}
 			},
 			{
@@ -100,7 +94,7 @@ std::string const example_json = R"(
                                                         "module": "f144",
                                                         "config": {
                                                                 "source": "speed:source:chopper",
-                                                                "topic": "local_motion",
+                                                                "topic": "local_choppers",
                                                                 "dtype": "double",
                                                                 "value_units": "Hz"
                                                         }
@@ -303,12 +297,13 @@ create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
 
 void add_message(Kafka::StubConsumerFactory &consumer_factory,
                  std::pair<std::unique_ptr<uint8_t[]>, size_t> flatbuffer,
-                 std::chrono::milliseconds timestamp, int64_t offset,
-                 int32_t partition) {
+                 std::chrono::milliseconds timestamp, std::string const &topic,
+                 int64_t offset, int32_t partition) {
   FileWriter::MessageMetaData metadata;
   metadata.Timestamp = timestamp;
   metadata.Offset = offset;
   metadata.Partition = partition;
+  metadata.topic = topic;
   consumer_factory.messages->emplace_back(flatbuffer.first.get(),
                                           flatbuffer.second, metadata);
 }
@@ -330,27 +325,34 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   // Pre-populate kafka messages - time-stamps must be in order?
   int64_t offset = 0;
   auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
-  add_message(*consumer_factory, std::move(msg), 1000ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1000ms, "local_choppers",
+              offset++, 0);
 
   msg = create_ep01_message_double("delay:source:chopper",
                                    ConnectionInfo::CONNECTED, 1001);
-  add_message(*consumer_factory, std::move(msg), 1001ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1001ms, "local_choppers",
+              offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 101, 1100);
-  add_message(*consumer_factory, std::move(msg), 1100ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1100ms, "local_choppers",
+              offset++, 0);
 
   msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
-  add_message(*consumer_factory, std::move(msg), 1200ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1200ms, "local_choppers",
+              offset++, 0);
 
   msg = create_ep01_message_double("speed:source:chopper",
                                    ConnectionInfo::CONNECTED, 1201);
-  add_message(*consumer_factory, std::move(msg), 1201ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1201ms, "local_choppers",
+              offset++, 0);
 
   msg = create_f144_message_double("speed:source:chopper", 2000, 1250);
-  add_message(*consumer_factory, std::move(msg), 1250ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 1250ms, "local_choppers",
+              offset++, 0);
 
   msg = create_f144_message_double("delay:source:chopper", 102, 2100);
-  add_message(*consumer_factory, std::move(msg), 2100ms, offset++, 0);
+  add_message(*consumer_factory, std::move(msg), 2100ms, "local_choppers",
+              offset++, 0);
 
   Command::StartInfo start_info;
   if (!json_file.empty()) {
