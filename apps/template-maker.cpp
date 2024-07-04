@@ -3,6 +3,7 @@
 #include "MetaData/Tracker.h"
 #include "Metrics/Metric.h"
 #include "logger.h"
+#include <CLI/CLI.hpp>
 #include <ep01_epics_connection_generated.h>
 #include <f144_logdata_generated.h>
 #include <fstream>
@@ -49,7 +50,7 @@ public:
   }
 };
 
-int main(int argc, char **argv) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"template-maker app"};
   std::string json_file;
   std::string InstrumentName;
@@ -57,7 +58,6 @@ int main(int argc, char **argv) {
   app.add_option("-i, --instrument", InstrumentName, "The instrument name");
   CLI11_PARSE(app, argc, argv);
 
-  using std::chrono_literals::operator""ms;
   std::cout << "Starting writing\n";
 
   std::unique_ptr<Metrics::IRegistrar> registrar =
@@ -66,8 +66,6 @@ int main(int argc, char **argv) {
 
   Command::StartInfo start_info;
 
-  std::string example_json = readJsonFromFile(json_file);
-
   std::cout << "Loaded file\n";
 
   if (!json_file.empty()) {
@@ -75,24 +73,20 @@ int main(int argc, char **argv) {
   } else {
     std::throw_with_nested(std::runtime_error("No JSON file provided"));
   }
-}
-if (!InstrumentName.empty()) {
-  start_info.InstrumentName = InstrumentName;
-} else {
-  std::throw_with_nested(std::runtime_error("No instrument name provided"));
-}
-start_info.JobID = "some_job_id";
+  if (!InstrumentName.empty()) {
+    start_info.InstrumentName = InstrumentName;
+  } else {
+    std::throw_with_nested(std::runtime_error("No instrument name provided"));
+  }
+  start_info.JobID = "some_job_id";
 
-FileWriter::StreamerOptions streamer_options;
-streamer_options.StartTimestamp = time_point{0ms};
-streamer_options.StopTimestamp = time_point{1250ms};
-std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName + "/" +
-                               InstrumentName + ".hdf"};
+  std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName + "/" +
+                                InstrumentName + ".hdf"};
 
-FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
-                                     tracker);
+  FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
+                                      tracker);
 
-std::cout << "Finished writing template\n";
+  std::cout << "Finished writing template\n";
 
-return 0;
+  return 0;
 }
