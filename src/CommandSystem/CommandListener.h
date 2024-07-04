@@ -30,15 +30,19 @@ public:
   /// \param command_topic_uri The URI for the command topic.
   /// \param settings Kafka (consumer) settings.
   /// \param start_timestamp Point in time to start listening for commands.
-  /// \param consumer_factory Factory for creating consumers.
   static std::unique_ptr<CommandListener>
   create(uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
-         time_point start_timestamp = time_point::max(),
-         std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
-             std::make_shared<Kafka::ConsumerFactory>()) {
+         time_point start_timestamp = time_point::max()) {
     return std::make_unique<CommandListener>(
         command_topic_uri, std::move(settings), start_timestamp,
-        std::move(consumer_factory));
+        std::make_shared<Kafka::ConsumerFactory>());
+  }
+
+  static std::unique_ptr<CommandListener>
+  create_null(uri::URI const &command_topic_uri, Kafka::BrokerSettings settings, std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory,
+         time_point start_timestamp = time_point::max()) {
+    return std::make_unique<CommandListener>(
+        command_topic_uri, std::move(settings), start_timestamp, consumer_factory);
   }
 
   /// \brief Destructor.
