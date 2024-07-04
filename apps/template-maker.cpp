@@ -80,11 +80,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   }
   start_info.JobID = "some_job_id";
 
-  std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName + "/" +
-                                InstrumentName + ".hdf"};
+  std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName +
+                                 "/" + InstrumentName + ".hdf"};
 
   FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
-                                      tracker);
+                                       tracker);
 
   std::cout << "Finished writing template\n";
 
