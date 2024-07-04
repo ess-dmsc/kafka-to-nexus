@@ -69,6 +69,12 @@ bool tryToFindTopics(std::string const &PoolTopic,
   return true;
 }
 
+std::string vector_to_comma_separated_string(std::vector<std::string> vector) {
+  return std::accumulate(
+      std::next(vector.begin()), vector.end(), vector.at(0),
+      [](std::string &a, std::string &b) { return a + "," + (b); });
+}
+
 int main(int argc, char **argv) {
   std::string const ApplicationName = "kafka-to-nexus";
   std::string const ApplicationVersion = GetVersion();
@@ -142,7 +148,8 @@ int main(int argc, char **argv) {
   std::signal(SIGINT, [](int signal) { signal_handler(signal, RunState); });
   std::signal(SIGTERM, [](int signal) { signal_handler(signal, RunState); });
 
-  Options->StreamerConfiguration.BrokerSettings.Address = Options->brokers;
+  Options->StreamerConfiguration.BrokerSettings.Address =
+      vector_to_comma_separated_string(Options->brokers);
 
   std::unique_ptr<FileWriter::Master> MasterPtr;
 

@@ -73,7 +73,7 @@ struct MainOpt {
   /// (e.g. list of current file writings).
   duration StatusMasterInterval{2000ms};
 
-  std::string brokers;
+  std::vector<std::string> brokers;
 
 private:
   std::string ServiceId{getDefaultServiceId()};
