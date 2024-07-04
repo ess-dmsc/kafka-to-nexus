@@ -31,12 +31,12 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
       .TIMES(1)
       .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
   REQUIRE_CALL(*Message, len()).TIMES(1).RETURN(TestPayload.size());
-  RdKafka::MessageTimestamp TimeStamp;
-  TimeStamp.timestamp = 1;
-  TimeStamp.type = RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME;
+  RdKafka::MessageTimestamp TimeStamp{
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 1};
   REQUIRE_CALL(*Message, timestamp()).TIMES(2).RETURN(TimeStamp);
   REQUIRE_CALL(*Message, offset()).TIMES(1).RETURN(1);
   ALLOW_CALL(*Message, partition()).RETURN(0);
+  ALLOW_CALL(*Message, topic_name()).RETURN("::some_topic::");
   ALLOW_CALL(*RdConsumer, unassign()).RETURN(RdKafka::ERR_NO_ERROR);
   ALLOW_CALL(*RdConsumer, unsubscribe()).RETURN(RdKafka::ERR_NO_ERROR);
 

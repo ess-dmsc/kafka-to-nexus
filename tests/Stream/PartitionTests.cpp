@@ -229,7 +229,8 @@ TEST_F(PartitionTest, MessageWithInvalidFlatBufferIsNotProcessed) {
   FileWriter::MessageMetaData MetaData{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           (Start + 10s).time_since_epoch()),
-      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
@@ -245,7 +246,8 @@ TEST_F(PartitionTest, MessageWithinStopLeewayDoesNotTriggerFinished) {
   FileWriter::MessageMetaData MetaData{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           (Stop + StopLeeway).time_since_epoch()),
-      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
@@ -260,7 +262,8 @@ TEST_F(PartitionTest, MessageAfterStopLeewayTriggersFinished) {
   FileWriter::MessageMetaData MetaData{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           (Stop + StopLeeway + 1s).time_since_epoch()),
-      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
@@ -274,7 +277,8 @@ TEST_F(PartitionTest, ForceStopStops) {
   FileWriter::MessageMetaData MetaData{
       std::chrono::duration_cast<std::chrono::milliseconds>(
           Start.time_since_epoch()),
-      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   uint8_t *TempPointer{nullptr};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message, FileWriter::Msg{TempPointer, 0, MetaData}};
@@ -417,7 +421,8 @@ TEST_F(PartitionTest, PartitionHasNotFinishedIfAnyOfItsFiltersHaveNotFinished) {
   REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(false);
 
   FileWriter::MessageMetaData MetaData{
-      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
       FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
@@ -445,7 +450,8 @@ TEST_F(PartitionTest, HasNotFinishedAlt2) {
   REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(true);
 
   FileWriter::MessageMetaData MetaData{
-      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
       FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
@@ -467,7 +473,8 @@ TEST_F(PartitionTest, HasNotFinishedAlt3) {
   REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(false);
 
   FileWriter::MessageMetaData MetaData{
-      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
       FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
@@ -489,7 +496,8 @@ TEST_F(PartitionTest, HasFinishedAlt1) {
   REQUIRE_CALL(*TestFilterPtr1, hasFinished()).TIMES(1).RETURN(true);
 
   FileWriter::MessageMetaData MetaData{
-      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
       FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
@@ -517,7 +525,8 @@ TEST_F(PartitionTest, PartitionHasFinishedIfAllItsFiltersHaveFinished) {
   REQUIRE_CALL(*TestFilterPtr2, hasFinished()).TIMES(1).RETURN(true);
 
   FileWriter::MessageMetaData MetaData{
-      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0};
+      1ms, RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME, 0, 0,
+      "::some_topic::"};
   Kafka::MockConsumer::PollReturnType PollReturn{
       Kafka::PollStatus::Message,
       FileWriter::Msg{SomeData.data(), SomeData.size(), MetaData}};
