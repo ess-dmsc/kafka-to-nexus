@@ -107,6 +107,7 @@ public:
                                  StartTime,
                                  StartTime + 50s,
                                  "control_topic",
+                                 "",
                                  "service_id"};
   std::string StartCmdAbsoluteFilename{
       std::filesystem::temp_directory_path().append("some_file_name")};
@@ -117,6 +118,7 @@ public:
                                          StartTime,
                                          StartTime + 50s,
                                          "control_topic",
+                                         "",
                                          "service_id"};
 };
 
