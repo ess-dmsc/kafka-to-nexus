@@ -23,11 +23,13 @@ public:
   nlohmann::json NexusStructure{};
   std::vector<ModuleHDFInfo> ModuleHDFInfoList;
   MetaData::TrackerPtr Tracker{};
+  std::filesystem::path TemplatePath{""};
+  std::string InstrumentName{""};
 };
 
 TEST_F(HDFFile, FileModes) {
   FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
-                                Tracker};
+                                Tracker,  TemplatePath,   InstrumentName};
   EXPECT_TRUE(UnderTest.isRegularMode());
   EXPECT_FALSE(UnderTest.isSWMRMode());
   UnderTest.openInSWMRMode();
@@ -40,7 +42,7 @@ TEST_F(HDFFile, FileModes) {
 
 TEST_F(HDFFile, DefaultFileAttributes) {
   FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
-                                Tracker};
+                                Tracker,  TemplatePath,   InstrumentName};
   auto RootGroup = UnderTest.hdfGroup();
   EXPECT_TRUE(RootGroup.attributes.exists("HDF5_Version"));
   EXPECT_TRUE(RootGroup.attributes.exists("creator"));
@@ -80,9 +82,10 @@ TEST_F(HDFFile, SimpleNexusStructure) {
       ]
   })"";
   EXPECT_TRUE(ModuleHDFInfoList.empty());
-  FileWriter::HDFFile UnderTest{FileName,
-                                nlohmann::json::parse(SimpleNexusStructure),
-                                ModuleHDFInfoList, Tracker};
+  FileWriter::HDFFile UnderTest{
+      FileName,          nlohmann::json::parse(SimpleNexusStructure),
+      ModuleHDFInfoList, Tracker,
+      TemplatePath,      InstrumentName};
   EXPECT_TRUE(UnderTest.hdfGroup().has_group("entry"));
   EXPECT_EQ(ModuleHDFInfoList.size(), 1u);
 }
