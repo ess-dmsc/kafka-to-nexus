@@ -34,10 +34,14 @@ public:
 protected:
   auto &hdfFile() { return H5File; }
   void init(const std::string &NexusStructure,
-            std::vector<ModuleHDFInfo> &ModuleHDFInfo);
+            std::vector<ModuleHDFInfo> &ModuleHDFInfo,
+            std::filesystem::path const &TemplatePath,
+            std::string const &InstrumentName);
 
   void init(const nlohmann::json &NexusStructure,
-            std::vector<ModuleHDFInfo> &ModuleHDFInfo);
+            std::vector<ModuleHDFInfo> &ModuleHDFInfo,
+            std::filesystem::path const &TemplatePath,
+            std::string const &InstrumentName);
 
 private:
   hdf5::file::File H5File;
@@ -49,7 +53,8 @@ public:
           nlohmann::json const &NexusStructure,
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
           MetaData::TrackerPtr &TrackerPtr,
-          std::filesystem::path const &TemplatePath = "");
+          std::filesystem::path const &TemplatePath,
+          std::string const &InstrumentName);
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
   void addMetaData();
   void openInSWMRMode();
@@ -60,7 +65,7 @@ public:
 
 private:
   bool SWMRMode{false};
-  void createFileInRegularMode(const std::string &TemplateFileName);
+  void createFileInRegularMode(std::filesystem::path const &TemplatePath, std::string const &InstrumentName);
   void openFileInRegularMode();
   void openFileInSWMRMode();
   void closeFile();

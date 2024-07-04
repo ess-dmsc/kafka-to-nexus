@@ -23,7 +23,8 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
                  nlohmann::json const &NexusStructure,
                  std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                  MetaData::TrackerPtr &TrackerPtr,
-                 std::filesystem::path const &TemplatePath)
+                 std::filesystem::path const &TemplatePath,
+                 std::string const &InstrumentName)
     : H5FileName(FileName), MetaDataTracker(TrackerPtr) {
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
@@ -31,24 +32,23 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
   FileAccessList.library_version_bounds(hdf5::property::LibVersion::Latest,
                                         hdf5::property::LibVersion::Latest);
 
-  //const std::string TemplateFileName = "/home/jonas/code/kafka-to-nexus/template.hdf";
-  // pass no file
-  createFileInRegularMode(TemplatePath);
-  //createFileInRegularMode(TemplateFileName); // Pass TemplateFileName
-  init(NexusStructure, ModuleHDFInfo);
+  createFileInRegularMode(TemplatePath, InstrumentName);
+  init(NexusStructure, ModuleHDFInfo, TemplatePath, InstrumentName);
   StoredNexusStructure = NexusStructure;
 }
 
 HDFFile::~HDFFile() { addMetaData(); }
 
-void HDFFile::createFileInRegularMode(const std::string &TemplateFileName) {
-  if (TemplateFileName.empty()) {
+void HDFFile::createFileInRegularMode(std::filesystem::path const &TemplatePath, std::string const &InstrumentName) {
+  if (TemplatePath.empty() or InstrumentName.empty()) {
+    LOG_WARN("Creating new file: {}", H5FileName.string());
     hdfFile() = hdf5::file::create(H5FileName,
                                    hdf5::file::AccessFlags::Exclusive |
                                        hdf5::file::AccessFlags::SWMRWrite,
                                    FileCreationList, FileAccessList);
   } else {
-    std::filesystem::copy(TemplateFileName, H5FileName, std::filesystem::copy_options::overwrite_existing);
+    LOG_WARN("Copying template file: {} to: {}", TemplatePath.string(), H5FileName.string());
+    std::filesystem::copy(TemplatePath, H5FileName, std::filesystem::copy_options::overwrite_existing);
     hdfFile() = hdf5::file::open(H5FileName,
                                  hdf5::file::AccessFlags::ReadWrite |
                                      hdf5::file::AccessFlags::SWMRWrite,
@@ -57,13 +57,17 @@ void HDFFile::createFileInRegularMode(const std::string &TemplateFileName) {
 }
 
 void HDFFileBase::init(const std::string &NexusStructure,
-                       std::vector<ModuleHDFInfo> &ModuleHDFInfo) {
+                       std::vector<ModuleHDFInfo> &ModuleHDFInfo,
+                       std::filesystem::path const &TemplatePath,
+                       std::string const &InstrumentName) {
   auto Document = nlohmann::json::parse(NexusStructure);
-  init(Document, ModuleHDFInfo);
+  init(Document, ModuleHDFInfo, TemplatePath, InstrumentName);
 }
 
 void HDFFileBase::init(const nlohmann::json &NexusStructure,
-                       std::vector<ModuleHDFInfo> &ModuleHDFInfo) {
+                       std::vector<ModuleHDFInfo> &ModuleHDFInfo,
+                       std::filesystem::path const &TemplatePath,
+                       std::string const &InstrumentName) {
 
   try {
     hdf5::property::AttributeCreationList acpl;
@@ -89,33 +93,38 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
       }
     }
 
-    // Adding checks before writing attributes
-    if (!RootGroup.attributes.exists("HDF5_Version")) {
+    LOG_WARN("The instrument name is: {}", InstrumentName);
+
+    // Only write this if we are using a template file
+    if (!TemplatePath.empty() or InstrumentName.empty()) {
       HDFAttributes::writeAttribute(RootGroup, "HDF5_Version",
                                     h5VersionStringLinked());
-    } else {
-      LOG_INFO("Attribute HDF5_Version already exists in RootGroup, skipping.");
-    }
-
-    if (!RootGroup.attributes.exists("file_name")) {
       HDFAttributes::writeAttribute(RootGroup, "file_name",
                                     hdfFile().id().file_name().string());
-    } else {
-      LOG_INFO("Attribute file_name already exists in RootGroup, skipping.");
-    }
-
-    if (!RootGroup.attributes.exists("creator")) {
       HDFAttributes::writeAttribute(
           RootGroup, "creator",
           fmt::format("kafka-to-nexus commit {:.13}", GetVersion()));
-    } else {
-      LOG_INFO("Attribute creator already exists in RootGroup, skipping.");
-    }
-
-    if (!RootGroup.attributes.exists("file_time")) {
       writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
-    } else {
-      LOG_INFO("Attribute file_time already exists in RootGroup, skipping.");
+
+      if (NexusStructure.contains("dynamic_version") && NexusStructure["dynamic_version"].is_string()) {
+        HDFAttributes::writeAttribute(RootGroup, "dynamic_version",
+                                      NexusStructure["dynamic_version"].get<std::string>());
+      }
+
+      if (RootGroup.attributes.exists("template_version")) {
+        std::string existingTemplateVersion;
+        RootGroup.attributes["template_version"].read(existingTemplateVersion);
+        LOG_WARN("Loaded template_version from HDF5 file: {}", existingTemplateVersion);
+      } else {
+        LOG_WARN("No template_version found in the existing HDF5 file.");
+      }
+
+    }
+    else {
+      if (NexusStructure.contains("template_version") && NexusStructure["template_version"].is_string()) {
+        HDFAttributes::writeAttribute(RootGroup, "template_version",
+                                      NexusStructure["template_version"].get<std::string>());
+      }
     }
 
     writeAttributesIfPresent(RootGroup, NexusStructure);
