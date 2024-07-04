@@ -38,11 +38,13 @@ public:
         std::make_shared<Kafka::ConsumerFactory>());
   }
 
-  static std::unique_ptr<CommandListener>
-  create_null(uri::URI const &command_topic_uri, Kafka::BrokerSettings settings, std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory,
-         time_point start_timestamp = time_point::max()) {
-    return std::make_unique<CommandListener>(
-        command_topic_uri, std::move(settings), start_timestamp, consumer_factory);
+  static std::unique_ptr<CommandListener> create_null(
+      uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+      const std::shared_ptr<Kafka::StubConsumerFactory> &consumer_factory,
+      time_point start_timestamp = time_point::max()) {
+    return std::make_unique<CommandListener>(command_topic_uri,
+                                             std::move(settings),
+                                             start_timestamp, consumer_factory);
   }
 
   /// \brief Destructor.
