@@ -8,8 +8,10 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Producer.h"
+
 #include "ConfigureKafka.h"
 #include "logger.h"
+#include <utility>
 
 namespace Kafka {
 

@@ -27,8 +27,8 @@ public:
   /// \param JobPoolUri The URI/URL of the Kafka broker + topic to connect to
   /// for new jobs. \param Settings Kafka (consumer) settings.
   JobListener(
-      const uri::URI &JobPoolUri, Kafka::BrokerSettings Settings,
-      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
+      std::string const &job_pool_topic, Kafka::BrokerSettings const &Settings,
+      const std::shared_ptr<Kafka::ConsumerFactoryInterface> &consumer_factory =
           std::make_shared<Kafka::ConsumerFactory>());
 
   /// \brief Poll the Kafka topic for a new job.

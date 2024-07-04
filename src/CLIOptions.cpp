@@ -143,13 +143,17 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--version", MainOptions.PrintVersion,
                "Print application version and exit");
 
-  addUriOption(App, "--command-status-uri", MainOptions.CommandBrokerURI,
-               "<host[:port][/topic]> Kafka broker/topic to listen for "
-               "commands and to push status updates to.")
+  App.add_option("--brokers", MainOptions.brokers,
+                 "Comma separated list of Kafka brokers")
       ->required();
 
-  addUriOption(App, "--job-pool-uri", MainOptions.JobPoolURI,
-               "<host[:port][/topic]> Kafka broker/topic to listen for jobs")
+  App.add_option("--command-status-topic", MainOptions.command_topic,
+                 "Kafka topic to listen for "
+                 "commands and to push status updates to")
+      ->required();
+
+  App.add_option("--job-pool-topic", MainOptions.job_pool_topic,
+                 "Kafka topic to listen for jobs on")
       ->required();
 
   addUriOption(App, "--graylog-logger-address",

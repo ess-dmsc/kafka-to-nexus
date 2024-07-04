@@ -32,7 +32,6 @@ createStatusReporter(MainOpt const &MainConfig,
                      std::string const &ApplicationVersion) {
   Kafka::BrokerSettings BrokerSettings =
       MainConfig.StreamerConfiguration.BrokerSettings;
-  BrokerSettings.Address = MainConfig.CommandBrokerURI.HostPort;
   auto const StatusInformation =
       Status::ApplicationStatusInfo{MainConfig.StatusMasterInterval,
                                     ApplicationName,
@@ -42,16 +41,15 @@ createStatusReporter(MainOpt const &MainConfig,
                                     MainConfig.getServiceId(),
                                     getPID()};
   return std::make_unique<Status::StatusReporter>(
-      BrokerSettings, MainConfig.CommandBrokerURI.Topic, StatusInformation);
+      BrokerSettings, MainConfig.command_topic, StatusInformation);
 }
 
 bool tryToFindTopics(std::string const &PoolTopic,
-                     std::string const &CommandTopic, std::string const &Broker,
-                     duration TimeOut,
+                     std::string const &CommandTopic, duration TimeOut,
                      Kafka::BrokerSettings const &BrokerSettings) {
   try {
-    auto ListOfTopics =
-        Kafka::MetadataEnquirer().getTopicList(Broker, TimeOut, BrokerSettings);
+    auto ListOfTopics = Kafka::MetadataEnquirer().getTopicList(
+        BrokerSettings.Address, TimeOut, BrokerSettings);
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           R"(Unable to find job pool topic with name "{}".)", PoolTopic);
@@ -97,7 +95,7 @@ int main(int argc, char **argv) {
 
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
-  if (not versionOfHDF5IsOk()) {
+  if (!versionOfHDF5IsOk()) {
     LOG_ALERT("Failed HDF5 version check. Exiting.");
     return EXIT_FAILURE;
   }
@@ -119,7 +117,7 @@ int main(int argc, char **argv) {
   MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
       std::make_unique<Metrics::LogSink>(), 60s));
 
-  if (not Options->GrafanaCarbonAddress.HostPort.empty()) {
+  if (!Options->GrafanaCarbonAddress.HostPort.empty()) {
     auto HostName = Options->GrafanaCarbonAddress.Host;
     auto Port = Options->GrafanaCarbonAddress.Port;
     MetricsReporters.push_back(std::make_shared<Metrics::Reporter>(
@@ -144,6 +142,8 @@ int main(int argc, char **argv) {
   std::signal(SIGINT, [](int signal) { signal_handler(signal, RunState); });
   std::signal(SIGTERM, [](int signal) { signal_handler(signal, RunState); });
 
+  Options->StreamerConfiguration.BrokerSettings.Address = Options->brokers;
+
   std::unique_ptr<FileWriter::Master> MasterPtr;
 
   auto GenerateMaster = [&]() {
@@ -151,8 +151,8 @@ int main(int argc, char **argv) {
         *Options,
         Command::Handler::create(Options->getServiceId(),
                                  Options->StreamerConfiguration.BrokerSettings,
-                                 Options->JobPoolURI,
-                                 Options->CommandBrokerURI),
+                                 Options->job_pool_topic,
+                                 Options->command_topic),
         createStatusReporter(*Options, ApplicationName, ApplicationVersion),
         std::move(registrar));
   };
@@ -163,15 +163,12 @@ int main(int argc, char **argv) {
   bool FindTopicMode{true};
   duration CMetaDataTimeout{
       Options->StreamerConfiguration.BrokerSettings.MinMetadataTimeout};
-  auto PoolTopic = Options->JobPoolURI.Topic;
-  auto CommandTopic = Options->CommandBrokerURI.Topic;
   LOG_DEBUG("Starting run loop.");
   LOG_DEBUG("Retrieving topic names from broker.");
   while (!shouldStop(MasterPtr, FindTopicMode, RunState)) {
     try {
       if (FindTopicMode) {
-        if (tryToFindTopics(PoolTopic, CommandTopic,
-                            Options->CommandBrokerURI.HostPort,
+        if (tryToFindTopics(Options->job_pool_topic, Options->command_topic,
                             CMetaDataTimeout,
                             Options->StreamerConfiguration.BrokerSettings)) {
           LOG_DEBUG("Command and status topics found, starting master.");
@@ -186,7 +183,7 @@ int main(int argc, char **argv) {
           }
           LOG_WARN(
               R"(Meta data call for retrieving the command topic ("{}") from the broker failed. Re-trying with a timeout of {} ms.)",
-              CommandTopic,
+              Options->command_topic,
               std::chrono::duration_cast<std::chrono::milliseconds>(
                   CMetaDataTimeout)
                   .count());

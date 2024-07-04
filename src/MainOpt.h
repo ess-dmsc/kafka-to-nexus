@@ -30,9 +30,9 @@ struct MainOpt {
   std::string ServiceName;
   void setServiceName(std::string NewServiceName);
 
-  std::string getServiceId() const;
+  [[nodiscard]] std::string getServiceId() const;
 
-  std::string getHDFOutputPrefix() const;
+  [[nodiscard]] std::string getHDFOutputPrefix() const;
 
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamController.
@@ -54,11 +54,11 @@ struct MainOpt {
   /// TCP port number for querying application status
   int ServerStatusPort{8888};
 
-  /// Kafka broker and topic where file writer commands are published.
-  uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
+  /// Kafka topic where file writer commands are published.
+  std::string command_topic;
 
-  /// Kafka broker and topic where file writer jobs are published.
-  uri::URI JobPoolURI{"localhost:9092/kafka-to-nexus.jobpool"};
+  /// Kafka topic where file writer jobs are published.
+  std::string job_pool_topic;
 
   /// \brief Path for HDF output.
   ///
@@ -72,6 +72,8 @@ struct MainOpt {
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
   duration StatusMasterInterval{2000ms};
+
+  std::string brokers;
 
 private:
   std::string ServiceId{getDefaultServiceId()};
