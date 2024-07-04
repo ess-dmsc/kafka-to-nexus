@@ -28,11 +28,14 @@ namespace FileWriter {
 using nlohmann::json;
 
 std::vector<ModuleHDFInfo>
-initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString, std::filesystem::path const &TemplatePath, std::string const &InstrumentName) {
+initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
+              std::filesystem::path const &TemplatePath,
+              std::string const &InstrumentName) {
   try {
     json const NexusStructure = json::parse(NexusStructureString);
     std::vector<ModuleHDFInfo> ModuleHDFInfoList;
-    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList, TemplatePath, InstrumentName);
+    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList, TemplatePath,
+                       InstrumentName);
     return ModuleHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
@@ -133,8 +136,8 @@ std::unique_ptr<StreamController> createFileWritingJob(
   std::filesystem::path TemplatePath{TemplateRootPath + FolderName + "/" +
                                      FileName};
 
-  std::vector<ModuleHDFInfo> ModuleHDFInfoList =
-      initializeHDF(*Task, StartInfo.NexusStructure, TemplatePath, StartInfo.InstrumentName);
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
+      *Task, StartInfo.NexusStructure, TemplatePath, StartInfo.InstrumentName);
   std::vector<ModuleHDFInfo> mdatInfoList =
       extractMdatModules(ModuleHDFInfoList);
 
@@ -200,17 +203,16 @@ std::unique_ptr<StreamController> createFileWritingJob(
       metadata_enquirer, consumer_factory);
 }
 
-
-void createFileWriterTemplate(
-    Command::StartInfo const &StartInfo, std::filesystem::path const &filepath,
-    Metrics::IRegistrar *Registrar, MetaData::TrackerPtr const &Tracker) {
+void createFileWriterTemplate(Command::StartInfo const &StartInfo,
+                              std::filesystem::path const &filepath,
+                              Metrics::IRegistrar *Registrar,
+                              MetaData::TrackerPtr const &Tracker) {
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
   std::filesystem::path TemplatePath{""}; // Empty path when writing a template.
-  std::vector<ModuleHDFInfo> ModuleHDFInfoList =
-      initializeHDF(*Task, StartInfo.NexusStructure, TemplatePath, StartInfo.InstrumentName);
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
+      *Task, StartInfo.NexusStructure, TemplatePath, StartInfo.InstrumentName);
 }
-
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
                                    FileWriterTask &Task) {

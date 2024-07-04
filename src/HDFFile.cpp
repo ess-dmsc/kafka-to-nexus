@@ -39,7 +39,8 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
 
 HDFFile::~HDFFile() { addMetaData(); }
 
-void HDFFile::createFileInRegularMode(std::filesystem::path const &TemplatePath, std::string const &InstrumentName) {
+void HDFFile::createFileInRegularMode(std::filesystem::path const &TemplatePath,
+                                      std::string const &InstrumentName) {
   if (TemplatePath.empty() or InstrumentName.empty()) {
     LOG_WARN("Creating new file: {}", H5FileName.string());
     hdfFile() = hdf5::file::create(H5FileName,
@@ -47,8 +48,10 @@ void HDFFile::createFileInRegularMode(std::filesystem::path const &TemplatePath,
                                        hdf5::file::AccessFlags::SWMRWrite,
                                    FileCreationList, FileAccessList);
   } else {
-    LOG_WARN("Copying template file: {} to: {}", TemplatePath.string(), H5FileName.string());
-    std::filesystem::copy(TemplatePath, H5FileName, std::filesystem::copy_options::overwrite_existing);
+    LOG_WARN("Copying template file: {} to: {}", TemplatePath.string(),
+             H5FileName.string());
+    std::filesystem::copy(TemplatePath, H5FileName,
+                          std::filesystem::copy_options::overwrite_existing);
     hdfFile() = hdf5::file::open(H5FileName,
                                  hdf5::file::AccessFlags::ReadWrite |
                                      hdf5::file::AccessFlags::SWMRWrite,
@@ -106,24 +109,28 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
           fmt::format("kafka-to-nexus commit {:.13}", GetVersion()));
       writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
 
-      if (NexusStructure.contains("dynamic_version") && NexusStructure["dynamic_version"].is_string()) {
-        HDFAttributes::writeAttribute(RootGroup, "dynamic_version",
-                                      NexusStructure["dynamic_version"].get<std::string>());
+      if (NexusStructure.contains("dynamic_version") &&
+          NexusStructure["dynamic_version"].is_string()) {
+        HDFAttributes::writeAttribute(
+            RootGroup, "dynamic_version",
+            NexusStructure["dynamic_version"].get<std::string>());
       }
 
       if (RootGroup.attributes.exists("template_version")) {
         std::string existingTemplateVersion;
         RootGroup.attributes["template_version"].read(existingTemplateVersion);
-        LOG_WARN("Loaded template_version from HDF5 file: {}", existingTemplateVersion);
+        LOG_WARN("Loaded template_version from HDF5 file: {}",
+                 existingTemplateVersion);
       } else {
         LOG_WARN("No template_version found in the existing HDF5 file.");
       }
 
-    }
-    else {
-      if (NexusStructure.contains("template_version") && NexusStructure["template_version"].is_string()) {
-        HDFAttributes::writeAttribute(RootGroup, "template_version",
-                                      NexusStructure["template_version"].get<std::string>());
+    } else {
+      if (NexusStructure.contains("template_version") &&
+          NexusStructure["template_version"].is_string()) {
+        HDFAttributes::writeAttribute(
+            RootGroup, "template_version",
+            NexusStructure["template_version"].get<std::string>());
       }
     }
 
