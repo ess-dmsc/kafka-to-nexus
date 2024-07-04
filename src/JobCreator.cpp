@@ -124,17 +124,11 @@ std::unique_ptr<StreamController> createFileWritingJob(
     Command::StartMessage const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
     MetaData::TrackerPtr const &Tracker,
+    std::filesystem::path const &TemplatePath,
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory) {
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
-
-  std::string const TemplateRootPath{"../../nexus_templates/"};
-  std::string const FolderName = StartInfo.InstrumentName;
-  std::string const FileName = StartInfo.InstrumentName + ".hdf";
-
-  std::filesystem::path TemplatePath{TemplateRootPath + FolderName + "/" +
-                                     FileName};
 
   std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
       *Task, StartInfo.NexusStructure, TemplatePath, StartInfo.InstrumentName);
