@@ -381,15 +381,19 @@ void createHDFStructures(
           Logger::Debug("Group {} exists: {}", CNode.Name.get_value(), groupExists);
           hdf5::node::Group CurrentGroup;
           if (!groupExists) {
-            CurrentGroup = Parent.create_group(CNode.Name.get_value(), LinkCreationPropertyList);
+            CurrentGroup = Parent.create_group(CNode.Name.get_value(),
+                                               LinkCreationPropertyList);
           } else {
             CurrentGroup = Parent.get_group(CNode.Name.get_value());
           }
           Path.push_back(CNode.Name.get_value());
           writeAttributesIfPresent(CurrentGroup, Value);
-          if (!CNode.Children.hasDefaultValue() && CNode.Children.get_value().is_array()) {
+          if (!CNode.Children.hasDefaultValue() &&
+              CNode.Children.get_value().is_array()) {
             for (auto &Child : CNode.Children.get_value()) {
-              createHDFStructures(Child, CurrentGroup, Level + 1, LinkCreationPropertyList, FixedStringHDFType, HDFStreamInfo, Path);
+              createHDFStructures(Child, CurrentGroup, Level + 1,
+                                  LinkCreationPropertyList, FixedStringHDFType,
+                                  HDFStreamInfo, Path);
             }
           } else {
             Logger::Debug(
@@ -397,26 +401,36 @@ void createHDFStructures(
           }
           Path.pop_back();
         } catch (std::exception const &e) {
-          Logger::Error("Failed to create or access group. Name: {}. Message: {}. HDF5 Path: {}", CNode.Name.get_value(), e.what(), std::string(Parent.link().path()));
+          Logger::Error("Failed to create or access group. Name: {}. Message: {}. "
+                    "HDF5 Path: {}",
+                    CNode.Name.get_value(), e.what(),
+                    std::string(Parent.link().path()));
         }
       } else {
-        Logger::Error("Unknown HDF node of type {}. Ignoring.", CNode.Type.get_value());
+        Logger::Error("Unknown HDF node of type {}. Ignoring.",
+                  CNode.Type.get_value());
       }
     } else if (CNode.Type.get_key() == "module") {
       if (CNode.Type.get_value() == "dataset") {
         try {
-          std::string datasetName = CNode.Config.get_value().at("name").get<std::string>();
+          std::string datasetName =
+              CNode.Config.get_value().at("name").get<std::string>();
           if (!Parent.has_dataset(datasetName)) {
-            Logger::Debug("Creating dataset {} in group {}", datasetName, std::string(Parent.link().path()));
+            Logger::Debug("Creating dataset {} in group {}", datasetName,
+                      std::string(Parent.link().path()));
             auto NewDataset = writeDataset(Parent, CNode.Config.get_value());
             writeAttributesIfPresent(Parent.get_dataset(NewDataset), Value);
           } else {
-            Logger::Debug("Dataset {} already exists in group {}", datasetName, std::string(Parent.link().path()));
+            Logger::Debug("Dataset {} already exists in group {}", datasetName,
+                      std::string(Parent.link().path()));
             auto ExistingDataset = Parent.get_dataset(datasetName);
             writeAttributesIfPresent(ExistingDataset, Value);
           }
         } catch (const std::exception &e) {
-          Logger::Error("Failed to create or access dataset. Name: {}. Message: {}. HDF5 Path: {}", CNode.Name.get_value(), e.what(), std::string(Parent.link().path()));
+          Logger::Error("Failed to create or access dataset. Name: {}. Message: "
+                    "{}. HDF5 Path: {}",
+                    CNode.Name.get_value(), e.what(),
+                    std::string(Parent.link().path()));
         }
       } else {
         std::string pathstr;
@@ -428,7 +442,9 @@ void createHDFStructures(
       }
     }
   } catch (std::exception const &e) {
-    Logger::Error("Failed to create structure with path \"{}\" ({} levels deep). Message: {}", std::string(Parent.link().path()), Level, e.what());
+    Logger::Error("Failed to create structure with path \"{}\" ({} levels deep). "
+              "Message: {}",
+              std::string(Parent.link().path()), Level, e.what());
   }
 }
 

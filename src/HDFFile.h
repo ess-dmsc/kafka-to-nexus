@@ -65,7 +65,8 @@ public:
 
 private:
   bool SWMRMode{false};
-  void createFileInRegularMode(std::filesystem::path const &TemplatePath, std::string const &InstrumentName);
+  void createFileInRegularMode(std::filesystem::path const &TemplatePath,
+                               std::string const &InstrumentName);
   void openFileInRegularMode();
   void openFileInSWMRMode();
   void closeFile();

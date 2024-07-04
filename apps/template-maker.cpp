@@ -5,27 +5,25 @@
 #include "logger.h"
 #include <ep01_epics_connection_generated.h>
 #include <f144_logdata_generated.h>
+#include <fstream>
 #include <iostream>
 #include <memory>
-#include <utility>
-#include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 using std::chrono_literals::operator""ms;
 
-
-std::string readJsonFromFile(const std::string& filePath) {
-    std::ifstream file(filePath);
-    if (!file.is_open()) {
-        throw std::runtime_error("Unable to open file: " + filePath);
-    }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    file.close();
-    return buffer.str();
+std::string readJsonFromFile(const std::string &filePath) {
+  std::ifstream file(filePath);
+  if (!file.is_open()) {
+    throw std::runtime_error("Unable to open file: " + filePath);
+  }
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  file.close();
+  return buffer.str();
 }
-
 
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
@@ -53,13 +51,13 @@ public:
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    std::cerr << "Usage: " << argv[0] << " <InstrumentName> <JsonFilePath>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <InstrumentName> <JsonFilePath>"
+              << std::endl;
     return 1;
   }
 
   std::string instrumentName = argv[1];
   std::string jsonFilePath = argv[2];
-
 
   using std::chrono_literals::operator""ms;
   std::cout << "Starting writing\n";
@@ -70,7 +68,8 @@ int main(int argc, char **argv) {
 
   Command::StartInfo start_info;
 
-  //std::string jsonFilePath = "/home/jonas/code/nexus-json-templates/bifrost/bifrost-test.json";
+  // std::string jsonFilePath =
+  // "/home/jonas/code/nexus-json-templates/bifrost/bifrost-test.json";
   std::string example_json = readJsonFromFile(jsonFilePath);
 
   std::cout << "Loaded file\n";
@@ -82,9 +81,11 @@ int main(int argc, char **argv) {
   FileWriter::StreamerOptions streamer_options;
   streamer_options.StartTimestamp = time_point{0ms};
   streamer_options.StopTimestamp = time_point{1250ms};
-  std::filesystem::path filepath{"../../nexus_templates/"+instrumentName+"/"+instrumentName+".hdf"};
+  std::filesystem::path filepath{"../../nexus_templates/" + instrumentName +
+                                 "/" + instrumentName + ".hdf"};
 
-  FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(), tracker);
+  FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
+                                       tracker);
   // stream_controller->start();
 
   // while (!stream_controller->isDoneWriting()) {

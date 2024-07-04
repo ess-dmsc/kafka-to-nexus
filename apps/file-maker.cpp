@@ -7,10 +7,9 @@
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <memory>
-#include <utility>
-#include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 using std::chrono_literals::operator""ms;
 using namespace FlatBuffers;
