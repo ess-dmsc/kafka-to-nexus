@@ -123,8 +123,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   if (!instrument_name.empty()) {
     start_info.InstrumentName = instrument_name;
   }
-  if (!instrumentName.empty()) {
-    start_info.InstrumentName = instrumentName;
+  if (!InstrumentName.empty()) {
+    start_info.InstrumentName = InstrumentName;
   }
   start_info.JobID = "some_job_id";
 
