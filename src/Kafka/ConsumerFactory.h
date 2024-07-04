@@ -43,7 +43,7 @@ class StubConsumerFactory : public Kafka::ConsumerFactoryInterface {
 public:
   std::shared_ptr<Kafka::ConsumerInterface> createConsumer(
       [[maybe_unused]] Kafka::BrokerSettings const &settings) override {
-    auto consumer = std::make_shared<StubConsumer>(messages);
+    auto consumer = std::make_shared<StubConsumer>(messages, valid_topics);
     return consumer;
   }
 
@@ -51,9 +51,8 @@ public:
   createConsumerAtOffset([[maybe_unused]] Kafka::BrokerSettings const &settings,
                          std::string const &topic, int partition_id,
                          [[maybe_unused]] int64_t offset) override {
-    auto consumer = std::make_shared<StubConsumer>(messages);
-    consumer->topic = topic;
-    consumer->partition = partition_id;
+    auto consumer = std::make_shared<StubConsumer>(messages, valid_topics);
+    consumer->addPartitionAtOffset(topic, partition_id, offset);
     return consumer;
   }
   ~StubConsumerFactory() override = default;
@@ -61,5 +60,8 @@ public:
   // One set of messages shared by all topics/consumers.
   std::shared_ptr<std::vector<FileWriter::Msg>> messages =
       std::make_shared<std::vector<FileWriter::Msg>>();
+
+  // Valid topics - if empty then all topics are valid
+  std::vector<std::string> valid_topics;
 };
 } // namespace Kafka
