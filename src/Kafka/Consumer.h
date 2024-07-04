@@ -95,13 +95,20 @@ public:
   ~StubConsumer() override = default;
 
   std::pair<Kafka::PollStatus, FileWriter::Msg> poll() override {
-    if (offset < messages->size()) {
-      auto temp = FileWriter::Msg{messages->at(offset).data(),
-                                  messages->at(offset).size(),
-                                  messages->at(offset).getMetaData()};
+    // Look for next message with the correct topic
+    while (offset < messages->size()) {
+      auto const message_topic = messages->at(offset).getMetaData().topic;
+      if (message_topic == topic) {
+        auto temp = FileWriter::Msg{messages->at(offset).data(),
+                                    messages->at(offset).size(),
+                                    messages->at(offset).getMetaData()};
+        ++offset;
+        return {Kafka::PollStatus::Message, std::move(temp)};
+      }
       ++offset;
-      return {Kafka::PollStatus::Message, std::move(temp)};
     }
+
+    // No more messages
     if (at_end_of_partition) {
       return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
     } else {
