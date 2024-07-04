@@ -50,14 +50,12 @@ public:
 };
 
 int main(int argc, char **argv) {
-  if (argc != 3) {
-    std::cerr << "Usage: " << argv[0] << " <InstrumentName> <JsonFilePath>"
-              << std::endl;
-    return 1;
-  }
-
-  std::string instrumentName = argv[1];
-  std::string jsonFilePath = argv[2];
+  CLI::App app{"template-maker app"};
+  std::string json_file;
+  std::string InstrumentName;
+  app.add_option("-f, --file", json_file, "The JSON file to load");
+  app.add_option("-i, --instrument", InstrumentName, "The instrument name");
+  CLI11_PARSE(app, argc, argv);
 
   using std::chrono_literals::operator""ms;
   std::cout << "Starting writing\n";
@@ -68,32 +66,33 @@ int main(int argc, char **argv) {
 
   Command::StartInfo start_info;
 
-  // std::string jsonFilePath =
-  // "/home/jonas/code/nexus-json-templates/bifrost/bifrost-test.json";
-  std::string example_json = readJsonFromFile(jsonFilePath);
+  std::string example_json = readJsonFromFile(json_file);
 
   std::cout << "Loaded file\n";
 
-  start_info.NexusStructure = example_json;
+  if (!json_file.empty()) {
+    start_info.NexusStructure = readJsonFromFile(json_file);
+  } else {
+    std::throw_with_nested(std::runtime_error("No JSON file provided"));
+  }
+  }
+  if (!InstrumentName.empty()) {
+    start_info.InstrumentName = InstrumentName;
+  } else {
+    std::throw_with_nested(std::runtime_error("No instrument name provided"));
+  }
   start_info.JobID = "some_job_id";
-  start_info.InstrumentName = instrumentName;
 
   FileWriter::StreamerOptions streamer_options;
   streamer_options.StartTimestamp = time_point{0ms};
   streamer_options.StopTimestamp = time_point{1250ms};
-  std::filesystem::path filepath{"../../nexus_templates/" + instrumentName +
-                                 "/" + instrumentName + ".hdf"};
+  std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName +
+                                 "/" + InstrumentName + ".hdf"};
 
   FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
                                        tracker);
-  // stream_controller->start();
 
-  // while (!stream_controller->isDoneWriting()) {
-  //   std::cout << "Stream controller is writing\n";
-  //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  // }
-
-  std::cout << "Stream controller has finished writing\n";
+  std::cout << "Finished writing template\n";
 
   return 0;
 }
