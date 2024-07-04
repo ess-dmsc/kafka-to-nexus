@@ -23,57 +23,35 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
                  nlohmann::json const &NexusStructure,
                  std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                  MetaData::TrackerPtr &TrackerPtr,
-<<<<<<< HEAD
                  std::filesystem::path const &template_path,
                  std::string const &instrument_name)
-=======
-                 std::filesystem::path const &TemplatePath)
->>>>>>> 2258ae1d (:osomewhat working)
     : H5FileName(FileName), MetaDataTracker(TrackerPtr) {
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
   }
   FileAccessList.library_version_bounds(hdf5::property::LibVersion::Latest,
                                         hdf5::property::LibVersion::Latest);
-
-<<<<<<< HEAD
   createFileInRegularMode(template_path, instrument_name);
   init(NexusStructure, ModuleHDFInfo, template_path, instrument_name);
-=======
-  //const std::string TemplateFileName = "/home/jonas/code/kafka-to-nexus/template.hdf";
-  // pass no file
-  createFileInRegularMode(TemplatePath);
-  //createFileInRegularMode(TemplateFileName); // Pass TemplateFileName
-  init(NexusStructure, ModuleHDFInfo);
->>>>>>> 2258ae1d (:osomewhat working)
   StoredNexusStructure = NexusStructure;
 }
 
 HDFFile::~HDFFile() { addMetaData(); }
 
-<<<<<<< HEAD
 void HDFFile::createFileInRegularMode(
     std::filesystem::path const &template_path,
     std::string const &instrument_name) {
   if (template_path.empty() || instrument_name.empty()) {
     LOG_INFO("Creating new file: {}", H5FileName.string());
-=======
-void HDFFile::createFileInRegularMode(const std::string &TemplateFileName) {
-  if (TemplateFileName.empty()) {
->>>>>>> 2258ae1d (:osomewhat working)
     hdfFile() = hdf5::file::create(H5FileName,
                                    hdf5::file::AccessFlags::Exclusive |
                                        hdf5::file::AccessFlags::SWMRWrite,
                                    FileCreationList, FileAccessList);
   } else {
-<<<<<<< HEAD
     LOG_INFO("Copying template file: {} to: {}", template_path.string(),
              H5FileName.string());
     std::filesystem::copy(template_path, H5FileName,
                           std::filesystem::copy_options::overwrite_existing);
-=======
-    std::filesystem::copy(TemplateFileName, H5FileName, std::filesystem::copy_options::overwrite_existing);
->>>>>>> 2258ae1d (:osomewhat working)
     hdfFile() = hdf5::file::open(H5FileName,
                                  hdf5::file::AccessFlags::ReadWrite |
                                      hdf5::file::AccessFlags::SWMRWrite,
@@ -118,43 +96,13 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
       }
     }
 
-<<<<<<< HEAD
     if (!template_path.empty() || instrument_name.empty()) {
       write_common_attributes(RootGroup);
       write_dynamic_version_if_present(RootGroup, NexusStructure);
       ExistingTemplateVersion = read_template_version_if_present(RootGroup);
     } else {
       write_template_version_if_present(RootGroup, NexusStructure);
-=======
-    // Adding checks before writing attributes
-    if (!RootGroup.attributes.exists("HDF5_Version")) {
-      HDFAttributes::writeAttribute(RootGroup, "HDF5_Version",
-                                    h5VersionStringLinked());
-    } else {
-      LOG_INFO("Attribute HDF5_Version already exists in RootGroup, skipping.");
-    }
-
-    if (!RootGroup.attributes.exists("file_name")) {
-      HDFAttributes::writeAttribute(RootGroup, "file_name",
-                                    hdfFile().id().file_name().string());
-    } else {
-      LOG_INFO("Attribute file_name already exists in RootGroup, skipping.");
-    }
-
-    if (!RootGroup.attributes.exists("creator")) {
-      HDFAttributes::writeAttribute(
-          RootGroup, "creator",
-          fmt::format("kafka-to-nexus commit {:.13}", GetVersion()));
-    } else {
-      LOG_INFO("Attribute creator already exists in RootGroup, skipping.");
-    }
-
-    if (!RootGroup.attributes.exists("file_time")) {
-      writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
-    } else {
-      LOG_INFO("Attribute file_time already exists in RootGroup, skipping.");
->>>>>>> 2258ae1d (:osomewhat working)
-    }
+    LOG_WARN("The instrument name is: {}", InstrumentName);
 
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {

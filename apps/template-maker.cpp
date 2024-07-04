@@ -76,6 +76,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     std::throw_with_nested(std::runtime_error("No instrument name provided"));
   }
   start_info.JobID = "some_job_id";
+  start_info.InstrumentName = instrumentName;
 
   std::filesystem::path filepath{"../../nexus_templates/{}/{}.hdf" + instrument_name +
                                  "/" + instrument_name + ".hdf"};
