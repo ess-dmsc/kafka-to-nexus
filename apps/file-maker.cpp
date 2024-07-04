@@ -176,8 +176,9 @@ void add_message(Kafka::StubConsumerFactory &consumer_factory,
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"file-maker app"};
   std::string json_file;
+  std::string InstrumentName;
   app.add_option("-f, --file", json_file, "The JSON file to load");
-  app.add_option("-i, --instrument", instrumentName, "The instrument name");
+  app.add_option("-i, --instrument", InstrumentName, "The instrument name");
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
@@ -226,8 +227,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   } else {
     start_info.NexusStructure = example_json;
   }
-  if (!instrumentName.empty()) {
-    start_info.InstrumentName = instrumentName;
+  if (!InstrumentName.empty()) {
+    start_info.InstrumentName = InstrumentName;
   }
   start_info.JobID = "some_job_id";
 
