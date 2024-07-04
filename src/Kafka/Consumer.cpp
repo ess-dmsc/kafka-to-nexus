@@ -166,7 +166,6 @@ std::pair<PollStatus, FileWriter::Msg> Consumer::poll() {
       toMilliSeconds(ConsumerBrokerSettings.PollTimeout)));
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR: {
-    // TODO: add topic name to metadata
     auto MetaData = FileWriter::MessageMetaData{
         std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
         KafkaMsg->timestamp().type, KafkaMsg->offset(), KafkaMsg->partition(),
