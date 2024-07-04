@@ -51,13 +51,20 @@ void Master::startWriting(Command::StartMessage const &StartInfo) {
     streamer_options.StartTimestamp = StartInfo.StartTime;
     streamer_options.StopTimestamp = StartInfo.StopTime;
 
-    std::filesystem::path const filepath =
-        std::filesystem::path(MainConfig.HDFOutputPrefix) /
-        std::filesystem::path(StartInfo.Filename).relative_path();
+    std::filesystem::path const prefix{MainConfig.HDFOutputPrefix};
 
-    CurrentStreamController =
-        createFileWritingJob(StartInfo, streamer_options, filepath,
-                             MasterMetricsRegistrar.get(), MetaDataTracker);
+    std::filesystem::path const filepath =
+        prefix / std::filesystem::path(StartInfo.Filename).relative_path();
+
+    std::filesystem::path LocalTemplatePath{"nexus_templates/" +
+                                            StartInfo.InstrumentName + "/" +
+                                            StartInfo.InstrumentName + ".hdf"};
+
+    std::filesystem::path const TemplatePath = prefix / LocalTemplatePath;
+
+    CurrentStreamController = createFileWritingJob(
+        StartInfo, streamer_options, filepath, MasterMetricsRegistrar.get(),
+        MetaDataTracker, TemplatePath);
     CurrentStreamController->start();
 
     metadata_from_start_msg = StartInfo.Metadata;

@@ -24,6 +24,7 @@ std::unique_ptr<StreamController> createFileWritingJob(
     Command::StartMessage const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
     MetaData::TrackerPtr const &Tracker,
+    std::filesystem::path const &TemplatePath,
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
         std::make_shared<Kafka::MetadataEnquirer>(),
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =

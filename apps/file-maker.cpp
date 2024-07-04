@@ -227,8 +227,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   } else {
     start_info.NexusStructure = example_json;
   }
+  std::filesystem::path const TemplatePath;
   if (!InstrumentName.empty()) {
     start_info.InstrumentName = InstrumentName;
+    std::filesystem::path const TemplatePath{"../../nexus_templates/" +
+                                             InstrumentName + "/" +
+                                             InstrumentName + ".hdf"};
   }
   start_info.JobID = "some_job_id";
 
@@ -239,7 +243,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
-      metadata_enquirer, consumer_factory);
+      TemplatePath, metadata_enquirer, consumer_factory);
   stream_controller->start();
 
   while (!stream_controller->isDoneWriting()) {
