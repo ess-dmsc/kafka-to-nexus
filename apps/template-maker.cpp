@@ -75,24 +75,24 @@ int main(int argc, char **argv) {
   } else {
     std::throw_with_nested(std::runtime_error("No JSON file provided"));
   }
-  }
-  if (!InstrumentName.empty()) {
-    start_info.InstrumentName = InstrumentName;
-  } else {
-    std::throw_with_nested(std::runtime_error("No instrument name provided"));
-  }
-  start_info.JobID = "some_job_id";
+}
+if (!InstrumentName.empty()) {
+  start_info.InstrumentName = InstrumentName;
+} else {
+  std::throw_with_nested(std::runtime_error("No instrument name provided"));
+}
+start_info.JobID = "some_job_id";
 
-  FileWriter::StreamerOptions streamer_options;
-  streamer_options.StartTimestamp = time_point{0ms};
-  streamer_options.StopTimestamp = time_point{1250ms};
-  std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName +
-                                 "/" + InstrumentName + ".hdf"};
+FileWriter::StreamerOptions streamer_options;
+streamer_options.StartTimestamp = time_point{0ms};
+streamer_options.StopTimestamp = time_point{1250ms};
+std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName + "/" +
+                               InstrumentName + ".hdf"};
 
-  FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
-                                       tracker);
+FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
+                                     tracker);
 
-  std::cout << "Finished writing template\n";
+std::cout << "Finished writing template\n";
 
-  return 0;
+return 0;
 }
