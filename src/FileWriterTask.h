@@ -56,7 +56,8 @@ public:
   /// \param HdfInfo The HDF information for the stream.
   void InitialiseHdf(nlohmann::json const &NexusStructure,
                      std::vector<ModuleHDFInfo> &HdfInfo,
-                     std::filesystem::path const &TemplatePath = "");
+                     std::filesystem::path const &TemplatePath,
+                     std::string const &InstrumentName);
 
   /// \brief Add a source to the topics.
   ///
