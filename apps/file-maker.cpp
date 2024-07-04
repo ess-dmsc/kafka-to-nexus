@@ -104,8 +104,8 @@ std::string const example_json = R"(
 			}
 		]
 	}]
-})";
-
+}
+                             )";
 
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
