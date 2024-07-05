@@ -22,7 +22,7 @@ std::unique_ptr<Handler> Handler::create(std::string const &service_id,
                                          Kafka::BrokerSettings const &settings,
                                          const uri::URI &job_pool_uri,
                                          const uri::URI &command_topic_uri) {
-  auto pool_listener = std::make_unique<JobListener>(job_pool_uri, settings);
+  auto pool_listener = JobListener::create(job_pool_uri, settings);
   auto command_listener = CommandListener::create(command_topic_uri, settings);
   std::unique_ptr<FeedbackProducer> command_response =
       FeedbackProducer::create(service_id, command_topic_uri, settings);
