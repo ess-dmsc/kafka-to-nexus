@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "FeedbackProducerBase.h"
 #include "Kafka/BrokerSettings.h"
 #include "Kafka/Producer.h"
 #include "Kafka/ProducerTopic.h"
@@ -18,7 +17,14 @@
 
 namespace Command {
 
-class FeedbackProducer : public FeedbackProducerBase {
+enum class ActionResponse { StartJob, SetStopTime };
+
+enum class ActionResult {
+  Success,
+  Failure,
+};
+
+class FeedbackProducer {
 public:
   std::unique_ptr<FeedbackProducer> static create(
       std::string const &ServiceIdentifier, uri::URI const &ResponseUri,
@@ -31,11 +37,11 @@ public:
   void publishResponse(ActionResponse Command, ActionResult Result,
                        std::string const &JobId, std::string const &CommandId,
                        time_point StopTime, int StatusCode,
-                       std::string const &Description) override;
+                       std::string const &Description);
   void publishStoppedMsg(ActionResult Result, std::string const &JobId,
                          std::string const &Description,
                          std::filesystem::path FilePath,
-                         std::string const &Metadata) override;
+                         std::string const &Metadata);
 
 private:
   std::string ServiceId;
