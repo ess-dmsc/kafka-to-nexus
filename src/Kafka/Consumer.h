@@ -90,9 +90,8 @@ private:
 
 class StubConsumer : public Kafka::ConsumerInterface {
 public:
-  // TODO: pass valid topics, so we can throw on addPartition, addTopic, etc.
-  explicit StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages,
-                        const std::vector<std::string> &valid_topics = {})
+  StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages,
+               const std::vector<std::string> &valid_topics = {})
       : _messages(std::move(messages)), _valid_topics(valid_topics) {}
   ~StubConsumer() override = default;
 

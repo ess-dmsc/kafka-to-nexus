@@ -25,8 +25,7 @@ std::unique_ptr<Handler> Handler::create(std::string const &service_id,
   auto pool_listener = std::make_unique<JobListener>(job_pool_uri, settings);
   auto command_listener = CommandListener::create(command_topic_uri, settings);
   std::unique_ptr<FeedbackProducerBase> command_response =
-      std::make_unique<FeedbackProducer>(service_id, command_topic_uri,
-                                         settings);
+      FeedbackProducer::create(service_id, command_topic_uri, settings);
   return std::make_unique<Handler>(
       service_id, settings, command_topic_uri, std::move(pool_listener),
       std::move(command_listener), std::move(command_response));
@@ -96,7 +95,7 @@ void Handler::switchCommandTopic(std::string const &ControlTopic,
       R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
       ControlTopic, StartTime);
   CommandSource->change_topic(ControlTopic, StartTime);
-  AltCommandResponse = std::make_unique<FeedbackProducer>(
+  AltCommandResponse = FeedbackProducer::create(
       ServiceId, uri::URI{CommandTopicAddress, std::string(ControlTopic)},
       KafkaSettings);
   std::swap(CommandResponse, AltCommandResponse);

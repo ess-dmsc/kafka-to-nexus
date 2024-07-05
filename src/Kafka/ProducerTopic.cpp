@@ -10,23 +10,10 @@
 #include "ProducerTopic.h"
 #include "ProducerMessage.h"
 #include <flatbuffers/flatbuffers.h>
+#include <utility>
 #include <vector>
 
 namespace Kafka {
-
-ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
-                             std::string TopicName)
-    : KafkaProducer(std::move(ProducerPtr)), Name(std::move(TopicName)) {
-
-  std::string ErrStr;
-  RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(
-      KafkaProducer->getRdKafkaPtr(), Name, ConfigPtr.get(), ErrStr));
-  if (RdKafkaTopic == nullptr) {
-    LOG_ERROR("could not create Kafka topic: {}", ErrStr);
-    throw TopicCreationError();
-  }
-  LOG_DEBUG("Constructor producer topic: {}", RdKafkaTopic->name());
-}
 
 struct Msg_ : public ProducerMessage {
   std::vector<unsigned char> v;
@@ -36,12 +23,29 @@ struct Msg_ : public ProducerMessage {
   }
 };
 
-int ProducerTopic::produce(flatbuffers::DetachedBuffer const &MsgData) {
+int IProducerTopic::produce(flatbuffers::DetachedBuffer const &MsgData) {
   auto *MsgPtr = new Msg_;
   std::copy(MsgData.data(), MsgData.data() + MsgData.size(),
             std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();
   return produce(std::unique_ptr<ProducerMessage>(MsgPtr));
+}
+
+std::string IProducerTopic::name() const { return Name; }
+
+ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
+                             std::string TopicName)
+    : KafkaProducer(std::move(ProducerPtr)) {
+
+  Name = std::move(TopicName);
+  std::string ErrStr;
+  RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(
+      KafkaProducer->getRdKafkaPtr(), Name, ConfigPtr.get(), ErrStr));
+  if (RdKafkaTopic == nullptr) {
+    LOG_ERROR("could not create Kafka topic: {}", ErrStr);
+    throw TopicCreationError();
+  }
+  LOG_DEBUG("Constructor producer topic: {}", RdKafkaTopic->name());
 }
 
 int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
@@ -87,5 +91,4 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
   return 1;
 }
 
-std::string ProducerTopic::name() const { return Name; }
 } // namespace Kafka

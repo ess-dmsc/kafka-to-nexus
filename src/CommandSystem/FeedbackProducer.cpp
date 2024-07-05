@@ -24,18 +24,28 @@ Kafka::BrokerSettings setBrokerAddress(Kafka::BrokerSettings Settings,
 
 FeedbackProducer::FeedbackProducer(
     std::string ServiceIdentifier,
-    std::unique_ptr<Kafka::ProducerTopic> KafkaProducer)
+    std::unique_ptr<Kafka::IProducerTopic> KafkaProducer)
     : ServiceId(std::move(ServiceIdentifier)),
       Producer(std::move(KafkaProducer)) {}
 
-FeedbackProducer::FeedbackProducer(const std::string &ServiceIdentifier,
-                                   uri::URI const &ResponseUri,
-                                   Kafka::BrokerSettings Settings)
-    : FeedbackProducer(ServiceIdentifier,
-                       std::make_unique<Kafka::ProducerTopic>(
-                           std::make_shared<Kafka::Producer>(setBrokerAddress(
-                               std::move(Settings), ResponseUri.HostPort)),
-                           ResponseUri.Topic)) {}
+std::unique_ptr<FeedbackProducer>
+FeedbackProducer::create(const std::string &service_identifier,
+                         uri::URI const &response_uri,
+                         Kafka::BrokerSettings settings) {
+  return std::make_unique<FeedbackProducer>(
+      service_identifier,
+      std::make_unique<Kafka::ProducerTopic>(
+          std::make_shared<Kafka::Producer>(
+              setBrokerAddress(std::move(settings), response_uri.HostPort)),
+          response_uri.Topic));
+}
+
+std::unique_ptr<FeedbackProducer> FeedbackProducer::create_null(
+    const std::string &service_identifier,
+    std::unique_ptr<Kafka::StubProducerTopic> producer) {
+  return std::make_unique<FeedbackProducer>(service_identifier,
+                                            std::move(producer));
+}
 
 void FeedbackProducer::publishResponse(ActionResponse Command,
                                        ActionResult Result,

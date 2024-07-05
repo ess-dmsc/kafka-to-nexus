@@ -20,10 +20,14 @@ namespace Command {
 
 class FeedbackProducer : public FeedbackProducerBase {
 public:
-  FeedbackProducer(std::string const &ServiceIdentifier,
-                   uri::URI const &ResponseUri, Kafka::BrokerSettings Settings);
+  std::unique_ptr<FeedbackProducer> static create(
+      std::string const &ServiceIdentifier, uri::URI const &ResponseUri,
+      Kafka::BrokerSettings Settings);
+  std::unique_ptr<FeedbackProducer> static create_null(
+      std::string const &ServiceIdentifier,
+      std::unique_ptr<Kafka::StubProducerTopic> producer);
   FeedbackProducer(std::string ServiceIdentifier,
-                   std::unique_ptr<Kafka::ProducerTopic> KafkaProducer);
+                   std::unique_ptr<Kafka::IProducerTopic> KafkaProducer);
   void publishResponse(ActionResponse Command, ActionResult Result,
                        std::string const &JobId, std::string const &CommandId,
                        time_point StopTime, int StatusCode,
@@ -35,7 +39,7 @@ public:
 
 private:
   std::string ServiceId;
-  std::unique_ptr<Kafka::ProducerTopic> Producer;
+  std::unique_ptr<Kafka::IProducerTopic> Producer;
 };
 
 } // namespace Command
