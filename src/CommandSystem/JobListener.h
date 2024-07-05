@@ -25,9 +25,10 @@ public:
   /// \brief The constructor will not automatically connect to the Kafka broker.
   ///
   /// \param JobPoolUri The URI/URL of the Kafka broker + topic to connect to
-  /// for new jobs. \param Settings Kafka (consumer) settings.
+  /// for new jobs.
+  /// \param Settings Kafka (consumer) settings.
   JobListener(
-      const uri::URI &JobPoolUri, Kafka::BrokerSettings Settings,
+      uri::URI const &job_pool_uri, Kafka::BrokerSettings settings,
       std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
           std::make_shared<Kafka::ConsumerFactory>());
 

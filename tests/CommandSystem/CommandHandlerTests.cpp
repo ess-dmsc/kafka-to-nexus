@@ -33,21 +33,6 @@ public:
   bool isConnected() const override { return false; }
 };
 
-class CommandListenerMock : public CommandListener {
-public:
-  CommandListenerMock(uri::URI commandTopicUri, Kafka::BrokerSettings settings)
-      : CommandListener(std::move(commandTopicUri), std::move(settings)) {}
-
-  CommandListenerMock(uri::URI commandTopicUri, Kafka::BrokerSettings settings,
-                      time_point startTimestamp)
-      : CommandListener(std::move(commandTopicUri), std::move(settings),
-                        startTimestamp) {}
-
-  std::pair<Kafka::PollStatus, Msg> pollForCommand() override {
-    return {Kafka::PollStatus::TimedOut, Msg()};
-  }
-};
-
 class HandlerStandIn : public Handler {
 public:
   // Inherit constructors
@@ -60,7 +45,7 @@ public:
 class StartHandlerTest : public ::testing::Test {
 protected:
   std::unique_ptr<JobListenerMock> _jobListenerMock;
-  std::unique_ptr<CommandListener> _commandListener;
+  std::unique_ptr<CommandListener> _command_listener;
   std::unique_ptr<FeedbackProducer> _feedback_producer;
   std::unique_ptr<HandlerStandIn> _handlerUnderTest;
   StartMessage _startMessage;
@@ -69,9 +54,9 @@ protected:
   void SetUp() override {
     _jobListenerMock = std::make_unique<JobListenerMock>(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
-    _commandListener = std::make_unique<CommandListener>(
+    _command_listener = CommandListener::create_null(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{},
-        time_point::max(), std::make_shared<Kafka::StubConsumerFactory>());
+        std::make_shared<Kafka::StubConsumerFactory>(), time_point::max());
     auto producer_topic =
         std::make_unique<Kafka::StubProducerTopic>("my_topic");
     _feedback_producer = FeedbackProducer::create_null(
@@ -79,7 +64,7 @@ protected:
     _handlerUnderTest = std::make_unique<HandlerStandIn>(
         _serviceId, Kafka::BrokerSettings{},
         uri::URI("localhost:1111/no_topic_here"), std::move(_jobListenerMock),
-        std::move(_commandListener), std::move(_feedback_producer));
+        std::move(_command_listener), std::move(_feedback_producer));
     _handlerUnderTest->registerIsWritingFunction(
         []() -> bool { return false; });
     _handlerUnderTest->registerStartFunction(
@@ -198,7 +183,7 @@ TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
 class StopHandlerTest : public ::testing::Test {
 protected:
   std::unique_ptr<JobListenerMock> _jobListenerMock;
-  std::unique_ptr<CommandListenerMock> _commandListenerMock;
+  std::unique_ptr<CommandListener> _command_listener;
   std::unique_ptr<FeedbackProducer> _feedback_producer;
   std::unique_ptr<HandlerStandIn> _handlerUnderTest;
   StopMessage _stopMessage;
@@ -207,8 +192,9 @@ protected:
   void SetUp() override {
     _jobListenerMock = std::make_unique<JobListenerMock>(
         uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
-    _commandListenerMock = std::make_unique<CommandListenerMock>(
-        uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{});
+    _command_listener = CommandListener::create_null(
+        uri::URI("localhost:1111/no_topic_here"), Kafka::BrokerSettings{},
+        std::make_shared<Kafka::StubConsumerFactory>(), time_point::max());
     auto producer_topic =
         std::make_unique<Kafka::StubProducerTopic>("my_topic");
     _feedback_producer = FeedbackProducer::create_null(
@@ -216,7 +202,7 @@ protected:
     _handlerUnderTest = std::make_unique<HandlerStandIn>(
         _serviceId, Kafka::BrokerSettings{},
         uri::URI("localhost:1111/no_topic_here"), std::move(_jobListenerMock),
-        std::move(_commandListenerMock), std::move(_feedback_producer));
+        std::move(_command_listener), std::move(_feedback_producer));
     _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
     _handlerUnderTest->registerGetJobIdFunction(
         [this]() -> std::string { return this->_stopMessage.JobID; });
