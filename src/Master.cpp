@@ -51,20 +51,14 @@ void Master::startWriting(Command::StartMessage const &StartInfo) {
     streamer_options.StartTimestamp = StartInfo.StartTime;
     streamer_options.StopTimestamp = StartInfo.StopTime;
 
-    std::filesystem::path const prefix{MainConfig.HDFOutputPrefix};
-
     std::filesystem::path const filepath =
-        prefix / std::filesystem::path(StartInfo.Filename).relative_path();
-
-    std::filesystem::path LocalTemplatePath{"nexus_templates/" +
-                                            StartInfo.InstrumentName + "/" +
-                                            StartInfo.InstrumentName + ".hdf"};
-
-    std::filesystem::path const TemplatePath = prefix / LocalTemplatePath;
+        construct_filepath(MainConfig.HDFOutputPrefix, StartInfo.Filename);
+    std::filesystem::path const template_path = construct_template_path(
+        MainConfig.HDFOutputPrefix, StartInfo.InstrumentName);
 
     CurrentStreamController = createFileWritingJob(
         StartInfo, streamer_options, filepath, MasterMetricsRegistrar.get(),
-        MetaDataTracker, TemplatePath);
+        MetaDataTracker, template_path);
     CurrentStreamController->start();
 
     metadata_from_start_msg = StartInfo.Metadata;
@@ -78,6 +72,20 @@ void Master::startWriting(Command::StartMessage const &StartInfo) {
     Logger::Critical("{}", Error.what());
     throw;
   }
+}
+
+std::filesystem::path
+Master::construct_filepath(std::filesystem::path const &prefix,
+                           std::string const &filename) {
+  return prefix / std::filesystem::path(filename).relative_path();
+}
+
+std::filesystem::path
+Master::construct_template_path(std::filesystem::path const &prefix,
+                                std::string const &instrument_name) {
+  std::filesystem::path local_template_path{
+      "nexus_templates/" + instrument_name + "/" + instrument_name + ".hdf"};
+  return prefix / local_template_path;
 }
 
 void Master::stopNow() {

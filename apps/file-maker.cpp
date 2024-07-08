@@ -176,9 +176,9 @@ void add_message(Kafka::StubConsumerFactory &consumer_factory,
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"file-maker app"};
   std::string json_file;
-  std::string InstrumentName;
+  std::string instrument_name;
   app.add_option("-f, --file", json_file, "The JSON file to load");
-  app.add_option("-i, --instrument", InstrumentName, "The instrument name");
+  app.add_option("-i, --instrument", instrument_name, "The instrument name");
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
@@ -227,12 +227,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   } else {
     start_info.NexusStructure = example_json;
   }
-  std::filesystem::path const TemplatePath;
-  if (!InstrumentName.empty()) {
-    start_info.InstrumentName = InstrumentName;
-    std::filesystem::path const TemplatePath{"../../nexus_templates/" +
-                                             InstrumentName + "/" +
-                                             InstrumentName + ".hdf"};
+  std::filesystem::path template_path;
+  if (!instrument_name.empty()) {
+    start_info.InstrumentName = instrument_name;
+    template_path =
+        std::filesystem::path{"../../nexus_templates/" + instrument_name + "/" +
+                              instrument_name + ".hdf"};
   }
   start_info.JobID = "some_job_id";
 
@@ -243,7 +243,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
-      TemplatePath, metadata_enquirer, consumer_factory);
+      template_path, metadata_enquirer, consumer_factory);
   stream_controller->start();
 
   while (!stream_controller->isDoneWriting()) {

@@ -51,6 +51,11 @@ public:
   Status::WorkerState getCurrentState() const;
   const Metrics::Metric &getCurrentStateMetric() const;
   std::filesystem::path getCurrentFilePath() const;
+  std::filesystem::path construct_filepath(std::filesystem::path const &prefix,
+                                           std::string const &filename);
+  std::filesystem::path
+  construct_template_path(std::filesystem::path const &prefix,
+                          std::string const &instrument_name);
   virtual void stopNow();
   void startWriting(Command::StartMessage const &StartInfo);
   virtual bool writingIsFinished();
