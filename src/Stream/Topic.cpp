@@ -14,6 +14,7 @@
 #include "logger.h"
 #include <Kafka/MetadataException.h>
 
+#include <iostream>
 #include <utility>
 
 namespace Stream {
@@ -176,11 +177,11 @@ void Topic::createStreams(
 }
 
 void Topic::checkIfDone() {
-  ConsumerThreads.erase(
-      std::remove_if(ConsumerThreads.begin(), ConsumerThreads.end(),
-                     [](auto const &Elem) { return Elem->hasFinished(); }),
-      ConsumerThreads.end());
-  if (ConsumerThreads.empty()) {
+  auto const is_done =
+      std::all_of(ConsumerThreads.begin(), ConsumerThreads.end(),
+                  [](auto const &thread) { return thread->hasFinished(); });
+  if (is_done) {
+    LOG_INFO("Topic {} has finished consuming.", TopicName);
     IsDone.store(true);
   }
   std::this_thread::sleep_for(50ms);
