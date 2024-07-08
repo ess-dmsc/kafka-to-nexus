@@ -53,9 +53,9 @@ public:
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"template-maker app"};
   std::string json_file;
-  std::string InstrumentName;
+  std::string instrument_name;
   app.add_option("-f, --file", json_file, "The JSON file to load");
-  app.add_option("-i, --instrument", InstrumentName, "The instrument name");
+  app.add_option("-i, --instrument", instrument_name, "The instrument name");
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
@@ -73,15 +73,15 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   } else {
     std::throw_with_nested(std::runtime_error("No JSON file provided"));
   }
-  if (!InstrumentName.empty()) {
-    start_info.InstrumentName = InstrumentName;
+  if (!instrument_name.empty()) {
+    start_info.InstrumentName = instrument_name;
   } else {
     std::throw_with_nested(std::runtime_error("No instrument name provided"));
   }
   start_info.JobID = "some_job_id";
 
-  std::filesystem::path filepath{"../../nexus_templates/" + InstrumentName +
-                                 "/" + InstrumentName + ".hdf"};
+  std::filesystem::path filepath{"../../nexus_templates/" + instrument_name +
+                                 "/" + instrument_name + ".hdf"};
 
   FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
                                        tracker);

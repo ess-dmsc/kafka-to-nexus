@@ -35,15 +35,23 @@ protected:
   auto &hdfFile() { return H5File; }
   void init(const std::string &NexusStructure,
             std::vector<ModuleHDFInfo> &ModuleHDFInfo,
-            std::filesystem::path const &TemplatePath,
-            std::string const &InstrumentName);
+            std::filesystem::path const &template_path,
+            std::string const &instrument_name);
 
   void init(const nlohmann::json &NexusStructure,
             std::vector<ModuleHDFInfo> &ModuleHDFInfo,
-            std::filesystem::path const &TemplatePath,
-            std::string const &InstrumentName);
+            std::filesystem::path const &template_path,
+            std::string const &instrument_name);
+
+  void write_common_attributes(hdf5::node::Group &RootGroup);
+  void write_dynamic_version_if_present(hdf5::node::Group &RootGroup,
+                                        const nlohmann::json &NexusStructure);
+  void write_template_version_if_present(hdf5::node::Group &RootGroup,
+                                         const nlohmann::json &NexusStructure);
+  std::string read_template_version_if_present(hdf5::node::Group &RootGroup);
 
 private:
+  std::string ExistingTemplateVersion;
   hdf5::file::File H5File;
 };
 
@@ -53,8 +61,8 @@ public:
           nlohmann::json const &NexusStructure,
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
           MetaData::TrackerPtr &TrackerPtr,
-          std::filesystem::path const &TemplatePath,
-          std::string const &InstrumentName);
+          std::filesystem::path const &template_path,
+          std::string const &instrument_name);
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
   void addMetaData();
   void openInSWMRMode();
@@ -65,8 +73,8 @@ public:
 
 private:
   bool SWMRMode{false};
-  void createFileInRegularMode(std::filesystem::path const &TemplatePath,
-                               std::string const &InstrumentName);
+  void createFileInRegularMode(std::filesystem::path const &template_path,
+                               std::string const &instrument_name);
   void openFileInRegularMode();
   void openFileInSWMRMode();
   void closeFile();

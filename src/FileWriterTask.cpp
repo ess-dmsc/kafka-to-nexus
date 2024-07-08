@@ -29,8 +29,8 @@ void FileWriterTask::addSource(Source &&Source) {
 
 void FileWriterTask::InitialiseHdf(nlohmann::json const &NexusStructure,
                                    std::vector<ModuleHDFInfo> &HdfInfo,
-                                   std::filesystem::path const &TemplatePath,
-                                   std::string const &InstrumentName) {
+                                   std::filesystem::path const &template_path,
+                                   std::string const &instrument_name) {
   std::string ErrorString;
 
   if (std::filesystem::exists(_filepath)) {
@@ -56,8 +56,8 @@ void FileWriterTask::InitialiseHdf(nlohmann::json const &NexusStructure,
   try {
     Logger::Info("Creating HDF file {}", _filepath.string());
     File = std::make_unique<HDFFile>(_filepath, NexusStructure, HdfInfo,
-                                     MetaDataTracker, TemplatePath,
-                                     InstrumentName);
+                                     MetaDataTracker, template_path,
+                                     instrument_name);
   } catch (std::exception const &E) {
     ErrorString =
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: {})",
