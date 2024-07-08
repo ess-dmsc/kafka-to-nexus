@@ -58,11 +58,11 @@ class Handler : public HandlerBase {
 public:
   static std::unique_ptr<Handler> create(std::string const &ServiceIdentifier,
                                          Kafka::BrokerSettings const &Settings,
-                                         const uri::URI &JobPoolUri,
-                                         const uri::URI &CommandTopicUri);
+                                         std::string const &job_pool_topic,
+                                         std::string const &command_topic);
 
   Handler(std::string service_id, Kafka::BrokerSettings settings,
-          uri::URI command_topic_uri,
+          std::string command_topic_uri,
           std::unique_ptr<JobListener> pool_listener,
           std::unique_ptr<CommandListener> command_listener,
           std::unique_ptr<FeedbackProducerBase> command_response);
@@ -89,7 +89,7 @@ protected:
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse startWriting(StartMessage &StartJob, bool IsJobPoolCommand);
+  CmdResponse startWriting(StartMessage const &StartJob, bool IsJobPoolCommand);
 
   /// \brief Stops writing.
   ///
@@ -157,7 +157,7 @@ private:
   std::unique_ptr<CommandListener> CommandSource;
   std::unique_ptr<FeedbackProducerBase> CommandResponse;
   std::unique_ptr<FeedbackProducerBase> AltCommandResponse;
-  uri::URI const CommandTopicAddress;
+  std::string const CommandTopicAddress;
   Kafka::BrokerSettings const KafkaSettings;
   bool UsingAltTopic{false};
 };

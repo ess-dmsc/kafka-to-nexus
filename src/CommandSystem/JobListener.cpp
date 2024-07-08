@@ -20,10 +20,9 @@ namespace Command {
 using std::string;
 
 JobListener::JobListener(
-    const uri::URI &job_pool_uri, Kafka::BrokerSettings settings,
-    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
-    : CommandListener(job_pool_uri, std::move(settings),
-                      std::move(consumer_factory)) {
+    std::string const &job_pool_topic, Kafka::BrokerSettings const &settings,
+    const std::shared_ptr<Kafka::ConsumerFactoryInterface> &consumer_factory)
+    : CommandListener(job_pool_topic, settings, consumer_factory) {
   KafkaSettings.KafkaConfiguration["group.id"] = ConsumerGroupId;
   KafkaSettings.KafkaConfiguration["queued.min.messages"] = "1";
   KafkaSettings.KafkaConfiguration["enable.auto.commit"] = "true";

@@ -20,25 +20,21 @@
 namespace Command {
 
 CommandListener::CommandListener(
-    uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+    std::string const &command_topic, Kafka::BrokerSettings const &settings,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
-    : KafkaAddress(command_topic_uri.HostPort),
-      CommandTopic(command_topic_uri.Topic), KafkaSettings(std::move(settings)),
-      _consumer_factory(std::move(consumer_factory)) {
-  KafkaSettings.Address = command_topic_uri.HostPort;
-}
+    : CommandTopic(command_topic), KafkaSettings(settings),
+      _consumer_factory(std::move(consumer_factory)) {}
 
 CommandListener::CommandListener(
-    uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+    std::string const &command_topic, Kafka::BrokerSettings const &settings,
     time_point start_timestamp,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
-    : KafkaAddress(command_topic_uri.HostPort),
-      CommandTopic(command_topic_uri.Topic), KafkaSettings(std::move(settings)),
+    : CommandTopic(command_topic), KafkaSettings(settings),
       StartTimestamp(start_timestamp),
       _consumer_factory(std::move(consumer_factory)) {}
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
-  if (!KafkaAddress.empty() && !CommandTopic.empty()) {
+  if (!KafkaSettings.Address.empty() && !CommandTopic.empty()) {
     if (Consumer == nullptr) {
       setUpConsumer();
     } else {

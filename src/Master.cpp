@@ -50,7 +50,6 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     StreamerOptions streamer_options = MainConfig.StreamerConfiguration;
     streamer_options.StartTimestamp = StartInfo.StartTime;
     streamer_options.StopTimestamp = StartInfo.StopTime;
-    streamer_options.BrokerSettings.Address = MainConfig.JobPoolURI.HostPort;
 
     std::filesystem::path const filepath =
         std::filesystem::path(MainConfig.HDFOutputPrefix) /
