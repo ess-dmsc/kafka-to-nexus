@@ -123,12 +123,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   if (!instrument_name.empty()) {
     start_info.InstrumentName = instrument_name;
   }
-  std::filesystem::path const TemplatePath;
-  if (!InstrumentName.empty()) {
-    start_info.InstrumentName = InstrumentName;
-    std::filesystem::path const TemplatePath{"../../nexus_templates/" +
-                                             InstrumentName + "/" +
-                                             InstrumentName + ".hdf"};
+  std::filesystem::path template_path;
+  if (!instrument_name.empty()) {
+    start_info.InstrumentName = instrument_name;
+    template_path =
+        std::filesystem::path{"../../nexus_templates/" + instrument_name + "/" +
+                              instrument_name + ".hdf"};
   }
   start_info.JobID = "some_job_id";
 
