@@ -27,23 +27,24 @@ class CommandListener {
 public:
   /// \brief Constructor without specific start_timestamp.
   ///
-  /// \param command_topic_uri The URI/URL of the Kafka broker + topic to
+  /// \param command_topic The Kafka topic to
   /// connect to for new commands.
   /// \param settings Kafka (consumer) settings.
   /// \param consumer_factory Factory for creating consumers.
   CommandListener(
-      uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+      std::string const &command_topic, Kafka::BrokerSettings const &settings,
       std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
           std::make_shared<Kafka::ConsumerFactory>());
 
   /// \brief Constructor with specific start_timestamp.
   ///
+  /// \param command_topic The Kafka topic to
   /// connect to for new commands.
   /// \param settings Kafka (consumer) settings.
   /// \param start_timestamp Point in time to start listening for commands.
   /// \param consumer_factory Factory for creating consumers.
   CommandListener(
-      uri::URI const &command_topic_uri, Kafka::BrokerSettings settings,
+      std::string const &command_topic, Kafka::BrokerSettings const &settings,
       time_point start_timestamp,
       std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
           std::make_shared<Kafka::ConsumerFactory>());
@@ -67,7 +68,6 @@ public:
                     time_point start_time = time_point::max());
 
 protected:
-  std::string const KafkaAddress;
   std::string CommandTopic;
   Kafka::BrokerSettings KafkaSettings;
   void setUpConsumer();

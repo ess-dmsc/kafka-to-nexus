@@ -13,11 +13,12 @@ Part of the ESS data streaming pipeline.
 ```
   -h,--help                   Print this help message and exit
   --version                   Print application version and exit
-  --command-status-uri URI REQUIRED
-                              <host[:port][/topic]> Kafka broker/topic to
+  --brokers TEXT              Comma separated list of Kafka brokers.
+  --command-status-topic TEXT REQUIRED
+                              Kafka topic to
                               listen for commands and to push status updates
-                              to.
-  --job-pool-uri URI REQUIRED <host[:port][/topic]> Kafka broker/topic to
+                              to
+  --job-pool-topic TEXT REQUIRED Kafka topic to
                               listen for jobs
   --graylog-logger-address URI
                               <host:port> Log to Graylog via graylog_logger
@@ -80,8 +81,9 @@ The file-writer can be configured from a file via `--config-file <ini>` which mi
 For example:
 
 ```ini
-command-status-uri=//broker[:port]/command-topic
-job-pool-uri=//broker[:port]/job-pool-topic
+brokers=localhost:9092
+command-status-topic=command-topic
+job-pool-topic=job-pool-topic
 hdf-output-prefix=./absolute/or/relative/path/to/hdf/output/directory
 service-name=this_is_filewriter_instance_HOST_PID_EXAMPLENAME
 streamer-ms-before-start=123456

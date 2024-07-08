@@ -20,28 +20,27 @@ using LogLevel = Log::Severity;
 
 std::unique_ptr<Handler> Handler::create(std::string const &service_id,
                                          Kafka::BrokerSettings const &settings,
-                                         const uri::URI &job_pool_uri,
-                                         const uri::URI &command_topic_uri) {
-  auto pool_listener = std::make_unique<JobListener>(job_pool_uri, settings);
+                                         std::string const &job_pool_topic,
+                                         std::string const &command_topic) {
+  auto pool_listener = std::make_unique<JobListener>(job_pool_topic, settings);
   auto command_listener =
-      std::make_unique<CommandListener>(command_topic_uri, settings);
+      std::make_unique<CommandListener>(command_topic, settings);
   std::unique_ptr<FeedbackProducerBase> command_response =
-      std::make_unique<FeedbackProducer>(service_id, command_topic_uri,
-                                         settings);
+      std::make_unique<FeedbackProducer>(service_id, command_topic, settings);
   return std::make_unique<Handler>(
-      service_id, settings, command_topic_uri, std::move(pool_listener),
+      service_id, settings, command_topic, std::move(pool_listener),
       std::move(command_listener), std::move(command_response));
 }
 
 Handler::Handler(std::string service_id, Kafka::BrokerSettings settings,
-                 uri::URI command_topic_uri,
+                 std::string command_topic,
                  std::unique_ptr<JobListener> pool_listener,
                  std::unique_ptr<CommandListener> command_listener,
                  std::unique_ptr<FeedbackProducerBase> command_response)
     : ServiceId(std::move(service_id)), JobPool(std::move(pool_listener)),
       CommandSource(std::move(command_listener)),
       CommandResponse(std::move(command_response)),
-      CommandTopicAddress(std::move(command_topic_uri)),
+      CommandTopicAddress(std::move(command_topic)),
       KafkaSettings(std::move(settings)) {}
 
 void Handler::loopFunction() {
@@ -83,9 +82,8 @@ void Handler::registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) {
 
 void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
-    LOG_INFO("Reverting to default command topic: {}",
-             CommandTopicAddress.Topic);
-    CommandSource->change_topic(CommandTopicAddress.Topic);
+    LOG_INFO("Reverting to default command topic: {}", CommandTopicAddress);
+    CommandSource->change_topic(CommandTopicAddress);
     std::swap(AltCommandResponse, CommandResponse);
     UsingAltTopic = false;
   }
@@ -98,8 +96,7 @@ void Handler::switchCommandTopic(std::string const &ControlTopic,
       ControlTopic, StartTime);
   CommandSource->change_topic(ControlTopic, StartTime);
   AltCommandResponse = std::make_unique<FeedbackProducer>(
-      ServiceId, uri::URI{CommandTopicAddress, std::string(ControlTopic)},
-      KafkaSettings);
+      ServiceId, ControlTopic, KafkaSettings);
   std::swap(CommandResponse, AltCommandResponse);
   UsingAltTopic = true;
 }
@@ -205,7 +202,7 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
   return startWriting(StartJob, IsJobPoolCommand);
 }
 
-CmdResponse Handler::startWriting(StartMessage &StartJob,
+CmdResponse Handler::startWriting(StartMessage const &StartJob,
                                   bool IsJobPoolCommand) {
   std::string ExceptionMessage;
 

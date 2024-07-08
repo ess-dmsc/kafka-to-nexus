@@ -12,8 +12,7 @@
 
 namespace Kafka {
 
-std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
-                                         const std::string &Broker) {
+std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings) {
   auto SettingsCopy = Settings;
 
   // Create a unique group.id for this consumer
@@ -27,8 +26,6 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
                         .count());
     SettingsCopy.KafkaConfiguration.emplace("group.id", GroupIdStr);
   }
-
-  SettingsCopy.Address = Broker;
 
   auto Conf = std::unique_ptr<RdKafka::Conf>(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
@@ -45,10 +42,6 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
   }
   return std::make_unique<Consumer>(std::move(KafkaConsumer), std::move(Conf),
                                     std::move(EventCallback));
-}
-
-std::unique_ptr<Consumer> createConsumer(BrokerSettings const &Settings) {
-  return createConsumer(Settings, Settings.Address);
 }
 
 std::shared_ptr<ConsumerInterface>

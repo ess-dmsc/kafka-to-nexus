@@ -131,9 +131,10 @@ def run_writers(
             proc = Popen(
                 [
                     file_writer_path,
+                    f"--brokers={kafka_address}",
                     f"--config-file={c_path}/config-files/file_writer_config.ini",
-                    f"--job-pool-uri={kafka_address}/TEST_writer_jobs",
-                    f"--command-status-uri={kafka_address}/TEST_writer_commands",
+                    f"--job-pool-topic=TEST_writer_jobs",
+                    f"--command-status-topic=TEST_writer_commands",
                     f"--service-name=filewriter_{i}",
                 ],
                 stdout=log_file,
