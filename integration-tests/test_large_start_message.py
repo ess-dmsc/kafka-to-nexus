@@ -12,9 +12,7 @@ from helpers.writer import (
 )
 
 
-@pytest.mark.parametrize(
-    "json_padding", [(1024**2), (16 * 1024**2), (64 * 1024**2)]
-)
+@pytest.mark.parametrize("json_padding", [(1024**2), (16 * 1024**2), (64 * 1024**2)])
 def test_large_start_message(worker_pool, kafka_address, json_padding):
     file_path = build_relative_file_path(f"output_file_large_msg_{json_padding}.nxs")
     wait_writers_available(worker_pool, nr_of=1, timeout=20)
