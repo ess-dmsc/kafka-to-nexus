@@ -148,7 +148,6 @@ void HDFFileBase::write_template_version_if_present(
 std::string
 HDFFileBase::read_template_version_if_present(hdf5::node::Group &RootGroup) {
   if (RootGroup.attributes.exists("template_version")) {
-    std::string ExistingTemplateVersion;
     RootGroup.attributes["template_version"].read(ExistingTemplateVersion);
     LOG_DEBUG("The template version is: {}", ExistingTemplateVersion);
     return ExistingTemplateVersion;

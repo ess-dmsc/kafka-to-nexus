@@ -68,7 +68,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   if (!json_file.empty()) {
     start_info.NexusStructure = readJsonFromFile(json_file);
   } else {
-    std::throw_with_nested(std::runtime_error("No JSON file provided"));
+    throw std::runtime_error("No JSON file provided");
   }
   if (!instrument_name.empty()) {
     start_info.InstrumentName = instrument_name;
@@ -77,7 +77,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   }
   start_info.JobID = "some_job_id";
 
-  std::filesystem::path filepath{"../../nexus_templates/" + instrument_name +
+  std::filesystem::path filepath{"../../nexus_templates/{}/{}.hdf" + instrument_name +
                                  "/" + instrument_name + ".hdf"};
 
   FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
