@@ -28,7 +28,7 @@ CommandListener::CommandListener(
       _consumer_factory(std::move(consumer_factory)) {}
 
 std::pair<Kafka::PollStatus, Msg> CommandListener::pollForCommand() {
-  if (!KafkaSettings.Address.empty() && !CommandTopic.empty()) {
+  if (!CommandTopic.empty()) {
     if (Consumer == nullptr) {
       setUpConsumer();
     } else {

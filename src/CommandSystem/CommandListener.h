@@ -39,6 +39,17 @@ public:
         std::make_shared<Kafka::ConsumerFactory>());
   }
 
+  /// \brief Create a new instance but with stub consumers.
+  ///
+  /// \note For use in tests!
+  static std::unique_ptr<CommandListener> create_null(
+      std::string const &command_topic, Kafka::BrokerSettings const &settings,
+      const std::shared_ptr<Kafka::StubConsumerFactory> &consumer_factory,
+      time_point start_timestamp = time_point::max()) {
+    return std::make_unique<CommandListener>(command_topic, settings,
+                                             start_timestamp, consumer_factory);
+  }
+
   /// \brief Constructor.
   ///
   /// \note Prefer using create instead.
