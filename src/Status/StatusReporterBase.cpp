@@ -59,11 +59,6 @@ nlohmann::json StatusReporterBase::createJSONReport() const {
   Info["file_being_written"] = CurrentStatus.Filename;
   Info["start_time"] = toMilliSeconds(CurrentStatus.StartTime);
   Info["stop_time"] = toMilliSeconds(CurrentStatus.StopTime);
-  auto TempObject = nlohmann::json::object();
-  if (JSONGenerator != nullptr) {
-    JSONGenerator(TempObject);
-  }
-  Info["extra"] = TempObject;
   return Info;
 }
 
