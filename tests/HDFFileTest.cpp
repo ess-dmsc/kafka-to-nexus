@@ -23,13 +23,13 @@ public:
   nlohmann::json NexusStructure{};
   std::vector<ModuleHDFInfo> ModuleHDFInfoList;
   MetaData::TrackerPtr Tracker{};
-  std::filesystem::path template_path{""};
-  std::string instrument_name{""};
+  std::filesystem::path template_path;
+  bool is_legacy_writing = true;
 };
 
 TEST_F(HDFFile, FileModes) {
   FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
-                                Tracker,  template_path,  instrument_name};
+                                Tracker,  template_path,  is_legacy_writing};
   EXPECT_TRUE(UnderTest.isRegularMode());
   EXPECT_FALSE(UnderTest.isSWMRMode());
   UnderTest.openInSWMRMode();
@@ -42,7 +42,7 @@ TEST_F(HDFFile, FileModes) {
 
 TEST_F(HDFFile, DefaultFileAttributes) {
   FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
-                                Tracker,  template_path,  instrument_name};
+                                Tracker,  template_path,  is_legacy_writing};
   auto RootGroup = UnderTest.hdfGroup();
   EXPECT_TRUE(RootGroup.attributes.exists("HDF5_Version"));
   EXPECT_TRUE(RootGroup.attributes.exists("creator"));
@@ -85,7 +85,7 @@ TEST_F(HDFFile, SimpleNexusStructure) {
   FileWriter::HDFFile UnderTest{
       FileName,          nlohmann::json::parse(SimpleNexusStructure),
       ModuleHDFInfoList, Tracker,
-      template_path,     instrument_name};
+      template_path,     is_legacy_writing};
   EXPECT_TRUE(UnderTest.hdfGroup().has_group("entry"));
   EXPECT_EQ(ModuleHDFInfoList.size(), 1u);
 }
@@ -117,12 +117,12 @@ TEST_F(HDFFile, WithTemplatePathNoInstrumentName) {
       ]
   })"";
   template_path = "templateFile.hdf";
-  instrument_name = "";
+  is_legacy_writing = true;
 
   FileWriter::HDFFile UnderTest{
       FileName,          nlohmann::json::parse(SimpleNexusStructure),
       ModuleHDFInfoList, Tracker,
-      template_path,     instrument_name};
+      template_path,     is_legacy_writing};
   EXPECT_TRUE(UnderTest.hdfGroup().attributes.exists("HDF5_Version"));
   EXPECT_TRUE(UnderTest.hdfGroup().attributes.exists("creator"));
   EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("dynamic_version"));
@@ -158,12 +158,12 @@ TEST_F(HDFFile, NoTemplatePathWithInstrumentName) {
       ]
   })"";
   template_path = "";
-  instrument_name = "TEST_INSTRUMENT";
+  is_legacy_writing = false;
 
   FileWriter::HDFFile UnderTest{
       FileName,          nlohmann::json::parse(SimpleNexusStructure),
       ModuleHDFInfoList, Tracker,
-      template_path,     instrument_name};
+      template_path,     is_legacy_writing};
   EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("HDF5_Version"));
   EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("creator"));
   EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("dynamic_version"));
@@ -199,13 +199,13 @@ TEST_F(HDFFile, WithTemplatePathWithInstrumentName) {
       ]
   })"";
   template_path = "templateFile.hdf";
-  instrument_name = "TEST_INSTRUMENT";
+  is_legacy_writing = false;
 
   try {
     FileWriter::HDFFile UnderTest{
         FileName,          nlohmann::json::parse(SimpleNexusStructure),
         ModuleHDFInfoList, Tracker,
-        template_path,     instrument_name};
+        template_path,     is_legacy_writing};
     FAIL() << "Expected std::exception";
   } catch (const std::exception &e) {
     std::string error_message = e.what();

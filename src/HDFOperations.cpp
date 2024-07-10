@@ -433,10 +433,12 @@ void createHDFStructures(
                     std::string(Parent.link().path()));
         }
       } else {
-        std::string pathstr;
-        for (auto const &x : Path) {
-          pathstr += "/" + x;
-        }
+        std::string pathstr = std::accumulate(
+            Path.begin(), Path.end(), std::string{},
+            [](const std::string &a, const std::string &b) -> std::string {
+              return a + "/" + b;
+            });
+
         HDFStreamInfo.push_back(ModuleHDFInfo{CNode.Type.get_value(), pathstr,
                                               CNode.Config.get_value().dump()});
       }

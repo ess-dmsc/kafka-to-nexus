@@ -43,7 +43,7 @@ void addStreamSourceToWriterModule(
 std::vector<ModuleHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
               std::filesystem::path const &template_path,
-              std::string const &instrument_name);
+              bool const &is_legacy_writing);
 
 /// \brief Extract information about the module (stream or link).
 ///

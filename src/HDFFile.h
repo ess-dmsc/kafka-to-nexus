@@ -36,21 +36,25 @@ protected:
   void init(const std::string &NexusStructure,
             std::vector<ModuleHDFInfo> &ModuleHDFInfo,
             std::filesystem::path const &template_path,
-            std::string const &instrument_name);
+            bool const &is_legacy_writing);
 
   void init(const nlohmann::json &NexusStructure,
             std::vector<ModuleHDFInfo> &ModuleHDFInfo,
             std::filesystem::path const &template_path,
-            std::string const &instrument_name);
-
-  void write_common_attributes(hdf5::node::Group &RootGroup);
-  void write_dynamic_version_if_present(hdf5::node::Group &RootGroup,
-                                        const nlohmann::json &NexusStructure);
-  void write_template_version_if_present(hdf5::node::Group &RootGroup,
-                                         const nlohmann::json &NexusStructure);
-  std::string read_template_version_if_present(hdf5::node::Group &RootGroup);
+            bool const &is_legacy_writing);
 
 private:
+  void write_nexus_file_metadata(hdf5::node::Group const &RootGroup,
+                                 nlohmann::json const &NexusStructure);
+  void write_template_file_metadata(hdf5::node::Group const &RootGroup,
+                                    nlohmann::json const &NexusStructure);
+  void write_common_attributes(hdf5::node::Group const &RootGroup);
+  void write_dynamic_version_if_present(hdf5::node::Group const &RootGroup,
+                                        nlohmann::json const &NexusStructure);
+  void write_template_version_if_present(hdf5::node::Group const &RootGroup,
+                                         nlohmann::json const &NexusStructure);
+  std::string
+  read_template_version_if_present(hdf5::node::Group const &RootGroup);
   std::string ExistingTemplateVersion;
   hdf5::file::File H5File;
 };
@@ -62,7 +66,7 @@ public:
           std::vector<ModuleHDFInfo> &ModuleHDFInfo,
           MetaData::TrackerPtr &TrackerPtr,
           std::filesystem::path const &template_path,
-          std::string const &instrument_name);
+          bool const &is_legacy_writing);
   void addLinks(std::vector<ModuleSettings> const &LinkSettingsList);
   void addMetaData();
   void openInSWMRMode();
@@ -74,7 +78,7 @@ public:
 private:
   bool SWMRMode{false};
   void createFileInRegularMode(std::filesystem::path const &template_path,
-                               std::string const &instrument_name);
+                               bool const &is_legacy_writing);
   void openFileInRegularMode();
   void openFileInSWMRMode();
   void closeFile();
