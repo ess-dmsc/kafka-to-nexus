@@ -25,27 +25,32 @@ public:
   TopicCreationError() : std::runtime_error("Can not create Kafka topic") {}
 };
 
-class ProducerTopic {
+class IProducerTopic {
 public:
-  ProducerTopic(std::shared_ptr<Producer> ProducerPtr, std::string TopicName);
+  IProducerTopic() = default;
+  virtual ~IProducerTopic() = default;
 
-  virtual ~ProducerTopic() = default;
+  int produce(flatbuffers::DetachedBuffer const &MsgData);
+  [[nodiscard]] std::string name() const;
 
-  /// \brief Send a message to Kafka for publishing on this topic.
-  ///
-  /// \param MsgData The message to publish
-  /// \return 0 if message is successfully passed to RdKafka to be published, 1
-  /// otherwise
-  virtual int produce(flatbuffers::DetachedBuffer const &MsgData);
-
-  std::string name() const;
+protected:
+  std::string Name;
 
 private:
-  int produce(std::unique_ptr<Kafka::ProducerMessage> Msg);
+  virtual int produce(std::unique_ptr<ProducerMessage> msg) = 0;
+};
+
+class ProducerTopic : public IProducerTopic {
+public:
+  ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
+                std::string const &TopicName);
+  ~ProducerTopic() override = default;
+
+private:
+  int produce(std::unique_ptr<Kafka::ProducerMessage> Msg) override;
   std::unique_ptr<RdKafka::Conf> ConfigPtr{
       RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC)};
   std::shared_ptr<Producer> KafkaProducer;
   std::unique_ptr<RdKafka::Topic> RdKafkaTopic;
-  std::string Name;
 };
 } // namespace Kafka

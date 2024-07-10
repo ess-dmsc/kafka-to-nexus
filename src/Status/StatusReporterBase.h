@@ -80,8 +80,8 @@ private:
   virtual void postReportStatusActions(){};
   mutable std::shared_mutex StatusMutex;
   std::shared_ptr<Kafka::Producer> Producer;
-  std::unique_ptr<Kafka::ProducerTopic> StatusProducerTopic;
-  std::unique_ptr<Kafka::ProducerTopic> AltStatusProducerTopic;
+  std::unique_ptr<Kafka::IProducerTopic> StatusProducerTopic;
+  std::unique_ptr<Kafka::IProducerTopic> AltStatusProducerTopic;
   bool UsingAlternativeStatusTopic{false};
   ApplicationStatusInfo const StaticStatusInformation;
   JsonGeneratorFuncType JSONGenerator{[](auto) {

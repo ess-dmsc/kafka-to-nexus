@@ -26,7 +26,8 @@ public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
                        std::string TopicName)
       : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
-  int produce(flatbuffers::DetachedBuffer const & /*Msg*/) override {
+  int produce(
+      [[maybe_unused]] std::unique_ptr<Kafka::ProducerMessage> Msg) override {
     return 0;
   }
 };
