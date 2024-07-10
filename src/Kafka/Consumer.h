@@ -90,45 +90,58 @@ private:
 
 class StubConsumer : public Kafka::ConsumerInterface {
 public:
-  explicit StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages)
-      : messages(std::move(messages)) {}
+  StubConsumer(std::shared_ptr<std::vector<FileWriter::Msg>> messages,
+               const std::vector<std::string> &valid_topics = {})
+      : _messages(std::move(messages)), _valid_topics(valid_topics) {}
+
   ~StubConsumer() override = default;
 
   std::pair<Kafka::PollStatus, FileWriter::Msg> poll() override {
     // Look for next message with the correct topic
-    while (offset < messages->size()) {
-      auto const message_topic = messages->at(offset).getMetaData().topic;
-      if (message_topic == topic) {
-        auto temp = FileWriter::Msg{messages->at(offset).data(),
-                                    messages->at(offset).size(),
-                                    messages->at(offset).getMetaData()};
-        ++offset;
+    while (_offset < _messages->size()) {
+      auto const message_topic = _messages->at(_offset).getMetaData().topic;
+      if (message_topic == _topic) {
+        auto temp = FileWriter::Msg{_messages->at(_offset).data(),
+                                    _messages->at(_offset).size(),
+                                    _messages->at(_offset).getMetaData()};
+        ++_offset;
         return {Kafka::PollStatus::Message, std::move(temp)};
       }
-      ++offset;
+      ++_offset;
     }
 
     // No more messages
-    if (at_end_of_partition) {
+    if (_at_end_of_partition) {
       return {Kafka::PollStatus::TimedOut, FileWriter::Msg()};
     } else {
-      at_end_of_partition = true;
+      _at_end_of_partition = true;
       return {Kafka::PollStatus::EndOfPartition, FileWriter::Msg()};
     }
   };
 
   void addPartitionAtOffset(std::string const &Topic, int PartitionId,
                             [[maybe_unused]] int64_t Offset) override {
-    topic = Topic;
-    partition = PartitionId;
+    if (!is_topic_valid(Topic)) {
+      throw std::runtime_error("Could not add partition at offset");
+    }
+    _topic = Topic;
+    _partition = PartitionId;
   };
 
-  void addTopic(std::string const &Topic) override { topic = Topic; }
+  void addTopic(std::string const &Topic) override {
+    if (!is_topic_valid(Topic)) {
+      throw std::runtime_error("Could not add topic");
+    }
+    _topic = Topic;
+  }
 
   void assignAllPartitions(
       std::string const &Topic,
       [[maybe_unused]] time_point const &StartTimestamp) override {
-    topic = Topic;
+    if (!is_topic_valid(Topic)) {
+      throw std::runtime_error("Could not assign all partitions");
+    }
+    _topic = Topic;
   }
 
   const RdKafka::TopicMetadata *
@@ -137,10 +150,21 @@ public:
     return nullptr;
   }
 
-  size_t offset = 0;
-  std::string topic;
-  int32_t partition = 0;
-  std::shared_ptr<std::vector<FileWriter::Msg>> messages;
-  bool at_end_of_partition = false;
+private:
+  bool is_topic_valid(std::string const &topic) {
+    if (_valid_topics.empty()) {
+      return true;
+    }
+
+    return std::find(_valid_topics.begin(), _valid_topics.end(), topic) !=
+           _valid_topics.end();
+  }
+
+  size_t _offset = 0;
+  std::string _topic;
+  int32_t _partition = 0;
+  std::shared_ptr<std::vector<FileWriter::Msg>> _messages;
+  bool _at_end_of_partition = false;
+  std::vector<std::string> _valid_topics;
 };
 } // namespace Kafka
