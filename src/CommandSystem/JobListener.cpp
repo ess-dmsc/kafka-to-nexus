@@ -22,7 +22,8 @@ using std::string;
 JobListener::JobListener(
     std::string const &job_pool_topic, Kafka::BrokerSettings const &settings,
     const std::shared_ptr<Kafka::ConsumerFactoryInterface> &consumer_factory)
-    : CommandListener(job_pool_topic, settings, consumer_factory) {
+    : CommandListener(job_pool_topic, settings, time_point::max(),
+                      consumer_factory) {
   KafkaSettings.KafkaConfiguration["group.id"] = ConsumerGroupId;
   KafkaSettings.KafkaConfiguration["queued.min.messages"] = "1";
   KafkaSettings.KafkaConfiguration["enable.auto.commit"] = "true";

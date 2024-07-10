@@ -21,12 +21,6 @@ namespace Command {
 
 CommandListener::CommandListener(
     std::string const &command_topic, Kafka::BrokerSettings const &settings,
-    std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
-    : CommandTopic(command_topic), KafkaSettings(settings),
-      _consumer_factory(std::move(consumer_factory)) {}
-
-CommandListener::CommandListener(
-    std::string const &command_topic, Kafka::BrokerSettings const &settings,
     time_point start_timestamp,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
     : CommandTopic(command_topic), KafkaSettings(settings),
