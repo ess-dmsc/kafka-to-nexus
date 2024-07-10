@@ -30,12 +30,12 @@ using nlohmann::json;
 std::vector<ModuleHDFInfo>
 initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
               std::filesystem::path const &template_path,
-              std::string const &instrument_name) {
+              bool const &is_legacy_writing) {
   try {
     json const NexusStructure = json::parse(NexusStructureString);
     std::vector<ModuleHDFInfo> ModuleHDFInfoList;
     Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList, template_path,
-                       instrument_name);
+                       is_legacy_writing);
     return ModuleHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
@@ -130,8 +130,10 @@ std::unique_ptr<StreamController> createFileWritingJob(
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
 
+  bool const is_legacy_writing = StartInfo.InstrumentName.empty();
+
   std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
-      *Task, StartInfo.NexusStructure, template_path, StartInfo.InstrumentName);
+      *Task, StartInfo.NexusStructure, template_path, is_legacy_writing);
   std::vector<ModuleHDFInfo> mdatInfoList =
       extractMdatModules(ModuleHDFInfoList);
 
@@ -203,10 +205,10 @@ void createFileWriterTemplate(Command::StartInfo const &StartInfo,
                               MetaData::TrackerPtr const &Tracker) {
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
-  std::filesystem::path template_path{
-      ""}; // Empty path when writing a template.
+  std::filesystem::path const template_path;
+  bool const is_legacy_writing = false;
   std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
-      *Task, StartInfo.NexusStructure, template_path, StartInfo.InstrumentName);
+      *Task, StartInfo.NexusStructure, template_path, is_legacy_writing);
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,

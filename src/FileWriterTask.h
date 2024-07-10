@@ -57,7 +57,7 @@ public:
   void InitialiseHdf(nlohmann::json const &NexusStructure,
                      std::vector<ModuleHDFInfo> &HdfInfo,
                      std::filesystem::path const &template_path,
-                     std::string const &instrument_name);
+                     bool const &is_legacy_writing);
 
   /// \brief Add a source to the topics.
   ///

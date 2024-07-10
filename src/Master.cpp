@@ -14,6 +14,13 @@
 #include <functional>
 namespace FileWriter {
 
+std::filesystem::path construct_filepath(std::filesystem::path const &prefix,
+                                         std::string const &filename);
+
+std::filesystem::path
+construct_template_path(std::filesystem::path const &prefix,
+                        std::string const &instrument_name);
+
 Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
                std::unique_ptr<Status::StatusReporterBase> Reporter,
                std::unique_ptr<Metrics::IRegistrar> Registrar)
@@ -74,17 +81,16 @@ void Master::startWriting(Command::StartMessage const &StartInfo) {
   }
 }
 
-std::filesystem::path
-Master::construct_filepath(std::filesystem::path const &prefix,
-                           std::string const &filename) {
+std::filesystem::path construct_filepath(std::filesystem::path const &prefix,
+                                         std::string const &filename) {
   return prefix / std::filesystem::path(filename).relative_path();
 }
 
 std::filesystem::path
-Master::construct_template_path(std::filesystem::path const &prefix,
-                                std::string const &instrument_name) {
-  std::filesystem::path local_template_path{
-      "nexus_templates/" + instrument_name + "/" + instrument_name + ".hdf"};
+construct_template_path(std::filesystem::path const &prefix,
+                        std::string const &instrument_name) {
+  std::filesystem::path local_template_path =
+      fmt::format("nexus_templates/{0}/{0}.hdf", instrument_name);
   return prefix / local_template_path;
 }
 

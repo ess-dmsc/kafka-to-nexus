@@ -24,7 +24,7 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
                  std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                  MetaData::TrackerPtr &TrackerPtr,
                  std::filesystem::path const &template_path,
-                 std::string const &instrument_name)
+                 bool const &is_legacy_writing)
     : H5FileName(FileName), MetaDataTracker(TrackerPtr) {
   if (FileName.empty()) {
     throw std::runtime_error("HDF file name must not be empty.");
@@ -39,9 +39,8 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
 HDFFile::~HDFFile() { addMetaData(); }
 
 void HDFFile::createFileInRegularMode(
-    std::filesystem::path const &template_path,
-    std::string const &instrument_name) {
-  if (template_path.empty() || instrument_name.empty()) {
+    std::filesystem::path const &template_path, bool const &is_legacy_writing) {
+  if (template_path.empty() || is_legacy_writing) {
     LOG_INFO("Creating new file: {}", H5FileName.string());
     hdfFile() = hdf5::file::create(H5FileName,
                                    hdf5::file::AccessFlags::Exclusive |
@@ -62,15 +61,15 @@ void HDFFile::createFileInRegularMode(
 void HDFFileBase::init(const std::string &NexusStructure,
                        std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                        std::filesystem::path const &template_path,
-                       std::string const &instrument_name) {
+                       bool const &is_legacy_writing) {
   auto Document = nlohmann::json::parse(NexusStructure);
-  init(Document, ModuleHDFInfo, template_path, instrument_name);
+  init(Document, ModuleHDFInfo, template_path, is_legacy_writing);
 }
 
 void HDFFileBase::init(const nlohmann::json &NexusStructure,
                        std::vector<ModuleHDFInfo> &ModuleHDFInfo,
                        std::filesystem::path const &template_path,
-                       std::string const &instrument_name) {
+                       bool const &is_legacy_writing) {
 
   try {
     hdf5::property::AttributeCreationList acpl;
@@ -96,10 +95,8 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
       }
     }
 
-    if (!template_path.empty() || instrument_name.empty()) {
-      write_common_attributes(RootGroup);
-      write_dynamic_version_if_present(RootGroup, NexusStructure);
-      ExistingTemplateVersion = read_template_version_if_present(RootGroup);
+    if (!template_path.empty() || is_legacy_writing) {
+      write_nexus_file_metadata(RootGroup, NexusStructure);
     } else {
       write_template_version_if_present(RootGroup, NexusStructure);
     LOG_WARN("The instrument name is: {}", InstrumentName);
@@ -113,19 +110,31 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
   }
 }
 
-void HDFFileBase::write_common_attributes(hdf5::node::Group &RootGroup) {
+void HDFFileBase::write_nexus_file_metadata(
+    hdf5::node::Group const &RootGroup, nlohmann::json const &NexusStructure) {
+  write_common_attributes(RootGroup);
+  write_dynamic_version_if_present(RootGroup, NexusStructure);
+  ExistingTemplateVersion = read_template_version_if_present(RootGroup);
+}
+
+void HDFFileBase::write_template_file_metadata(
+    hdf5::node::Group const &RootGroup, nlohmann::json const &NexusStructure) {
+  write_template_version_if_present(RootGroup, NexusStructure);
+}
+
+void HDFFileBase::write_common_attributes(hdf5::node::Group const &RootGroup) {
   HDFAttributes::writeAttribute(RootGroup, "HDF5_Version",
                                 h5VersionStringLinked());
   HDFAttributes::writeAttribute(RootGroup, "file_name",
                                 hdfFile().id().file_name().string());
   HDFAttributes::writeAttribute(
       RootGroup, "creator",
-      fmt::format("kafka-to-nexus commit {:.13}", GetVersion()));
+      fmt::format("kafka-to-nexus commit {}", GetVersion()));
   writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
 }
 
 void HDFFileBase::write_dynamic_version_if_present(
-    hdf5::node::Group &RootGroup, const nlohmann::json &NexusStructure) {
+    hdf5::node::Group const &RootGroup, nlohmann::json const &NexusStructure) {
   if (NexusStructure.contains("dynamic_version") &&
       NexusStructure["dynamic_version"].is_string()) {
     HDFAttributes::writeAttribute(
@@ -135,7 +144,7 @@ void HDFFileBase::write_dynamic_version_if_present(
 }
 
 void HDFFileBase::write_template_version_if_present(
-    hdf5::node::Group &RootGroup, const nlohmann::json &NexusStructure) {
+    hdf5::node::Group const &RootGroup, nlohmann::json const &NexusStructure) {
   if (NexusStructure.contains("template_version") &&
       NexusStructure["template_version"].is_string()) {
     HDFAttributes::writeAttribute(
@@ -144,8 +153,8 @@ void HDFFileBase::write_template_version_if_present(
   }
 }
 
-std::string
-HDFFileBase::read_template_version_if_present(hdf5::node::Group &RootGroup) {
+std::string HDFFileBase::read_template_version_if_present(
+    hdf5::node::Group const &RootGroup) {
   if (RootGroup.attributes.exists("template_version")) {
     RootGroup.attributes["template_version"].read(ExistingTemplateVersion);
     LOG_DEBUG("The template version is: {}", ExistingTemplateVersion);
