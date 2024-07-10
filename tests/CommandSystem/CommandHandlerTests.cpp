@@ -60,10 +60,6 @@ public:
 class CommandListenerMock : public CommandListener {
 public:
   CommandListenerMock(std::string const &command_topic,
-                      Kafka::BrokerSettings settings)
-      : CommandListener(command_topic, std::move(settings)) {}
-
-  CommandListenerMock(std::string const &command_topic,
                       Kafka::BrokerSettings settings, time_point startTimestamp)
       : CommandListener(command_topic, std::move(settings), startTimestamp) {}
 
@@ -94,7 +90,7 @@ protected:
     _jobListenerMock = std::make_unique<JobListenerMock>(
         "no_topic_here", Kafka::BrokerSettings{});
     _commandListener = std::make_unique<CommandListener>(
-        "no_topic_here", Kafka::BrokerSettings{},
+        "no_topic_here", Kafka::BrokerSettings{}, time_point::max(),
         std::make_shared<Kafka::StubConsumerFactory>());
     _feedbackProducerMock = std::make_unique<FeedbackProducerMock>();
 
@@ -230,7 +226,7 @@ protected:
     _jobListenerMock = std::make_unique<JobListenerMock>(
         "no_topic_here", Kafka::BrokerSettings{});
     _commandListenerMock = std::make_unique<CommandListenerMock>(
-        "no_topic_here", Kafka::BrokerSettings{});
+        "no_topic_here", Kafka::BrokerSettings{}, time_point::max());
     _feedbackProducerMock = std::make_unique<FeedbackProducerMock>();
     _handlerUnderTest = std::make_unique<HandlerStandIn>(
         _serviceId, Kafka::BrokerSettings{}, "no_topic_here",

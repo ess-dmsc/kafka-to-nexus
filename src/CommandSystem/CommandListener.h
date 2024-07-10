@@ -25,21 +25,25 @@ using FileWriter::Msg;
 /// \brief Check for new commands on a command listener topic.
 class CommandListener {
 public:
-  /// \brief Constructor without specific start_timestamp.
+  /// \brief Create a new instance.
   ///
-  /// \param command_topic The Kafka topic to
-  /// connect to for new commands.
+  /// \param command_topic The Kafka topic to connect to for new commands.
   /// \param settings Kafka (consumer) settings.
-  /// \param consumer_factory Factory for creating consumers.
-  CommandListener(
-      std::string const &command_topic, Kafka::BrokerSettings const &settings,
-      std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
-          std::make_shared<Kafka::ConsumerFactory>());
+  /// \param start_timestamp Point in time to start listening for commands.
+  static std::unique_ptr<CommandListener>
+  create(std::string const &command_topic,
+         Kafka::BrokerSettings const &settings,
+         time_point start_timestamp = time_point::max()) {
+    return std::make_unique<CommandListener>(
+        command_topic, settings, start_timestamp,
+        std::make_shared<Kafka::ConsumerFactory>());
+  }
 
-  /// \brief Constructor with specific start_timestamp.
+  /// \brief Constructor.
   ///
-  /// \param command_topic The Kafka topic to
-  /// connect to for new commands.
+  /// \note Prefer using create instead.
+  ///
+  /// \param command_topic The Kafka topic to connect to for new commands.
   /// \param settings Kafka (consumer) settings.
   /// \param start_timestamp Point in time to start listening for commands.
   /// \param consumer_factory Factory for creating consumers.
@@ -71,7 +75,7 @@ protected:
   std::string CommandTopic;
   Kafka::BrokerSettings KafkaSettings;
   void setUpConsumer();
-  time_point StartTimestamp = time_point::max();
+  time_point StartTimestamp;
   std::shared_ptr<Kafka::ConsumerInterface> Consumer;
 
 private:
