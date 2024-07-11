@@ -31,7 +31,7 @@ set(UnitTests_SRC
         ConsumerTests.cpp
         CommandSystem/CommandListenerTests.cpp
         CommandSystem/CommandParserTests.cpp
-        CommandSystem/CommandHandlerTests.cpp
+        CommandSystem/HandlerTests.cpp
         StatusReporterTests.cpp
         UnitTests.cpp
         ThreadedExecutorTests.cpp
