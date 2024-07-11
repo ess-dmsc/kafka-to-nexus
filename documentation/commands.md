@@ -37,7 +37,10 @@ messages will be sent to the topic indicated in the `RunStart` message.
 After completing the job, the file-writer will switch back to its
 default `command` and `pool` topics.
 
+### Start writing from a template HDF file instead of creating a new file from scratch
 
+If an instrument name is specified in the run start message (pl72), the file-writer will look for a template with static data such as the detector geometry.
+If no instrument name is specified it will create a new NeXus file, if the NeXus structure defined in the start message is large, the creation of the file will take a significant amount of time. For example, the DREAM NeXus structure which is ~700MB takes around 10-15 minutes before it can start writing data.
 
 ### Defining a NeXus structure in the RunStart command
 
