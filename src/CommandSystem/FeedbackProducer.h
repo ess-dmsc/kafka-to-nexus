@@ -36,7 +36,7 @@ public:
 
 private:
   std::string ServiceId;
-  std::unique_ptr<Kafka::ProducerTopic> Producer;
+  std::unique_ptr<Kafka::IProducerTopic> Producer;
 };
 
 } // namespace Command
