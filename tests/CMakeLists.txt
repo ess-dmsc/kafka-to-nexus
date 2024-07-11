@@ -31,7 +31,7 @@ set(UnitTests_SRC
         ConsumerTests.cpp
         CommandSystem/CommandListenerTests.cpp
         CommandSystem/CommandParserTests.cpp
-        CommandSystem/CommandHandlerTests.cpp
+        CommandSystem/HandlerTests.cpp
         StatusReporterTests.cpp
         UnitTests.cpp
         ThreadedExecutorTests.cpp
@@ -69,7 +69,8 @@ set(UnitTests_SRC
         helpers/StatusHelpers.cpp
         helpers/HDFFileTestHelper.cpp
         HDFOperationsTests.cpp
-        )
+        CommandSystem/FeedbackProducerTests.cpp
+)
 
 add_executable(UnitTests ${UnitTests_SRC})
 target_include_directories(UnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

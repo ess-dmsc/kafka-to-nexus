@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "CommandSystem/FeedbackProducerBase.h"
 #include "CommandSystem/Handler.h"
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
@@ -35,28 +34,6 @@ public:
   bool isConnected() const override { return false; }
 };
 
-class FeedbackProducerMock : public FeedbackProducerBase {
-public:
-  // Inherit constructors from FeedbackProducerBase
-  using FeedbackProducerBase::FeedbackProducerBase;
-
-  void
-  publishResponse([[maybe_unused]] ActionResponse command,
-                  [[maybe_unused]] ActionResult result,
-                  [[maybe_unused]] std::string const &jobId,
-                  [[maybe_unused]] std::string const &commandId,
-                  [[maybe_unused]] time_point stopTime,
-                  [[maybe_unused]] int statusCode,
-                  [[maybe_unused]] std::string const &description) override {}
-
-  void
-  publishStoppedMsg([[maybe_unused]] ActionResult result,
-                    [[maybe_unused]] std::string const &jobId,
-                    [[maybe_unused]] std::string const &description,
-                    [[maybe_unused]] std::filesystem::path filePath,
-                    [[maybe_unused]] std::string const &metadata) override {}
-};
-
 class CommandListenerMock : public CommandListener {
 public:
   CommandListenerMock(std::string const &command_topic,
@@ -81,7 +58,7 @@ class StartHandlerTest : public ::testing::Test {
 protected:
   std::unique_ptr<JobListenerMock> _jobListenerMock;
   std::unique_ptr<CommandListener> _commandListener;
-  std::unique_ptr<FeedbackProducerMock> _feedbackProducerMock;
+  std::unique_ptr<FeedbackProducer> _feedbackProducer;
   std::unique_ptr<HandlerStandIn> _handlerUnderTest;
   StartMessage _startMessage;
   std::string _serviceId = "service_id_123";
@@ -92,12 +69,14 @@ protected:
     _commandListener = std::make_unique<CommandListener>(
         "no_topic_here", Kafka::BrokerSettings{}, time_point::max(),
         std::make_shared<Kafka::StubConsumerFactory>());
-    _feedbackProducerMock = std::make_unique<FeedbackProducerMock>();
+    _feedbackProducer = FeedbackProducer::create_null(
+        _serviceId,
+        std::make_unique<Kafka::StubProducerTopic>("no_topic_here"));
 
     _handlerUnderTest = std::make_unique<HandlerStandIn>(
         _serviceId, Kafka::BrokerSettings{}, "localhost:1111/no_topic_here",
         std::move(_jobListenerMock), std::move(_commandListener),
-        std::move(_feedbackProducerMock));
+        std::move(_feedbackProducer));
     _handlerUnderTest->registerIsWritingFunction(
         []() -> bool { return false; });
     _handlerUnderTest->registerStartFunction(
@@ -217,7 +196,7 @@ class StopHandlerTest : public ::testing::Test {
 protected:
   std::unique_ptr<JobListenerMock> _jobListenerMock;
   std::unique_ptr<CommandListenerMock> _commandListenerMock;
-  std::unique_ptr<FeedbackProducerMock> _feedbackProducerMock;
+  std::unique_ptr<FeedbackProducer> _feedbackProducer;
   std::unique_ptr<HandlerStandIn> _handlerUnderTest;
   StopMessage _stopMessage;
   std::string _serviceId = "service_id_123";
@@ -227,11 +206,13 @@ protected:
         "no_topic_here", Kafka::BrokerSettings{});
     _commandListenerMock = std::make_unique<CommandListenerMock>(
         "no_topic_here", Kafka::BrokerSettings{}, time_point::max());
-    _feedbackProducerMock = std::make_unique<FeedbackProducerMock>();
+    _feedbackProducer = FeedbackProducer::create_null(
+        _serviceId,
+        std::make_unique<Kafka::StubProducerTopic>("no_topic_here"));
     _handlerUnderTest = std::make_unique<HandlerStandIn>(
         _serviceId, Kafka::BrokerSettings{}, "no_topic_here",
         std::move(_jobListenerMock), std::move(_commandListenerMock),
-        std::move(_feedbackProducerMock));
+        std::move(_feedbackProducer));
     _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
     _handlerUnderTest->registerGetJobIdFunction(
         [this]() -> std::string { return this->_stopMessage.JobID; });

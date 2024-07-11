@@ -11,7 +11,7 @@
 
 #include "CommandListener.h"
 #include "Commands.h"
-#include "FeedbackProducerBase.h"
+#include "FeedbackProducer.h"
 #include "JobListener.h"
 #include "Kafka/BrokerSettings.h"
 #include "Msg.h"
@@ -65,7 +65,7 @@ public:
           std::string command_topic_uri,
           std::unique_ptr<JobListener> pool_listener,
           std::unique_ptr<CommandListener> command_listener,
-          std::unique_ptr<FeedbackProducerBase> command_response);
+          std::unique_ptr<FeedbackProducer> command_response);
 
   void registerStartFunction(StartFuncType StartFunction) override;
   void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) override;
@@ -155,8 +155,8 @@ private:
 
   std::unique_ptr<JobListener> JobPool;
   std::unique_ptr<CommandListener> CommandSource;
-  std::unique_ptr<FeedbackProducerBase> CommandResponse;
-  std::unique_ptr<FeedbackProducerBase> AltCommandResponse;
+  std::unique_ptr<FeedbackProducer> CommandResponse;
+  std::unique_ptr<FeedbackProducer> AltCommandResponse;
   std::string const CommandTopicAddress;
   Kafka::BrokerSettings const KafkaSettings;
   bool UsingAltTopic{false};

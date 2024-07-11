@@ -53,4 +53,21 @@ private:
   std::shared_ptr<Producer> KafkaProducer;
   std::unique_ptr<RdKafka::Topic> RdKafkaTopic;
 };
+
+class StubProducerTopic : public IProducerTopic {
+public:
+  explicit StubProducerTopic(std::string const &topic_name) {
+    Name = topic_name;
+  }
+  ~StubProducerTopic() override = default;
+
+  int produce([[maybe_unused]] std::unique_ptr<Kafka::ProducerMessage> message)
+      override {
+    messages.emplace_back(std::move(message));
+    return 0;
+  }
+
+  std::vector<std::unique_ptr<Kafka::ProducerMessage>> messages;
+};
+
 } // namespace Kafka
