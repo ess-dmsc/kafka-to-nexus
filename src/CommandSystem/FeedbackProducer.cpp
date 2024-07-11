@@ -16,19 +16,28 @@
 
 namespace Command {
 
+std::unique_ptr<FeedbackProducer>
+FeedbackProducer::create(const std::string &service_identifier,
+                         std::string const &response_topic,
+                         Kafka::BrokerSettings const &settings) {
+  return std::make_unique<FeedbackProducer>(
+      service_identifier,
+      std::make_unique<Kafka::ProducerTopic>(
+          std::make_shared<Kafka::Producer>(settings), response_topic));
+}
+
+std::unique_ptr<FeedbackProducer> FeedbackProducer::create_null(
+    const std::string &service_identifier,
+    std::unique_ptr<Kafka::StubProducerTopic> producer) {
+  return std::make_unique<FeedbackProducer>(service_identifier,
+                                            std::move(producer));
+}
+
 FeedbackProducer::FeedbackProducer(
     std::string ServiceIdentifier,
-    std::unique_ptr<Kafka::ProducerTopic> KafkaProducer)
+    std::unique_ptr<Kafka::IProducerTopic> KafkaProducer)
     : ServiceId(std::move(ServiceIdentifier)),
       Producer(std::move(KafkaProducer)) {}
-
-FeedbackProducer::FeedbackProducer(std::string const &ServiceIdentifier,
-                                   std::string const &response_topic,
-                                   Kafka::BrokerSettings const &Settings)
-    : FeedbackProducer(
-          ServiceIdentifier,
-          std::make_unique<Kafka::ProducerTopic>(
-              std::make_shared<Kafka::Producer>(Settings), response_topic)) {}
 
 void FeedbackProducer::publishResponse(ActionResponse Command,
                                        ActionResult Result,
