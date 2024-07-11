@@ -69,7 +69,8 @@ set(UnitTests_SRC
         helpers/StatusHelpers.cpp
         helpers/HDFFileTestHelper.cpp
         HDFOperationsTests.cpp
-        )
+        CommandSystem/FeedbackProducerTests.cpp
+)
 
 add_executable(UnitTests ${UnitTests_SRC})
 target_include_directories(UnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
