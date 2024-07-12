@@ -20,7 +20,7 @@ namespace Command {
 using FileWriter::Msg;
 
 /// \brief Check for new jobs on a topic.
-class JobListener : public CommandListener {
+class JobListener : private CommandListener {
 public:
   /// \brief Create new instance.
   static std::unique_ptr<JobListener>

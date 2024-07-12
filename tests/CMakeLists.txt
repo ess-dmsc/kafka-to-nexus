@@ -70,6 +70,7 @@ set(UnitTests_SRC
         helpers/HDFFileTestHelper.cpp
         HDFOperationsTests.cpp
         CommandSystem/FeedbackProducerTests.cpp
+        CommandSystem/JobListenerTests.cpp
 )
 
 add_executable(UnitTests ${UnitTests_SRC})
