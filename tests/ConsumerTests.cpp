@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "Kafka/ConfigureKafka.h"
 #include "Kafka/Consumer.h"
 #include "helpers/MockMessage.h"
 #include "helpers/RdKafkaMocks.h"
@@ -113,8 +114,6 @@ TEST_F(ConsumerTests,
     ASSERT_EQ(ConsumedMessage.first, PollStatus::Error);
   }
 }
-
-#include "Kafka/ConfigureKafka.h"
 
 TEST(ConsumerAssignmentTest, Test1) {
   BrokerSettings SettingsCopy;
