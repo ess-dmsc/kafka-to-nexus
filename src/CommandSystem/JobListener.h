@@ -65,8 +65,6 @@ public:
   /// pollForJob().
   virtual void disconnectFromPool();
 
-  virtual bool isConnected() const;
-
 private:
   // Do not change the ConsumerGroupId variable, it is vital to the workings of
   // the worker pool
