@@ -20,16 +20,33 @@ namespace Command {
 using FileWriter::Msg;
 
 /// \brief Check for new jobs on a topic.
-class JobListener : public CommandListener {
+class JobListener : private CommandListener {
 public:
+  /// \brief Create new instance.
+  static std::unique_ptr<JobListener>
+  create(std::string const &job_pool_topic,
+         Kafka::BrokerSettings const &settings) {
+    return std::make_unique<JobListener>(
+        job_pool_topic, settings, std::make_shared<Kafka::ConsumerFactory>());
+  }
+
+  /// \brief Create a new instance but with stubs.
+  ///
+  /// \note For use in tests!
+  static std::unique_ptr<JobListener> create_null(
+      std::string const &job_pool_topic, Kafka::BrokerSettings const &settings,
+      const std::shared_ptr<Kafka::StubConsumerFactory> &consumer_factory) {
+    return std::make_unique<JobListener>(job_pool_topic, settings,
+                                         consumer_factory);
+  }
+
   /// \brief The constructor will not automatically connect to the Kafka broker.
   ///
   /// \param JobPoolUri The URI/URL of the Kafka broker + topic to connect to
   /// for new jobs. \param Settings Kafka (consumer) settings.
   JobListener(
       std::string const &job_pool_topic, Kafka::BrokerSettings const &Settings,
-      const std::shared_ptr<Kafka::ConsumerFactoryInterface> &consumer_factory =
-          std::make_shared<Kafka::ConsumerFactory>());
+      const std::shared_ptr<Kafka::ConsumerFactoryInterface> &consumer_factory);
 
   /// \brief Poll the Kafka topic for a new job.
   ///
@@ -47,8 +64,6 @@ public:
   /// This function should (probably) be called after a successful call to
   /// pollForJob().
   virtual void disconnectFromPool();
-
-  virtual bool isConnected() const;
 
 private:
   // Do not change the ConsumerGroupId variable, it is vital to the workings of

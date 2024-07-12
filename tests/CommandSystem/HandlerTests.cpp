@@ -30,8 +30,6 @@ public:
   }
 
   void disconnectFromPool() override {}
-
-  bool isConnected() const override { return false; }
 };
 
 class CommandListenerMock : public CommandListener {
