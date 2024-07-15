@@ -34,29 +34,30 @@ void signal_handler(int Signal, std::atomic<RunStates> &RunState) {
   case SIGINT:
     if (RunState == RunStates::Running ||
         RunState == RunStates::SIGHUP_Received) {
-      LOG_INFO(CtrlCString);
+      Logger::Info(CtrlCString);
       RunState = RunStates::SIGINT_Received;
     } else {
-      LOG_INFO("Got repeated Ctrl-c. Shutting down now;");
+      Logger::Info("Got repeated Ctrl-c. Shutting down now;");
       RunState = RunStates::Stopping;
     }
     break;
   case SIGTERM:
-    LOG_INFO(SIGTERMString);
+    Logger::Info(SIGTERMString);
     RunState = RunStates::Stopping;
     break;
   case SIGHUP:
     if (RunState == RunStates::Running) {
-      LOG_INFO(SIGHUPString);
+      Logger::Info(SIGHUPString);
       RunState = RunStates::SIGHUP_Received;
     } else {
-      LOG_INFO("SIGHUP is only honoured from 'Running' state, ignoring signal "
-               "received while on state {}",
-               static_cast<int>(RunState.load()));
+      Logger::Info(
+          "SIGHUP is only honoured from 'Running' state, ignoring signal "
+          "received while on state {}",
+          static_cast<int>(RunState.load()));
     }
     break;
   default:
-    LOG_INFO(UnknownSignal);
+    Logger::Info(UnknownSignal);
   }
 }
 
@@ -79,7 +80,7 @@ bool shouldStop(std::unique_ptr<FileWriter::Master> &MasterPtr,
     }
   } else if (RunState == RunStates::SIGINT_Waiting) {
     if (system_clock::now() > SIGINTStart + WaitForStop) {
-      LOG_INFO("Failed to shut down gracefully. Stopping now.");
+      Logger::Info("Failed to shut down gracefully. Stopping now.");
       return true;
     } else if (MasterPtr->writingIsFinished()) {
       RunState = RunStates::SIGINT_KafkaWait;

@@ -23,7 +23,7 @@ ev42_Extractor::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = GetEventMessage(Message.data());
   auto NamePtr = fbuf->source_name();
   if (NamePtr == nullptr) {
-    LOG_INFO("message has no source_name");
+    Logger::Info("message has no source_name");
     return "";
   }
   return NamePtr->str();

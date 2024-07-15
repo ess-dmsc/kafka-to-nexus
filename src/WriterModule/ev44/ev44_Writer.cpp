@@ -64,8 +64,8 @@ InitResult ev44_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("ev44 could not init_hdf hdf_parent: {}  trace: {}",
-              static_cast<std::string>(HDFGroup.link().path()), message);
+    Logger::Error("ev44 could not init_hdf hdf_parent: {}  trace: {}",
+                  static_cast<std::string>(HDFGroup.link().path()), message);
     return WriterModule::InitResult::ERROR;
   }
   return WriterModule::InitResult::OK;
@@ -81,7 +81,7 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -94,8 +94,9 @@ void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
   auto CurrentNumberOfEvents = EventMsgFlatbuffer->time_of_flight()->size();
   if (EventMsgFlatbuffer->pixel_id()->size() > 0 &&
       EventMsgFlatbuffer->pixel_id()->size() != CurrentNumberOfEvents) {
-    LOG_WARN("ev44 message data lengths differ (time_of_flight={} pixel_id={})",
-             CurrentNumberOfEvents, EventMsgFlatbuffer->pixel_id()->size());
+    Logger::Info(
+        "ev44 message data lengths differ (time_of_flight={} pixel_id={})",
+        CurrentNumberOfEvents, EventMsgFlatbuffer->pixel_id()->size());
   }
   EventTimeOffset.appendArray(
       getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));

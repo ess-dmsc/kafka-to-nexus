@@ -81,7 +81,7 @@ void Handler::registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) {
 
 void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
-    LOG_INFO("Reverting to default command topic: {}", CommandTopicAddress);
+    Logger::Info("Reverting to default command topic: {}", CommandTopicAddress);
     CommandSource->change_topic(CommandTopicAddress);
     std::swap(AltCommandResponse, CommandResponse);
     UsingAltTopic = false;
@@ -91,7 +91,7 @@ void Handler::revertCommandTopic() {
 void Handler::switchCommandTopic(std::string const &ControlTopic,
                                  time_point const StartTime) {
   if (ControlTopic != CommandTopicAddress) {
-    LOG_INFO(
+    Logger::Info(
         R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
         ControlTopic, StartTime);
     CommandSource->change_topic(ControlTopic, StartTime);
@@ -104,8 +104,8 @@ void Handler::switchCommandTopic(std::string const &ControlTopic,
 
 void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
                                     std::string const &Metadata) {
-  LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={})",
-            "Success", GetJobId(), FilePath.string());
+  Logger::Debug("Sending FinishedWriting message (Result={} JobId={} File={})",
+                "Success", GetJobId(), FilePath.string());
   CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
                                      FilePath, Metadata);
   revertCommandTopic();
@@ -114,8 +114,9 @@ void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
 void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                           std::string const &Metadata,
                                           std::string const &ErrorMessage) {
-  LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={}): {}",
-            "Failure", GetJobId(), FileName, ErrorMessage);
+  Logger::Debug(
+      "Sending FinishedWriting message (Result={} JobId={} File={}): {}",
+      "Failure", GetJobId(), FileName, ErrorMessage);
   CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(),
                                      ErrorMessage, FileName, Metadata);
   revertCommandTopic();
@@ -150,12 +151,12 @@ bool isValidUUID(std::string const &UUIDStr) {
 /// \param MsgTime
 void warnIfMessageIsOld(time_point MsgTime) {
   if (system_clock::now() > MsgTime + 120s) {
-    LOG_WARN(fmt::format("Start command's message timestamp is not very "
-                         "recent, the command was queued for some time"
-                         "(command created at: {}, "
-                         "current time: {}).",
-                         toUTCDateTime(MsgTime),
-                         toUTCDateTime(system_clock::now())));
+    Logger::Info(fmt::format("Start command's message timestamp is not very "
+                             "recent, the command was queued for some time"
+                             "(command created at: {}, "
+                             "current time: {}).",
+                             toUTCDateTime(MsgTime),
+                             toUTCDateTime(system_clock::now())));
   }
 }
 
@@ -183,7 +184,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
       revertCommandTopic();
     }
   } catch (std::exception &E) {
-    LOG_CRITICAL("Unable to process start command, error was: {}", E.what());
+    Logger::Critical("Unable to process start command, error was: {}",
+                     E.what());
   }
 }
 
@@ -303,7 +305,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           ValidationResponse.MessageString());
     }
   } catch (std::exception &E) {
-    LOG_CRITICAL("Unable to process stop command, error was: {}", E.what());
+    Logger::Critical("Unable to process stop command, error was: {}", E.what());
   }
 }
 

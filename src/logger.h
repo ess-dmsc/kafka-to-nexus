@@ -10,6 +10,8 @@
 #pragma once
 
 #include "TimeUtility.h"
+#include "spdlog/sinks/syslog_sink.h"
+#include "spdlog/spdlog.h"
 #include <fmt/format.h>
 #include <graylog_logger/Log.hpp>
 #include <nlohmann/json.hpp>
@@ -90,38 +92,41 @@ struct URI;
 void setUpLogging(const Log::Severity &LoggingLevel,
                   const std::string &LogFileName, const uri::URI &GraylogURI);
 
-template <typename... Args>
-void LOG_ALERT(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Alert, fmt, args...);
+struct Logger {
+static auto instance() {
+  static auto syslog_logger = spdlog::syslog_logger_mt("syslog", "kafka-to-nexus", LOG_PID);
+  return syslog_logger;
 }
 
 template <typename... Args>
-void LOG_CRITICAL(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Critical, fmt, args...);
+static void Critical(std::string fmt, const Args &... args) {
+  instance()->critical(fmt, args...);
 }
 
 template <typename... Args>
-void LOG_ERROR(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Error, fmt, args...);
+static void Error(std::string fmt, const Args &... args) {
+  instance()->error(fmt, args...);
 }
 
 template <typename... Args>
-void LOG_WARN(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Warning, fmt, args...);
+static void Warn(std::string fmt, const Args &... args) {
+  instance()->warn(fmt, args...);
 }
 
 template <typename... Args>
-void LOG_INFO(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Info, fmt, args...);
+static void Info(std::string fmt, const Args &... args) {
+  instance()->info(fmt, args...);
 }
 
 template <typename... Args>
-void LOG_DEBUG(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Debug, fmt, args...);
+static void Debug(std::string fmt, const Args &... args) {
+  instance()->debug(fmt, args...);
 }
 
 template <typename... Args>
-void LOG_TRACE(std::string fmt, const Args &... args) {
-  Log::FmtMsg(Log::Severity::Debug, fmt, args...);
-// Fix this, what do we do about log levels?
+static void Trace(std::string fmt, const Args &... args) {
+  instance()->trace(fmt, args...);
 }
+};
+
+

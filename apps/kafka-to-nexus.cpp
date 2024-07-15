@@ -53,17 +53,17 @@ bool tryToFindTopics(std::string const &PoolTopic,
     if (ListOfTopics.find(PoolTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           R"(Unable to find job pool topic with name "{}".)", PoolTopic);
-      LOG_CRITICAL(MsgString);
+      Logger::Critical(MsgString);
       throw std::runtime_error(MsgString);
     }
     if (ListOfTopics.find(CommandTopic) == ListOfTopics.end()) {
       auto MsgString = fmt::format(
           R"(Unable to find command topic with name "{}".)", CommandTopic);
-      LOG_CRITICAL(MsgString);
+      Logger::Critical(MsgString);
       throw std::runtime_error(MsgString);
     }
   } catch (MetadataException const &E) {
-    LOG_WARN("Meta data query failed with message: {}", E.what());
+    Logger::Info("Meta data query failed with message: {}", E.what());
     return false;
   }
   return true;
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
   if (!versionOfHDF5IsOk()) {
-    LOG_ALERT("Failed HDF5 version check. Exiting.");
+    Logger::Critical("Failed HDF5 version check. Exiting.");
     return EXIT_FAILURE;
   }
 
@@ -170,15 +170,15 @@ int main(int argc, char **argv) {
   bool FindTopicMode{true};
   duration CMetaDataTimeout{
       Options->StreamerConfiguration.BrokerSettings.MinMetadataTimeout};
-  LOG_DEBUG("Starting run loop.");
-  LOG_DEBUG("Retrieving topic names from broker.");
+  Logger::Debug("Starting run loop.");
+  Logger::Debug("Retrieving topic names from broker.");
   while (!shouldStop(MasterPtr, FindTopicMode, RunState)) {
     try {
       if (FindTopicMode) {
         if (tryToFindTopics(Options->job_pool_topic, Options->command_topic,
                             CMetaDataTimeout,
                             Options->StreamerConfiguration.BrokerSettings)) {
-          LOG_DEBUG("Command and status topics found, starting master.");
+          Logger::Debug("Command and status topics found, starting master.");
           MasterPtr = GenerateMaster();
           FindTopicMode = false;
         } else {
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
             CMetaDataTimeout = Options->StreamerConfiguration.BrokerSettings
                                    .MaxMetadataTimeout;
           }
-          LOG_WARN(
+          Logger::Info(
               R"(Meta data call for retrieving the command topic ("{}") from the broker failed. Re-trying with a timeout of {} ms.)",
               Options->command_topic,
               std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -199,24 +199,24 @@ int main(int argc, char **argv) {
         MasterPtr->run();
       }
     } catch (std::system_error const &e) {
-      LOG_CRITICAL(
+      Logger::Critical(
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
           e.code().value(), e.code().category().name(), e.code().message(),
           e.what());
       break;
     } catch (std::runtime_error const &e) {
-      LOG_CRITICAL("std::runtime_error  what: {}", e.what());
+      Logger::Critical("std::runtime_error  what: {}", e.what());
       break;
     } catch (std::exception const &e) {
-      LOG_CRITICAL("std::exception  what: {}", e.what());
+      Logger::Critical("std::exception  what: {}", e.what());
       break;
     }
   }
   if (RunState == RunStates::SIGINT_KafkaWait) {
-    LOG_DEBUG("Giving a grace period to Kafka.");
+    Logger::Debug("Giving a grace period to Kafka.");
     std::this_thread::sleep_for(3s);
   }
-  LOG_INFO("Exiting.");
+  Logger::Info("Exiting.");
   Log::Flush();
   return EXIT_SUCCESS;
 }

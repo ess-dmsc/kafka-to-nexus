@@ -36,7 +36,7 @@ std::string toLocalDateTime(time_point TimeStamp) {
   try {
     CurrentTimeZone = date::current_zone();
   } catch (const std::runtime_error &e) {
-    LOG_WARN("Unable to find local time zone, using UTC.");
+    Logger::Info("Unable to find local time zone, using UTC.");
     return toUTCDateTime(TimeStamp);
   }
   auto ZonedTime = date::make_zoned(

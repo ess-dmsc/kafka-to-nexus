@@ -26,13 +26,13 @@ void configureKafka(RdKafka::Conf &RdKafkaConfiguration,
 
     if (RdKafka::Conf::ConfResult::CONF_OK !=
         RdKafkaConfiguration.set(Key, Value, ErrorString)) {
-      LOG_WARN("Failure setting config: {} = {}", Key, LogValue);
+      Logger::Info("Failure setting config: {} = {}", Key, LogValue);
     } else {
       DebugOutput += fmt::format(" {}={}", Key, LogValue);
     }
   }
 
-  LOG_DEBUG("RdKafka settings applied:{}", DebugOutput);
+  Logger::Debug("RdKafka settings applied:{}", DebugOutput);
 }
 
 } // namespace Kafka

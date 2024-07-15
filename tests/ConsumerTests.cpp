@@ -131,7 +131,7 @@ TEST(ConsumerAssignmentTest, Test1) {
       RdKafka::KafkaConsumer::create(Conf.get(), ErrorString));
   auto ConsumerPtr = KafkaConsumer.get();
   if (KafkaConsumer == nullptr) {
-    LOG_CRITICAL("can not create kafka consumer: {}", ErrorString);
+    Logger::Critical("can not create kafka consumer: {}", ErrorString);
     throw std::runtime_error("can not create Kafka consumer");
   }
   auto TestConsumer = std::make_unique<Consumer>(

@@ -16,7 +16,7 @@
 namespace Kafka {
 
 Producer::~Producer() {
-  LOG_DEBUG("~Producer");
+  Logger::Debug("~Producer");
   if (ProducerPtr != nullptr) {
     int TimeoutMS = 100;
     int NumberOfIterations = 80;
@@ -27,7 +27,7 @@ Producer::~Producer() {
       ProducerPtr->poll(TimeoutMS);
     }
     if (outputQueueLength() > 0) {
-      LOG_TRACE(
+      Logger::Trace(
           "Kafka out queue still not empty: {}, destroying producer anyway.",
           outputQueueLength());
     }
@@ -58,21 +58,22 @@ Producer::Producer(BrokerSettings const &Settings)
   ProducerPtr = std::unique_ptr<RdKafka::Producer>(
       RdKafka::Producer::create(Conf.get(), ErrorString));
   if (ProducerPtr == nullptr) {
-    LOG_CRITICAL("Can not create kafka handle: {}", ErrorString);
+    Logger::Critical("Can not create kafka handle: {}", ErrorString);
     throw std::runtime_error("can not create Kafka handle");
   }
 
-  LOG_INFO("new Kafka producer: {}, with brokers: {}", ProducerPtr->name(),
-           ProducerBrokerSettings.Address);
+  Logger::Info("new Kafka producer: {}, with brokers: {}", ProducerPtr->name(),
+               ProducerBrokerSettings.Address);
 }
 
 void Producer::poll() {
   auto EventsHandled =
       ProducerPtr->poll(toMilliSeconds(ProducerBrokerSettings.PollTimeout));
   auto OutputQueueLength = outputQueueLength();
-  LOG_DEBUG("IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
-            ProducerID, ProducerBrokerSettings.Address, EventsHandled,
-            OutputQueueLength);
+  Logger::Debug(
+      "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
+      ProducerID, ProducerBrokerSettings.Address, EventsHandled,
+      OutputQueueLength);
   Stats.poll_served += EventsHandled;
   Stats.out_queue = OutputQueueLength;
 }

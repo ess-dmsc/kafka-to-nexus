@@ -14,7 +14,7 @@ std::string ep01_Extractor::source_name(
   auto FBuffer = GetEpicsPVConnectionInfo(Message.data());
   auto SourceName = FBuffer->source_name();
   if (SourceName == nullptr) {
-    LOG_WARN("Message has no source name.");
+    Logger::Info("Message has no source name.");
     return "";
   }
   return SourceName->str();
