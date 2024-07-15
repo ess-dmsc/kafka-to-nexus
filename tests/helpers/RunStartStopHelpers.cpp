@@ -10,13 +10,15 @@ FileWriter::Msg buildRunStartMessage(
     std::string const &InstrumentName, std::string const &RunName,
     std::string const &NexusStructure, std::string const &JobID,
     std::optional<std::string> const &ServiceID, std::string const &Filename,
-    uint64_t StartTime, uint64_t StopTime) {
+    uint64_t StartTime, uint64_t StopTime, std::string const &control_topic) {
   flatbuffers::FlatBufferBuilder Builder;
 
-  const auto InstrumentNameOffset = Builder.CreateString(InstrumentName);
-  const auto RunIDOffset = Builder.CreateString(RunName);
-  const auto NexusStructureOffset = Builder.CreateString(NexusStructure);
-  const auto JobIDOffset = Builder.CreateString(JobID);
+  auto const InstrumentNameOffset = Builder.CreateString(InstrumentName);
+  auto const RunIDOffset = Builder.CreateString(RunName);
+  auto const NexusStructureOffset = Builder.CreateString(NexusStructure);
+  auto const JobIDOffset = Builder.CreateString(JobID);
+  auto const control_topic_offset = Builder.CreateString(control_topic);
+
   flatbuffers::Offset<flatbuffers::String> ServiceIDOffset;
   if (ServiceID) {
     ServiceIDOffset = Builder.CreateString(*ServiceID);
@@ -24,6 +26,7 @@ FileWriter::Msg buildRunStartMessage(
   const auto FilenameOffset = Builder.CreateString(Filename);
 
   RunStartBuilder StartBuilder{Builder};
+  StartBuilder.add_control_topic(control_topic_offset);
   StartBuilder.add_start_time(StartTime);
   StartBuilder.add_stop_time(StopTime);
   StartBuilder.add_run_name(RunIDOffset);
