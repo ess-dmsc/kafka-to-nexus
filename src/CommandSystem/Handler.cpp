@@ -90,14 +90,16 @@ void Handler::revertCommandTopic() {
 
 void Handler::switchCommandTopic(std::string const &ControlTopic,
                                  time_point const StartTime) {
-  LOG_INFO(
-      R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
-      ControlTopic, StartTime);
-  CommandSource->change_topic(ControlTopic, StartTime);
-  AltCommandResponse =
-      FeedbackProducer::create(ServiceId, ControlTopic, KafkaSettings);
-  std::swap(CommandResponse, AltCommandResponse);
-  UsingAltTopic = true;
+  if (ControlTopic != CommandTopicAddress) {
+    LOG_INFO(
+        R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
+        ControlTopic, StartTime);
+    CommandSource->change_topic(ControlTopic, StartTime);
+    AltCommandResponse =
+        FeedbackProducer::create(ServiceId, ControlTopic, KafkaSettings);
+    std::swap(CommandResponse, AltCommandResponse);
+    UsingAltTopic = true;
+  }
 }
 
 void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,

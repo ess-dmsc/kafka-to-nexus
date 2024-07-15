@@ -9,6 +9,7 @@
 
 #include "CommandSystem/Handler.h"
 #include "helpers/RunStartStopHelpers.h"
+#include <answ_action_response_generated.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
 #include <uuid.h>
@@ -55,22 +56,26 @@ class StartHandlerTest : public ::testing::Test {
 protected:
   std::shared_ptr<Kafka::StubConsumerFactory> _consumer_factory;
   std::unique_ptr<Handler> _handlerUnderTest;
+  Kafka::StubProducerTopic *_producer_topic;
   StartMessage _startMessage;
   std::string _serviceId = "service_id_123";
+  std::string _default_command_topic = "command_topic";
 
   void SetUp() override {
     _consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
     auto job_listener =
         JobListener::create_null("pool_topic", {}, _consumer_factory);
-    auto command_listener =
-        CommandListener::create_null("command_topic", Kafka::BrokerSettings{},
-                                     _consumer_factory, time_point::max());
+    auto command_listener = CommandListener::create_null(
+        _default_command_topic, Kafka::BrokerSettings{}, _consumer_factory,
+        time_point::max());
     auto producer_topic =
         std::make_unique<Kafka::StubProducerTopic>("my_topic");
+    _producer_topic = producer_topic.get();
+
     auto feedback_producer =
         FeedbackProducer::create_null(_serviceId, std::move(producer_topic));
     _handlerUnderTest = std::make_unique<Handler>(
-        _serviceId, Kafka::BrokerSettings{}, "no_topic_here",
+        _serviceId, Kafka::BrokerSettings{}, _default_command_topic,
         std::move(job_listener), std::move(command_listener),
         std::move(feedback_producer));
     _handlerUnderTest->registerIsWritingFunction(
@@ -93,7 +98,7 @@ TEST_F(StartHandlerTest, start_command_actioned) {
 
   auto start_message = RunStartStopHelpers::buildRunStartMessage(
       "my_instrument", "my_run_name", example_json, _startMessage.JobID,
-      {_serviceId}, "my_file_name", 123456, 987654, "new_control_topic");
+      {_serviceId}, "my_file_name", 123456, 987654, "new_command_topic");
   FileWriter::MessageMetaData meta_data{.topic = "pool_topic"};
   _consumer_factory->messages->emplace_back(start_message.data(),
                                             start_message.size(), meta_data);
@@ -104,115 +109,149 @@ TEST_F(StartHandlerTest, start_command_actioned) {
 
   EXPECT_EQ(true, start_called);
 }
-//
-// TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
-//  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
-//
-//  for (bool isPoolCommand : {false, true}) {
-//    CmdResponse cmdResponse =
-//        _handlerUnderTest->startWriting(_startMessage, isPoolCommand);
-//    EXPECT_TRUE(cmdResponse.SendResponse);
-//    EXPECT_TRUE(isErrorResponse(cmdResponse));
-//  }
-//}
-//
-// TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_TRUE(cmdResponse.SendResponse);
-//  EXPECT_FALSE(isErrorResponse(cmdResponse));
-//}
-//
-// TEST_F(StartHandlerTest,
-//       validateStartCommandFromJobPoolAndMismatchingServiceId) {
-//  _startMessage.ServiceID = "another_service_id";
-//
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_FALSE(cmdResponse.SendResponse);
-//  EXPECT_TRUE(isErrorResponse(cmdResponse));
-//}
-//
-// TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId)
-// {
-//  _startMessage.ServiceID = _serviceId;
-//
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_TRUE(cmdResponse.SendResponse);
-//  EXPECT_FALSE(isErrorResponse(cmdResponse));
-//}
-//
-// TEST_F(StartHandlerTest,
-//       validateStartCommandRejectsControlTopicIfNotFromJobPool) {
-//  _startMessage.ControlTopic = "some_topic";
-//
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, false);
-//
-//  EXPECT_FALSE(_handlerUnderTest->isUsingAlternativeTopic());
-//  EXPECT_TRUE(cmdResponse.SendResponse);
-//  EXPECT_TRUE(isErrorResponse(cmdResponse));
-//}
-//
-// TEST_F(StartHandlerTest,
-// validateStartCommandAcceptsControlTopicIfFromJobPool) {
-//  EXPECT_FALSE(_handlerUnderTest->isUsingAlternativeTopic());
-//  _startMessage.ControlTopic = "some_topic";
-//
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_FALSE(isErrorResponse(cmdResponse));
-//  EXPECT_TRUE(_handlerUnderTest->isUsingAlternativeTopic());
-//}
-//
-// TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
-//  _startMessage.JobID = "321e4567-e89b-12d3-a456-426614174000";
-//
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_TRUE(cmdResponse.SendResponse);
-//  EXPECT_FALSE(isErrorResponse(cmdResponse));
-//}
-//
-// TEST_F(StartHandlerTest, validateStartCommandRejectsInvalidJobID) {
-//  _startMessage.JobID = "123";
-//
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_TRUE(cmdResponse.SendResponse);
-//  EXPECT_TRUE(isErrorResponse(cmdResponse));
-//}
-//
-// TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
-//  _handlerUnderTest->registerStartFunction(
-//      []([[maybe_unused]] auto startMessage) -> void {
-//        throw std::runtime_error("Some error");
-//      });
-//
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_TRUE(cmdResponse.SendResponse);
-//  EXPECT_TRUE(isErrorResponse(cmdResponse));
-//}
-//
-// TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse)
-// {
-//  CmdResponse cmdResponse =
-//      _handlerUnderTest->startWriting(_startMessage, true);
-//
-//  EXPECT_TRUE(cmdResponse.SendResponse);
-//  EXPECT_FALSE(isErrorResponse(cmdResponse));
-//  EXPECT_EQ(cmdResponse.StatusCode, 201);
-//}
-//
+
+TEST_F(StartHandlerTest, start_command_sends_response) {
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      []([[maybe_unused]] auto startMessage) -> void {});
+
+  // NOTE: using the same command topic, so it doesn't create a new
+  // ProducerTopic. This allows us to see the messages
+  auto start_message = RunStartStopHelpers::buildRunStartMessage(
+      "my_instrument", "my_run_name", example_json, _startMessage.JobID,
+      {_serviceId}, "my_file_name", 123456, 987654, _default_command_topic);
+  FileWriter::MessageMetaData meta_data{.topic = "pool_topic"};
+  _consumer_factory->messages->emplace_back(start_message.data(),
+                                            start_message.size(), meta_data);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  auto message = _producer_topic->messages[0].get();
+  auto result = GetActionResponse(message->data);
+
+  EXPECT_EQ(1u, _producer_topic->messages.size());
+  ASSERT_EQ(result->action(), ActionType::StartJob);
+  ASSERT_EQ(result->outcome(), ActionOutcome::Success);
+}
+
+TEST_F(StartHandlerTest, start_command_ignored_if_already_writing) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+
+  auto start_message = RunStartStopHelpers::buildRunStartMessage(
+      "my_instrument", "my_run_name", example_json, _startMessage.JobID,
+      {_serviceId}, "my_file_name", 123456, 987654, "new_control_topic");
+  FileWriter::MessageMetaData meta_data{.topic = _default_command_topic};
+  _consumer_factory->messages->emplace_back(start_message.data(),
+                                            start_message.size(), meta_data);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(false, start_called);
+}
+
+TEST_F(StartHandlerTest, start_command_with_no_service_id_starts) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+
+  auto start_message = RunStartStopHelpers::buildRunStartMessage(
+      "my_instrument", "my_run_name", example_json, _startMessage.JobID, {},
+      "my_file_name", 123456, 987654, "new_control_topic");
+  FileWriter::MessageMetaData meta_data{.topic = "pool_topic"};
+  _consumer_factory->messages->emplace_back(start_message.data(),
+                                            start_message.size(), meta_data);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(true, start_called);
+}
+
+TEST_F(StartHandlerTest, start_command_with_mismatched_service_id_is_rejected) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+
+  auto start_message = RunStartStopHelpers::buildRunStartMessage(
+      "my_instrument", "my_run_name", example_json, _startMessage.JobID,
+      {"wrong_service_id"}, "my_file_name", 123456, 987654,
+      "new_control_topic");
+  FileWriter::MessageMetaData meta_data{.topic = "pool_topic"};
+  _consumer_factory->messages->emplace_back(start_message.data(),
+                                            start_message.size(), meta_data);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(false, start_called);
+}
+
+TEST_F(StartHandlerTest, start_command_with_invalid_UUID_is_rejected) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+
+  auto start_message = RunStartStopHelpers::buildRunStartMessage(
+      "my_instrument", "my_run_name", example_json, "invalid_uuid",
+      {"wrong_service_id"}, "my_file_name", 123456, 987654,
+      "new_control_topic");
+  FileWriter::MessageMetaData meta_data{.topic = "pool_topic"};
+  _consumer_factory->messages->emplace_back(start_message.data(),
+                                            start_message.size(), meta_data);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(false, start_called);
+}
+
+TEST_F(StartHandlerTest, rejected_command_sends_response) {
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      []([[maybe_unused]] auto startMessage) -> void {});
+
+  // NOTE: using the same command topic, so it doesn't create a new
+  // ProducerTopic. This allows us to see the messages
+  auto start_message = RunStartStopHelpers::buildRunStartMessage(
+      "my_instrument", "my_run_name", example_json, "invalid_uuid",
+      {_serviceId}, "my_file_name", 123456, 987654, _default_command_topic);
+  FileWriter::MessageMetaData meta_data{.topic = "pool_topic"};
+  _consumer_factory->messages->emplace_back(start_message.data(),
+                                            start_message.size(), meta_data);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  auto message = _producer_topic->messages[0].get();
+  auto result = GetActionResponse(message->data);
+
+  EXPECT_EQ(1u, _producer_topic->messages.size());
+  ASSERT_EQ(result->action(), ActionType::StartJob);
+  ASSERT_EQ(result->outcome(), ActionOutcome::Failure);
+}
+
 // class StopHandlerTest : public ::testing::Test {
 // protected:
 //  std::unique_ptr<JobListenerMock> _jobListenerMock;
