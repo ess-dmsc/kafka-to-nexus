@@ -16,7 +16,7 @@
 #include <utility>
 
 namespace Command {
-using LogLevel = Log::Severity;
+using LogLevel = LogSeverity;
 
 std::unique_ptr<Handler> Handler::create(std::string const &service_id,
                                          Kafka::BrokerSettings const &settings,
@@ -173,7 +173,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     }
 
     warnIfMessageIsOld(CommandMsg.getMetaData().timestamp());
-    Log::Msg(ValidationResponse.LogLevel, ValidationResponse.MessageString());
+    // Log::Msg(ValidationResponse.LogLevel,
+    // ValidationResponse.MessageString());
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
@@ -195,7 +196,7 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
   std::string ExceptionMessage;
   if (!extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
     return CmdResponse{
-        LogLevel::Warning, 400, false, [ExceptionMessage]() {
+        LogLevel::Warn, 400, false, [ExceptionMessage]() {
           return fmt::format(
               "Failed to extract start command from flatbuffer. The "
               "error was: {}",
@@ -245,7 +246,7 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob,
 
   if (!isValidUUID(StartJob.JobID)) {
     return CmdResponse{
-        LogLevel::Warning, 400, true, [StartJob]() {
+        LogLevel::Warn, 400, true, [StartJob]() {
           return fmt::format(
               R"(Rejected start command as the job id was invalid (it was: "{}").)",
               StartJob.JobID);
@@ -297,7 +298,8 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       SendResult = ActionResult::Failure;
     }
 
-    Log::Msg(ValidationResponse.LogLevel, ValidationResponse.MessageString());
+    // Log::Msg(ValidationResponse.LogLevel,
+    // ValidationResponse.MessageString());
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::SetStopTime, SendResult, StopJob.JobID,
@@ -314,7 +316,7 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
   if (std::string ExceptionMessage;
       !extractStopMessage(CommandMsg, StopJob, ExceptionMessage)) {
     return CmdResponse{
-        LogLevel::Warning, 400, false, [ExceptionMessage]() {
+        LogLevel::Warn, 400, false, [ExceptionMessage]() {
           return fmt::format(
               "Failed to extract stop command from flatbuffer. The "
               "error was: {}",
@@ -339,7 +341,7 @@ CmdResponse Handler::stopWriting(StopMessage const &StopCmd) {
 
   if (!IsWritingNow()) {
     return CmdResponse{
-        LogLevel::Warning, 400,
+        LogLevel::Warn, 400,
         !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID, []() {
           return fmt::format("Rejected stop command as there is "
                              "currently no write job in progress.");
@@ -349,7 +351,7 @@ CmdResponse Handler::stopWriting(StopMessage const &StopCmd) {
   auto CurrentJobId = GetJobId();
   if (!(CurrentJobId == StopCmd.JobID)) {
     return CmdResponse{
-        LogLevel::Warning, 400,
+        LogLevel::Warn, 400,
         !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID,
         [CurrentJobId, StopCmd]() {
           return fmt::format(

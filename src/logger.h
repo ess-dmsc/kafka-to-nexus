@@ -13,7 +13,6 @@
 #include "spdlog/sinks/syslog_sink.h"
 #include "spdlog/spdlog.h"
 #include <fmt/format.h>
-#include <graylog_logger/Log.hpp>
 #include <nlohmann/json.hpp>
 #include <numeric>
 #include <string>
@@ -132,6 +131,35 @@ template <typename... Args>
 static void Trace(std::string fmt, const Args &... args) {
   instance()->trace(fmt, args...);
 }
+
+template <typename... Args>
+  static void Log(int severity, std::string fmt, const Args&... args) {
+    switch (severity) {
+      case spdlog::level::critical:
+        Critical(fmt, args...);
+        break;
+      case spdlog::level::err:
+        Error(fmt, args...);
+        break;
+      case spdlog::level::warn:
+        Warn(fmt, args...);
+        break;
+      case spdlog::level::info:
+        Info(fmt, args...);
+        break;
+      case spdlog::level::debug:
+        Debug(fmt, args...);
+        break;
+      case spdlog::level::trace:
+        Trace(fmt, args...);
+        break;
+      default:
+        Info(fmt, args...);
+        break;
+    }
+  }
+
+static void Flush() {
+  spdlog::apply_all([](std::shared_ptr<spdlog::logger> l) { l->flush(); });
+}
 };
-
-

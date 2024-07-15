@@ -217,6 +217,6 @@ int main(int argc, char **argv) {
     std::this_thread::sleep_for(3s);
   }
   Logger::Info("Exiting.");
-  Log::Flush();
+  Logger::Flush();
   return EXIT_SUCCESS;
 }

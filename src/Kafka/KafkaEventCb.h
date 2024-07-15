@@ -17,11 +17,11 @@ public:
   void event_cb(RdKafka::Event &Event) override {
     switch (Event.type()) {
     case RdKafka::Event::EVENT_ERROR:
-      Log::FmtMsg(LogLevels.at(Event.severity()), "Kafka EVENT_ERROR {} [{}]",
+      Logger::Log(LogLevels.at(Event.severity()), "Kafka EVENT_ERROR {} [{}]",
                   RdKafka::err2str(Event.err()), Event.str());
       break;
     case RdKafka::Event::EVENT_STATS:
-      // Log::FmtMsg(LogLevels.at(Event.severity()),
+      // Logger::Log(LogLevels.at(Event.severity()),
       //             "Kafka Stats id: {} broker: {} message: {}",
       //             Event.broker_id(), Event.broker_name(), Event.str());
       break;
@@ -37,32 +37,38 @@ public:
           break;
         }
         // Override severity of the remaining CONFWARN messages
-        Log::FmtMsg(Log::Severity::Debug, "Kafka Log {} {}", Event.fac(),
-                    Event.str());
+        Logger::Log(static_cast<int>(LogSeverity::Debug), "Kafka Log {} {}",
+                    Event.fac(), Event.str());
       } else {
-        Log::FmtMsg(LogLevels.at(Event.severity()), "Kafka Log {} {}",
+        Logger::Log(LogLevels.at(Event.severity()), "Kafka Log {} {}",
                     Event.fac(), Event.str());
       }
       break;
     default:
-      Log::FmtMsg(LogLevels.at(Event.severity()), "Kafka Event {} ({}): {}",
+      Logger::Log(LogLevels.at(Event.severity()), "Kafka Event {} ({}): {}",
                   Event.type(), RdKafka::err2str(Event.err()), Event.str());
+
       break;
     }
   }
 
 private:
-  std::map<RdKafka::Event::Severity, Log::Severity> LogLevels{
-      {RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG, Log::Severity::Debug},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_INFO, Log::Severity::Info},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_NOTICE, Log::Severity::Notice},
+  std::map<RdKafka::Event::Severity, int> LogLevels{
+      {RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG,
+       static_cast<int>(LogSeverity::Debug)},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_INFO,
+       static_cast<int>(LogSeverity::Info)},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_NOTICE,
+       static_cast<int>(LogSeverity::Info)},
       {RdKafka::Event::Severity::EVENT_SEVERITY_WARNING,
-       Log::Severity::Warning},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_ERROR, Log::Severity::Error},
+       static_cast<int>(LogSeverity::Warn)},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_ERROR,
+       static_cast<int>(LogSeverity::Error)},
       {RdKafka::Event::Severity::EVENT_SEVERITY_CRITICAL,
-       Log::Severity::Critical},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT, Log::Severity::Critical},
+       static_cast<int>(LogSeverity::Critical)},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT,
+       static_cast<int>(LogSeverity::Critical)},
       {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG,
-       Log::Severity::Critical}};
+       static_cast<int>(LogSeverity::Critical)}};
 };
 } // namespace Kafka

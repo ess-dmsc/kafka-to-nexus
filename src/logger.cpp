@@ -10,9 +10,6 @@
 #include "logger.h"
 #include "URI.h"
 #include <date/date.h>
-#include <graylog_logger/ConsoleInterface.hpp>
-#include <graylog_logger/FileInterface.hpp>
-#include <graylog_logger/GraylogInterface.hpp>
 #include <string>
 
 void setUpLogging(LogSeverity const &logging_level) {
