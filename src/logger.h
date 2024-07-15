@@ -19,6 +19,15 @@
 #include <string>
 #include <vector>
 
+enum class LogSeverity : int {
+  Critical = 0,
+  Error = 1,
+  Warn = 2,
+  Info = 3,
+  Debug = 4,
+  Trace = 5,
+};
+
 template <typename InnerType> struct fmt::formatter<std::vector<InnerType>> {
   static constexpr auto parse(format_parse_context &ctx) {
     const auto begin = ctx.begin();
@@ -85,12 +94,8 @@ template <> struct fmt::formatter<time_point> {
 //clang-format on
 };
 
-namespace uri {
-struct URI;
-}
 
-void setUpLogging(const Log::Severity &LoggingLevel,
-                  const std::string &LogFileName, const uri::URI &GraylogURI);
+void setUpLogging(LogSeverity const &logging_level);
 
 struct Logger {
 static auto instance() {

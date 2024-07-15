@@ -30,10 +30,7 @@ void reporter<specialized>::send(severity s, char const *file,
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  // do not use filewriterlogger during tests
-  std::string LogFile;
-  auto GraylogURI = uri::URI();
-  ::setUpLogging(Log::Severity::Error, LogFile, GraylogURI);
+  ::setUpLogging(LogSeverity::Error);
 
   return RUN_ALL_TESTS();
 }
