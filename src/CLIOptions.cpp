@@ -156,9 +156,6 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "Kafka topic to listen for jobs on")
       ->required();
 
-  addUriOption(App, "--graylog-logger-address",
-               MainOptions.GraylogLoggerAddress,
-               "<host:port> Log to Graylog via graylog_logger library");
   addUriOption(App, "--grafana-carbon-address",
                MainOptions.GrafanaCarbonAddress,
                "<host:port> Address to the Grafana (Carbon) metrics service.");

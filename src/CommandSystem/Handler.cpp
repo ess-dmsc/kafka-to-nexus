@@ -173,8 +173,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
     }
 
     warnIfMessageIsOld(CommandMsg.getMetaData().timestamp());
-    // Log::Msg(ValidationResponse.LogLevel,
-    // ValidationResponse.MessageString());
+    Logger::Log(ValidationResponse.LogLevel,
+                ValidationResponse.MessageString());
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
@@ -298,8 +298,8 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       SendResult = ActionResult::Failure;
     }
 
-    // Log::Msg(ValidationResponse.LogLevel,
-    // ValidationResponse.MessageString());
+    Logger::Log(ValidationResponse.LogLevel,
+                ValidationResponse.MessageString());
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::SetStopTime, SendResult, StopJob.JobID,

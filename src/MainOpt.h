@@ -43,9 +43,6 @@ struct MainOpt {
 
   LogSeverity LoggingLevel{LogSeverity::Info};
 
-  /// Can optionally use the `graylog_logger` library to log to this address.
-  uri::URI GraylogLoggerAddress;
-
   uri::URI GrafanaCarbonAddress;
 
   /// Used for logging to file

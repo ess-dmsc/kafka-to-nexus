@@ -133,24 +133,24 @@ static void Trace(std::string fmt, const Args &... args) {
 }
 
 template <typename... Args>
-  static void Log(int severity, std::string fmt, const Args&... args) {
+  static void Log(LogSeverity severity, std::string fmt, const Args&... args) {
     switch (severity) {
-      case spdlog::level::critical:
+      case LogSeverity::Critical:
         Critical(fmt, args...);
         break;
-      case spdlog::level::err:
+      case LogSeverity::Error:
         Error(fmt, args...);
         break;
-      case spdlog::level::warn:
+      case LogSeverity::Warn:
         Warn(fmt, args...);
         break;
-      case spdlog::level::info:
+      case LogSeverity::Info:
         Info(fmt, args...);
         break;
-      case spdlog::level::debug:
+      case LogSeverity::Debug:
         Debug(fmt, args...);
         break;
-      case spdlog::level::trace:
+      case LogSeverity::Trace:
         Trace(fmt, args...);
         break;
       default:

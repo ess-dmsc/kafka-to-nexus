@@ -2,11 +2,11 @@
 #include "InternalMetric.h"
 
 namespace {
-std::unordered_map<Metrics::Severity, int> LogSeverityMap{
-    {Metrics::Severity::DEBUG, static_cast<int>(LogSeverity::Debug)},
-    {Metrics::Severity::INFO, static_cast<int>(LogSeverity::Info)},
-    {Metrics::Severity::WARNING, static_cast<int>(LogSeverity::Warn)},
-    {Metrics::Severity::ERROR, static_cast<int>(LogSeverity::Error)},
+std::unordered_map<Metrics::Severity, LogSeverity> LogSeverityMap{
+    {Metrics::Severity::DEBUG, LogSeverity::Debug},
+    {Metrics::Severity::INFO, LogSeverity::Info},
+    {Metrics::Severity::WARNING, LogSeverity::Warn},
+    {Metrics::Severity::ERROR, LogSeverity::Error},
 };
 } // namespace
 

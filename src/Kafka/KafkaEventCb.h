@@ -37,8 +37,8 @@ public:
           break;
         }
         // Override severity of the remaining CONFWARN messages
-        Logger::Log(static_cast<int>(LogSeverity::Debug), "Kafka Log {} {}",
-                    Event.fac(), Event.str());
+        Logger::Log(LogSeverity::Debug, "Kafka Log {} {}", Event.fac(),
+                    Event.str());
       } else {
         Logger::Log(LogLevels.at(Event.severity()), "Kafka Log {} {}",
                     Event.fac(), Event.str());
@@ -53,22 +53,15 @@ public:
   }
 
 private:
-  std::map<RdKafka::Event::Severity, int> LogLevels{
-      {RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG,
-       static_cast<int>(LogSeverity::Debug)},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_INFO,
-       static_cast<int>(LogSeverity::Info)},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_NOTICE,
-       static_cast<int>(LogSeverity::Info)},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_WARNING,
-       static_cast<int>(LogSeverity::Warn)},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_ERROR,
-       static_cast<int>(LogSeverity::Error)},
+  std::map<RdKafka::Event::Severity, LogSeverity> LogLevels{
+      {RdKafka::Event::Severity::EVENT_SEVERITY_DEBUG, LogSeverity::Debug},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_INFO, LogSeverity::Info},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_NOTICE, LogSeverity::Info},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_WARNING, LogSeverity::Warn},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_ERROR, LogSeverity::Error},
       {RdKafka::Event::Severity::EVENT_SEVERITY_CRITICAL,
-       static_cast<int>(LogSeverity::Critical)},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT,
-       static_cast<int>(LogSeverity::Critical)},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG,
-       static_cast<int>(LogSeverity::Critical)}};
+       LogSeverity::Critical},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT, LogSeverity::Critical},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG, LogSeverity::Critical}};
 };
 } // namespace Kafka
