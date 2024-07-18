@@ -21,9 +21,6 @@ public:
                   RdKafka::err2str(Event.err()), Event.str());
       break;
     case RdKafka::Event::EVENT_STATS:
-      // Logger::Log(LogLevels.at(Event.severity()),
-      //             "Kafka Stats id: {} broker: {} message: {}",
-      //             Event.broker_id(), Event.broker_name(), Event.str());
       break;
     case RdKafka::Event::EVENT_LOG:
       if (std::string(Event.fac()).find("CONFWARN") != std::string::npos) {
