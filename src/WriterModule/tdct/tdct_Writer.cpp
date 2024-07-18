@@ -39,7 +39,7 @@ InitResult tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Unable to initialise chopper time stamp tree in HDF file with error message: "{}")",
         E.what());
     return WriterModule::InitResult::ERROR;
@@ -56,7 +56,7 @@ WriterModule::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -69,7 +69,8 @@ void tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto TempTimePtr = FbPointer->timestamps()->data();
   auto TempTimeSize = FbPointer->timestamps()->size();
   if (TempTimeSize == 0) {
-    LOG_WARN("Received a flatbuffer with zero (0) timestamps elements in it.");
+    Logger::Info(
+        "Received a flatbuffer with zero (0) timestamps elements in it.");
     return;
   }
   hdf5::ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);

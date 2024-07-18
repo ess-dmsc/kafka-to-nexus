@@ -23,7 +23,7 @@ create_chunked_dataset(hdf5::node::Group const &parent, std::string const &name,
   }
 
   if (chunk_size.empty()) {
-    LOG_WARN("No chunk size given. Using the default value 1024.");
+    Logger::Info("No chunk size given. Using the default value 1024.");
     chunk_size.emplace_back(1024);
   }
   if (chunk_size.size() == shape.size()) {
@@ -39,10 +39,10 @@ create_chunked_dataset(hdf5::node::Group const &parent, std::string const &name,
     chunk_size = shape;
     chunk_size[0] = num_rows;
   } else {
-    LOG_ERROR("Unable to reconcile a data shape with {} dimensions "
-              "and chunk size with {} dimensions. Using default "
-              "values.",
-              shape.size(), chunk_size.size());
+    Logger::Error("Unable to reconcile a data shape with {} dimensions "
+                  "and chunk size with {} dimensions. Using default "
+                  "values.",
+                  shape.size(), chunk_size.size());
     chunk_size = shape;
     chunk_size[0] = 1024;
   }
@@ -61,21 +61,22 @@ void appendArray(hdf5::node::Dataset &dataset, T const &new_data,
   ++current_extent[0];
   shape.insert(shape.begin(), 1);
   if (shape.size() != current_extent.size()) {
-    LOG_ERROR("Data has {} dimension(s) and dataset has {} (+1) dimensions.",
-              shape.size() - 1, current_extent.size() - 1);
+    Logger::Error(
+        "Data has {} dimension(s) and dataset has {} (+1) dimensions.",
+        shape.size() - 1, current_extent.size() - 1);
     throw std::runtime_error(
         "Rank (dimensions) of data to be written is wrong.");
   }
   for (size_t i = 1; i < shape.size(); i++) {
     if (shape[i] > current_extent[i]) {
-      LOG_WARN("Dimension {} of new data is larger than that of the "
-               "dataset. Extending dataset.",
-               i - 1);
+      Logger::Info("Dimension {} of new data is larger than that of the "
+                   "dataset. Extending dataset.",
+                   i - 1);
       current_extent[i] = shape[i];
     } else if (shape[i] < current_extent[i]) {
-      LOG_WARN("Dimension {} of new data is smaller than that of "
-               "the dataset. Using 0 as a filler.",
-               i - 1);
+      Logger::Info("Dimension {} of new data is smaller than that of "
+                   "the dataset. Using 0 as a filler.",
+                   i - 1);
     }
   }
   dataset.extent(current_extent);
@@ -118,16 +119,16 @@ public:
       _data = json_config["data"];
     if (!_dtype.has_value() && _data.has_value()) {
       _dtype = guess_dtype(_data.value());
-      LOG_ERROR("No data type specified for variable {}. Guessing type {}.",
-                _name, _dtype.value());
+      Logger::Error("No data type specified for variable {}. Guessing type {}.",
+                    _name, _dtype.value());
     }
     if (!_shape.has_value() && _data.has_value()) {
       _shape = get_shape(_data.value());
-      LOG_ERROR("No shape specified for variable {}. Guessing shape {}.", _name,
-                _shape.value());
+      Logger::Error("No shape specified for variable {}. Guessing shape {}.",
+                    _name, _shape.value());
     }
     if (!is_consistent()) {
-      LOG_WARN("Inconsistent variable config for variable {}.", _name);
+      Logger::Info("Inconsistent variable config for variable {}.", _name);
     }
     return *this;
   }
@@ -155,7 +156,7 @@ public:
         _axes = dims;
     }
     if (!is_consistent()) {
-      LOG_WARN("Inconsistent variable config for variable {}.", _name);
+      Logger::Info("Inconsistent variable config for variable {}.", _name);
     }
   }
 
@@ -211,9 +212,9 @@ public:
 
   [[nodiscard]] bool is_consistent() const {
     if (has_axes() && has_shape() && axes().size() != shape().size()) {
-      LOG_WARN("Consistency check failed for variable {}. Dims and shape "
-               "have different sizes.",
-               name());
+      Logger::Info("Consistency check failed for variable {}. Dims and shape "
+                   "have different sizes.",
+                   name());
       return false;
     }
     return true;
@@ -223,8 +224,9 @@ public:
     bool inconsistent{false};
     bool changed{false};
     if (name() != other.name()) {
-      LOG_DEBUG("Variable name mismatch for variable {}. Expected {}, got {}.",
-                name(), name(), other.name());
+      Logger::Debug(
+          "Variable name mismatch for variable {}. Expected {}, got {}.",
+          name(), name(), other.name());
       return std::make_pair(false, false);
     }
     if (has_unit() && other.has_unit()) {
@@ -252,8 +254,8 @@ public:
       _source = other.source();
     }
     if (has_dtype() && other.has_dtype() && dtype() != other.dtype()) {
-      LOG_DEBUG("Data type mismatch for variable {}. Expected {}, got {}.",
-                name(), dtype(), other.dtype());
+      Logger::Debug("Data type mismatch for variable {}. Expected {}, got {}.",
+                    name(), dtype(), other.dtype());
       inconsistent = true;
       if (force)
         dtype(other.dtype());
@@ -272,8 +274,8 @@ public:
       for (auto const &o : other.shape())
         os << o << ", ";
       os << "]";
-      LOG_DEBUG("Shape mismatch for variable {}. Expected {}, got {}.", name(),
-                ts.str(), os.str());
+      Logger::Debug("Shape mismatch for variable {}. Expected {}, got {}.",
+                    name(), ts.str(), os.str());
       inconsistent = true;
       if (force)
         shape(other.shape());
@@ -292,8 +294,8 @@ public:
       for (auto const &o : other.axes())
         os << o << ", ";
       os << "]";
-      LOG_DEBUG("Dims mismatch for variable {}. Expected {}, got {}.", name(),
-                ts.str(), os.str());
+      Logger::Debug("Dims mismatch for variable {}. Expected {}, got {}.",
+                    name(), ts.str(), os.str());
       inconsistent = true;
       if (force)
         dims(other.axes());
@@ -321,9 +323,10 @@ public:
     auto count = std::accumulate(shape().cbegin(), shape().cend(), 1,
                                  std::multiplies<>());
     if (count * sizeof(DataType) != bytes * sizeof(uint8_t)) {
-      LOG_ERROR("Buffer size mismatch for variable {}. Expected {} bytes, got "
-                "{} bytes.",
-                name(), count * sizeof(DataType), bytes * sizeof(uint8_t));
+      Logger::Error(
+          "Buffer size mismatch for variable {}. Expected {} bytes, got "
+          "{} bytes.",
+          name(), count * sizeof(DataType), bytes * sizeof(uint8_t));
     }
     // ArrayAdapter caused a segfault when writing. Copying the data to a vector
     // first works.
@@ -352,15 +355,17 @@ public:
     if (has_shape()) {
       auto const &my_shape = this->shape();
       if (my_shape.size() != shape.size()) {
-        LOG_ERROR("Shape mismatch for variable {}. Expected {} dimensions, got "
-                  "{} dimensions.",
-                  name(), my_shape.size(), shape.size());
+        Logger::Error(
+            "Shape mismatch for variable {}. Expected {} dimensions, got "
+            "{} dimensions.",
+            name(), my_shape.size(), shape.size());
       }
       for (size_t i = 0; i < my_shape.size(); ++i) {
         if (my_shape[i] != shape[i]) {
-          LOG_ERROR("Shape mismatch for variable {}. Expected shape {}, got "
-                    "shape {}.",
-                    name(), my_shape, shape);
+          Logger::Error(
+              "Shape mismatch for variable {}. Expected shape {}, got "
+              "shape {}.",
+              name(), my_shape, shape);
         }
       }
     }
@@ -500,23 +505,24 @@ public:
         {da00_dtype::c_string,
          [&]() { append_variable<char>(dataset, data, shape); }}};
     if (has_dtype() && dtype() != fb->data_type()) {
-      LOG_WARN("Data type mismatch for {}: (configuration={}, buffer={})",
-               name(), dtype(), fb->data_type());
+      Logger::Info("Data type mismatch for {}: (configuration={}, buffer={})",
+                   name(), dtype(), fb->data_type());
       // TODO: return early? If the data doesn't match then it will crash?
     }
     // check provided and expected axis names
     if (has_axes()) {
       const auto axis_dims = fb->axes(); // dimension _names_
       if (axis_dims->size() != axes().size()) {
-        LOG_WARN("Axis dimension count mismatch for {}: (configuration={}, "
-                 "buffer={})",
-                 name(), axes().size(), axis_dims->size());
+        Logger::Info("Axis dimension count mismatch for {}: (configuration={}, "
+                     "buffer={})",
+                     name(), axes().size(), axis_dims->size());
       }
       for (size_t i = 0; i < axis_dims->size(); ++i) {
         if (axis_dims->Get(i)->str() != axes()[i]) {
-          LOG_WARN("Axis dimension mismatch for {} axis {}: (configuration={}, "
-                   "buffer={})",
-                   name(), i, axes()[i], axis_dims->Get(i)->str());
+          Logger::Info(
+              "Axis dimension mismatch for {} axis {}: (configuration={}, "
+              "buffer={})",
+              name(), i, axes()[i], axis_dims->Get(i)->str());
         }
       }
     }
@@ -548,8 +554,8 @@ public:
         {da00_dtype::c_string,
          [&]() { append_missing_variable<char>(dataset); }}};
     if (!has_dtype()) {
-      LOG_ERROR("Can not append missing data for {} without data_type!",
-                name());
+      Logger::Error("Can not append missing data for {} without data_type!",
+                    name());
     }
     call_map[dtype()]();
   }
@@ -559,7 +565,7 @@ public:
     if (!group.has_dataset(name())) {
       std::stringstream ss;
       ss << group.link().path();
-      LOG_ERROR(
+      Logger::Error(
           "Trying to reopen variable dataset {}, but it doesn't exist under {}",
           name(), ss.str());
     }
@@ -571,7 +577,7 @@ public:
     if (!group.has_dataset(name())) {
       std::stringstream ss;
       ss << group.link().path();
-      LOG_ERROR(
+      Logger::Error(
           "Trying to reopen constant dataset {}, but it doesn't exist under {}",
           name(), ss.str());
     }
@@ -603,8 +609,8 @@ public:
           if (last != std::string::npos)
             var_obj.resize(last);
           if (var_obj != obj.value().value()) {
-            LOG_DEBUG("Mismatch for dataset {}. (new={}, was={})", name(),
-                      obj.value(), var_obj);
+            Logger::Debug("Mismatch for dataset {}. (new={}, was={})", name(),
+                          obj.value(), var_obj);
             auto datatype = dataset->attributes[attr].datatype();
             dataset->attributes[attr].write(obj.value().value(), datatype);
           }
@@ -626,8 +632,8 @@ public:
         if (last != std::string::npos)
           var_axes.resize(last);
         if (var_axes != colsepaxes()) {
-          LOG_DEBUG("Axes mismatch for dataset {}. (new={}, was={})", name(),
-                    axes(), var_axes);
+          Logger::Debug("Axes mismatch for dataset {}. (new={}, was={})",
+                        name(), axes(), var_axes);
           dataset->attributes["axes"].write(
               colsepaxes(), dataset->attributes["axes"].datatype());
         }
@@ -652,28 +658,31 @@ public:
       auto ds = variable->dataspace();
       bool resize{false};
       if (ds.type() == Type::Scalar) {
-        LOG_ERROR("Variable dataset {} has scalar dataspace.", name());
+        Logger::Error("Variable dataset {} has scalar dataspace.", name());
         // resizing never allowed
       } else {
         auto simple = Simple(ds);
         if (simple.rank() != sh.size()) {
-          LOG_ERROR("Variable dataset {} has different rank than new config.",
-                    name());
+          Logger::Error(
+              "Variable dataset {} has different rank than new config.",
+              name());
           // we can never change the rank of an existing dataset
         } else {
           sh[0] = simple.current_dimensions()[0];
           if (simple.current_dimensions() != sh) {
-            LOG_WARN("Variable dataset {} has different shape than new config.",
-                     name());
+            Logger::Info(
+                "Variable dataset {} has different shape than new config.",
+                name());
             resize = true;
           }
           if (resize) {
             auto max_size = simple.maximum_dimensions();
             for (size_t i = 0; i < sh.size(); ++i) {
               if (sh[i] > max_size[i]) {
-                LOG_ERROR("Variable dataset {} too small along {}, max {} <  "
-                          "request {}.",
-                          name(), i, max_size[i], sh[i]);
+                Logger::Error(
+                    "Variable dataset {} too small along {}, max {} <  "
+                    "request {}.",
+                    name(), i, max_size[i], sh[i]);
                 // we can never change the maximum size of an existing dataset
                 resize = false;
               }
@@ -698,16 +707,16 @@ public:
       bool resize{false};
       bool replace{false};
       if (ds.type() == Type::Scalar && !shape().empty()) {
-        LOG_ERROR("Constant dataset {} has scalar dataspace but new config "
-                  "shape is not scalar.",
-                  name());
+        Logger::Error("Constant dataset {} has scalar dataspace but new config "
+                      "shape is not scalar.",
+                      name());
         replace = true;
         // somehow replace the dataspace in the dataset?
       }
       if (ds.type() == Type::Simple &&
           Simple(ds).current_dimensions() != shape()) {
-        LOG_ERROR("Constant dataset {} has different shape than new config.",
-                  name());
+        Logger::Error(
+            "Constant dataset {} has different shape than new config.", name());
         resize = true;
         auto max_size = Simple(ds).maximum_dimensions();
         auto max_count = std::accumulate(max_size.cbegin(), max_size.cend(), 1,
@@ -715,8 +724,8 @@ public:
         auto count = std::accumulate(shape().cbegin(), shape().cend(), 1,
                                      std::multiplies<>());
         if (count > max_count) {
-          LOG_ERROR("Constant dataset {} too small maximum size {} < {}.",
-                    name(), max_count, count);
+          Logger::Error("Constant dataset {} too small maximum size {} < {}.",
+                        name(), max_count, count);
           // somehow replace the dataspace
           replace = true;
         }
@@ -742,8 +751,8 @@ public:
     std::vector<T> var_data;
     constant->read(var_data);
     if (var_data.size() != data.size()) {
-      LOG_ERROR("Constant dataset {} has different size than new data.",
-                name());
+      Logger::Error("Constant dataset {} has different size than new data.",
+                    name());
     }
     bool same{true};
     if constexpr (std::is_integral_v<T>) {
@@ -756,8 +765,8 @@ public:
       }
     }
     if (!same) {
-      LOG_ERROR("Constant dataset {} has different data than new data.",
-                name());
+      Logger::Error("Constant dataset {} has different data than new data.",
+                    name());
       constant->write(data);
     }
   }

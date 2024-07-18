@@ -29,8 +29,8 @@ InitResult al00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
     NeXusDataset::AlarmSeverity(HDFGroup, Create);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("al00 could not init_hdf hdf_parent: {}  trace: {}",
-              static_cast<std::string>(HDFGroup.link().path()), message);
+    Logger::Error("al00 could not init_hdf hdf_parent: {}  trace: {}",
+                  static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
 
@@ -46,7 +46,7 @@ InitResult al00_Writer::reopen(hdf5::node::Group &HDFGroup) {
     AlarmSeverity = NeXusDataset::AlarmSeverity(HDFGroup, Open);
     AlarmMsg = NeXusDataset::AlarmMsg(HDFGroup, Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return InitResult::ERROR;

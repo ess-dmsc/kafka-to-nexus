@@ -24,7 +24,7 @@ f142_Extractor::source_name(FlatbufferMessage const &Message) const {
   auto const LogDataBuffer = GetLogData(Message.data());
   auto const SourceNameFlatbufferStr = LogDataBuffer->source_name();
   if (SourceNameFlatbufferStr == nullptr) {
-    LOG_WARN("message has no source name");
+    Logger::Info("message has no source name");
     return "";
   }
   return SourceNameFlatbufferStr->str();

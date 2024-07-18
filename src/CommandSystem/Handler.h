@@ -28,7 +28,7 @@ using IsWritingFuncType = std::function<bool()>;
 using GetJobIdFuncType = std::function<std::string()>;
 
 struct CmdResponse {
-  Log::Severity LogLevel;
+  LogSeverity LogLevel;
   int StatusCode{0};
   bool SendResponse;
   std::function<std::string()> MessageString;

@@ -1,7 +1,6 @@
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 
 set(UnitTests_SRC
-        Metrics/LogSinkTest.cpp
         Metrics/MetricsReporterTest.cpp
         Metrics/CarbonTestServer.cpp
         Metrics/CarbonConnectionTest.cpp

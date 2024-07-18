@@ -70,11 +70,12 @@ extractModuleInformationFromJsonForSource(ModuleHDFInfo const &ModuleInfo) {
       Command::Parser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
   if (!Attributes.empty() && Attributes != "\"\"") {
-    LOG_WARN("Writing of writer module attributes to parent group has been "
-             "removed. Attributes should be assigned directly to group. The "
-             "(unused) attributes belongs to dataset with source name \"{}\" "
-             "from topic \"{}\".",
-             ModuleSettings.Source, ModuleSettings.Topic);
+    Logger::Info(
+        "Writing of writer module attributes to parent group has been "
+        "removed. Attributes should be assigned directly to group. The "
+        "(unused) attributes belongs to dataset with source name \"{}\" "
+        "from topic \"{}\".",
+        ModuleSettings.Source, ModuleSettings.Topic);
   }
 
   return ModuleSettings;
@@ -89,18 +90,18 @@ std::vector<ModuleSettings> extractModuleInformationFromJson(
       SettingsList.push_back(
           extractModuleInformationFromJsonForSource(ModuleHDFInfo));
     } catch (json::parse_error const &E) {
-      LOG_WARN(
+      Logger::Info(
           "Invalid module configuration JSON encountered. The error was: {}",
           E.what());
       continue;
     } catch (std::runtime_error const &E) {
-      LOG_WARN("Unknown exception encountered when extracting module "
-               "information. The error was: {}",
-               E.what());
+      Logger::Info("Unknown exception encountered when extracting module "
+                   "information. The error was: {}",
+                   E.what());
       continue;
     }
   }
-  LOG_INFO("Command contains {} links and streams.", SettingsList.size());
+  Logger::Info("Command contains {} links and streams.", SettingsList.size());
   return SettingsList;
 }
 
@@ -185,7 +186,7 @@ std::unique_ptr<IStreamController> createFileWritingJob(
 
   addStreamSourceToWriterModule(StreamSettingsList, *Task);
 
-  LOG_INFO("Write file with job_id: {}", Task->jobID());
+  Logger::Info("Write file with job_id: {}", Task->jobID());
 
   return std::make_unique<StreamController>(
       std::move(Task), std::move(mdatWriter), Settings, Registrar, Tracker,
@@ -203,12 +204,13 @@ void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
             RootGroup, StreamSettings.ModuleHDFInfoObj.HDFParentName);
         auto Err = StreamSettings.WriterModule->reopen({StreamGroup});
         if (Err != WriterModule::InitResult::OK) {
-          LOG_ERROR("Failed when reopening HDF datasets for stream {}",
-                    StreamSettings.ModuleHDFInfoObj.HDFParentName);
+          Logger::Error("Failed when reopening HDF datasets for stream {}",
+                        StreamSettings.ModuleHDFInfoObj.HDFParentName);
           continue;
         }
       } catch (std::runtime_error const &e) {
-        LOG_ERROR("Exception on WriterModule::Base->reopen(): {}", e.what());
+        Logger::Error("Exception on WriterModule::Base->reopen(): {}",
+                      e.what());
         continue;
       }
 
@@ -219,7 +221,7 @@ void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
                         std::move(StreamSettings.WriterModule));
       Task.addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
-      LOG_WARN(
+      Logger::Info(
           "Exception while initializing writer module {} for source {}: {}",
           StreamSettings.Module, StreamSettings.Source, E.what());
       continue;
@@ -266,7 +268,7 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
                                                Attributes) {
     for (auto const &Attribute : Attributes) {
       if (StreamGroup.attributes.exists(Attribute.first)) {
-        LOG_DEBUG(
+        Logger::Debug(
             R"(Will not write attribute with key "{}" at "{}" as it already exists.)",
             Attribute.first, StreamInfo.ModuleHDFInfoObj.HDFParentName);
         continue;
@@ -283,11 +285,12 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
       {"writer_module", StreamInfo.Module},
   });
   if (not StreamInfo.Attributes.empty()) {
-    LOG_WARN("Writing of writer module attributes to parent group has been "
-             "removed. Attributes should be assigned directly to group. The "
-             "(unused) attributes belongs to dataset with source name \"{}\" "
-             "on topic \"{}\".",
-             StreamInfo.Source, StreamInfo.Topic);
+    Logger::Info(
+        "Writing of writer module attributes to parent group has been "
+        "removed. Attributes should be assigned directly to group. The "
+        "(unused) attributes belongs to dataset with source name \"{}\" "
+        "on topic \"{}\".",
+        StreamInfo.Source, StreamInfo.Topic);
   }
 }
 

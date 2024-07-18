@@ -84,7 +84,7 @@ void Topic::getPartitionsForTopic(Kafka::BrokerSettings const &Settings,
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    LOG_WARN(
+    Logger::Info(
         R"(Meta data call for retrieving partition IDs for topic "{}" from the broker failed. The failure message was: "{}". Re-trying with a timeout of {} ms.)",
         Topic, E.what(),
         std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -103,7 +103,7 @@ void Topic::setErrorState(const std::string &Msg) {
   HasError = true;
   std::lock_guard Lock(ErrorMsgMutex);
   ErrorMessage = Msg;
-  LOG_ERROR(ErrorMessage);
+  Logger::Error(ErrorMessage);
 }
 
 std::vector<std::pair<int, int64_t>> Topic::getOffsetForTimeInternal(
@@ -143,7 +143,7 @@ void Topic::getOffsetsForPartitions(Kafka::BrokerSettings const &Settings,
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    LOG_WARN(
+    Logger::Info(
         R"(Meta data call for retrieving offsets for topic "{}" from the broker failed. The failure message was: "{}". Re-trying with a timeout of {} ms.)",
         Topic, E.what(),
         std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -181,7 +181,7 @@ void Topic::checkIfDone() {
       std::all_of(ConsumerThreads.begin(), ConsumerThreads.end(),
                   [](auto const &thread) { return thread->hasFinished(); });
   if (is_done) {
-    LOG_INFO("Topic {} has finished consuming.", TopicName);
+    Logger::Info("Topic {} has finished consuming.", TopicName);
     IsDone.store(true);
   }
   std::this_thread::sleep_for(50ms);

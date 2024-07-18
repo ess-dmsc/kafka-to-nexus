@@ -40,8 +40,8 @@ void ADAr_Writer::config_post_processing() {
   try {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
-    LOG_ERROR("Unknown type ({}), using the default (double).",
-              DataType.get_value());
+    Logger::Error("Unknown type ({}), using the default (double).",
+                  DataType.get_value());
   }
 }
 
@@ -62,7 +62,7 @@ InitResult ADAr_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Unable to initialise areaDetector data tree in HDF file with error message: "{}")",
         E.what());
     return WriterModule::InitResult::ERROR;
@@ -80,7 +80,7 @@ WriterModule::InitResult ADAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -128,12 +128,13 @@ void msgTypeIsConfigType(ADAr_Writer::Type ConfigType, DType MsgType) {
       {ADAr_Writer::Type::float64, "float64"}};
   try {
     if (TypeComparison.at(MsgType) != ConfigType) {
-      LOG_WARN("Configured data type ({}) is not the same as the ADAr message "
-               "type ({}).",
-               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+      Logger::Info(
+          "Configured data type ({}) is not the same as the ADAr message "
+          "type ({}).",
+          ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
     }
   } catch (std::out_of_range const &) {
-    LOG_ERROR("Got out of range error when comparing types.");
+    Logger::Error("Got out of range error when comparing types.");
   }
 }
 

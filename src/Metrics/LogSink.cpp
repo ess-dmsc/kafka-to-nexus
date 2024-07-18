@@ -2,11 +2,12 @@
 #include "InternalMetric.h"
 
 namespace {
-std::unordered_map<Metrics::Severity, Log::Severity> LogSeverityMap{
-    {Metrics::Severity::DEBUG, Log::Severity::Debug},
-    {Metrics::Severity::INFO, Log::Severity::Info},
-    {Metrics::Severity::WARNING, Log::Severity::Warning},
-    {Metrics::Severity::ERROR, Log::Severity::Error}};
+std::unordered_map<Metrics::Severity, LogSeverity> LogSeverityMap{
+    {Metrics::Severity::DEBUG, LogSeverity::Debug},
+    {Metrics::Severity::INFO, LogSeverity::Info},
+    {Metrics::Severity::WARNING, LogSeverity::Warn},
+    {Metrics::Severity::ERROR, LogSeverity::Error},
+};
 } // namespace
 
 namespace Metrics {
@@ -21,12 +22,13 @@ void LogSink::reportMetric(InternalMetric &MetricToBeReported) {
     auto TimeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(
                         Now - MetricToBeReported.LastTime)
                         .count();
-    Log::FmtMsg(
+    Logger::Log(
         LogSeverityMap[MetricToBeReported.ValueSeverity],
         R"(In the past {} ms, {} events of type "{}" have occurred ({}).)",
         TimeDiff, ValueDiff, MetricToBeReported.FullName,
         MetricToBeReported.DescriptionString);
   }
+
   MetricToBeReported.LastTime = Now;
 }
 } // namespace Metrics

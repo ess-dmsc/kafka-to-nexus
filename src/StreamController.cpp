@@ -30,8 +30,8 @@ StreamController::StreamController(
 StreamController::~StreamController() {
   stop();
   MdatWriter->write_metadata(*WriterTask);
-  LOG_INFO("Stopped StreamController for file with id : {}",
-           StreamController::getJobId());
+  Logger::Info("Stopped StreamController for file with id : {}",
+               StreamController::getJobId());
 }
 
 void StreamController::start() {
@@ -97,11 +97,11 @@ void StreamController::getTopicNames() {
     if (CurrentMetadataTimeOut > Settings.MaxMetadataTimeout) {
       CurrentMetadataTimeOut = Settings.MaxMetadataTimeout;
     }
-    LOG_WARN("Meta data call for retrieving topic names from the broker "
-             "failed. Re-trying with a timeout of {} ms.",
-             std::chrono::duration_cast<std::chrono::milliseconds>(
-                 CurrentMetadataTimeOut)
-                 .count());
+    Logger::Info("Meta data call for retrieving topic names from the broker "
+                 "failed. Re-trying with a timeout of {} ms.",
+                 std::chrono::duration_cast<std::chrono::milliseconds>(
+                     CurrentMetadataTimeOut)
+                     .count());
     Executor.sendLowPriorityWork([=]() { getTopicNames(); });
   }
 }
@@ -123,7 +123,7 @@ void StreamController::initStreams(std::set<std::string> known_topic_names) {
     }
   }
   if (!errors_collector.empty()) {
-    LOG_ERROR(errors_collector);
+    Logger::Error(errors_collector);
     std::lock_guard guard(ErrorMsgMutex);
     ErrorMessage = errors_collector;
     HasError = true;
@@ -187,14 +187,15 @@ void StreamController::throttleIfWriteQueueIsFull() {
   auto QueuedWrites = WriterThread.nrOfWritesQueued();
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {
-    LOG_DEBUG("Maximum queued writes exceeded (count={}). Pausing consumers...",
-              QueuedWrites);
+    Logger::Debug(
+        "Maximum queued writes exceeded (count={}). Pausing consumers...",
+        QueuedWrites);
     pauseStreamers();
   } else if (QueuedWrites < QueuedWritesResumeThreshold *
                                 StreamerOptions.MaxQueuedWrites &&
              StreamersPaused.load()) {
-    LOG_DEBUG("Write queue below maximum (count={}). Resuming consumers...",
-              QueuedWrites);
+    Logger::Debug("Write queue below maximum (count={}). Resuming consumers...",
+                  QueuedWrites);
     resumeStreamers();
   }
 }

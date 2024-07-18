@@ -47,7 +47,8 @@ void da00_Writer::config_post_processing() {
     fill_config_map(VariableConfigMap, VariablesField.get_value());
     fill_config_map(ConstantConfigMap, ConstantsField.get_value());
   } catch (std::exception &E) {
-    LOG_ERROR("Failed to parse configuration with error message: {}", E.what());
+    Logger::Error("Failed to parse configuration with error message: {}",
+                  E.what());
     throw;
   }
 }
@@ -58,7 +59,7 @@ static void warn_if(bool Condition, const std::string &fmt,
   std::stringstream msg;
   msg << fmt << " Using configured value.\n";
   if (Condition)
-    LOG_WARN(msg.str(), args...);
+    Logger::Info(msg.str(), args...);
 }
 
 void da00_Writer::handle_first_message(da00_DataArray const *da00) {
@@ -71,17 +72,18 @@ void da00_Writer::handle_first_message(da00_DataArray const *da00) {
       auto &v = p->second;
       auto inconsistent_changed = v.update_from(fb, false);
       if (inconsistent_changed.first)
-        LOG_WARN("Variable {} is configured with inconsistent data", fb.name());
+        Logger::Info("Variable {} is configured with inconsistent data",
+                     fb.name());
       if (inconsistent_changed.second) {
-        LOG_DEBUG("Variable {} changed, find it's dataset and update it",
-                  fb.name());
+        Logger::Debug("Variable {} changed, find it's dataset and update it",
+                      fb.name());
         if (auto f = VariablePtrs.find(fb.name()); f != VariablePtrs.end()) {
           v.update_variable(f->second);
         } else {
-          LOG_ERROR("Unable to find dataset to update for Variable {}",
-                    fb.name());
+          Logger::Error("Unable to find dataset to update for Variable {}",
+                        fb.name());
           for (const auto &[name, dptr] : VariablePtrs) {
-            LOG_ERROR("Found dataset for Variable {}", name);
+            Logger::Error("Found dataset for Variable {}", name);
           }
         }
       }
@@ -105,9 +107,10 @@ void da00_Writer::handle_first_message(da00_DataArray const *da00) {
                 "Data for constant {} is not consistent.", fb.name());
       }
       if (inconsistent_changed.second || needs_data) {
-        LOG_INFO("Constant {} changed or needs data written into it, find it's "
-                 "dataset and update it",
-                 fb.name());
+        Logger::Info(
+            "Constant {} changed or needs data written into it, find it's "
+            "dataset and update it",
+            fb.name());
         if (auto f = ConstantPtrs.find(fb.name()); f != ConstantPtrs.end()) {
           if (inconsistent_changed.second)
             v.update_constant(f->second);
@@ -115,10 +118,10 @@ void da00_Writer::handle_first_message(da00_DataArray const *da00) {
             v.write_constant_dataset(f->second, ptr->data()->Data(),
                                      ptr->data()->size());
         } else {
-          LOG_ERROR("Unable to find dataset to update for Constant {}",
-                    fb.name());
+          Logger::Error("Unable to find dataset to update for Constant {}",
+                        fb.name());
           for (const auto &[name, dptr] : ConstantPtrs) {
-            LOG_ERROR("Found dataset for Constant {}", name);
+            Logger::Error("Found dataset for Constant {}", name);
           }
         }
       }
@@ -180,7 +183,8 @@ void da00_Writer::handle_group_attributes(hdf5::node::Group &HDFGroup) const {
     if (auto f = VariableConfigMap.find(signal_name);
         f != VariableConfigMap.end()) {
       if (!f->second.has_axes()) {
-        LOG_ERROR("Configuration for Variable {} has no axes!", signal_name);
+        Logger::Error("Configuration for Variable {} has no axes!",
+                      signal_name);
       } else {
         auto axes = f->second.axes();
         if (!axes.empty()) {
@@ -215,7 +219,7 @@ void da00_Writer::handle_group_attributes(hdf5::node::Group &HDFGroup) const {
     try {
       attr.add_to_hdf5(HDFGroup);
     } catch (std::exception &E) {
-      LOG_ERROR(
+      Logger::Error(
           "Failed to add attribute `{}` to HDF file with error message: {}",
           attr.name(), E.what());
     }
@@ -233,11 +237,12 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
         config.insert_variable_dataset(HDFGroup, ChunkSize);
       } else {
         if (!config.has_dtype())
-          LOG_ERROR("Variable {} configuration lacks data_type. Can not insert "
-                    "dataset",
-                    name);
+          Logger::Error(
+              "Variable {} configuration lacks data_type. Can not insert "
+              "dataset",
+              name);
         if (!config.has_shape())
-          LOG_ERROR(
+          Logger::Error(
               "Variable {} configuration lacks shape. Can not insert dataset",
               name);
       }
@@ -247,15 +252,16 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
         config.insert_constant_dataset(HDFGroup);
       } else {
         if (!config.has_data())
-          LOG_ERROR(
+          Logger::Error(
               "Constant {} configuration lacks data. Can not insert dataset",
               name);
         if (!config.has_dtype())
-          LOG_ERROR("Constant {} configuration lacks data_type. Can not insert "
-                    "dataset",
-                    name);
+          Logger::Error(
+              "Constant {} configuration lacks data_type. Can not insert "
+              "dataset",
+              name);
         if (!config.has_shape())
-          LOG_ERROR(
+          Logger::Error(
               "Constant {} configuration lacks shape. Can not insert dataset",
               name);
       }
@@ -267,7 +273,7 @@ InitResult da00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
     NeXusDataset::CueTimestampZero(HDFGroup, Mode::Create,
                                    chunk_size); // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Unable to initialise DataArray data tree in HDF file with error message: "{}")",
         E.what());
     return InitResult::ERROR;
@@ -282,11 +288,12 @@ InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
         VariablePtrs[name] = config.reopen_variable_dataset(HDFGroup);
       } else {
         if (!config.has_dtype())
-          LOG_ERROR("Variable {} configuration lacks data_type. Can not reopen "
-                    "dataset",
-                    name);
+          Logger::Error(
+              "Variable {} configuration lacks data_type. Can not reopen "
+              "dataset",
+              name);
         if (!config.has_shape())
-          LOG_ERROR(
+          Logger::Error(
               "Variable {} configuration lacks shape. Can not reopen dataset",
               name);
       }
@@ -296,15 +303,16 @@ InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
         ConstantPtrs[name] = config.reopen_constant_dataset(HDFGroup);
       } else {
         if (!config.has_data())
-          LOG_ERROR(
+          Logger::Error(
               "Constant {} configuration lacks data. Can not reopen dataset",
               name);
         if (!config.has_dtype())
-          LOG_ERROR("Constant {} configuration lacks data_type. Can not reopen "
-                    "dataset",
-                    name);
+          Logger::Error(
+              "Constant {} configuration lacks data_type. Can not reopen "
+              "dataset",
+              name);
         if (!config.has_shape())
-          LOG_ERROR(
+          Logger::Error(
               "Constant {} configuration lacks shape. Can not reopen dataset",
               name);
       }
@@ -314,7 +322,7 @@ InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
         NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return InitResult::ERROR;
@@ -335,16 +343,18 @@ void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     auto name = ptr->name()->str();
     if (auto f = VariablePtrs.find(name); f != VariablePtrs.end()) {
       if (!f->second->is_valid()) {
-        LOG_ERROR("Variable {} dataset pointer is not valid. Buffered data is "
-                  "ignored",
-                  name);
+        Logger::Error(
+            "Variable {} dataset pointer is not valid. Buffered data is "
+            "ignored",
+            name);
       }
       VariableConfigMap[name].variable_append(f->second, ptr);
       variable_order.push_back(name);
     } else {
-      LOG_DEBUG("Buffer Variable {} is not a configured dataset. Buffered data "
-                "is ignored",
-                name);
+      Logger::Debug(
+          "Buffer Variable {} is not a configured dataset. Buffered data "
+          "is ignored",
+          name);
     }
   }
   if (variable_order.size() != VariablePtrs.size()) {
@@ -363,7 +373,7 @@ void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     }
     auto str = message.str();
     str.erase(str.size() - 2);
-    LOG_ERROR(str);
+    Logger::Error(str);
   }
   Timestamp.appendElement(da00_obj->timestamp());
   ++NrOfWrites;
