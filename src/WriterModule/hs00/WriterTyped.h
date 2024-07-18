@@ -89,15 +89,15 @@ private:
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 WriterTyped<DataType, EdgeType, ErrorType>::~WriterTyped() {
-  LOG_TRACE("WriterTyped destructor");
+  Logger::Trace("WriterTyped destructor");
 }
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     size_t HDFIndex) {
-  LOG_TRACE("WriterTyped copyLatestToData");
+  Logger::Trace("WriterTyped copyLatestToData");
   if (Dataset.is_valid()) {
-    LOG_TRACE("Found valid dataset");
+    Logger::Trace("Found valid dataset");
     auto Type = hdf5::datatype::create<DataType>().native_type();
     auto SpaceIn = hdf5::dataspace::Simple(Dataset.dataspace());
     auto Dims = SpaceIn.current_dimensions();
@@ -129,20 +129,20 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     }
     bool found = false;
     try {
-      LOG_TRACE("Attempting to get latest dataset");
+      Logger::Trace("Attempting to get latest dataset");
       Dataset.link().parent().get_dataset("data");
       found = true;
     } catch (...) {
-      LOG_TRACE("Failed to get latest dataset");
+      Logger::Trace("Failed to get latest dataset");
     }
     if (!found) {
-      LOG_TRACE(R"(Dataset "data" not yet present)");
+      Logger::Trace(R"(Dataset "data" not yet present)");
       for (size_t I = 0; I < DimsOut.size(); ++I) {
-        LOG_TRACE("I: {}: {}", I, DimsOut.at(I));
+        Logger::Trace("I: {}: {}", I, DimsOut.at(I));
       }
       Dataset.link().parent().create_dataset("data", Type, SpaceOut, DCPL);
       Dataset.link().file().flush(hdf5::file::Scope::Global);
-      LOG_TRACE(R"(Dataset "data" created)");
+      Logger::Trace(R"(Dataset "data" created)");
     }
     auto Latest = Dataset.link().parent().get_dataset("data");
     if (Dims.at(0) > 0) {
@@ -154,10 +154,10 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
       for (size_t I = 0; I < Buffer.size(); ++I) {
         S += Buffer.at(I);
       }
-      LOG_TRACE("copy latest histogram.  sum: {}", S);
+      Logger::Trace("copy latest histogram.  sum: {}", S);
       Latest.write(Buffer, Type, SpaceMem, SpaceOut);
     } else {
-      LOG_TRACE("No entries so far");
+      Logger::Trace("No entries so far");
     }
   }
   return 0;
@@ -225,8 +225,8 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     }
     DCPL.chunk(ChunkElements);
     if (0 > H5Pset_deflate(static_cast<hid_t>(DCPL), 7)) {
-      LOG_ERROR("can not use gzip filter on hdf5. Is hdf5 not built "
-                "with gzip support?");
+      Logger::Error("can not use gzip filter on hdf5. Is hdf5 not built "
+                    "with gzip support?");
     }
     Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
     copyLatestToData(0);
@@ -280,7 +280,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
       Dataset.attributes.create("units", TypeUTF8, CurrentSpaceMem)
           .write(Dim.getUnit());
       if (Group.attributes.exists("NX_class")) {
-        LOG_INFO("NX_class already specified!");
+        Logger::Info("NX_class already specified!");
       } else {
         auto ClassAttribute = Group.attributes.create<std::string>("NX_class");
         ClassAttribute.write("NXdata");
@@ -482,7 +482,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
     copyLatestToData(Record.getHDFIndex());
   }
 
-  LOG_TRACE("hs00 -------------------------------   DONE");
+  Logger::Trace("hs00 -------------------------------   DONE");
 }
 } // namespace hs00
 } // namespace WriterModule

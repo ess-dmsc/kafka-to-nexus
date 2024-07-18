@@ -40,7 +40,7 @@ InitResult ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
         NeXusDataset::Mode::Create,     // NOLINT(bugprone-unused-raii)
         ChunkSize);                     // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Unable to initialise areaDetector data tree in HDF file with error message: "{}")",
         E.what());
     return WriterModule::InitResult::ERROR;
@@ -57,7 +57,7 @@ WriterModule::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(HDFGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -78,10 +78,11 @@ void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     double ConvertedValue = std::stod(Value->str());
     Values.appendElement(ConvertedValue);
   } catch (std::invalid_argument const &Exception) {
-    LOG_ERROR("Could not convert string value to double: '{}'", Value->str());
+    Logger::Error("Could not convert string value to double: '{}'",
+                  Value->str());
     throw;
   } catch (std::out_of_range const &Exception) {
-    LOG_ERROR("Converted value too big for result type: {}", Value->str());
+    Logger::Error("Converted value too big for result type: {}", Value->str());
     throw;
   }
 

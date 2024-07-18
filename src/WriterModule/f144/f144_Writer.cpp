@@ -72,8 +72,8 @@ void f144_Writer::config_post_processing() {
   try {
     ElementType = TypeMap.at(ToLower(DataType.get_value()));
   } catch (std::out_of_range &E) {
-    LOG_WARN(R"(Unknown data type with name "{}". Using double.)",
-             DataType.get_value());
+    Logger::Info(R"(Unknown data type with name "{}". Using double.)",
+                 DataType.get_value());
   }
 }
 
@@ -97,8 +97,8 @@ InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    LOG_ERROR("f144 writer could not init_hdf hdf_parent: {}  trace: {}",
-              static_cast<std::string>(HDFGroup.link().path()), message);
+    Logger::Error("f144 writer could not init_hdf hdf_parent: {}  trace: {}",
+                  static_cast<std::string>(HDFGroup.link().path()), message);
     return InitResult::ERROR;
   }
 
@@ -115,7 +115,7 @@ InitResult f144_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
     Values = NeXusDataset::ExtensibleDatasetBase(HDFGroup, "value", Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return InitResult::ERROR;
@@ -186,12 +186,13 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
   };
   try {
     if (TypeComparison.at(MsgType) != ConfigType) {
-      LOG_WARN("Configured data type ({}) is not the same as the f144 message "
-               "type ({}).",
-               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+      Logger::Info(
+          "Configured data type ({}) is not the same as the f144 message "
+          "type ({}).",
+          ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
     }
   } catch (std::out_of_range const &) {
-    LOG_ERROR("Got out of range error when comparing types.");
+    Logger::Error("Got out of range error when comparing types.");
   }
 }
 
@@ -247,9 +248,10 @@ void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
         appendScalarData<const double, Double>(Values, LogDataMessage);
     break;
   default:
-    LOG_WARN("f144 writer module no longer supports array types, so ignoring "
-             "message with source '{}'",
-             LogDataMessage->source_name()->str());
+    Logger::Info(
+        "f144 writer module no longer supports array types, so ignoring "
+        "message with source '{}'",
+        LogDataMessage->source_name()->str());
     throw WriterModule::WriterException(
         "Unknown data type in f144 flatbuffer.");
   }

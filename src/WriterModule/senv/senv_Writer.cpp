@@ -42,7 +42,7 @@ WriterModule::InitResult senv_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         ChunkSize);                 // NOLINT(bugprone-unused-raii)
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Unable to initialise fast sample environment data tree in HDF file with error message: "{}")",
         E.what());
     return WriterModule::InitResult::ERROR;
@@ -61,7 +61,7 @@ WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
     return WriterModule::InitResult::ERROR;
@@ -79,8 +79,8 @@ void senv_Writer::config_post_processing() {
   try {
     ElementType = TypeMap.at(DataType);
   } catch (std::out_of_range &E) {
-    LOG_ERROR("Unknown type ({}), using the default (int64).",
-              DataType.get_value());
+    Logger::Error("Unknown type ({}), using the default (int64).",
+                  DataType.get_value());
   }
 }
 
@@ -122,12 +122,13 @@ void msgTypeIsConfigType(senv_Writer::Type ConfigType, ValueUnion MsgType) {
       {senv_Writer::Type::uint64, "uint64"}};
   try {
     if (TypeComparison.at(MsgType) != ConfigType) {
-      LOG_WARN("Configured data type ({}) is not the same as the senv message "
-               "type ({}).",
-               ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
+      Logger::Info(
+          "Configured data type ({}) is not the same as the senv message "
+          "type ({}).",
+          ConfigTypeString.at(ConfigType), MsgTypeString.at(MsgType));
     }
   } catch (std::out_of_range const &) {
-    LOG_ERROR("Got out of range error when comparing types.");
+    Logger::Error("Got out of range error when comparing types.");
   }
 }
 
@@ -185,7 +186,7 @@ void senv_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     Value->appendArray(hdf5::ArrayAdapter(ValuePtr->data(), NrOfElements));
   } break;
   default:
-    LOG_WARN("Unknown data type in flatbuffer.");
+    Logger::Info("Unknown data type in flatbuffer.");
   }
   if (NrOfElements == 0) {
     return;

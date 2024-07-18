@@ -41,10 +41,7 @@ struct MainOpt {
   /// Command line argument to print application version and exit.
   bool PrintVersion = false;
 
-  Log::Severity LoggingLevel{Log::Severity::Info};
-
-  /// Can optionally use the `graylog_logger` library to log to this address.
-  uri::URI GraylogLoggerAddress;
+  LogSeverity LoggingLevel{LogSeverity::Info};
 
   uri::URI GrafanaCarbonAddress;
 

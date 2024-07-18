@@ -31,7 +31,7 @@ public:
       if (config.contains("size"))
         _size = config["size"].get<ssize_t>();
     } else {
-      LOG_ERROR("Invalid StringConfig JSON input {}", config.dump());
+      Logger::Error("Invalid StringConfig JSON input {}", config.dump());
       throw std::runtime_error("Invalid StringConfig JSON input");
     }
   }
@@ -54,7 +54,7 @@ public:
       auto msg = fmt::format(
           "StringConfig can not create attribute {}@{} without value or size",
           pos, name);
-      LOG_ERROR(msg);
+      Logger::Error(msg);
       throw std::runtime_error(msg);
     }
     auto s = has_size() ? size() : 0u;
@@ -66,8 +66,8 @@ public:
       try {
         attr.write(value(), output);
       } catch (std::exception &e) {
-        LOG_ERROR("Failed to write attribute {}@{}: {}",
-                  std::string(parent->link().path()), name, e.what());
+        Logger::Error("Failed to write attribute {}@{}: {}",
+                      std::string(parent->link().path()), name, e.what());
       }
     }
     return attr;
@@ -77,7 +77,7 @@ public:
     bool inconsistent{false}, changed{false};
     if (other.has_value()) {
       if (has_value() && value() != other.value() && force) {
-        LOG_DEBUG("Unexpected StringConfig update: {} -> {}", *this, other);
+        Logger::Debug("Unexpected StringConfig update: {} -> {}", *this, other);
         _value = other.value();
         if (static_cast<ssize_t>(other.value().size()) >
             std::max(static_cast<ssize_t>(value().size()), size())) {
@@ -89,8 +89,8 @@ public:
         _value = other.value();
         changed = true;
       } else {
-        LOG_ERROR("Update StringConfig value too large: {} -> {}", *this,
-                  other);
+        Logger::Error("Update StringConfig value too large: {} -> {}", *this,
+                      other);
       }
     }
     return std::make_pair(inconsistent, changed);

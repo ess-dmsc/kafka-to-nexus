@@ -88,7 +88,7 @@ public:
       try {
         WriteToFile(UsedNode, getName(), MetaDataValue);
       } catch (std::exception &E) {
-        LOG_ERROR(
+        Logger::Error(
             R"(Failed to write HDF5 dataset "{}" with values "{}". The message was: {})",
             getPath(), MetaDataValue, E.what());
         throw;
@@ -97,7 +97,7 @@ public:
         ValueBaseInternal::writeAttributesToHDF5File(
             UsedNode.get_dataset(getName()));
       } catch (std::exception &E) {
-        LOG_ERROR(
+        Logger::Error(
             R"(Failed to write HDF5 attributes for path "{}". The message was: {})",
             getPath(), E.what());
         throw;

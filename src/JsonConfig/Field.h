@@ -82,13 +82,13 @@ public:
       : FieldBase(RegistrarPtr, Key) {}
 
   void setValue(std::string const &, json const &) override {
-    LOG_WARN(
+    Logger::Info(
         R"(The field with the key(s) "{}" is obsolete. Any value set will be ignored.)",
         getKeys());
   }
 
   void setValue(std::string const &, std::string const &) override {
-    LOG_WARN(
+    Logger::Info(
         R"(The field with the key(s) "{}" is obsolete. Any value set will be ignored.)",
         getKeys());
   }
@@ -166,7 +166,7 @@ private:
       auto keys_str =
           std::accumulate(std::next(keys.begin()), keys.end(), keys[0],
                           [](auto a, auto b) { return a + ", " + b; });
-      LOG_WARN(
+      Logger::Info(
           R"(Replacing the previously given value of "{}" with "{}" in json config field with key(s): )",
           _value, value, keys_str);
     }

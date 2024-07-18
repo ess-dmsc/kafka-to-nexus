@@ -10,30 +10,29 @@
 #include "logger.h"
 #include "URI.h"
 #include <date/date.h>
-#include <graylog_logger/ConsoleInterface.hpp>
-#include <graylog_logger/FileInterface.hpp>
-#include <graylog_logger/GraylogInterface.hpp>
 #include <string>
 
-std::string consoleFormatter(Log::LogMessage const &Msg) {
-  std::array<std::string, 8> const sevToStr = {{"EMERGENCY", "ALERT",
-                                                "CRITICAL", "ERROR", "WARNING",
-                                                "Notice", "Info", "Debug"}};
-  return fmt::format("{} [{}] {}", date::format("[%H:%M:%S] ", Msg.Timestamp),
-                     sevToStr.at(int(Msg.SeverityLevel)), Msg.MessageString);
-}
-
-void setUpLogging(Log::Severity const &LoggingLevel,
-                  const std::string &LogFileName, const uri::URI &GraylogURI) {
-  Log::SetMinimumSeverity(LoggingLevel);
-  auto CInterface = std::make_shared<Log::ConsoleInterface>();
-  CInterface->setMessageStringCreatorFunction(consoleFormatter);
-  Log::AddLogHandler(CInterface);
-  if (!LogFileName.empty()) {
-    Log::AddLogHandler(std::make_shared<Log::FileInterface>(LogFileName));
+void setUpLogging(LogSeverity const &logging_level) {
+  auto logger = Logger::instance();
+  switch (logging_level) {
+  case LogSeverity::Critical:
+    logger->set_level(spdlog::level::critical);
+    break;
+  case LogSeverity::Error:
+    logger->set_level(spdlog::level::err);
+    break;
+  case LogSeverity::Warn:
+    logger->set_level(spdlog::level::warn);
+    break;
+  case LogSeverity::Info:
+    logger->set_level(spdlog::level::info);
+    break;
+  case LogSeverity::Debug:
+    logger->set_level(spdlog::level::debug);
+    break;
+  case LogSeverity::Trace:
+    logger->set_level(spdlog::level::trace);
+    break;
   }
-  if (GraylogURI.getURIString() != "/") {
-    Log::AddLogHandler(std::make_shared<Log::GraylogInterface>(
-        GraylogURI.Host, GraylogURI.Port));
-  }
+  logger->set_level(spdlog::level::trace);
 }
