@@ -28,22 +28,8 @@
 
 namespace FileWriter {
 
-class IStreamController {
-public:
-  virtual ~IStreamController() = default;
-  virtual std::string getJobId() const = 0;
-  virtual void setStopTime(const time_point &StopTime) = 0;
-  virtual bool isDoneWriting() = 0;
-  virtual void pauseStreamers() = 0;
-  virtual void resumeStreamers() = 0;
-  virtual void start() = 0;
-  virtual void stop() = 0;
-  virtual bool hasErrorState() const = 0;
-  virtual std::string errorMessage() = 0;
-};
-
 /// \brief The StreamController's task is to coordinate the different Streamers.
-class StreamController : public IStreamController {
+class StreamController {
 public:
   StreamController(
       std::unique_ptr<FileWriterTask> FileWriterTask,
@@ -52,7 +38,7 @@ public:
       Metrics::IRegistrar *Registrar, MetaData::TrackerPtr Tracker,
       std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
       std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory);
-  ~StreamController() override;
+  ~StreamController();
   StreamController(const StreamController &) = delete;
   StreamController(StreamController &&) = delete;
   StreamController &operator=(const StreamController &) = delete;
@@ -61,7 +47,7 @@ public:
   /// \brief Start the streamers and, hence, the filewriting.
   ///
   /// MUST BE CALLED AFTER CONSTRUCTION!
-  void start() override;
+  void start();
 
   /// \brief Set the point in time that triggers
   /// the termination of the run.
@@ -73,23 +59,23 @@ public:
   ///
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
-  void setStopTime(const time_point &StopTime) override;
+  void setStopTime(const time_point &StopTime);
 
   /// \brief Pause consumers.
   ///
   /// Pauses consumer polling to throttle the ingestion of data.
-  void pauseStreamers() override;
+  void pauseStreamers();
 
   /// \brief Resume consumers.
   ///
   /// Resumes consumers if they were paused.
-  void resumeStreamers() override;
+  void resumeStreamers();
 
   /// \brief Stop the streams as soon as possible.
   ///
   /// This call is not blocking but will trigger open streams to stop as soon as
   /// possible.
-  void stop() final;
+  void stop();
 
   /// \brief Returns true if all topics are done AND current system time
   /// is greater than stop time.
@@ -100,17 +86,17 @@ public:
   ///
   /// \note If stop time has not been set, it will be treated as the maximum
   /// possible time.
-  bool isDoneWriting() override;
+  bool isDoneWriting();
 
-  bool hasErrorState() const override;
+  bool hasErrorState() const;
 
-  std::string errorMessage() override;
+  std::string errorMessage();
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
   ///
   /// \return The job id.
-  std::string getJobId() const override;
+  std::string getJobId() const;
 
 private:
   bool StopNow{false};
