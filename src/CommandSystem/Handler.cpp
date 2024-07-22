@@ -227,6 +227,14 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob,
                        }};
   }
 
+  if (StartJob.ControlTopic.empty()) {
+    return CmdResponse {
+      LogLevel::Warning, 400, true, [StartJob]() {
+        return fmt::format(
+          R"(Rejected start job as control topic is empty.)");
+    }};
+  }
+
   if (!StartJob.ControlTopic.empty()) {
     if (!IsJobPoolCommand) {
       return CmdResponse{
