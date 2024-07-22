@@ -162,8 +162,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
     StartMessage StartJob;
 
     ActionResult SendResult{ActionResult::Success};
-    CmdResponse ValidationResponse =
-        startWritingProcess(CommandMsg, StartJob);
+    CmdResponse ValidationResponse = startWritingProcess(CommandMsg, StartJob);
     if (ValidationResponse.StatusCode >= 400) {
       SendResult = ActionResult::Failure;
     }
@@ -202,8 +201,7 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
 CmdResponse Handler::startWriting(StartMessage const &StartJob) {
   std::string ExceptionMessage;
 
-  if (!StartJob.ServiceID.empty() &&
-      StartJob.ServiceID != ServiceId) {
+  if (!StartJob.ServiceID.empty() && StartJob.ServiceID != ServiceId) {
     return CmdResponse{
         LogLevel::Debug, 400, false, [StartJob, this]() {
           return fmt::format(
@@ -226,11 +224,11 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob) {
 
   if (!StartJob.ControlTopic.empty()) {
     return CmdResponse{
-      LogLevel::Error, 400, true, [StartJob]() {
-        return fmt::format(
-        R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
-        StartJob.ControlTopic);
-      }};
+        LogLevel::Error, 400, true, [StartJob]() {
+          return fmt::format(
+              R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
+              StartJob.ControlTopic);
+        }};
     switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
   }
 

@@ -136,7 +136,8 @@ private:
     throw std::runtime_error("DoSetStopTime(): Not set/implemented.");
   }};
   StopNowFuncType DoStopNow{
-      []() { throw std::runtime_error("DoStopNow(): Not set/implemented."); }};
+      []() {
+    throw std::runtime_error("DoStopNow(): Not set/implemented."); }};
   IsWritingFuncType IsWritingNow{[]() -> bool {
     throw std::runtime_error("IsWritingNow(): Not set/implemented.");
   }};
