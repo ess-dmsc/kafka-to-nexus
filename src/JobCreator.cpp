@@ -117,7 +117,7 @@ extractMdatModules(std::vector<ModuleHDFInfo> &Modules) {
   return mdatInfoList;
 };
 
-std::unique_ptr<IStreamController> createFileWritingJob(
+std::unique_ptr<StreamController> createFileWritingJob(
     Command::StartInfo const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
     MetaData::TrackerPtr const &Tracker,
