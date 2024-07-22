@@ -157,14 +157,13 @@ void warnIfMessageIsOld(time_point MsgTime) {
   }
 }
 
-void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
-                                 bool IsJobPoolCommand) {
+void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
   try {
     StartMessage StartJob;
 
     ActionResult SendResult{ActionResult::Success};
     CmdResponse ValidationResponse =
-        startWritingProcess(CommandMsg, StartJob, IsJobPoolCommand);
+        startWritingProcess(CommandMsg, StartJob);
     if (ValidationResponse.StatusCode >= 400) {
       SendResult = ActionResult::Failure;
     }
@@ -186,8 +185,7 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 }
 
 CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
-                                         StartMessage &StartJob,
-                                         bool IsJobPoolCommand) {
+                                         StartMessage &StartJob) {
   std::string ExceptionMessage;
   if (!extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
     return CmdResponse{
@@ -198,14 +196,13 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
               ExceptionMessage);
         }};
   }
-  return startWriting(StartJob, IsJobPoolCommand);
+  return startWriting(StartJob);
 }
 
-CmdResponse Handler::startWriting(StartMessage const &StartJob,
-                                  bool IsJobPoolCommand) {
+CmdResponse Handler::startWriting(StartMessage const &StartJob) {
   std::string ExceptionMessage;
 
-  if (IsJobPoolCommand && !StartJob.ServiceID.empty() &&
+  if (!StartJob.ServiceID.empty() &&
       StartJob.ServiceID != ServiceId) {
     return CmdResponse{
         LogLevel::Debug, 400, false, [StartJob, this]() {
@@ -228,14 +225,12 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob,
   }
 
   if (!StartJob.ControlTopic.empty()) {
-    if (!IsJobPoolCommand) {
-      return CmdResponse{
-          LogLevel::Error, 400, true, [StartJob]() {
-            return fmt::format(
-                R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
-                StartJob.ControlTopic);
-          }};
-    }
+    return CmdResponse{
+      LogLevel::Error, 400, true, [StartJob]() {
+        return fmt::format(
+        R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
+        StartJob.ControlTopic);
+      }};
     switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
   }
 

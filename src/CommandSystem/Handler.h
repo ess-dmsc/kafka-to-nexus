@@ -89,7 +89,7 @@ protected:
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse startWriting(StartMessage const &StartJob, bool IsJobPoolCommand);
+  CmdResponse startWriting(StartMessage const &StartJob);
 
   /// \brief Stops writing.
   ///
@@ -103,7 +103,7 @@ private:
   /// \param CommandMsg Kafka message.
   /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
-  void handleStartCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
+  void handleStartCommand(FileWriter::Msg CommandMsg);
 
   /// \brief Validate command and start writing.
   ///
@@ -113,8 +113,7 @@ private:
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse startWritingProcess(const FileWriter::Msg &CommandMsg,
-                                  StartMessage &StartJob,
-                                  bool IsJobPoolCommand);
+                                  StartMessage &StartJob;
 
   /// \brief Handle stop command.
   ///
