@@ -370,7 +370,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
       metadata_enquirer, consumer_factory);
-  stream_controller->start();
 
   while (!stream_controller->isDoneWriting()) {
     std::cout << "Stream controller is writing\n";

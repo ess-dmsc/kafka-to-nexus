@@ -14,8 +14,6 @@ namespace FileWriter {
 
 using namespace std::chrono_literals;
 
-enum class Status { Initialising, Running, Error };
-
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
@@ -23,7 +21,8 @@ StreamController::StreamController(
     MetaData::TrackerPtr Tracker,
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
-    : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
+    : CurrentMetadataTimeOut(Settings.BrokerSettings.MinMetadataTimeout),
+      WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
       StreamMetricRegistrar(Registrar->getNewRegistrar("")),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
@@ -31,7 +30,10 @@ StreamController::StreamController(
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
       _metadata_enquirer(std::move(metadata_enquirer)),
       _consumer_factory(std::move(consumer_factory)),
-      _worker_thread(&StreamController::process, this) {}
+      _worker_thread(&StreamController::process, this) {
+  MdatWriter->set_start_time(StreamerOptions.StartTimestamp);
+  MdatWriter->set_stop_time(StreamerOptions.StopTimestamp);
+}
 
 StreamController::~StreamController() { stop(); }
 
@@ -42,16 +44,7 @@ void StreamController::process() {
   while (_run_thread.load()) {
     switch (status) {
     case Status::Initialising: {
-      auto topic_names = getTopicNames();
-      if (topic_names.empty()) {
-        break;
-      }
-      auto success = initStreams(topic_names);
-      if (success) {
-        status = Status::Running;
-      } else {
-        status = Status::Error;
-      }
+      status = initialise_streams();
       break;
     }
     case Status::Running: {
@@ -69,10 +62,17 @@ void StreamController::process() {
   Logger::Info("StreamController threaded process exiting");
 }
 
-void StreamController::start() {
-  CurrentMetadataTimeOut = StreamerOptions.BrokerSettings.MinMetadataTimeout;
-  MdatWriter->set_start_time(StreamerOptions.StartTimestamp);
-  MdatWriter->set_stop_time(StreamerOptions.StopTimestamp);
+StreamController::Status StreamController::initialise_streams() {
+  auto topic_names = getTopicNames();
+  if (topic_names.empty()) {
+    return Status::Initialising;
+  }
+  auto success = initStreams(topic_names);
+  if (success) {
+    return Status::Running;
+  } else {
+    return Status::Error;
+  }
 }
 
 void StreamController::setStopTime(time_point const &StopTime) {
@@ -211,8 +211,9 @@ void StreamController::checkIfStreamsAreDone() {
   } catch (std::exception &E) {
     HasError = true;
     std::lock_guard Guard(ErrorMsgMutex);
-    ErrorMessage =
-        fmt::format("Got stream error. The error message was: {}", E.what());
+    ErrorMessage = fmt::format(
+        "Got stream error so stopping file writing. The error message was: {}",
+        E.what());
     stop();
     StreamersRemaining.store(false);
   }

@@ -44,11 +44,6 @@ public:
   StreamController &operator=(const StreamController &) = delete;
   StreamController &operator=(StreamController &&) = delete;
 
-  /// \brief Start the streamers and, hence, the filewriting.
-  ///
-  /// MUST BE CALLED AFTER CONSTRUCTION!
-  void start();
-
   /// \brief Set the point in time that triggers
   /// the termination of the run.
   ///
@@ -101,12 +96,14 @@ public:
   void process();
 
 private:
+  enum class Status { Initialising, Running, Error };
   bool StopNow{false};
   std::set<std::string> getTopicNames();
   bool initStreams(std::set<std::string> known_topic_names);
   void performPeriodicChecks();
   void checkIfStreamsAreDone();
   void throttleIfWriteQueueIsFull();
+  Status initialise_streams();
 
   std::chrono::system_clock::duration CurrentMetadataTimeOut{};
   std::atomic<bool> StreamersRemaining{true};

@@ -58,7 +58,6 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
     CurrentStreamController =
         createFileWritingJob(StartInfo, streamer_options, filepath,
                              MasterMetricsRegistrar.get(), MetaDataTracker);
-    CurrentStreamController->start();
 
     metadata_from_start_msg = StartInfo.Metadata;
     if (!StartInfo.ControlTopic.empty()) {
