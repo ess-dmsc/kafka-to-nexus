@@ -98,6 +98,8 @@ public:
   /// \return The job id.
   std::string getJobId() const;
 
+  void process();
+
 private:
   bool StopNow{false};
   void getTopicNames();
@@ -136,7 +138,10 @@ private:
   MetaData::TrackerPtr MetaDataTracker;
   std::shared_ptr<Kafka::MetadataEnquirer> _metadata_enquirer;
   std::shared_ptr<Kafka::ConsumerFactoryInterface> _consumer_factory;
-  ThreadedExecutor Executor{false, "stream_controller"}; // Must be last
+  moodycamel::ConcurrentQueue<JobType> TaskQueue;
+  moodycamel::ConcurrentQueue<JobType> LowPriorityTaskQueue;
+  bool _run_thread{true};
+  std::thread _worker_thread;
 };
 
 } // namespace FileWriter

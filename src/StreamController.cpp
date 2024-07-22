@@ -11,6 +11,9 @@
 #include <utility>
 
 namespace FileWriter {
+
+using namespace std::chrono_literals;
+
 StreamController::StreamController(
     std::unique_ptr<FileWriterTask> FileWriterTask,
     std::unique_ptr<WriterModule::mdat::mdat_Writer> mdatWriter,
@@ -25,19 +28,39 @@ StreamController::StreamController(
                    Registrar->getNewRegistrar("stream.writer")),
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
       _metadata_enquirer(std::move(metadata_enquirer)),
-      _consumer_factory(std::move(consumer_factory)) {}
+      _consumer_factory(std::move(consumer_factory)),
+      _worker_thread(&StreamController::process, this) {}
 
 StreamController::~StreamController() {
   stop();
   MdatWriter->write_metadata(*WriterTask);
   Logger::Info("Stopped StreamController for file with id : {}",
                StreamController::getJobId());
+  TaskQueue.enqueue([=]() { _run_thread = false; });
+  if (_worker_thread.joinable()) {
+    _worker_thread.join();
+  }
+}
+
+void StreamController::process() {
+  setThreadName("stream_controller");
+  while (_run_thread) {
+    JobType CurrentTask;
+    if (TaskQueue.try_dequeue(CurrentTask)) {
+      CurrentTask();
+    } else if (LowPriorityTaskQueue.try_dequeue(CurrentTask)) {
+      CurrentTask();
+    } else {
+      std::this_thread::sleep_for(5ms);
+    }
+  }
+  Logger::Info("StreamController threaded process exiting");
 }
 
 void StreamController::start() {
   MdatWriter->set_start_time(StreamerOptions.StartTimestamp);
   MdatWriter->set_stop_time(StreamerOptions.StopTimestamp);
-  Executor.sendLowPriorityWork([=]() {
+  LowPriorityTaskQueue.enqueue([=]() {
     CurrentMetadataTimeOut = StreamerOptions.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
   });
@@ -46,7 +69,7 @@ void StreamController::start() {
 void StreamController::setStopTime(time_point const &StopTime) {
   StreamerOptions.StopTimestamp = StopTime;
   MdatWriter->set_stop_time(StopTime);
-  Executor.sendWork([=]() {
+  TaskQueue.enqueue([=]() {
     for (auto &s : Streamers) {
       s->setStopTime(StopTime);
     }
@@ -90,7 +113,7 @@ void StreamController::getTopicNames() {
     auto TopicNames = _metadata_enquirer->getTopicList(
         StreamerOptions.BrokerSettings.Address, CurrentMetadataTimeOut,
         StreamerOptions.BrokerSettings);
-    Executor.sendLowPriorityWork([=]() { initStreams(TopicNames); });
+    LowPriorityTaskQueue.enqueue([=]() { initStreams(TopicNames); });
   } catch (MetadataException &E) {
     CurrentMetadataTimeOut *= 2;
     auto &Settings = StreamerOptions.BrokerSettings;
@@ -102,7 +125,7 @@ void StreamController::getTopicNames() {
                  std::chrono::duration_cast<std::chrono::milliseconds>(
                      CurrentMetadataTimeOut)
                      .count());
-    Executor.sendLowPriorityWork([=]() { getTopicNames(); });
+    LowPriorityTaskQueue.enqueue([=]() { getTopicNames(); });
   }
 }
 
@@ -147,7 +170,7 @@ void StreamController::initStreams(std::set<std::string> known_topic_names) {
     topic->start();
     Streamers.emplace_back(std::move(topic));
   }
-  Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
+  LowPriorityTaskQueue.enqueue([=]() { performPeriodicChecks(); });
 }
 
 bool StreamController::hasErrorState() const { return HasError; }
@@ -161,7 +184,7 @@ void StreamController::performPeriodicChecks() {
   checkIfStreamsAreDone();
   throttleIfWriteQueueIsFull();
   std::this_thread::sleep_for(PeriodicChecksInterval);
-  Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
+  LowPriorityTaskQueue.enqueue([=]() { performPeriodicChecks(); });
 }
 
 void StreamController::checkIfStreamsAreDone() {
