@@ -102,8 +102,8 @@ public:
 
 private:
   bool StopNow{false};
-  void getTopicNames();
-  void initStreams(std::set<std::string> known_topic_names);
+  std::set<std::string> getTopicNames();
+  bool initStreams(std::set<std::string> known_topic_names);
   void performPeriodicChecks();
   void checkIfStreamsAreDone();
   void throttleIfWriteQueueIsFull();
@@ -140,7 +140,7 @@ private:
   std::shared_ptr<Kafka::ConsumerFactoryInterface> _consumer_factory;
   moodycamel::ConcurrentQueue<JobType> TaskQueue;
   moodycamel::ConcurrentQueue<JobType> LowPriorityTaskQueue;
-  bool _run_thread{true};
+  std::atomic<bool> _run_thread{true};
   std::thread _worker_thread;
 };
 
