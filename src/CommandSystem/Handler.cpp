@@ -255,7 +255,7 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob,
 
   if (StartJob.ControlTopic.empty()) {
     return CmdResponse{
-        LogLevel::Warning, 400, true, []() {
+        LogLevel::Warn, 400, true, []() {
           return fmt::format(
               R"(Rejected start job as control topic was empty.)");
         }};
