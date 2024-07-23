@@ -227,6 +227,10 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob) {
                        }};
   }
 
+  if (!StartJob.ControlTopic.empty()) {
+    switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
+  }
+
   if (!isValidUUID(StartJob.JobID)) {
     return CmdResponse{
         LogLevel::Warn, 400, true, [StartJob]() {

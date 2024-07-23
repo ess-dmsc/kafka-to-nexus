@@ -86,7 +86,6 @@ protected:
   /// \brief Initiates writing.
   ///
   /// \param StartJob The start message as a StartMessage struct.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse startWriting(StartMessage const &StartJob);
@@ -101,7 +100,6 @@ private:
   /// \brief Handle start command.
   ///
   /// \param CommandMsg Kafka message.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   void handleStartCommand(FileWriter::Msg CommandMsg);
 
@@ -109,7 +107,6 @@ private:
   ///
   /// \param CommandMsg Kafka message.
   /// \param StartJob Returns the parsed start message as a StartMessage struct.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse startWritingProcess(const FileWriter::Msg &CommandMsg,
