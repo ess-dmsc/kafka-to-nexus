@@ -113,7 +113,7 @@ private:
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse startWritingProcess(const FileWriter::Msg &CommandMsg,
-                                  StartMessage &StartJob;
+                                  StartMessage &StartJob);
 
   /// \brief Handle stop command.
   ///
