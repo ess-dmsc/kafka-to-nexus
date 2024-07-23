@@ -89,12 +89,9 @@ protected:
 
 TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
   _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
-
-  for (bool isPoolCommand : {false, true}) {
-    CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
-    EXPECT_TRUE(cmdResponse.SendResponse);
-    EXPECT_TRUE(isErrorResponse(cmdResponse));
-  }
+  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
+  EXPECT_TRUE(cmdResponse.SendResponse);
+  EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
