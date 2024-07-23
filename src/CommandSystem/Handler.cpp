@@ -222,16 +222,6 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob) {
                        }};
   }
 
-  if (!StartJob.ControlTopic.empty()) {
-    return CmdResponse{
-        LogLevel::Error, 400, true, [StartJob]() {
-          return fmt::format(
-              R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
-              StartJob.ControlTopic);
-        }};
-    switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
-  }
-
   if (!isValidUUID(StartJob.JobID)) {
     return CmdResponse{
         LogLevel::Warning, 400, true, [StartJob]() {
