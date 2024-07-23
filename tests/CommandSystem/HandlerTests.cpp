@@ -91,8 +91,7 @@ TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
   _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
 
   for (bool isPoolCommand : {false, true}) {
-    CmdResponse cmdResponse =
-        _handlerUnderTest->startWriting(_startMessage, isPoolCommand);
+    CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
     EXPECT_TRUE(cmdResponse.SendResponse);
     EXPECT_TRUE(isErrorResponse(cmdResponse));
   }
@@ -118,31 +117,17 @@ TEST_F(StartHandlerTest,
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
   _startMessage.ServiceID = _serviceId;
 
-  CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StartHandlerTest,
-       validateStartCommandRejectsControlTopicIfNotFromJobPool) {
-  _startMessage.ControlTopic = "some_topic";
-
-  CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, false);
-
-  EXPECT_FALSE(_handlerUnderTest->isUsingAlternativeTopic());
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
 }
 
 TEST_F(StartHandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
   EXPECT_FALSE(_handlerUnderTest->isUsingAlternativeTopic());
   _startMessage.ControlTopic = "some_topic";
 
-  CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_FALSE(isErrorResponse(cmdResponse));
   EXPECT_TRUE(_handlerUnderTest->isUsingAlternativeTopic());
@@ -160,8 +145,7 @@ TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
 TEST_F(StartHandlerTest, validateStartCommandRejectsInvalidJobID) {
   _startMessage.JobID = "123";
 
-  CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -173,8 +157,7 @@ TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
         throw std::runtime_error("Some error");
       });
 
-  CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
