@@ -22,7 +22,7 @@ hs00_Extractor::source_name(FlatbufferMessage const &Message) const {
   auto Buffer = GetEventHistogram(Message.data());
   auto Source = Buffer->source();
   if (Source == nullptr) {
-    LOG_INFO("message has no source_name");
+    Logger::Info("message has no source_name");
     return "";
   }
   return Source->str();

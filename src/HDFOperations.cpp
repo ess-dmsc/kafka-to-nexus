@@ -109,8 +109,8 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
       JSONAttribute CurrentAttribute(Attribute);
       if (Node.attributes.exists(CurrentAttribute.Name)) {
         Node.attributes.remove(CurrentAttribute.Name);
-        LOG_DEBUG(R"(Replacing (existing) attribute with key "{}".)",
-                  CurrentAttribute.Name.get_value());
+        Logger::Debug(R"(Replacing (existing) attribute with key "{}".)",
+                      CurrentAttribute.Name.get_value());
       }
       if (CurrentAttribute.Type.hasDefaultValue() and
           not CurrentAttribute.Value.get_value().is_array()) {
@@ -129,7 +129,7 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
                                  CurrentAttribute.Name, CurrentAttribute.Value);
       }
     } catch (std::exception &e) {
-      LOG_ERROR("Failed to write attribute. Error was: {}", e.what());
+      Logger::Error("Failed to write attribute. Error was: {}", e.what());
     }
   }
 }
@@ -176,7 +176,7 @@ void writeObjectOfAttributes(hdf5::node::Node const &Node,
     auto const Name = It.key();
     if (Node.attributes.exists(Name)) {
       Node.attributes.remove(Name);
-      LOG_DEBUG(R"(Replacing (existing) attribute with key "{}".)", Name);
+      Logger::Debug(R"(Replacing (existing) attribute with key "{}".)", Name);
     }
     writeScalarAttribute(Node, Name, It.value());
   }
@@ -366,7 +366,7 @@ void createHDFStructures(
     if (CNode.Type.get_key() == "type") {
       if (CNode.Type.get_value() == "group") {
         if (CNode.Name.get_value().empty()) {
-          LOG_ERROR("HDF group name was empty/missing, ignoring.");
+          Logger::Error("HDF group name was empty/missing, ignoring.");
           return;
         }
         try {
@@ -382,16 +382,17 @@ void createHDFStructures(
                                   HDFStreamInfo, Path);
             }
           } else {
-            LOG_DEBUG("Ignoring children as they do not exist or are invalid.");
+            Logger::Debug(
+                "Ignoring children as they do not exist or are invalid.");
           }
           Path.pop_back();
         } catch (std::exception const &e) {
-          LOG_ERROR("Failed to create group  Name: {}. Message was: {}",
-                    CNode.Name.get_value(), e.what());
+          Logger::Error("Failed to create group  Name: {}. Message was: {}",
+                        CNode.Name.get_value(), e.what());
         }
       } else {
-        LOG_ERROR("Unknown hdf node of type {}. Ignoring.",
-                  CNode.Type.get_value());
+        Logger::Error("Unknown hdf node of type {}. Ignoring.",
+                      CNode.Type.get_value());
       }
     } else if (CNode.Type.get_key() == "module") {
       if (CNode.Type.get_value() == "dataset") {
@@ -409,7 +410,7 @@ void createHDFStructures(
     }
   } catch (std::exception const &e) {
     // Don't throw here as the file should continue writing
-    LOG_ERROR(
+    Logger::Error(
         R"(Failed to create structure with path "{}" ({} levels deep). Message was: {})",
         std::string(Parent.link().path()), Level, e.what());
   }
@@ -438,24 +439,25 @@ void addLinkToNode(hdf5::node::Group const &Group,
     TargetID =
         H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
   } catch (const std::exception &e) {
-    LOG_ERROR("Failed to open HDF5 object for link creation.");
+    Logger::Error("Failed to open HDF5 object for link creation.");
     return;
   }
   if (TargetID < 0) {
-    LOG_WARN("Can not find target object for link target: {}  in group: {}",
-             Name, std::string(Group.link().path()));
+    Logger::Info("Can not find target object for link target: {}  in group: {}",
+                 Name, std::string(Group.link().path()));
   }
   if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), Name.c_str(),
                   H5P_DEFAULT, H5P_DEFAULT)) {
-    LOG_WARN("can not create link name: {}  in group: {}  to target: {}", Name,
-             std::string(Group.link().path()), TargetBase);
+    Logger::Info("can not create link name: {}  in group: {}  to target: {}",
+                 Name, std::string(Group.link().path()), TargetBase);
   }
   try {
     H5Oclose(TargetID);
   } catch (const std::exception &e) {
-    LOG_ERROR("Could not close HDF5 object while adding link with target {} to "
-              "group {}",
-              TargetID, std::string(Group.link().path()));
+    Logger::Error(
+        "Could not close HDF5 object while adding link with target {} to "
+        "group {}",
+        TargetID, std::string(Group.link().path()));
   }
 }
 

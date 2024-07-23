@@ -31,7 +31,7 @@ Consumer::~Consumer() {
     std::vector<std::string> Topics;
     auto ErrorCode = KafkaConsumer->subscription(Topics);
     if (ErrorCode == RdKafka::ERR_NO_ERROR) {
-      LOG_DEBUG("Consumer consuming from topic(s) {} closed.", Topics);
+      Logger::Debug("Consumer consuming from topic(s) {} closed.", Topics);
     }
     KafkaConsumer->unassign();
     KafkaConsumer->unsubscribe();
@@ -41,14 +41,14 @@ Consumer::~Consumer() {
 
 void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
                                     int64_t Offset) {
-  LOG_INFO("Consumer::addPartitionAtOffset()  topic: {},  partitionId: {}, "
-           "offset: {}",
-           Topic, PartitionId, Offset);
+  Logger::Info("Consumer::addPartitionAtOffset()  topic: {},  partitionId: {}, "
+               "offset: {}",
+               Topic, PartitionId, Offset);
   std::vector<RdKafka::TopicPartition *> Assignments;
   auto ErrorCode = KafkaConsumer->assignment(Assignments);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    LOG_ERROR("Could not assign to {}. Could not get current assignments.",
-              Topic);
+    Logger::Error("Could not assign to {}. Could not get current assignments.",
+                  Topic);
     throw std::runtime_error(fmt::format(
         R"(Could not assign topic-partition of topic {}. Could not get current assignments. RdKafka error: "{}")",
         Topic, err2str(ErrorCode)));
@@ -57,7 +57,7 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
       RdKafka::TopicPartition::create(Topic, PartitionId, Offset));
   auto ReturnCode = KafkaConsumer->assign(Assignments);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
-    LOG_ERROR("Could not assign to {}", Topic);
+    Logger::Error("Could not assign to {}", Topic);
     throw std::runtime_error(fmt::format(
         R"(Could not assign topic-partition of topic {}, RdKafka error: "{}")",
         Topic, err2str(ReturnCode)));
@@ -66,11 +66,11 @@ void Consumer::addPartitionAtOffset(std::string const &Topic, int PartitionId,
 }
 
 void Consumer::addTopic(std::string const &Topic) {
-  LOG_INFO("Consumer::addTopic()  topic: {}", Topic);
+  Logger::Info("Consumer::addTopic()  topic: {}", Topic);
   std::vector<std::string> Topics;
   auto ErrorCode = KafkaConsumer->subscription(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    LOG_ERROR("Could not get current topic subscriptions.");
+    Logger::Error("Could not get current topic subscriptions.");
     throw std::runtime_error(fmt::format(
         R"(Could not get current topic subscriptions. RdKafka error: "{}")",
         err2str(ErrorCode)));
@@ -78,8 +78,8 @@ void Consumer::addTopic(std::string const &Topic) {
   Topics.emplace_back(Topic);
   ErrorCode = KafkaConsumer->subscribe(Topics);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    LOG_ERROR(R"(Unable to add topic "{}" to list of subscribed topics.)",
-              Topic);
+    Logger::Error(R"(Unable to add topic "{}" to list of subscribed topics.)",
+                  Topic);
     throw std::runtime_error(fmt::format(
         R"(Unable to add topic "{}" to list of subscribed topics. RdKafka
         error: "{}")",
@@ -89,8 +89,8 @@ void Consumer::addTopic(std::string const &Topic) {
 
 void Consumer::assignAllPartitions(std::string const &Topic,
                                    time_point const &StartTimestamp) {
-  LOG_INFO("Consumer::assignAllPartitions()  Topic: {} StartTimestamp: {}",
-           Topic, StartTimestamp);
+  Logger::Info("Consumer::assignAllPartitions()  Topic: {} StartTimestamp: {}",
+               Topic, StartTimestamp);
   // Obtain partitions
   RdKafka::Metadata *MetadataPtr{nullptr};
   const RdKafka::TopicMetadata *TopicMetadata =
@@ -102,7 +102,7 @@ void Consumer::assignAllPartitions(std::string const &Topic,
   }
   std::vector<RdKafka::TopicPartition *> TopicPartitions;
   for (auto const &Partition : *TopicMetadata->partitions()) {
-    LOG_DEBUG(
+    Logger::Debug(
         R"(Obtaining offset for topic "{}" partition "{}" for the provided timestamp "{}")",
         Topic, Partition->id(), StartTimestamp);
     TopicPartitions.push_back(RdKafka::TopicPartition::create(
@@ -113,7 +113,7 @@ void Consumer::assignAllPartitions(std::string const &Topic,
       TopicPartitions,
       toMilliSeconds(ConsumerBrokerSettings.MaxMetadataTimeout));
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Could not get offsets in topic "{}" for the provided timestamp "{}". RdKafka error: "{}")",
         Topic, StartTimestamp, err2str(ErrorCode));
     throw std::runtime_error(fmt::format(
@@ -123,8 +123,8 @@ void Consumer::assignAllPartitions(std::string const &Topic,
   // Assign partitions at offset
   ErrorCode = KafkaConsumer->assign(TopicPartitions);
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    LOG_ERROR(R"(Could not assign topic-partitions. RdKafka error: "{}")",
-              err2str(ErrorCode));
+    Logger::Error(R"(Could not assign topic-partitions. RdKafka error: "{}")",
+                  err2str(ErrorCode));
     throw std::runtime_error(
         fmt::format(R"(Could not assign topic-partitions. RdKafka error: "{}")",
                     err2str(ErrorCode)));

@@ -25,10 +25,10 @@ public:
     if (_edges.has_value() ||
         (_first.has_value() && _last.has_value() && _size.has_value()))
       return *this;
-    LOG_ERROR("Invalid EdgeConfig JSON input {} -> edges = {}, first = {}, "
-              "last = {}, size = {}",
-              config, _edges.has_value(), _first.has_value(), _last.has_value(),
-              _size.has_value());
+    Logger::Error("Invalid EdgeConfig JSON input {} -> edges = {}, first = {}, "
+                  "last = {}, size = {}",
+                  config, _edges.has_value(), _first.has_value(),
+                  _last.has_value(), _size.has_value());
     throw std::runtime_error("Invalid EdgeConfig JSON input");
   }
   EdgeConfig &operator=(EdgeConfig const &other) = default;

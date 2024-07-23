@@ -71,13 +71,14 @@ void StatusReporterBase::reportStatus() {
     auto const StatusJSONReport = createJSONReport();
     auto const StatusReportString = StatusJSONReport.dump();
     if (StatusJSONReport["file_being_written"] != "") {
-      LOG_DEBUG("status: {}", StatusReportString);
+      Logger::Debug("status: {}", StatusReportString);
     }
 
     StatusProducerTopic->produce(createReport(StatusReportString));
     postReportStatusActions();
   } catch (std::runtime_error &E) {
-    LOG_WARN("Unable to create a status report. The error was: {}", E.what());
+    Logger::Info("Unable to create a status report. The error was: {}",
+                 E.what());
   }
 }
 
@@ -89,11 +90,12 @@ void StatusReporterBase::useAlternativeStatusTopic(
         std::make_unique<Kafka::ProducerTopic>(Producer, AltTopicName);
     std::swap(StatusProducerTopic, AltStatusProducerTopic);
     UsingAlternativeStatusTopic = true;
-    LOG_DEBUG(R"(Now using the alternative status topic "{}".)", AltTopicName);
+    Logger::Debug(R"(Now using the alternative status topic "{}".)",
+                  AltTopicName);
   } else {
-    LOG_WARN(R"(Unable to set new alternative status topic "{}" as the "
+    Logger::Info(R"(Unable to set new alternative status topic "{}" as the "
              "alternative topic "{}" is already used.)",
-             AltTopicName, StatusProducerTopic->name());
+                 AltTopicName, StatusProducerTopic->name());
   }
 }
 
@@ -101,8 +103,8 @@ void StatusReporterBase::revertToDefaultStatusTopic() {
   if (UsingAlternativeStatusTopic) {
     std::swap(StatusProducerTopic, AltStatusProducerTopic);
     UsingAlternativeStatusTopic = false;
-    LOG_DEBUG(R"(Reverting to default status topic name "{}".)",
-              StatusProducerTopic->name());
+    Logger::Debug(R"(Reverting to default status topic name "{}".)",
+                  StatusProducerTopic->name());
   }
 }
 

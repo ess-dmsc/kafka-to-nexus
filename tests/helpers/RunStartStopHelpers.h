@@ -21,7 +21,8 @@ FileWriter::Msg buildRunStartMessage(
     std::string const &InstrumentName, std::string const &RunName,
     std::string const &NexusStructure, std::string const &JobID,
     std::optional<std::string> const &ServiceID, std::string const &Filename,
-    uint64_t StartTime, uint64_t StopTime);
+    uint64_t StartTime, uint64_t StopTime,
+    std::string const &control_topic = "");
 
 FileWriter::Msg
 buildRunStopMessage(uint64_t StopTime, std::string const &RunName,

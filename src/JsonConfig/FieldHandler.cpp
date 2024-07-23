@@ -21,7 +21,7 @@ void FieldHandler::registerField(FieldBase *Ptr) {
   auto Keys = Ptr->getKeys();
   for (auto const &Key : Keys) {
     if (FieldMap.find(Key) != FieldMap.end()) {
-      LOG_WARN(
+      Logger::Info(
           R"(Replacing the config field (key) "{}". Note: this is programming error (i.e. a bug) that should be fixed post-haste.)",
           Key);
     }
@@ -36,14 +36,14 @@ void FieldHandler::processConfigData(std::string const &ConfigJsonStr) {
 void FieldHandler::processConfigData(nlohmann::json const &JsonObj) {
   for (auto Iter = JsonObj.begin(); Iter != JsonObj.end(); ++Iter) {
     if (FieldMap.find(Iter.key()) == FieldMap.end()) {
-      LOG_ERROR(R"(Json config field with name (key) "{}" is unknown.)",
-                Iter.key());
+      Logger::Error(R"(Json config field with name (key) "{}" is unknown.)",
+                    Iter.key());
     } else {
       auto CurrentField = FieldMap.find(Iter.key());
       try {
         CurrentField->second->setValue(Iter.key(), Iter.value());
       } catch (json::type_error &E) {
-        LOG_ERROR(
+        Logger::Error(
             R"(Got type error when trying to set json config field value (with key "{}"). The error message was: {})",
             Iter.key(), E.what());
       }

@@ -27,7 +27,7 @@ class StatusReporterBase;
 }
 
 namespace FileWriter {
-class IStreamController;
+class StreamController;
 
 /// \brief Listens to the Kafka configuration topic and handles any requests.
 ///
@@ -61,7 +61,7 @@ private:
   void resetStatusInfo();
   MainOpt &MainConfig;
   std::unique_ptr<Command::HandlerBase> CommandAndControl;
-  std::unique_ptr<IStreamController> CurrentStreamController{nullptr};
+  std::unique_ptr<StreamController> CurrentStreamController{nullptr};
   std::unique_ptr<Status::StatusReporterBase> Reporter;
   std::unique_ptr<Metrics::IRegistrar> MasterMetricsRegistrar;
   mutable std::mutex StatusMutex;

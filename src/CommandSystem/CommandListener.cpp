@@ -61,7 +61,7 @@ void CommandListener::try_connecting_to_topic() {
     auto const message =
         fmt::format("Could not connect to command topic {}: {}", CommandTopic,
                     error.what());
-    LOG_ERROR(message);
+    Logger::Error(message);
     throw MetadataException(message);
   }
 }

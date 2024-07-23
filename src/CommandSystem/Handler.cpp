@@ -16,13 +16,13 @@
 #include <utility>
 
 namespace Command {
-using LogLevel = Log::Severity;
+using LogLevel = LogSeverity;
 
 std::unique_ptr<Handler> Handler::create(std::string const &service_id,
                                          Kafka::BrokerSettings const &settings,
                                          std::string const &job_pool_topic,
                                          std::string const &command_topic) {
-  auto pool_listener = std::make_unique<JobListener>(job_pool_topic, settings);
+  auto pool_listener = JobListener::create(job_pool_topic, settings);
   auto command_listener = CommandListener::create(command_topic, settings);
   std::unique_ptr<FeedbackProducer> command_response =
       FeedbackProducer::create(service_id, command_topic, settings);
@@ -81,7 +81,7 @@ void Handler::registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) {
 
 void Handler::revertCommandTopic() {
   if (UsingAltTopic) {
-    LOG_INFO("Reverting to default command topic: {}", CommandTopicAddress);
+    Logger::Info("Reverting to default command topic: {}", CommandTopicAddress);
     CommandSource->change_topic(CommandTopicAddress);
     std::swap(AltCommandResponse, CommandResponse);
     UsingAltTopic = false;
@@ -90,20 +90,22 @@ void Handler::revertCommandTopic() {
 
 void Handler::switchCommandTopic(std::string const &ControlTopic,
                                  time_point const StartTime) {
-  LOG_INFO(
-      R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
-      ControlTopic, StartTime);
-  CommandSource->change_topic(ControlTopic, StartTime);
-  AltCommandResponse =
-      FeedbackProducer::create(ServiceId, ControlTopic, KafkaSettings);
-  std::swap(CommandResponse, AltCommandResponse);
-  UsingAltTopic = true;
+  if (ControlTopic != CommandTopicAddress) {
+    Logger::Info(
+        R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
+        ControlTopic, StartTime);
+    CommandSource->change_topic(ControlTopic, StartTime);
+    AltCommandResponse =
+        FeedbackProducer::create(ServiceId, ControlTopic, KafkaSettings);
+    std::swap(CommandResponse, AltCommandResponse);
+    UsingAltTopic = true;
+  }
 }
 
 void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
                                     std::string const &Metadata) {
-  LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={})",
-            "Success", GetJobId(), FilePath.string());
+  Logger::Debug("Sending FinishedWriting message (Result={} JobId={} File={})",
+                "Success", GetJobId(), FilePath.string());
   CommandResponse->publishStoppedMsg(ActionResult::Success, GetJobId(), "",
                                      FilePath, Metadata);
   revertCommandTopic();
@@ -112,8 +114,9 @@ void Handler::sendHasStoppedMessage(std::filesystem::path const &FilePath,
 void Handler::sendErrorEncounteredMessage(std::string const &FileName,
                                           std::string const &Metadata,
                                           std::string const &ErrorMessage) {
-  LOG_DEBUG("Sending FinishedWriting message (Result={} JobId={} File={}): {}",
-            "Failure", GetJobId(), FileName, ErrorMessage);
+  Logger::Debug(
+      "Sending FinishedWriting message (Result={} JobId={} File={}): {}",
+      "Failure", GetJobId(), FileName, ErrorMessage);
   CommandResponse->publishStoppedMsg(ActionResult::Failure, GetJobId(),
                                      ErrorMessage, FileName, Metadata);
   revertCommandTopic();
@@ -148,12 +151,12 @@ bool isValidUUID(std::string const &UUIDStr) {
 /// \param MsgTime
 void warnIfMessageIsOld(time_point MsgTime) {
   if (system_clock::now() > MsgTime + 120s) {
-    LOG_WARN(fmt::format("Start command's message timestamp is not very "
-                         "recent, the command was queued for some time"
-                         "(command created at: {}, "
-                         "current time: {}).",
-                         toUTCDateTime(MsgTime),
-                         toUTCDateTime(system_clock::now())));
+    Logger::Info(fmt::format("Start command's message timestamp is not very "
+                             "recent, the command was queued for some time"
+                             "(command created at: {}, "
+                             "current time: {}).",
+                             toUTCDateTime(MsgTime),
+                             toUTCDateTime(system_clock::now())));
   }
 }
 
@@ -168,7 +171,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
     }
 
     warnIfMessageIsOld(CommandMsg.getMetaData().timestamp());
-    Log::Msg(ValidationResponse.LogLevel, ValidationResponse.MessageString());
+    Logger::Log(ValidationResponse.LogLevel,
+                ValidationResponse.MessageString());
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
@@ -179,7 +183,8 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
       revertCommandTopic();
     }
   } catch (std::exception &E) {
-    LOG_CRITICAL("Unable to process start command, error was: {}", E.what());
+    Logger::Critical("Unable to process start command, error was: {}",
+                     E.what());
   }
 }
 
@@ -188,7 +193,7 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
   std::string ExceptionMessage;
   if (!extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
     return CmdResponse{
-        LogLevel::Warning, 400, false, [ExceptionMessage]() {
+        LogLevel::Warn, 400, false, [ExceptionMessage]() {
           return fmt::format(
               "Failed to extract start command from flatbuffer. The "
               "error was: {}",
@@ -224,7 +229,7 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob) {
 
   if (!isValidUUID(StartJob.JobID)) {
     return CmdResponse{
-        LogLevel::Warning, 400, true, [StartJob]() {
+        LogLevel::Warn, 400, true, [StartJob]() {
           return fmt::format(
               R"(Rejected start command as the job id was invalid (it was: "{}").)",
               StartJob.JobID);
@@ -276,7 +281,8 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       SendResult = ActionResult::Failure;
     }
 
-    Log::Msg(ValidationResponse.LogLevel, ValidationResponse.MessageString());
+    Logger::Log(ValidationResponse.LogLevel,
+                ValidationResponse.MessageString());
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::SetStopTime, SendResult, StopJob.JobID,
@@ -284,7 +290,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
           ValidationResponse.MessageString());
     }
   } catch (std::exception &E) {
-    LOG_CRITICAL("Unable to process stop command, error was: {}", E.what());
+    Logger::Critical("Unable to process stop command, error was: {}", E.what());
   }
 }
 
@@ -293,7 +299,7 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
   if (std::string ExceptionMessage;
       !extractStopMessage(CommandMsg, StopJob, ExceptionMessage)) {
     return CmdResponse{
-        LogLevel::Warning, 400, false, [ExceptionMessage]() {
+        LogLevel::Warn, 400, false, [ExceptionMessage]() {
           return fmt::format(
               "Failed to extract stop command from flatbuffer. The "
               "error was: {}",
@@ -318,7 +324,7 @@ CmdResponse Handler::stopWriting(StopMessage const &StopCmd) {
 
   if (!IsWritingNow()) {
     return CmdResponse{
-        LogLevel::Warning, 400,
+        LogLevel::Warn, 400,
         !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID, []() {
           return fmt::format("Rejected stop command as there is "
                              "currently no write job in progress.");
@@ -328,7 +334,7 @@ CmdResponse Handler::stopWriting(StopMessage const &StopCmd) {
   auto CurrentJobId = GetJobId();
   if (!(CurrentJobId == StopCmd.JobID)) {
     return CmdResponse{
-        LogLevel::Warning, 400,
+        LogLevel::Warn, 400,
         !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID,
         [CurrentJobId, StopCmd]() {
           return fmt::format(

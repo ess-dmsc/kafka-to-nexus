@@ -85,9 +85,9 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
-    LOG_CRITICAL("Failed to initialize  file={}  trace:\n{}",
-                 hdfFile().id().file_name().string(),
-                 hdf5::error::print_nested(E));
+    Logger::Critical("Failed to initialize  file={}  trace:\n{}",
+                     hdfFile().id().file_name().string(),
+                     hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
 }
@@ -95,16 +95,17 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
 void HDFFile::closeFile() {
   try {
     if (hdfFile().is_valid()) {
-      LOG_DEBUG(R"(Closing file "{}".)", hdfFile().id().file_name().string());
+      Logger::Debug(R"(Closing file "{}".)",
+                    hdfFile().id().file_name().string());
       hdfFile().close();
       hdfFile() = hdf5::file::File();
     } else {
-      LOG_CRITICAL("File is not valid, unable to close.");
+      Logger::Critical("File is not valid, unable to close.");
     }
   } catch (const std::runtime_error &E) {
     auto Trace = hdf5::error::print_nested(E);
-    LOG_CRITICAL(R"(Got error when closing file "{}". Failure was: {})",
-                 hdfFile().id().file_name().string(), Trace);
+    Logger::Critical(R"(Got error when closing file "{}". Failure was: {})",
+                     hdfFile().id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
         fs::current_path().string(), hdfFile().id().file_name().string(),
@@ -113,7 +114,7 @@ void HDFFile::closeFile() {
 }
 
 void HDFFile::openFileInSWMRMode() {
-  LOG_DEBUG(R"(Opening file "{}" in SWMR mode.)", H5FileName.string());
+  Logger::Debug(R"(Opening file "{}" in SWMR mode.)", H5FileName.string());
   hdfFile() = hdf5::file::open(H5FileName,
                                hdf5::file::AccessFlags::ReadWrite |
                                    hdf5::file::AccessFlags::SWMRWrite,
@@ -125,7 +126,7 @@ void HDFFileBase::flush() {
     if (H5File.is_valid()) {
       H5File.flush(hdf5::file::Scope::Global);
     } else {
-      LOG_CRITICAL("Unable to flush file due to it being invalid.");
+      Logger::Critical("Unable to flush file due to it being invalid.");
     }
   } catch (const std::runtime_error &E) {
     std::throw_with_nested(std::runtime_error(
@@ -134,8 +135,8 @@ void HDFFileBase::flush() {
 }
 
 void HDFFile::openFileInRegularMode() {
-  LOG_DEBUG(R"(Opening file "{}" in regular (non SWMR) mode.)",
-            H5FileName.string());
+  Logger::Debug(R"(Opening file "{}" in regular (non SWMR) mode.)",
+                H5FileName.string());
   hdfFile() = hdf5::file::open(H5FileName, hdf5::file::AccessFlags::ReadWrite,
                                FileAccessList);
 }
@@ -145,8 +146,9 @@ void HDFFile::addLinks(std::vector<ModuleSettings> const &LinkSettingsList) {
     openInRegularMode();
     HDFOperations::addLinks(hdfGroup(), LinkSettingsList);
   } catch (std::exception const &E) {
-    LOG_ERROR(R"(Unable to finish file "{}". addLinks failed with error: {})",
-              H5FileName.string(), E.what());
+    Logger::Error(
+        R"(Unable to finish file "{}". addLinks failed with error: {})",
+        H5FileName.string(), E.what());
   }
 }
 
@@ -158,7 +160,7 @@ void HDFFile::addMetaData() {
       MetaDataTracker->writeToHDF5File(root);
     }
   } catch (std::exception const &E) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Unable to finish file "{}". addMetadata failed with error: {})",
         H5FileName.string(), E.what());
   }

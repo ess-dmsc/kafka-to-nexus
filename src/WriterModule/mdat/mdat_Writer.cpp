@@ -58,7 +58,8 @@ void mdat_Writer::write_string_value(FileWriter::FileWriterTask const &task,
     auto dataset = group.create_dataset(name, data_type, data_space);
     dataset.write(value, data_type, data_space);
   } catch (std::exception &error) {
-    LOG_ERROR("Failed to write mdat string value {}: {}", name, error.what());
+    Logger::Error("Failed to write mdat string value {}: {}", name,
+                  error.what());
   }
 }
 

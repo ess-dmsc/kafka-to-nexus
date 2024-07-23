@@ -8,303 +8,398 @@
 // Screaming Udder!                              https://esss.se
 
 #include "CommandSystem/Handler.h"
+#include "helpers/RunStartStopHelpers.h"
+#include <answ_action_response_generated.h>
 #include <gtest/gtest.h>
-#include <trompeloeil.hpp>
-#include <uuid.h>
 
 using namespace Command;
 
-bool isErrorResponse(const CmdResponse &response) {
-  return response.StatusCode >= 400;
+std::string const example_json = R"(
+{
+	"children": [{
+		"name": "entry",
+		"type": "group",
+		"attributes": [{
+			"name": "NX_class",
+			"dtype": "string",
+			"values": "NXentry"
+		}],
+		"children": [{
+				"module": "dataset",
+				"config": {
+					"name": "title",
+					"values": "This is a title",
+					"dtype": "string"
+				}
+			}
+		]
+	}]
 }
-
-class JobListenerMock : public JobListener {
-public:
-  JobListenerMock(std::string const &job_pool_topic,
-                  Kafka::BrokerSettings settings)
-      : JobListener(job_pool_topic, std::move(settings),
-                    std::make_shared<Kafka::StubConsumerFactory>()) {}
-
-  std::pair<Kafka::PollStatus, Msg> pollForJob() override {
-    return {Kafka::PollStatus::TimedOut, Msg()};
-  }
-
-  void disconnectFromPool() override {}
-
-  bool isConnected() const override { return false; }
-};
-
-class CommandListenerMock : public CommandListener {
-public:
-  CommandListenerMock(std::string const &command_topic,
-                      Kafka::BrokerSettings settings, time_point startTimestamp)
-      : CommandListener(command_topic, std::move(settings), startTimestamp) {}
-
-  std::pair<Kafka::PollStatus, Msg> pollForCommand() override {
-    return {Kafka::PollStatus::TimedOut, Msg()};
-  }
-};
-
-class HandlerStandIn : public Handler {
-public:
-  // Inherit constructors
-  using Handler::Handler;
-  // Expose some members as public
-  using Handler::startWriting;
-  using Handler::stopWriting;
-};
+                             )";
 
 class StartHandlerTest : public ::testing::Test {
 protected:
-  std::unique_ptr<JobListenerMock> _jobListenerMock;
-  std::unique_ptr<CommandListener> _commandListener;
-  std::unique_ptr<FeedbackProducer> _feedbackProducer;
-  std::unique_ptr<HandlerStandIn> _handlerUnderTest;
-  StartMessage _startMessage;
-  std::string _serviceId = "service_id_123";
+  std::shared_ptr<Kafka::StubConsumerFactory> _consumer_factory;
+  std::unique_ptr<Handler> _handlerUnderTest;
+  Kafka::StubProducerTopic *_producer_topic;
+  std::string const _valid_job_id = "123e4567-e89b-12d3-a456-426614174000";
+  std::string const _serviceId = "service_id_123";
+  std::string const _default_command_topic = "command_topic";
 
   void SetUp() override {
-    _jobListenerMock = std::make_unique<JobListenerMock>(
-        "no_topic_here", Kafka::BrokerSettings{});
-    _commandListener = std::make_unique<CommandListener>(
-        "no_topic_here", Kafka::BrokerSettings{}, time_point::max(),
-        std::make_shared<Kafka::StubConsumerFactory>());
-    _feedbackProducer = FeedbackProducer::create_null(
-        _serviceId,
-        std::make_unique<Kafka::StubProducerTopic>("no_topic_here"));
+    _consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
+    auto job_listener =
+        JobListener::create_null("pool_topic", {}, _consumer_factory);
+    auto command_listener = CommandListener::create_null(
+        _default_command_topic, Kafka::BrokerSettings{}, _consumer_factory,
+        time_point::max());
+    auto producer_topic =
+        std::make_unique<Kafka::StubProducerTopic>("my_topic");
+    _producer_topic = producer_topic.get();
 
-    _handlerUnderTest = std::make_unique<HandlerStandIn>(
-        _serviceId, Kafka::BrokerSettings{}, "localhost:1111/no_topic_here",
-        std::move(_jobListenerMock), std::move(_commandListener),
-        std::move(_feedbackProducer));
+    auto feedback_producer =
+        FeedbackProducer::create_null(_serviceId, std::move(producer_topic));
+    _handlerUnderTest = std::make_unique<Handler>(
+        _serviceId, Kafka::BrokerSettings{}, _default_command_topic,
+        std::move(job_listener), std::move(command_listener),
+        std::move(feedback_producer));
     _handlerUnderTest->registerIsWritingFunction(
         []() -> bool { return false; });
     _handlerUnderTest->registerStartFunction(
         []([[maybe_unused]] auto startMessage) -> void {});
+  }
 
-    // Use a valid JobID in the base start message
-    _startMessage.JobID = "123e4567-e89b-12d3-a456-426614174000";
+  void queue_start_message(std::string const &command_topic,
+                           std::string const &job_id,
+                           std::optional<std::string> const &service_id) {
+    auto start_message = RunStartStopHelpers::buildRunStartMessage(
+        "my_instrument", "my_run_name", example_json, job_id, service_id,
+        "my_file_name", 123456, 987654, command_topic);
+    FileWriter::MessageMetaData meta_data{.topic = "pool_topic"};
+    _consumer_factory->messages->emplace_back(start_message.data(),
+                                              start_message.size(), meta_data);
   }
 };
 
-TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
-  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+TEST_F(StartHandlerTest, start_command_actioned) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+  queue_start_message("new_command_topic", _valid_job_id, _serviceId);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(true, start_called);
 }
 
-TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
+TEST_F(StartHandlerTest, start_command_ignored_if_already_writing) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+  queue_start_message("new_command_topic", _valid_job_id, _serviceId);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(false, start_called);
+}
+
+TEST_F(StartHandlerTest, start_command_with_no_service_id_starts) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+  queue_start_message("new_command_topic", _valid_job_id, {});
+
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(true, start_called);
+}
+
+TEST_F(StartHandlerTest, start_command_with_mismatched_service_id_is_rejected) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
+      });
+  queue_start_message("new_command_topic", _valid_job_id, {"wrong_service_id"});
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(false, start_called);
 }
 
 TEST_F(StartHandlerTest,
-       validateStartCommandFromJobPoolAndMismatchingServiceId) {
-  _startMessage.ServiceID = "another_service_id";
-
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
-
-  EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
-  _startMessage.ServiceID = _serviceId;
-
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
-
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
-  _startMessage.JobID = "321e4567-e89b-12d3-a456-426614174000";
-
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
-
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StartHandlerTest, validateStartCommandRejectsInvalidJobID) {
-  _startMessage.JobID = "123";
-
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
-
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
+       start_command_with_invalid_uuid_for_job_id_is_rejected) {
+  bool start_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
   _handlerUnderTest->registerStartFunction(
-      []([[maybe_unused]] auto startMessage) -> void {
-        throw std::runtime_error("Some error");
+      [&start_called]([[maybe_unused]] auto startMessage) -> void {
+        start_called = true;
       });
+  queue_start_message("new_command_topic", "invalid_uuid", {_serviceId});
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+  EXPECT_EQ(false, start_called);
 }
 
-TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
+TEST_F(StartHandlerTest, start_command_sends_response) {
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      []([[maybe_unused]] auto startMessage) -> void {});
 
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
-  EXPECT_EQ(cmdResponse.StatusCode, 201);
+  // NOTE: using the same command topic, so it doesn't create a new
+  // ProducerTopic. This allows us to see the messages
+  queue_start_message(_default_command_topic, _valid_job_id, _serviceId);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  auto message = _producer_topic->messages.at(0).get();
+  auto result = GetActionResponse(message->data);
+
+  EXPECT_EQ(1u, _producer_topic->messages.size());
+  ASSERT_EQ(result->action(), ActionType::StartJob);
+  ASSERT_EQ(result->outcome(), ActionOutcome::Success);
+}
+
+TEST_F(StartHandlerTest, rejected_command_sends_response) {
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      []([[maybe_unused]] auto startMessage) -> void {});
+
+  // NOTE: using the same command topic, so it doesn't create a new
+  // ProducerTopic. This allows us to see the messages
+  queue_start_message(_default_command_topic, "invalid_uuid", {_serviceId});
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  auto message = _producer_topic->messages.at(0).get();
+  auto result = GetActionResponse(message->data);
+
+  EXPECT_EQ(1u, _producer_topic->messages.size());
+  ASSERT_EQ(result->action(), ActionType::StartJob);
+  ASSERT_EQ(result->outcome(), ActionOutcome::Failure);
 }
 
 class StopHandlerTest : public ::testing::Test {
 protected:
-  std::unique_ptr<JobListenerMock> _jobListenerMock;
-  std::unique_ptr<CommandListenerMock> _commandListenerMock;
-  std::unique_ptr<FeedbackProducer> _feedbackProducer;
-  std::unique_ptr<HandlerStandIn> _handlerUnderTest;
-  StopMessage _stopMessage;
-  std::string _serviceId = "service_id_123";
+  std::shared_ptr<Kafka::StubConsumerFactory> _consumer_factory;
+  std::unique_ptr<Handler> _handlerUnderTest;
+  Kafka::StubProducerTopic *_producer_topic;
+  std::string const _valid_job_id = "123e4567-e89b-12d3-a456-426614174000";
+  std::string const _valid_command_id = "dda7c081-737d-42b5-996c-f45a4a957536";
+  std::string const _serviceId = "service_id_123";
+  std::string const _default_command_topic = "command_topic";
 
   void SetUp() override {
-    _jobListenerMock = std::make_unique<JobListenerMock>(
-        "no_topic_here", Kafka::BrokerSettings{});
-    _commandListenerMock = std::make_unique<CommandListenerMock>(
-        "no_topic_here", Kafka::BrokerSettings{}, time_point::max());
-    _feedbackProducer = FeedbackProducer::create_null(
-        _serviceId,
-        std::make_unique<Kafka::StubProducerTopic>("no_topic_here"));
-    _handlerUnderTest = std::make_unique<HandlerStandIn>(
-        _serviceId, Kafka::BrokerSettings{}, "no_topic_here",
-        std::move(_jobListenerMock), std::move(_commandListenerMock),
-        std::move(_feedbackProducer));
-    _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
-    _handlerUnderTest->registerGetJobIdFunction(
-        [this]() -> std::string { return this->_stopMessage.JobID; });
-    _handlerUnderTest->registerStopNowFunction([]() -> void {});
-    _handlerUnderTest->registerSetStopTimeFunction(
-        []([[maybe_unused]] auto stopTime) -> void {});
+    _consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
+    auto job_listener =
+        JobListener::create_null("pool_topic", {}, _consumer_factory);
+    auto command_listener = CommandListener::create_null(
+        _default_command_topic, Kafka::BrokerSettings{}, _consumer_factory,
+        time_point::max());
+    auto producer_topic =
+        std::make_unique<Kafka::StubProducerTopic>("my_topic");
+    _producer_topic = producer_topic.get();
 
-    // Use a valid JobID and CommandID in the base stop message
-    _stopMessage.JobID = "123e4567-e89b-12d3-a456-426614174000";
-    _stopMessage.CommandID = "321e4567-e89b-12d3-a456-426614174000";
+    auto feedback_producer =
+        FeedbackProducer::create_null(_serviceId, std::move(producer_topic));
+    _handlerUnderTest = std::make_unique<Handler>(
+        _serviceId, Kafka::BrokerSettings{}, _default_command_topic,
+        std::move(job_listener), std::move(command_listener),
+        std::move(feedback_producer));
+    _handlerUnderTest->registerIsWritingFunction(
+        []() -> bool { return false; });
+    _handlerUnderTest->registerStartFunction(
+        []([[maybe_unused]] auto startMessage) -> void {});
+  }
+
+  void queue_stop_message(uint64_t stop_time, std::string const &job_id,
+                          std::optional<std::string> const &service_id,
+                          std::string const &command_id) {
+    auto stop_message = RunStartStopHelpers::buildRunStopMessage(
+        stop_time, "my_run_name", job_id, command_id, service_id);
+    FileWriter::MessageMetaData meta_data{.topic = _default_command_topic};
+    _consumer_factory->messages->emplace_back(stop_message.data(),
+                                              stop_message.size(), meta_data);
   }
 };
 
-TEST_F(StopHandlerTest, validateStopCommandWithNoCurrentJobAndEmptyServiceID) {
-  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
-
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
-
-  EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StopHandlerTest,
-       validateStopCommandWithNoCurrentJobAndMatchingServiceID) {
-  _stopMessage.ServiceID = _serviceId;
-  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
-
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
-
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StopHandlerTest,
-       validateStopCommandWithNoCurrentJobAndMismatchingServiceID) {
-  _stopMessage.ServiceID = "another_service_id";
-  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
-
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
-
-  EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_FALSE(
-      isErrorResponse(cmdResponse)); // mismatching service ids get tested first
-}
-
-TEST_F(StopHandlerTest, validateStopCommandWithMismatchingServiceId) {
-  _stopMessage.ServiceID = "another_service_id";
-
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
-
-  EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_FALSE(
-      isErrorResponse(cmdResponse)); // mismatching service ids get tested first
-}
-
-TEST_F(StopHandlerTest, validateStopCommandWithMatchingServiceId) {
-  _stopMessage.ServiceID = _serviceId;
-
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
-
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
-}
-
-TEST_F(StopHandlerTest,
-       validateStopCommandWithMismatchingJobIdAndEmptyServiceID) {
+TEST_F(StopHandlerTest, stop_now_command_actioned) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
   _handlerUnderTest->registerGetJobIdFunction(
-      []() -> std::string { return "different_job_id"; });
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, _valid_job_id, {_serviceId}, _valid_command_id);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+  EXPECT_EQ(true, stop_called);
 }
 
-TEST_F(StopHandlerTest,
-       validateStopCommandWithMismatchingJobIdAndMatchingServiceID) {
-  _stopMessage.ServiceID = _serviceId;
+TEST_F(StopHandlerTest, stop_ignored_if_not_writing) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
   _handlerUnderTest->registerGetJobIdFunction(
-      []() -> std::string { return "different_job_id"; });
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, _valid_job_id, {_serviceId}, _valid_command_id);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+  EXPECT_EQ(false, stop_called);
 }
 
-TEST_F(StopHandlerTest,
-       validateStopCommandWithMismatchingJobIDAndMismatchingServiceID) {
-  _stopMessage.ServiceID = "another_service_id";
+TEST_F(StopHandlerTest, stop_ignored_if_job_id_wrong) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
   _handlerUnderTest->registerGetJobIdFunction(
-      []() -> std::string { return "different_job_id"; });
+      [this]() -> std::string { return this->_valid_job_id; });
+  std::string wrong_job_id = "43e86e91-75dd-4c87-996b-fd7a22d0e726";
+  queue_stop_message(0, wrong_job_id, {_serviceId}, _valid_command_id);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_FALSE(cmdResponse.SendResponse);
-  EXPECT_FALSE(
-      isErrorResponse(cmdResponse)); // mismatching service ids get tested first
+  EXPECT_EQ(false, stop_called);
 }
 
-TEST_F(StopHandlerTest, validateStopCommandWithInvalidCommandID) {
-  _stopMessage.CommandID = "invalid";
+TEST_F(StopHandlerTest, stop_ignored_if_no_job_id) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
+  _handlerUnderTest->registerGetJobIdFunction(
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, "", {_serviceId}, _valid_command_id);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_TRUE(isErrorResponse(cmdResponse));
+  EXPECT_EQ(false, stop_called);
 }
 
-TEST_F(StopHandlerTest, validateStopCommandImmediateStop) {
-  _stopMessage.StopTime = time_point{0ms};
+TEST_F(StopHandlerTest, stop_actioned_if_service_id_in_message_is_empty) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
+  _handlerUnderTest->registerGetJobIdFunction(
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, _valid_job_id, {}, _valid_command_id);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
-  EXPECT_EQ(cmdResponse.StatusCode, 201);
+  EXPECT_EQ(true, stop_called);
 }
 
-TEST_F(StopHandlerTest, validateStopCommandSetStopTime) {
-  _stopMessage.StopTime =
-      std::chrono::system_clock::now() + std::chrono::minutes(5);
+TEST_F(StopHandlerTest, stop_ignored_if_service_id_is_wrong) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
+  _handlerUnderTest->registerGetJobIdFunction(
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, _valid_job_id, {"wrong_service_id"}, _valid_command_id);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
 
-  CmdResponse cmdResponse = _handlerUnderTest->stopWriting(_stopMessage);
+  _handlerUnderTest->loopFunction();
 
-  EXPECT_TRUE(cmdResponse.SendResponse);
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
-  EXPECT_EQ(cmdResponse.StatusCode, 201);
+  EXPECT_EQ(false, stop_called);
+}
+
+TEST_F(StopHandlerTest, stop_ignored_if_command_id_is_not_uuid) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
+  _handlerUnderTest->registerGetJobIdFunction(
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, _valid_job_id, {_serviceId}, "not_a_uuid");
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  EXPECT_EQ(false, stop_called);
+}
+
+TEST_F(StopHandlerTest, stop_command_sends_response) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
+  _handlerUnderTest->registerGetJobIdFunction(
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, _valid_job_id, {_serviceId}, _valid_command_id);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  auto message = _producer_topic->messages.at(0).get();
+  auto result = GetActionResponse(message->data);
+
+  EXPECT_EQ(1u, _producer_topic->messages.size());
+  ASSERT_EQ(result->action(), ActionType::SetStopTime);
+  ASSERT_EQ(result->outcome(), ActionOutcome::Success);
+}
+
+TEST_F(StopHandlerTest, rejected_stop_command_sends_response) {
+  bool stop_called = false;
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
+  _handlerUnderTest->registerStopNowFunction(
+      [&stop_called]() -> void { stop_called = true; });
+  _handlerUnderTest->registerGetJobIdFunction(
+      [this]() -> std::string { return this->_valid_job_id; });
+  queue_stop_message(0, _valid_job_id, {_serviceId}, "invalid_command_id");
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  auto message = _producer_topic->messages.at(0).get();
+  auto result = GetActionResponse(message->data);
+
+  EXPECT_EQ(1u, _producer_topic->messages.size());
+  ASSERT_EQ(result->action(), ActionType::SetStopTime);
+  ASSERT_EQ(result->outcome(), ActionOutcome::Failure);
 }

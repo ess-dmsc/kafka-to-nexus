@@ -108,7 +108,7 @@ void Partition::addPollTask() {
 void Partition::checkAndLogPartitionTimeOut() {
   if (StopTester.hasTopicTimedOut()) {
     if (not PartitionTimeOutLogged) {
-      LOG_WARN(
+      Logger::Info(
           "No new messages were received from Kafka in partition {} of "
           "topic {} ({:.1f}s passed) when polling for new data.",
           PartitionID, Topic,
@@ -132,20 +132,21 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
   if (StopTester.shouldStopPartition(CStatus)) {
     switch (StopTester.currentPartitionState()) {
     case PartitionFilter::PartitionState::ERROR:
-      LOG_ERROR("Stopping consumption of data from Kafka in partition {} of "
-                "topic {} due to poll error.",
-                PartitionID, Topic);
+      Logger::Error(
+          "Stopping consumption of data from Kafka in partition {} of "
+          "topic {} due to poll error.",
+          PartitionID, Topic);
       break;
     case PartitionFilter::PartitionState::END_OF_PARTITION:
-      LOG_INFO(
+      Logger::Info(
           R"(Done consuming data from partition {} of topic "{}" (reached the end of the partition).)",
           PartitionID, Topic);
       break;
     case PartitionFilter::PartitionState::TIMEOUT:
     case PartitionFilter::PartitionState::DEFAULT:
     default:
-      LOG_INFO(R"(Done consuming data from partition {} of topic "{}".)",
-               PartitionID, Topic);
+      Logger::Info(R"(Done consuming data from partition {} of topic "{}".)",
+                   PartitionID, Topic);
     }
     return true;
   }
@@ -186,14 +187,14 @@ void Partition::pollForMessage() {
     if (Msg.first == Kafka::PollStatus::Message) {
       processMessage(Msg.second);
       if (MsgFilters.empty()) {
-        LOG_INFO(
+        Logger::Info(
             R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
             PartitionID, Topic);
         HasFinished = true;
         return;
       } else if (Msg.second.getMetaData().timestamp() >
                  StopTime + StopTimeLeeway) {
-        LOG_INFO(
+        Logger::Info(
             R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
             PartitionID, Topic, Msg.second.getMetaData().timestamp());
         HasFinished = true;
