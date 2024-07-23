@@ -34,6 +34,5 @@ std::pair<Kafka::PollStatus, Msg> JobListener::pollForJob() {
 }
 
 void JobListener::disconnectFromPool() { Consumer.reset(); }
-bool JobListener::isConnected() const { return Consumer != nullptr; }
 
 } // namespace Command

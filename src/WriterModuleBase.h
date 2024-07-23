@@ -39,11 +39,12 @@ public:
 
   virtual ~Base() {
     if (WriteCount == 0) {
-      LOG_WARN("WriterModule finished but no writes were performed (module={} "
-               "topic={} source={})",
-               WriterModuleId, Topic.get_value(), SourceName.get_value());
+      Logger::Info(
+          "WriterModule finished but no writes were performed (module={} "
+          "topic={} source={})",
+          WriterModuleId, Topic.get_value(), SourceName.get_value());
     } else {
-      LOG_TRACE(
+      Logger::Trace(
           "WriterModule finished successfully, {} writes performed (module={} "
           "topic={} source={})",
           WriteCount, WriterModuleId, Topic.get_value(),

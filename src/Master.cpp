@@ -29,7 +29,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
   CommandAndControl->registerIsWritingFunction(
       [this]() { return Status::WorkerState::Writing == getCurrentState(); });
-  LOG_INFO("file-writer service id: {}", Config.getServiceId());
+  Logger::Info("file-writer service id: {}", Config.getServiceId());
   this->Reporter->setJSONMetaDataGenerator(
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
@@ -68,7 +68,7 @@ void Master::startWriting(Command::StartInfo const &StartInfo) {
                       StartInfo.Filename, StartInfo.StartTime,
                       StartInfo.StopTime});
   } catch (std::runtime_error const &Error) {
-    LOG_CRITICAL("{}", Error.what());
+    Logger::Critical("{}", Error.what());
     throw;
   }
 }
@@ -78,7 +78,7 @@ void Master::stopNow() {
     throw std::runtime_error(
         R"(Unable to stop writing when not in "Writing" state.)");
   }
-  LOG_INFO("Attempting to stop file-writing (quickly).");
+  Logger::Info("Attempting to stop file-writing (quickly).");
   if (CurrentStreamController != nullptr) {
     CurrentStreamController->stop();
     CurrentStreamController->setStopTime(system_clock::now());
@@ -124,7 +124,7 @@ void Master::setToIdle() {
         writtenFilePath, metadata_from_start_msg,
         CurrentStreamController->errorMessage());
   } else {
-    LOG_INFO("Full path of file written: {}", writtenFilePath.string());
+    Logger::Info("Full path of file written: {}", writtenFilePath.string());
     CommandAndControl->sendHasStoppedMessage(writtenFilePath,
                                              metadata_from_start_msg);
   }

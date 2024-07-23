@@ -417,21 +417,22 @@ public:
     ++CurrentExtent[0];
     Shape.insert(Shape.begin(), 1);
     if (Shape.size() != CurrentExtent.size()) {
-      LOG_ERROR("Data has {} dimension(s) and dataset has {} (+1) dimensions.",
-                Shape.size() - 1, CurrentExtent.size() - 1);
+      Logger::Error(
+          "Data has {} dimension(s) and dataset has {} (+1) dimensions.",
+          Shape.size() - 1, CurrentExtent.size() - 1);
       throw std::runtime_error(
           "Rank (dimensions) of data to be written is wrong.");
     }
     for (size_t i = 1; i < Shape.size(); i++) {
       if (Shape[i] > CurrentExtent[i]) {
-        LOG_WARN("Dimension {} of new data is larger than that of the "
-                 "dataset. Extending dataset.",
-                 i - 1);
+        Logger::Info("Dimension {} of new data is larger than that of the "
+                     "dataset. Extending dataset.",
+                     i - 1);
         CurrentExtent[i] = Shape[i];
       } else if (Shape[i] < CurrentExtent[i]) {
-        LOG_WARN("Dimension {} of new data is smaller than that of "
-                 "the dataset. Using 0 as a filler.",
-                 i - 1);
+        Logger::Info("Dimension {} of new data is smaller than that of "
+                     "the dataset. Using 0 as a filler.",
+                     i - 1);
       }
     }
     _dataset.extent(CurrentExtent);
@@ -470,7 +471,7 @@ public:
                                hdf5::dataspace::Simple::unlimited);
       std::vector<hsize_t> VectorChunkSize;
       if (chunksize.empty()) {
-        LOG_WARN("No chunk size given. Using the default value 1024.");
+        Logger::Info("No chunk size given. Using the default value 1024.");
         chunksize.emplace_back(1024);
       }
       if (chunksize.size() == shape.size()) {
@@ -486,10 +487,10 @@ public:
         }
         VectorChunkSize[0] = NrOfRows;
       } else {
-        LOG_ERROR("Unable to reconcile a data shape with {} dimensions "
-                  "and chunk size with {} dimensions. Using default "
-                  "values.",
-                  shape.size(), chunksize.size());
+        Logger::Error("Unable to reconcile a data shape with {} dimensions "
+                      "and chunk size with {} dimensions. Using default "
+                      "values.",
+                      shape.size(), chunksize.size());
         VectorChunkSize = shape;
         VectorChunkSize[0] = 1024;
       }

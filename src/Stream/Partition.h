@@ -126,7 +126,7 @@ protected:
   std::atomic_bool HasFinished{false};
   std::int64_t CurrentOffset{0};
   time_point StopTime;
-  duration StopTimeLeeway;
+  duration StopTimeLeeway{};
   duration PauseCheckInterval{200ms};
   PartitionFilter StopTester;
   std::function<bool()> AreStreamersPausedFunction;

@@ -1,7 +1,6 @@
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 
 set(UnitTests_SRC
-        Metrics/LogSinkTest.cpp
         Metrics/MetricsReporterTest.cpp
         Metrics/CarbonTestServer.cpp
         Metrics/CarbonConnectionTest.cpp
@@ -70,6 +69,7 @@ set(UnitTests_SRC
         helpers/HDFFileTestHelper.cpp
         HDFOperationsTests.cpp
         CommandSystem/FeedbackProducerTests.cpp
+        CommandSystem/JobListenerTests.cpp
 )
 
 add_executable(UnitTests ${UnitTests_SRC})

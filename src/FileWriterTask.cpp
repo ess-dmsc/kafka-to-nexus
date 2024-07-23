@@ -52,14 +52,14 @@ void FileWriterTask::InitialiseHdf(nlohmann::json const &NexusStructure,
   }
 
   try {
-    LOG_INFO("Creating HDF file {}", _filepath.string());
+    Logger::Info("Creating HDF file {}", _filepath.string());
     File = std::make_unique<HDFFile>(_filepath, NexusStructure, HdfInfo,
                                      MetaDataTracker);
   } catch (std::exception const &E) {
     ErrorString =
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: {})",
                     _filepath.string(), E.what());
-    LOG_CRITICAL(ErrorString);
+    Logger::Critical(ErrorString);
     std::throw_with_nested(std::runtime_error(ErrorString));
   }
 }
@@ -102,7 +102,7 @@ void FileWriterTask::updateApproximateFileSize() {
   std::error_code ErrorCode;
   auto size = std::filesystem::file_size(_filepath, ErrorCode);
   if (ErrorCode) {
-    LOG_ERROR(
+    Logger::Error(
         R"(Unable to determine file size of the file "{}". The error was: {})",
         _filepath.string(), ErrorCode.message());
     return;

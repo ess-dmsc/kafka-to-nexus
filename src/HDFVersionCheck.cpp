@@ -28,18 +28,20 @@ bool versionOfHDF5IsOk() {
   unsigned h5_vers_major{}, h5_vers_minor{}, h5_vers_release{};
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   if (h5_vers_major != H5_VERS_MAJOR) {
-    LOG_CRITICAL("HDF5 version mismatch.  compile time: {}  runtime: {}",
-                 H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
+    Logger::Critical("HDF5 version mismatch.  compile time: {}  runtime: {}",
+                     H5VersionStringHeadersCompileTime(),
+                     h5VersionStringLinked());
     return false;
   }
   if (h5_vers_minor != H5_VERS_MINOR) {
-    LOG_CRITICAL("HDF5 version mismatch.  compile time: {}  runtime: {}",
-                 H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
+    Logger::Critical("HDF5 version mismatch.  compile time: {}  runtime: {}",
+                     H5VersionStringHeadersCompileTime(),
+                     h5VersionStringLinked());
     return false;
   }
   if (h5_vers_release != H5_VERS_RELEASE) {
-    LOG_ERROR("HDF5 version mismatch.  compile time: {}  runtime: {}",
-              H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
+    Logger::Error("HDF5 version mismatch.  compile time: {}  runtime: {}",
+                  H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
   }
   return true;
 }

@@ -41,7 +41,7 @@ void Tracker::writeToHDF5File(hdf5::node::Group &RootNode) const {
     }
   }
   if (ErrorCounter > 0) {
-    LOG_ERROR(
+    Logger::Error(
         "Failed to write {} (out of a total of {}) meta-data values to file.",
         ErrorCounter, KnownMetaData.size());
   }

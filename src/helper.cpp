@@ -53,7 +53,7 @@ std::string getFQDN() {
   int GetAddressResult{0};
   if ((GetAddressResult =
            getaddrinfo(HostName.c_str(), nullptr, &hints, &info)) != 0) {
-    LOG_WARN(
+    Logger::Info(
         R"(Unable to get FQDN due to error ("{}"), using hostname instead.)",
         gai_strerror(GetAddressResult));
     return HostName;
@@ -71,7 +71,7 @@ std::string getFQDN() {
       FoundHostnames.cbegin(), FoundHostnames.cend(),
       [](auto const &lhs, auto const &rhs) { return lhs.size() < rhs.size(); });
   if (Longest == FoundHostnames.end()) {
-    LOG_WARN("No FQDN found, using hostname instead.");
+    Logger::Info("No FQDN found, using hostname instead.");
     return HostName;
   }
   return *Longest;

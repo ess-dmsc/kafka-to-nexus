@@ -13,7 +13,7 @@
 constexpr size_t RandomStringLength{4};
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  setUpLogging(opt.LoggingLevel, opt.LogFilename, opt.GraylogLoggerAddress);
+  setUpLogging(opt.LoggingLevel);
 }
 
 std::string MainOpt::getDefaultServiceId() {
