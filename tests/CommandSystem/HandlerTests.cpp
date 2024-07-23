@@ -99,6 +99,7 @@ TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
 }
 
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
+  _startmessage.ControlTopic = "some_topic";
   CmdResponse cmdResponse =
       _handlerUnderTest->startWriting(_startMessage, true);
 
@@ -119,6 +120,7 @@ TEST_F(StartHandlerTest,
 
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
   _startMessage.ServiceID = _serviceId;
+  _startMessage.ControlTopic = "some_topic";
 
   CmdResponse cmdResponse =
       _handlerUnderTest->startWriting(_startMessage, true);
@@ -152,6 +154,7 @@ TEST_F(StartHandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
 
 TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
   _startMessage.JobID = "321e4567-e89b-12d3-a456-426614174000";
+  _startMessage.ControlTopic = "some_topic";
 
   CmdResponse cmdResponse =
       _handlerUnderTest->startWriting(_startMessage, true);
@@ -184,6 +187,7 @@ TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
 }
 
 TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
+  _startmessage.ControlTopic = "some_topic";
   CmdResponse cmdResponse =
       _handlerUnderTest->startWriting(_startMessage, true);
 
