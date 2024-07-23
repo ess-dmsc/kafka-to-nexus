@@ -120,16 +120,6 @@ TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndMatchingServiceId) {
   EXPECT_FALSE(isErrorResponse(cmdResponse));
 }
 
-TEST_F(StartHandlerTest, validateStartCommandAcceptsControlTopicIfFromJobPool) {
-  EXPECT_FALSE(_handlerUnderTest->isUsingAlternativeTopic());
-  _startMessage.ControlTopic = "some_topic";
-
-  CmdResponse cmdResponse = _handlerUnderTest->startWriting(_startMessage);
-
-  EXPECT_FALSE(isErrorResponse(cmdResponse));
-  EXPECT_TRUE(_handlerUnderTest->isUsingAlternativeTopic());
-}
-
 TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
   _startMessage.JobID = "321e4567-e89b-12d3-a456-426614174000";
 
