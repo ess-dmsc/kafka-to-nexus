@@ -100,7 +100,7 @@ TEST_F(StartHandlerTest, validateStartCommandReturnsErrorIfAlreadyWriting) {
 
 TEST_F(StartHandlerTest, validateStartCommandFromJobPoolAndEmptyServiceId) {
   CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+      _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
@@ -111,7 +111,7 @@ TEST_F(StartHandlerTest,
   _startMessage.ServiceID = "another_service_id";
 
   CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+      _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_FALSE(cmdResponse.SendResponse);
   EXPECT_TRUE(isErrorResponse(cmdResponse));
@@ -154,7 +154,7 @@ TEST_F(StartHandlerTest, validateStartCommandAcceptsValidJobID) {
   _startMessage.JobID = "321e4567-e89b-12d3-a456-426614174000";
 
   CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+      _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
@@ -185,7 +185,7 @@ TEST_F(StartHandlerTest, validateStartCommandReportsExceptionUponJobStart) {
 
 TEST_F(StartHandlerTest, validateStartCommandSuccessfulStartReturnsResponse) {
   CmdResponse cmdResponse =
-      _handlerUnderTest->startWriting(_startMessage, true);
+      _handlerUnderTest->startWriting(_startMessage);
 
   EXPECT_TRUE(cmdResponse.SendResponse);
   EXPECT_FALSE(isErrorResponse(cmdResponse));
