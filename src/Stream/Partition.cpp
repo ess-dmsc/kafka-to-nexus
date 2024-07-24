@@ -122,7 +122,7 @@ void Partition::stop() {
 }
 
 void Partition::setStopTime(time_point stop) {
-  _command_queue.enqueue(PartitionCommand{CommandType::STOP_NOW, stop});
+  _command_queue.enqueue(PartitionCommand{CommandType::SET_STOP_TIME, stop});
 }
 
 bool Partition::hasFinished() const { return HasFinished.load(); }
