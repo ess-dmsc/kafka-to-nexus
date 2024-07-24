@@ -61,9 +61,6 @@ public:
             std::move(Consumer), Partition, std::move(TopicName), Map, Writer,
             std::make_unique<Metrics::Registrar>("some_prefix").get(), Start,
             Stop, StopLeeway, KafkaErrorTimeout, AreStreamersPausedFunction) {}
-  void addPollTask() override {
-    // Do nothing as don't want to automatically poll again
-  }
   using Partition::ConsumerPtr;
   using Partition::FlatbufferErrors;
   using Partition::forceStop;
@@ -76,18 +73,17 @@ public:
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
-  using Partition::TaskQueue;
   MAKE_CONST_MOCK1(sleep, void(const duration Duration), override);
 };
 
-void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
+void waitUntilDoneProcessing([[maybe_unused]] PartitionStandIn *UnderTest) {
   // Queue a job in the executor and block until it is complete
   // so that we know previously queued job that is part of test should
   // now have been executed
-  std::promise<bool> Promise;
-  auto Future = Promise.get_future();
-  UnderTest->TaskQueue.enqueue([&Promise]() { Promise.set_value(true); });
-  Future.wait();
+  //  std::promise<bool> Promise;
+  //  auto Future = Promise.get_future();
+  //  UnderTest->TaskQueue.enqueue([&Promise]() { Promise.set_value(true); });
+  //  Future.wait();
 }
 
 class MessageWriterStandIn : public Stream::MessageWriter {

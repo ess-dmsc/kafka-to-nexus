@@ -12,6 +12,8 @@
 
 namespace Stream {
 
+using namespace std::chrono_literals;
+
 Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
                      int Partition, std::string TopicName, SrcToDst const &Map,
                      MessageWriter *Writer, Metrics::IRegistrar *RegisterMetric,
@@ -21,8 +23,7 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout),
-      AreStreamersPausedFunction(AreStreamersPausedFunction),
-      _worker_thread(&Partition::process, this) {
+      AreStreamersPausedFunction(AreStreamersPausedFunction) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
@@ -84,19 +85,27 @@ Partition::~Partition() {
   }
 }
 
-void Partition::start() { addPollTask(); }
+void Partition::start() {
+  _worker_thread = std::thread{&Partition::process, this};
+}
 
 void Partition::process() {
   setThreadName("partition");
   while (_run_thread) {
-    JobType CurrentTask;
-    if (TaskQueue.try_dequeue(CurrentTask)) {
-      CurrentTask();
-    } else if (LowPriorityTaskQueue.try_dequeue(CurrentTask)) {
-      CurrentTask();
-    } else {
-      std::this_thread::sleep_for(5ms);
+    PartitionCommand command;
+    if (_command_queue.try_dequeue(command)) {
+      if (command.command_type == CommandType::STOP_NOW) {
+        forceStop();
+      } else if (command.command_type == CommandType::SET_STOP_TIME) {
+        StopTime = command.stop_time;
+        StopTester.setStopTime(StopTime);
+        for (auto &Filter : MsgFilters) {
+          Filter.second->setStopTime(StopTime);
+        }
+      }
     }
+    pollForMessage();
+    std::this_thread::sleep_for(5ms);
   }
   Logger::Info("Partition threaded process exiting");
 }
@@ -108,25 +117,15 @@ void Partition::sleep(const duration Duration) const {
 }
 
 void Partition::stop() {
-  LowPriorityTaskQueue.enqueue([=]() { forceStop(); });
-  TaskQueue.enqueue([=]() { forceStop(); });
+  _command_queue.enqueue(
+      PartitionCommand{CommandType::STOP_NOW, time_point{0ms}});
 }
 
-void Partition::setStopTime(time_point Stop) {
-  TaskQueue.enqueue([=]() {
-    StopTime = Stop;
-    StopTester.setStopTime(Stop);
-    for (auto &Filter : MsgFilters) {
-      Filter.second->setStopTime(Stop);
-    }
-  });
+void Partition::setStopTime(time_point stop) {
+  _command_queue.enqueue(PartitionCommand{CommandType::STOP_NOW, stop});
 }
 
 bool Partition::hasFinished() const { return HasFinished.load(); }
-
-void Partition::addPollTask() {
-  LowPriorityTaskQueue.enqueue([=]() { pollForMessage(); });
-}
 
 void Partition::checkAndLogPartitionTimeOut() {
   if (StopTester.hasTopicTimedOut()) {
@@ -229,7 +228,6 @@ void Partition::pollForMessage() {
       }
     }
   }
-  addPollTask();
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {

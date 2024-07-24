@@ -50,7 +50,6 @@ public:
   virtual ~Partition();
 
   /// \brief Must be called after the constructor.
-  /// \note This function exist in order to make unit testing possible.
   void start();
 
   /// \brief Stop the consumer thread.
@@ -109,7 +108,6 @@ protected:
       Metrics::Severity::ERROR};
 
   virtual void pollForMessage();
-  virtual void addPollTask();
   virtual bool hasStopBeenRequested() const;
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
   void forceStop();
@@ -119,6 +117,13 @@ protected:
   /// \brief Sleep.
   /// \note This function exist in order to make unit testing possible.
   virtual void sleep(const duration Duration) const;
+
+  enum class CommandType { NO_OP, STOP_NOW, SET_STOP_TIME };
+
+  struct PartitionCommand {
+    CommandType command_type{CommandType::NO_OP};
+    time_point stop_time;
+  };
 
   virtual void processMessage(FileWriter::Msg const &Message);
   std::shared_ptr<Kafka::ConsumerInterface> ConsumerPtr;
@@ -135,8 +140,7 @@ protected:
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
       MsgFilters;
-  moodycamel::ConcurrentQueue<JobType> TaskQueue;
-  moodycamel::ConcurrentQueue<JobType> LowPriorityTaskQueue;
+  moodycamel::ConcurrentQueue<PartitionCommand> _command_queue;
   std::atomic<bool> _run_thread{true};
   std::thread _worker_thread;
 };
