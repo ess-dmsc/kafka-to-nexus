@@ -74,6 +74,7 @@ def test_start_and_stop_time_are_in_the_past(
         broker=kafka_address,
         start_time=file_start_time,
         stop_time=file_stop_time,
+        control_topic="TEST_writer_jobs",
         metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=20)

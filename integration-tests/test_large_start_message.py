@@ -28,6 +28,7 @@ def test_large_start_message(worker_pool, kafka_address, json_padding):
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        control_topic="TEST_writer_jobs",
         metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=70)

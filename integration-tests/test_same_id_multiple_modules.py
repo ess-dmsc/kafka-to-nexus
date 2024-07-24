@@ -46,6 +46,7 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
+        control_topic="TEST_writer_jobs",
         metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=20)
