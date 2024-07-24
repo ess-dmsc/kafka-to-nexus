@@ -28,7 +28,7 @@ def test_end_message_metadata(
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
-        control_topic="TEST_writer_jobs",
+        control_topic="TEST_writer_commands_alternative",
         metadata=json.dumps(metadata).encode("utf-8"),
     )
     wait_start_job(worker_pool, write_job, timeout=20)
