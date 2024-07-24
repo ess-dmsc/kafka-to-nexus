@@ -65,7 +65,6 @@ public:
     // Do nothing as don't want to automatically poll again
   }
   using Partition::ConsumerPtr;
-  using Partition::Executor;
   using Partition::FlatbufferErrors;
   using Partition::forceStop;
   using Partition::KafkaErrors;
@@ -77,6 +76,7 @@ public:
   using Partition::processMessage;
   using Partition::StopTime;
   using Partition::StopTimeLeeway;
+  using Partition::TaskQueue;
   MAKE_CONST_MOCK1(sleep, void(const duration Duration), override);
 };
 
@@ -86,7 +86,7 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
   // now have been executed
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.sendWork([&Promise]() { Promise.set_value(true); });
+  UnderTest->TaskQueue.enqueue([&Promise]() { Promise.set_value(true); });
   Future.wait();
 }
 

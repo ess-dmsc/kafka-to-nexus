@@ -21,7 +21,8 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout),
-      AreStreamersPausedFunction(AreStreamersPausedFunction) {
+      AreStreamersPausedFunction(AreStreamersPausedFunction),
+      _worker_thread(&Partition::process, this) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
@@ -76,7 +77,29 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
       BufferTooSmallErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
 
+Partition::~Partition() {
+  _run_thread.store(false);
+  if (_worker_thread.joinable()) {
+    _worker_thread.join();
+  }
+}
+
 void Partition::start() { addPollTask(); }
+
+void Partition::process() {
+  setThreadName("partition");
+  while (_run_thread) {
+    JobType CurrentTask;
+    if (TaskQueue.try_dequeue(CurrentTask)) {
+      CurrentTask();
+    } else if (LowPriorityTaskQueue.try_dequeue(CurrentTask)) {
+      CurrentTask();
+    } else {
+      std::this_thread::sleep_for(5ms);
+    }
+  }
+  Logger::Info("Partition threaded process exiting");
+}
 
 void Partition::forceStop() { StopTester.forceStop(); }
 
@@ -85,12 +108,12 @@ void Partition::sleep(const duration Duration) const {
 }
 
 void Partition::stop() {
-  Executor.sendLowPriorityWork([=]() { forceStop(); });
-  Executor.sendWork([=]() { forceStop(); });
+  LowPriorityTaskQueue.enqueue([=]() { forceStop(); });
+  TaskQueue.enqueue([=]() { forceStop(); });
 }
 
 void Partition::setStopTime(time_point Stop) {
-  Executor.sendWork([=]() {
+  TaskQueue.enqueue([=]() {
     StopTime = Stop;
     StopTester.setStopTime(Stop);
     for (auto &Filter : MsgFilters) {
@@ -102,7 +125,7 @@ void Partition::setStopTime(time_point Stop) {
 bool Partition::hasFinished() const { return HasFinished.load(); }
 
 void Partition::addPollTask() {
-  Executor.sendLowPriorityWork([=]() { pollForMessage(); });
+  LowPriorityTaskQueue.enqueue([=]() { pollForMessage(); });
 }
 
 void Partition::checkAndLogPartitionTimeOut() {
@@ -156,6 +179,7 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
 void Partition::pollForMessage() {
   if (hasStopBeenRequested()) {
     HasFinished = true;
+    _run_thread.store(false);
     return;
   }
   if (AreStreamersPausedFunction()) {
@@ -181,6 +205,7 @@ void Partition::pollForMessage() {
     }
     if (shouldStopBasedOnPollStatus(Msg.first)) {
       HasFinished = true;
+      _run_thread.store(false);
       return;
     }
 
@@ -191,6 +216,7 @@ void Partition::pollForMessage() {
             R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
             PartitionID, Topic);
         HasFinished = true;
+        _run_thread.store(false);
         return;
       } else if (Msg.second.getMetaData().timestamp() >
                  StopTime + StopTimeLeeway) {
@@ -198,6 +224,7 @@ void Partition::pollForMessage() {
             R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
             PartitionID, Topic, Msg.second.getMetaData().timestamp());
         HasFinished = true;
+        _run_thread.store(false);
         return;
       }
     }

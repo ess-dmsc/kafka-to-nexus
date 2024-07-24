@@ -47,7 +47,7 @@ public:
             Metrics::IRegistrar *RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
             std::function<bool()> AreStreamersPausedFunction);
-  virtual ~Partition() = default;
+  virtual ~Partition();
 
   /// \brief Must be called after the constructor.
   /// \note This function exist in order to make unit testing possible.
@@ -114,6 +114,8 @@ protected:
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
   void forceStop();
 
+  void process();
+
   /// \brief Sleep.
   /// \note This function exist in order to make unit testing possible.
   virtual void sleep(const duration Duration) const;
@@ -133,7 +135,10 @@ protected:
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
       MsgFilters;
-  ThreadedExecutor Executor{false, "partition"}; // Must be last
+  moodycamel::ConcurrentQueue<JobType> TaskQueue;
+  moodycamel::ConcurrentQueue<JobType> LowPriorityTaskQueue;
+  std::atomic<bool> _run_thread{true};
+  std::thread _worker_thread;
 };
 
 } // namespace Stream
