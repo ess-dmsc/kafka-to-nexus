@@ -55,7 +55,7 @@ def test_ep01(worker_pool, kafka_address, hdf_file_name="output_file_ep01.nxs"):
         broker=kafka_address,
         start_time=start_time,
         stop_time=stop_time,
-        control_topic="TEST_writer_commands_alternative",
+        control_topic="TEST_writer_commands",
         metadata="{}",
     )
     wait_start_job(worker_pool, write_job, timeout=20)
