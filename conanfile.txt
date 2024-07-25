@@ -13,7 +13,7 @@ readerwriterqueue/1.0.6
 concurrentqueue/1.0.3
 stduuid/1.2.2
 spdlog/1.14.1
-asio/1.23.0
+asio/1.30.2
 
 [generators]
 cmake
