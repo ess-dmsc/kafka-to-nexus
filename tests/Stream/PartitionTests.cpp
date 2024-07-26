@@ -28,7 +28,7 @@ public:
       : SourceFilter(std::chrono::system_clock::now(),
                      std::chrono::system_clock::now(), true, nullptr,
                      std::make_unique<Metrics::Registrar>("some_prefix")) {}
-  MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage Message),
+  MAKE_MOCK1(filterMessage, bool(FileWriter::FlatbufferMessage const &Message),
              override);
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
