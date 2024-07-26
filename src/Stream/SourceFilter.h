@@ -33,14 +33,14 @@ public:
     destination_writer_modules.push_back(writer_module);
   };
 
-  virtual bool filterMessage(FileWriter::FlatbufferMessage InMsg);
+  virtual bool filterMessage(FileWriter::FlatbufferMessage const &InMsg);
   void setStopTime(time_point StopTime);
   time_point getStopTime() const { return Stop; }
   virtual bool hasFinished() const;
 
 protected:
-  void sendMessage(FileWriter::FlatbufferMessage const &message);
-  void sendBufferedMessage();
+  void forward_message(FileWriter::FlatbufferMessage const &message);
+  void forward_buffered_message();
   time_point Start;
   time_point Stop;
   bool WriteRepeatedTimestamps;

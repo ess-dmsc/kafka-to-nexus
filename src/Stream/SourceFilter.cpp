@@ -25,20 +25,20 @@ SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
   Registrar->registerMetric(RepeatedTimestamp, {Metrics::LogTo::CARBON});
 }
 
-SourceFilter::~SourceFilter() { sendBufferedMessage(); }
+SourceFilter::~SourceFilter() { forward_buffered_message(); }
 
 void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
 
 bool SourceFilter::hasFinished() const { return IsDone; }
 
-void SourceFilter::sendBufferedMessage() {
+void SourceFilter::forward_buffered_message() {
   if (BufferedMessage.isValid()) {
-    sendMessage(BufferedMessage);
+    forward_message(BufferedMessage);
     BufferedMessage = FileWriter::FlatbufferMessage();
   }
 }
 
-bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage InMsg) {
+bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage const &InMsg) {
   MessagesReceived++;
   if (not InMsg.isValid()) {
     MessagesDiscarded++;
@@ -70,12 +70,13 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage InMsg) {
   if (TempMsgTime > Stop) {
     IsDone = true;
   }
-  sendBufferedMessage();
-  sendMessage(InMsg);
+  forward_buffered_message();
+  forward_message(InMsg);
   return true;
 }
 
-void SourceFilter::sendMessage(FileWriter::FlatbufferMessage const &message) {
+void SourceFilter::forward_message(
+    FileWriter::FlatbufferMessage const &message) {
   ++MessagesTransmitted;
   for (auto &module : destination_writer_modules) {
     writer->addMessage({module, message});
