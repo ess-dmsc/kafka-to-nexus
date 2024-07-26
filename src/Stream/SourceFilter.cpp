@@ -11,75 +11,88 @@
 
 namespace Stream {
 
-SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
-                           bool AcceptRepeatedTimestamps, MessageWriter *writer,
-                           std::unique_ptr<Metrics::IRegistrar> RegisterMetric)
-    : Start(StartTime), Stop(StopTime),
-      WriteRepeatedTimestamps(AcceptRepeatedTimestamps), writer(writer),
-      Registrar(std::move(RegisterMetric)) {
-  Registrar->registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
-  Registrar->registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
-  Registrar->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
-  Registrar->registerMetric(MessagesTransmitted, {Metrics::LogTo::CARBON});
-  Registrar->registerMetric(MessagesDiscarded, {Metrics::LogTo::CARBON});
-  Registrar->registerMetric(RepeatedTimestamp, {Metrics::LogTo::CARBON});
+SourceFilter::SourceFilter(time_point start_time, time_point stop_time,
+                           bool allow_repeated_timestamps,
+                           MessageWriter *writer,
+                           std::unique_ptr<Metrics::IRegistrar> registrar)
+    : _start_time(start_time), _stop_time(stop_time),
+      _allow_repeated_timestamps(allow_repeated_timestamps), _writer(writer),
+      _registrar(std::move(registrar)) {
+  _registrar->registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
+  _registrar->registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
+  _registrar->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
+  _registrar->registerMetric(MessagesTransmitted, {Metrics::LogTo::CARBON});
+  _registrar->registerMetric(MessagesDiscarded, {Metrics::LogTo::CARBON});
+  _registrar->registerMetric(RepeatedTimestamp, {Metrics::LogTo::CARBON});
 }
 
 SourceFilter::~SourceFilter() { forward_buffered_message(); }
 
-void SourceFilter::setStopTime(time_point StopTime) { Stop = StopTime; }
+void SourceFilter::set_stop_time(time_point stop_time) {
+  _stop_time = stop_time;
+}
 
-bool SourceFilter::hasFinished() const { return IsDone; }
+bool SourceFilter::has_finished() const { return _is_finished; }
 
 void SourceFilter::forward_buffered_message() {
-  if (BufferedMessage.isValid()) {
-    forward_message(BufferedMessage);
-    BufferedMessage = FileWriter::FlatbufferMessage();
+  if (_buffered_message.isValid()) {
+    forward_message(_buffered_message);
+    _buffered_message = FileWriter::FlatbufferMessage();
   }
 }
 
-bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage const &InMsg) {
+time_point to_timepoint(int64_t timestamp) {
+  return time_point(std::chrono::duration_cast<std::chrono::microseconds>(
+      std::chrono::nanoseconds(timestamp)));
+}
+
+bool SourceFilter::filter_message(
+    FileWriter::FlatbufferMessage const &message) {
   MessagesReceived++;
-  if (not InMsg.isValid()) {
+  if (_is_finished) {
+    MessagesDiscarded++;
+    return false;
+  }
+  if (!message.isValid()) {
     MessagesDiscarded++;
     FlatbufferInvalid++;
     return false;
   }
 
-  if (InMsg.getTimestamp() == CurrentTimeStamp) {
+  if (message.getTimestamp() == _last_seen_timestamp) {
     RepeatedTimestamp++;
-    if (not WriteRepeatedTimestamps) {
+    if (!_allow_repeated_timestamps) {
       MessagesDiscarded++;
       return false;
     }
-  } else if (InMsg.getTimestamp() < CurrentTimeStamp) {
+  } else if (message.getTimestamp() < _last_seen_timestamp) {
     UnorderedTimestamp++;
   }
-  CurrentTimeStamp = InMsg.getTimestamp();
+  _last_seen_timestamp = message.getTimestamp();
 
-  auto Temp = std::chrono::nanoseconds(InMsg.getTimestamp());
-  auto TempMsgTime =
-      time_point(std::chrono::duration_cast<std::chrono::microseconds>(Temp));
-  if (TempMsgTime < Start) {
-    if (BufferedMessage.isValid()) {
+  auto message_time = to_timepoint(message.getTimestamp());
+  if (message_time < _start_time) {
+    if (_buffered_message.isValid() &&
+        message_time < to_timepoint(_buffered_message.getTimestamp())) {
       MessagesDiscarded++;
+      return false;
     }
-    BufferedMessage = InMsg;
+    _buffered_message = message;
     return false;
   }
-  if (TempMsgTime > Stop) {
-    IsDone = true;
+  if (message_time > _stop_time) {
+    _is_finished = true;
   }
   forward_buffered_message();
-  forward_message(InMsg);
+  forward_message(message);
   return true;
 }
 
 void SourceFilter::forward_message(
     FileWriter::FlatbufferMessage const &message) {
   ++MessagesTransmitted;
-  for (auto &module : destination_writer_modules) {
-    writer->addMessage({module, message});
+  for (auto const &writer_module : _destination_writer_modules) {
+    _writer->addMessage({writer_module, message});
   }
 }
 

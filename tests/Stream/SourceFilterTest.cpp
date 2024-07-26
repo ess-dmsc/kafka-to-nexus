@@ -7,293 +7,301 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "FlatbufferReader.h"
 #include "Stream/SourceFilter.h"
-#include "WriterModule/template/TemplateWriter.h"
-#include "helpers/SetExtractorModule.h"
+#include "WriterModule/f144/f144_Writer.h"
 #include <chrono>
+#include <f144_logdata_generated.h>
 #include <gtest/gtest.h>
-#include <thread>
-#include <trompeloeil.hpp>
 
-class MessageWriterStandIn : public Stream::MessageWriter {
+class StubMessageWriter : public Stream::MessageWriter {
 public:
-  MessageWriterStandIn()
+  StubMessageWriter()
       : MessageWriter([]() {}, 1s, std::make_unique<Metrics::Registrar>("")) {}
-  MAKE_MOCK1(addMessage, void(Stream::Message const &), override);
+  void addMessage(Stream::Message const &Msg) override {
+    messages_received.emplace_back(Msg);
+  }
+  std::vector<Stream::Message> messages_received;
 };
 
-class SourceFilterStandIn : public Stream::SourceFilter {
-public:
-  SourceFilterStandIn(time_point Start, time_point Stop,
-                      bool AcceptRepeatedTimestamp,
-                      Stream::MessageWriter *Writer,
-                      std::unique_ptr<Metrics::IRegistrar> Reg)
-      : SourceFilter(Start, Stop, AcceptRepeatedTimestamp, Writer,
-                     std::move(Reg)) {}
-  using SourceFilter::MessagesDiscarded;
-  using SourceFilter::MessagesReceived;
-  using SourceFilter::MessagesTransmitted;
-  using SourceFilter::RepeatedTimestamp;
-  using SourceFilter::UnorderedTimestamp;
-};
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_f144_message_double(std::string const &source, double value,
+                           int64_t timestamp_ms) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+  auto value_offset = CreateDouble(builder, value).Union();
 
-class SourceFilterTest : public ::testing::Test {
-public:
-  time_point StartTime{std::chrono::system_clock::now()};
-  MessageWriterStandIn Writer;
-  auto getTestFilter(bool AcceptRepeatedTimestamp = true) {
-    return std::make_unique<SourceFilterStandIn>(
-        StartTime, std::chrono::system_clock::time_point::max(),
-        AcceptRepeatedTimestamp, &Writer,
-        std::make_unique<Metrics::Registrar>("test_reg"));
-  }
-};
+  f144_LogDataBuilder f144_builder(builder);
+  f144_builder.add_value(value_offset);
+  f144_builder.add_source_name(source_name_offset);
+  f144_builder.add_timestamp(timestamp_ms * 1000000);
+  f144_builder.add_value_type(Value::Double);
+  Finishf144_LogDataBuffer(builder, f144_builder.Finish());
 
-TEST_F(SourceFilterTest, InitState) {
-  auto UnderTest = getTestFilter();
-  EXPECT_FALSE(UnderTest->hasFinished());
-}
-using trompeloeil::_;
-
-class yyyyFbReader : public FileWriter::FlatbufferReader {
-public:
-  bool verify(FileWriter::FlatbufferMessage const &) const override {
-    return true;
-  }
-
-  std::string
-  source_name(FileWriter::FlatbufferMessage const &) const override {
-    return "some_name";
-  }
-
-  uint64_t timestamp(FileWriter::FlatbufferMessage const &) const override {
-    return yyyyFbReader::Timestamp;
-  }
-  static void setTimestamp(uint64_t NewTime) {
-    yyyyFbReader::Timestamp = NewTime;
-  }
-
-private:
-  static uint64_t Timestamp;
-};
-
-uint64_t yyyyFbReader::Timestamp{1};
-
-FileWriter::FlatbufferMessage generateMsg() {
-  std::array<uint8_t, 9> SomeData{'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'};
-  setExtractorModule<yyyyFbReader>("yyyy");
-  return FileWriter::FlatbufferMessage(SomeData.data(), SomeData.size());
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
 }
 
-TEST_F(SourceFilterTest, InvalidMessage) {
-  FORBID_CALL(Writer, addMessage(_));
-  auto UnderTest = getTestFilter();
-  FileWriter::FlatbufferMessage TestMsg;
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesDiscarded == 1);
-  EXPECT_FALSE(UnderTest->hasFinished());
+FileWriter::FlatbufferMessage create_f144_message(std::string const &source,
+                                                  double value,
+                                                  int64_t timestamp_ms) {
+  auto const [buffer, size] =
+      create_f144_message_double(source, value, timestamp_ms);
+  return {buffer.get(), size};
 }
 
-TEST_F(SourceFilterTest, MessageWithNoDest) {
-  FORBID_CALL(Writer, addMessage(_));
-  auto UnderTest = getTestFilter();
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
+TEST(SourceFilter, messages_within_start_and_stop_are_allowed_through) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 2, 200));
+
+  EXPECT_EQ(2u, writer->messages_received.size());
 }
 
-TEST_F(SourceFilterTest, SendBufferedMessageFromBeforeStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
+TEST(SourceFilter, out_of_order_messages_are_allowed_through) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+
+  EXPECT_EQ(2u, writer->messages_received.size());
+}
+
+TEST(SourceFilter, invalid_message_is_filtered_out) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  FileWriter::FlatbufferMessage invalid;
+  filter.filter_message(invalid);
+
+  EXPECT_EQ(0u, writer->messages_received.size());
+}
+
+TEST(SourceFilter, message_before_start_is_not_allowed_through) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+
+  EXPECT_EQ(0u, writer->messages_received.size());
+}
+
+TEST(SourceFilter, message_on_start_is_allowed_through) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 1000));
+
+  EXPECT_EQ(1u, writer->messages_received.size());
+}
+
+TEST(SourceFilter, first_message_after_stop_is_allowed_through) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point{1000ms}, false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 1001));
+  filter.filter_message(create_f144_message("::source::", 1, 1002));
+
+  EXPECT_EQ(1u, writer->messages_received.size());
+}
+
+TEST(SourceFilter, message_after_stop_sets_filter_to_finished) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point{1000ms}, false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 1001));
+
+  EXPECT_EQ(true, filter.has_finished());
+}
+
+TEST(SourceFilter,
+     messages_with_same_timestamp_ignored_when_allowed_repeated_is_false) {
+  auto allow_repeated_timestamps = false;
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(),
+                              allow_repeated_timestamps, writer.get(),
+                              std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 1000));
+  filter.filter_message(create_f144_message("::source::", 2, 1000));
+  filter.filter_message(create_f144_message("::source::", 3, 1000));
+
+  EXPECT_EQ(1u, writer->messages_received.size());
+}
+
+TEST(SourceFilter,
+     messages_with_same_timestamp_allowed_when_allowed_repeated_is_true) {
+  auto allow_repeated_timestamps = true;
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(),
+                              allow_repeated_timestamps, writer.get(),
+                              std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 1000));
+  filter.filter_message(create_f144_message("::source::", 2, 1000));
+  filter.filter_message(create_f144_message("::source::", 3, 1000));
+
+  EXPECT_EQ(3u, writer->messages_received.size());
+}
+
+TEST(SourceFilter, can_change_stop_time_after_construction) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.set_stop_time(time_point{1000ms});
+
+  // First message after stop is allowed
+  filter.filter_message(create_f144_message("::source::", 1, 1001));
+  filter.filter_message(create_f144_message("::source::", 2, 1002));
+
+  EXPECT_EQ(1u, writer->messages_received.size());
+}
+
+TEST(SourceFilter,
+     last_message_before_start_time_is_allowed_through_after_valid_message) {
+  // For values that don't update very often, the forwarder periodically sends
+  // the current value to Kafka. This is to ensure that the data file contains
+  // the value despite it not changing.
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("some_source", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 3, 1002));
+
+  EXPECT_EQ(2u, writer->messages_received.size());
+  auto first = writer->messages_received.at(0).FbMsg;
+  EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
+  EXPECT_EQ("some_source", first.getSourceName());
+}
+
+TEST(SourceFilter,
+     last_message_before_start_time_handles_out_of_order_messages) {
+  // For values that don't update very often, the forwarder periodically sends
+  // the current value to Kafka. This is to ensure that the data file contains
+  // the value despite it not changing.
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(create_f144_message("some_source", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 3, 1002));
+
+  EXPECT_EQ(2u, writer->messages_received.size());
+  auto first = writer->messages_received.at(0).FbMsg;
+  EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
+  EXPECT_EQ("some_source", first.getSourceName());
+}
+
+TEST(
+    SourceFilter,
+    last_message_before_start_time_is_allowed_through_on_destruction_if_no_updates) {
+  // For values that don't update very often, the forwarder periodically sends
+  // the current value to Kafka. This is to ensure that the data file contains
+  // the value despite it not changing.
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   {
-    auto UnderTest = getTestFilter();
-    UnderTest->add_writer_module_for_message(0);
-    auto TestMsg = generateMsg();
-    UnderTest->filterMessage(std::move(TestMsg));
-    EXPECT_TRUE(UnderTest->MessagesReceived == 1);
-    EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
-    EXPECT_FALSE(UnderTest->hasFinished());
-  } // Have destructor send message
-}
+    Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
+                                writer.get(), std::move(registrar)};
+    filter.add_writer_module_for_message(f144_writer.get());
 
-TEST_F(SourceFilterTest, MultipleMessagesBeforeStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
-  auto UnderTest = getTestFilter();
-  UnderTest->add_writer_module_for_message(0);
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  yyyyFbReader::setTimestamp(2);
-  auto TestMsg2 = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg2));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
-  EXPECT_FALSE(UnderTest->hasFinished());
-}
-
-TEST_F(SourceFilterTest, SameTSBeforeStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
-  auto UnderTest = getTestFilter();
-  UnderTest->add_writer_module_for_message(0);
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
-  EXPECT_FALSE(UnderTest->hasFinished());
-}
-
-using std::chrono_literals::operator""ms;
-
-TEST_F(SourceFilterTest, SameTSAfterStartAccepted) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
-  auto UnderTest = getTestFilter();
-  UnderTest->add_writer_module_for_message(0);
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
-  EXPECT_FALSE(UnderTest->hasFinished());
-}
-
-TEST_F(SourceFilterTest, SameTSAfterStartRejected) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
-  auto UnderTest = getTestFilter(false);
-  UnderTest->add_writer_module_for_message(0);
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->RepeatedTimestamp == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
-  EXPECT_FALSE(UnderTest->hasFinished());
-}
-
-TEST_F(SourceFilterTest, MsgBeforeAndAfterStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
-  auto UnderTest = getTestFilter();
-  UnderTest->add_writer_module_for_message(0);
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
-  auto TestMsg2 = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg2));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
-  EXPECT_FALSE(UnderTest->hasFinished());
-}
-
-TEST_F(SourceFilterTest, MultipleDestinations) {
-  TemplateWriter::WriterClass Writer1;
-  TemplateWriter::WriterClass Writer2;
-  {
-    REQUIRE_CALL(Writer, addMessage(_))
-        .LR_WITH(_1.DestPtr == &Writer1)
-        .TIMES(1);
-    REQUIRE_CALL(Writer, addMessage(_))
-        .LR_WITH(_1.DestPtr == &Writer2)
-        .TIMES(1);
-    auto UnderTest = getTestFilter();
-    UnderTest->add_writer_module_for_message(&Writer1);
-    UnderTest->add_writer_module_for_message(&Writer2);
-    yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
-    auto TestMsg = generateMsg();
-    UnderTest->filterMessage(std::move(TestMsg));
-    EXPECT_TRUE(UnderTest->MessagesReceived == 1);
-    EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
-    EXPECT_FALSE(UnderTest->hasFinished());
+    filter.filter_message(create_f144_message("some_source", 2, 200));
   }
+
+  EXPECT_EQ(1u, writer->messages_received.size());
+  auto first = writer->messages_received.at(0).FbMsg;
+  EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
+  EXPECT_EQ("some_source", first.getSourceName());
 }
 
-TEST_F(SourceFilterTest, MessageAfterStop) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
-  auto UnderTest = getTestFilter();
-  TemplateWriter::WriterClass Writer1;
-  UnderTest->add_writer_module_for_message(&Writer1);
-  UnderTest->setStopTime(StartTime + 20ms);
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 1);
-  EXPECT_TRUE(UnderTest->hasFinished());
+TEST(
+    SourceFilter,
+    last_message_before_start_time_is_not_allowed_through_on_destruction_if_already_written) {
+  // For values that don't update very often, the forwarder periodically sends
+  // the current value to Kafka. This is to ensure that the data file contains
+  // the value despite it not changing.
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  {
+    Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
+                                writer.get(), std::move(registrar)};
+    filter.add_writer_module_for_message(f144_writer.get());
+
+    filter.filter_message(create_f144_message("some_source", 2, 200));
+    filter.filter_message(create_f144_message("::source::", 3, 1002));
+  }
+
+  EXPECT_EQ(2u, writer->messages_received.size());
+  auto first = writer->messages_received.at(0).FbMsg;
+  EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
+  EXPECT_EQ("some_source", first.getSourceName());
 }
 
-TEST_F(SourceFilterTest, MessageBeforeAndAfterStop) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
-  auto UnderTest = getTestFilter();
-  TemplateWriter::WriterClass Writer1;
-  UnderTest->add_writer_module_for_message(&Writer1);
-  UnderTest->setStopTime(StartTime + 20ms);
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 10ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
+TEST(SourceFilter, messages_written_for_each_module_when_more_than_one_module) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer_1 = std::make_unique<WriterModule::f144::f144_Writer>();
+  auto f144_writer_2 = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.add_writer_module_for_message(f144_writer_1.get());
+  filter.add_writer_module_for_message(f144_writer_2.get());
 
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
-  auto TestMsg2 = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg2));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
-  EXPECT_TRUE(UnderTest->hasFinished());
-}
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 2, 200));
 
-TEST_F(SourceFilterTest, MessageBeforeStartAndAfterStop) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
-  auto UnderTest = getTestFilter();
-  TemplateWriter::WriterClass Writer1;
-  UnderTest->add_writer_module_for_message(&Writer1);
-  UnderTest->setStopTime(StartTime + 20ms);
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime - 10ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
-
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
-  auto TestMsg2 = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg2));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
-  EXPECT_TRUE(UnderTest->hasFinished());
-}
-
-TEST_F(SourceFilterTest, UnorderedMsgBeforeStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
-  auto UnderTest = getTestFilter();
-  TemplateWriter::WriterClass Writer1;
-  UnderTest->add_writer_module_for_message(&Writer1);
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime - 10ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
-
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime - 50ms));
-  auto TestMsg2 = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg2));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->UnorderedTimestamp == 1);
-  EXPECT_TRUE(UnderTest->MessagesDiscarded == 1);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 0);
-}
-
-TEST_F(SourceFilterTest, UnorderedMsgAfterStart) {
-  REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
-  auto UnderTest = getTestFilter();
-  TemplateWriter::WriterClass Writer1;
-  UnderTest->add_writer_module_for_message(&Writer1);
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 10ms));
-  auto TestMsg = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg));
-  yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 5ms));
-  auto TestMsg2 = generateMsg();
-  UnderTest->filterMessage(std::move(TestMsg2));
-  EXPECT_TRUE(UnderTest->MessagesReceived == 2);
-  EXPECT_TRUE(UnderTest->UnorderedTimestamp == 1);
-  EXPECT_TRUE(UnderTest->MessagesDiscarded == 0);
-  EXPECT_TRUE(UnderTest->MessagesTransmitted == 2);
+  EXPECT_EQ(4u, writer->messages_received.size());
 }
