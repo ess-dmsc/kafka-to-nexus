@@ -298,57 +298,54 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
                     "error was: {}",
                     ExceptionMessage)};
   }
-  return stopWriting(StopJob);
-}
 
-CmdResponse Handler::stopWriting(StopMessage const &StopCmd) {
   std::string ResponseMessage;
 
-  if (!(StopCmd.ServiceID.empty()) && ServiceId != StopCmd.ServiceID) {
+  if (!(StopJob.ServiceID.empty()) && ServiceId != StopJob.ServiceID) {
     return CmdResponse{
         LogLevel::Debug, 0, false,
         fmt::format(
             "Rejected stop command as the service ID did not match. Local ID "
             "is {}, command ID was {}.",
-            ServiceId, StopCmd.ServiceID)};
+            ServiceId, StopJob.ServiceID)};
   }
 
   if (!IsWritingNow()) {
     return CmdResponse{LogLevel::Warn, 400,
-                       !StopCmd.ServiceID.empty() &&
-                           ServiceId == StopCmd.ServiceID,
+                       !StopJob.ServiceID.empty() &&
+                           ServiceId == StopJob.ServiceID,
                        fmt::format("Rejected stop command as there is "
                                    "currently no write job in progress.")};
   }
 
   auto CurrentJobId = GetJobId();
-  if (CurrentJobId != StopCmd.JobID) {
+  if (CurrentJobId != StopJob.JobID) {
     return CmdResponse{
         LogLevel::Warn, 400,
-        !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID,
+        !StopJob.ServiceID.empty() && ServiceId == StopJob.ServiceID,
         fmt::format("Rejected stop command as the job ID did not match (local"
                     "ID is {}, command ID was: {}).",
-                    CurrentJobId, StopCmd.JobID)};
+                    CurrentJobId, StopJob.JobID)};
   }
 
-  if (!isValidUUID(StopCmd.CommandID)) {
+  if (!isValidUUID(StopJob.CommandID)) {
     return CmdResponse{
         LogLevel::Error, 400, true,
         fmt::format("Rejected stop command as the command ID was invalid "
                     "(it was: {}).",
-                    StopCmd.CommandID)};
+                    StopJob.CommandID)};
   }
 
   // Stop job
   try {
-    if (StopCmd.StopTime == time_point{0ms}) {
+    if (StopJob.StopTime == time_point{0ms}) {
       DoStopNow();
       ResponseMessage = "Attempting to stop writing job now.";
     } else {
-      DoSetStopTime(StopCmd.StopTime);
+      DoSetStopTime(StopJob.StopTime);
       ResponseMessage =
           fmt::format("File writing job stop time set to: {}",
-                      toUTCDateTime(time_point(StopCmd.StopTime)));
+                      toUTCDateTime(time_point(StopJob.StopTime)));
     }
   } catch (std::exception const &E) {
     ResponseMessage = E.what();

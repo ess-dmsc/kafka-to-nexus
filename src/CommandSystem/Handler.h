@@ -80,14 +80,6 @@ public:
                                    std::string const &ErrorMessage) override;
 
   void loopFunction() override;
-  [[nodiscard]] bool isUsingAlternativeTopic() const { return UsingAltTopic; }
-
-protected:
-  /// \brief Stops writing.
-  ///
-  /// \param StopJob The stop message as a StopMessage struct.
-  /// \return Metadata about the success/failure after processing the command.
-  CmdResponse stopWriting(StopMessage const &StopJob);
 
 private:
   /// \brief Handle start command.
