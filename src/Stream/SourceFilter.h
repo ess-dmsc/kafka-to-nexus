@@ -38,7 +38,7 @@ public:
   time_point getStopTime() const { return Stop; }
   virtual bool hasFinished() const;
 
-protected:
+private:
   void forward_message(FileWriter::FlatbufferMessage const &message);
   void forward_buffered_message();
   time_point Start;
