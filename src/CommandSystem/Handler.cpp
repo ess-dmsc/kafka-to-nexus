@@ -90,7 +90,7 @@ void Handler::revertCommandTopic() {
 
 void Handler::switchCommandTopic(std::string const &ControlTopic,
                                  time_point const StartTime) {
-  if (ControlTopic != CommandTopicAddress) {
+  if (!ControlTopic.empty() && ControlTopic != CommandTopicAddress) {
     Logger::Info(
         R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
         ControlTopic, StartTime);
@@ -178,9 +178,6 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
           StartJob.StopTime, ValidationResponse.StatusCode,
           ValidationResponse.Message);
     }
-    if (SendResult == ActionResult::Failure) {
-      revertCommandTopic();
-    }
   } catch (std::exception &E) {
     Logger::Critical("Unable to process start command, error was: {}",
                      E.what());
@@ -215,10 +212,6 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
                         "currently a write job in progress.")};
   }
 
-  if (!StartJob.ControlTopic.empty()) {
-    switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
-  }
-
   if (!isValidUUID(StartJob.JobID)) {
     return {
         LogLevel::Warn, 400, true,
@@ -234,14 +227,15 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
 
   // Start job
   try {
+    switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
     DoStart(StartJob);
   } catch (std::exception const &E) {
-    ExceptionMessage = E.what();
+    revertCommandTopic();
 
     return {LogLevel::Error, 500, true,
             fmt::format(
                 "Failed to start filewriting job. The failure message was: {}",
-                ExceptionMessage)};
+                E.what())};
   }
 
   // Success
