@@ -31,7 +31,7 @@ struct CmdResponse {
   LogSeverity LogLevel;
   int StatusCode{0};
   bool SendResponse;
-  std::function<std::string()> MessageString;
+  std::string Message;
 };
 
 class HandlerBase {
@@ -80,21 +80,6 @@ public:
                                    std::string const &ErrorMessage) override;
 
   void loopFunction() override;
-  [[nodiscard]] bool isUsingAlternativeTopic() const { return UsingAltTopic; }
-
-protected:
-  /// \brief Initiates writing.
-  ///
-  /// \param StartJob The start message as a StartMessage struct.
-  /// pool or the command topic.
-  /// \return Metadata about the success/failure after processing the command.
-  CmdResponse startWriting(StartMessage const &StartJob);
-
-  /// \brief Stops writing.
-  ///
-  /// \param StopJob The stop message as a StopMessage struct.
-  /// \return Metadata about the success/failure after processing the command.
-  CmdResponse stopWriting(StopMessage const &StopJob);
 
 private:
   /// \brief Handle start command.
