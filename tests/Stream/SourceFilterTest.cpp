@@ -7,10 +7,10 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "FlatBufferGenerators.h"
 #include "Stream/SourceFilter.h"
 #include "WriterModule/f144/f144_Writer.h"
 #include <chrono>
-#include <f144_logdata_generated.h>
 #include <gtest/gtest.h>
 
 class StubMessageWriter : public Stream::MessageWriter {
@@ -23,31 +23,11 @@ public:
   std::vector<Stream::Message> messages_received;
 };
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
-create_f144_message_double(std::string const &source, double value,
-                           int64_t timestamp_ms) {
-  auto builder = flatbuffers::FlatBufferBuilder();
-  auto source_name_offset = builder.CreateString(source);
-  auto value_offset = CreateDouble(builder, value).Union();
-
-  f144_LogDataBuilder f144_builder(builder);
-  f144_builder.add_value(value_offset);
-  f144_builder.add_source_name(source_name_offset);
-  f144_builder.add_timestamp(timestamp_ms * 1000000);
-  f144_builder.add_value_type(Value::Double);
-  Finishf144_LogDataBuffer(builder, f144_builder.Finish());
-
-  size_t buffer_size = builder.GetSize();
-  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
-  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
-  return {std::move(buffer), buffer_size};
-}
-
 FileWriter::FlatbufferMessage create_f144_message(std::string const &source,
                                                   double value,
                                                   int64_t timestamp_ms) {
   auto const [buffer, size] =
-      create_f144_message_double(source, value, timestamp_ms);
+      FlatBuffers::create_f144_message_double(source, value, timestamp_ms);
   return {buffer.get(), size};
 }
 
