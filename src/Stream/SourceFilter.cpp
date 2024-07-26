@@ -38,9 +38,18 @@ void SourceFilter::forward_buffered_message() {
   }
 }
 
+time_point to_timepoint(int64_t timestamp) {
+  return time_point(std::chrono::duration_cast<std::chrono::microseconds>(
+      std::chrono::nanoseconds(timestamp)));
+}
+
 bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage const &InMsg) {
   MessagesReceived++;
-  if (not InMsg.isValid()) {
+  if (IsDone) {
+    MessagesDiscarded++;
+    return false;
+  }
+  if (!InMsg.isValid()) {
     MessagesDiscarded++;
     FlatbufferInvalid++;
     return false;
@@ -48,7 +57,7 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage const &InMsg) {
 
   if (InMsg.getTimestamp() == CurrentTimeStamp) {
     RepeatedTimestamp++;
-    if (not WriteRepeatedTimestamps) {
+    if (!WriteRepeatedTimestamps) {
       MessagesDiscarded++;
       return false;
     }
@@ -57,17 +66,17 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage const &InMsg) {
   }
   CurrentTimeStamp = InMsg.getTimestamp();
 
-  auto Temp = std::chrono::nanoseconds(InMsg.getTimestamp());
-  auto TempMsgTime =
-      time_point(std::chrono::duration_cast<std::chrono::microseconds>(Temp));
-  if (TempMsgTime < Start) {
-    if (BufferedMessage.isValid()) {
+  auto message_time = to_timepoint(InMsg.getTimestamp());
+  if (message_time < Start) {
+    if (BufferedMessage.isValid() &&
+        message_time < to_timepoint(BufferedMessage.getTimestamp())) {
       MessagesDiscarded++;
+      return false;
     }
     BufferedMessage = InMsg;
     return false;
   }
-  if (TempMsgTime > Stop) {
+  if (message_time > Stop) {
     IsDone = true;
   }
   forward_buffered_message();
@@ -78,8 +87,8 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage const &InMsg) {
 void SourceFilter::forward_message(
     FileWriter::FlatbufferMessage const &message) {
   ++MessagesTransmitted;
-  for (auto &module : destination_writer_modules) {
-    writer->addMessage({module, message});
+  for (auto const &writer_module : destination_writer_modules) {
+    writer->addMessage({writer_module, message});
   }
 }
 
