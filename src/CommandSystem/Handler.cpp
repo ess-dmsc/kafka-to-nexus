@@ -186,12 +186,12 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
 
 CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
                                          StartMessage &StartJob) {
-  std::string ExceptionMessage;
-  if (!extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
+  if (std::string exception_message;
+      !extractStartMessage(CommandMsg, StartJob, exception_message)) {
     return {LogLevel::Warn, 400, false,
             fmt::format("Failed to extract start command from flatbuffer. The "
                         "error was: {}",
-                        ExceptionMessage)};
+                        exception_message)};
   }
 
   if (!StartJob.ServiceID.empty() && StartJob.ServiceID != ServiceId) {
