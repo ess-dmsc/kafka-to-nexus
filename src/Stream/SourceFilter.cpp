@@ -76,4 +76,11 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage InMsg) {
   return true;
 }
 
+void SourceFilter::sendMessage(FileWriter::FlatbufferMessage const &Msg) {
+  ++MessagesTransmitted;
+  for (auto &CDest : DestIDs) {
+    Dest->addMessage({CDest, Msg});
+  }
+}
+
 } // namespace Stream

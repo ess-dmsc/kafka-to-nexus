@@ -39,13 +39,7 @@ public:
   virtual bool hasFinished() const;
 
 protected:
-  void sendMessage(FileWriter::FlatbufferMessage const &Msg) {
-    ++MessagesTransmitted;
-    for (auto &CDest : DestIDs) {
-      Dest->addMessage({CDest, Msg});
-    }
-  }
-
+  void sendMessage(FileWriter::FlatbufferMessage const &Msg);
   void sendBufferedMessage();
   time_point Start;
   time_point Stop;
