@@ -12,11 +12,10 @@
 namespace Stream {
 
 SourceFilter::SourceFilter(time_point StartTime, time_point StopTime,
-                           bool AcceptRepeatedTimestamps,
-                           MessageWriter *Destination,
+                           bool AcceptRepeatedTimestamps, MessageWriter *writer,
                            std::unique_ptr<Metrics::IRegistrar> RegisterMetric)
     : Start(StartTime), Stop(StopTime),
-      WriteRepeatedTimestamps(AcceptRepeatedTimestamps), Dest(Destination),
+      WriteRepeatedTimestamps(AcceptRepeatedTimestamps), writer(writer),
       Registrar(std::move(RegisterMetric)) {
   Registrar->registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
   Registrar->registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
@@ -76,10 +75,10 @@ bool SourceFilter::filterMessage(FileWriter::FlatbufferMessage InMsg) {
   return true;
 }
 
-void SourceFilter::sendMessage(FileWriter::FlatbufferMessage const &Msg) {
+void SourceFilter::sendMessage(FileWriter::FlatbufferMessage const &message) {
   ++MessagesTransmitted;
-  for (auto &CDest : DestIDs) {
-    Dest->addMessage({CDest, Msg});
+  for (auto &module : destination_writer_modules) {
+    writer->addMessage({module, message});
   }
 }
 

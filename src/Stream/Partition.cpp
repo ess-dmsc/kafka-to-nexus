@@ -44,7 +44,7 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
                                 RegisterMetric->getNewRegistrar(
                                     SrcDestInfo.getMetricsNameString())));
     }
-    TempFilterMap[SrcDestInfo.WriteHash]->addDestinationPtr(
+    TempFilterMap[SrcDestInfo.WriteHash]->add_writer_module_for_message(
         SrcDestInfo.Destination);
     WriterToSourceHashMap[SrcDestInfo.WriteHash] = SrcDestInfo.SrcHash;
   }

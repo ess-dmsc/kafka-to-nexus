@@ -26,11 +26,11 @@ class SourceFilter {
 public:
   SourceFilter() = default;
   SourceFilter(time_point StartTime, time_point StopTime,
-               bool AcceptRepeatedTimestamps, MessageWriter *Destination,
+               bool AcceptRepeatedTimestamps, MessageWriter *writer,
                std::unique_ptr<Metrics::IRegistrar> RegisterMetric);
   virtual ~SourceFilter();
-  void addDestinationPtr(Message::DestPtrType NewDestination) {
-    DestIDs.push_back(NewDestination);
+  void add_writer_module_for_message(Message::DestPtrType writer_module) {
+    destination_writer_modules.push_back(writer_module);
   };
 
   virtual bool filterMessage(FileWriter::FlatbufferMessage InMsg);
@@ -39,16 +39,16 @@ public:
   virtual bool hasFinished() const;
 
 protected:
-  void sendMessage(FileWriter::FlatbufferMessage const &Msg);
+  void sendMessage(FileWriter::FlatbufferMessage const &message);
   void sendBufferedMessage();
   time_point Start;
   time_point Stop;
   bool WriteRepeatedTimestamps;
   int64_t CurrentTimeStamp{0};
-  MessageWriter *Dest{nullptr};
+  MessageWriter *writer{nullptr};
   bool IsDone{false};
   FileWriter::FlatbufferMessage BufferedMessage;
-  std::vector<Message::DestPtrType> DestIDs;
+  std::vector<Message::DestPtrType> destination_writer_modules;
   std::unique_ptr<Metrics::IRegistrar> Registrar;
   Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
                                     "Flatbuffer failed validation.",
