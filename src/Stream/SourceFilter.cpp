@@ -46,24 +46,24 @@ time_point to_timepoint(int64_t timestamp) {
       std::chrono::nanoseconds(timestamp)));
 }
 
-bool SourceFilter::filter_message(
+void SourceFilter::filter_message(
     FileWriter::FlatbufferMessage const &message) {
   MessagesReceived++;
   if (_is_finished) {
     MessagesDiscarded++;
-    return false;
+    return;
   }
   if (!message.isValid()) {
     MessagesDiscarded++;
     FlatbufferInvalid++;
-    return false;
+    return;
   }
 
   if (message.getTimestamp() == _last_seen_timestamp) {
     RepeatedTimestamp++;
     if (!_allow_repeated_timestamps) {
       MessagesDiscarded++;
-      return false;
+      return;
     }
   } else if (message.getTimestamp() < _last_seen_timestamp) {
     UnorderedTimestamp++;
@@ -75,17 +75,16 @@ bool SourceFilter::filter_message(
     if (_buffered_message.isValid() &&
         message_time < to_timepoint(_buffered_message.getTimestamp())) {
       MessagesDiscarded++;
-      return false;
+      return;
     }
     _buffered_message = message;
-    return false;
+    return;
   }
   if (message_time > _stop_time) {
     _is_finished = true;
   }
   forward_buffered_message();
   forward_message(message);
-  return true;
 }
 
 void SourceFilter::forward_message(
