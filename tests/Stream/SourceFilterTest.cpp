@@ -55,8 +55,8 @@ TEST(SourceFilter, messages_within_start_and_stop_are_allowed_through) {
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 100));
-  filter.filterMessage(create_f144_message("::source::", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 2, 200));
 
   EXPECT_EQ(2u, writer->messages_received.size());
 }
@@ -68,8 +68,8 @@ TEST(SourceFilter, out_of_order_messages_are_allowed_through) {
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 2, 200));
-  filter.filterMessage(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
 
   EXPECT_EQ(2u, writer->messages_received.size());
 }
@@ -82,7 +82,7 @@ TEST(SourceFilter, invalid_message_is_filtered_out) {
   filter.add_writer_module_for_message(f144_writer.get());
 
   FileWriter::FlatbufferMessage invalid;
-  filter.filterMessage(invalid);
+  filter.filter_message(invalid);
 
   EXPECT_EQ(0u, writer->messages_received.size());
 }
@@ -94,7 +94,7 @@ TEST(SourceFilter, message_before_start_is_not_allowed_through) {
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
 
   EXPECT_EQ(0u, writer->messages_received.size());
 }
@@ -106,7 +106,7 @@ TEST(SourceFilter, message_on_start_is_allowed_through) {
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 1000));
+  filter.filter_message(create_f144_message("::source::", 1, 1000));
 
   EXPECT_EQ(1u, writer->messages_received.size());
 }
@@ -118,8 +118,8 @@ TEST(SourceFilter, first_message_after_stop_is_allowed_through) {
   Stream::SourceFilter filter{time_point{0ms}, time_point{1000ms}, false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 1001));
-  filter.filterMessage(create_f144_message("::source::", 1, 1002));
+  filter.filter_message(create_f144_message("::source::", 1, 1001));
+  filter.filter_message(create_f144_message("::source::", 1, 1002));
 
   EXPECT_EQ(1u, writer->messages_received.size());
 }
@@ -131,9 +131,9 @@ TEST(SourceFilter, message_after_stop_sets_filter_to_finished) {
   Stream::SourceFilter filter{time_point{0ms}, time_point{1000ms}, false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 1001));
+  filter.filter_message(create_f144_message("::source::", 1, 1001));
 
-  EXPECT_EQ(true, filter.hasFinished());
+  EXPECT_EQ(true, filter.has_finished());
 }
 
 TEST(SourceFilter, messages_with_same_timestamp_ignored_when_allowed_repeated_is_false) {
@@ -144,9 +144,9 @@ TEST(SourceFilter, messages_with_same_timestamp_ignored_when_allowed_repeated_is
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), allow_repeated_timestamps, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 1000));
-  filter.filterMessage(create_f144_message("::source::", 2, 1000));
-  filter.filterMessage(create_f144_message("::source::", 3, 1000));
+  filter.filter_message(create_f144_message("::source::", 1, 1000));
+  filter.filter_message(create_f144_message("::source::", 2, 1000));
+  filter.filter_message(create_f144_message("::source::", 3, 1000));
 
   EXPECT_EQ(1u, writer->messages_received.size());
 }
@@ -159,9 +159,9 @@ TEST(SourceFilter, messages_with_same_timestamp_allowed_when_allowed_repeated_is
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), allow_repeated_timestamps, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 1000));
-  filter.filterMessage(create_f144_message("::source::", 2, 1000));
-  filter.filterMessage(create_f144_message("::source::", 3, 1000));
+  filter.filter_message(create_f144_message("::source::", 1, 1000));
+  filter.filter_message(create_f144_message("::source::", 2, 1000));
+  filter.filter_message(create_f144_message("::source::", 3, 1000));
 
   EXPECT_EQ(3u, writer->messages_received.size());
 }
@@ -173,11 +173,11 @@ TEST(SourceFilter, can_change_stop_time_after_construction) {
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.setStopTime(time_point{1000ms});
+  filter.set_stop_time(time_point{1000ms});
 
   // First message after stop is allowed
-  filter.filterMessage(create_f144_message("::source::", 1, 1001));
-  filter.filterMessage(create_f144_message("::source::", 2, 1002));
+  filter.filter_message(create_f144_message("::source::", 1, 1001));
+  filter.filter_message(create_f144_message("::source::", 2, 1002));
 
   EXPECT_EQ(1u, writer->messages_received.size());
 }
@@ -191,9 +191,9 @@ TEST(SourceFilter, last_message_before_start_time_is_allowed_through_after_valid
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 100));
-  filter.filterMessage(create_f144_message("some_source", 2, 200));
-  filter.filterMessage(create_f144_message("::source::", 3, 1002));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("some_source", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 3, 1002));
 
   EXPECT_EQ(2u, writer->messages_received.size());
   auto first = writer->messages_received.at(0).FbMsg;
@@ -210,9 +210,9 @@ TEST(SourceFilter, last_message_before_start_time_handles_out_of_order_messages)
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false, writer.get(), std::move(registrar)};
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filterMessage(create_f144_message("some_source", 2, 200));
-  filter.filterMessage(create_f144_message("::source::", 1, 100));
-  filter.filterMessage(create_f144_message("::source::", 3, 1002));
+  filter.filter_message(create_f144_message("some_source", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 3, 1002));
 
   EXPECT_EQ(2u, writer->messages_received.size());
   auto first = writer->messages_received.at(0).FbMsg;
@@ -231,7 +231,7 @@ TEST(SourceFilter, last_message_before_start_time_is_allowed_through_on_destruct
                                 writer.get(), std::move(registrar)};
     filter.add_writer_module_for_message(f144_writer.get());
 
-    filter.filterMessage(create_f144_message("some_source", 2, 200));
+    filter.filter_message(create_f144_message("some_source", 2, 200));
   }
 
   EXPECT_EQ(1u, writer->messages_received.size());
@@ -251,8 +251,8 @@ TEST(SourceFilter, last_message_before_start_time_is_not_allowed_through_on_dest
                                 writer.get(), std::move(registrar)};
     filter.add_writer_module_for_message(f144_writer.get());
 
-    filter.filterMessage(create_f144_message("some_source", 2, 200));
-    filter.filterMessage(create_f144_message("::source::", 3, 1002));
+    filter.filter_message(create_f144_message("some_source", 2, 200));
+    filter.filter_message(create_f144_message("::source::", 3, 1002));
   }
 
   EXPECT_EQ(2u, writer->messages_received.size());
@@ -270,8 +270,8 @@ TEST(SourceFilter, messages_written_for_each_module_when_more_than_one_module) {
   filter.add_writer_module_for_message(f144_writer_1.get());
   filter.add_writer_module_for_message(f144_writer_2.get());
 
-  filter.filterMessage(create_f144_message("::source::", 1, 100));
-  filter.filterMessage(create_f144_message("::source::", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 1, 100));
+  filter.filter_message(create_f144_message("::source::", 2, 200));
 
   EXPECT_EQ(4u, writer->messages_received.size());
 }

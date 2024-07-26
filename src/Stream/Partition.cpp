@@ -94,7 +94,7 @@ void Partition::setStopTime(time_point Stop) {
     StopTime = Stop;
     StopTester.setStopTime(Stop);
     for (auto &Filter : MsgFilters) {
-      Filter.second->setStopTime(Stop);
+      Filter.second->set_stop_time(Stop);
     }
   });
 }
@@ -241,12 +241,12 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
   for (auto &CFilter : MsgFilters) {
     if (CFilter.first == FbMsg.getSourceHash()) {
-      CFilter.second->filterMessage(FbMsg);
+      CFilter.second->filter_message(FbMsg);
     }
   }
   MsgFilters.erase(
       std::remove_if(MsgFilters.begin(), MsgFilters.end(),
-                     [](auto &Item) { return Item.second->hasFinished(); }),
+                     [](auto &Item) { return Item.second->has_finished(); }),
       MsgFilters.end());
 }
 
