@@ -106,7 +106,7 @@ TEST_F(SourceFilterTest, SendBufferedMessageFromBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   {
     auto UnderTest = getTestFilter();
-    UnderTest->addDestinationPtr(0);
+    UnderTest->add_writer_module_for_message(0);
     auto TestMsg = generateMsg();
     UnderTest->filterMessage(std::move(TestMsg));
     EXPECT_TRUE(UnderTest->MessagesReceived == 1);
@@ -118,7 +118,7 @@ TEST_F(SourceFilterTest, SendBufferedMessageFromBeforeStart) {
 TEST_F(SourceFilterTest, MultipleMessagesBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationPtr(0);
+  UnderTest->add_writer_module_for_message(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   yyyyFbReader::setTimestamp(2);
@@ -132,7 +132,7 @@ TEST_F(SourceFilterTest, MultipleMessagesBeforeStart) {
 TEST_F(SourceFilterTest, SameTSBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationPtr(0);
+  UnderTest->add_writer_module_for_message(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   TestMsg = generateMsg();
@@ -148,7 +148,7 @@ using std::chrono_literals::operator""ms;
 TEST_F(SourceFilterTest, SameTSAfterStartAccepted) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationPtr(0);
+  UnderTest->add_writer_module_for_message(0);
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
@@ -163,7 +163,7 @@ TEST_F(SourceFilterTest, SameTSAfterStartAccepted) {
 TEST_F(SourceFilterTest, SameTSAfterStartRejected) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter(false);
-  UnderTest->addDestinationPtr(0);
+  UnderTest->add_writer_module_for_message(0);
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
@@ -178,7 +178,7 @@ TEST_F(SourceFilterTest, SameTSAfterStartRejected) {
 TEST_F(SourceFilterTest, MsgBeforeAndAfterStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
-  UnderTest->addDestinationPtr(0);
+  UnderTest->add_writer_module_for_message(0);
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
@@ -200,8 +200,8 @@ TEST_F(SourceFilterTest, MultipleDestinations) {
         .LR_WITH(_1.DestPtr == &Writer2)
         .TIMES(1);
     auto UnderTest = getTestFilter();
-    UnderTest->addDestinationPtr(&Writer1);
-    UnderTest->addDestinationPtr(&Writer2);
+    UnderTest->add_writer_module_for_message(&Writer1);
+    UnderTest->add_writer_module_for_message(&Writer2);
     yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
     auto TestMsg = generateMsg();
     UnderTest->filterMessage(std::move(TestMsg));
@@ -215,7 +215,7 @@ TEST_F(SourceFilterTest, MessageAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationPtr(&Writer1);
+  UnderTest->add_writer_module_for_message(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 50ms));
   auto TestMsg = generateMsg();
@@ -229,7 +229,7 @@ TEST_F(SourceFilterTest, MessageBeforeAndAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationPtr(&Writer1);
+  UnderTest->add_writer_module_for_message(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 10ms));
   auto TestMsg = generateMsg();
@@ -247,7 +247,7 @@ TEST_F(SourceFilterTest, MessageBeforeStartAndAfterStop) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationPtr(&Writer1);
+  UnderTest->add_writer_module_for_message(&Writer1);
   UnderTest->setStopTime(StartTime + 20ms);
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime - 10ms));
   auto TestMsg = generateMsg();
@@ -266,7 +266,7 @@ TEST_F(SourceFilterTest, UnorderedMsgBeforeStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(1);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationPtr(&Writer1);
+  UnderTest->add_writer_module_for_message(&Writer1);
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime - 10ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
@@ -285,7 +285,7 @@ TEST_F(SourceFilterTest, UnorderedMsgAfterStart) {
   REQUIRE_CALL(Writer, addMessage(_)).TIMES(2);
   auto UnderTest = getTestFilter();
   TemplateWriter::WriterClass Writer1;
-  UnderTest->addDestinationPtr(&Writer1);
+  UnderTest->add_writer_module_for_message(&Writer1);
   yyyyFbReader::setTimestamp(toNanoSeconds(StartTime + 10ms));
   auto TestMsg = generateMsg();
   UnderTest->filterMessage(std::move(TestMsg));
