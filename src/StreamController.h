@@ -135,8 +135,6 @@ private:
   MetaData::TrackerPtr MetaDataTracker;
   std::shared_ptr<Kafka::MetadataEnquirer> _metadata_enquirer;
   std::shared_ptr<Kafka::ConsumerFactoryInterface> _consumer_factory;
-  moodycamel::ConcurrentQueue<JobType> TaskQueue;
-  moodycamel::ConcurrentQueue<JobType> LowPriorityTaskQueue;
   std::atomic<bool> _run_thread{true};
   std::thread _worker_thread;
 };
