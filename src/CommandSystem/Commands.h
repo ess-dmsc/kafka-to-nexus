@@ -15,18 +15,6 @@
 
 namespace Command {
 
-/// \brief Structure for holding all the data required to start a file-writing
-/// job.
-struct StartInfo {
-  std::string JobID;
-  std::string Filename;
-  std::string NexusStructure;
-  std::string Metadata;
-  time_point StartTime{0ms};
-  time_point StopTime{time_point::max()};
-  std::string ControlTopic;
-};
-
 /// \brief A de-serialised "start writing" message.
 struct StartMessage {
   std::string JobID;
