@@ -306,13 +306,13 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
                         "currently no write job in progress.")};
   }
 
-  auto CurrentJobId = GetJobId();
-  if (CurrentJobId != StopJob.JobID) {
+
+  if (auto CurrentJobId = GetJobId(); CurrentJobId != StopJob.JobID) {
     return {
         LogLevel::Warn, 400,
         !StopJob.ServiceID.empty() && ServiceId == StopJob.ServiceID,
         fmt::format("Rejected stop command as the job ID did not match (local"
-                    "ID is {}, command ID was: {}).",
+                    "ID is {}, job ID was: {}).",
                     CurrentJobId, StopJob.JobID)};
   }
 
