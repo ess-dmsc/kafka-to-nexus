@@ -306,7 +306,6 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
                         "currently no write job in progress.")};
   }
 
-
   if (auto CurrentJobId = GetJobId(); CurrentJobId != StopJob.JobID) {
     return {
         LogLevel::Warn, 400,
