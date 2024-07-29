@@ -43,7 +43,9 @@ public:
                                   int64_t /*offset*/) override {
     return RdKafka::ERR_NO_ERROR;
   };
-  struct rd_kafka_topic_s *c_ptr() override { return {}; };
+  struct rd_kafka_topic_s *c_ptr() override {
+    return {};
+  };
 };
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
