@@ -31,7 +31,7 @@ uint64_t const StopTimeInput = 123456790000;
 
 class CommandParserHappyStartTests : public testing::Test {
 public:
-  Command::StartInfo StartInfo;
+  Command::StartMessage StartInfo;
 
   void SetUp() override {
     auto MessageBuffer = buildRunStartMessage(

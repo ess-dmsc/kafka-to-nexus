@@ -21,7 +21,7 @@
 
 namespace Command {
 
-using StartFuncType = std::function<void(StartInfo)>;
+using StartFuncType = std::function<void(StartMessage)>;
 using StopTimeFuncType = std::function<void(time_point)>;
 using StopNowFuncType = std::function<void()>;
 using IsWritingFuncType = std::function<bool()>;

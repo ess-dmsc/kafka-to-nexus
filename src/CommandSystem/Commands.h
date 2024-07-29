@@ -28,7 +28,14 @@ struct StartInfo {
 };
 
 /// \brief A de-serialised "start writing" message.
-struct StartMessage : StartInfo {
+struct StartMessage {
+  std::string JobID;
+  std::string Filename;
+  std::string NexusStructure;
+  std::string Metadata;
+  time_point StartTime{0ms};
+  time_point StopTime{time_point::max()};
+  std::string ControlTopic;
   std::string ServiceID;
 };
 

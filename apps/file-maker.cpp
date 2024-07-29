@@ -217,7 +217,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   add_message(*consumer_factory, std::move(msg), 2100ms, "local_choppers",
               offset++, 0);
 
-  Command::StartInfo start_info;
+  Command::StartMessage start_info;
   if (!json_file.empty()) {
     start_info.NexusStructure = readJsonFromFile(json_file);
   } else {
