@@ -21,7 +21,7 @@
 namespace FileWriter {
 
 std::unique_ptr<StreamController> createFileWritingJob(
-    Command::StartInfo const &StartInfo, StreamerOptions const &Settings,
+    Command::StartMessage const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
     MetaData::TrackerPtr const &Tracker,
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =

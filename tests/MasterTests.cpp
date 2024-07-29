@@ -100,22 +100,24 @@ public:
   StatusReporterStandIn *StatusReporter;
   std::unique_ptr<FileWriter::Master> UnderTest;
   time_point StartTime{system_clock::now()};
-  Command::StartInfo StartCmd{"job_id",
-                              "some_file_name",
-                              R"({"nexus_structure":5})",
-                              R"({"meta_data":54})",
-                              StartTime,
-                              StartTime + 50s,
-                              "control_topic"};
+  Command::StartMessage StartCmd{"job_id",
+                                 "some_file_name",
+                                 R"({"nexus_structure":5})",
+                                 R"({"meta_data":54})",
+                                 StartTime,
+                                 StartTime + 50s,
+                                 "control_topic",
+                                 "service_id"};
   std::string StartCmdAbsoluteFilename{
       std::filesystem::temp_directory_path().append("some_file_name")};
-  Command::StartInfo StartCmdAbsolute{"job_id",
-                                      StartCmdAbsoluteFilename,
-                                      R"({"nexus_structure":5})",
-                                      R"({"meta_data":54})",
-                                      StartTime,
-                                      StartTime + 50s,
-                                      "control_topic"};
+  Command::StartMessage StartCmdAbsolute{"job_id",
+                                         StartCmdAbsoluteFilename,
+                                         R"({"nexus_structure":5})",
+                                         R"({"meta_data":54})",
+                                         StartTime,
+                                         StartTime + 50s,
+                                         "control_topic",
+                                         "service_id"};
 };
 
 TEST_F(MasterTest, Init) {

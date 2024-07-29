@@ -38,7 +38,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
                                          {Metrics::LogTo::CARBON});
 }
 
-void Master::startWriting(Command::StartInfo const &StartInfo) {
+void Master::startWriting(Command::StartMessage const &StartInfo) {
   if (getCurrentState() == Status::WorkerState::Writing) {
     throw std::runtime_error(fmt::format(
         R"(Unable to start new writing job (with id: "{}") when waiting for the current one to finish.)",
