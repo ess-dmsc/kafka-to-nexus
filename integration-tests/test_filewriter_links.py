@@ -36,7 +36,7 @@ def test_links(worker_pool, kafka_address, hdf_file_name="output_file_links.nxs"
         assert not file.swmr_mode
         assert file["entry/link_to_features"][0] == 10138143369737381149
         assert file["entry/instrument/link2_to_features"][0] == 10138143369737381149
-        assert file["entry/instrument/link_to_monitor1_det_id"] == 11
+        assert file["entry/instrument/link_to_monitor1_det_id"][()] == 11
         assert np.allclose(
             file["entry/link_to_monitor1_transform/location"].attrs["vector"],
             np.array([0.0, 0.0, -1.0]),
