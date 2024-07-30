@@ -29,11 +29,11 @@ class PartitionFilter {
 public:
   enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT };
   PartitionFilter() = default;
-  PartitionFilter(time_point StopAtTime, duration StopTimeLeeway,
-                  duration TimeLimit);
+  PartitionFilter(time_point stop_time, duration stop_time_leeway,
+                  duration time_limit);
 
   /// \brief Update the stop time.
-  void setStopTime(time_point Stop) { StopTime = Stop; }
+  void setStopTime(time_point stop) { _stop_time = stop; }
 
   /// \brief Force shouldStopPartition() to return true on next call.
   void forceStop();
@@ -42,16 +42,16 @@ public:
   [[nodiscard]] bool hasForceStopBeenRequested() const;
 
   /// \brief Applies the stop logic to the current poll status.
-  /// \param CurrentPollStatus The current (last) poll status.
+  /// \param current_poll_status The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
   /// be halted.
-  [[nodiscard]] bool shouldStopPartition(Kafka::PollStatus CurrentPollStatus);
+  [[nodiscard]] bool shouldStopPartition(Kafka::PollStatus current_poll_status);
 
-  [[nodiscard]] PartitionState currentPartitionState() const { return State; }
+  [[nodiscard]] PartitionState currentPartitionState() const { return _state; }
 
   /// \brief Check if we currently have an error state.
   [[nodiscard]] bool hasErrorState() const {
-    return State == PartitionState::ERROR;
+    return _state == PartitionState::ERROR;
   }
 
   /// \brief Check if time limit has been exceeded.
@@ -61,21 +61,19 @@ public:
   [[nodiscard]] bool hasTopicTimedOut() const;
 
   /// \brief Update status occurence time.
-  void updateStatusOccurrenceTime(PartitionState ComparisonState);
+  void updateStatusOccurrenceTime(PartitionState comparison_state);
 
   [[nodiscard]] time_point getStatusOccurrenceTime() const {
-    return StatusOccurrenceTime;
+    return _status_occurrence_time;
   }
 
-protected:
-  bool ForceStop{false};
-  PartitionState State{PartitionState::DEFAULT};
-  time_point StatusOccurrenceTime;
-  time_point StopTime{time_point::max()};
-  duration StopLeeway{10s};
-  duration TimeLimit{10s};
-
 private:
+  bool _force_stop{false};
+  PartitionState _state{PartitionState::DEFAULT};
+  time_point _status_occurrence_time;
+  time_point _stop_time{time_point::max()};
+  duration _stop_leeway{10s};
+  duration _time_limit{10s};
   bool at_end_of_partition_{false};
 };
 

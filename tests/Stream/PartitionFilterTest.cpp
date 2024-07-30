@@ -12,7 +12,6 @@
 
 #include "Kafka/PollStatus.h"
 #include "Stream/PartitionFilter.h"
-#include "TimeUtility.h"
 #include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
