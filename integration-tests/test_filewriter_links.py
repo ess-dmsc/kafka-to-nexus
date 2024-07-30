@@ -42,9 +42,8 @@ def test_links(worker_pool, kafka_address, hdf_file_name="output_file_links.nxs"
             np.array([0.0, 0.0, -1.0]),
         )
         assert (
-                file["entry/link_to_monitor1_transform/location"].attrs[
-                    "transformation_type"
-                ]
-                == "translation"
+            file["entry/link_to_monitor1_transform/location"].attrs[
+                "transformation_type"
+            ]
+            == "translation"
         )
-
