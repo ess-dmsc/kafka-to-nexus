@@ -107,7 +107,7 @@ void Partition::addPollTask() {
 
 void Partition::checkAndLogPartitionTimeOut() {
   if (StopTester.hasTopicTimedOut()) {
-    if (not PartitionTimeOutLogged) {
+    if (!PartitionTimeOutLogged) {
       Logger::Info(
           "No new messages were received from Kafka in partition {} of "
           "topic {} ({:.1f}s passed) when polling for new data.",
@@ -206,7 +206,7 @@ void Partition::pollForMessage() {
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
-  if (CurrentOffset != 0 and
+  if (CurrentOffset != 0 &&
       CurrentOffset + 1 != Message.getMetaData().Offset) {
     BadOffsets++;
   }
