@@ -67,15 +67,13 @@ public:
     return StatusOccurrenceTime;
   }
 
-protected:
+private:
   bool ForceStop{false};
   PartitionState State{PartitionState::DEFAULT};
   time_point StatusOccurrenceTime;
   time_point StopTime{time_point::max()};
   duration StopLeeway{10s};
   duration TimeLimit{10s};
-
-private:
   bool at_end_of_partition_{false};
 };
 
