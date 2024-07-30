@@ -9,8 +9,6 @@
 
 #include "PartitionFilter.h"
 #include "Kafka/PollStatus.h"
-#include "Msg.h"
-#include <iostream>
 
 namespace Stream {
 
