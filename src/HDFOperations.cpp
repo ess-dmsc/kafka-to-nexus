@@ -216,16 +216,16 @@ static void writeNumericDataset(hdf5::node::Group const &Node,
     if (Values.is_number()) {
       auto Data = Values.get<DT>();
       auto DataSpace = hdf5::dataspace::Scalar();
-      auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
-                                         DataSpace);
+      auto Dataset =
+          Node.create_dataset(Name, hdf5::datatype::create<DT>(), DataSpace);
       Dataset.write(Data);
     } else {
       auto Data = jsonArrayToMultiArray<DT>(Values);
       auto Dims = Data.getDimensions();
       auto DataSpace =
           hdf5::dataspace::Simple(hdf5::Dimensions(Dims.begin(), Dims.end()));
-      auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
-                                         DataSpace);
+      auto Dataset =
+          Node.create_dataset(Name, hdf5::datatype::create<DT>(), DataSpace);
       Dataset.write(Data);
     }
   } catch (std::exception const &E) {
