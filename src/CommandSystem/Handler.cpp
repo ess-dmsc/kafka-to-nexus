@@ -47,7 +47,7 @@ void Handler::loopFunction() {
     auto [poll_status, message] = JobPool->pollForJob();
     if (poll_status == Kafka::PollStatus::Message &&
         Parser::isStartCommand(message)) {
-      handleStartCommand(std::move(message), true);
+      handleStartCommand(std::move(message));
       JobPool->disconnectFromPool();
     }
   } else {
@@ -90,7 +90,7 @@ void Handler::revertCommandTopic() {
 
 void Handler::switchCommandTopic(std::string const &ControlTopic,
                                  time_point const StartTime) {
-  if (ControlTopic != CommandTopicAddress) {
+  if (!ControlTopic.empty() && ControlTopic != CommandTopicAddress) {
     Logger::Info(
         R"(Connecting to an alternative command topic "{}" with starting offset "{}")",
         ControlTopic, StartTime);
@@ -160,29 +160,23 @@ void warnIfMessageIsOld(time_point MsgTime) {
   }
 }
 
-void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
-                                 bool IsJobPoolCommand) {
+void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
   try {
     StartMessage StartJob;
 
     ActionResult SendResult{ActionResult::Success};
-    CmdResponse ValidationResponse =
-        startWritingProcess(CommandMsg, StartJob, IsJobPoolCommand);
+    CmdResponse ValidationResponse = startWritingProcess(CommandMsg, StartJob);
     if (ValidationResponse.StatusCode >= 400) {
       SendResult = ActionResult::Failure;
     }
 
     warnIfMessageIsOld(CommandMsg.getMetaData().timestamp());
-    Logger::Log(ValidationResponse.LogLevel,
-                ValidationResponse.MessageString());
+    Logger::Log(ValidationResponse.LogLevel, ValidationResponse.Message);
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
           StartJob.StopTime, ValidationResponse.StatusCode,
-          ValidationResponse.MessageString());
-    }
-    if (SendResult == ActionResult::Failure) {
-      revertCommandTopic();
+          ValidationResponse.Message);
     }
   } catch (std::exception &E) {
     Logger::Critical("Unable to process start command, error was: {}",
@@ -191,33 +185,21 @@ void Handler::handleStartCommand(FileWriter::Msg CommandMsg,
 }
 
 CmdResponse Handler::startWritingProcess(const FileWriter::Msg &CommandMsg,
-                                         StartMessage &StartJob,
-                                         bool IsJobPoolCommand) {
-  std::string ExceptionMessage;
-  if (!extractStartMessage(CommandMsg, StartJob, ExceptionMessage)) {
-    return CmdResponse{
-        LogLevel::Warn, 400, false, [ExceptionMessage]() {
-          return fmt::format(
-              "Failed to extract start command from flatbuffer. The "
-              "error was: {}",
-              ExceptionMessage);
-        }};
+                                         StartMessage &StartJob) {
+  if (std::string exception_message;
+      !extractStartMessage(CommandMsg, StartJob, exception_message)) {
+    return {LogLevel::Warn, 400, false,
+            fmt::format("Failed to extract start command from flatbuffer. The "
+                        "error was: {}",
+                        exception_message)};
   }
-  return startWriting(StartJob, IsJobPoolCommand);
-}
 
-CmdResponse Handler::startWriting(StartMessage const &StartJob,
-                                  bool IsJobPoolCommand) {
-  std::string ExceptionMessage;
-
-  if (IsJobPoolCommand && !StartJob.ServiceID.empty() &&
-      StartJob.ServiceID != ServiceId) {
-    return CmdResponse{
-        LogLevel::Debug, 400, false, [StartJob, this]() {
-          return fmt::format(
-              R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
-              ServiceId, StartJob.ServiceID);
-        }};
+  if (!StartJob.ServiceID.empty() && StartJob.ServiceID != ServiceId) {
+    return {
+        LogLevel::Debug, 400, false,
+        fmt::format(
+            R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
+            ServiceId, StartJob.ServiceID)};
   }
 
   /// \note This test should never return false as consumption of new jobs
@@ -225,63 +207,42 @@ CmdResponse Handler::startWriting(StartMessage const &StartJob,
   /// is an indication that in some cases jobs will be consumed regardless.
   /// This statement is made 2022-03-21
   if (IsWritingNow()) {
-    return CmdResponse{LogLevel::Error, 400, true, []() {
-                         return fmt::format(
-                             "Rejected start command as there is "
-                             "currently a write job in progress.");
-                       }};
-  }
-
-  if (!StartJob.ControlTopic.empty()) {
-    if (!IsJobPoolCommand) {
-      return CmdResponse{
-          LogLevel::Error, 400, true, [StartJob]() {
-            return fmt::format(
-                R"(Rejected new/alternative command topic ("{}") as the job was not received from job pool.)",
-                StartJob.ControlTopic);
-          }};
-    }
-    switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
+    return {LogLevel::Error, 400, true,
+            fmt::format("Rejected start command as there is "
+                        "currently a write job in progress.")};
   }
 
   if (!isValidUUID(StartJob.JobID)) {
-    return CmdResponse{
-        LogLevel::Warn, 400, true, [StartJob]() {
-          return fmt::format(
-              R"(Rejected start command as the job id was invalid (it was: "{}").)",
-              StartJob.JobID);
-        }};
+    return {
+        LogLevel::Warn, 400, true,
+        fmt::format(
+            R"(Rejected start command as the job id was invalid (it was: "{}").)",
+            StartJob.JobID)};
   }
 
   if (StartJob.ControlTopic.empty()) {
-    return CmdResponse{LogLevel::Warn, 400, true, []() {
-                         return fmt::format(
-                             "Rejected start job as control topic was empty.");
-                       }};
+    return {LogLevel::Warn, 400, true,
+            fmt::format(R"(Rejected start job as control topic was empty.)")};
   }
 
   // Start job
   try {
+    switchCommandTopic(StartJob.ControlTopic, StartJob.StartTime);
     DoStart(StartJob);
   } catch (std::exception const &E) {
-    ExceptionMessage = E.what();
+    revertCommandTopic();
 
-    return CmdResponse{
-        LogLevel::Error, 500, true, [ExceptionMessage]() {
-          return fmt::format(
-              "Failed to start filewriting job. The failure message was: {}",
-              ExceptionMessage);
-        }};
+    return {LogLevel::Error, 500, true,
+            fmt::format(
+                "Failed to start filewriting job. The failure message was: {}",
+                E.what())};
   }
 
   // Success
-  return CmdResponse{
-      LogLevel::Info, 201, true, [StartJob]() {
-        return fmt::format(
-            "Started write job with start time {} and stop time {}.",
-            toUTCDateTime(StartJob.StartTime),
-            toUTCDateTime(StartJob.StopTime));
-      }};
+  return {LogLevel::Info, 201, true,
+          fmt::format("Started write job with start time {} and stop time {}.",
+                      toUTCDateTime(StartJob.StartTime),
+                      toUTCDateTime(StartJob.StopTime))};
 }
 
 bool extractStopMessage(FileWriter::Msg const &CommandMsg, StopMessage &Msg,
@@ -305,13 +266,12 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
       SendResult = ActionResult::Failure;
     }
 
-    Logger::Log(ValidationResponse.LogLevel,
-                ValidationResponse.MessageString());
+    Logger::Log(ValidationResponse.LogLevel, ValidationResponse.Message);
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::SetStopTime, SendResult, StopJob.JobID,
           StopJob.CommandID, StopJob.StopTime, ValidationResponse.StatusCode,
-          ValidationResponse.MessageString());
+          ValidationResponse.Message);
     }
   } catch (std::exception &E) {
     Logger::Critical("Unable to process stop command, error was: {}", E.what());
@@ -322,86 +282,67 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &CommandMsg,
                                         StopMessage &StopJob) {
   if (std::string ExceptionMessage;
       !extractStopMessage(CommandMsg, StopJob, ExceptionMessage)) {
-    return CmdResponse{
-        LogLevel::Warn, 400, false, [ExceptionMessage]() {
-          return fmt::format(
-              "Failed to extract stop command from flatbuffer. The "
-              "error was: {}",
-              ExceptionMessage);
-        }};
+    return {LogLevel::Warn, 400, false,
+            fmt::format("Failed to extract stop command from flatbuffer. The "
+                        "error was: {}",
+                        ExceptionMessage)};
   }
-  return stopWriting(StopJob);
-}
 
-CmdResponse Handler::stopWriting(StopMessage const &StopCmd) {
   std::string ResponseMessage;
 
-  if (!(StopCmd.ServiceID.empty()) && ServiceId != StopCmd.ServiceID) {
-    return CmdResponse{
-        LogLevel::Debug, 0, false, [StopCmd, this]() {
-          return fmt::format(
-              "Rejected stop command as the service ID did not match. Local ID "
-              "is {}, command ID was {}.",
-              ServiceId, StopCmd.ServiceID);
-        }};
+  if (!(StopJob.ServiceID.empty()) && ServiceId != StopJob.ServiceID) {
+    return {
+        LogLevel::Debug, 0, false,
+        fmt::format(
+            "Rejected stop command as the service ID did not match. Local ID "
+            "is {}, command ID was {}.",
+            ServiceId, StopJob.ServiceID)};
   }
 
   if (!IsWritingNow()) {
-    return CmdResponse{
-        LogLevel::Warn, 400,
-        !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID, []() {
-          return fmt::format("Rejected stop command as there is "
-                             "currently no write job in progress.");
-        }};
+    return {LogLevel::Warn, 400,
+            !StopJob.ServiceID.empty() && ServiceId == StopJob.ServiceID,
+            fmt::format("Rejected stop command as there is "
+                        "currently no write job in progress.")};
   }
 
-  auto CurrentJobId = GetJobId();
-  if (!(CurrentJobId == StopCmd.JobID)) {
-    return CmdResponse{
+  if (auto CurrentJobId = GetJobId(); CurrentJobId != StopJob.JobID) {
+    return {
         LogLevel::Warn, 400,
-        !StopCmd.ServiceID.empty() && ServiceId == StopCmd.ServiceID,
-        [CurrentJobId, StopCmd]() {
-          return fmt::format(
-              "Rejected stop command as the job ID did not match (local"
-              "ID is {}, command ID was: {}).",
-              CurrentJobId, StopCmd.JobID);
-        }};
+        !StopJob.ServiceID.empty() && ServiceId == StopJob.ServiceID,
+        fmt::format("Rejected stop command as the job ID did not match (local"
+                    "ID is {}, job ID was: {}).",
+                    CurrentJobId, StopJob.JobID)};
   }
 
-  if (!isValidUUID(StopCmd.CommandID)) {
-    return CmdResponse{
-        LogLevel::Error, 400, true, [StopCmd]() {
-          return fmt::format(
-              "Rejected stop command as the command ID was invalid "
-              "(it was: {}).",
-              StopCmd.CommandID);
-        }};
+  if (!isValidUUID(StopJob.CommandID)) {
+    return {LogLevel::Error, 400, true,
+            fmt::format("Rejected stop command as the command ID was invalid "
+                        "(it was: {}).",
+                        StopJob.CommandID)};
   }
 
   // Stop job
   try {
-    if (StopCmd.StopTime == time_point{0ms}) {
+    if (StopJob.StopTime == time_point{0ms}) {
       DoStopNow();
       ResponseMessage = "Attempting to stop writing job now.";
     } else {
-      DoSetStopTime(StopCmd.StopTime);
+      DoSetStopTime(StopJob.StopTime);
       ResponseMessage =
           fmt::format("File writing job stop time set to: {}",
-                      toUTCDateTime(time_point(StopCmd.StopTime)));
+                      toUTCDateTime(time_point(StopJob.StopTime)));
     }
   } catch (std::exception const &E) {
     ResponseMessage = E.what();
-    return CmdResponse{LogLevel::Error, 500, true, [ResponseMessage]() {
-                         return fmt::format(
-                             "Failed to execute stop command. The "
-                             "failure message was: {}",
-                             ResponseMessage);
-                       }};
+    return {LogLevel::Error, 500, true,
+            fmt::format("Failed to execute stop command. The "
+                        "failure message was: {}",
+                        ResponseMessage)};
   }
 
   // Success
-  return CmdResponse{LogLevel::Info, 201, true,
-                     [ResponseMessage]() { return ResponseMessage; }};
+  return {LogLevel::Info, 201, true, ResponseMessage};
 }
 
 } // namespace Command
