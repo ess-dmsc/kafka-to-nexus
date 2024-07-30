@@ -17,45 +17,39 @@
 
 namespace Stream {
 
-/// \brief Pass messages to the writer thread based on timestamp of message
+/// \brief Pass messages to the _writer thread based on timestamp of message
 /// and if there are any destinations in the file for the data.
 /// SourceFilter buffers a message such that, when used in conjunction with the
-/// periodic-update feature of the Forwarder, the writer module should always be
-/// able to record at least the data from a single message.
+/// periodic-update feature of the Forwarder, the _writer module should always
+/// be able to record at least the data from a single message.
 class SourceFilter {
 public:
   SourceFilter() = default;
-  SourceFilter(time_point StartTime, time_point StopTime,
-               bool AcceptRepeatedTimestamps, MessageWriter *Destination,
-               std::unique_ptr<Metrics::IRegistrar> RegisterMetric);
+  SourceFilter(time_point start_time, time_point stop_time,
+               bool accept_repeated_timestamps, MessageWriter *writer,
+               std::unique_ptr<Metrics::IRegistrar> registrar);
   virtual ~SourceFilter();
-  void addDestinationPtr(Message::DestPtrType NewDestination) {
-    DestIDs.push_back(NewDestination);
+  void add_writer_module_for_message(Message::DestPtrType writer_module) {
+    _destination_writer_modules.push_back(writer_module);
   };
 
-  virtual bool filterMessage(FileWriter::FlatbufferMessage InMsg);
-  void setStopTime(time_point StopTime);
-  time_point getStopTime() const { return Stop; }
-  virtual bool hasFinished() const;
+  virtual void filter_message(FileWriter::FlatbufferMessage const &message);
+  void set_stop_time(time_point stop_time);
+  time_point get_stop_time() const { return _stop_time; }
+  virtual bool has_finished() const;
 
-protected:
-  void sendMessage(FileWriter::FlatbufferMessage const &Msg) {
-    ++MessagesTransmitted;
-    for (auto &CDest : DestIDs) {
-      Dest->addMessage({CDest, Msg});
-    }
-  }
-
-  void sendBufferedMessage();
-  time_point Start;
-  time_point Stop;
-  bool WriteRepeatedTimestamps;
-  int64_t CurrentTimeStamp{0};
-  MessageWriter *Dest{nullptr};
-  bool IsDone{false};
-  FileWriter::FlatbufferMessage BufferedMessage;
-  std::vector<Message::DestPtrType> DestIDs;
-  std::unique_ptr<Metrics::IRegistrar> Registrar;
+private:
+  void forward_message(FileWriter::FlatbufferMessage const &message);
+  void forward_buffered_message();
+  time_point _start_time;
+  time_point _stop_time;
+  bool _allow_repeated_timestamps{false};
+  int64_t _last_seen_timestamp{0};
+  MessageWriter *_writer{nullptr};
+  bool _is_finished{false};
+  FileWriter::FlatbufferMessage _buffered_message;
+  std::vector<Message::DestPtrType> _destination_writer_modules;
+  std::unique_ptr<Metrics::IRegistrar> _registrar;
   Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
                                     "Flatbuffer failed validation.",
                                     Metrics::Severity::ERROR};

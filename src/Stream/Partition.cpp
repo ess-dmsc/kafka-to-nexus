@@ -44,7 +44,7 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
                                 RegisterMetric->getNewRegistrar(
                                     SrcDestInfo.getMetricsNameString())));
     }
-    TempFilterMap[SrcDestInfo.WriteHash]->addDestinationPtr(
+    TempFilterMap[SrcDestInfo.WriteHash]->add_writer_module_for_message(
         SrcDestInfo.Destination);
     WriterToSourceHashMap[SrcDestInfo.WriteHash] = SrcDestInfo.SrcHash;
   }
@@ -94,7 +94,7 @@ void Partition::setStopTime(time_point Stop) {
     StopTime = Stop;
     StopTester.setStopTime(Stop);
     for (auto &Filter : MsgFilters) {
-      Filter.second->setStopTime(Stop);
+      Filter.second->set_stop_time(Stop);
     }
   });
 }
@@ -107,7 +107,7 @@ void Partition::addPollTask() {
 
 void Partition::checkAndLogPartitionTimeOut() {
   if (StopTester.hasTopicTimedOut()) {
-    if (not PartitionTimeOutLogged) {
+    if (!PartitionTimeOutLogged) {
       Logger::Info(
           "No new messages were received from Kafka in partition {} of "
           "topic {} ({:.1f}s passed) when polling for new data.",
@@ -206,8 +206,7 @@ void Partition::pollForMessage() {
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
-  if (CurrentOffset != 0 and
-      CurrentOffset + 1 != Message.getMetaData().Offset) {
+  if (CurrentOffset != 0 && CurrentOffset + 1 != Message.getMetaData().Offset) {
     BadOffsets++;
   }
   CurrentOffset = Message.getMetaData().Offset;
@@ -241,12 +240,12 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
   for (auto &CFilter : MsgFilters) {
     if (CFilter.first == FbMsg.getSourceHash()) {
-      CFilter.second->filterMessage(FbMsg);
+      CFilter.second->filter_message(FbMsg);
     }
   }
   MsgFilters.erase(
       std::remove_if(MsgFilters.begin(), MsgFilters.end(),
-                     [](auto &Item) { return Item.second->hasFinished(); }),
+                     [](auto &Item) { return Item.second->has_finished(); }),
       MsgFilters.end());
 }
 

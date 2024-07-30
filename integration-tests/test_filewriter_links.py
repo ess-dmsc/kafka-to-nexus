@@ -19,7 +19,18 @@ from helpers.nexushelpers import OpenNexusFile from datetime import datetime,
                    stop_time = stop_time, metadata = "{}", )
               wait_start_job(worker_pool, write_job, timeout = 20)
 
-                  wait_no_working_writers(worker_pool, timeout = 30)
+    with open("commands/nexus_structure_links.json", "r") as f:
+        structure = f.read()
+    write_job = WriteJob(
+        nexus_structure=structure,
+        file_name=file_path,
+        broker=kafka_address,
+        start_time=start_time,
+        stop_time=stop_time,
+        control_topic="TEST_writer_commands",
+        metadata="{}",
+    )
+    wait_start_job(worker_pool, write_job, timeout=20)
 
                       with OpenNexusFile(file_path)
 as file : assert not file.swmr_mode assert file["entry/link_to_features"][0] ==

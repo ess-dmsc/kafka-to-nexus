@@ -21,7 +21,7 @@
 
 namespace Command {
 
-using StartFuncType = std::function<void(StartInfo)>;
+using StartFuncType = std::function<void(StartMessage)>;
 using StopTimeFuncType = std::function<void(time_point)>;
 using StopNowFuncType = std::function<void()>;
 using IsWritingFuncType = std::function<bool()>;
@@ -31,7 +31,7 @@ struct CmdResponse {
   LogSeverity LogLevel;
   int StatusCode{0};
   bool SendResponse;
-  std::function<std::string()> MessageString;
+  std::string Message;
 };
 
 class HandlerBase {
@@ -80,41 +80,22 @@ public:
                                    std::string const &ErrorMessage) override;
 
   void loopFunction() override;
-  [[nodiscard]] bool isUsingAlternativeTopic() const { return UsingAltTopic; }
-
-protected:
-  /// \brief Initiates writing.
-  ///
-  /// \param StartJob The start message as a StartMessage struct.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
-  /// pool or the command topic.
-  /// \return Metadata about the success/failure after processing the command.
-  CmdResponse startWriting(StartMessage const &StartJob, bool IsJobPoolCommand);
-
-  /// \brief Stops writing.
-  ///
-  /// \param StopJob The stop message as a StopMessage struct.
-  /// \return Metadata about the success/failure after processing the command.
-  CmdResponse stopWriting(StopMessage const &StopJob);
 
 private:
   /// \brief Handle start command.
   ///
   /// \param CommandMsg Kafka message.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
-  void handleStartCommand(FileWriter::Msg CommandMsg, bool IsJobPoolCommand);
+  void handleStartCommand(FileWriter::Msg CommandMsg);
 
   /// \brief Validate command and start writing.
   ///
   /// \param CommandMsg Kafka message.
   /// \param StartJob Returns the parsed start message as a StartMessage struct.
-  /// \param IsJobPoolCommand Flag to indicate if the command comes from the job
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse startWritingProcess(const FileWriter::Msg &CommandMsg,
-                                  StartMessage &StartJob,
-                                  bool IsJobPoolCommand);
+                                  StartMessage &StartJob);
 
   /// \brief Handle stop command.
   ///
