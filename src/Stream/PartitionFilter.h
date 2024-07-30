@@ -30,7 +30,7 @@ public:
   enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT };
   PartitionFilter() = default;
   PartitionFilter(time_point stop_time, duration stop_time_leeway,
-                                 duration time_limit);
+                  duration time_limit);
 
   /// \brief Update the stop time.
   void setStopTime(time_point stop) { _stop_time = stop; }

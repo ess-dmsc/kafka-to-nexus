@@ -12,9 +12,10 @@
 
 namespace Stream {
 
-PartitionFilter::PartitionFilter(time_point stop_time, duration stop_time_leeway,
-                                 duration time_limit)
-    : _stop_time(stop_time), _stop_leeway(stop_time_leeway), _time_limit(time_limit) {
+PartitionFilter::PartitionFilter(time_point stop_time,
+                                 duration stop_time_leeway, duration time_limit)
+    : _stop_time(stop_time), _stop_leeway(stop_time_leeway),
+      _time_limit(time_limit) {
   // Deal with potential overflow problem
   if (time_point::max() - _stop_time <= stop_time_leeway) {
     _stop_time -= stop_time_leeway;
@@ -22,7 +23,8 @@ PartitionFilter::PartitionFilter(time_point stop_time, duration stop_time_leeway
 }
 
 bool PartitionFilter::hasExceededTimeLimit() const {
-  return std::chrono::system_clock::now() > _status_occurrence_time + _time_limit;
+  return std::chrono::system_clock::now() >
+         _status_occurrence_time + _time_limit;
 }
 
 bool PartitionFilter::hasTopicTimedOut() const {
@@ -41,7 +43,8 @@ void PartitionFilter::forceStop() { _force_stop = true; }
 
 bool PartitionFilter::hasForceStopBeenRequested() const { return _force_stop; }
 
-bool PartitionFilter::shouldStopPartition(Kafka::PollStatus current_poll_status) {
+bool PartitionFilter::shouldStopPartition(
+    Kafka::PollStatus current_poll_status) {
   if (hasForceStopBeenRequested()) {
     return true;
   }
