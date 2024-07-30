@@ -206,8 +206,7 @@ void Partition::pollForMessage() {
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
-  if (CurrentOffset != 0 &&
-      CurrentOffset + 1 != Message.getMetaData().Offset) {
+  if (CurrentOffset != 0 && CurrentOffset + 1 != Message.getMetaData().Offset) {
     BadOffsets++;
   }
   CurrentOffset = Message.getMetaData().Offset;
