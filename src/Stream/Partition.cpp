@@ -12,45 +12,23 @@
 
 namespace Stream {
 
-Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
-                     int Partition, std::string TopicName, SrcToDst const &Map,
-                     MessageWriter *Writer, Metrics::IRegistrar *RegisterMetric,
-                     time_point Start, time_point Stop, duration StopLeeway,
-                     duration KafkaErrorTimeout,
-                     std::function<bool()> AreStreamersPausedFunction)
+Partition::Partition(
+    std::shared_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
+    std::string TopicName,
+    std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                          std::unique_ptr<SourceFilter>>>
+        filters,
+    Metrics::IRegistrar *RegisterMetric, time_point Stop, duration StopLeeway,
+    duration KafkaErrorTimeout,
+    std::function<bool()> AreStreamersPausedFunction)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout),
-      AreStreamersPausedFunction(AreStreamersPausedFunction) {
+      AreStreamersPausedFunction(AreStreamersPausedFunction),
+      MsgFilters(std::move(filters)) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
-  }
-  std::map<FileWriter::FlatbufferMessage::SrcHash,
-           std::unique_ptr<SourceFilter>>
-      TempFilterMap;
-  std::map<FileWriter::FlatbufferMessage::SrcHash,
-           FileWriter::FlatbufferMessage::SrcHash>
-      WriterToSourceHashMap;
-  for (auto const &SrcDestInfo : Map) {
-    // Note that the cppcheck warning we are suppressing here is an actual
-    // false positive due to side effects of instantiating the SourceFilter
-    if (TempFilterMap.find(SrcDestInfo.WriteHash) == TempFilterMap.end()) {
-      TempFilterMap.emplace(SrcDestInfo.WriteHash,
-                            // cppcheck-suppress stlFindInsert
-                            std::make_unique<SourceFilter>(
-                                Start, Stop,
-                                SrcDestInfo.AcceptsRepeatedTimestamps, Writer,
-                                RegisterMetric->getNewRegistrar(
-                                    SrcDestInfo.getMetricsNameString())));
-    }
-    TempFilterMap[SrcDestInfo.WriteHash]->add_writer_module_for_message(
-        SrcDestInfo.Destination);
-    WriterToSourceHashMap[SrcDestInfo.WriteHash] = SrcDestInfo.SrcHash;
-  }
-  for (auto &Item : TempFilterMap) {
-    auto UsedHash = WriterToSourceHashMap[Item.first];
-    MsgFilters.emplace_back(UsedHash, std::move(Item.second));
   }
 
   RegisterMetric->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});

@@ -278,9 +278,9 @@ TEST_F(TopicTest, StreamsAreCreatedCorrespondingToQueriedPartitions) {
 class PartitionStandInAlt : public Stream::Partition {
 public:
   PartitionStandInAlt()
-      : Stream::Partition({}, 0, "", {}, nullptr,
+      : Stream::Partition({}, 0, "", {},
                           std::make_unique<Metrics::Registrar>("").get(), {},
-                          {}, {}, {}, []() { return false; }) {}
+                          {}, {}, []() { return false; }) {}
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
 

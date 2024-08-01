@@ -158,6 +158,43 @@ void Topic::checkIfDoneTask() {
   Executor.sendLowPriorityWork([=]() { checkIfDone(); });
 }
 
+std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                      std::unique_ptr<SourceFilter>>>
+create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
+               MessageWriter *writer, Metrics::IRegistrar *registrar) {
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           std::unique_ptr<SourceFilter>>
+      hash_to_filter;
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           FileWriter::FlatbufferMessage::SrcHash>
+      write_hash_to_source_hash;
+  for (auto const &src_dest_info : map) {
+    // Note that the cppcheck warning we are suppressing here is an actual
+    // false positive due to side effects of instantiating the SourceFilter
+    if (hash_to_filter.find(src_dest_info.WriteHash) == hash_to_filter.end()) {
+      hash_to_filter.emplace(src_dest_info.WriteHash,
+                             // cppcheck-suppress stlFindInsert
+                             std::make_unique<SourceFilter>(
+                                 start_time, stop_time,
+                                 src_dest_info.AcceptsRepeatedTimestamps,
+                                 writer,
+                                 registrar->getNewRegistrar(
+                                     src_dest_info.getMetricsNameString())));
+    }
+    hash_to_filter[src_dest_info.WriteHash]->add_writer_module_for_message(
+        src_dest_info.Destination);
+    write_hash_to_source_hash[src_dest_info.WriteHash] = src_dest_info.SrcHash;
+  }
+  std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                        std::unique_ptr<SourceFilter>>>
+      filters;
+  for (auto &[hash, filter] : hash_to_filter) {
+    auto UsedHash = write_hash_to_source_hash[hash];
+    filters.emplace_back(UsedHash, std::move(filter));
+  }
+  return filters;
+}
+
 void Topic::createStreams(
     Kafka::BrokerSettings const &Settings, std::string const &Topic,
     std::vector<std::pair<int, int64_t>> const &PartitionOffsets) {
@@ -166,9 +203,11 @@ void Topic::createStreams(
         Registrar->getNewRegistrar("partition_" + std::to_string(partition));
     auto Consumer = _consumer_factory->createConsumerAtOffset(
         Settings, Topic, partition, offset);
+    auto filters = create_filters(DataMap, StartConsumeTime, StartConsumeTime,
+                                  WriterPtr, CRegistrar.get());
     auto TempPartition = std::make_unique<Partition>(
-        std::move(Consumer), partition, Topic, DataMap, WriterPtr,
-        CRegistrar.get(), StartConsumeTime, StopConsumeTime, StopLeeway,
+        std::move(Consumer), partition, Topic, std::move(filters),
+        CRegistrar.get(), StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout, AreStreamersPausedFunction);
     TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));
