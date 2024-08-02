@@ -8,14 +8,18 @@
 // Screaming Udder!                              https://esss.se
 
 #include "PartitionFilter.h"
+
 #include "Kafka/PollStatus.h"
+#include <memory>
+#include <utility>
 
 namespace Stream {
 
 PartitionFilter::PartitionFilter(time_point stop_time,
-                                 duration stop_time_leeway, duration time_limit)
+                                 duration stop_time_leeway, duration time_limit,
+                                 std::shared_ptr<Clock> clock)
     : _stop_time(stop_time), _stop_leeway(stop_time_leeway),
-      _time_limit(time_limit) {
+      _time_limit(time_limit), clock_(std::move(clock)) {
   // Deal with potential overflow problem
   if (time_point::max() - _stop_time <= stop_time_leeway) {
     _stop_time -= stop_time_leeway;
@@ -23,8 +27,7 @@ PartitionFilter::PartitionFilter(time_point stop_time,
 }
 
 bool PartitionFilter::hasExceededTimeLimit() const {
-  return std::chrono::system_clock::now() >
-         _status_occurrence_time + _time_limit;
+  return clock_->get_current_time() > _status_occurrence_time + _time_limit;
 }
 
 bool PartitionFilter::hasTopicTimedOut() const {
@@ -35,7 +38,7 @@ void PartitionFilter::updateStatusOccurrenceTime(
     PartitionState comparison_state) {
   if (_state != comparison_state) {
     _state = comparison_state;
-    _status_occurrence_time = std::chrono::system_clock::now();
+    _status_occurrence_time = clock_->get_current_time();
   }
 }
 
@@ -62,7 +65,7 @@ bool PartitionFilter::shouldStopPartition(
     if (!at_end_of_partition_) {
       return false;
     }
-    return std::chrono::system_clock::now() > _stop_time + _stop_leeway;
+    return clock_->get_current_time() > _stop_time + _stop_leeway;
   case Kafka::PollStatus::Error:
     updateStatusOccurrenceTime(PartitionState::ERROR);
     return hasExceededTimeLimit();
