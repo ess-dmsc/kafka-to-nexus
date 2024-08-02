@@ -8,8 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #pragma once
-
+#include "Clock.h"
 #include "TimeUtility.h"
+#include <memory>
 
 namespace Kafka {
 enum class PollStatus;
@@ -29,8 +30,9 @@ class PartitionFilter {
 public:
   enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT };
   PartitionFilter() = default;
-  PartitionFilter(time_point stop_time, duration stop_time_leeway,
-                  duration time_limit);
+  PartitionFilter(
+      time_point stop_time, duration stop_time_leeway, duration time_limit,
+      std::shared_ptr<Clock> clock = std::make_shared<SystemClock>());
 
   /// \brief Update the stop time.
   void setStopTime(time_point stop) { _stop_time = stop; }
@@ -74,6 +76,7 @@ private:
   time_point _stop_time{time_point::max()};
   duration _stop_leeway{10s};
   duration _time_limit{10s};
+  std::shared_ptr<Clock> clock_;
   bool at_end_of_partition_{false};
 };
 
