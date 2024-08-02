@@ -10,6 +10,7 @@
 #include "PartitionFilter.h"
 
 #include "Kafka/PollStatus.h"
+#include <memory>
 #include <utility>
 
 namespace Stream {

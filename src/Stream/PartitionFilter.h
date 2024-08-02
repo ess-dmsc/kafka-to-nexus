@@ -8,9 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #pragma once
-
 #include "Clock.h"
 #include "TimeUtility.h"
+#include <memory>
 
 namespace Kafka {
 enum class PollStatus;
