@@ -233,16 +233,19 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
     FlatbufferErrors++;
     return;
   }
-  if (std::any_of(MsgFilters.begin(), MsgFilters.end(), [&FbMsg](auto &Item) {
-        return Item.first == FbMsg.getSourceHash();
-      })) {
-    MessagesProcessed++;
-  }
-  for (auto &CFilter : MsgFilters) {
-    if (CFilter.first == FbMsg.getSourceHash()) {
-      CFilter.second->filter_message(FbMsg);
+
+  bool processed = false;
+  for (auto &[hash, filter] : MsgFilters) {
+    if (hash == FbMsg.getSourceHash()) {
+      processed = true;
+      filter->filter_message(FbMsg);
     }
   }
+
+  if (processed) {
+    MessagesProcessed++;
+  }
+
   MsgFilters.erase(
       std::remove_if(MsgFilters.begin(), MsgFilters.end(),
                      [](auto &Item) { return Item.second->has_finished(); }),
