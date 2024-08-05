@@ -32,7 +32,7 @@ public:
   PartitionFilter() = default;
   PartitionFilter(
       time_point stop_time, duration stop_time_leeway, duration time_limit,
-      std::shared_ptr<Clock> clock = std::make_shared<SystemClock>());
+      std::unique_ptr<Clock> clock = std::make_unique<SystemClock>());
 
   /// \brief Update the stop time.
   void setStopTime(time_point stop) { _stop_time = stop; }
@@ -76,8 +76,8 @@ private:
   time_point _stop_time{time_point::max()};
   duration _stop_leeway{10s};
   duration _time_limit{10s};
-  std::shared_ptr<Clock> clock_;
-  bool at_end_of_partition_{false};
+  std::unique_ptr<Clock> _clock;
+  bool _at_end_of_partition{false};
 };
 
 } // namespace Stream
