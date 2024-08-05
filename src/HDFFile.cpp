@@ -48,7 +48,7 @@ void HDFFile::createFileInRegularMode(
                                    FileCreationList, FileAccessList);
   } else {
     Logger::Info("Copying template file: {} to: {}", template_path.string(),
-             H5FileName.string());
+                 H5FileName.string());
     std::filesystem::copy(template_path, H5FileName,
                           std::filesystem::copy_options::overwrite_existing);
     hdfFile() = hdf5::file::open(H5FileName,
