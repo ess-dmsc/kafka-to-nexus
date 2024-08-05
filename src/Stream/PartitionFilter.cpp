@@ -17,9 +17,9 @@ namespace Stream {
 
 PartitionFilter::PartitionFilter(time_point stop_time,
                                  duration stop_time_leeway, duration time_limit,
-                                 std::shared_ptr<Clock> clock)
+                                 std::unique_ptr<Clock> clock)
     : _stop_time(stop_time), _stop_leeway(stop_time_leeway),
-      _time_limit(time_limit), clock_(std::move(clock)) {
+      _time_limit(time_limit), _clock(std::move(clock)) {
   // Deal with potential overflow problem
   if (time_point::max() - _stop_time <= stop_time_leeway) {
     _stop_time -= stop_time_leeway;
@@ -27,7 +27,7 @@ PartitionFilter::PartitionFilter(time_point stop_time,
 }
 
 bool PartitionFilter::hasExceededTimeLimit() const {
-  return clock_->get_current_time() > _status_occurrence_time + _time_limit;
+  return _clock->get_current_time() > _status_occurrence_time + _time_limit;
 }
 
 bool PartitionFilter::hasTopicTimedOut() const {
@@ -38,7 +38,7 @@ void PartitionFilter::updateStatusOccurrenceTime(
     PartitionState comparison_state) {
   if (_state != comparison_state) {
     _state = comparison_state;
-    _status_occurrence_time = clock_->get_current_time();
+    _status_occurrence_time = _clock->get_current_time();
   }
 }
 
@@ -53,19 +53,19 @@ bool PartitionFilter::shouldStopPartition(
   }
   switch (current_poll_status) {
   case Kafka::PollStatus::Message:
-    at_end_of_partition_ = false;
+    _at_end_of_partition = false;
     _state = PartitionState::DEFAULT;
     return false;
   case Kafka::PollStatus::EndOfPartition:
-    at_end_of_partition_ = true;
+    _at_end_of_partition = true;
     _state = PartitionState::END_OF_PARTITION;
     return false;
   case Kafka::PollStatus::TimedOut:
     updateStatusOccurrenceTime(PartitionState::TIMEOUT);
-    if (!at_end_of_partition_) {
+    if (!_at_end_of_partition) {
       return false;
     }
-    return clock_->get_current_time() > _stop_time + _stop_leeway;
+    return _clock->get_current_time() > _stop_time + _stop_leeway;
   case Kafka::PollStatus::Error:
     updateStatusOccurrenceTime(PartitionState::ERROR);
     return hasExceededTimeLimit();
