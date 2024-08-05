@@ -41,13 +41,13 @@ HDFFile::~HDFFile() { addMetaData(); }
 void HDFFile::createFileInRegularMode(
     std::filesystem::path const &template_path, bool const &is_legacy_writing) {
   if (template_path.empty() || is_legacy_writing) {
-    LOG_INFO("Creating new file: {}", H5FileName.string());
+    Logger::Info("Creating new file: {}", H5FileName.string());
     hdfFile() = hdf5::file::create(H5FileName,
                                    hdf5::file::AccessFlags::Exclusive |
                                        hdf5::file::AccessFlags::SWMRWrite,
                                    FileCreationList, FileAccessList);
   } else {
-    LOG_INFO("Copying template file: {} to: {}", template_path.string(),
+    Logger::Info("Copying template file: {} to: {}", template_path.string(),
              H5FileName.string());
     std::filesystem::copy(template_path, H5FileName,
                           std::filesystem::copy_options::overwrite_existing);
@@ -157,10 +157,10 @@ std::string HDFFileBase::read_template_version_if_present(
     hdf5::node::Group const &RootGroup) {
   if (RootGroup.attributes.exists("template_version")) {
     RootGroup.attributes["template_version"].read(ExistingTemplateVersion);
-    LOG_DEBUG("The template version is: {}", ExistingTemplateVersion);
+    Logger::Debug("The template version is: {}", ExistingTemplateVersion);
     return ExistingTemplateVersion;
   }
-  LOG_DEBUG("No template version found.");
+  Logger::Debug("No template version found.");
   return "";
 }
 

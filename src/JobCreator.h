@@ -30,7 +30,7 @@ std::unique_ptr<StreamController> createFileWritingJob(
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
         std::make_shared<Kafka::ConsumerFactory>());
 
-void createFileWriterTemplate(Command::StartInfo const &StartInfo,
+void createFileWriterTemplate(Command::StartMessage const &StartInfo,
                               std::filesystem::path const &filepath,
                               Metrics::IRegistrar *Registrar,
                               MetaData::TrackerPtr const &Tracker);
