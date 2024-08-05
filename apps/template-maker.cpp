@@ -61,7 +61,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
       std::make_unique<FakeRegistrar>();
   auto tracker = std::make_shared<FakeTracker>();
 
-  Command::StartInfo start_info;
+  Command::StartMessage start_info;
 
   std::cout << "Loaded file\n";
 

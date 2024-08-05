@@ -199,7 +199,7 @@ std::unique_ptr<StreamController> createFileWritingJob(
       metadata_enquirer, consumer_factory);
 }
 
-void createFileWriterTemplate(Command::StartInfo const &StartInfo,
+void createFileWriterTemplate(Command::StartMessage const &StartInfo,
                               std::filesystem::path const &filepath,
                               Metrics::IRegistrar *Registrar,
                               MetaData::TrackerPtr const &Tracker) {
