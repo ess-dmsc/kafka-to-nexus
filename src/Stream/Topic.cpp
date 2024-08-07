@@ -166,7 +166,7 @@ void Topic::createStreams(
         Registrar->getNewRegistrar("partition_" + std::to_string(partition));
     auto Consumer = _consumer_factory->createConsumerAtOffset(
         Settings, Topic, partition, offset);
-    auto TempPartition = std::make_unique<Partition>(
+    auto TempPartition = Partition::create(
         std::move(Consumer), partition, Topic, DataMap, WriterPtr,
         CRegistrar.get(), StartConsumeTime, StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout, AreStreamersPausedFunction);
