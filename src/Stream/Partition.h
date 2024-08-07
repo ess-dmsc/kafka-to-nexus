@@ -48,6 +48,9 @@ public:
          duration kafka_error_timeout,
          std::function<bool()> const &streamers_paused_function);
 
+  std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                        std::unique_ptr<SourceFilter>>>
+
   Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::IRegistrar *RegisterMetric, time_point Start,

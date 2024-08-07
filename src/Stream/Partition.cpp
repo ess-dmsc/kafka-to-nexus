@@ -12,12 +12,50 @@
 
 namespace Stream {
 
+std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                      std::unique_ptr<SourceFilter>>>
+create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
+               MessageWriter *writer, Metrics::IRegistrar *registrar) {
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           std::unique_ptr<SourceFilter>>
+      hash_to_filter;
+  std::map<FileWriter::FlatbufferMessage::SrcHash,
+           FileWriter::FlatbufferMessage::SrcHash>
+      write_hash_to_source_hash;
+  for (auto const &src_dest_info : map) {
+    // Note that the cppcheck warning we are suppressing here is an actual
+    // false positive due to side effects of instantiating the SourceFilter
+    if (hash_to_filter.find(src_dest_info.WriteHash) == hash_to_filter.end()) {
+      hash_to_filter.emplace(src_dest_info.WriteHash,
+                             // cppcheck-suppress stlFindInsert
+                             std::make_unique<SourceFilter>(
+                                 start_time, stop_time,
+                                 src_dest_info.AcceptsRepeatedTimestamps,
+                                 writer,
+                                 registrar->getNewRegistrar(
+                                     src_dest_info.getMetricsNameString())));
+    }
+    hash_to_filter[src_dest_info.WriteHash]->add_writer_module_for_message(
+        src_dest_info.Destination);
+    write_hash_to_source_hash[src_dest_info.WriteHash] = src_dest_info.SrcHash;
+  }
+  std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                        std::unique_ptr<SourceFilter>>>
+      filters;
+  for (auto &[hash, filter] : hash_to_filter) {
+    auto UsedHash = write_hash_to_source_hash[hash];
+    filters.emplace_back(UsedHash, std::move(filter));
+  }
+  return filters;
+}
+
 std::unique_ptr<Partition> Partition::create(
     std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
     const std::string &topic_name, const SrcToDst &map, MessageWriter *writer,
     Metrics::IRegistrar *registrar, time_point start_time, time_point stop_time,
     duration stop_leeway, duration kafka_error_timeout,
     const std::function<bool()> &streamers_paused_function) {
+  auto filters = create_filters(map, start_time, stop_time, writer, registrar);
   return std::make_unique<Partition>(
       std::move(consumer), partition, topic_name, map, writer, registrar,
       start_time, stop_time, stop_leeway, kafka_error_timeout,
