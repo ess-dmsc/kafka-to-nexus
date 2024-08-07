@@ -73,14 +73,15 @@ Partition::Partition(
     std::unique_ptr<PartitionFilter> partition_filter,
     Metrics::IRegistrar *registrar, time_point stop_time, duration stop_leeway,
     std::function<bool()> const &streamers_paused_function)
-    : ConsumerPtr(std::move(consumer)), PartitionID(partition),
-      Topic(topic_name), StopTime(stop_time), StopTimeLeeway(stop_leeway),
-      StopTester(std::move(partition_filter)),
+    : _consumer(std::move(consumer)), _partition_id(partition),
+      _topic_name(topic_name), _stop_time(stop_time),
+      _stop_time_leeway(stop_leeway),
+      _partition_filter(std::move(partition_filter)),
       _source_filters(std::move(source_filters)),
-      AreStreamersPausedFunction(streamers_paused_function) {
+      _streamers_paused_function(streamers_paused_function) {
   // Stop time is reduced if it is too close to max to avoid overflow.
-  if (time_point::max() - StopTime <= StopTimeLeeway) {
-    StopTime -= StopTimeLeeway;
+  if (time_point::max() - _stop_time <= _stop_time_leeway) {
+    _stop_time -= _stop_time_leeway;
   }
 
   registrar->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
@@ -103,6 +104,7 @@ Partition::Partition(
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
 
+// Old constructor - to be removed
 Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                      int partition, std::string const &topic_name,
                      SrcToDst const &map, MessageWriter *writer,
@@ -118,76 +120,76 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
 
 void Partition::start() { addPollTask(); }
 
-void Partition::forceStop() { StopTester->forceStop(); }
+void Partition::forceStop() { _partition_filter->forceStop(); }
 
 void Partition::sleep(const duration Duration) const {
   std::this_thread::sleep_for(Duration);
 }
 
 void Partition::stop() {
-  Executor.sendLowPriorityWork([=]() { forceStop(); });
-  Executor.sendWork([=]() { forceStop(); });
+  _executor.sendLowPriorityWork([=]() { forceStop(); });
+  _executor.sendWork([=]() { forceStop(); });
 }
 
 void Partition::setStopTime(time_point Stop) {
-  Executor.sendWork([=]() {
-    StopTime = Stop;
-    StopTester->setStopTime(Stop);
+  _executor.sendWork([=]() {
+    _stop_time = Stop;
+    _partition_filter->setStopTime(Stop);
     for (auto &Filter : _source_filters) {
       Filter.second->set_stop_time(Stop);
     }
   });
 }
 
-bool Partition::hasFinished() const { return HasFinished.load(); }
+bool Partition::hasFinished() const { return _has_finished.load(); }
 
 void Partition::addPollTask() {
-  Executor.sendLowPriorityWork([=]() { pollForMessage(); });
+  _executor.sendLowPriorityWork([=]() { pollForMessage(); });
 }
 
 void Partition::checkAndLogPartitionTimeOut() {
-  if (StopTester->hasTopicTimedOut()) {
-    if (!PartitionTimeOutLogged) {
+  if (_partition_filter->hasTopicTimedOut()) {
+    if (!_partition_time_out_logged) {
       Logger::Info(
           "No new messages were received from Kafka in partition {} of "
           "topic {} ({:.1f}s passed) when polling for new data.",
-          PartitionID, Topic,
-          double(
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  system_clock::now() - StopTester->getStatusOccurrenceTime())
-                  .count()) /
+          _partition_id, _topic_name,
+          double(std::chrono::duration_cast<std::chrono::milliseconds>(
+                     system_clock::now() -
+                     _partition_filter->getStatusOccurrenceTime())
+                     .count()) /
               1000.0);
-      PartitionTimeOutLogged = true;
+      _partition_time_out_logged = true;
     }
   } else {
-    PartitionTimeOutLogged = false;
+    _partition_time_out_logged = false;
   }
 }
 
 bool Partition::hasStopBeenRequested() const {
-  return StopTester->hasForceStopBeenRequested();
+  return _partition_filter->hasForceStopBeenRequested();
 }
 
 bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
   checkAndLogPartitionTimeOut();
-  if (StopTester->shouldStopPartition(CStatus)) {
-    switch (StopTester->currentPartitionState()) {
+  if (_partition_filter->shouldStopPartition(CStatus)) {
+    switch (_partition_filter->currentPartitionState()) {
     case PartitionFilter::PartitionState::ERROR:
       Logger::Error(
           "Stopping consumption of data from Kafka in partition {} of "
           "topic {} due to poll error.",
-          PartitionID, Topic);
+          _partition_id, _topic_name);
       break;
     case PartitionFilter::PartitionState::END_OF_PARTITION:
       Logger::Info(
           R"(Done consuming data from partition {} of topic "{}" (reached the end of the partition).)",
-          PartitionID, Topic);
+          _partition_id, _topic_name);
       break;
     case PartitionFilter::PartitionState::TIMEOUT:
     case PartitionFilter::PartitionState::DEFAULT:
     default:
       Logger::Info(R"(Done consuming data from partition {} of topic "{}".)",
-                   PartitionID, Topic);
+                   _partition_id, _topic_name);
     }
     return true;
   }
@@ -196,13 +198,13 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
 
 void Partition::pollForMessage() {
   if (hasStopBeenRequested()) {
-    HasFinished = true;
+    _has_finished = true;
     return;
   }
-  if (AreStreamersPausedFunction()) {
-    sleep(PauseCheckInterval);
+  if (_streamers_paused_function()) {
+    sleep(_pause_check_interval);
   } else {
-    auto Msg = ConsumerPtr->poll();
+    auto Msg = _consumer->poll();
     switch (Msg.first) {
     case Kafka::PollStatus::Message:
       MessagesReceived++;
@@ -221,7 +223,7 @@ void Partition::pollForMessage() {
       break;
     }
     if (shouldStopBasedOnPollStatus(Msg.first)) {
-      HasFinished = true;
+      _has_finished = true;
       return;
     }
 
@@ -230,15 +232,15 @@ void Partition::pollForMessage() {
       if (_source_filters.empty()) {
         Logger::Info(
             R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
-            PartitionID, Topic);
-        HasFinished = true;
+            _partition_id, _topic_name);
+        _has_finished = true;
         return;
       } else if (Msg.second.getMetaData().timestamp() >
-                 StopTime + StopTimeLeeway) {
+                 _stop_time + _stop_time_leeway) {
         Logger::Info(
             R"(Done consuming data from partition {} of topic "{}" as we have reached the stop time. The timestamp of the last message was: {})",
-            PartitionID, Topic, Msg.second.getMetaData().timestamp());
-        HasFinished = true;
+            _partition_id, _topic_name, Msg.second.getMetaData().timestamp());
+        _has_finished = true;
         return;
       }
     }
@@ -247,10 +249,11 @@ void Partition::pollForMessage() {
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
-  if (CurrentOffset != 0 && CurrentOffset + 1 != Message.getMetaData().Offset) {
+  if (_current_offset != 0 &&
+      _current_offset + 1 != Message.getMetaData().Offset) {
     BadOffsets++;
   }
-  CurrentOffset = Message.getMetaData().Offset;
+  _current_offset = Message.getMetaData().Offset;
   FileWriter::FlatbufferMessage FbMsg;
   try {
     FbMsg = FileWriter::FlatbufferMessage(Message);

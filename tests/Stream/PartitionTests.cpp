@@ -64,9 +64,11 @@ public:
   void addPollTask() override {
     // Do nothing as don't want to automatically poll again
   }
+  using Partition::_consumer;
+  using Partition::_executor;
   using Partition::_source_filters;
-  using Partition::ConsumerPtr;
-  using Partition::Executor;
+  using Partition::_stop_time;
+  using Partition::_stop_time_leeway;
   using Partition::FlatbufferErrors;
   using Partition::forceStop;
   using Partition::KafkaErrors;
@@ -75,8 +77,6 @@ public:
   using Partition::MessagesReceived;
   using Partition::pollForMessage;
   using Partition::processMessage;
-  using Partition::StopTime;
-  using Partition::StopTimeLeeway;
   MAKE_CONST_MOCK1(sleep, void(const duration Duration), override);
 };
 
@@ -86,7 +86,7 @@ void waitUntilDoneProcessing(PartitionStandIn *UnderTest) {
   // now have been executed
   std::promise<bool> Promise;
   auto Future = Promise.get_future();
-  UnderTest->Executor.sendWork([&Promise]() { Promise.set_value(true); });
+  UnderTest->_executor.sendWork([&Promise]() { Promise.set_value(true); });
   Future.wait();
 }
 
@@ -115,7 +115,7 @@ public:
         UsedPartitionId, TopicName, UsedMap, nullptr, Start, StopTime,
         StopLeeway, ErrorTimeout, AreStreamersPausedFunction);
     Stop = StopTime;
-    Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->ConsumerPtr.get());
+    Consumer = dynamic_cast<Kafka::MockConsumer *>(Temp->_consumer.get());
     return Temp;
   }
   auto createTestedInstance(std::function<bool()> AreStreamersPausedFunction) {
@@ -143,14 +143,14 @@ TEST_F(PartitionTest, OnConstructionValuesAreAsExpected) {
   auto UnderTest = createTestedInstance(StopTime);
   EXPECT_EQ(UnderTest->getPartitionID(), UsedPartitionId);
   EXPECT_EQ(UnderTest->getTopicName(), TopicName);
-  EXPECT_EQ(UnderTest->StopTimeLeeway, StopLeeway);
-  EXPECT_EQ(UnderTest->StopTime, StopTime);
+  EXPECT_EQ(UnderTest->_stop_time_leeway, StopLeeway);
+  EXPECT_EQ(UnderTest->_stop_time, StopTime);
 }
 
 TEST_F(PartitionTest, IfStopTimeTooCloseToMaxThenItIsBackedOff) {
   auto StopTime = std::chrono::system_clock::time_point::max() - StopLeeway / 2;
   auto UnderTest = createTestedInstance(StopTime);
-  EXPECT_EQ(UnderTest->StopTime, StopTime - StopLeeway);
+  EXPECT_EQ(UnderTest->_stop_time, StopTime - StopLeeway);
 }
 
 TEST_F(PartitionTest, ActualMessageIsCounted) {

@@ -48,7 +48,7 @@ public:
          duration kafka_error_timeout,
          std::function<bool()> const &streamers_paused_function);
 
-  /// Old constructor - to be removed
+  // Old constructor - to be removed
   Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
             std::string const &topic_name, SrcToDst const &map,
             MessageWriter *writer, Metrics::IRegistrar *registrar,
@@ -84,8 +84,8 @@ public:
   void setStopTime(time_point Stop);
 
   virtual bool hasFinished() const;
-  auto getPartitionID() const { return PartitionID; }
-  auto getTopicName() const { return Topic; }
+  auto getPartitionID() const { return _partition_id; }
+  auto getTopicName() const { return _topic_name; }
 
 protected:
   Metrics::Metric KafkaTimeouts{"timeouts",
@@ -135,23 +135,23 @@ protected:
   /// \brief Sleep.
   /// \note This function exist in order to make unit testing possible.
   virtual void sleep(duration const Duration) const;
-
   virtual void processMessage(FileWriter::Msg const &Message);
-  std::shared_ptr<Kafka::ConsumerInterface> ConsumerPtr;
-  int PartitionID{-1};
-  bool PartitionTimeOutLogged{false};
-  std::string Topic{"not_initialized"};
-  std::atomic_bool HasFinished{false};
-  std::int64_t CurrentOffset{0};
-  time_point StopTime;
-  duration StopTimeLeeway{};
-  duration PauseCheckInterval{200ms};
-  std::unique_ptr<PartitionFilter> StopTester;
+
+  std::shared_ptr<Kafka::ConsumerInterface> _consumer;
+  int _partition_id{-1};
+  bool _partition_time_out_logged{false};
+  std::string _topic_name{"not_initialized"};
+  std::atomic_bool _has_finished{false};
+  std::int64_t _current_offset{0};
+  time_point _stop_time;
+  duration _stop_time_leeway{};
+  duration _pause_check_interval{200ms};
+  std::unique_ptr<PartitionFilter> _partition_filter;
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
       _source_filters;
-  std::function<bool()> AreStreamersPausedFunction;
-  ThreadedExecutor Executor{false, "partition"}; // Must be last
+  std::function<bool()> _streamers_paused_function;
+  ThreadedExecutor _executor{false, "partition"}; // Must be last
 };
 
 } // namespace Stream
