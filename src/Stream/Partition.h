@@ -40,6 +40,13 @@ using SrcToDst = std::vector<SrcDstKey>;
 /// based) filtering of those messages.
 class Partition {
 public:
+  static std::unique_ptr<Partition>
+  create(std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
+         std::string const &topic_name, SrcToDst const &map,
+         MessageWriter *writer, Metrics::IRegistrar *registrar,
+         time_point start_time, time_point stop_time, duration stop_leeway,
+         duration kafka_error_timeout,
+         std::function<bool()> const &streamers_paused_function);
 
   Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,

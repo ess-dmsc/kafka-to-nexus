@@ -12,6 +12,20 @@
 
 namespace Stream {
 
+std::unique_ptr<Partition>
+create(std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
+       std::string const &topic_name, SrcToDst const &map,
+       MessageWriter *writer, Metrics::IRegistrar *registrar,
+       time_point start_time, time_point stop_time, duration stop_leeway,
+       duration kafka_error_timeout,
+       std::function<bool()> const &streamers_paused_function) {
+
+  return std::make_unique<Partition>(
+      std::move(consumer), partition, topic_name, map, writer, registrar,
+      start_time, stop_time, stop_leeway, kafka_error_timeout,
+      streamers_paused_function);
+}
+
 Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
                      int Partition, std::string TopicName, SrcToDst const &Map,
                      MessageWriter *Writer, Metrics::IRegistrar *RegisterMetric,
