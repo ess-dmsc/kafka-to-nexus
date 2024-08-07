@@ -148,7 +148,7 @@ protected:
   PartitionFilter StopTester;
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
-      MsgFilters;
+      _source_filters;
   std::function<bool()> AreStreamersPausedFunction;
   ThreadedExecutor Executor{false, "partition"}; // Must be last
 };

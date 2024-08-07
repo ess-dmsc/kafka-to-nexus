@@ -73,7 +73,7 @@ Partition::Partition(
     : ConsumerPtr(std::move(consumer)), PartitionID(partition),
       Topic(topic_name), StopTime(stop_time), StopTimeLeeway(stop_leeway),
       StopTester(stop_time, stop_leeway, kafka_error_timeout),
-      MsgFilters(std::move(source_filters)),
+      _source_filters(std::move(source_filters)),
       AreStreamersPausedFunction(streamers_paused_function) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
@@ -129,7 +129,7 @@ void Partition::setStopTime(time_point Stop) {
   Executor.sendWork([=]() {
     StopTime = Stop;
     StopTester.setStopTime(Stop);
-    for (auto &Filter : MsgFilters) {
+    for (auto &Filter : _source_filters) {
       Filter.second->set_stop_time(Stop);
     }
   });
@@ -222,7 +222,7 @@ void Partition::pollForMessage() {
 
     if (Msg.first == Kafka::PollStatus::Message) {
       processMessage(Msg.second);
-      if (MsgFilters.empty()) {
+      if (_source_filters.empty()) {
         Logger::Info(
             R"(Done consuming data from partition {} of topic "{}" as there are no remaining filters.)",
             PartitionID, Topic);
@@ -271,7 +271,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
 
   bool processed = false;
-  for (auto &[hash, filter] : MsgFilters) {
+  for (auto &[hash, filter] : _source_filters) {
     if (hash == FbMsg.getSourceHash()) {
       processed = true;
       filter->filter_message(FbMsg);
@@ -282,10 +282,10 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
     MessagesProcessed++;
   }
 
-  MsgFilters.erase(
-      std::remove_if(MsgFilters.begin(), MsgFilters.end(),
+  _source_filters.erase(
+      std::remove_if(_source_filters.begin(), _source_filters.end(),
                      [](auto &Item) { return Item.second->has_finished(); }),
-      MsgFilters.end());
+      _source_filters.end());
 }
 
 } // namespace Stream
