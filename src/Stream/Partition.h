@@ -48,14 +48,22 @@ public:
          duration kafka_error_timeout,
          std::function<bool()> const &streamers_paused_function);
 
-  std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
-                        std::unique_ptr<SourceFilter>>>
+  /// Old constructor - to be removed
+  Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
+            std::string const &topic_name, SrcToDst const &map,
+            MessageWriter *writer, Metrics::IRegistrar *registrar,
+            time_point start_time, time_point stop_time, duration stop_leeway,
+            duration kafka_error_timeout,
+            std::function<bool()> const &streamers_paused_function);
 
-  Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer, int Partition,
-            std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
-            Metrics::IRegistrar *RegisterMetric, time_point Start,
-            time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
-            std::function<bool()> const &AreStreamersPausedFunction);
+  Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
+            std::string const &topic_name,
+            std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                                  std::unique_ptr<SourceFilter>>>
+                source_filters,
+            Metrics::IRegistrar *registrar, time_point stop_time,
+            duration stop_leeway, duration kafka_error_timeout,
+            std::function<bool()> const &streamers_paused_function);
   virtual ~Partition() = default;
 
   /// \brief Must be called after the constructor.
@@ -138,10 +146,10 @@ protected:
   duration StopTimeLeeway{};
   duration PauseCheckInterval{200ms};
   PartitionFilter StopTester;
-  std::function<bool()> AreStreamersPausedFunction;
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
       MsgFilters;
+  std::function<bool()> AreStreamersPausedFunction;
   ThreadedExecutor Executor{false, "partition"}; // Must be last
 };
 

@@ -57,74 +57,60 @@ std::unique_ptr<Partition> Partition::create(
     const std::function<bool()> &streamers_paused_function) {
   auto filters = create_filters(map, start_time, stop_time, writer, registrar);
   return std::make_unique<Partition>(
-      std::move(consumer), partition, topic_name, map, writer, registrar,
-      start_time, stop_time, stop_leeway, kafka_error_timeout,
-      streamers_paused_function);
+      std::move(consumer), partition, topic_name, std::move(filters), registrar,
+      stop_time, stop_leeway, kafka_error_timeout, streamers_paused_function);
 }
 
-Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
-                     int Partition, std::string TopicName, SrcToDst const &Map,
-                     MessageWriter *Writer, Metrics::IRegistrar *RegisterMetric,
-                     time_point Start, time_point Stop, duration StopLeeway,
-                     duration KafkaErrorTimeout,
-                     std::function<bool()> const &AreStreamersPausedFunction)
-    : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
-      Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
-      StopTester(Stop, StopLeeway, KafkaErrorTimeout),
-      AreStreamersPausedFunction(AreStreamersPausedFunction) {
+Partition::Partition(
+    std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
+    std::string const &topic_name,
+    std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
+                          std::unique_ptr<SourceFilter>>>
+        source_filters,
+    Metrics::IRegistrar *registrar, time_point stop_time, duration stop_leeway,
+    duration kafka_error_timeout,
+    std::function<bool()> const &streamers_paused_function)
+    : ConsumerPtr(std::move(consumer)), PartitionID(partition),
+      Topic(topic_name), StopTime(stop_time), StopTimeLeeway(stop_leeway),
+      StopTester(stop_time, stop_leeway, kafka_error_timeout),
+      MsgFilters(std::move(source_filters)),
+      AreStreamersPausedFunction(streamers_paused_function) {
   // Stop time is reduced if it is too close to max to avoid overflow.
   if (time_point::max() - StopTime <= StopTimeLeeway) {
     StopTime -= StopTimeLeeway;
   }
-  std::map<FileWriter::FlatbufferMessage::SrcHash,
-           std::unique_ptr<SourceFilter>>
-      TempFilterMap;
-  std::map<FileWriter::FlatbufferMessage::SrcHash,
-           FileWriter::FlatbufferMessage::SrcHash>
-      WriterToSourceHashMap;
-  for (auto const &SrcDestInfo : Map) {
-    // Note that the cppcheck warning we are suppressing here is an actual
-    // false positive due to side effects of instantiating the SourceFilter
-    if (TempFilterMap.find(SrcDestInfo.WriteHash) == TempFilterMap.end()) {
-      TempFilterMap.emplace(SrcDestInfo.WriteHash,
-                            // cppcheck-suppress stlFindInsert
-                            std::make_unique<SourceFilter>(
-                                Start, Stop,
-                                SrcDestInfo.AcceptsRepeatedTimestamps, Writer,
-                                RegisterMetric->getNewRegistrar(
-                                    SrcDestInfo.getMetricsNameString())));
-    }
-    TempFilterMap[SrcDestInfo.WriteHash]->add_writer_module_for_message(
-        SrcDestInfo.Destination);
-    WriterToSourceHashMap[SrcDestInfo.WriteHash] = SrcDestInfo.SrcHash;
-  }
-  for (auto &Item : TempFilterMap) {
-    auto UsedHash = WriterToSourceHashMap[Item.first];
-    MsgFilters.emplace_back(UsedHash, std::move(Item.second));
-  }
 
-  RegisterMetric->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
-  RegisterMetric->registerMetric(
-      KafkaErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric->registerMetric(EndOfPartition, {Metrics::LogTo::CARBON});
-  RegisterMetric->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
-  RegisterMetric->registerMetric(MessagesProcessed, {Metrics::LogTo::CARBON});
-  RegisterMetric->registerMetric(
-      BadOffsets, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric->registerMetric(
-      FlatbufferErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric->registerMetric(
-      BadFlatbufferTimestampErrors,
-      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric->registerMetric(
-      UnknownFlatbufferIdErrors,
-      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric->registerMetric(
-      NotValidFlatbufferErrors,
-      {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  RegisterMetric->registerMetric(
-      BufferTooSmallErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(KafkaErrors,
+                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar->registerMetric(EndOfPartition, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(MessagesProcessed, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(BadOffsets,
+                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar->registerMetric(FlatbufferErrors,
+                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar->registerMetric(BadFlatbufferTimestampErrors,
+                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar->registerMetric(UnknownFlatbufferIdErrors,
+                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar->registerMetric(NotValidFlatbufferErrors,
+                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+  registrar->registerMetric(BufferTooSmallErrors,
+                            {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
+
+Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
+                     int partition, std::string const &topic_name,
+                     SrcToDst const &map, MessageWriter *writer,
+                     Metrics::IRegistrar *registrar, time_point start_time,
+                     time_point stop_time, duration stop_leeway,
+                     duration kafka_error_timeout,
+                     std::function<bool()> const &streamers_paused_function)
+    : Partition(std::move(consumer), partition, topic_name,
+                create_filters(map, start_time, stop_time, writer, registrar),
+                registrar, stop_time, stop_leeway, kafka_error_timeout,
+                streamers_paused_function) {}
 
 void Partition::start() { addPollTask(); }
 
