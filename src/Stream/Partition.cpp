@@ -12,14 +12,12 @@
 
 namespace Stream {
 
-std::unique_ptr<Partition>
-create(std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
-       std::string const &topic_name, SrcToDst const &map,
-       MessageWriter *writer, Metrics::IRegistrar *registrar,
-       time_point start_time, time_point stop_time, duration stop_leeway,
-       duration kafka_error_timeout,
-       std::function<bool()> const &streamers_paused_function) {
-
+std::unique_ptr<Partition> Partition::create(
+    std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
+    const std::string &topic_name, const SrcToDst &map, MessageWriter *writer,
+    Metrics::IRegistrar *registrar, time_point start_time, time_point stop_time,
+    duration stop_leeway, duration kafka_error_timeout,
+    const std::function<bool()> &streamers_paused_function) {
   return std::make_unique<Partition>(
       std::move(consumer), partition, topic_name, map, writer, registrar,
       start_time, stop_time, stop_leeway, kafka_error_timeout,
@@ -31,7 +29,7 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> Consumer,
                      MessageWriter *Writer, Metrics::IRegistrar *RegisterMetric,
                      time_point Start, time_point Stop, duration StopLeeway,
                      duration KafkaErrorTimeout,
-                     std::function<bool()> AreStreamersPausedFunction)
+                     std::function<bool()> const &AreStreamersPausedFunction)
     : ConsumerPtr(std::move(Consumer)), PartitionID(Partition),
       Topic(std::move(TopicName)), StopTime(Stop), StopTimeLeeway(StopLeeway),
       StopTester(Stop, StopLeeway, KafkaErrorTimeout),

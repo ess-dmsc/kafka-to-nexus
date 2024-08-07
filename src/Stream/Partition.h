@@ -52,7 +52,7 @@ public:
             std::string TopicName, SrcToDst const &Map, MessageWriter *Writer,
             Metrics::IRegistrar *RegisterMetric, time_point Start,
             time_point Stop, duration StopLeeway, duration KafkaErrorTimeout,
-            std::function<bool()> AreStreamersPausedFunction);
+            std::function<bool()> const &AreStreamersPausedFunction);
   virtual ~Partition() = default;
 
   /// \brief Must be called after the constructor.
