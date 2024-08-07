@@ -56,9 +56,12 @@ std::unique_ptr<Partition> Partition::create(
     duration stop_leeway, duration kafka_error_timeout,
     const std::function<bool()> &streamers_paused_function) {
   auto filters = create_filters(map, start_time, stop_time, writer, registrar);
+  auto partition_filter = std::make_unique<PartitionFilter>(
+      stop_time, stop_leeway, kafka_error_timeout);
   return std::make_unique<Partition>(
-      std::move(consumer), partition, topic_name, std::move(filters), registrar,
-      stop_time, stop_leeway, kafka_error_timeout, streamers_paused_function);
+      std::move(consumer), partition, topic_name, std::move(filters),
+      std::move(partition_filter), registrar, stop_time, stop_leeway,
+      streamers_paused_function);
 }
 
 Partition::Partition(
@@ -67,12 +70,12 @@ Partition::Partition(
     std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                           std::unique_ptr<SourceFilter>>>
         source_filters,
+    std::unique_ptr<PartitionFilter> partition_filter,
     Metrics::IRegistrar *registrar, time_point stop_time, duration stop_leeway,
-    duration kafka_error_timeout,
     std::function<bool()> const &streamers_paused_function)
     : ConsumerPtr(std::move(consumer)), PartitionID(partition),
       Topic(topic_name), StopTime(stop_time), StopTimeLeeway(stop_leeway),
-      StopTester(stop_time, stop_leeway, kafka_error_timeout),
+      StopTester(std::move(partition_filter)),
       _source_filters(std::move(source_filters)),
       AreStreamersPausedFunction(streamers_paused_function) {
   // Stop time is reduced if it is too close to max to avoid overflow.
@@ -109,12 +112,13 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                      std::function<bool()> const &streamers_paused_function)
     : Partition(std::move(consumer), partition, topic_name,
                 create_filters(map, start_time, stop_time, writer, registrar),
-                registrar, stop_time, stop_leeway, kafka_error_timeout,
-                streamers_paused_function) {}
+                std::make_unique<PartitionFilter>(stop_time, stop_leeway,
+                                                  kafka_error_timeout),
+                registrar, stop_time, stop_leeway, streamers_paused_function) {}
 
 void Partition::start() { addPollTask(); }
 
-void Partition::forceStop() { StopTester.forceStop(); }
+void Partition::forceStop() { StopTester->forceStop(); }
 
 void Partition::sleep(const duration Duration) const {
   std::this_thread::sleep_for(Duration);
@@ -128,7 +132,7 @@ void Partition::stop() {
 void Partition::setStopTime(time_point Stop) {
   Executor.sendWork([=]() {
     StopTime = Stop;
-    StopTester.setStopTime(Stop);
+    StopTester->setStopTime(Stop);
     for (auto &Filter : _source_filters) {
       Filter.second->set_stop_time(Stop);
     }
@@ -142,15 +146,16 @@ void Partition::addPollTask() {
 }
 
 void Partition::checkAndLogPartitionTimeOut() {
-  if (StopTester.hasTopicTimedOut()) {
+  if (StopTester->hasTopicTimedOut()) {
     if (!PartitionTimeOutLogged) {
       Logger::Info(
           "No new messages were received from Kafka in partition {} of "
           "topic {} ({:.1f}s passed) when polling for new data.",
           PartitionID, Topic,
-          double(std::chrono::duration_cast<std::chrono::milliseconds>(
-                     system_clock::now() - StopTester.getStatusOccurrenceTime())
-                     .count()) /
+          double(
+              std::chrono::duration_cast<std::chrono::milliseconds>(
+                  system_clock::now() - StopTester->getStatusOccurrenceTime())
+                  .count()) /
               1000.0);
       PartitionTimeOutLogged = true;
     }
@@ -160,13 +165,13 @@ void Partition::checkAndLogPartitionTimeOut() {
 }
 
 bool Partition::hasStopBeenRequested() const {
-  return StopTester.hasForceStopBeenRequested();
+  return StopTester->hasForceStopBeenRequested();
 }
 
 bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
   checkAndLogPartitionTimeOut();
-  if (StopTester.shouldStopPartition(CStatus)) {
-    switch (StopTester.currentPartitionState()) {
+  if (StopTester->shouldStopPartition(CStatus)) {
+    switch (StopTester->currentPartitionState()) {
     case PartitionFilter::PartitionState::ERROR:
       Logger::Error(
           "Stopping consumption of data from Kafka in partition {} of "

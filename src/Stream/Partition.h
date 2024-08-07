@@ -61,8 +61,9 @@ public:
             std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                                   std::unique_ptr<SourceFilter>>>
                 source_filters,
+            std::unique_ptr<PartitionFilter> partition_filter,
             Metrics::IRegistrar *registrar, time_point stop_time,
-            duration stop_leeway, duration kafka_error_timeout,
+            duration stop_leeway,
             std::function<bool()> const &streamers_paused_function);
   virtual ~Partition() = default;
 
@@ -133,7 +134,7 @@ protected:
 
   /// \brief Sleep.
   /// \note This function exist in order to make unit testing possible.
-  virtual void sleep(const duration Duration) const;
+  virtual void sleep(duration const Duration) const;
 
   virtual void processMessage(FileWriter::Msg const &Message);
   std::shared_ptr<Kafka::ConsumerInterface> ConsumerPtr;
@@ -145,7 +146,7 @@ protected:
   time_point StopTime;
   duration StopTimeLeeway{};
   duration PauseCheckInterval{200ms};
-  PartitionFilter StopTester;
+  std::unique_ptr<PartitionFilter> StopTester;
   std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
                         std::unique_ptr<SourceFilter>>>
       _source_filters;
