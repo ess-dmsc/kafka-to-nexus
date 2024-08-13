@@ -14,9 +14,9 @@
 
 #include "helper.h"
 
-#include "ad00_Writer.h"
 #include "HDFOperations.h"
 #include "WriterRegistrar.h"
+#include "ad00_Writer.h"
 #include <ad00_area_detector_array_generated.h>
 
 namespace WriterModule::ad00 {

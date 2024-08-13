@@ -9,13 +9,13 @@
 
 #pragma once
 
+#include <ad00_area_detector_array_generated.h>
 #include <da00_dataarray_generated.h>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
-#include <ad00_area_detector_array_generated.h>
-#include <ostream>
 #include <iostream>
+#include <ostream>
 
 namespace FlatBuffers {
 
@@ -133,7 +133,6 @@ create_ad00_message_uint16(std::string const &source,
                                      static_cast<int64_t>(cols)};
   auto dimensions_offset = builder.CreateVector(dimensions);
 
-
   ad00_ADArrayBuilder ad00_builder(builder);
   ad00_builder.add_data(data_offset);
   ad00_builder.add_source_name(source_name_offset);
@@ -149,8 +148,6 @@ create_ad00_message_uint16(std::string const &source,
 
   return {std::move(buffer), buffer_size};
 }
-
-
 
 std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
