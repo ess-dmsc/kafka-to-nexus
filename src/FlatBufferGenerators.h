@@ -9,10 +9,13 @@
 
 #pragma once
 
+#include <ad00_area_detector_array_generated.h>
 #include <da00_dataarray_generated.h>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
+#include <iostream>
+#include <ostream>
 
 namespace FlatBuffers {
 
@@ -103,6 +106,46 @@ create_ev44_message(std::string const &source, int64_t message_id,
   size_t buffer_size = builder.GetSize();
   auto buffer = std::make_unique<uint8_t[]>(buffer_size);
   std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_ad00_message_uint16(std::string const &source,
+                           const std::vector<std::vector<uint16_t>> &values_2d,
+                           int64_t timestamp_ms) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+
+  size_t rows = values_2d.size();
+  size_t cols = values_2d.empty() ? 0 : values_2d[0].size();
+
+  std::vector<uint16_t> flat_values;
+  flat_values.reserve(rows * cols);
+  for (const auto &row : values_2d) {
+    flat_values.insert(flat_values.end(), row.begin(), row.end());
+  }
+
+  auto data_offset = builder.CreateVector(
+      reinterpret_cast<const uint8_t *>(flat_values.data()),
+      flat_values.size() * sizeof(uint16_t));
+
+  std::vector<int64_t> dimensions = {static_cast<int64_t>(rows),
+                                     static_cast<int64_t>(cols)};
+  auto dimensions_offset = builder.CreateVector(dimensions);
+
+  ad00_ADArrayBuilder ad00_builder(builder);
+  ad00_builder.add_data(data_offset);
+  ad00_builder.add_source_name(source_name_offset);
+  ad00_builder.add_timestamp(timestamp_ms * 1000000);
+  ad00_builder.add_data_type(DType::uint16);
+  ad00_builder.add_dimensions(dimensions_offset);
+  Finishad00_ADArrayBuffer(builder, ad00_builder.Finish());
+
+  size_t buffer_size = builder.GetSize();
+
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+
   return {std::move(buffer), buffer_size};
 }
 
