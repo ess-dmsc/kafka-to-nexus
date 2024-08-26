@@ -26,6 +26,7 @@ set(UnitTests_SRC
         MasterTests.cpp
         HDFFileAttributesTests.cpp
         JsonTests.cpp
+        JsonToFlatbuffersTests.cpp
         ProducerTests.cpp
         ConsumerTests.cpp
         CommandSystem/CommandListenerTests.cpp
