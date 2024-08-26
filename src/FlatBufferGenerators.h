@@ -19,7 +19,7 @@
 
 namespace FlatBuffers {
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_f144_message_double(std::string const &source, double value,
                            int64_t timestamp_ms) {
   auto builder = flatbuffers::FlatBufferBuilder();
@@ -39,7 +39,7 @@ create_f144_message_double(std::string const &source, double value,
   return {std::move(buffer), buffer_size};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_f144_message_array_double(std::string const &source,
                                  const std::vector<double> &values,
                                  int64_t timestamp_ms) {
@@ -60,7 +60,7 @@ create_f144_message_array_double(std::string const &source,
   return {std::move(buffer), buffer_size};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_ep01_message_double(std::string const &source, ConnectionInfo status,
                            int64_t timestamp_ms) {
   auto builder = flatbuffers::FlatBufferBuilder();
@@ -78,7 +78,7 @@ create_ep01_message_double(std::string const &source, ConnectionInfo status,
   return {std::move(buffer), buffer_size};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_ev44_message(std::string const &source, int64_t message_id,
                     int64_t timestamp_ns,
                     std::vector<int32_t> const &time_of_flight,
@@ -109,7 +109,7 @@ create_ev44_message(std::string const &source, int64_t message_id,
   return {std::move(buffer), buffer_size};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_ad00_message_uint16(std::string const &source,
                            const std::vector<std::vector<uint16_t>> &values_2d,
                            int64_t timestamp_ms) {
@@ -149,7 +149,7 @@ create_ad00_message_uint16(std::string const &source,
   return {std::move(buffer), buffer_size};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
                            const std::vector<int32_t> &data) {
   auto builder = flatbuffers::FlatBufferBuilder();
