@@ -34,29 +34,11 @@ std::string const example_json = R"(
 ]
 )";
 
-std::pair<std::unique_ptr<uint8_t[]>, size_t>
-convert_to_raw_flatbuffer(nlohmann::json const &item) {
-  std::string const schema = item["schema"];
-  if (schema == "f144") {
-    std::pair<std::unique_ptr<uint8_t[]>, size_t> f144_message =
-        FlatBuffers::create_f144_message_double(
-            item["source_name"], item["value"], item["timestamp"]);
-    return f144_message;
-  } else if (schema == "ev44") {
-    std::pair<std::unique_ptr<uint8_t[]>, size_t> ev44_message =
-        FlatBuffers::create_ev44_message(
-            item["source_name"], item["message_id"], item["reference_time"],
-            item["time_of_flight"], item["pixel_ids"]);
-    return ev44_message;
-  }
-  throw std::runtime_error("Unknown schema");
-}
-
 TEST(json_to_fb, can_create_f144_buffer) {
   json data = json::parse(example_json);
   json item = data[0];
   std::pair<std::unique_ptr<uint8_t[]>, size_t> raw_flatbuffer =
-      convert_to_raw_flatbuffer(item);
+      FlatBuffers::convert_to_raw_flatbuffer(item);
   uint8_t *buffer = raw_flatbuffer.first.get();
   auto fb = Getf144_LogData(buffer);
   ASSERT_EQ("test_source", fb->source_name()->str());
@@ -68,7 +50,7 @@ TEST(json_to_fb, can_create_ev44_buffer) {
   json data = json::parse(example_json);
   json item = data[1];
   std::pair<std::unique_ptr<uint8_t[]>, size_t> raw_flatbuffer =
-      convert_to_raw_flatbuffer(item);
+      FlatBuffers::convert_to_raw_flatbuffer(item);
   uint8_t *buffer = raw_flatbuffer.first.get();
   auto fb = GetEvent44Message(buffer);
   ASSERT_EQ("test_source", fb->source_name()->str());

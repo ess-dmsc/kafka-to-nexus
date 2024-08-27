@@ -15,6 +15,7 @@
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <ostream>
 
 namespace FlatBuffers {
@@ -192,6 +193,24 @@ create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
   auto buffer = std::make_unique<uint8_t[]>(buffer_size);
   std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
   return {std::move(buffer), buffer_size};
+}
+
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
+convert_to_raw_flatbuffer(nlohmann::json const &item) {
+  std::string const schema = item["schema"];
+  if (schema == "f144") {
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> f144_message =
+        FlatBuffers::create_f144_message_double(
+            item["source_name"], item["value"], item["timestamp"]);
+    return f144_message;
+  } else if (schema == "ev44") {
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> ev44_message =
+        FlatBuffers::create_ev44_message(
+            item["source_name"], item["message_id"], item["reference_time"],
+            item["time_of_flight"], item["pixel_ids"]);
+    return ev44_message;
+  }
+  throw std::runtime_error("Unknown schema");
 }
 
 } // namespace FlatBuffers
