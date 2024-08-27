@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include <FlatBufferGenerators.h>
+#include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
@@ -21,25 +22,62 @@ std::string const example_json = R"(
      "source_name": "test_source",
      "timestamp": 123456,
      "value": 3.14
+  },
+  {
+     "schema": "ev44",
+     "source_name": "test_source",
+     "message_id": 666,
+     "reference_time": 123456,
+     "time_of_flight": [10, 20, 30],
+     "pixel_ids": [1, 2, 3]
   }
 ]
 )";
 
-std::unique_ptr<uint8_t[]>
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
 convert_to_raw_flatbuffer(nlohmann::json const &item) {
   std::string const schema = item["schema"];
   if (schema == "f144") {
-    auto [buffer, size] = FlatBuffers::create_f144_message_double(
-        item["source_name"], item["value"], item["timestamp"]);
-    return std::move(buffer);
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> f144_message =
+        FlatBuffers::create_f144_message_double(
+            item["source_name"], item["value"], item["timestamp"]);
+    return f144_message;
+  } else if (schema == "ev44") {
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> ev44_message =
+        FlatBuffers::create_ev44_message(
+            item["source_name"], item["message_id"], item["reference_time"],
+            item["time_of_flight"], item["pixel_ids"]);
+    return ev44_message;
   }
   throw std::runtime_error("Unknown schema");
 }
 
 TEST(json_to_fb, can_create_f144_buffer) {
-  auto data = json::parse(example_json);
-  auto item = data[0];
-  auto buffer = convert_to_raw_flatbuffer(item);
-  auto fb = Getf144_LogData(buffer.get());
+  json data = json::parse(example_json);
+  json item = data[0];
+  std::pair<std::unique_ptr<uint8_t[]>, size_t> raw_flatbuffer =
+      convert_to_raw_flatbuffer(item);
+  uint8_t *buffer = raw_flatbuffer.first.get();
+  auto fb = Getf144_LogData(buffer);
   ASSERT_EQ("test_source", fb->source_name()->str());
+  ASSERT_EQ(123456000000, fb->timestamp());
+  ASSERT_EQ(3.14, fb->value_as_Double()->value());
+}
+
+TEST(json_to_fb, can_create_ev44_buffer) {
+  json data = json::parse(example_json);
+  json item = data[1];
+  std::pair<std::unique_ptr<uint8_t[]>, size_t> raw_flatbuffer =
+      convert_to_raw_flatbuffer(item);
+  uint8_t *buffer = raw_flatbuffer.first.get();
+  auto fb = GetEvent44Message(buffer);
+  ASSERT_EQ("test_source", fb->source_name()->str());
+  ASSERT_EQ(666, fb->message_id());
+  ASSERT_EQ(123456, fb->reference_time()->Get(0));
+  ASSERT_EQ(10, fb->time_of_flight()->Get(0));
+  ASSERT_EQ(20, fb->time_of_flight()->Get(1));
+  ASSERT_EQ(30, fb->time_of_flight()->Get(2));
+  ASSERT_EQ(1, fb->pixel_id()->Get(0));
+  ASSERT_EQ(2, fb->pixel_id()->Get(1));
+  ASSERT_EQ(3, fb->pixel_id()->Get(2));
 }
