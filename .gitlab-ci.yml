@@ -121,12 +121,13 @@ domain_tests:
   variables:
     SCL: scl enable devtoolset-11 rh-python38 --
   before_script:
+    - ls
     - cd domain-tests
   script:
     - $SCL python -m venv venv
     - source venv/bin/activate
     - python -m pip install -r requirements.txt
-    - pytest --file-maker-binary=../bin/kafka-to-nexus --junitxml=DomainTestsOutput.xml
+    - pytest --file-maker-binary=../build/bin/kafka-to-nexus --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
     paths:
