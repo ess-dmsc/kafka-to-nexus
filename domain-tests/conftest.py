@@ -9,13 +9,12 @@ OUTPUT_FILE = "output.hdf"
 
 def run_file_maker(args, timeout=15):
     try:
-        # Using subprocess.run for a more concise and safer implementation
         result = subprocess.run(
             args,
-            capture_output=True,  # Capture both stdout and stderr
-            text=True,  # Return output as a string instead of bytes
-            timeout=timeout,  # Specify a timeout for the process
-            check=True,  # Automatically raise an error if the process fails
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=True,
         )
         return result.stdout
     except subprocess.TimeoutExpired as e:
