@@ -30,8 +30,10 @@ black:
   script:
     - python3 -m venv .venv
     - .venv/bin/python -m pip install -r integration-tests/requirements.txt
+    - .venv/bin/python -m pip install -r domain-tests/requirements.txt
     - .venv/bin/python -m black --version
     - .venv/bin/python -m black --check integration-tests
+    - .venv/bin/python -m black --check domain-tests
 
 cppcheck:
   extends: .check
@@ -112,6 +114,20 @@ build-release:
       - build/licenses
     reports:
       junit: build/test-output.xml
+
+domain_tests:
+  extends: .build
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  before_script:
+    - cd domain-tests
+  script:
+    - ./run-domain-tests.sh
+  artifacts:
+    when: always
+    paths:
+      - domain-tests/DomainTestsOutput.xml
+    reports:
+      junit: Domain-tests/DomainTestsOutput.xml
 
 build-alt-distro:
   extends: .build
