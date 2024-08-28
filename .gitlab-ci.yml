@@ -118,10 +118,15 @@ build-release:
 domain_tests:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
   before_script:
     - cd domain-tests
   script:
-    - ./run-domain-tests.sh
+    - $SCL python -m venv venv
+    - source venv/bin/activate
+    - python -m pip install -r requirements.txt
+    - pytest --file-maker-binary=../kafka-to-nexus --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
     paths:
