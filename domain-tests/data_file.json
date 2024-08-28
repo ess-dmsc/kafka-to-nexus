@@ -70,5 +70,21 @@
     "reference_time": 230,
     "time_of_flight": [130, 140, 150, 160],
     "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ad00",
+    "topic": "local_detector",
+    "kafka_timestamp": 300,
+    "source_name": "image_data",
+    "timestamp": 300,
+    "data": [[10, 11], [12, 13]]
+  },
+  {
+  "schema": "ad00",
+  "topic": "local_detector",
+  "kafka_timestamp": 310,
+  "source_name": "image_data",
+  "timestamp": 310,
+  "data": [[13, 12], [11, 10]]
   }
 ]

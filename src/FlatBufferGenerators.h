@@ -220,6 +220,12 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
             item["source_name"], item["message_id"], item["reference_time"],
             item["time_of_flight"], item["pixel_ids"]);
     return ev44_message;
+  } else if (schema == "ad00") {
+    std::vector<std::vector<uint16_t>> data = item["data"];
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> ad00_message =
+        FlatBuffers::create_ad00_message_uint16(item["source_name"], data,
+                                                item["timestamp"]);
+    return ad00_message;
   }
   throw std::runtime_error("Unknown schema");
 }
