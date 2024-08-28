@@ -26,7 +26,7 @@ def write_file(request):
     if os.path.exists(OUTPUT_FILE):
         os.remove(OUTPUT_FILE)
     args = [
-        "../_ninja/bin/file-maker",
+        request.config.getoption(BINARY_PATH),
         "-f",
         "nexus_template.json",
         "-o",
