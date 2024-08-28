@@ -126,43 +126,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
                 offset++, 0);
   }
 
-  //  auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
-  //  add_message(*consumer_factory, std::move(msg), 1000ms, "local_choppers",
-  //              offset++, 0);
-  //
-  //  msg = create_ep01_message_double("delay:source:chopper",
-  //                                   ConnectionInfo::CONNECTED, 1001);
-  //  add_message(*consumer_factory, std::move(msg), 1001ms, "local_choppers",
-  //              offset++, 0);
-  //
-  //  msg = create_f144_message_double("delay:source:chopper", 101, 1100);
-  //  add_message(*consumer_factory, std::move(msg), 1100ms, "local_choppers",
-  //              offset++, 0);
-  //
-  //  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
-  //  add_message(*consumer_factory, std::move(msg), 1200ms, "local_choppers",
-  //              offset++, 0);
-  //
-  //  msg = create_ep01_message_double("speed:source:chopper",
-  //                                   ConnectionInfo::CONNECTED, 1201);
-  //  add_message(*consumer_factory, std::move(msg), 1201ms, "local_choppers",
-  //              offset++, 0);
-  //
-  //  msg = create_f144_message_double("speed:source:chopper", 2000, 1250);
-  //  add_message(*consumer_factory, std::move(msg), 1250ms, "local_choppers",
-  //              offset++, 0);
-  //
-  //  msg = create_f144_message_double("delay:source:chopper", 102, 2100);
-  //  add_message(*consumer_factory, std::move(msg), 2100ms, "local_choppers",
-  //              offset++, 0);
-
   Command::StartMessage start_info;
   start_info.NexusStructure = readJsonFromFile(json_file);
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;
   streamer_options.StartTimestamp = time_point{0ms};
-  streamer_options.StopTimestamp = time_point{210ms};
+  streamer_options.StopTimestamp = time_point{1000ms};
   std::filesystem::path filepath{output_file};
 
   auto stream_controller = FileWriter::createFileWritingJob(
