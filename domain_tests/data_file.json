@@ -1,0 +1,25 @@
+[
+  {
+    "schema": "f144",
+    "kafka_timestamp": 100,
+    "source_name": "speed:source:chopper",
+    "timestamp": 100,
+    "value": 10
+  },
+  {
+    "schema": "f144",
+    "kafka_timestamp": 110,
+    "source_name": "speed:source:chopper",
+    "timestamp": 110,
+    "value": 15
+  },
+  {
+    "schema": "ev44",
+    "kafka_timestamp": 200,
+    "source_name": "speed:source:chopper",
+    "message_id": 666,
+    "reference_time": 123458,
+    "time_of_flight": [10, 20, 30],
+    "pixel_ids": [1, 2, 3]
+  }
+]
