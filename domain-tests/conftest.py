@@ -4,6 +4,7 @@ import subprocess
 
 
 BINARY_PATH = "--file-maker-binary"
+CLEANUP_OUTPUT = "--cleanup-output"
 OUTPUT_FILE = "output.hdf"
 
 
@@ -32,6 +33,12 @@ def pytest_addoption(parser):
         default=None,
         help="Path to file-maker binary (executable).",
     )
+    parser.addoption(
+        CLEANUP_OUTPUT,
+        action="store_true",
+        default=False,
+        help="Remove the output file after the test run.",
+    )
 
 
 @pytest.fixture(scope="session")
@@ -45,7 +52,8 @@ def write_file(request):
         if os.path.exists(OUTPUT_FILE):
             os.remove(OUTPUT_FILE)
 
-    request.addfinalizer(finalize)
+    if request.config.getoption(CLEANUP_OUTPUT):
+        request.addfinalizer(finalize)
 
     if os.path.exists(OUTPUT_FILE):
         os.remove(OUTPUT_FILE)
