@@ -13,6 +13,7 @@ stages:
   - check
   - build
   - archive
+  - domain
   - integration
   - release
 
@@ -116,10 +117,10 @@ build-release:
       junit: build/test-output.xml
 
 domain_tests:
-  extends: .build
+  stage: domain
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   dependencies:
-    - build
+    - build-release
   variables:
     SCL: scl enable devtoolset-11 rh-python38 --
   before_script:
