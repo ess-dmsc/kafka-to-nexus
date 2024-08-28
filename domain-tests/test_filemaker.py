@@ -26,6 +26,20 @@ def test_ep01_writes(write_file):
         )
 
 
+def test_al00_writes(write_file):
+    with h5py.File(write_file, "r") as f:
+        messages = f["/entry/instrument/chopper/rotation_speed/alarm_message"][:]
+        assert messages[0].decode() == "Chopper speed is too low"
+        assert messages[1].decode() == "Chopper speed is perfect"
+        assert np.array_equal(
+            f["/entry/instrument/chopper/rotation_speed/alarm_severity"][:], [1, 0]
+        )
+        assert np.array_equal(
+            f["/entry/instrument/chopper/rotation_speed/alarm_time"][:],
+            [102000000, 112000000],
+        )
+
+
 def test_ev44_writes(write_file):
     with h5py.File(write_file, "r") as f:
         assert np.array_equal(

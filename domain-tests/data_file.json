@@ -16,6 +16,15 @@
     "timestamp": 101
   },
   {
+    "schema": "al00",
+    "topic": "local_choppers",
+    "kafka_timestamp": 102,
+    "source_name": "local:choppers:rotation_speed",
+    "timestamp": 102,
+    "severity": "Severity::MINOR",
+    "message": "Chopper speed is too low"
+  },
+  {
     "schema": "f144",
     "topic": "local_choppers",
     "kafka_timestamp": 110,
@@ -30,6 +39,15 @@
     "source_name": "local:choppers:rotation_speed",
     "connection_status": "ConnectionInfo::CONNECTED",
     "timestamp": 111
+  },
+    {
+    "schema": "al00",
+    "topic": "local_choppers",
+    "kafka_timestamp": 112,
+    "source_name": "local:choppers:rotation_speed",
+    "timestamp": 112,
+    "severity": "Severity::OK",
+    "message": "Chopper speed is perfect"
   },
   {
     "schema": "ev44",

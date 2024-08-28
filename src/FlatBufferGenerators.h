@@ -10,6 +10,7 @@
 #pragma once
 
 #include <ad00_area_detector_array_generated.h>
+#include <al00_alarm_generated.h>
 #include <da00_dataarray_generated.h>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
@@ -72,6 +73,27 @@ create_ep01_message_double(std::string const &source, ConnectionInfo status,
   ep01_builder.add_timestamp(timestamp_ms);
   ep01_builder.add_status(status);
   FinishEpicsPVConnectionInfoBuffer(builder, ep01_builder.Finish());
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_al00_message_double(std::string const &source, int64_t timestamp_ms,
+                           Severity severity, std::string message) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+  auto message_offset = builder.CreateString(message);
+
+  AlarmBuilder al00_builder(builder);
+  al00_builder.add_source_name(source_name_offset);
+  al00_builder.add_message(message_offset);
+  al00_builder.add_timestamp(timestamp_ms * 1000000);
+  al00_builder.add_severity(severity);
+
+  FinishAlarmBuffer(builder, al00_builder.Finish());
 
   size_t buffer_size = builder.GetSize();
   auto buffer = std::make_unique<uint8_t[]>(buffer_size);
@@ -214,6 +236,21 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
         FlatBuffers::create_ep01_message_double(
             item["source_name"], connection_status, item["timestamp"]);
     return ep01_message;
+  } else if (schema == "al00") {
+    Severity severity;
+    if (item["severity"] == "Severity::INVALID") {
+      severity = Severity::INVALID;
+    } else if (item["severity"] == "Severity::MAJOR") {
+      severity = Severity::MAJOR;
+    } else if (item["severity"] == "Severity::MINOR") {
+      severity = Severity::MINOR;
+    } else {
+      severity = Severity::OK;
+    }
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> al00_message =
+        FlatBuffers::create_al00_message_double(
+            item["source_name"], item["timestamp"], severity, item["message"]);
+    return al00_message;
   } else if (schema == "ev44") {
     std::pair<std::unique_ptr<uint8_t[]>, size_t> ev44_message =
         FlatBuffers::create_ev44_message(
