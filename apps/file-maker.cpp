@@ -23,88 +23,6 @@ std::string readJsonFromFile(const std::string &filePath) {
   return buffer.str();
 }
 
-std::string const example_json = R"(
-{
-	"children": [{
-		"name": "entry",
-		"type": "group",
-		"attributes": [{
-			"name": "NX_class",
-			"dtype": "string",
-			"values": "NXentry"
-		}],
-		"children": [{
-				"module": "dataset",
-				"config": {
-					"name": "title",
-					"values": "This is a title",
-					"dtype": "string"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"items": ["start_time", "end_time"]
-				}
-			},
-			{
-				"name": "instrument",
-				"type": "group",
-				"attributes": [{
-					"name": "NX_class",
-					"dtype": "string",
-					"values": "NXinstrument"
-				}],
-				"children": [{
-					"name": "mini_chopper",
-					"type": "group",
-					"attributes": [{
-						"name": "NX_class",
-						"dtype": "string",
-						"values": "NXdisk_chopper"
-					}],
-					"children": [{
-						"name": "delay",
-						"type": "group",
-						"attributes": [{
-							"name": "NX_class",
-							"dtype": "string",
-							"values": "NXlog"
-						}],
-						"children": [{
-							"module": "f144",
-							"config": {
-								"source": "delay:source:chopper",
-								"topic": "local_choppers",
-								"dtype": "double",
-                                                                "value_units": "ns"
-							}
-						}]
-					},{
-                                                "name": "speed",
-                                                "type": "group",
-                                                "attributes": [{
-                                                        "name": "NX_class",
-                                                        "dtype": "string",
-                                                        "values": "NXlog"
-                                                }],
-                                                "children": [{
-                                                        "module": "f144",
-                                                        "config": {
-                                                                "source": "speed:source:chopper",
-                                                                "topic": "local_choppers",
-                                                                "dtype": "double",
-                                                                "value_units": "Hz"
-                                                        }
-                                                }]
-                                                }]
-				}]
-			}
-		]
-	}]
-}
-                             )";
-
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
   void registerMetric([[maybe_unused]] Metrics::Metric &NewMetric,
@@ -174,13 +92,13 @@ void add_message(Kafka::StubConsumerFactory &consumer_factory,
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"file-maker app"};
   std::string json_file;
-  app.add_option("-f, --file", json_file, "The JSON file to load");
+  app.add_option("-f, --file", json_file, "The JSON file to load")->required();
   std::string output_file;
   app.add_option("-o, --output-file", output_file,
-                 "The name of the file to write");
+                 "The name of the file to write")->required();
   std::string data_file;
   app.add_option("-d, --data_file", data_file,
-                 "The name of the file containing the data to be converted to flatbuffers");
+                 "The name of the file containing the data to be converted to flatbuffers")->required();
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
@@ -234,11 +152,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 //              offset++, 0);
 
   Command::StartMessage start_info;
-  if (!json_file.empty()) {
-    start_info.NexusStructure = readJsonFromFile(json_file);
-  } else {
-    start_info.NexusStructure = example_json;
-  }
+  start_info.NexusStructure = readJsonFromFile(json_file);
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;
