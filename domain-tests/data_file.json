@@ -8,12 +8,28 @@
     "value": 10
   },
   {
+    "schema": "ep01",
+    "topic": "local_choppers",
+    "kafka_timestamp": 101,
+    "source_name": "local:choppers:rotation_speed",
+    "connection_status": "ConnectionInfo::CONNECTED",
+    "timestamp": 101
+  },
+  {
     "schema": "f144",
     "topic": "local_choppers",
     "kafka_timestamp": 110,
     "source_name": "local:choppers:rotation_speed",
     "timestamp": 110,
     "value": 15
+  },
+  {
+    "schema": "ep01",
+    "topic": "local_choppers",
+    "kafka_timestamp": 111,
+    "source_name": "local:choppers:rotation_speed",
+    "connection_status": "ConnectionInfo::CONNECTED",
+    "timestamp": 111
   },
   {
     "schema": "ev44",

@@ -203,6 +203,17 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
         FlatBuffers::create_f144_message_double(
             item["source_name"], item["value"], item["timestamp"]);
     return f144_message;
+  } else if (schema == "ep01") {
+    ConnectionInfo connection_status;
+    if (item["connection_status"] == "ConnectionInfo::CONNECTED") {
+      connection_status = ConnectionInfo::CONNECTED;
+    } else {
+      connection_status = ConnectionInfo::DISCONNECTED;
+    }
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> ep01_message =
+        FlatBuffers::create_ep01_message_double(
+            item["source_name"], connection_status, item["timestamp"]);
+    return ep01_message;
   } else if (schema == "ev44") {
     std::pair<std::unique_ptr<uint8_t[]>, size_t> ev44_message =
         FlatBuffers::create_ev44_message(
