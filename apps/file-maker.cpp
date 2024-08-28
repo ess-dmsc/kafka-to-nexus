@@ -95,10 +95,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   app.add_option("-f, --file", json_file, "The JSON file to load")->required();
   std::string output_file;
   app.add_option("-o, --output-file", output_file,
-                 "The name of the file to write")->required();
+                 "The name of the file to write")
+      ->required();
   std::string data_file;
   app.add_option("-d, --data_file", data_file,
-                 "The name of the file containing the data to be converted to flatbuffers")->required();
+                 "The name of the file containing the data to be converted to "
+                 "flatbuffers")
+      ->required();
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
@@ -114,42 +117,43 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   auto flatbuffer_json = nlohmann::json::parse(readJsonFromFile(data_file));
 
-  for (nlohmann::json::iterator it = flatbuffer_json.begin(); it != flatbuffer_json.end(); ++it) {
+  for (nlohmann::json::iterator it = flatbuffer_json.begin();
+       it != flatbuffer_json.end(); ++it) {
     auto msg = FlatBuffers::convert_to_raw_flatbuffer(*it);
     auto timestamp_ms = std::chrono::milliseconds((*it)["kafka_timestamp"]);
-    add_message(*consumer_factory, std::move(msg), timestamp_ms, "local_choppers",
-                offset++, 0);
+    add_message(*consumer_factory, std::move(msg), timestamp_ms,
+                "local_choppers", offset++, 0);
   }
 
-//  auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
-//  add_message(*consumer_factory, std::move(msg), 1000ms, "local_choppers",
-//              offset++, 0);
-//
-//  msg = create_ep01_message_double("delay:source:chopper",
-//                                   ConnectionInfo::CONNECTED, 1001);
-//  add_message(*consumer_factory, std::move(msg), 1001ms, "local_choppers",
-//              offset++, 0);
-//
-//  msg = create_f144_message_double("delay:source:chopper", 101, 1100);
-//  add_message(*consumer_factory, std::move(msg), 1100ms, "local_choppers",
-//              offset++, 0);
-//
-//  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
-//  add_message(*consumer_factory, std::move(msg), 1200ms, "local_choppers",
-//              offset++, 0);
-//
-//  msg = create_ep01_message_double("speed:source:chopper",
-//                                   ConnectionInfo::CONNECTED, 1201);
-//  add_message(*consumer_factory, std::move(msg), 1201ms, "local_choppers",
-//              offset++, 0);
-//
-//  msg = create_f144_message_double("speed:source:chopper", 2000, 1250);
-//  add_message(*consumer_factory, std::move(msg), 1250ms, "local_choppers",
-//              offset++, 0);
-//
-//  msg = create_f144_message_double("delay:source:chopper", 102, 2100);
-//  add_message(*consumer_factory, std::move(msg), 2100ms, "local_choppers",
-//              offset++, 0);
+  //  auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
+  //  add_message(*consumer_factory, std::move(msg), 1000ms, "local_choppers",
+  //              offset++, 0);
+  //
+  //  msg = create_ep01_message_double("delay:source:chopper",
+  //                                   ConnectionInfo::CONNECTED, 1001);
+  //  add_message(*consumer_factory, std::move(msg), 1001ms, "local_choppers",
+  //              offset++, 0);
+  //
+  //  msg = create_f144_message_double("delay:source:chopper", 101, 1100);
+  //  add_message(*consumer_factory, std::move(msg), 1100ms, "local_choppers",
+  //              offset++, 0);
+  //
+  //  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
+  //  add_message(*consumer_factory, std::move(msg), 1200ms, "local_choppers",
+  //              offset++, 0);
+  //
+  //  msg = create_ep01_message_double("speed:source:chopper",
+  //                                   ConnectionInfo::CONNECTED, 1201);
+  //  add_message(*consumer_factory, std::move(msg), 1201ms, "local_choppers",
+  //              offset++, 0);
+  //
+  //  msg = create_f144_message_double("speed:source:chopper", 2000, 1250);
+  //  add_message(*consumer_factory, std::move(msg), 1250ms, "local_choppers",
+  //              offset++, 0);
+  //
+  //  msg = create_f144_message_double("delay:source:chopper", 102, 2100);
+  //  add_message(*consumer_factory, std::move(msg), 2100ms, "local_choppers",
+  //              offset++, 0);
 
   Command::StartMessage start_info;
   start_info.NexusStructure = readJsonFromFile(json_file);
