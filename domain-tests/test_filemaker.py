@@ -7,7 +7,21 @@ def test_f144_writes(write_file):
         assert np.array_equal(
             f["/entry/instrument/chopper/rotation_speed/value"][:], [10, 15]
         )
-        # TODO: timestamps
+        assert np.array_equal(
+            f["/entry/instrument/chopper/rotation_speed/time"][:],
+            [100000000, 110000000],
+        )
+
+
+def test_ep01_writes(write_file):
+    with h5py.File(write_file, "r") as f:
+        assert np.array_equal(
+            f["/entry/instrument/chopper/rotation_speed/connection_status"][:], [2, 2]
+        )
+        assert np.array_equal(
+            f["/entry/instrument/chopper/rotation_speed/connection_status_time"][:],
+            [101, 111],
+        )
 
 
 def test_ev44_writes(write_file):

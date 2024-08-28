@@ -1,10 +1,29 @@
 import pytest
 import os
-from subprocess import Popen
+import subprocess
 
 
 BINARY_PATH = "--file-maker-binary"
 OUTPUT_FILE = "output.hdf"
+
+
+def run_file_maker(args, timeout=15):
+    try:
+        # Using subprocess.run for a more concise and safer implementation
+        result = subprocess.run(
+            args,
+            capture_output=True,  # Capture both stdout and stderr
+            text=True,  # Return output as a string instead of bytes
+            timeout=timeout,  # Specify a timeout for the process
+            check=True,  # Automatically raise an error if the process fails
+        )
+        return result.stdout
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError(f"Process timed out: {e}")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Command failed with error: {e.stderr}")
+    except Exception as e:
+        raise RuntimeError(f"An unexpected error occurred: {e}")
 
 
 def pytest_addoption(parser):
@@ -23,6 +42,12 @@ def write_file(request):
             f'You must supply a path to a file-maker executable ("{BINARY_PATH}").'
         )
 
+    def finalize():
+        if os.path.exists(OUTPUT_FILE):
+            os.remove(OUTPUT_FILE)
+
+    request.addfinalizer(finalize)
+
     if os.path.exists(OUTPUT_FILE):
         os.remove(OUTPUT_FILE)
     args = [
@@ -34,7 +59,5 @@ def write_file(request):
         "-d",
         "data_file.json",
     ]
-    proc = Popen(args)
-    outs, errs = proc.communicate(timeout=15)
-    print(outs)
+    file_maker_output = run_file_maker(args)
     return OUTPUT_FILE
