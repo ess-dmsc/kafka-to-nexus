@@ -4,6 +4,8 @@ import numpy as np
 
 def test_f144_writes(write_file):
     with h5py.File(write_file, "r") as f:
+        assert f["/entry/instrument/chopper/rotation_speed/value"][:].shape == (2,)
+        assert f["/entry/instrument/chopper/rotation_speed/time"][:].shape == (2,)
         assert np.array_equal(
             f["/entry/instrument/chopper/rotation_speed/value"][:], [10, 15]
         )
@@ -28,15 +30,33 @@ def test_ev44_writes(write_file):
     with h5py.File(write_file, "r") as f:
         assert np.array_equal(
             f["/entry/instrument/event_detector/events/event_time_offset"][:],
-            [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160],
+            [i * 10 for i in range(1, 17)],
+        )
+        assert np.array_equal(
+            f["/entry/instrument/event_detector/events/event_time_zero"][:],
+            [200, 210, 220, 230],
+        )
+        assert np.array_equal(
+            f["/entry/instrument/event_detector/events/event_index"][:],
+            [0, 4, 8, 12],
+        )
+        assert np.array_equal(
+            f["/entry/instrument/event_detector/events/event_id"][:],
+            [1, 2, 3, 4] * 4,
         )
 
 
 def test_ad00_writes(write_file):
     with h5py.File(write_file, "r") as f:
+        expected_data = np.array(
+            [
+                [[10, 11], [12, 13]],
+                [[13, 12], [11, 10]],
+            ]
+        )
         assert np.array_equal(
             f["/entry/instrument/image_detector/data/value"][:],
-            [[[10, 11], [12, 13]], [[13, 12], [11, 10]]],
+            expected_data,
         )
         assert np.array_equal(
             f["/entry/instrument/image_detector/data/time"][:], [300000000, 310000000]

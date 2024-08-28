@@ -47,7 +47,7 @@
     "kafka_timestamp": 210,
     "source_name": "detector_events",
     "message_id": 667,
-    "reference_time": 230,
+    "reference_time": 210,
     "time_of_flight": [50, 60, 70, 80],
     "pixel_ids": [1, 2, 3, 4]
   },
@@ -57,7 +57,7 @@
     "kafka_timestamp": 220,
     "source_name": "detector_events",
     "message_id": 668,
-    "reference_time": 230,
+    "reference_time": 220,
     "time_of_flight": [90, 100, 110, 120],
     "pixel_ids": [1, 2, 3, 4]
   },
