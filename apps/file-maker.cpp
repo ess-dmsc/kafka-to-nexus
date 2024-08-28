@@ -175,6 +175,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"file-maker app"};
   std::string json_file;
   app.add_option("-f, --file", json_file, "The JSON file to load");
+  std::string output_file;
+  app.add_option("-o, --output-file", output_file,
+                 "The name of the file to write");
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
@@ -228,7 +231,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   FileWriter::StreamerOptions streamer_options;
   streamer_options.StartTimestamp = time_point{0ms};
   streamer_options.StopTimestamp = time_point{1250ms};
-  std::filesystem::path filepath{"../../example.hdf"};
+  std::filesystem::path filepath{output_file};
 
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,
