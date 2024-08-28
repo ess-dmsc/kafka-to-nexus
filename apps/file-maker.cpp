@@ -72,7 +72,7 @@ public:
       [[maybe_unused]] duration TimeOut,
       [[maybe_unused]] Kafka::BrokerSettings const &BrokerSettings) override {
     // TODO: populate this list at runtime
-    return {"local_choppers", "local_motion"};
+    return {"local_choppers", "local_motion", "local_detector"};
   }
 };
 
@@ -121,8 +121,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
        it != flatbuffer_json.end(); ++it) {
     auto msg = FlatBuffers::convert_to_raw_flatbuffer(*it);
     auto timestamp_ms = std::chrono::milliseconds((*it)["kafka_timestamp"]);
-    add_message(*consumer_factory, std::move(msg), timestamp_ms,
-                "local_choppers", offset++, 0);
+    std::string topic = (*it)["topic"];
+    add_message(*consumer_factory, std::move(msg), timestamp_ms, topic,
+                offset++, 0);
   }
 
   //  auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);

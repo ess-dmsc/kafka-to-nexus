@@ -36,4 +36,5 @@ def write_file(request):
     ]
     proc = Popen(args)
     outs, errs = proc.communicate(timeout=15)
+    print(outs)
     return OUTPUT_FILE

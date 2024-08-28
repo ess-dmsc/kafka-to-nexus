@@ -1,25 +1,58 @@
 [
   {
     "schema": "f144",
+    "topic": "local_choppers",
     "kafka_timestamp": 100,
-    "source_name": "speed:source:chopper",
+    "source_name": "local:choppers:rotation_speed",
     "timestamp": 100,
     "value": 10
   },
   {
     "schema": "f144",
+    "topic": "local_choppers",
     "kafka_timestamp": 110,
-    "source_name": "speed:source:chopper",
+    "source_name": "local:choppers:rotation_speed",
     "timestamp": 110,
     "value": 15
   },
   {
     "schema": "ev44",
+    "topic": "local_detector",
     "kafka_timestamp": 200,
-    "source_name": "speed:source:chopper",
+    "source_name": "detector_events",
     "message_id": 666,
-    "reference_time": 123458,
-    "time_of_flight": [10, 20, 30],
-    "pixel_ids": [1, 2, 3]
+    "reference_time": 200,
+    "time_of_flight": [10, 20, 30, 40],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 210,
+    "source_name": "detector_events",
+    "message_id": 667,
+    "reference_time": 230,
+    "time_of_flight": [50, 60, 70, 80],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 220,
+    "source_name": "detector_events",
+    "message_id": 668,
+    "reference_time": 230,
+    "time_of_flight": [90, 100, 110, 120],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 230,
+    "source_name": "detector_events",
+    "message_id": 669,
+    "reference_time": 230,
+    "time_of_flight": [130, 140, 150, 160],
+    "pixel_ids": [1, 2, 3, 4]
   }
 ]

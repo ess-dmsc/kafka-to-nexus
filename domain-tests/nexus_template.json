@@ -40,7 +40,7 @@
           ],
           "children": [
             {
-              "name": "mini_chopper",
+              "name": "chopper",
               "type": "group",
               "attributes": [
                 {
@@ -50,6 +50,91 @@
                 }
               ],
               "children": [
+                {
+                  "name": "rotation_speed",
+                  "type": "group",
+                  "attributes": [
+                    {
+                      "name": "NX_class",
+                      "dtype": "string",
+                      "values": "NXlog"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "module": "f144",
+                      "config": {
+                        "source": "local:choppers:rotation_speed",
+                        "topic": "local_choppers",
+                        "value_units": "Hz",
+                        "dtype": "double"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "slit_height",
+                    "values": 0.085,
+                    "dtype": "double"
+                  },
+                  "attributes": [
+                    {
+                      "name": "units",
+                      "dtype": "string",
+                      "values": "m"
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "radius",
+                    "values": 0.32,
+                    "dtype": "double"
+                  },
+                  "attributes": [
+                    {
+                      "name": "units",
+                      "dtype": "string",
+                      "values": "m"
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "slits",
+                    "values": 1,
+                    "dtype": "int64"
+                  }
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "slit_edges",
+                    "values": [
+                      31.97,
+                      326.71000000000004
+                    ],
+                    "dtype": "double"
+                  },
+                  "attributes": [
+                    {
+                      "name": "units",
+                      "dtype": "string",
+                      "values": "deg"
+                    }
+                  ]
+                },
+                {
+                  "module": "tdct",
+                  "config": {
+                    "source": "local:chopper:tdct",
+                    "topic": "local_choppers"
+                  }
+                },
                 {
                   "name": "delay",
                   "type": "group",
@@ -64,7 +149,7 @@
                     {
                       "module": "f144",
                       "config": {
-                        "source": "delay:source:chopper",
+                        "source": "local:chopper:delay",
                         "topic": "local_choppers",
                         "dtype": "double",
                         "value_units": "ns"
@@ -73,7 +158,144 @@
                   ]
                 },
                 {
-                  "name": "speed",
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "values": ".",
+                    "dtype": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "event_detector",
+              "type": "group",
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "dtype": "string",
+                  "values": "NXdetector"
+                }
+              ],
+              "children": [
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "detector_number",
+                    "values": [
+                      [
+                        1,
+                        2,
+                        3,
+                        4
+                      ]
+                    ],
+                    "dtype": "int32"
+                  }
+                },
+                {
+                  "name": "events",
+                  "type": "group",
+                  "attributes": [
+                    {
+                      "name": "NX_class",
+                      "dtype": "string",
+                      "values": "NXevent_data"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "module": "ev44",
+                      "config": {
+                        "source": "detector_events",
+                        "topic": "local_detector"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "x_pixel_offset",
+                    "values": [
+                      [
+                        0.0,
+                        1.0
+                      ]
+                    ],
+                    "dtype": "float"
+                  },
+                  "attributes": [
+                    {
+                      "name": "units",
+                      "dtype": "string",
+                      "values": "m"
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "y_pixel_offset",
+                    "values": [
+                      [
+                        0.0,
+                        1.0
+                      ]
+                    ],
+                    "dtype": "float"
+                  },
+                  "attributes": [
+                    {
+                      "name": "units",
+                      "dtype": "string",
+                      "values": "m"
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "z_pixel_offset",
+                    "values": [
+                      [
+                        0.0,
+                        1.0
+                      ]
+                    ],
+                    "dtype": "float"
+                  },
+                  "attributes": [
+                    {
+                      "name": "units",
+                      "dtype": "string",
+                      "values": "m"
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "values": ".",
+                    "dtype": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "image_detector",
+              "type": "group",
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "dtype": "string",
+                  "values": "NXdetector"
+                }
+              ],
+              "children": [
+                {
+                  "name": "data",
                   "type": "group",
                   "attributes": [
                     {
@@ -84,15 +306,26 @@
                   ],
                   "children": [
                     {
-                      "module": "f144",
+                      "module": "ad00",
                       "config": {
-                        "source": "speed:source:chopper",
-                        "topic": "local_choppers",
-                        "dtype": "double",
-                        "value_units": "Hz"
+                        "source": "image_data",
+                        "topic": "local_detector",
+                        "array_size": [
+                          2,
+                          2
+                        ],
+                        "dtype": "int16"
                       }
                     }
                   ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "values": ".",
+                    "dtype": "string"
+                  }
                 }
               ]
             }
