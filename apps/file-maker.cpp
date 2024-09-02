@@ -108,7 +108,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     auto flatbuffer_json = nlohmann::json::parse(readJsonFromFile(data_file));
 
     for (nlohmann::json::iterator it = flatbuffer_json.begin();
-        it != flatbuffer_json.end(); ++it) {
+         it != flatbuffer_json.end(); ++it) {
       auto msg = FlatBuffers::convert_to_raw_flatbuffer(*it);
       auto timestamp_ms = std::chrono::milliseconds((*it)["kafka_timestamp"]);
       std::string topic = (*it)["topic"];
