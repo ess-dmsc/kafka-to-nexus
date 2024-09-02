@@ -88,8 +88,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   std::string data_file;
   app.add_option("-d, --data-file", data_file,
                  "The name of the file containing the data to be converted to "
-                 "flatbuffers")
-      ->required();
+                 "flatbuffers");
   std::string instrument_name;
   app.add_option("-i, --instrument", instrument_name, "The instrument name");
   CLI11_PARSE(app, argc, argv);
@@ -105,15 +104,17 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   // Pre-populate kafka messages - time-stamps must be in order?
   int64_t offset = 0;
 
-  auto flatbuffer_json = nlohmann::json::parse(readJsonFromFile(data_file));
+  if (!data_file.empty()) {
+    auto flatbuffer_json = nlohmann::json::parse(readJsonFromFile(data_file));
 
-  for (nlohmann::json::iterator it = flatbuffer_json.begin();
-       it != flatbuffer_json.end(); ++it) {
-    auto msg = FlatBuffers::convert_to_raw_flatbuffer(*it);
-    auto timestamp_ms = std::chrono::milliseconds((*it)["kafka_timestamp"]);
-    std::string topic = (*it)["topic"];
-    add_message(*consumer_factory, std::move(msg), timestamp_ms, topic,
-                offset++, 0);
+    for (nlohmann::json::iterator it = flatbuffer_json.begin();
+        it != flatbuffer_json.end(); ++it) {
+      auto msg = FlatBuffers::convert_to_raw_flatbuffer(*it);
+      auto timestamp_ms = std::chrono::milliseconds((*it)["kafka_timestamp"]);
+      std::string topic = (*it)["topic"];
+      add_message(*consumer_factory, std::move(msg), timestamp_ms, topic,
+                  offset++, 0);
+    }
   }
 
   Command::StartMessage start_info;
