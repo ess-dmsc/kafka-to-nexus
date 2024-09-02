@@ -80,7 +80,6 @@ void add_message(Kafka::StubConsumerFactory &consumer_factory,
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"file-maker app"};
   std::string json_file;
-  std::string instrument_name
   app.add_option("-f, --file", json_file, "The JSON file to load")->required();
   std::string output_file;
   app.add_option("-o, --output-file", output_file,
@@ -91,6 +90,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
                  "The name of the file containing the data to be converted to "
                  "flatbuffers")
       ->required();
+  std::string instrument_name;
   app.add_option("-i, --instrument", instrument_name, "The instrument name");
   CLI11_PARSE(app, argc, argv);
 
@@ -118,9 +118,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   Command::StartMessage start_info;
   start_info.NexusStructure = readJsonFromFile(json_file);
-  if (!instrument_name.empty()) {
-    start_info.InstrumentName = instrument_name;
-  }
   std::filesystem::path template_path;
   if (!instrument_name.empty()) {
     start_info.InstrumentName = instrument_name;

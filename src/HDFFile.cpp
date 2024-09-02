@@ -31,8 +31,8 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
   }
   FileAccessList.library_version_bounds(hdf5::property::LibVersion::Latest,
                                         hdf5::property::LibVersion::Latest);
-  createFileInRegularMode(template_path, instrument_name);
-  init(NexusStructure, ModuleHDFInfo, template_path, instrument_name);
+  createFileInRegularMode(template_path, is_legacy_writing);
+  init(NexusStructure, ModuleHDFInfo, template_path, is_legacy_writing);
   StoredNexusStructure = NexusStructure;
 }
 
@@ -99,7 +99,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
       write_nexus_file_metadata(RootGroup, NexusStructure);
     } else {
       write_template_version_if_present(RootGroup, NexusStructure);
-    LOG_WARN("The instrument name is: {}", InstrumentName);
+    }
 
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
