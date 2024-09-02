@@ -83,9 +83,9 @@ public:
   /// When it is called. Meta-data values that are to be stored to file will be
   /// written at the end of the write job just before closing the file for good.
   /// \param HDFGroup The (base/root) location in the HDF5 hierarchy for the
-  /// meta-data. \param Tracker A unique pointer to an instance of the
-  /// MetaData::Tracker class that is used to keep track of known meta-data
-  /// fields.
+  /// meta-data.
+  /// \param Tracker A unique pointer to an instance of the MetaData::Tracker
+  /// class that is used to keep track of known meta-data fields.
   virtual void
   register_meta_data([[maybe_unused]] hdf5::node::Group const &HDFGroup,
                      [[maybe_unused]] MetaData::TrackerPtr const &Tracker){};
