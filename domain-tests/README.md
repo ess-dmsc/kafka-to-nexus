@@ -7,5 +7,5 @@ Using the file-maker, the input "data" is read from JSON rather than from Kafka,
 To run:
 ```
 $ cd domain-tests
-$ pytest ---file-maker-binary=<path to file-maker binary>
+$ pytest --file-maker-binary=<path to file-maker binary>
 ```
