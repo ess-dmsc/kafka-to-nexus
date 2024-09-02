@@ -13,6 +13,9 @@ def test_f144_writes(write_file):
             f["/entry/instrument/chopper/rotation_speed/time"][:],
             [100000000, 110000000],
         )
+        assert f["/entry/instrument/chopper/rotation_speed/minimum_value"][0] == 10
+        assert f["/entry/instrument/chopper/rotation_speed/maximum_value"][0] == 15
+        assert f["/entry/instrument/chopper/rotation_speed/average_value"][0] == 12.5
 
 
 def test_ep01_writes(write_file):
