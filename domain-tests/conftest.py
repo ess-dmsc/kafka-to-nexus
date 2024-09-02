@@ -66,5 +66,5 @@ def write_file(request):
         "-d",
         "data_file.json",
     ]
-    file_maker_output = run_file_maker(args)
+    run_file_maker(args)
     return OUTPUT_FILE

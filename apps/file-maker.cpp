@@ -98,7 +98,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
                  "The name of the file to write")
       ->required();
   std::string data_file;
-  app.add_option("-d, --data_file", data_file,
+  app.add_option("-d, --data-file", data_file,
                  "The name of the file containing the data to be converted to "
                  "flatbuffers")
       ->required();
