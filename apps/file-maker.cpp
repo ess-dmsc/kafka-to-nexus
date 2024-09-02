@@ -23,88 +23,6 @@ std::string readJsonFromFile(const std::string &filePath) {
   return buffer.str();
 }
 
-std::string const example_json = R"(
-{
-	"children": [{
-		"name": "entry",
-		"type": "group",
-		"attributes": [{
-			"name": "NX_class",
-			"dtype": "string",
-			"values": "NXentry"
-		}],
-		"children": [{
-				"module": "dataset",
-				"config": {
-					"name": "title",
-					"values": "This is a title",
-					"dtype": "string"
-				}
-			},
-			{
-				"module": "mdat",
-				"config": {
-					"items": ["start_time", "end_time"]
-				}
-			},
-			{
-				"name": "instrument",
-				"type": "group",
-				"attributes": [{
-					"name": "NX_class",
-					"dtype": "string",
-					"values": "NXinstrument"
-				}],
-				"children": [{
-					"name": "mini_chopper",
-					"type": "group",
-					"attributes": [{
-						"name": "NX_class",
-						"dtype": "string",
-						"values": "NXdisk_chopper"
-					}],
-					"children": [{
-						"name": "delay",
-						"type": "group",
-						"attributes": [{
-							"name": "NX_class",
-							"dtype": "string",
-							"values": "NXlog"
-						}],
-						"children": [{
-							"module": "f144",
-							"config": {
-								"source": "delay:source:chopper",
-								"topic": "local_choppers",
-								"dtype": "double",
-                                                                "value_units": "ns"
-							}
-						}]
-					},{
-                                                "name": "speed",
-                                                "type": "group",
-                                                "attributes": [{
-                                                        "name": "NX_class",
-                                                        "dtype": "string",
-                                                        "values": "NXlog"
-                                                }],
-                                                "children": [{
-                                                        "module": "f144",
-                                                        "config": {
-                                                                "source": "speed:source:chopper",
-                                                                "topic": "local_choppers",
-                                                                "dtype": "double",
-                                                                "value_units": "Hz"
-                                                        }
-                                                }]
-                                                }]
-				}]
-			}
-		]
-	}]
-}
-                             )";
-
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
   void registerMetric([[maybe_unused]] Metrics::Metric &NewMetric,
@@ -114,18 +32,6 @@ public:
   [[nodiscard]] std::unique_ptr<Metrics::IRegistrar> getNewRegistrar(
       [[maybe_unused]] std::string const &MetricsPrefix) const override {
     return std::make_unique<FakeRegistrar>();
-  }
-};
-
-class FakeTracker : public MetaData::ITracker {
-public:
-  void
-  registerMetaData([[maybe_unused]] MetaData::ValueBase NewMetaData) override {}
-  void clearMetaData() override {}
-  void
-  writeToJSONDict([[maybe_unused]] nlohmann::json &JSONNode) const override {}
-  void
-  writeToHDF5File([[maybe_unused]] hdf5::node::Group &RootNode) const override {
   }
 };
 
@@ -154,7 +60,7 @@ public:
       [[maybe_unused]] duration TimeOut,
       [[maybe_unused]] Kafka::BrokerSettings const &BrokerSettings) override {
     // TODO: populate this list at runtime
-    return {"local_choppers", "local_motion"};
+    return {"local_choppers", "local_motion", "local_detector"};
   }
 };
 
@@ -174,61 +80,48 @@ void add_message(Kafka::StubConsumerFactory &consumer_factory,
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"file-maker app"};
   std::string json_file;
-  app.add_option("-f, --file", json_file, "The JSON file to load");
+  app.add_option("-f, --file", json_file, "The JSON file to load")->required();
+  std::string output_file;
+  app.add_option("-o, --output-file", output_file,
+                 "The name of the file to write")
+      ->required();
+  std::string data_file;
+  app.add_option("-d, --data-file", data_file,
+                 "The name of the file containing the data to be converted to "
+                 "flatbuffers")
+      ->required();
   CLI11_PARSE(app, argc, argv);
 
   std::cout << "Starting writing\n";
 
   std::unique_ptr<Metrics::IRegistrar> registrar =
       std::make_unique<FakeRegistrar>();
-  auto tracker = std::make_shared<FakeTracker>();
+  auto tracker = std::make_shared<MetaData::Tracker>();
   auto consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
   auto metadata_enquirer = std::make_shared<StubMetadataEnquirer>();
 
   // Pre-populate kafka messages - time-stamps must be in order?
   int64_t offset = 0;
-  auto msg = create_f144_message_double("delay:source:chopper", 100, 1000);
-  add_message(*consumer_factory, std::move(msg), 1000ms, "local_choppers",
-              offset++, 0);
 
-  msg = create_ep01_message_double("delay:source:chopper",
-                                   ConnectionInfo::CONNECTED, 1001);
-  add_message(*consumer_factory, std::move(msg), 1001ms, "local_choppers",
-              offset++, 0);
+  auto flatbuffer_json = nlohmann::json::parse(readJsonFromFile(data_file));
 
-  msg = create_f144_message_double("delay:source:chopper", 101, 1100);
-  add_message(*consumer_factory, std::move(msg), 1100ms, "local_choppers",
-              offset++, 0);
-
-  msg = create_f144_message_double("speed:source:chopper", 1000, 1200);
-  add_message(*consumer_factory, std::move(msg), 1200ms, "local_choppers",
-              offset++, 0);
-
-  msg = create_ep01_message_double("speed:source:chopper",
-                                   ConnectionInfo::CONNECTED, 1201);
-  add_message(*consumer_factory, std::move(msg), 1201ms, "local_choppers",
-              offset++, 0);
-
-  msg = create_f144_message_double("speed:source:chopper", 2000, 1250);
-  add_message(*consumer_factory, std::move(msg), 1250ms, "local_choppers",
-              offset++, 0);
-
-  msg = create_f144_message_double("delay:source:chopper", 102, 2100);
-  add_message(*consumer_factory, std::move(msg), 2100ms, "local_choppers",
-              offset++, 0);
+  for (nlohmann::json::iterator it = flatbuffer_json.begin();
+       it != flatbuffer_json.end(); ++it) {
+    auto msg = FlatBuffers::convert_to_raw_flatbuffer(*it);
+    auto timestamp_ms = std::chrono::milliseconds((*it)["kafka_timestamp"]);
+    std::string topic = (*it)["topic"];
+    add_message(*consumer_factory, std::move(msg), timestamp_ms, topic,
+                offset++, 0);
+  }
 
   Command::StartMessage start_info;
-  if (!json_file.empty()) {
-    start_info.NexusStructure = readJsonFromFile(json_file);
-  } else {
-    start_info.NexusStructure = example_json;
-  }
+  start_info.NexusStructure = readJsonFromFile(json_file);
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;
   streamer_options.StartTimestamp = time_point{0ms};
-  streamer_options.StopTimestamp = time_point{1250ms};
-  std::filesystem::path filepath{"../../example.hdf"};
+  streamer_options.StopTimestamp = time_point{1000ms};
+  std::filesystem::path filepath{output_file};
 
   auto stream_controller = FileWriter::createFileWritingJob(
       start_info, streamer_options, filepath, registrar.get(), tracker,

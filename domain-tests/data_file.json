@@ -1,0 +1,108 @@
+[
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 100,
+    "source_name": "local:choppers:rotation_speed",
+    "timestamp": 100,
+    "value": 10
+  },
+  {
+    "schema": "ep01",
+    "topic": "local_choppers",
+    "kafka_timestamp": 101,
+    "source_name": "local:choppers:rotation_speed",
+    "connection_status": "ConnectionInfo::CONNECTED",
+    "timestamp": 101
+  },
+  {
+    "schema": "al00",
+    "topic": "local_choppers",
+    "kafka_timestamp": 102,
+    "source_name": "local:choppers:rotation_speed",
+    "timestamp": 102,
+    "severity": "Severity::MINOR",
+    "message": "Chopper speed is too low"
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 110,
+    "source_name": "local:choppers:rotation_speed",
+    "timestamp": 110,
+    "value": 15
+  },
+  {
+    "schema": "ep01",
+    "topic": "local_choppers",
+    "kafka_timestamp": 111,
+    "source_name": "local:choppers:rotation_speed",
+    "connection_status": "ConnectionInfo::CONNECTED",
+    "timestamp": 111
+  },
+    {
+    "schema": "al00",
+    "topic": "local_choppers",
+    "kafka_timestamp": 112,
+    "source_name": "local:choppers:rotation_speed",
+    "timestamp": 112,
+    "severity": "Severity::OK",
+    "message": "Chopper speed is perfect"
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 200,
+    "source_name": "detector_events",
+    "message_id": 666,
+    "reference_time": 200,
+    "time_of_flight": [10, 20, 30, 40],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 210,
+    "source_name": "detector_events",
+    "message_id": 667,
+    "reference_time": 210,
+    "time_of_flight": [50, 60, 70, 80],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 220,
+    "source_name": "detector_events",
+    "message_id": 668,
+    "reference_time": 220,
+    "time_of_flight": [90, 100, 110, 120],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 230,
+    "source_name": "detector_events",
+    "message_id": 669,
+    "reference_time": 230,
+    "time_of_flight": [130, 140, 150, 160],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ad00",
+    "topic": "local_detector",
+    "kafka_timestamp": 300,
+    "source_name": "image_data",
+    "timestamp": 300,
+    "data": [[10, 11], [12, 13]]
+  },
+  {
+  "schema": "ad00",
+  "topic": "local_detector",
+  "kafka_timestamp": 310,
+  "source_name": "image_data",
+  "timestamp": 310,
+  "data": [[13, 12], [11, 10]]
+  }
+]

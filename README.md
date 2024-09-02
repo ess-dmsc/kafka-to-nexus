@@ -159,6 +159,11 @@ When using Conan on OSX, due to the way paths to dependencies are handled,
 the `activate_run.sh` file may need to be sourced before running the application. The
 `deactivate_run.sh` can be sourced to undo the changes afterwards.
 
+### Domain tests
+
+These tests run the core functionality of the program but without Kafka. This means the tests are more stable than the integration
+tests as they do not require Docker and Kafka to be running.
+
 ### Integration tests
 
 The integration tests consist of a series of automated tests for this repository that test it in ways similar to how it would 
