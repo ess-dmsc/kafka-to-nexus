@@ -38,36 +38,25 @@ getPathOffsetAttributeWriter(std::string PathOffset) {
 }
 
 template <class DataType>
-void basicDatasetWriter(hdf5::node::Node Node, std::string Name,
-                        DataType Value) {
-  if (is_dataset(Node)) {
+void basicDatasetWriter(hdf5::node::Node node, std::string name,
+                        DataType value) {
+  static_assert(std::is_arithmetic_v<DataType>, "can only write scalar values");
+  if (is_dataset(node)) {
     throw std::runtime_error(fmt::format(
         R"(Unable to create dataset "{}" at path "{}" as destination is a dataset.)",
-        Name, std::string(Node.link().path())));
+        name, std::string(node.link().path())));
   }
-  if (is_group(Node) and hdf5::node::Group(Node).has_dataset(Name)) {
+  if (is_group(node) and hdf5::node::Group(node).has_dataset(name)) {
     throw std::runtime_error(fmt::format(
         R"(Unable to create dataset "{}" at path "{}" as it already exists.)",
-        Name, std::string(Node.link().path())));
+        name, std::string(node.link().path())));
   }
-  auto Dataset = NeXusDataset::ExtensibleDataset<DataType>(
-      Node, Name, NeXusDataset::Mode::Create);
-  Dataset.appendElement(Value);
+  auto dataspace = hdf5::dataspace::Scalar();
+  auto dataset = hdf5::node::Group(node).create_dataset(
+      name, hdf5::datatype::create<DataType>(), dataspace);
+  dataset.write(value);
 }
 
 void basicStringDatasetWriter(hdf5::node::Node Node, std::string Name,
                               std::string Value);
-
-template <class DataType>
-std::function<void(hdf5::node::Node, std::string, DataType)>
-getPathOffsetDatasetWriter(std::string PathOffset) {
-  auto TempFunction = [PathOffset](hdf5::node::Node Node, std::string Name,
-                                   DataType Value) {
-    auto UsedNode =
-        hdf5::node::Node(hdf5::node::Group(Node).get_dataset(PathOffset));
-    MetaData::basicDatasetWriter<DataType>(UsedNode, Name, Value);
-  };
-  return TempFunction;
-}
-
 } // namespace MetaData
