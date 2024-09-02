@@ -94,12 +94,12 @@ def test_f142_meta_data(
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
     with OpenNexusFile(file_path) as file:
-        assert file["entry/meta_data_1/minimum_value"][0] == Min
-        assert file["entry/meta_data_1/maximum_value"][0] == Max
-        assert file["entry/meta_data_1/average_value"][0] == Mean
+        assert file["entry/meta_data_1/minimum_value"][()] == Min
+        assert file["entry/meta_data_1/maximum_value"][()] == Max
+        assert file["entry/meta_data_1/average_value"][()] == Mean
 
         FullArr = np.concatenate([Array1, Array2, Array3])
 
-        assert file["entry/meta_data_2/minimum_value"][0] == FullArr.min()
-        assert file["entry/meta_data_2/maximum_value"][0] == FullArr.max()
-        assert file["entry/meta_data_2/average_value"][0] == FullArr.mean()
+        assert file["entry/meta_data_2/minimum_value"][()] == FullArr.min()
+        assert file["entry/meta_data_2/maximum_value"][()] == FullArr.max()
+        assert file["entry/meta_data_2/average_value"][()] == FullArr.mean()

@@ -72,9 +72,9 @@ def test_f144(worker_pool, kafka_address, hdf_file_name="scal_output_file.nxs"):
     wait_no_working_writers(worker_pool, timeout=30)
 
     with OpenNexusFile(file_path) as file:
-        assert file["entry/scal_data/minimum_value"][0] == 42
-        assert file["entry/scal_data/maximum_value"][0] == 42
-        assert file["entry/scal_data/average_value"][0] == 42
+        assert file["entry/scal_data/minimum_value"][()] == 42
+        assert file["entry/scal_data/maximum_value"][()] == 42
+        assert file["entry/scal_data/average_value"][()] == 42
         assert file["entry/scal_data/value"][0] == 42
         assert file["entry/scal_data/alarm_message"][0].decode() == alarm_msg
         assert file["entry/scal_data/alarm_severity"][0] == alarm_severity.value
