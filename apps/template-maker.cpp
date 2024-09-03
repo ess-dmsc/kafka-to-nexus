@@ -35,18 +35,6 @@ public:
   }
 };
 
-class FakeTracker : public MetaData::ITracker {
-public:
-  void
-  registerMetaData([[maybe_unused]] MetaData::ValueBase NewMetaData) override {}
-  void clearMetaData() override {}
-  void
-  writeToJSONDict([[maybe_unused]] nlohmann::json &JSONNode) const override {}
-  void
-  writeToHDF5File([[maybe_unused]] hdf5::node::Group &RootNode) const override {
-  }
-};
-
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   CLI::App app{"template-maker app"};
   std::string json_file;
@@ -59,7 +47,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   std::unique_ptr<Metrics::IRegistrar> registrar =
       std::make_unique<FakeRegistrar>();
-  auto tracker = std::make_shared<FakeTracker>();
+  auto tracker = std::make_shared<MetaData::Tracker>();
 
   Command::StartMessage start_info;
 
