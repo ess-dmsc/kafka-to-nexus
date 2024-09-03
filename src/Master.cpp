@@ -84,7 +84,7 @@ std::filesystem::path
 Master::construct_template_path(std::filesystem::path const &prefix,
                                 std::string const &instrument_name) {
   std::filesystem::path local_template_path =
-      fmt::format("nexus/{0}/{0}.hdf", instrument_name);
+      fmt::format("{0}/{0}.hdf", instrument_name);
   return prefix / local_template_path;
 }
 

@@ -174,6 +174,11 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       addLineBreaks("Relative or absolute path to directory which gets "
                     "prepended to the HDF output filenames in the file write "
                     "commands. Default: current working directory"));
+  App.add_option(
+      "--hdf-template-prefix", MainOptions.HDFTemplatePrefix,
+      addLineBreaks("Relative or absolute path to directory which gets "
+                    "prepended to the HDF template filenames in the file write "
+                    "commands. Default: current working directory"));
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option("--server-status-port", MainOptions.ServerStatusPort,
