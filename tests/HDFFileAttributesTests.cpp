@@ -19,6 +19,8 @@ public:
         HDFFileTestHelper::createInMemoryTestFile("test-attribute.nxs", true);
   }
   std::unique_ptr<HDFFileTestHelper::DebugHDFFile> TestFile;
+  std::filesystem::path template_path;
+  bool is_legacy_writing = true;
 };
 
 TEST_F(HDFFileAttributesTest,
@@ -38,7 +40,8 @@ TEST_F(HDFFileAttributesTest,
       ]
     })"";
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -62,7 +65,8 @@ TEST_F(HDFFileAttributesTest,
       ]
     })"";
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithScalarStringAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithScalarStringAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto StringAttr = hdf5::node::get_group(TestFile->hdfGroup(),
                                           "/group_with_scalar_string_attr")
@@ -95,7 +99,8 @@ TEST_F(HDFFileAttributesTest,
   })"";
 
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithArrayOfAttrs, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithArrayOfAttrs, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto IntAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_of_attrs")
@@ -131,7 +136,8 @@ TEST_F(HDFFileAttributesTest,
   })"";
 
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithTypedAttrs, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithTypedAttrs, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto IntAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_typed_attrs")
@@ -159,7 +165,8 @@ TEST_F(HDFFileAttributesTest, IntArrayAttribute) {
   })"";
 
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithArrayAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithArrayAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto ArrayAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
@@ -189,7 +196,8 @@ TEST_F(HDFFileAttributesTest, StringArrayAttribute) {
   })"";
 
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithArrayAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithArrayAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto ArrayStringAttr =
       hdf5::node::get_group(TestFile->hdfGroup(), "group_with_array_attrs")
@@ -252,7 +260,8 @@ TEST_F(HDFFileAttributesTest,
   })"";
 
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithArrayOfAttrs, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithArrayOfAttrs, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   {
     auto StringAttr =
@@ -352,7 +361,7 @@ TEST_F(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
   })"";
 
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(Command, EmptyModuleHDFInfo);
+  TestFile->init(Command, EmptyModuleHDFInfo, template_path, is_legacy_writing);
 
   {
     auto StringAttr = hdf5::node::get_group(TestFile->hdfGroup(),
@@ -386,7 +395,8 @@ TEST_F(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
       ]
     })"";
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -416,7 +426,8 @@ TEST_F(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
       ]
     })"";
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -446,7 +457,8 @@ TEST_F(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
       ]
     })"";
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")
@@ -476,7 +488,8 @@ TEST_F(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
       ]
     })"";
   std::vector<ModuleHDFInfo> EmptyModuleHDFInfo;
-  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo);
+  TestFile->init(CommandWithNumericalAttr, EmptyModuleHDFInfo, template_path,
+                 is_legacy_writing);
 
   auto Attr = hdf5::node::get_dataset(TestFile->hdfGroup(),
                                       "/dataset_with_numerical_attr")

@@ -23,11 +23,13 @@ public:
   nlohmann::json NexusStructure{};
   std::vector<ModuleHDFInfo> ModuleHDFInfoList;
   MetaData::TrackerPtr Tracker{};
+  std::filesystem::path template_path;
+  bool is_legacy_writing = true;
 };
 
 TEST_F(HDFFile, FileModes) {
   FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
-                                Tracker};
+                                Tracker,  template_path,  is_legacy_writing};
   EXPECT_TRUE(UnderTest.isRegularMode());
   EXPECT_FALSE(UnderTest.isSWMRMode());
   UnderTest.openInSWMRMode();
@@ -40,7 +42,7 @@ TEST_F(HDFFile, FileModes) {
 
 TEST_F(HDFFile, DefaultFileAttributes) {
   FileWriter::HDFFile UnderTest{FileName, NexusStructure, ModuleHDFInfoList,
-                                Tracker};
+                                Tracker,  template_path,  is_legacy_writing};
   auto RootGroup = UnderTest.hdfGroup();
   EXPECT_TRUE(RootGroup.attributes.exists("HDF5_Version"));
   EXPECT_TRUE(RootGroup.attributes.exists("creator"));
@@ -80,9 +82,136 @@ TEST_F(HDFFile, SimpleNexusStructure) {
       ]
   })"";
   EXPECT_TRUE(ModuleHDFInfoList.empty());
-  FileWriter::HDFFile UnderTest{FileName,
-                                nlohmann::json::parse(SimpleNexusStructure),
-                                ModuleHDFInfoList, Tracker};
+  FileWriter::HDFFile UnderTest{
+      FileName,          nlohmann::json::parse(SimpleNexusStructure),
+      ModuleHDFInfoList, Tracker,
+      template_path,     is_legacy_writing};
   EXPECT_TRUE(UnderTest.hdfGroup().has_group("entry"));
   EXPECT_EQ(ModuleHDFInfoList.size(), 1u);
+}
+
+TEST_F(HDFFile, WithTemplatePathNoInstrumentName) {
+  std::string SimpleNexusStructure = R""({
+      "children": [
+        {
+          "name": "entry",
+          "type": "group",
+          "attributes": [
+            {
+              "name": "NX_class",
+              "dtype": "string",
+              "values": "NXentry"
+            }
+          ],
+          "children": [
+            {
+              "module": "f142",
+              "config": {
+                "dtype": "double",
+                "source": "my_test_pv",
+                "topic": "my_test_topic"
+              }
+            }
+          ]
+        }
+      ]
+  })"";
+  template_path = "templateFile.hdf";
+  is_legacy_writing = true;
+
+  FileWriter::HDFFile UnderTest{
+      FileName,          nlohmann::json::parse(SimpleNexusStructure),
+      ModuleHDFInfoList, Tracker,
+      template_path,     is_legacy_writing};
+  EXPECT_TRUE(UnderTest.hdfGroup().attributes.exists("HDF5_Version"));
+  EXPECT_TRUE(UnderTest.hdfGroup().attributes.exists("creator"));
+  EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("dynamic_version"));
+  EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("template_version"));
+}
+
+TEST_F(HDFFile, NoTemplatePathWithInstrumentName) {
+  std::string SimpleNexusStructure = R""({
+      "dynamic_version": "1.0.0",
+      "template_version": "1.0.0",
+      "children": [
+        {
+          "name": "entry",
+          "type": "group",
+          "attributes": [
+            {
+              "name": "NX_class",
+              "dtype": "string",
+              "values": "NXentry"
+            }
+          ],
+          "children": [
+            {
+              "module": "f142",
+              "config": {
+                "dtype": "double",
+                "source": "my_test_pv",
+                "topic": "my_test_topic"
+              }
+            }
+          ]
+        }
+      ]
+  })"";
+  template_path = "";
+  is_legacy_writing = false;
+
+  FileWriter::HDFFile UnderTest{
+      FileName,          nlohmann::json::parse(SimpleNexusStructure),
+      ModuleHDFInfoList, Tracker,
+      template_path,     is_legacy_writing};
+  EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("HDF5_Version"));
+  EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("creator"));
+  EXPECT_FALSE(UnderTest.hdfGroup().attributes.exists("dynamic_version"));
+  EXPECT_TRUE(UnderTest.hdfGroup().attributes.exists("template_version"));
+}
+
+TEST_F(HDFFile, WithTemplatePathWithInstrumentName) {
+  std::string SimpleNexusStructure = R""({
+      "dynamic_version": "1.0.0",
+      "template_version": "1.0.0",
+      "children": [
+        {
+          "name": "entry",
+          "type": "group",
+          "attributes": [
+            {
+              "name": "NX_class",
+              "dtype": "string",
+              "values": "NXentry"
+            }
+          ],
+          "children": [
+            {
+              "module": "f142",
+              "config": {
+                "dtype": "double",
+                "source": "my_test_pv",
+                "topic": "my_test_topic"
+              }
+            }
+          ]
+        }
+      ]
+  })"";
+  template_path = "templateFile.hdf";
+  is_legacy_writing = false;
+
+  try {
+    FileWriter::HDFFile UnderTest{
+        FileName,          nlohmann::json::parse(SimpleNexusStructure),
+        ModuleHDFInfoList, Tracker,
+        template_path,     is_legacy_writing};
+    FAIL() << "Expected std::exception";
+  } catch (const std::exception &e) {
+    std::string error_message = e.what();
+    EXPECT_EQ(error_message, "filesystem error: cannot copy: No such file or "
+                             "directory [templateFile.hdf] [someFileName.hdf]");
+  } catch (...) {
+    FAIL() << "Expected std::exception";
+  }
 }

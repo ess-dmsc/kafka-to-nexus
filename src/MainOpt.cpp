@@ -39,3 +39,5 @@ std::string MainOpt::getServiceId() const {
 }
 
 std::string MainOpt::getHDFOutputPrefix() const { return HDFOutputPrefix; }
+
+std::string MainOpt::getHDFTemplatePrefix() const { return HDFTemplatePrefix; }

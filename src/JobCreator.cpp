@@ -28,11 +28,14 @@ namespace FileWriter {
 using nlohmann::json;
 
 std::vector<ModuleHDFInfo>
-initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) {
+initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
+              std::filesystem::path const &template_path,
+              bool const &is_legacy_writing) {
   try {
     json const NexusStructure = json::parse(NexusStructureString);
     std::vector<ModuleHDFInfo> ModuleHDFInfoList;
-    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList);
+    Task.InitialiseHdf(NexusStructure, ModuleHDFInfoList, template_path,
+                       is_legacy_writing);
     return ModuleHDFInfoList;
   } catch (nlohmann::detail::exception const &Error) {
     throw std::runtime_error(
@@ -121,13 +124,16 @@ std::unique_ptr<StreamController> createFileWritingJob(
     Command::StartMessage const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
     MetaData::TrackerPtr const &Tracker,
+    std::filesystem::path const &template_path,
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory) {
   auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
                                                Registrar, Tracker);
 
-  std::vector<ModuleHDFInfo> ModuleHDFInfoList =
-      initializeHDF(*Task, StartInfo.NexusStructure);
+  bool const is_legacy_writing = StartInfo.InstrumentName.empty();
+
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
+      *Task, StartInfo.NexusStructure, template_path, is_legacy_writing);
   std::vector<ModuleHDFInfo> mdatInfoList =
       extractMdatModules(ModuleHDFInfoList);
 
@@ -191,6 +197,18 @@ std::unique_ptr<StreamController> createFileWritingJob(
   return std::make_unique<StreamController>(
       std::move(Task), std::move(mdatWriter), Settings, Registrar, Tracker,
       metadata_enquirer, consumer_factory);
+}
+
+void createFileWriterTemplate(Command::StartMessage const &StartInfo,
+                              std::filesystem::path const &filepath,
+                              Metrics::IRegistrar *Registrar,
+                              MetaData::TrackerPtr const &Tracker) {
+  auto Task = std::make_unique<FileWriterTask>(StartInfo.JobID, filepath,
+                                               Registrar, Tracker);
+  std::filesystem::path const template_path;
+  bool const is_legacy_writing = false;
+  std::vector<ModuleHDFInfo> ModuleHDFInfoList = initializeHDF(
+      *Task, StartInfo.NexusStructure, template_path, is_legacy_writing);
 }
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,

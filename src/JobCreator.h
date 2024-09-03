@@ -24,10 +24,16 @@ std::unique_ptr<StreamController> createFileWritingJob(
     Command::StartMessage const &StartInfo, StreamerOptions const &Settings,
     std::filesystem::path const &filepath, Metrics::IRegistrar *Registrar,
     MetaData::TrackerPtr const &Tracker,
+    std::filesystem::path const &template_path,
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer =
         std::make_shared<Kafka::MetadataEnquirer>(),
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory =
         std::make_shared<Kafka::ConsumerFactory>());
+
+void createFileWriterTemplate(Command::StartMessage const &StartInfo,
+                              std::filesystem::path const &filepath,
+                              Metrics::IRegistrar *Registrar,
+                              MetaData::TrackerPtr const &Tracker);
 
 // Note: The functions below are "private" helper functions.
 
@@ -35,7 +41,9 @@ void addStreamSourceToWriterModule(
     std::vector<ModuleSettings> &StreamSettingsList, FileWriterTask &Task);
 
 std::vector<ModuleHDFInfo>
-initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString);
+initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
+              std::filesystem::path const &template_path,
+              bool const &is_legacy_writing);
 
 /// \brief Extract information about the module (stream or link).
 ///

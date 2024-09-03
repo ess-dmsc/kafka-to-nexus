@@ -34,6 +34,8 @@ struct MainOpt {
 
   [[nodiscard]] std::string getHDFOutputPrefix() const;
 
+  [[nodiscard]] std::string getHDFTemplatePrefix() const;
+
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamController.
   FileWriter::StreamerOptions StreamerConfiguration;
@@ -62,6 +64,12 @@ struct MainOpt {
   /// This gets prepended to the HDF output filename given in the write
   /// commands.
   std::string HDFOutputPrefix{std::filesystem::current_path()};
+
+  /// \brief Path for HDF template.
+  ///
+  /// This gets prepended to the HDF template filename given in the write
+  /// commands.
+  std::string HDFTemplatePrefix{std::filesystem::current_path()};
 
   /// Used for command line argument.
   bool ListWriterModules = false;
