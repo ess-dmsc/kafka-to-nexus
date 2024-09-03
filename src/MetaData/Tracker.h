@@ -14,34 +14,24 @@
 #include <mutex>
 
 namespace MetaData {
-
-class ITracker {
-public:
-  virtual ~ITracker() noexcept = default;
-  virtual void registerMetaData(MetaData::ValueBase NewMetaData) = 0;
-  virtual void clearMetaData() = 0;
-  virtual void writeToJSONDict(nlohmann::json &JSONNode) const = 0;
-  virtual void writeToHDF5File(hdf5::node::Group &RootNode) const = 0;
-};
-
-using TrackerPtr = std::shared_ptr<ITracker>;
-
 /// \brief Used to store the pointers to metadata variables.
 ///
 /// The (almost) sole for this class to exist is so that we can automatically
 /// write (or do whatever) to the metadata when its destructor is called.
-class Tracker : public ITracker {
+class Tracker {
 public:
   Tracker() = default;
-  void registerMetaData(MetaData::ValueBase NewMetaData) override;
-  void clearMetaData() override;
-  void writeToJSONDict(nlohmann::json &JSONNode) const override;
-  void writeToHDF5File(hdf5::node::Group &RootNode) const override;
+  void registerMetaData(MetaData::ValueBase NewMetaData);
+  void clearMetaData();
+  void writeToJSONDict(nlohmann::json &JSONNode) const;
+  void writeToHDF5File(hdf5::node::Group &RootNode) const;
 
 private:
   mutable std::mutex MetaDataMutex;
   std::vector<std::shared_ptr<MetaDataInternal::ValueBaseInternal>>
       KnownMetaData;
 };
+
+using TrackerPtr = std::shared_ptr<Tracker>;
 
 } // namespace MetaData
