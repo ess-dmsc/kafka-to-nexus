@@ -78,7 +78,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   start_info.JobID = "some_job_id";
 
   std::filesystem::path filepath =
-      fmt::format("../../nexus_templates/{0}/{0}.hdf", instrument_name);
+      fmt::format("../../nexus/{0}/{0}.hdf", instrument_name);
 
   FileWriter::createFileWriterTemplate(start_info, filepath, registrar.get(),
                                        tracker);

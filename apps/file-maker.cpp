@@ -122,8 +122,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   std::filesystem::path template_path;
   if (!instrument_name.empty()) {
     start_info.InstrumentName = instrument_name;
-    template_path =
-        fmt::format("../../nexus_templates/{0}/{0}.hdf", instrument_name);
+    template_path = fmt::format("../../nexus/{0}/{0}.hdf", instrument_name);
   }
   start_info.JobID = "some_job_id";
 

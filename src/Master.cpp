@@ -54,7 +54,7 @@ void Master::startWriting(Command::StartMessage const &StartInfo) {
     std::filesystem::path const filepath =
         construct_filepath(MainConfig.HDFOutputPrefix, StartInfo.Filename);
     std::filesystem::path const template_path = construct_template_path(
-        MainConfig.HDFOutputPrefix, StartInfo.InstrumentName);
+        MainConfig.HDFTemplatePrefix, StartInfo.InstrumentName);
 
     CurrentStreamController = createFileWritingJob(
         StartInfo, streamer_options, filepath, MasterMetricsRegistrar.get(),
@@ -84,7 +84,7 @@ std::filesystem::path
 Master::construct_template_path(std::filesystem::path const &prefix,
                                 std::string const &instrument_name) {
   std::filesystem::path local_template_path =
-      fmt::format("nexus_templates/{0}/{0}.hdf", instrument_name);
+      fmt::format("nexus/{0}/{0}.hdf", instrument_name);
   return prefix / local_template_path;
 }
 
