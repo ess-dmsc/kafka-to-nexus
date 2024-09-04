@@ -280,7 +280,7 @@ public:
   PartitionStandInAlt()
       : Stream::Partition({}, 0, "", {}, nullptr,
                           std::make_unique<Metrics::Registrar>("").get(), {},
-                          {}, {}, {}, []() { return false; }) {}
+                          {}, []() { return false; }) {}
   MAKE_CONST_MOCK0(hasFinished, bool(), override);
 };
 
