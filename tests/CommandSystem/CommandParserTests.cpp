@@ -51,6 +51,11 @@ TEST_F(CommandParserHappyStartTests, IfFilenamePresentThenExtractedCorrectly) {
 }
 
 TEST_F(CommandParserHappyStartTests,
+       IfInstrumentNamePresentThenExtractedCorrectly) {
+  ASSERT_EQ(InstrumentNameInput, StartInfo.InstrumentName);
+}
+
+TEST_F(CommandParserHappyStartTests,
        IfNexusStructurePresentThenExtractedCorrectly) {
   ASSERT_EQ(NexusStructureInput, StartInfo.NexusStructure);
 }
