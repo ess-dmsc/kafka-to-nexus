@@ -37,12 +37,6 @@ public:
   /// \brief Update the stop time.
   void setStopTime(time_point stop) { _stop_time = stop; }
 
-  /// \brief Force shouldStopPartition() to return true on next call.
-  void forceStop();
-
-  /// \brief Return true if forceStop() has been called.
-  [[nodiscard]] bool hasForceStopBeenRequested() const;
-
   /// \brief Applies the stop logic to the current poll status.
   /// \param current_poll_status The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
@@ -70,7 +64,6 @@ public:
   }
 
 private:
-  bool _force_stop{false};
   PartitionState _state{PartitionState::DEFAULT};
   time_point _status_occurrence_time;
   time_point _stop_time{time_point::max()};

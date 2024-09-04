@@ -42,15 +42,8 @@ void PartitionFilter::updateStatusOccurrenceTime(
   }
 }
 
-void PartitionFilter::forceStop() { _force_stop = true; }
-
-bool PartitionFilter::hasForceStopBeenRequested() const { return _force_stop; }
-
 bool PartitionFilter::shouldStopPartition(
     Kafka::PollStatus current_poll_status) {
-  if (hasForceStopBeenRequested()) {
-    return true;
-  }
   switch (current_poll_status) {
   case Kafka::PollStatus::Message:
     _at_end_of_partition = false;
