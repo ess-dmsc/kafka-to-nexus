@@ -46,6 +46,7 @@ public:
   [[nodiscard]] PartitionState currentPartitionState() const { return _state; }
 
   /// \brief Check if we currently have an error state.
+  /// Only used in tests.
   [[nodiscard]] bool hasErrorState() const {
     return _state == PartitionState::ERROR;
   }
