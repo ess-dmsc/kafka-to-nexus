@@ -24,7 +24,7 @@ public:
 
   void SetUp() override {
     auto fake_clock = std::make_unique<FakeClock>();
-    fake_clock->set_time(time_point(std::chrono::seconds(0)));
+    fake_clock->set_time(time_point(std::chrono::seconds(100)));
     clock_ptr = fake_clock.get();
     UnderTest = {time_point::max(), 10ms, 20ms, std::move(fake_clock)};
   }
