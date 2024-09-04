@@ -59,7 +59,7 @@ void Topic::setStopTime(std::chrono::system_clock::time_point StopTime) {
   Executor.sendWork([=]() {
     StopConsumeTime = StopTime;
     for (auto &Stream : ConsumerThreads) {
-      Stream->setStopTime(StopTime);
+      Stream->set_stop_time(StopTime);
     }
   });
 }
@@ -166,11 +166,10 @@ void Topic::createStreams(
         Registrar->getNewRegistrar("partition_" + std::to_string(partition));
     auto Consumer = _consumer_factory->createConsumerAtOffset(
         Settings, Topic, partition, offset);
-    auto TempPartition = Partition::create(
+    auto TempPartition = PartitionThreaded::create(
         std::move(Consumer), partition, Topic, DataMap, WriterPtr,
         CRegistrar.get(), StartConsumeTime, StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout, AreStreamersPausedFunction);
-    TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));
   }
   checkIfDoneTask();
@@ -179,7 +178,7 @@ void Topic::createStreams(
 void Topic::checkIfDone() {
   auto const is_done =
       std::all_of(ConsumerThreads.begin(), ConsumerThreads.end(),
-                  [](auto const &thread) { return thread->hasFinished(); });
+                  [](auto const &thread) { return thread->has_finished(); });
   if (is_done) {
     Logger::Info("Topic {} has finished consuming.", TopicName);
     IsDone.store(true);

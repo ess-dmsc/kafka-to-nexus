@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include "FlatbufferMessage.h"
 #include "Kafka/Consumer.h"
 #include "Message.h"
@@ -67,25 +69,18 @@ public:
             std::function<bool()> const &streamers_paused_function);
   virtual ~Partition() = default;
 
-  /// \brief Must be called after the constructor.
-  /// \note This function exist in order to make unit testing possible.
-  void start();
-
   /// \brief Stop the consumer thread.
   ///
   /// Non blocking. Will tell the consumer thread to stop as soon as possible.
   /// There are no guarantees for when the consumer is actually stopped.
   void stop();
 
-  /// \brief Checks for occurrence for time out and logs it once for each time
-  /// out occurrence.
-  void checkAndLogPartitionTimeOut();
-
   void setStopTime(time_point Stop);
 
   virtual bool hasFinished() const;
   auto getPartitionID() const { return _partition_id; }
   auto getTopicName() const { return _topic_name; }
+  virtual void pollForMessage();
 
 protected:
   Metrics::Metric KafkaTimeouts{"timeouts",
@@ -126,15 +121,16 @@ protected:
       "Number of messages received with bad timestamps.",
       Metrics::Severity::ERROR};
 
-  virtual void pollForMessage();
-  virtual void addPollTask();
   virtual bool hasStopBeenRequested() const;
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
   void forceStop();
+  /// \brief Checks for occurrence for time out and logs it once for each time
+  /// out occurrence.
+  void checkAndLogPartitionTimeOut();
 
   /// \brief Sleep.
   /// \note This function exist in order to make unit testing possible.
-  virtual void sleep(duration const Duration) const;
+  virtual void sleep(duration Duration) const;
   virtual void processMessage(FileWriter::Msg const &Message);
 
   std::shared_ptr<Kafka::ConsumerInterface> _consumer;
@@ -151,7 +147,61 @@ protected:
                         std::unique_ptr<SourceFilter>>>
       _source_filters;
   std::function<bool()> _streamers_paused_function;
-  ThreadedExecutor _executor{false, "partition"}; // Must be last
+};
+
+class PartitionThreaded {
+public:
+  static std::unique_ptr<PartitionThreaded> create(
+      std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition_index,
+      std::string const &topic_name, SrcToDst const &map, MessageWriter *writer,
+      Metrics::IRegistrar *registrar, time_point start_time,
+      time_point stop_time, duration stop_leeway, duration kafka_error_timeout,
+      std::function<bool()> const &streamers_paused_function) {
+    auto partition =
+        Partition::create(std::move(consumer), partition_index, topic_name, map,
+                          writer, registrar, start_time, stop_time, stop_leeway,
+                          kafka_error_timeout, streamers_paused_function);
+    return std::make_unique<PartitionThreaded>(std::move(partition));
+  }
+
+  explicit PartitionThreaded(std::unique_ptr<Partition> partition)
+      : _partition(std::move(partition)),
+        _worker_thread(&PartitionThreaded::process, this) {}
+
+  ~PartitionThreaded() {
+    _exit.store(true);
+    _worker_thread.join();
+  }
+
+  void stop() { _immediate_stop_requested.store(true); }
+
+  void set_stop_time(time_point stop_time) {
+    _requested_stop_time.store(stop_time);
+  }
+
+  bool has_finished() const { return _partition->hasFinished(); }
+
+private:
+  void process() {
+    while (!_partition->hasFinished() && !_exit) {
+      if (_immediate_stop_requested.load()) {
+        _partition->stop();
+        _immediate_stop_requested.store(false);
+      }
+      if (_requested_stop_time.load() != time_point::max()) {
+        _partition->setStopTime(_requested_stop_time);
+        _requested_stop_time.store(time_point::max());
+      }
+      _partition->pollForMessage();
+      std::this_thread::sleep_for(5ms);
+    }
+  }
+
+  std::atomic<bool> _exit{false};
+  std::atomic<time_point> _requested_stop_time{time_point::max()};
+  std::unique_ptr<Partition> _partition;
+  std::atomic<bool> _immediate_stop_requested{false};
+  std::thread _worker_thread;
 };
 
 } // namespace Stream

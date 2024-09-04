@@ -109,7 +109,7 @@ protected:
 
   virtual time_point getCurrentTime() const { return system_clock::now(); }
 
-  std::vector<std::unique_ptr<Partition>> ConsumerThreads;
+  std::vector<std::unique_ptr<PartitionThreaded>> ConsumerThreads;
   std::shared_ptr<Kafka::MetadataEnquirer> _metadata_enquirer;
   std::shared_ptr<Kafka::ConsumerFactoryInterface> _consumer_factory;
   ThreadedExecutor Executor{false, "topic"}; // Must be last

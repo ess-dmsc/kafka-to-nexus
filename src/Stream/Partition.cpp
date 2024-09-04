@@ -118,34 +118,23 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                                                   kafka_error_timeout),
                 registrar, stop_time, stop_leeway, streamers_paused_function) {}
 
-void Partition::start() { addPollTask(); }
-
 void Partition::forceStop() { _partition_filter->forceStop(); }
 
 void Partition::sleep(const duration Duration) const {
   std::this_thread::sleep_for(Duration);
 }
 
-void Partition::stop() {
-  _executor.sendLowPriorityWork([=]() { forceStop(); });
-  _executor.sendWork([=]() { forceStop(); });
-}
+void Partition::stop() { forceStop(); }
 
 void Partition::setStopTime(time_point Stop) {
-  _executor.sendWork([=]() {
-    _stop_time = Stop;
-    _partition_filter->setStopTime(Stop);
-    for (auto &Filter : _source_filters) {
-      Filter.second->set_stop_time(Stop);
-    }
-  });
+  _stop_time = Stop;
+  _partition_filter->setStopTime(Stop);
+  for (auto &Filter : _source_filters) {
+    Filter.second->set_stop_time(Stop);
+  }
 }
 
 bool Partition::hasFinished() const { return _has_finished.load(); }
-
-void Partition::addPollTask() {
-  _executor.sendLowPriorityWork([=]() { pollForMessage(); });
-}
 
 void Partition::checkAndLogPartitionTimeOut() {
   if (_partition_filter->hasTopicTimedOut()) {
@@ -245,7 +234,6 @@ void Partition::pollForMessage() {
       }
     }
   }
-  addPollTask();
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
