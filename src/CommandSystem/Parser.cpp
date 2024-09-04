@@ -80,6 +80,9 @@ Command::StartMessage extractStartMessage(Msg const &CommandMessage,
   if (RunStartData->control_topic() != nullptr) {
     Result.ControlTopic = RunStartData->control_topic()->str();
   }
+  if (RunStartData->instrument_name() != nullptr) {
+    Result.InstrumentName = RunStartData->instrument_name()->str();
+  }
 
   return Result;
 }
