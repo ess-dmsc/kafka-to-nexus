@@ -50,20 +50,20 @@ public:
     return _state == PartitionState::ERROR;
   }
 
-  /// \brief Check if time limit has been exceeded.
-  [[nodiscard]] bool hasExceededTimeLimit() const;
-
   /// \brief Check if topic has timed out.
   [[nodiscard]] bool hasTopicTimedOut() const;
-
-  /// \brief Update status occurence time.
-  void updateStatusOccurrenceTime(PartitionState comparison_state);
 
   [[nodiscard]] time_point getStatusOccurrenceTime() const {
     return _status_occurrence_time;
   }
 
 private:
+  /// \brief Check if error recovery time limit has been exceeded.
+  [[nodiscard]] bool hasExceededTimeLimit() const;
+
+  /// \brief Update status occurrence time.
+  void updateStatusOccurrenceTime(PartitionState comparison_state);
+
   PartitionState _state{PartitionState::DEFAULT};
   time_point _status_occurrence_time;
   time_point _stop_time{time_point::max()};
