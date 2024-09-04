@@ -118,7 +118,7 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                                                   kafka_error_timeout),
                 registrar, stop_time, stop_leeway, streamers_paused_function) {}
 
-void Partition::forceStop() { _partition_filter->forceStop(); }
+void Partition::forceStop() { _force_stop = true; }
 
 void Partition::sleep(const duration Duration) const {
   std::this_thread::sleep_for(Duration);
@@ -155,9 +155,7 @@ void Partition::checkAndLogPartitionTimeOut() {
   }
 }
 
-bool Partition::hasStopBeenRequested() const {
-  return _partition_filter->hasForceStopBeenRequested();
-}
+bool Partition::hasStopBeenRequested() const { return _force_stop; }
 
 bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
   checkAndLogPartitionTimeOut();
@@ -186,7 +184,7 @@ bool Partition::shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus) {
 }
 
 void Partition::pollForMessage() {
-  if (hasStopBeenRequested()) {
+  if (_force_stop) {
     _has_finished = true;
     return;
   }

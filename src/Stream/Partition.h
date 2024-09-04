@@ -138,6 +138,7 @@ protected:
   bool _partition_time_out_logged{false};
   std::string _topic_name{"not_initialized"};
   std::atomic_bool _has_finished{false};
+  bool _force_stop{false};
   std::int64_t _current_offset{0};
   time_point _stop_time;
   duration _stop_time_leeway{};

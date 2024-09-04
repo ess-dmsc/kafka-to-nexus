@@ -37,12 +37,6 @@ public:
   /// \brief Update the stop time.
   void setStopTime(time_point stop) { _stop_time = stop; }
 
-  /// \brief Force shouldStopPartition() to return true on next call.
-  void forceStop();
-
-  /// \brief Return true if forceStop() has been called.
-  [[nodiscard]] bool hasForceStopBeenRequested() const;
-
   /// \brief Applies the stop logic to the current poll status.
   /// \param current_poll_status The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
@@ -52,25 +46,25 @@ public:
   [[nodiscard]] PartitionState currentPartitionState() const { return _state; }
 
   /// \brief Check if we currently have an error state.
+  /// Only used in tests.
   [[nodiscard]] bool hasErrorState() const {
     return _state == PartitionState::ERROR;
   }
 
-  /// \brief Check if time limit has been exceeded.
-  [[nodiscard]] bool hasExceededTimeLimit() const;
-
   /// \brief Check if topic has timed out.
   [[nodiscard]] bool hasTopicTimedOut() const;
-
-  /// \brief Update status occurence time.
-  void updateStatusOccurrenceTime(PartitionState comparison_state);
 
   [[nodiscard]] time_point getStatusOccurrenceTime() const {
     return _status_occurrence_time;
   }
 
 private:
-  bool _force_stop{false};
+  /// \brief Check if error recovery time limit has been exceeded.
+  [[nodiscard]] bool hasExceededTimeLimit() const;
+
+  /// \brief Update status occurrence time.
+  void updateStatusOccurrenceTime(PartitionState comparison_state);
+
   PartitionState _state{PartitionState::DEFAULT};
   time_point _status_occurrence_time;
   time_point _stop_time{time_point::max()};
