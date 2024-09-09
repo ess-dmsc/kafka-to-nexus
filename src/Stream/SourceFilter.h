@@ -33,7 +33,7 @@ public:
     _destination_writer_modules.push_back(writer_module);
   };
 
-  virtual void filter_message(FileWriter::FlatbufferMessage const &message);
+  virtual bool filter_message(FileWriter::FlatbufferMessage const &message);
   void set_stop_time(time_point stop_time);
   time_point get_stop_time() const { return _stop_time; }
   virtual bool has_finished() const;
