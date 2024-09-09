@@ -37,6 +37,7 @@ TEST(SourceFilter, messages_within_start_and_stop_are_allowed_through) {
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 100));
@@ -45,12 +46,30 @@ TEST(SourceFilter, messages_within_start_and_stop_are_allowed_through) {
   EXPECT_EQ(2u, writer->messages_received.size());
 }
 
+TEST(SourceFilter, messages_with_wrong_hash_are_ignored) {
+  auto writer = std::make_unique<StubMessageWriter>();
+  auto registrar = std::make_unique<Metrics::Registrar>("");
+  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
+  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
+                              writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
+  filter.add_writer_module_for_message(f144_writer.get());
+
+  filter.filter_message(
+      create_f144_message("wrong_source_give_wrong_hash", 1, 100));
+  filter.filter_message(
+      create_f144_message("wrong_source_give_wrong_hash", 2, 200));
+
+  EXPECT_EQ(0u, writer->messages_received.size());
+}
+
 TEST(SourceFilter, out_of_order_messages_are_allowed_through) {
   auto writer = std::make_unique<StubMessageWriter>();
   auto registrar = std::make_unique<Metrics::Registrar>("");
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 2, 200));
@@ -65,6 +84,7 @@ TEST(SourceFilter, invalid_message_is_filtered_out) {
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   FileWriter::FlatbufferMessage invalid;
@@ -79,6 +99,7 @@ TEST(SourceFilter, message_before_start_is_not_allowed_through) {
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 100));
@@ -92,6 +113,7 @@ TEST(SourceFilter, message_on_start_is_allowed_through) {
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 1000));
@@ -105,6 +127,7 @@ TEST(SourceFilter, first_message_after_stop_is_allowed_through) {
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{0ms}, time_point{1000ms}, false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 1001));
@@ -119,6 +142,7 @@ TEST(SourceFilter, message_after_stop_sets_filter_to_finished) {
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{0ms}, time_point{1000ms}, false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 1001));
@@ -135,6 +159,7 @@ TEST(SourceFilter,
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(),
                               allow_repeated_timestamps, writer.get(),
                               std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 1000));
@@ -153,6 +178,7 @@ TEST(SourceFilter,
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(),
                               allow_repeated_timestamps, writer.get(),
                               std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 1000));
@@ -168,6 +194,7 @@ TEST(SourceFilter, can_change_stop_time_after_construction) {
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.set_stop_time(time_point{1000ms});
@@ -189,16 +216,16 @@ TEST(SourceFilter,
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
   filter.filter_message(create_f144_message("::source::", 1, 100));
-  filter.filter_message(create_f144_message("some_source", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 2, 200));
   filter.filter_message(create_f144_message("::source::", 3, 1002));
 
   EXPECT_EQ(2u, writer->messages_received.size());
   auto first = writer->messages_received.at(0).FbMsg;
   EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
-  EXPECT_EQ("some_source", first.getSourceName());
 }
 
 TEST(SourceFilter,
@@ -211,16 +238,16 @@ TEST(SourceFilter,
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer.get());
 
-  filter.filter_message(create_f144_message("some_source", 2, 200));
+  filter.filter_message(create_f144_message("::source::", 2, 200));
   filter.filter_message(create_f144_message("::source::", 1, 100));
   filter.filter_message(create_f144_message("::source::", 3, 1002));
 
   EXPECT_EQ(2u, writer->messages_received.size());
   auto first = writer->messages_received.at(0).FbMsg;
   EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
-  EXPECT_EQ("some_source", first.getSourceName());
 }
 
 TEST(
@@ -235,15 +262,15 @@ TEST(
   {
     Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
                                 writer.get(), std::move(registrar)};
+    filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
     filter.add_writer_module_for_message(f144_writer.get());
 
-    filter.filter_message(create_f144_message("some_source", 2, 200));
+    filter.filter_message(create_f144_message("::source::", 2, 200));
   }
 
   EXPECT_EQ(1u, writer->messages_received.size());
   auto first = writer->messages_received.at(0).FbMsg;
   EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
-  EXPECT_EQ("some_source", first.getSourceName());
 }
 
 TEST(
@@ -258,16 +285,16 @@ TEST(
   {
     Stream::SourceFilter filter{time_point{1000ms}, time_point::max(), false,
                                 writer.get(), std::move(registrar)};
+    filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
     filter.add_writer_module_for_message(f144_writer.get());
 
-    filter.filter_message(create_f144_message("some_source", 2, 200));
+    filter.filter_message(create_f144_message("::source::", 2, 200));
     filter.filter_message(create_f144_message("::source::", 3, 1002));
   }
 
   EXPECT_EQ(2u, writer->messages_received.size());
   auto first = writer->messages_received.at(0).FbMsg;
   EXPECT_EQ(200000000, first.getTimestamp()); // timestamp is in ns
-  EXPECT_EQ("some_source", first.getSourceName());
 }
 
 TEST(SourceFilter, messages_written_for_each_module_when_more_than_one_module) {
@@ -277,6 +304,7 @@ TEST(SourceFilter, messages_written_for_each_module_when_more_than_one_module) {
   auto f144_writer_2 = std::make_unique<WriterModule::f144::f144_Writer>();
   Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
                               writer.get(), std::move(registrar)};
+  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
   filter.add_writer_module_for_message(f144_writer_1.get());
   filter.add_writer_module_for_message(f144_writer_2.get());
 
