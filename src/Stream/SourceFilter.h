@@ -34,7 +34,7 @@ public:
   };
 
   virtual bool filter_message(FileWriter::FlatbufferMessage const &message);
-  void set_stop_time(time_point stop_time);
+  virtual void set_stop_time(time_point stop_time);
   time_point get_stop_time() const { return _stop_time; }
   virtual bool has_finished() const;
   void set_source_hash(FileWriter::FlatbufferMessage::SrcHash source_hash) {
