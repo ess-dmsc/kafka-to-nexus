@@ -31,33 +31,35 @@ FileWriter::FlatbufferMessage create_f144_message(std::string const &source,
   return {buffer.get(), size};
 }
 
-TEST(SourceFilter, messages_within_start_and_stop_are_allowed_through) {
+std::pair<std::unique_ptr<Stream::SourceFilter>,
+          std::unique_ptr<StubMessageWriter>>
+create_filter_for_tests() {
   auto writer = std::make_unique<StubMessageWriter>();
   auto registrar = std::make_unique<Metrics::Registrar>("");
   auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
-  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
-                              writer.get(), std::move(registrar)};
-  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
-  filter.add_writer_module_for_message(f144_writer.get());
+  auto filter = std::make_unique<Stream::SourceFilter>(
+      time_point{0ms}, time_point::max(), false, writer.get(),
+      std::move(registrar));
+  filter->set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
+  filter->add_writer_module_for_message(f144_writer.get());
+  return {std::move(filter), std::move(writer)};
+}
 
-  filter.filter_message(create_f144_message("::source::", 1, 100));
-  filter.filter_message(create_f144_message("::source::", 2, 200));
+TEST(SourceFilter, messages_within_start_and_stop_are_allowed_through) {
+  auto [filter, writer] = create_filter_for_tests();
+
+  filter->filter_message(create_f144_message("::source::", 1, 100));
+  filter->filter_message(create_f144_message("::source::", 2, 200));
 
   EXPECT_EQ(2u, writer->messages_received.size());
 }
 
 TEST(SourceFilter, messages_with_wrong_hash_are_ignored) {
-  auto writer = std::make_unique<StubMessageWriter>();
-  auto registrar = std::make_unique<Metrics::Registrar>("");
-  auto f144_writer = std::make_unique<WriterModule::f144::f144_Writer>();
-  Stream::SourceFilter filter{time_point{0ms}, time_point::max(), false,
-                              writer.get(), std::move(registrar)};
-  filter.set_source_hash(FileWriter::calcSourceHash("f144", "::source::"));
-  filter.add_writer_module_for_message(f144_writer.get());
+  auto [filter, writer] = create_filter_for_tests();
 
-  filter.filter_message(
+  filter->filter_message(
       create_f144_message("wrong_source_give_wrong_hash", 1, 100));
-  filter.filter_message(
+  filter->filter_message(
       create_f144_message("wrong_source_give_wrong_hash", 2, 200));
 
   EXPECT_EQ(0u, writer->messages_received.size());
