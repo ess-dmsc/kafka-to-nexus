@@ -12,8 +12,7 @@
 
 namespace Stream {
 
-std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
-                      std::unique_ptr<SourceFilter>>>
+std::vector<std::unique_ptr<SourceFilter>>
 create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
                MessageWriter *writer, Metrics::IRegistrar *registrar) {
   std::map<FileWriter::FlatbufferMessage::SrcHash,
@@ -39,13 +38,11 @@ create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
         src_dest_info.Destination);
     write_hash_to_source_hash[src_dest_info.WriteHash] = src_dest_info.SrcHash;
   }
-  std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
-                        std::unique_ptr<SourceFilter>>>
-      filters;
+  std::vector<std::unique_ptr<SourceFilter>> filters;
   for (auto &[hash, filter] : hash_to_filter) {
     auto UsedHash = write_hash_to_source_hash[hash];
     filter->set_source_hash(UsedHash);
-    filters.emplace_back(UsedHash, std::move(filter));
+    filters.emplace_back(std::move(filter));
   }
   return filters;
 }
@@ -65,15 +62,13 @@ std::unique_ptr<Partition> Partition::create(
       streamers_paused_function);
 }
 
-Partition::Partition(
-    std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
-    std::string const &topic_name,
-    std::vector<std::pair<FileWriter::FlatbufferMessage::SrcHash,
-                          std::unique_ptr<SourceFilter>>>
-        source_filters,
-    std::unique_ptr<PartitionFilter> partition_filter,
-    Metrics::IRegistrar *registrar, time_point stop_time, duration stop_leeway,
-    std::function<bool()> const &streamers_paused_function)
+Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
+                     int partition, std::string const &topic_name,
+                     std::vector<std::unique_ptr<SourceFilter>> source_filters,
+                     std::unique_ptr<PartitionFilter> partition_filter,
+                     Metrics::IRegistrar *registrar, time_point stop_time,
+                     duration stop_leeway,
+                     std::function<bool()> const &streamers_paused_function)
     : _consumer(std::move(consumer)), _partition_id(partition),
       _topic_name(topic_name), _stop_time(stop_time),
       _stop_time_leeway(stop_leeway),
@@ -137,7 +132,7 @@ void Partition::setStopTime(time_point Stop) {
     _stop_time = Stop;
     _partition_filter->setStopTime(Stop);
     for (auto &Filter : _source_filters) {
-      Filter.second->set_stop_time(Stop);
+      Filter->set_stop_time(Stop);
     }
   });
 }
@@ -278,7 +273,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
 
   bool processed = false;
-  for (auto &[hash, filter] : _source_filters) {
+  for (auto &filter : _source_filters) {
     if (filter->filter_message(FbMsg)) {
       processed = true;
     }
@@ -290,7 +285,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
 
   _source_filters.erase(
       std::remove_if(_source_filters.begin(), _source_filters.end(),
-                     [](auto &Item) { return Item.second->has_finished(); }),
+                     [](auto &filter) { return filter->has_finished(); }),
       _source_filters.end());
 }
 
