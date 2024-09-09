@@ -44,6 +44,7 @@ create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
       filters;
   for (auto &[hash, filter] : hash_to_filter) {
     auto UsedHash = write_hash_to_source_hash[hash];
+    filter->set_source_hash(UsedHash);
     filters.emplace_back(UsedHash, std::move(filter));
   }
   return filters;
@@ -272,9 +273,8 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
 
   bool processed = false;
   for (auto &[hash, filter] : _source_filters) {
-    if (hash == FbMsg.getSourceHash()) {
+    if (filter->filter_message(FbMsg)) {
       processed = true;
-      filter->filter_message(FbMsg);
     }
   }
 
