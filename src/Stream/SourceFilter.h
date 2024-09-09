@@ -33,10 +33,16 @@ public:
     _destination_writer_modules.push_back(writer_module);
   };
 
-  virtual void filter_message(FileWriter::FlatbufferMessage const &message);
+  virtual bool filter_message(FileWriter::FlatbufferMessage const &message);
   void set_stop_time(time_point stop_time);
   time_point get_stop_time() const { return _stop_time; }
   virtual bool has_finished() const;
+  void set_source_hash(FileWriter::FlatbufferMessage::SrcHash source_hash) {
+    if (_source_hash != 0) {
+      Logger::Warn("Source hash should only be set once");
+    }
+    _source_hash = source_hash;
+  }
 
 private:
   void forward_message(FileWriter::FlatbufferMessage const &message);
@@ -50,6 +56,7 @@ private:
   FileWriter::FlatbufferMessage _buffered_message;
   std::vector<Message::DestPtrType> _destination_writer_modules;
   std::unique_ptr<Metrics::IRegistrar> _registrar;
+  FileWriter::FlatbufferMessage::SrcHash _source_hash{0};
   Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
                                     "Flatbuffer failed validation.",
                                     Metrics::Severity::ERROR};

@@ -28,7 +28,7 @@ public:
       : SourceFilter(std::chrono::system_clock::now(),
                      std::chrono::system_clock::now(), true, nullptr,
                      std::make_unique<Metrics::Registrar>("some_prefix")) {}
-  MAKE_MOCK1(filter_message, void(FileWriter::FlatbufferMessage const &Message),
+  MAKE_MOCK1(filter_message, bool(FileWriter::FlatbufferMessage const &Message),
              override);
   MAKE_CONST_MOCK0(has_finished, bool(), override);
 };
@@ -328,6 +328,7 @@ TEST_F(PartitionTest, IfSourceHashUnknownThenNotProcessed) {
   auto UnderTest = createTestedInstance();
   auto TestFilter = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr = TestFilter.get();
+  REQUIRE_CALL(*TestFilterPtr, filter_message(_)).TIMES(1).RETURN(false);
   REQUIRE_CALL(*TestFilterPtr, has_finished()).TIMES(1).RETURN(false);
   UnderTest->_source_filters.clear();
   size_t SomeOtherHash{42};
@@ -345,7 +346,7 @@ TEST_F(PartitionTest, IfSourceHashIsKnownThenItIsProcessed) {
   UnderTest->_source_filters.clear();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter));
-  REQUIRE_CALL(*TestFilterPtr, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, has_finished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
@@ -361,7 +362,7 @@ TEST_F(PartitionTest, FilterNotRemovedIfNotDone) {
   UnderTest->_source_filters.clear();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter));
-  REQUIRE_CALL(*TestFilterPtr, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, has_finished()).TIMES(1).RETURN(false);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
@@ -377,7 +378,7 @@ TEST_F(PartitionTest, FilterIsRemovedWhenDone) {
   UnderTest->_source_filters.clear();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter));
-  REQUIRE_CALL(*TestFilterPtr, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr, has_finished()).TIMES(1).RETURN(true);
   setExtractorModule<zzzzFbReader>("zzzz");
   FileWriter::Msg Msg(SomeData.data(), SomeData.size());
@@ -393,14 +394,14 @@ TEST_F(PartitionTest, MultipleFiltersAreRemovedWhenDone) {
   auto TestFilterPtr1 = TestFilter1.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter1));
-  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, has_finished()).TIMES(1).RETURN(true);
 
   auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr2 = TestFilter2.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter2));
-  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr2, has_finished()).TIMES(1).RETURN(true);
   EXPECT_EQ(UnderTest->_source_filters.size(), 2u);
   setExtractorModule<zzzzFbReader>("zzzz");
@@ -417,14 +418,14 @@ TEST_F(PartitionTest, PartitionHasNotFinishedIfAnyOfItsFiltersHaveNotFinished) {
   auto TestFilterPtr1 = TestFilter1.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter1));
-  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, has_finished()).TIMES(1).RETURN(true);
 
   auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr2 = TestFilter2.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter2));
-  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr2, has_finished()).TIMES(1).RETURN(false);
 
   FileWriter::MessageMetaData MetaData{
@@ -448,14 +449,14 @@ TEST_F(PartitionTest, HasNotFinishedAlt2) {
   auto TestFilterPtr1 = TestFilter1.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter1));
-  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, has_finished()).TIMES(1).RETURN(false);
 
   auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr2 = TestFilter2.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter2));
-  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr2, has_finished()).TIMES(1).RETURN(true);
 
   FileWriter::MessageMetaData MetaData{
@@ -479,7 +480,7 @@ TEST_F(PartitionTest, HasNotFinishedAlt3) {
   auto TestFilterPtr1 = TestFilter1.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter1));
-  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, has_finished()).TIMES(1).RETURN(false);
 
   FileWriter::MessageMetaData MetaData{
@@ -503,7 +504,7 @@ TEST_F(PartitionTest, HasFinishedAlt1) {
   auto TestFilterPtr1 = TestFilter1.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter1));
-  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, has_finished()).TIMES(1).RETURN(true);
 
   FileWriter::MessageMetaData MetaData{
@@ -527,14 +528,14 @@ TEST_F(PartitionTest, PartitionHasFinishedIfAllItsFiltersHaveFinished) {
   auto TestFilterPtr1 = TestFilter1.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter1));
-  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr1, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr1, has_finished()).TIMES(1).RETURN(true);
 
   auto TestFilter2 = std::make_unique<SourceFilterStandInAlt>();
   auto TestFilterPtr2 = TestFilter2.get();
   UnderTest->_source_filters.emplace_back(UsedFilterHash,
                                           std::move(TestFilter2));
-  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1);
+  REQUIRE_CALL(*TestFilterPtr2, filter_message(_)).TIMES(1).RETURN(true);
   REQUIRE_CALL(*TestFilterPtr2, has_finished()).TIMES(1).RETURN(true);
 
   FileWriter::MessageMetaData MetaData{
