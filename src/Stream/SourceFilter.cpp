@@ -48,6 +48,10 @@ time_point to_timepoint(int64_t timestamp) {
 
 void SourceFilter::filter_message(
     FileWriter::FlatbufferMessage const &message) {
+  if (message.getSourceHash() != _source_hash) {
+    // Not intended for this filter
+    return;
+  }
   MessagesReceived++;
   if (_is_finished) {
     MessagesDiscarded++;
