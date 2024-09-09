@@ -33,28 +33,36 @@ public:
   PartitionFilter(
       time_point stop_time, duration stop_time_leeway, duration time_limit,
       std::unique_ptr<Clock> clock = std::make_unique<SystemClock>());
+  virtual ~PartitionFilter() = default;
+  PartitionFilter(PartitionFilter &other) = delete;
+  PartitionFilter &operator=(PartitionFilter &other) = delete;
+  PartitionFilter(PartitionFilter &&other) = default;
+  PartitionFilter &operator=(PartitionFilter &&other) = default;
 
   /// \brief Update the stop time.
-  void setStopTime(time_point stop) { _stop_time = stop; }
+  virtual void setStopTime(time_point stop) { _stop_time = stop; }
 
   /// \brief Applies the stop logic to the current poll status.
   /// \param current_poll_status The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
   /// be halted.
-  [[nodiscard]] bool shouldStopPartition(Kafka::PollStatus current_poll_status);
+  [[nodiscard]] virtual bool
+  shouldStopPartition(Kafka::PollStatus current_poll_status);
 
-  [[nodiscard]] PartitionState currentPartitionState() const { return _state; }
+  [[nodiscard]] virtual PartitionState currentPartitionState() const {
+    return _state;
+  }
 
   /// \brief Check if we currently have an error state.
   /// Only used in tests.
-  [[nodiscard]] bool hasErrorState() const {
+  [[nodiscard]] virtual bool hasErrorState() const {
     return _state == PartitionState::ERROR;
   }
 
   /// \brief Check if topic has timed out.
-  [[nodiscard]] bool hasTopicTimedOut() const;
+  [[nodiscard]] virtual bool hasTopicTimedOut() const;
 
-  [[nodiscard]] time_point getStatusOccurrenceTime() const {
+  [[nodiscard]] virtual time_point getStatusOccurrenceTime() const {
     return _status_occurrence_time;
   }
 
@@ -66,7 +74,7 @@ private:
   void updateStatusOccurrenceTime(PartitionState comparison_state);
 
   PartitionState _state{PartitionState::DEFAULT};
-  time_point _status_occurrence_time;
+  time_point _status_occurrence_time{time_point::max()};
   time_point _stop_time{time_point::max()};
   duration _stop_leeway{10s};
   duration _time_limit{10s};

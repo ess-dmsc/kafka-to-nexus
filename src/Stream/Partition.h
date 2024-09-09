@@ -128,6 +128,9 @@ protected:
   /// out occurrence.
   void checkAndLogPartitionTimeOut();
 
+  /// \brief Back of stop time if too close to overflowing
+  [[nodiscard]] time_point sanitise_stop_time(time_point stop_time);
+
   /// \brief Sleep.
   /// \note This function exist in order to make unit testing possible.
   virtual void sleep(duration Duration) const;

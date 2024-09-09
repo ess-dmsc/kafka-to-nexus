@@ -79,10 +79,8 @@ Partition::Partition(
       _partition_filter(std::move(partition_filter)),
       _source_filters(std::move(source_filters)),
       _streamers_paused_function(streamers_paused_function) {
-  // Stop time is reduced if it is too close to max to avoid overflow.
-  if (time_point::max() - _stop_time <= _stop_time_leeway) {
-    _stop_time -= _stop_time_leeway;
-  }
+  _stop_time = sanitise_stop_time(stop_time);
+  _partition_filter->setStopTime(_stop_time);
 
   registrar->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
   registrar->registerMetric(KafkaErrors,
@@ -126,8 +124,16 @@ void Partition::sleep(const duration Duration) const {
 
 void Partition::stop() { forceStop(); }
 
+time_point Partition::sanitise_stop_time(time_point stop_time) {
+  // Stop time is reduced if it is too close to max to avoid overflow.
+  if (time_point::max() - stop_time <= _stop_time_leeway) {
+    stop_time -= _stop_time_leeway;
+  }
+  return stop_time;
+}
+
 void Partition::setStopTime(time_point Stop) {
-  _stop_time = Stop;
+  _stop_time = sanitise_stop_time(Stop);
   _partition_filter->setStopTime(Stop);
   for (auto &Filter : _source_filters) {
     Filter.second->set_stop_time(Stop);
