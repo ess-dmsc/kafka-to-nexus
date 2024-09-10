@@ -231,9 +231,6 @@ TEST(partition_test, if_new_stop_time_too_close_to_max_then_is_backed_off) {
 }
 
 // TODO: tests for source filters
-// Check gets sent message when there is one
-// Set stop_time
-// When all finished, partition becomes finished
 // Introduce interfaces
 
 TEST(partition_test, sends_messages_to_source_filters) {
@@ -253,7 +250,6 @@ TEST(partition_test, sends_messages_to_source_filters) {
   std::vector<std::unique_ptr<Stream::SourceFilter>> source_filters;
   source_filters.emplace_back(std::move(source_filter_1));
   source_filters.emplace_back(std::move(source_filter_2));
-
   auto partition = Stream::Partition(
       stub_consumer, 1, "topic_name", std::move(source_filters),
       std::move(partition_filter), registrar.get(), Stop, StopLeeway,
@@ -281,37 +277,28 @@ TEST(partition_test, sends_messages_to_source_filters) {
 TEST(partition_test, sends_stop_time_to_source_filters) {
   auto messages = std::make_shared<std::vector<FileWriter::Msg>>();
   auto stub_consumer = std::make_shared<Kafka::StubConsumer>(messages);
-  stub_consumer->addTopic("topic_name");
   auto registrar = std::make_unique<Metrics::Registrar>("some_prefix");
   time_point Stop{100s};
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
   std::unique_ptr<Stream::PartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
-  auto source_filter = std::make_unique<FakeSourceFilter>();
-  auto source_filter_ptr = source_filter.get();
+  auto source_filter_1 = std::make_unique<FakeSourceFilter>();
+  auto source_filter_1_ptr = source_filter_1.get();
+  auto source_filter_2 = std::make_unique<FakeSourceFilter>();
+  auto source_filter_2_ptr = source_filter_1.get();
   std::vector<std::unique_ptr<Stream::SourceFilter>> source_filters;
-  source_filters.emplace_back(std::move(source_filter));
-
+  source_filters.emplace_back(std::move(source_filter_1));
+  source_filters.emplace_back(std::move(source_filter_2));
   auto partition = Stream::Partition(
       stub_consumer, 1, "topic_name", std::move(source_filters),
       std::move(partition_filter), registrar.get(), Stop, StopLeeway,
       AreStreamersPausedFunction);
-  auto const [buffer, size] =
-      FlatBuffers::create_f144_message_double("delay:source:chopper", 100, 123);
-  FileWriter::MessageMetaData metadata;
-  metadata.Timestamp = 123ms;
-  metadata.Offset = 0;
-  metadata.Partition = 1;
-  metadata.topic = "topic_name";
-  FileWriter::Msg msg1{buffer.get(), size, metadata};
-  messages->emplace_back(std::move(msg1));
 
-  partition.pollForMessage();
+  partition.setStopTime(time_point{123ms});
 
-  EXPECT_EQ(source_filter_ptr->last_message.getSourceName(),
-            "delay:source:chopper");
-  EXPECT_EQ(source_filter_ptr->last_message.getTimestamp(), 123000000);
+  EXPECT_EQ(source_filter_1_ptr->stop_time, time_point{123ms});
+  EXPECT_EQ(source_filter_2_ptr->stop_time, time_point{123ms});
 }
 
 // class SourceFilterStandInAlt : public Stream::SourceFilter {
