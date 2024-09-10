@@ -267,7 +267,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
 
   bool processed = false;
-  for (auto &filter : _source_filters) {
+  for (auto const &filter : _source_filters) {
     if (filter->filter_message(FbMsg)) {
       processed = true;
     }
