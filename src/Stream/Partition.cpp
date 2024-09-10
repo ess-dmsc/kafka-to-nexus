@@ -12,7 +12,7 @@
 
 namespace Stream {
 
-std::vector<std::unique_ptr<SourceFilter>>
+std::vector<std::unique_ptr<ISourceFilter>>
 create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
                MessageWriter *writer, Metrics::IRegistrar *registrar) {
   std::map<FileWriter::FlatbufferMessage::SrcHash,
@@ -38,7 +38,7 @@ create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
         src_dest_info.Destination);
     write_hash_to_source_hash[src_dest_info.WriteHash] = src_dest_info.SrcHash;
   }
-  std::vector<std::unique_ptr<SourceFilter>> filters;
+  std::vector<std::unique_ptr<ISourceFilter>> filters;
   for (auto &[hash, filter] : hash_to_filter) {
     auto UsedHash = write_hash_to_source_hash[hash];
     filter->set_source_hash(UsedHash);
@@ -64,7 +64,7 @@ std::unique_ptr<Partition> Partition::create(
 
 Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                      int partition, std::string const &topic_name,
-                     std::vector<std::unique_ptr<SourceFilter>> source_filters,
+                     std::vector<std::unique_ptr<ISourceFilter>> source_filters,
                      std::unique_ptr<PartitionFilter> partition_filter,
                      Metrics::IRegistrar *registrar, time_point stop_time,
                      duration stop_leeway,

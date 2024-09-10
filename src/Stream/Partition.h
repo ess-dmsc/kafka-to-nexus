@@ -60,7 +60,7 @@ public:
 
   Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer, int partition,
             std::string const &topic_name,
-            std::vector<std::unique_ptr<SourceFilter>> source_filters,
+            std::vector<std::unique_ptr<ISourceFilter>> source_filters,
             std::unique_ptr<PartitionFilter> partition_filter,
             Metrics::IRegistrar *registrar, time_point stop_time,
             duration stop_leeway,
@@ -145,7 +145,7 @@ protected:
   duration _stop_time_leeway{};
   duration _pause_check_interval{200ms};
   std::unique_ptr<PartitionFilter> _partition_filter;
-  std::vector<std::unique_ptr<SourceFilter>> _source_filters;
+  std::vector<std::unique_ptr<ISourceFilter>> _source_filters;
   std::function<bool()> _streamers_paused_function;
 };
 

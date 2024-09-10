@@ -14,30 +14,43 @@
 #include "Metrics/Registrar.h"
 #include "Stream/MessageWriter.h"
 #include "TimeUtility.h"
+#include <iostream>
 
 namespace Stream {
+
+class ISourceFilter {
+public:
+  virtual ~ISourceFilter() = default;
+  [[nodiscard]] virtual bool
+  filter_message(FileWriter::FlatbufferMessage const &message) = 0;
+  virtual void set_stop_time(time_point stop_time) = 0;
+  [[nodiscard]] virtual bool has_finished() const = 0;
+  virtual void
+  set_source_hash(FileWriter::FlatbufferMessage::SrcHash source_hash) = 0;
+};
 
 /// \brief Pass messages to the _writer thread based on timestamp of message
 /// and if there are any destinations in the file for the data.
 /// SourceFilter buffers a message such that, when used in conjunction with the
 /// periodic-update feature of the Forwarder, the _writer module should always
 /// be able to record at least the data from a single message.
-class SourceFilter {
+class SourceFilter : public ISourceFilter {
 public:
   SourceFilter() = default;
   SourceFilter(time_point start_time, time_point stop_time,
                bool accept_repeated_timestamps, MessageWriter *writer,
                std::unique_ptr<Metrics::IRegistrar> registrar);
-  virtual ~SourceFilter();
+  ~SourceFilter() override;
   void add_writer_module_for_message(Message::DestPtrType writer_module) {
     _destination_writer_modules.push_back(writer_module);
   };
 
-  virtual bool filter_message(FileWriter::FlatbufferMessage const &message);
-  virtual void set_stop_time(time_point stop_time);
+  bool filter_message(FileWriter::FlatbufferMessage const &message) override;
+  void set_stop_time(time_point stop_time) override;
+  bool has_finished() const override;
   time_point get_stop_time() const { return _stop_time; }
-  virtual bool has_finished() const;
-  void set_source_hash(FileWriter::FlatbufferMessage::SrcHash source_hash) {
+  void
+  set_source_hash(FileWriter::FlatbufferMessage::SrcHash source_hash) override {
     if (_source_hash != 0) {
       Logger::Warn("Source hash should only be set once");
     }

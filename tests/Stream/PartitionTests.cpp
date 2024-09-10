@@ -72,9 +72,9 @@ public:
   time_point status_occurrence_time{time_point::min()};
 };
 
-class FakeSourceFilter : public Stream::SourceFilter {
+class FakeSourceFilter : public Stream::ISourceFilter {
 public:
-  FakeSourceFilter() : Stream::SourceFilter() {}
+  FakeSourceFilter() : Stream::ISourceFilter() {}
 
   bool filter_message(FileWriter::FlatbufferMessage const &message) override {
     last_message = message;
@@ -87,9 +87,15 @@ public:
 
   bool has_finished() const override { return has_finished_processing; }
 
+  void set_source_hash(
+      FileWriter::FlatbufferMessage::SrcHash new_source_hash) override {
+    source_hash = new_source_hash;
+  }
+
   FileWriter::FlatbufferMessage last_message;
   time_point stop_time{time_point::max()};
   bool has_finished_processing{false};
+  FileWriter::FlatbufferMessage::SrcHash source_hash;
 };
 
 TEST(partition_test, is_not_finished_if_source_filter_says_do_not_stop) {
@@ -174,8 +180,6 @@ TEST(partition_test, immediate_stop) {
 
   std::unique_ptr<Stream::PartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
-  //  auto partition_filter_ref =
-  //  dynamic_cast<FakePartitionFilter*>(partition_filter.get());
 
   auto partition = Stream::Partition(
       stub_consumer, 1, "topic_name", {}, std::move(partition_filter),
@@ -247,7 +251,7 @@ TEST(partition_test, sends_messages_to_source_filters) {
   auto source_filter_1_ptr = source_filter_1.get();
   auto source_filter_2 = std::make_unique<FakeSourceFilter>();
   auto source_filter_2_ptr = source_filter_1.get();
-  std::vector<std::unique_ptr<Stream::SourceFilter>> source_filters;
+  std::vector<std::unique_ptr<Stream::ISourceFilter>> source_filters;
   source_filters.emplace_back(std::move(source_filter_1));
   source_filters.emplace_back(std::move(source_filter_2));
   auto partition = Stream::Partition(
@@ -287,7 +291,7 @@ TEST(partition_test, sends_stop_time_to_source_filters) {
   auto source_filter_1_ptr = source_filter_1.get();
   auto source_filter_2 = std::make_unique<FakeSourceFilter>();
   auto source_filter_2_ptr = source_filter_1.get();
-  std::vector<std::unique_ptr<Stream::SourceFilter>> source_filters;
+  std::vector<std::unique_ptr<Stream::ISourceFilter>> source_filters;
   source_filters.emplace_back(std::move(source_filter_1));
   source_filters.emplace_back(std::move(source_filter_2));
   auto partition = Stream::Partition(
