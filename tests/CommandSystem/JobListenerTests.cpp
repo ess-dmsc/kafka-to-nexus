@@ -41,7 +41,7 @@ TEST(JobListener, finds_message_when_present) {
   metadata.topic = "pool_topic";
 
   auto consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
-  consumer_factory->messages->emplace_back("::some_flatbuffer::", 21, metadata);
+  consumer_factory->messages->emplace_back("::some_flatbuffer::", 20, metadata);
 
   auto Listener =
       Command::JobListener::create_null("pool_topic", {}, consumer_factory);
@@ -50,7 +50,7 @@ TEST(JobListener, finds_message_when_present) {
 
   auto const [poll_status, message] = Listener->pollForJob();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "pool_topic");
 }
 
@@ -62,7 +62,7 @@ TEST(JobListener, after_disconnecting_from_pool_polling_reconnects) {
   metadata.topic = "pool_topic";
 
   auto consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
-  consumer_factory->messages->emplace_back("::some_flatbuffer::", 21, metadata);
+  consumer_factory->messages->emplace_back("::some_flatbuffer::", 20, metadata);
 
   auto Listener =
       Command::JobListener::create_null("pool_topic", {}, consumer_factory);
@@ -75,6 +75,6 @@ TEST(JobListener, after_disconnecting_from_pool_polling_reconnects) {
   // Second poll returns the message
   auto const [poll_status, message] = Listener->pollForJob();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "pool_topic");
 }
