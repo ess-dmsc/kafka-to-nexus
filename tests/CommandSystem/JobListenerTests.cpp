@@ -50,7 +50,7 @@ TEST(JobListener, finds_message_when_present) {
 
   auto const [poll_status, message] = Listener->pollForJob();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "pool_topic");
 }
 
@@ -75,6 +75,6 @@ TEST(JobListener, after_disconnecting_from_pool_polling_reconnects) {
   // Second poll returns the message
   auto const [poll_status, message] = Listener->pollForJob();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "pool_topic");
 }

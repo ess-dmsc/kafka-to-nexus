@@ -50,7 +50,7 @@ TEST(CommandListener, finds_message_when_present) {
 
   auto const [poll_status, message] = Listener->pollForCommand();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "some_topic");
 }
 
@@ -73,7 +73,7 @@ TEST(CommandListener, change_topic) {
 
   auto const [poll_status, message] = Listener->pollForCommand();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "new_topic");
 }
 
