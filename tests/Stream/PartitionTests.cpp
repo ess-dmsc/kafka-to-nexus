@@ -215,9 +215,6 @@ TEST(partition_test, if_new_stop_time_too_close_to_max_then_is_backed_off) {
   EXPECT_EQ(partition_filter_ref->stop_time, new_stop_time - StopLeeway);
 }
 
-// TODO: tests for source filters
-// Introduce interfaces
-
 TEST(partition_test, sends_messages_to_source_filters) {
   auto messages = std::make_shared<std::vector<FileWriter::Msg>>();
   auto stub_consumer = std::make_shared<Kafka::StubConsumer>(messages);
