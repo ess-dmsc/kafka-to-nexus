@@ -41,7 +41,7 @@ TEST(CommandListener, finds_message_when_present) {
   metadata.topic = "some_topic";
 
   auto consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
-  consumer_factory->messages->emplace_back("::some_flatbuffer::", 21, metadata);
+  consumer_factory->messages->emplace_back("::some_flatbuffer::", 20, metadata);
 
   auto Listener =
       Command::CommandListener::create_null("some_topic", {}, consumer_factory);
@@ -50,7 +50,7 @@ TEST(CommandListener, finds_message_when_present) {
 
   auto const [poll_status, message] = Listener->pollForCommand();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "some_topic");
 }
 
@@ -62,7 +62,7 @@ TEST(CommandListener, change_topic) {
   metadata.topic = "new_topic";
 
   auto consumer_factory = std::make_shared<Kafka::StubConsumerFactory>();
-  consumer_factory->messages->emplace_back("::some_flatbuffer::", 21, metadata);
+  consumer_factory->messages->emplace_back("::some_flatbuffer::", 20, metadata);
 
   auto Listener =
       Command::CommandListener::create_null("some_topic", {}, consumer_factory);
@@ -73,7 +73,7 @@ TEST(CommandListener, change_topic) {
 
   auto const [poll_status, message] = Listener->pollForCommand();
   EXPECT_EQ(poll_status, Kafka::PollStatus::Message);
-  EXPECT_EQ(message.size(), 21u);
+  EXPECT_EQ(message.size(), 20u);
   EXPECT_EQ(message.getMetaData().topic, "new_topic");
 }
 
