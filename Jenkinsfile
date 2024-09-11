@@ -84,7 +84,7 @@ builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: Build") {
     container.sh """
       cd build
-      ninja kafka-to-nexus UnitTests
+      ninja kafka-to-nexus template-maker UnitTests
     """
   }  // stage: build
 
@@ -144,6 +144,7 @@ builders = pipeline_builder.createBuilders { container ->
         rm -rf ${pipeline_builder.project}; mkdir ${pipeline_builder.project}
         mkdir ${pipeline_builder.project}/bin
         cp ./bin/kafka-to-nexus ${pipeline_builder.project}/bin/
+        cp ./bin/template-maker ${pipeline_builder.project}/bin/
         cp -r ./lib ${pipeline_builder.project}/
         cp -r ./licenses ${pipeline_builder.project}/
 
