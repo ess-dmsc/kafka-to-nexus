@@ -18,6 +18,20 @@ enum class PollStatus;
 
 namespace Stream {
 
+class IPartitionFilter {
+public:
+  enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT };
+
+  virtual ~IPartitionFilter() = default;
+  virtual void setStopTime(time_point stop) = 0;
+  [[nodiscard]] virtual bool
+  shouldStopPartition(Kafka::PollStatus current_poll_status) = 0;
+  [[nodiscard]] virtual PartitionState currentPartitionState() const = 0;
+  [[nodiscard]] virtual bool hasErrorState() const = 0;
+  [[nodiscard]] virtual bool hasTopicTimedOut() const = 0;
+  [[nodiscard]] virtual time_point getStatusOccurrenceTime() const = 0;
+};
+
 /// \brief Implements logic for determining if we should stop consuming data
 /// based on message polling status.
 ///
@@ -26,43 +40,42 @@ namespace Stream {
 ///
 /// A diagram showing the logic implemented here can be found in
 /// kafka-to-nexus/documentation/PartitionFilter_logic.png
-class PartitionFilter {
+class PartitionFilter : public IPartitionFilter {
 public:
-  enum class PartitionState { DEFAULT, END_OF_PARTITION, ERROR, TIMEOUT };
   PartitionFilter() = default;
   PartitionFilter(
       time_point stop_time, duration stop_time_leeway, duration time_limit,
       std::unique_ptr<Clock> clock = std::make_unique<SystemClock>());
-  virtual ~PartitionFilter() = default;
+  ~PartitionFilter() override = default;
   PartitionFilter(PartitionFilter &other) = delete;
   PartitionFilter &operator=(PartitionFilter &other) = delete;
   PartitionFilter(PartitionFilter &&other) = default;
   PartitionFilter &operator=(PartitionFilter &&other) = default;
 
   /// \brief Update the stop time.
-  virtual void setStopTime(time_point stop) { _stop_time = stop; }
+  void setStopTime(time_point stop) override { _stop_time = stop; }
 
   /// \brief Applies the stop logic to the current poll status.
   /// \param current_poll_status The current (last) poll status.
   /// \return Returns true if consumption from this topic + partition should
   /// be halted.
-  [[nodiscard]] virtual bool
-  shouldStopPartition(Kafka::PollStatus current_poll_status);
+  [[nodiscard]] bool
+  shouldStopPartition(Kafka::PollStatus current_poll_status) override;
 
-  [[nodiscard]] virtual PartitionState currentPartitionState() const {
+  [[nodiscard]] PartitionState currentPartitionState() const override {
     return _state;
   }
 
   /// \brief Check if we currently have an error state.
   /// Only used in tests.
-  [[nodiscard]] virtual bool hasErrorState() const {
+  [[nodiscard]] bool hasErrorState() const override {
     return _state == PartitionState::ERROR;
   }
 
   /// \brief Check if topic has timed out.
-  [[nodiscard]] virtual bool hasTopicTimedOut() const;
+  [[nodiscard]] bool hasTopicTimedOut() const override;
 
-  [[nodiscard]] virtual time_point getStatusOccurrenceTime() const {
+  [[nodiscard]] time_point getStatusOccurrenceTime() const override {
     return _status_occurrence_time;
   }
 

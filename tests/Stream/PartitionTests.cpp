@@ -20,9 +20,9 @@
 
 using std::chrono_literals::operator""s;
 
-class FakePartitionFilter : public Stream::PartitionFilter {
+class FakePartitionFilter : public Stream::IPartitionFilter {
 public:
-  FakePartitionFilter() : Stream::PartitionFilter() {}
+  FakePartitionFilter() : Stream::IPartitionFilter() {}
 
   void setStopTime(time_point stop) override { stop_time = stop; }
 
@@ -76,7 +76,7 @@ public:
   FileWriter::FlatbufferMessage last_message;
   time_point stop_time{time_point::max()};
   bool has_finished_processing{false};
-  [[maybe_unused]] FileWriter::FlatbufferMessage::SrcHash source_hash;
+  FileWriter::FlatbufferMessage::SrcHash source_hash;
 };
 
 TEST(partition_test, is_not_finished_if_source_filter_says_do_not_stop) {
@@ -87,7 +87,7 @@ TEST(partition_test, is_not_finished_if_source_filter_says_do_not_stop) {
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
 
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
   auto partition_filter_ref =
       dynamic_cast<FakePartitionFilter *>(partition_filter.get());
@@ -112,7 +112,7 @@ TEST(partition_test, is_finished_if_source_filter_says_stop) {
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
 
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
   auto partition_filter_ref =
       dynamic_cast<FakePartitionFilter *>(partition_filter.get());
@@ -137,7 +137,7 @@ TEST(partition_test, setting_stop_time_updates_source_filter) {
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
 
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
   auto partition_filter_ref =
       dynamic_cast<FakePartitionFilter *>(partition_filter.get());
@@ -159,7 +159,7 @@ TEST(partition_test, immediate_stop) {
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
 
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
 
   auto partition = Stream::Partition(
@@ -180,7 +180,7 @@ TEST(partition_test, if_initial_stop_time_too_close_to_max_then_is_backed_off) {
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
 
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
   auto partition_filter_ref =
       dynamic_cast<FakePartitionFilter *>(partition_filter.get());
@@ -200,7 +200,7 @@ TEST(partition_test, if_new_stop_time_too_close_to_max_then_is_backed_off) {
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
 
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
   auto partition_filter_ref =
       dynamic_cast<FakePartitionFilter *>(partition_filter.get());
@@ -226,7 +226,7 @@ TEST(partition_test, sends_messages_to_source_filters) {
   time_point Stop{100s};
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
   auto source_filter_1 = std::make_unique<FakeSourceFilter>();
   auto source_filter_1_ptr = source_filter_1.get();
@@ -266,7 +266,7 @@ TEST(partition_test, sends_stop_time_to_source_filters) {
   time_point Stop{100s};
   duration StopLeeway{5s};
   std::function<bool()> AreStreamersPausedFunction = []() { return false; };
-  std::unique_ptr<Stream::PartitionFilter> partition_filter =
+  std::unique_ptr<Stream::IPartitionFilter> partition_filter =
       std::make_unique<FakePartitionFilter>();
   auto source_filter_1 = std::make_unique<FakeSourceFilter>();
   auto source_filter_1_ptr = source_filter_1.get();

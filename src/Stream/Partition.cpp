@@ -65,7 +65,7 @@ std::unique_ptr<Partition> Partition::create(
 Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                      int partition, std::string const &topic_name,
                      std::vector<std::unique_ptr<ISourceFilter>> source_filters,
-                     std::unique_ptr<PartitionFilter> partition_filter,
+                     std::unique_ptr<IPartitionFilter> partition_filter,
                      Metrics::IRegistrar *registrar, time_point stop_time,
                      duration stop_leeway,
                      std::function<bool()> const &streamers_paused_function)
