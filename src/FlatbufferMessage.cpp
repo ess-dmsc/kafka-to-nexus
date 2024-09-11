@@ -46,8 +46,8 @@ void FlatbufferMessage::extractPacketInfo() {
   }
   std::string FlatbufferID(reinterpret_cast<char const *>(data()) + 4, 4);
   try {
-    auto &Reader = FlatbufferReaderRegistry::find(FlatbufferID);
-    if (not Reader->verify(*this)) {
+    auto const &Reader = FlatbufferReaderRegistry::find(FlatbufferID);
+    if (!Reader->verify(*this)) {
       throw NotValidFlatbuffer(fmt::format(
           R"(Buffer which has flatbuffer ID "{}" is not a valid flatbuffer of this type.)",
           FlatbufferID));
