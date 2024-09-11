@@ -12,7 +12,7 @@
 
 namespace Stream {
 
-std::vector<std::unique_ptr<SourceFilter>>
+std::vector<std::unique_ptr<ISourceFilter>>
 create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
                MessageWriter *writer, Metrics::IRegistrar *registrar) {
   std::map<FileWriter::FlatbufferMessage::SrcHash,
@@ -38,7 +38,7 @@ create_filters(SrcToDst const &map, time_point start_time, time_point stop_time,
         src_dest_info.Destination);
     write_hash_to_source_hash[src_dest_info.WriteHash] = src_dest_info.SrcHash;
   }
-  std::vector<std::unique_ptr<SourceFilter>> filters;
+  std::vector<std::unique_ptr<ISourceFilter>> filters;
   for (auto &[hash, filter] : hash_to_filter) {
     auto UsedHash = write_hash_to_source_hash[hash];
     filter->set_source_hash(UsedHash);
@@ -64,8 +64,8 @@ std::unique_ptr<Partition> Partition::create(
 
 Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                      int partition, std::string const &topic_name,
-                     std::vector<std::unique_ptr<SourceFilter>> source_filters,
-                     std::unique_ptr<PartitionFilter> partition_filter,
+                     std::vector<std::unique_ptr<ISourceFilter>> source_filters,
+                     std::unique_ptr<IPartitionFilter> partition_filter,
                      Metrics::IRegistrar *registrar, time_point stop_time,
                      duration stop_leeway,
                      std::function<bool()> const &streamers_paused_function)
@@ -75,10 +75,8 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
       _partition_filter(std::move(partition_filter)),
       _source_filters(std::move(source_filters)),
       _streamers_paused_function(streamers_paused_function) {
-  // Stop time is reduced if it is too close to max to avoid overflow.
-  if (time_point::max() - _stop_time <= _stop_time_leeway) {
-    _stop_time -= _stop_time_leeway;
-  }
+  _stop_time = sanitise_stop_time(stop_time);
+  _partition_filter->setStopTime(_stop_time);
 
   registrar->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
   registrar->registerMetric(KafkaErrors,
@@ -114,34 +112,31 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                                                   kafka_error_timeout),
                 registrar, stop_time, stop_leeway, streamers_paused_function) {}
 
-void Partition::start() { addPollTask(); }
-
 void Partition::forceStop() { _force_stop = true; }
 
 void Partition::sleep(const duration Duration) const {
   std::this_thread::sleep_for(Duration);
 }
 
-void Partition::stop() {
-  _executor.sendLowPriorityWork([=]() { forceStop(); });
-  _executor.sendWork([=]() { forceStop(); });
+void Partition::stop() { forceStop(); }
+
+time_point Partition::sanitise_stop_time(time_point stop_time) {
+  // Stop time is reduced if it is too close to max to avoid overflow.
+  if (time_point::max() - stop_time <= _stop_time_leeway) {
+    stop_time -= _stop_time_leeway;
+  }
+  return stop_time;
 }
 
 void Partition::setStopTime(time_point Stop) {
-  _executor.sendWork([=]() {
-    _stop_time = Stop;
-    _partition_filter->setStopTime(Stop);
-    for (auto &Filter : _source_filters) {
-      Filter->set_stop_time(Stop);
-    }
-  });
+  _stop_time = sanitise_stop_time(Stop);
+  _partition_filter->setStopTime(_stop_time);
+  for (auto &Filter : _source_filters) {
+    Filter->set_stop_time(_stop_time);
+  }
 }
 
 bool Partition::hasFinished() const { return _has_finished.load(); }
-
-void Partition::addPollTask() {
-  _executor.sendLowPriorityWork([=]() { pollForMessage(); });
-}
 
 void Partition::checkAndLogPartitionTimeOut() {
   if (_partition_filter->hasTopicTimedOut()) {
@@ -239,7 +234,6 @@ void Partition::pollForMessage() {
       }
     }
   }
-  addPollTask();
 }
 
 void Partition::processMessage(FileWriter::Msg const &Message) {
@@ -273,7 +267,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
 
   bool processed = false;
-  for (auto &filter : _source_filters) {
+  for (auto const &filter : _source_filters) {
     if (filter->filter_message(FbMsg)) {
       processed = true;
     }
