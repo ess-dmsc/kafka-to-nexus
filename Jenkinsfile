@@ -84,7 +84,7 @@ builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: Build") {
     container.sh """
       cd build
-      ninja kafka-to-nexus template-maker UnitTests
+      ninja all
     """
   }  // stage: build
 
