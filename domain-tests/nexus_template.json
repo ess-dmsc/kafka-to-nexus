@@ -131,7 +131,7 @@
                 {
                   "module": "tdct",
                   "config": {
-                    "source": "local:chopper:tdct",
+                    "source": "local:choppers:tdct",
                     "topic": "local_choppers"
                   }
                 },
@@ -149,10 +149,9 @@
                     {
                       "module": "f144",
                       "config": {
-                        "source": "local:chopper:delay",
+                        "source": "local:choppers:delay",
                         "topic": "local_choppers",
-                        "dtype": "double",
-                        "value_units": "ns"
+                        "dtype": "double"
                       }
                     }
                   ]
