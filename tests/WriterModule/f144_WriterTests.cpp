@@ -277,7 +277,7 @@ TEST_F(f144Init, config_units_attribute_on_value_dataset_if_empty) {
   std::string attribute_value;
   EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
       << "Expect units attribute to be created even if config string is empty";
-  EXPECT_EQ(TestWriter.Values.attribute("units", attribute_value), "")
+  EXPECT_EQ(attribute_value, "")
       << "Expect blank units attribute to be written as"
          "a blank value representing a unitless value";
 }
@@ -295,7 +295,7 @@ TEST_F(f144Init, units_attribute_on_value_dataset_created_if_not_in_config) {
   std::string attribute_value;
   EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
       << "Expect units attribute to always be present on the value dataset";
-  EXPECT_EQ(TestWriter.Values.attribute("units", attribute_value), "")
+  EXPECT_EQ(attribute_value, "")
       << "Expect default units attribute to have "
          "a blank value representing a unitless value";
 }
