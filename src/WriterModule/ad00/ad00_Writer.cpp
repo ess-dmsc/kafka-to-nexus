@@ -61,6 +61,7 @@ InitResult ad00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
         HDFGroup,                   // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+    HDFGroup["value"].attributes.create_from<std::string>("units", "");
   } catch (std::exception &E) {
     Logger::Error(
         R"(Unable to initialise areaDetector data tree in HDF file with error message: "{}")",

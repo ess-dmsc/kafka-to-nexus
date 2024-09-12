@@ -78,3 +78,11 @@ def test_ad00_writes(write_file):
         assert np.array_equal(
             f["/entry/instrument/image_detector/data/time"][:], [300000000, 310000000]
         )
+
+
+def test_ad00_units_attributes_if_not_in_json(write_file):
+    with h5py.File(write_file, "r") as f:
+        assert "units" in f["/entry/instrument/image_detector/data/value"].attrs
+
+        assert f["/entry/instrument/image_detector/data/value"].attrs["units"] == ""
+        assert f["/entry/instrument/image_detector/data/time"].attrs["units"] == "ns"
