@@ -91,9 +91,7 @@ InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
                            ChunkSize); // NOLINT(bugprone-unused-raii)
     initValueDataset(HDFGroup, ElementType);
 
-    if (!Unit.get_value().empty()) {
-      HDFGroup["value"].attributes.create_from<std::string>("units", Unit);
-    }
+    HDFGroup["value"].attributes.create_from<std::string>("units", Unit);
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
@@ -284,25 +282,19 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
     MetaDataMin = MetaData::Value<double>(
         HDFGroup, "minimum_value", MetaData::basicDatasetWriter<double>,
         MetaData::basicAttributeWriter<std::string>);
-    if (!Unit.get_value().empty()) {
-      MetaDataMin.setAttribute("units", Unit.get_value());
-    }
+    MetaDataMin.setAttribute("units", Unit.get_value());
     Tracker->registerMetaData(MetaDataMin);
 
     MetaDataMax = MetaData::Value<double>(
         HDFGroup, "maximum_value", MetaData::basicDatasetWriter<double>,
         MetaData::basicAttributeWriter<std::string>);
-    if (!Unit.get_value().empty()) {
-      MetaDataMax.setAttribute("units", Unit.get_value());
-    }
+    MetaDataMax.setAttribute("units", Unit.get_value());
     Tracker->registerMetaData(MetaDataMax);
 
     MetaDataMean = MetaData::Value<double>(
         HDFGroup, "average_value", MetaData::basicDatasetWriter<double>,
         MetaData::basicAttributeWriter<std::string>);
-    if (!Unit.get_value().empty()) {
-      MetaDataMean.setAttribute("units", Unit.get_value());
-    }
+    MetaDataMean.setAttribute("units", Unit.get_value());
     Tracker->registerMetaData(MetaDataMean);
   }
 }
