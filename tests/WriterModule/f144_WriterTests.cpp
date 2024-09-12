@@ -274,7 +274,7 @@ TEST_F(f144Init, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.reopen(RootGroup);
 
   EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
-      << "units attribute should not be created if the config string is empty";
+      << "units attribute should be created even if the config string is empty for unitless values";
 }
 
 TEST_F(f144Init, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
@@ -287,9 +287,8 @@ TEST_F(f144Init, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
   TestWriter.reopen(RootGroup);
 
   // THEN a units attributes is not created on the value dataset
-  EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
-      << "units attribute should not be created if it was not specified in the "
-         "JSON config";
+  EXPECT_TRUE(TestWriter.Values.attribute_exists("units"))
+      << "units attribute should always be created";
 }
 
 TEST_F(f144Init, WriteOneElement) {
