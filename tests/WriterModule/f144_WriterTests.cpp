@@ -273,12 +273,16 @@ TEST_F(f144Init, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  EXPECT_TRUE(TestWriter.Values.attribute_exists("units"))
-      << "units attribute should be created even if the config string is empty "
-         "for unitless values";
+  // THEN an empty units attribute is cretaed on the value dataset
+  std::string attribute_value;
+  EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
+      << "Expect units attribute to be created even if config string is empty";
+  EXPECT_EQ(TestWriter.Values.attribute("units", attribute_value), "")
+      << "Expect blank units attribute to be written as"
+         "a blank value representing a unitless value";
 }
 
-TEST_F(f144Init, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
+TEST_F(f144Init, UnitsAttributeOnValueDatasetCreatedIfNotInConfig) {
   f144_WriterStandIn TestWriter;
   // GIVEN value_units is not specified in the JSON config
   TestWriter.parse_config("{}");
@@ -287,9 +291,13 @@ TEST_F(f144Init, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  // THEN a units attributes is not created on the value dataset
-  EXPECT_TRUE(TestWriter.Values.attribute_exists("units"))
-      << "units attribute should always be created";
+  // THEN a units attribute is created on the value dataset
+  std::string attribute_value;
+  EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
+      << "Expect units attribute to always be present on the value dataset";
+  EXPECT_EQ(TestWriter.Values.attribute("units", attribute_value), "")
+      << "Expect default units attribute to have "
+         "a blank value representing a unitless value";
 }
 
 TEST_F(f144Init, WriteOneElement) {
