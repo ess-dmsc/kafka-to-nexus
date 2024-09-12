@@ -274,7 +274,8 @@ TEST_F(f144Init, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.reopen(RootGroup);
 
   EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
-      << "units attribute should be created even if the config string is empty for unitless values";
+      << "units attribute should be created even if the config string is empty "
+         "for unitless values";
 }
 
 TEST_F(f144Init, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
