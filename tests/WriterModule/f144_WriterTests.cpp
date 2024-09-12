@@ -273,7 +273,7 @@ TEST_F(f144Init, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
+  EXPECT_TRUE(TestWriter.Values.attribute_exists("units"))
       << "units attribute should be created even if the config string is empty "
          "for unitless values";
 }
