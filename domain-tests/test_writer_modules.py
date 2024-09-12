@@ -22,11 +22,22 @@ def test_f144_units_attributes_if_in_json(write_file):
     with h5py.File(write_file, "r") as f:
         assert "units" in f["/entry/instrument/chopper/rotation_speed/value"].attrs
 
-        assert f["/entry/instrument/chopper/rotation_speed/value"].attrs["units"] == "Hz"
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/value"].attrs["units"] == "Hz"
+        )
         assert f["/entry/instrument/chopper/rotation_speed/time"].attrs["units"] == "ns"
-        assert f["/entry/instrument/chopper/rotation_speed/minimum_value"].attrs["units"] == "Hz"
-        assert f["/entry/instrument/chopper/rotation_speed/maximum_value"].attrs["units"] == "Hz"
-        assert f["/entry/instrument/chopper/rotation_speed/average_value"].attrs["units"] == "Hz"
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/minimum_value"].attrs["units"]
+            == "Hz"
+        )
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/maximum_value"].attrs["units"]
+            == "Hz"
+        )
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/average_value"].attrs["units"]
+            == "Hz"
+        )
 
 
 def test_f144_units_attributes_if_not_in_json(write_file):
