@@ -18,6 +18,39 @@ def test_f144_writes(write_file):
         assert f["/entry/instrument/chopper/rotation_speed/average_value"][()] == 12.5
 
 
+def test_f144_units_attributes_if_in_json(write_file):
+    with h5py.File(write_file, "r") as f:
+        assert "units" in f["/entry/instrument/chopper/rotation_speed/value"].attrs
+
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/value"].attrs["units"] == "Hz"
+        )
+        assert f["/entry/instrument/chopper/rotation_speed/time"].attrs["units"] == "ns"
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/minimum_value"].attrs["units"]
+            == "Hz"
+        )
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/maximum_value"].attrs["units"]
+            == "Hz"
+        )
+        assert (
+            f["/entry/instrument/chopper/rotation_speed/average_value"].attrs["units"]
+            == "Hz"
+        )
+
+
+def test_f144_units_attributes_if_not_in_json(write_file):
+    with h5py.File(write_file, "r") as f:
+        assert "units" in f["/entry/instrument/chopper/delay/value"].attrs
+
+        assert f["/entry/instrument/chopper/delay/value"].attrs["units"] == ""
+        assert f["/entry/instrument/chopper/delay/time"].attrs["units"] == "ns"
+        assert f["/entry/instrument/chopper/delay/minimum_value"].attrs["units"] == ""
+        assert f["/entry/instrument/chopper/delay/maximum_value"].attrs["units"] == ""
+        assert f["/entry/instrument/chopper/delay/average_value"].attrs["units"] == ""
+
+
 def test_ep01_writes(write_file):
     with h5py.File(write_file, "r") as f:
         assert np.array_equal(

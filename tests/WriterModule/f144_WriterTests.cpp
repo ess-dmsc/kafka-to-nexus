@@ -47,7 +47,7 @@ public:
   using f144_Writer::Values;
 };
 
-TEST_F(f144Init, BasicDefaultInit) {
+TEST_F(f144Init, basic_default_init) {
   f144_Writer TestWriter;
   TestWriter.init_hdf(RootGroup);
   EXPECT_TRUE(RootGroup.has_dataset("cue_index"));
@@ -56,18 +56,18 @@ TEST_F(f144Init, BasicDefaultInit) {
   EXPECT_TRUE(RootGroup.has_dataset("value"));
 }
 
-TEST_F(f144Init, ReOpenSuccess) {
+TEST_F(f144Init, re_open_success) {
   f144_Writer TestWriter;
   TestWriter.init_hdf(RootGroup);
   EXPECT_EQ(TestWriter.reopen(RootGroup), WriterModule::InitResult::OK);
 }
 
-TEST_F(f144Init, ReOpenFailure) {
+TEST_F(f144Init, re_open_failure) {
   f144_Writer TestWriter;
   EXPECT_EQ(TestWriter.reopen(RootGroup), WriterModule::InitResult::ERROR);
 }
 
-TEST_F(f144Init, CheckInitDataType) {
+TEST_F(f144Init, check_init_data_type) {
   f144_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   auto Open = NeXusDataset::Mode::Open;
@@ -75,7 +75,7 @@ TEST_F(f144Init, CheckInitDataType) {
   EXPECT_EQ(Value.datatype(), hdf5::datatype::create<double>());
 }
 
-TEST_F(f144Init, CheckAllDataTypes) {
+TEST_F(f144Init, check_all_data_types) {
   std::vector<std::pair<f144_Writer::Type, hdf5::datatype::Datatype>> TypeMap{
       {f144_Writer::Type::int8, hdf5::datatype::create<std::int8_t>()},
       {f144_Writer::Type::uint8, hdf5::datatype::create<std::uint8_t>()},
@@ -103,7 +103,7 @@ class f144ConfigParse : public ::testing::Test {
 public:
 };
 
-TEST_F(f144ConfigParse, EmptyConfig) {
+TEST_F(f144ConfigParse, empty_config) {
   f144_WriterStandIn TestWriter;
   TestWriter.parse_config("{}");
   f144_WriterStandIn TestWriter2;
@@ -113,7 +113,7 @@ TEST_F(f144ConfigParse, EmptyConfig) {
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
-TEST_F(f144ConfigParse, SetArraySize) {
+TEST_F(f144ConfigParse, set_array_size) {
   f144_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "array_size": 3
@@ -125,7 +125,7 @@ TEST_F(f144ConfigParse, SetArraySize) {
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
-TEST_F(f144ConfigParse, SetChunkSize) {
+TEST_F(f144ConfigParse, set_chunk_size) {
   f144_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "chunk_size": 511
@@ -137,7 +137,7 @@ TEST_F(f144ConfigParse, SetChunkSize) {
   EXPECT_EQ(TestWriter.ChunkSize, 511u);
 }
 
-TEST_F(f144ConfigParse, CuInterval) {
+TEST_F(f144ConfigParse, cu_interval) {
   f144_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "cue_interval": 24
@@ -149,7 +149,7 @@ TEST_F(f144ConfigParse, CuInterval) {
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
-TEST_F(f144ConfigParse, DataType1) {
+TEST_F(f144ConfigParse, data_type_1) {
   f144_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "type": "int8"
@@ -161,7 +161,7 @@ TEST_F(f144ConfigParse, DataType1) {
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
-TEST_F(f144ConfigParse, DataType2) {
+TEST_F(f144ConfigParse, data_type_2) {
   f144_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "dtype": "uint64"
@@ -173,7 +173,7 @@ TEST_F(f144ConfigParse, DataType2) {
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
-TEST_F(f144ConfigParse, DataTypeFailure) {
+TEST_F(f144ConfigParse, data_type_failure) {
   f144_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "Dtype": "uint64"
@@ -185,7 +185,7 @@ TEST_F(f144ConfigParse, DataTypeFailure) {
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
-TEST_F(f144ConfigParse, DataTypes) {
+TEST_F(f144ConfigParse, data_types) {
   using Type = f144_Writer::Type;
   std::vector<std::pair<std::string, Type>> TypeList{
       {"int8", Type::int8},       {"INT8", Type::int8},
@@ -243,7 +243,7 @@ generateFlatbufferArrayMessage(std::vector<double> Value, int64_t Timestamp) {
 }
 } // namespace f144_schema
 
-TEST_F(f144Init, ConfigUnitsAttributeOnValueDataset) {
+TEST_F(f144Init, config_units_attribute_on_value_dataset) {
   f144_WriterStandIn TestWriter;
   const std::string units_string = "parsecs";
   // GIVEN value_units is specified in the JSON config
@@ -254,7 +254,7 @@ TEST_F(f144Init, ConfigUnitsAttributeOnValueDataset) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  // THEN a units attributes is created on the value dataset with the specified
+  // THEN a units attribute is created on the value dataset with the specified
   // string
   std::string attribute_value;
   EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
@@ -264,7 +264,7 @@ TEST_F(f144Init, ConfigUnitsAttributeOnValueDataset) {
                                               "configuration";
 }
 
-TEST_F(f144Init, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
+TEST_F(f144Init, config_units_attribute_on_value_dataset_if_empty) {
   f144_WriterStandIn TestWriter;
   // GIVEN value_units is specified as an empty string in the JSON config
   TestWriter.parse_config(R"({"value_units": ""})");
@@ -273,11 +273,16 @@ TEST_F(f144Init, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
-      << "units attribute should not be created if the config string is empty";
+  // THEN an empty units attribute is created on the value dataset
+  std::string attribute_value;
+  EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
+      << "Expect units attribute to be created even if config string is empty";
+  EXPECT_EQ(attribute_value, "")
+      << "Expect blank units attribute to be written as "
+         "a blank value representing a unitless value";
 }
 
-TEST_F(f144Init, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
+TEST_F(f144Init, units_attribute_on_value_dataset_created_if_not_in_config) {
   f144_WriterStandIn TestWriter;
   // GIVEN value_units is not specified in the JSON config
   TestWriter.parse_config("{}");
@@ -286,13 +291,16 @@ TEST_F(f144Init, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
 
-  // THEN a units attributes is not created on the value dataset
-  EXPECT_FALSE(TestWriter.Values.attribute_exists("units"))
-      << "units attribute should not be created if it was not specified in the "
-         "JSON config";
+  // THEN a units attribute is created on the value dataset
+  std::string attribute_value;
+  EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
+      << "Expect units attribute to always be present on the value dataset";
+  EXPECT_EQ(attribute_value, "")
+      << "Expect default units attribute to have "
+         "a blank value representing a unitless value";
 }
 
-TEST_F(f144Init, WriteOneElement) {
+TEST_F(f144Init, write_one_element) {
   f144_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
@@ -316,7 +324,7 @@ TEST_F(f144Init, WriteOneElement) {
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
 
-TEST_F(f144Init, WriteOneDefaultValueElement) {
+TEST_F(f144Init, write_one_default_value_element) {
   f144_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);
@@ -341,7 +349,7 @@ TEST_F(f144Init, WriteOneDefaultValueElement) {
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
 
-TEST_F(f144Init, WriteMultipleElements) {
+TEST_F(f144Init, write_multiple_elements) {
   f144_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup);
   TestWriter.reopen(RootGroup);

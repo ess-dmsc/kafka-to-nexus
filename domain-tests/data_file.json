@@ -27,6 +27,31 @@
   {
     "schema": "f144",
     "topic": "local_choppers",
+    "kafka_timestamp": 150,
+    "source_name": "local:choppers:delay",
+    "timestamp": 150,
+    "value": 1000000000
+  },
+  {
+      "schema": "ep01",
+      "topic": "local_choppers",
+      "kafka_timestamp": 151,
+      "source_name": "local:choppers:delay",
+      "connection_status": "ConnectionInfo::CONNECTED",
+      "timestamp": 151
+  },
+  {
+      "schema": "al00",
+      "topic": "local_choppers",
+      "kafka_timestamp": 152,
+      "source_name": "local:choppers:delay",
+      "timestamp": 152,
+      "severity": "Severity::MINOR",
+      "message": "Chopper delay is too low"
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
     "kafka_timestamp": 110,
     "source_name": "local:choppers:rotation_speed",
     "timestamp": 110,
