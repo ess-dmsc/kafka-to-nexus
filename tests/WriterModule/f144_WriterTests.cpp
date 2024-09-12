@@ -278,7 +278,7 @@ TEST_F(f144Init, config_units_attribute_on_value_dataset_if_empty) {
   EXPECT_NO_THROW(TestWriter.Values.attribute("units", attribute_value))
       << "Expect units attribute to be created even if config string is empty";
   EXPECT_EQ(attribute_value, "")
-      << "Expect blank units attribute to be written as"
+      << "Expect blank units attribute to be written as "
          "a blank value representing a unitless value";
 }
 
