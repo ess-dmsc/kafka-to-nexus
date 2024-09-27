@@ -59,8 +59,9 @@ public:
       [[maybe_unused]] std::string const &Broker,
       [[maybe_unused]] duration TimeOut,
       [[maybe_unused]] Kafka::BrokerSettings const &BrokerSettings) override {
-    // TODO: populate this list at runtime
-    return {"local_choppers", "local_motion", "local_detector"};
+    // NOTE: template files need to use these topics
+    return {"local_choppers", "local_motion", "local_detector",
+            "local_nicos_devices", "local_sample_env"};
   }
 };
 
