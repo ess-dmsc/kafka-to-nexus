@@ -35,8 +35,6 @@ void createFileWriterTemplate(Command::StartMessage const &StartInfo,
                               Metrics::IRegistrar *Registrar,
                               MetaData::TrackerPtr const &Tracker);
 
-// Note: The functions below are "private" helper functions.
-
 void addStreamSourceToWriterModule(
     std::vector<ModuleSettings> &StreamSettingsList, FileWriterTask &Task);
 
