@@ -50,8 +50,8 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
   auto MsgSize = static_cast<uint64_t>(Msg->size());
 
   switch (KafkaProducer->produce(
-      RdKafkaTopic.get(), RdKafka::Topic::PARTITION_UA, MsgFlags, (void *) Msg->data(),
-      Msg->size(), key, key_len, Msg.get())) {
+      RdKafkaTopic.get(), RdKafka::Topic::PARTITION_UA, MsgFlags,
+      (void *)Msg->data(), Msg->size(), key, key_len, Msg.get())) {
   case RdKafka::ERR_NO_ERROR:
     ++ProducerStats.produced;
     ProducerStats.produced_bytes += MsgSize;
