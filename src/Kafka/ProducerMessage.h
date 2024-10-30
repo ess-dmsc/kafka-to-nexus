@@ -13,11 +13,12 @@
 #include <vector>
 
 namespace Kafka {
-/// This class is used for storing messages before passing them on to librdkafka.
-/// The lifetime of this object MUST exceed the call to librdkafka's producer.
-/// I.e. it must not be deleted until it has been sent to Kafka.
+/// This class is used for storing messages for sending via librdkafka.
+///
+/// The producer takes a pointer to the instance and returns it via the callback.
+/// It is then manually destructed/deallocated in the callback.
 struct ProducerMessage {
-  // TODO: do we need to inheirt from this?
+  // Virtual to allow overriding in tests.
   virtual ~ProducerMessage() = default;
   std::vector<unsigned char> v;
 
