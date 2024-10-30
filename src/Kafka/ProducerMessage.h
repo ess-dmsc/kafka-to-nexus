@@ -10,11 +10,24 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 namespace Kafka {
+/// This class is used for storing messages before passing them on to librdkafka.
+/// The lifetime of this object MUST exceed the call to librdkafka's producer.
+/// I.e. it must not be deleted until it has been sent to Kafka.
 struct ProducerMessage {
+  // TODO: do we need to inheirt from this?
   virtual ~ProducerMessage() = default;
-  uint32_t size{0};
-  unsigned char *data{nullptr};
+  std::vector<unsigned char> v;
+
+  [[nodiscard]] size_t size() const {
+    return v.size();
+  }
+
+  [[nodiscard]] unsigned const char * data() const {
+    return v.data();
+  }
+
 };
 } // namespace Kafka

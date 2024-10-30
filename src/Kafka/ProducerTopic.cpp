@@ -14,20 +14,11 @@
 
 namespace Kafka {
 
-struct Msg_ : public ProducerMessage {
-  std::vector<unsigned char> v;
-  void finalize() {
-    data = v.data();
-    size = v.size();
-  }
-};
-
-int IProducerTopic::produce(flatbuffers::DetachedBuffer const &MsgData) {
-  auto *MsgPtr = new Msg_;
-  std::copy(MsgData.data(), MsgData.data() + MsgData.size(),
-            std::back_inserter(MsgPtr->v));
-  MsgPtr->finalize();
-  return produce(std::unique_ptr<ProducerMessage>(MsgPtr));
+int IProducerTopic::produce(flatbuffers::DetachedBuffer const &buffer) {
+  auto message = std::make_unique<ProducerMessage>();
+  std::copy(buffer.data(), buffer.data() + buffer.size(),
+            std::back_inserter(message->v));
+  return produce(std::move(message));
 }
 
 std::string IProducerTopic::name() const { return Name; }
@@ -56,11 +47,11 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
   // point we can free the memory
   int MsgFlags = 0;
   auto &ProducerStats = KafkaProducer->Stats;
-  auto MsgSize = static_cast<uint64_t>(Msg->size);
+  auto MsgSize = static_cast<uint64_t>(Msg->size());
 
   switch (KafkaProducer->produce(
-      RdKafkaTopic.get(), RdKafka::Topic::PARTITION_UA, MsgFlags, Msg->data,
-      Msg->size, key, key_len, Msg.get())) {
+      RdKafkaTopic.get(), RdKafka::Topic::PARTITION_UA, MsgFlags, (void *) Msg->data(),
+      Msg->size(), key, key_len, Msg.get())) {
   case RdKafka::ERR_NO_ERROR:
     ++ProducerStats.produced;
     ProducerStats.produced_bytes += MsgSize;
@@ -77,7 +68,7 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> Msg) {
 
   case RdKafka::ERR_MSG_SIZE_TOO_LARGE:
     ++ProducerStats.msg_too_large;
-    Logger::Error("Message size too large to publish, size: {}", Msg->size);
+    Logger::Error("Message size too large to publish, size: {}", Msg->size());
     break;
 
   default:
