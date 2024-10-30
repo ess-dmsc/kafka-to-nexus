@@ -213,7 +213,6 @@ void createFileWriterTemplate(Command::StartMessage const &StartInfo,
 
 void addStreamSourceToWriterModule(vector<ModuleSettings> &StreamSettingsList,
                                    FileWriterTask &Task) {
-
   for (auto &StreamSettings : StreamSettingsList) {
     try {
       try {
