@@ -22,7 +22,7 @@ struct ProducerMessage {
   virtual ~ProducerMessage() = default;
   std::vector<unsigned char> v;
 
-  [[nodiscard]] size_t size() const { return v.size(); }
+  [[nodiscard]] std::size_t size() const { return v.size(); }
 
   [[nodiscard]] unsigned const char *data() const { return v.data(); }
 };
