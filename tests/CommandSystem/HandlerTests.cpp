@@ -177,7 +177,7 @@ TEST_F(StartHandlerTest, start_command_sends_response) {
   _handlerUnderTest->loopFunction();
 
   auto message = _producer_topic->messages.at(0).get();
-  auto result = GetActionResponse(message->data);
+  auto result = GetActionResponse(message->data());
 
   EXPECT_EQ(1u, _producer_topic->messages.size());
   ASSERT_EQ(result->action(), ActionType::StartJob);
@@ -198,7 +198,7 @@ TEST_F(StartHandlerTest, rejected_command_sends_response) {
   _handlerUnderTest->loopFunction();
 
   auto message = _producer_topic->messages.at(0).get();
-  auto result = GetActionResponse(message->data);
+  auto result = GetActionResponse(message->data());
 
   EXPECT_EQ(1u, _producer_topic->messages.size());
   ASSERT_EQ(result->action(), ActionType::StartJob);
@@ -376,7 +376,7 @@ TEST_F(StopHandlerTest, stop_command_sends_response) {
   _handlerUnderTest->loopFunction();
 
   auto message = _producer_topic->messages.at(0).get();
-  auto result = GetActionResponse(message->data);
+  auto result = GetActionResponse(message->data());
 
   EXPECT_EQ(1u, _producer_topic->messages.size());
   ASSERT_EQ(result->action(), ActionType::SetStopTime);
@@ -397,7 +397,7 @@ TEST_F(StopHandlerTest, rejected_stop_command_sends_response) {
   _handlerUnderTest->loopFunction();
 
   auto message = _producer_topic->messages.at(0).get();
-  auto result = GetActionResponse(message->data);
+  auto result = GetActionResponse(message->data());
 
   EXPECT_EQ(1u, _producer_topic->messages.size());
   ASSERT_EQ(result->action(), ActionType::SetStopTime);
