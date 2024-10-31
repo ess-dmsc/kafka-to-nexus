@@ -12,6 +12,7 @@
 #include "Kafka/BrokerSettings.h"
 #include "Kafka/Producer.h"
 #include "Kafka/ProducerTopic.h"
+#include "Msg.h"
 #include "URI.h"
 #include <string>
 
@@ -36,14 +37,18 @@ public:
 
   FeedbackProducer(std::string ServiceIdentifier,
                    std::unique_ptr<Kafka::IProducerTopic> KafkaProducer);
+
   void publishResponse(ActionResponse Command, ActionResult Result,
                        std::string const &JobId, std::string const &CommandId,
                        time_point StopTime, int StatusCode,
                        std::string const &Description);
+
   void publishStoppedMsg(ActionResult Result, std::string const &JobId,
                          std::string const &Description,
                          std::filesystem::path FilePath,
                          std::string const &Metadata);
+
+  void echo_message(FileWriter::Msg const &command_msg);
 
 private:
   std::string ServiceId;

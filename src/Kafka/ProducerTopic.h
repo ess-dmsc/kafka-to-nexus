@@ -32,12 +32,10 @@ public:
 
   int produce(flatbuffers::DetachedBuffer const &MsgData);
   [[nodiscard]] std::string name() const;
+  virtual int produce(std::unique_ptr<ProducerMessage> msg) = 0;
 
 protected:
   std::string Name;
-
-private:
-  virtual int produce(std::unique_ptr<ProducerMessage> msg) = 0;
 };
 
 class ProducerTopic : public IProducerTopic {
@@ -45,9 +43,9 @@ public:
   ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
                 std::string const &TopicName);
   ~ProducerTopic() override = default;
+  int produce(std::unique_ptr<Kafka::ProducerMessage> Msg) override;
 
 private:
-  int produce(std::unique_ptr<Kafka::ProducerMessage> Msg) override;
   std::unique_ptr<RdKafka::Conf> ConfigPtr{
       RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC)};
   std::shared_ptr<Producer> KafkaProducer;

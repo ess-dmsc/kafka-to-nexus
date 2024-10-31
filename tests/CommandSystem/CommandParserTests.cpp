@@ -19,7 +19,7 @@
 
 using namespace RunStartStopHelpers;
 
-std::string const InstrumentNameInput = "TEST";
+std::string const InstrumentNameInput = "TEST42";
 std::string const RunNameInput = "42";
 std::string const NexusStructureInput = "{}";
 std::string const JobIDInput = "qw3rty";
