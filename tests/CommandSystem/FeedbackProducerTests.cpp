@@ -25,7 +25,7 @@ TEST(FeedbackProducer, publish_start_job_success) {
       "my_job_id", "my_command_id", time_point{123456ms}, 123, "my_message");
 
   auto message = holder->messages.at(0).get();
-  auto result = GetActionResponse(message->data);
+  auto result = GetActionResponse(message->data());
   ASSERT_EQ(result->service_id()->str(), "my_service_identifier");
   ASSERT_EQ(result->job_id()->str(), "my_job_id");
   ASSERT_EQ(result->action(), ActionType::StartJob);
@@ -47,7 +47,7 @@ TEST(FeedbackProducer, publish_start_job_failure) {
       "my_job_id", "my_command_id", time_point{123456ms}, 123, "my_message");
 
   auto message = holder->messages.at(0).get();
-  auto result = GetActionResponse(message->data);
+  auto result = GetActionResponse(message->data());
   ASSERT_EQ(result->action(), ActionType::StartJob);
   ASSERT_EQ(result->outcome(), ActionOutcome::Failure);
 }
@@ -63,7 +63,7 @@ TEST(FeedbackProducer, publish_stop_writing_success) {
                                        {"c://file.txt"}, "my_metadata");
 
   auto message = holder->messages.at(0).get();
-  auto result = GetFinishedWriting(message->data);
+  auto result = GetFinishedWriting(message->data());
   ASSERT_EQ(result->service_id()->str(), "my_service_identifier");
   ASSERT_EQ(result->job_id()->str(), "my_job_id");
   ASSERT_EQ(result->error_encountered(), false);
@@ -83,6 +83,6 @@ TEST(FeedbackProducer, publish_stop_writing_failure) {
                                        {"c://file.txt"}, "my_metadata");
 
   auto message = holder->messages.at(0).get();
-  auto result = GetFinishedWriting(message->data);
+  auto result = GetFinishedWriting(message->data());
   ASSERT_EQ(result->error_encountered(), true);
 }
