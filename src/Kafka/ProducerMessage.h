@@ -10,11 +10,20 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 namespace Kafka {
+/// This class is used for storing messages for sending via librdkafka.
+///
+/// The producer takes a pointer to the instance and returns it via the
+/// callback. It is then manually destructed/deallocated in the callback.
 struct ProducerMessage {
+  // Virtual to allow overriding in tests.
   virtual ~ProducerMessage() = default;
-  uint32_t size{0};
-  unsigned char *data{nullptr};
+  std::vector<unsigned char> v;
+
+  [[nodiscard]] std::size_t size() const { return v.size(); }
+
+  [[nodiscard]] unsigned const char *data() const { return v.data(); }
 };
 } // namespace Kafka
