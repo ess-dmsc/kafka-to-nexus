@@ -83,4 +83,11 @@ void FeedbackProducer::publishStoppedMsg(ActionResult Result,
   Producer->produce(Builder.Release());
 }
 
+void FeedbackProducer::echo_message(FileWriter::Msg const &command_msg) {
+  auto message = std::make_unique<Kafka::ProducerMessage>();
+  std::copy(command_msg.data(), command_msg.data() + command_msg.size(),
+            std::back_inserter(message->v));
+  Producer->produce(std::move(message));
+}
+
 } // namespace Command

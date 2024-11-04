@@ -163,7 +163,7 @@ TEST_F(StartHandlerTest,
   EXPECT_EQ(false, start_called);
 }
 
-TEST_F(StartHandlerTest, start_command_sends_response) {
+TEST_F(StartHandlerTest, start_command_is_echoed) {
   _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
   _handlerUnderTest->registerStartFunction(
       []([[maybe_unused]] auto startMessage) -> void {});
@@ -177,9 +177,29 @@ TEST_F(StartHandlerTest, start_command_sends_response) {
   _handlerUnderTest->loopFunction();
 
   auto message = _producer_topic->messages.at(0).get();
+  std::string schema{message->v.begin() + 4, message->v.begin() + 8};
+
+  ASSERT_EQ(schema, "pl72");
+}
+
+TEST_F(StartHandlerTest, start_command_sends_response) {
+  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
+  _handlerUnderTest->registerStartFunction(
+      []([[maybe_unused]] auto startMessage) -> void {});
+
+  // NOTE: using the same command topic, so it doesn't create a new
+  // ProducerTopic. This allows us to see the messages
+  queue_start_message(_default_command_topic, _valid_job_id, _serviceId);
+  // First poll connects the consumer
+  _handlerUnderTest->loopFunction();
+
+  _handlerUnderTest->loopFunction();
+
+  auto message = _producer_topic->messages.at(1).get();
   auto result = GetActionResponse(message->data());
 
-  EXPECT_EQ(1u, _producer_topic->messages.size());
+  // Expect 2 messages: the echo of the start command and the response
+  EXPECT_EQ(2u, _producer_topic->messages.size());
   ASSERT_EQ(result->action(), ActionType::StartJob);
   ASSERT_EQ(result->outcome(), ActionOutcome::Success);
 }
@@ -197,10 +217,11 @@ TEST_F(StartHandlerTest, rejected_command_sends_response) {
 
   _handlerUnderTest->loopFunction();
 
-  auto message = _producer_topic->messages.at(0).get();
+  auto message = _producer_topic->messages.at(1).get();
   auto result = GetActionResponse(message->data());
 
-  EXPECT_EQ(1u, _producer_topic->messages.size());
+  // Expect 2 messages: the echo of the start command and the response
+  EXPECT_EQ(2u, _producer_topic->messages.size());
   ASSERT_EQ(result->action(), ActionType::StartJob);
   ASSERT_EQ(result->outcome(), ActionOutcome::Failure);
 }
