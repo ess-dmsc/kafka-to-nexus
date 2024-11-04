@@ -160,18 +160,22 @@ void warnIfMessageIsOld(time_point MsgTime) {
   }
 }
 
-void Handler::handleStartCommand(FileWriter::Msg CommandMsg) {
+void Handler::handleStartCommand(FileWriter::Msg start_message) {
   try {
     StartMessage StartJob;
 
     ActionResult SendResult{ActionResult::Success};
-    CmdResponse ValidationResponse = startWritingProcess(CommandMsg, StartJob);
+    CmdResponse ValidationResponse =
+        startWritingProcess(start_message, StartJob);
     if (ValidationResponse.StatusCode >= 400) {
       SendResult = ActionResult::Failure;
     }
 
-    warnIfMessageIsOld(CommandMsg.getMetaData().timestamp());
+    warnIfMessageIsOld(start_message.getMetaData().timestamp());
     Logger::Log(ValidationResponse.LogLevel, ValidationResponse.Message);
+
+    CommandResponse->echo_message(start_message);
+
     if (ValidationResponse.SendResponse) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,

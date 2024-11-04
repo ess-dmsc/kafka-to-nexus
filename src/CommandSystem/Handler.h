@@ -84,9 +84,9 @@ public:
 private:
   /// \brief Handle start command.
   ///
-  /// \param CommandMsg Kafka message.
+  /// \param start_message Kafka message.
   /// pool or the command topic.
-  void handleStartCommand(FileWriter::Msg CommandMsg);
+  void handleStartCommand(FileWriter::Msg start_message);
 
   /// \brief Validate command and start writing.
   ///
