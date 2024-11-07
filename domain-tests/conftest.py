@@ -40,30 +40,29 @@ def pytest_addoption(parser):
     )
 
 
-# @pytest.fixture(scope="module")
-def write_file(request, file_name):
+def write_file(request, output_file, template_file, data_file):
     if request.config.getoption(BINARY_PATH) is None:
         raise RuntimeError(
             f'You must supply a path to a file-maker executable ("{BINARY_PATH}").'
         )
 
     def finalize():
-        if os.path.exists(file_name):
-            os.remove(file_name)
+        if os.path.exists(output_file):
+            os.remove(output_file)
 
     if request.config.getoption(CLEANUP_OUTPUT):
         request.addfinalizer(finalize)
 
-    if os.path.exists(file_name):
-        os.remove(file_name)
+    if os.path.exists(output_file):
+        os.remove(output_file)
     args = [
         request.config.getoption(BINARY_PATH),
         "-f",
-        "nexus_template.json",
+        template_file,
         "-o",
-        file_name,
+        output_file,
         "-d",
-        "data_file.json",
+        data_file,
     ]
     run_file_maker(args)
-    return file_name
+    return output_file

@@ -7,7 +7,7 @@ from conftest import write_file
 # This fixture is used to create the file
 @pytest.fixture(scope="module")
 def local_file(request):
-    return write_file(request, "writer_modules.hdf")
+    return write_file(request, "writer_modules.hdf", "nexus_template.json", "data_file.json")
 
 
 def test_f144_writes(local_file):
