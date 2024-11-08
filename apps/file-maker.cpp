@@ -128,8 +128,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   start_info.JobID = "some_job_id";
 
   FileWriter::StreamerOptions streamer_options;
-  streamer_options.StartTimestamp = time_point{0ms};
-  streamer_options.StopTimestamp = time_point{1000ms};
+  streamer_options.StartTimestamp = time_point{10000ms};
+  streamer_options.StopTimestamp = time_point{15000ms};
   std::filesystem::path filepath{output_file};
 
   auto stream_controller = FileWriter::createFileWritingJob(

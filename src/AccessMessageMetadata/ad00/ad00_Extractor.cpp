@@ -32,7 +32,7 @@ std::string ad00_Extractor::source_name(
   auto FbPointer = Getad00_ADArray(Message.data());
   // The source name was left out of the relevant EPICS areaDetector plugin.
   // There is currently a pull request for adding this variable to the FB
-  // schema. When the variable has been addded, this function will be updated.
+  // schema. When the variable has been added, this function will be updated.
   return FbPointer->source_name()->str();
 }
 } // namespace AccessMessageMetadata
