@@ -146,7 +146,7 @@ are read from files.
 Its main purpose is for allowing developers to do testing and debugging in a more deterministic way by having consistent
 input data and not having to set up Kafka.
 
-The file-maker has a fixed start and stop time (0ms to 1000ms Unix epoch), so the data supplied needs to take that into account.
+The file-maker has a fixed start and stop time (10000ms to 15000ms Unix epoch), so the data supplied needs to take that into account.
 
 Use the `--help` flag to see how to use it. The domain-tests also use it, so they are a good way to learn more about it.
 
