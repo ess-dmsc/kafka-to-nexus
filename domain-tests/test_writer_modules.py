@@ -1,9 +1,19 @@
 import h5py
 import numpy as np
+import pytest
+from conftest import write_file
 
 
-def test_f144_writes(write_file):
-    with h5py.File(write_file, "r") as f:
+# This fixture is used to create the file
+@pytest.fixture(scope="module")
+def local_file(request):
+    return write_file(
+        request, "writer_modules.hdf", "nexus_template.json", "data_file.json"
+    )
+
+
+def test_f144_writes(local_file):
+    with h5py.File(local_file, "r") as f:
         assert f["/entry/instrument/chopper/rotation_speed/value"][:].shape == (2,)
         assert f["/entry/instrument/chopper/rotation_speed/time"][:].shape == (2,)
         assert np.array_equal(
@@ -18,8 +28,8 @@ def test_f144_writes(write_file):
         assert f["/entry/instrument/chopper/rotation_speed/average_value"][()] == 12.5
 
 
-def test_f144_units_attributes_if_in_json(write_file):
-    with h5py.File(write_file, "r") as f:
+def test_f144_units_attributes_if_in_json(local_file):
+    with h5py.File(local_file, "r") as f:
         assert "units" in f["/entry/instrument/chopper/rotation_speed/value"].attrs
 
         assert (
@@ -40,8 +50,8 @@ def test_f144_units_attributes_if_in_json(write_file):
         )
 
 
-def test_f144_units_attributes_if_not_in_json(write_file):
-    with h5py.File(write_file, "r") as f:
+def test_f144_units_attributes_if_not_in_json(local_file):
+    with h5py.File(local_file, "r") as f:
         assert "units" in f["/entry/instrument/chopper/delay/value"].attrs
 
         assert f["/entry/instrument/chopper/delay/value"].attrs["units"] == ""
@@ -51,8 +61,8 @@ def test_f144_units_attributes_if_not_in_json(write_file):
         assert f["/entry/instrument/chopper/delay/average_value"].attrs["units"] == ""
 
 
-def test_ep01_writes(write_file):
-    with h5py.File(write_file, "r") as f:
+def test_ep01_writes(local_file):
+    with h5py.File(local_file, "r") as f:
         assert np.array_equal(
             f["/entry/instrument/chopper/rotation_speed/connection_status"][:], [2, 2]
         )
@@ -62,8 +72,8 @@ def test_ep01_writes(write_file):
         )
 
 
-def test_al00_writes(write_file):
-    with h5py.File(write_file, "r") as f:
+def test_al00_writes(local_file):
+    with h5py.File(local_file, "r") as f:
         messages = f["/entry/instrument/chopper/rotation_speed/alarm_message"][:]
         assert messages[0].decode() == "Chopper speed is too low"
         assert messages[1].decode() == "Chopper speed is perfect"
@@ -76,8 +86,8 @@ def test_al00_writes(write_file):
         )
 
 
-def test_ev44_writes(write_file):
-    with h5py.File(write_file, "r") as f:
+def test_ev44_writes(local_file):
+    with h5py.File(local_file, "r") as f:
         assert np.array_equal(
             f["/entry/instrument/event_detector/events/event_time_offset"][:],
             [i * 10 for i in range(1, 17)],
@@ -96,8 +106,8 @@ def test_ev44_writes(write_file):
         )
 
 
-def test_ad00_writes(write_file):
-    with h5py.File(write_file, "r") as f:
+def test_ad00_writes(local_file):
+    with h5py.File(local_file, "r") as f:
         expected_data = np.array(
             [
                 [[10, 11], [12, 13]],
@@ -113,8 +123,8 @@ def test_ad00_writes(write_file):
         )
 
 
-def test_ad00_units_attributes_if_not_in_json(write_file):
-    with h5py.File(write_file, "r") as f:
+def test_ad00_units_attributes_if_not_in_json(local_file):
+    with h5py.File(local_file, "r") as f:
         assert "units" in f["/entry/instrument/image_detector/data/value"].attrs
 
         assert f["/entry/instrument/image_detector/data/value"].attrs["units"] == ""

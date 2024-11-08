@@ -5,7 +5,6 @@ import subprocess
 
 BINARY_PATH = "--file-maker-binary"
 CLEANUP_OUTPUT = "--cleanup-output"
-OUTPUT_FILE = "output.hdf"
 
 
 def run_file_maker(args, timeout=15):
@@ -41,30 +40,29 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture(scope="session")
-def write_file(request):
+def write_file(request, output_file, template_file, data_file):
     if request.config.getoption(BINARY_PATH) is None:
         raise RuntimeError(
             f'You must supply a path to a file-maker executable ("{BINARY_PATH}").'
         )
 
     def finalize():
-        if os.path.exists(OUTPUT_FILE):
-            os.remove(OUTPUT_FILE)
+        if os.path.exists(output_file):
+            os.remove(output_file)
 
     if request.config.getoption(CLEANUP_OUTPUT):
         request.addfinalizer(finalize)
 
-    if os.path.exists(OUTPUT_FILE):
-        os.remove(OUTPUT_FILE)
+    if os.path.exists(output_file):
+        os.remove(output_file)
     args = [
         request.config.getoption(BINARY_PATH),
         "-f",
-        "nexus_template.json",
+        template_file,
         "-o",
-        OUTPUT_FILE,
+        output_file,
         "-d",
-        "data_file.json",
+        data_file,
     ]
     run_file_maker(args)
-    return OUTPUT_FILE
+    return output_file
