@@ -70,7 +70,7 @@ create_ep01_message_double(std::string const &source, ConnectionInfo status,
 
   EpicsPVConnectionInfoBuilder ep01_builder(builder);
   ep01_builder.add_source_name(source_name_offset);
-  ep01_builder.add_timestamp(timestamp_ms);
+  ep01_builder.add_timestamp(timestamp_ms * 1000000);
   ep01_builder.add_status(status);
   FinishEpicsPVConnectionInfoBuffer(builder, ep01_builder.Finish());
 
@@ -109,7 +109,7 @@ create_ev44_message(std::string const &source, int64_t message_id,
   auto builder = flatbuffers::FlatBufferBuilder();
   auto source_name_offset = builder.CreateString(source);
 
-  std::vector<int64_t> reference_times = {timestamp_ns};
+  std::vector<int64_t> reference_times = {timestamp_ns * 1000000};
   auto reference_time_offset = builder.CreateVector(reference_times);
   std::vector<int32_t> reference_index = {0};
   auto reference_index_offset = builder.CreateVector(reference_index);
