@@ -5,6 +5,7 @@ from subprocess import PIPE, Popen
 from time import sleep
 
 import pytest
+
 # from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
@@ -31,6 +32,7 @@ common_options = {
 }
 
 BINARY_PATH = "--file-writer-binary"
+LOCAL_KAFKA = "--use-local-kafka"
 BROKERS = ["localhost:9092"]
 POOL_TOPIC = "local_filewriter_pool"
 POOL_STATUS_TOPIC = "local_filewriter_status"
@@ -44,7 +46,13 @@ def pytest_addoption(parser):
         BINARY_PATH,
         action="store",
         default=None,
-        help="Path to file-maker binary (executable).",
+        help="Path to file-writer binary (executable).",
+    )
+    parser.addoption(
+        LOCAL_KAFKA,
+        action="store",
+        default=False,
+        help="Skip running Kafka in Docker because it is running locally",
     )
 
 
@@ -113,25 +121,28 @@ def run_file_maker(args, timeout=15):
 
 @pytest.fixture(scope="session", autouse=True)
 def start_kafka(request):
+    if request.config.getoption(LOCAL_KAFKA):
+        # Skip running kafka in docker
+        return request
     print("Starting zookeeper and kafka", flush=True)
-    # options = common_options
-    # options["--project-name"] = "kafka"
-    # options["--file"] = ["docker-compose.yml"]
-    # project = project_from_options(os.path.dirname(__file__), options)
-    # cmd = TopLevelCommand(project)
-    #
-    # cmd.up(options)
-    # print("Started kafka containers", flush=True)
-    # wait_until_kafka_ready(cmd, options)
-    #
-    # def fin():
-    #     print("Stopping zookeeper and kafka", flush=True)
-    #     options["--timeout"] = 30
-    #     options["--project-name"] = "kafka"
-    #     options["--file"] = ["docker-compose-kafka.yml"]
-    #     cmd.down(options)
-    #
-    # request.addfinalizer(fin)
+    options = common_options
+    options["--project-name"] = "kafka"
+    options["--file"] = ["docker-compose.yml"]
+    project = project_from_options(os.path.dirname(__file__), options)
+    cmd = TopLevelCommand(project)
+
+    cmd.up(options)
+    print("Started kafka containers", flush=True)
+    wait_until_kafka_ready(cmd, options)
+
+    def fin():
+        print("Stopping zookeeper and kafka", flush=True)
+        options["--timeout"] = 30
+        options["--project-name"] = "kafka"
+        options["--file"] = ["docker-compose-kafka.yml"]
+        cmd.down(options)
+
+    request.addfinalizer(fin)
 
 
 @pytest.fixture(scope="module")
