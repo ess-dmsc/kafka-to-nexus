@@ -14,8 +14,14 @@ from streaming_data_types.logdata_f144 import serialise_f144
 from streaming_data_types.run_start_pl72 import serialise_pl72
 from streaming_data_types.run_stop_6s4t import serialise_6s4t
 
-from conftest import (BROKERS, DETECTOR_TOPIC, INST_CONTROL_TOPIC,
-                      MOTION_TOPIC, POOL_STATUS_TOPIC, POOL_TOPIC)
+from conftest import (
+    BROKERS,
+    DETECTOR_TOPIC,
+    INST_CONTROL_TOPIC,
+    MOTION_TOPIC,
+    POOL_STATUS_TOPIC,
+    POOL_TOPIC,
+)
 
 NEXUS_STRUCTURE = {
     "children": [
@@ -83,6 +89,38 @@ def extract_time_from_status_message(buffer):
     return json.loads(deserialise_x5f2(buffer).status_json)["state"]
 
 
+def start_filewriter(
+    producer, file_name, job_id, start_time_s, stop_time_s=None, metadata=""
+):
+    buffer = serialise_pl72(
+        job_id=job_id,
+        filename=file_name,
+        start_time=start_time_s * 1000,
+        stop_time=stop_time_s * 1000 if stop_time_s else None,
+        run_name="test_run",
+        nexus_structure=json.dumps(NEXUS_STRUCTURE),
+        service_id="",
+        instrument_name="",
+        broker="localhost:9092",
+        control_topic=INST_CONTROL_TOPIC,
+        metadata=metadata,
+    )
+    producer.produce(POOL_TOPIC, buffer)
+    producer.flush()
+
+
+def stop_filewriter(producer, job_id):
+    buffer = serialise_6s4t(
+        job_id=job_id,
+        run_name="test_run",
+        service_id="",
+        stop_time=None,
+        command_id=str(uuid.uuid4()),
+    )
+    producer.produce(INST_CONTROL_TOPIC, buffer)
+    producer.flush()
+
+
 def create_consumer(topic):
     consumer_conf = {
         "bootstrap.servers": ",".join(BROKERS),
@@ -135,27 +173,13 @@ class TestFileWriter:
         and the "data" tests separate, so a blank file is fine.
         """
         consumer, topic_partitions = create_consumer(INST_CONTROL_TOPIC)
+        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
         job_id = str(uuid.uuid4())
         metadata = json.dumps({"hello": 123})
 
-        buffer = serialise_pl72(
-            job_id=job_id,
-            filename=file_name,
-            start_time=time_stamp * 1000,
-            run_name="test_run",
-            nexus_structure=json.dumps(NEXUS_STRUCTURE),
-            service_id="",
-            instrument_name="",
-            broker="localhost:9092",
-            control_topic=INST_CONTROL_TOPIC,
-            metadata=metadata,
-        )
-
-        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
-        producer.produce(POOL_TOPIC, buffer)
-        producer.flush()
+        start_filewriter(producer, file_name, job_id, time_stamp, metadata=metadata)
 
         # Collect messages while writing
         start_time = time.time()
@@ -165,16 +189,7 @@ class TestFileWriter:
             if msg:
                 messages.append(msg)
 
-        buffer = serialise_6s4t(
-            job_id=job_id,
-            run_name="test_run",
-            service_id="",
-            stop_time=None,
-            command_id=str(uuid.uuid4()),
-        )
-
-        producer.produce(INST_CONTROL_TOPIC, buffer)
-        producer.flush()
+        stop_filewriter(producer, job_id)
 
         # Collect messages after stopping
         start_time = time.time()
@@ -218,26 +233,12 @@ class TestFileWriter:
         """
         Test that the data in the file is what is expected
         """
+        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
         job_id = str(uuid.uuid4())
 
-        buffer = serialise_pl72(
-            job_id=job_id,
-            filename=file_name,
-            start_time=time_stamp * 1000,
-            run_name="test_run",
-            nexus_structure=json.dumps(NEXUS_STRUCTURE),
-            service_id="",
-            instrument_name="",
-            broker="localhost:9092",
-            control_topic=INST_CONTROL_TOPIC,
-            metadata="",
-        )
-
-        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
-        producer.produce(POOL_TOPIC, buffer)
-        producer.flush()
+        start_filewriter(producer, file_name, job_id, time_stamp)
 
         # Send some data to Kafka
         messages_sent = 0
@@ -256,15 +257,7 @@ class TestFileWriter:
             messages_sent += 1
             time.sleep(1)
 
-        buffer = serialise_6s4t(
-            job_id=job_id,
-            run_name="test_run",
-            service_id="",
-            stop_time=None,
-            command_id=str(uuid.uuid4()),
-        )
-        producer.produce(INST_CONTROL_TOPIC, buffer)
-        producer.flush()
+        stop_filewriter(producer, job_id)
 
         # Give the file time to stop writing
         time.sleep(10)
@@ -289,6 +282,7 @@ class TestFileWriter:
 
     def test_rejoins_pool_after_writing_done(self, file_writer):
         consumer, topic_partitions = create_consumer(POOL_STATUS_TOPIC)
+        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
         approximate_write_time = 15
 
         messages = []
@@ -302,35 +296,12 @@ class TestFileWriter:
         file_name = f"{time_stamp}.nxs"
         job_id = str(uuid.uuid4())
 
-        buffer = serialise_pl72(
-            job_id=job_id,
-            filename=file_name,
-            start_time=time_stamp * 1000,
-            run_name="test_run",
-            nexus_structure=json.dumps(NEXUS_STRUCTURE),
-            service_id="",
-            instrument_name="",
-            broker="localhost:9092",
-            control_topic=INST_CONTROL_TOPIC,
-            metadata="",
-        )
-
-        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
-        producer.produce(POOL_TOPIC, buffer)
-        producer.flush()
+        start_filewriter(producer, file_name, job_id, time_stamp)
 
         time.sleep(approximate_write_time)
         messages_before = len(messages)
 
-        buffer = serialise_6s4t(
-            job_id=job_id,
-            run_name="test_run",
-            service_id="",
-            stop_time=None,
-            command_id=str(uuid.uuid4()),
-        )
-        producer.produce(INST_CONTROL_TOPIC, buffer)
-        producer.flush()
+        stop_filewriter(producer, job_id)
 
         start_time = time.time()
         while time.time() < start_time + 12:
