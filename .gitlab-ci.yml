@@ -14,7 +14,7 @@ stages:
   - build
   - archive
   - domain
-  - new_integration_tests
+#  - new_integration_tests
   - integration
   - release
 
@@ -139,27 +139,27 @@ domain_tests:
     reports:
       junit: Domain-tests/DomainTestsOutput.xml
 
-new_integration_tests:
-  stage: new_integration_tests
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  dependencies:
-    - build-release
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
-  before_script:
-    - ls
-    - cd integration-tests-2
-  script:
-    - $SCL python -m venv venv
-    - source venv/bin/activate
-    - python -m pip install -r requirements.txt
-    - pytest --file-writer-binary=../build/bin/kafka-to-nexus --junitxml=NewIntegrationTestsOutput.xml
-  artifacts:
-    when: always
-    paths:
-      - integration-tests-2/NewIntegrationTestsOutput.xml
-    reports:
-      junit: integration-tests-2/NewIntegrationTestsOutput.xml
+#new_integration_tests:
+#  stage: new_integration_tests
+#  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+#  dependencies:
+#    - build-release
+#  variables:
+#    SCL: scl enable devtoolset-11 rh-python38 --
+#  before_script:
+#    - ls
+#    - cd integration-tests-2
+#  script:
+#    - $SCL python -m venv venv
+#    - source venv/bin/activate
+#    - python -m pip install -r requirements.txt
+#    - pytest --file-writer-binary=../build/bin/kafka-to-nexus --junitxml=NewIntegrationTestsOutput.xml
+#  artifacts:
+#    when: always
+#    paths:
+#      - integration-tests-2/NewIntegrationTestsOutput.xml
+#    reports:
+#      junit: integration-tests-2/NewIntegrationTestsOutput.xml
 
 build-alt-distro:
   extends: .build
@@ -200,13 +200,17 @@ integration-tests:
   stage: integration
   image: docker:latest
   before_script:
-    - cd integration-tests
-    - ./setup.sh ../build/archive/kafka-to-nexus.tar.gz
+    - cd integration-tests-2
+#    - ./setup.sh ../build/archive/kafka-to-nexus.tar.gz
   script:
-    - ./run-integration-tests.sh
+#    - ./run-integration-tests.sh
+      - $SCL python -m venv venv
+      - source venv/bin/activate
+      - python -m pip install -r requirements.txt
+      - pytest --file-writer-binary=../build/bin/kafka-to-nexus --junitxml=IntegrationTestsOutput.xml
   after_script:
     - cd integration-tests
-    - ./teardown.sh
+#    - ./teardown.sh
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   variables:
