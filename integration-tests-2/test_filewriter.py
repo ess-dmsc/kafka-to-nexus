@@ -79,6 +79,10 @@ def extract_state_from_status_message(buffer):
     return json.loads(deserialise_x5f2(buffer).status_json)["state"]
 
 
+def extract_time_from_status_message(buffer):
+    return json.loads(deserialise_x5f2(buffer).status_json)["state"]
+
+
 def create_consumer(topic):
     consumer_conf = {
         "bootstrap.servers": ",".join(BROKERS),
@@ -283,5 +287,61 @@ class TestFileWriter:
                 f["/entry/motion/value"][:], [i for i in range(messages_sent)]
             )
 
-    def test_rejoins_pool_after_writing_done(self):
-        pass
+    def test_rejoins_pool_after_writing_done(self, file_writer):
+        consumer, topic_partitions = create_consumer(POOL_STATUS_TOPIC)
+        approximate_write_time = 15
+
+        messages = []
+        start_time = time.time()
+        while time.time() < start_time + 12:
+            msg = consumer.poll(0.005)
+            if msg:
+                messages.append(msg)
+
+        time_stamp = int(time.time())
+        file_name = f"{time_stamp}.nxs"
+        job_id = str(uuid.uuid4())
+
+        buffer = serialise_pl72(
+            job_id=job_id,
+            filename=file_name,
+            start_time=time_stamp * 1000,
+            run_name="test_run",
+            nexus_structure=json.dumps(NEXUS_STRUCTURE),
+            service_id="",
+            instrument_name="",
+            broker="localhost:9092",
+            control_topic=INST_CONTROL_TOPIC,
+            metadata="",
+        )
+
+        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
+        producer.produce(POOL_TOPIC, buffer)
+        producer.flush()
+
+        time.sleep(approximate_write_time)
+        messages_before = len(messages)
+
+        buffer = serialise_6s4t(
+            job_id=job_id,
+            run_name="test_run",
+            service_id="",
+            stop_time=None,
+            command_id=str(uuid.uuid4()),
+        )
+        producer.produce(INST_CONTROL_TOPIC, buffer)
+        producer.flush()
+
+        start_time = time.time()
+        while time.time() < start_time + 12:
+            msg = consumer.poll(0.005)
+            if msg:
+                messages.append(msg)
+
+        assert len(messages) >= messages_before + 2
+        # Check that the gap between the last message before and the first message after is greater than the write time
+        assert (
+            messages[messages_before].timestamp()[1]
+            - messages[messages_before - 1].timestamp()[1]
+            >= approximate_write_time
+        )
