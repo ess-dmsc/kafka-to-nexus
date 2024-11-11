@@ -1,12 +1,9 @@
-import os.path
-import signal
-import sys
+import os
 from subprocess import PIPE, Popen
 from time import sleep
 
 import pytest
-
-# from compose.cli.main import TopLevelCommand, project_from_options
+from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 
