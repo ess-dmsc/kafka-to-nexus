@@ -214,6 +214,7 @@ integration-tests:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
     FILEWRITER_ZOOKEEPER_CONTAINER_NAME: zookeeper-$CI_JOB_ID
     FILEWRITER_KAFKA_CONTAINER_NAME: kafka-$CI_JOB_ID
     FILEWRITER_FILEWRITER_CONTAINER_NAME: filewriter-$CI_JOB_ID
