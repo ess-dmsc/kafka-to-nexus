@@ -32,6 +32,9 @@ common_options = {
 
 BINARY_PATH = "--file-writer-binary"
 BROKERS = ["localhost:9092"]
+POOL_TOPIC = "local_filewriter_pool"
+POOL_STATUS_TOPIC = "local_filewriter_status"
+INST_CONTROL_TOPIC = "local_filewriter"
 
 
 def pytest_addoption(parser):
