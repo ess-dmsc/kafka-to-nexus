@@ -138,6 +138,28 @@ domain_tests:
     reports:
       junit: Domain-tests/DomainTestsOutput.xml
 
+new_integration_tests:
+  stage: new_integration_tests
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  dependencies:
+    - build-release
+  variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
+  before_script:
+    - ls
+    - cd integration-tests-2
+  script:
+    - $SCL python -m venv venv
+    - source venv/bin/activate
+    - python -m pip install -r requirements.txt
+    - pytest --file-writer-binary=../build/bin/kafka-to-nexus --junitxml=NewIntegrationTestsOutput.xml
+  artifacts:
+    when: always
+    paths:
+      - integration-tests-2/NewIntegrationTestsOutput.xml
+    reports:
+      junit: integration-tests-2/DomainTestsOutput.xml
+
 build-alt-distro:
   extends: .build
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
