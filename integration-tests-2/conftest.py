@@ -84,7 +84,7 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
     n_polls = 0
     while n_polls < 10 and not topics_ready:
         topics = set(client.list_topics().topics.keys())
-        topics_needed = ["hist_commands"]
+        topics_needed = [POOL_TOPIC, POOL_STATUS_TOPIC, INST_CONTROL_TOPIC, DETECTOR_TOPIC, MOTION_TOPIC]
         present = [t in topics for t in topics_needed]
         if all(present):
             topics_ready = True
@@ -96,24 +96,6 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
     if not topics_ready:
         docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka topics were not ready after 60 seconds, aborting tests.")
-
-
-def run_file_maker(args, timeout=15):
-    try:
-        result = subprocess.run(
-            args,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=True,
-        )
-        return result.stdout
-    except subprocess.TimeoutExpired as e:
-        raise RuntimeError(f"Process timed out: {e}")
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Command failed with error: {e.stderr}")
-    except Exception as e:
-        raise RuntimeError(f"An unexpected error occurred: {e}")
 
 
 @pytest.fixture(scope="session", autouse=True)

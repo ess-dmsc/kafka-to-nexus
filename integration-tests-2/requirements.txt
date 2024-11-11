@@ -7,3 +7,4 @@ h5py>=3.1.0
 numpy
 pytest
 pytest-rerunfailures
+requests==2.31.0
