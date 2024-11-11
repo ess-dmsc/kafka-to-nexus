@@ -159,7 +159,7 @@ new_integration_tests:
     paths:
       - integration-tests-2/NewIntegrationTestsOutput.xml
     reports:
-      junit: integration-tests-2/DomainTestsOutput.xml
+      junit: integration-tests-2/NewIntegrationTestsOutput.xml
 
 build-alt-distro:
   extends: .build
