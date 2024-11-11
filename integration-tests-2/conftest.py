@@ -1,7 +1,7 @@
 import os.path
 import signal
 import sys
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 from time import sleep
 
 import pytest
@@ -35,6 +35,8 @@ BROKERS = ["localhost:9092"]
 POOL_TOPIC = "local_filewriter_pool"
 POOL_STATUS_TOPIC = "local_filewriter_status"
 INST_CONTROL_TOPIC = "local_filewriter"
+MOTION_TOPIC = "local_motion"
+DETECTOR_TOPIC = "local_detector"
 
 
 def pytest_addoption(parser):
@@ -140,8 +142,9 @@ def file_writer(request):
             request.config.getoption(BINARY_PATH),
             "-c",
             "config.ini",
-        ]
-        , stdout=PIPE, stderr=PIPE
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
     )
 
     # Give process time to start up
