@@ -25,9 +25,6 @@ docker cp ../integration-tests ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewrite
 
 echo "Extracting file-writer"
 docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c "tar xzvf kafka-to-nexus.tar.gz"
-echo "debugging"
-docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c "pwd"
-docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c "ls kafka-to-nexus"
 echo "Installing dependencies..."
 docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c "scl enable rh-python38 -- python -m venv venv"
 docker exec ${FILEWRITER_FILEWRITER_CONTAINER_NAME:-filewriter} bash -c "scl enable rh-python38 -- venv/bin/pip install --proxy='$HTTPS_PROXY' -r integration-tests/requirements.txt"
