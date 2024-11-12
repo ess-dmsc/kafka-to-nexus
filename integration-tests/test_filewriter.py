@@ -14,8 +14,14 @@ from streaming_data_types.logdata_f144 import serialise_f144
 from streaming_data_types.run_start_pl72 import serialise_pl72
 from streaming_data_types.run_stop_6s4t import serialise_6s4t
 
-from conftest import (DETECTOR_TOPIC, INST_CONTROL_TOPIC, MOTION_TOPIC,
-                      POOL_STATUS_TOPIC, POOL_TOPIC, get_brokers)
+from conftest import (
+    DETECTOR_TOPIC,
+    INST_CONTROL_TOPIC,
+    MOTION_TOPIC,
+    POOL_STATUS_TOPIC,
+    POOL_TOPIC,
+    get_brokers,
+)
 
 NEXUS_STRUCTURE = {
     "children": [
@@ -23,6 +29,7 @@ NEXUS_STRUCTURE = {
             "type": "group",
             "name": "entry",
             "children": [
+                {"module": "mdat", "config": {"items": ["start_time", "end_time"]}},
                 {
                     "module": "dataset",
                     "config": {
@@ -311,3 +318,21 @@ class TestFileWriter:
             - messages[messages_before - 1].timestamp()[1]
             >= approximate_write_time
         )
+
+    def test_start_and_stop_in_same_message(self, file_writer):
+        """
+        Tests that we get a file when the start and stop times are in the start message
+        """
+        producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
+        file_time_s = 10
+        start_time = int(time.time())
+        end_time = start_time + file_time_s
+        file_name = f"{start_time}.nxs"
+        job_id = str(uuid.uuid4())
+
+        start_filewriter(producer, file_name, job_id, start_time, stop_time_s=end_time)
+
+        # Give file time to write and finish
+        time.sleep(30)
+
+        assert os.path.exists(file_name)

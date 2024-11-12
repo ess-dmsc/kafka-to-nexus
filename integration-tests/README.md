@@ -3,6 +3,13 @@ Tests that check the basic functionality of the file-writer including Kafka inte
 
 ### Running locally
 - Create a Python environment with all the requirements installed.
+- Start docker:
+```
+docker-compose up
+```
+- Create the required topics listed in the topics.txt file:
+```
+```
 - Run the following command:
 ```
 pytest -s --file-writer-binary=../_ninja/bin/kafka-to-nexus 

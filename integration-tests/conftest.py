@@ -3,7 +3,6 @@ from subprocess import PIPE, Popen
 from time import sleep
 
 import pytest
-from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 
@@ -79,7 +78,6 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
         n_polls += 1
 
     if not kafka_ready:
-        docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka broker was not ready after 100 seconds, aborting tests.")
 
     client = AdminClient(conf)
@@ -104,37 +102,17 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
         n_polls += 1
 
     if not topics_ready:
-        docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka topics were not ready after 60 seconds, aborting tests.")
 
 
 @pytest.fixture(scope="session", autouse=True)
-def start_kafka(request):
+def set_broker(request):
     if request.config.getoption(LOCAL_KAFKA):
         # Skip running kafka in docker
         global BROKER
         BROKER = request.config.getoption(LOCAL_KAFKA)
         print(f"BROKER set to {BROKER}")
-        return request
-    print("Starting zookeeper and kafka", flush=True)
-    options = common_options
-    options["--project-name"] = "kafka"
-    options["--file"] = ["docker-compose.yml"]
-    project = project_from_options(os.path.dirname(__file__), options)
-    cmd = TopLevelCommand(project)
-
-    cmd.up(options)
-    print("Started kafka containers", flush=True)
-    wait_until_kafka_ready(cmd, options)
-
-    def fin():
-        print("Stopping zookeeper and kafka", flush=True)
-        options["--timeout"] = 30
-        options["--project-name"] = "kafka"
-        options["--file"] = ["docker-compose-kafka.yml"]
-        cmd.down(options)
-
-    request.addfinalizer(fin)
+    return request
 
 
 @pytest.fixture(scope="module")
