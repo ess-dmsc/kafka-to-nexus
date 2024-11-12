@@ -11,7 +11,7 @@ KAFKA_BROKER_OPT = "--kafka-broker"
 BROKER = "kafka:9093"
 POOL_TOPIC = "test_filewriter_pool"
 POOL_STATUS_TOPIC = "test_filewriter_status"
-INST_CONTROL_TOPIC = "test_filewriter"
+INST_CONTROL_TOPIC = "test_filewriter_inst1"
 MOTION_TOPIC = "test_motion"
 DETECTOR_TOPIC = "test_detector"
 
