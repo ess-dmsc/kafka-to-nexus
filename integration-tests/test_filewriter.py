@@ -3,6 +3,7 @@ import os.path
 import time
 import uuid
 from collections import Counter
+from datetime import datetime
 
 import h5py
 import numpy as np
@@ -335,4 +336,11 @@ class TestFileWriter:
         # Give file time to write and finish
         time.sleep(30)
 
-        assert os.path.exists(file_name)
+        with h5py.File(file_name, "r") as f:
+            # Check start and stop time are what we expect
+            assert datetime.strptime(
+                f["/entry/start_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
+            ) == datetime.utcfromtimestamp(start_time)
+            assert datetime.strptime(
+                f["/entry/end_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
+            ) == datetime.utcfromtimestamp(end_time)
