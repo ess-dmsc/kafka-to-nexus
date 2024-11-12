@@ -11,7 +11,8 @@ KAFKA_BROKER_OPT = "--kafka-broker"
 BROKER = "kafka:9093"
 POOL_TOPIC = "test_filewriter_pool"
 POOL_STATUS_TOPIC = "test_filewriter_status"
-INST_CONTROL_TOPIC = "test_filewriter_inst1"
+INST_CONTROL_TOPIC_1 = "test_filewriter_inst1"
+INST_CONTROL_TOPIC_2 = "test_filewriter_inst2"
 MOTION_TOPIC = "test_motion"
 DETECTOR_TOPIC = "test_detector"
 OUTPUT_DIR = "output-files"
@@ -69,7 +70,8 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
         topics_needed = [
             POOL_TOPIC,
             POOL_STATUS_TOPIC,
-            INST_CONTROL_TOPIC,
+            INST_CONTROL_TOPIC_1,
+            INST_CONTROL_TOPIC_2,
             DETECTOR_TOPIC,
             MOTION_TOPIC,
         ]
@@ -91,7 +93,7 @@ def set_broker(request):
     if request.config.getoption(KAFKA_BROKER_OPT):
         # Set custom broker
         BROKER = request.config.getoption(KAFKA_BROKER_OPT)
-    print(f"BROKER set to {BROKER}")
+    print(f"\nBROKER set to {BROKER}")
     return request
 
 
@@ -117,6 +119,47 @@ def file_writer(request):
 
     def fin():
         proc.kill()
+
+    # Using a finalizer rather than yield in the fixture means
+    # that the process will be brought down even if tests fail.
+    request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="module")
+def job_pool(request):
+    print("Started preparing test environment...", flush=True)
+    proc1 = Popen(
+        [
+            request.config.getoption(BINARY_PATH_OPT),
+            "--brokers",
+            f"{BROKER}",
+            "-c",
+            "config.ini",
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
+    )
+    proc2 = Popen(
+        [
+            request.config.getoption(BINARY_PATH_OPT),
+            "--brokers",
+            f"{BROKER}",
+            "-c",
+            "config.ini",
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
+    )
+
+    # Give processes time to start up
+    sleep(10)
+
+    print(f"File-writer 1 is running on process id {proc1.pid}")
+    print(f"File-writer 2 is running on process id {proc2.pid}")
+
+    def fin():
+        proc1.kill()
+        proc2.kill()
 
     # Using a finalizer rather than yield in the fixture means
     # that the process will be brought down even if tests fail.

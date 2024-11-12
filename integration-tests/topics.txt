@@ -1,5 +1,6 @@
 test_filewriter_pool
 test_filewriter_status
 test_filewriter_inst1
+test_filewriter_inst2
 test_motion
 test_detector
