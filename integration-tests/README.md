@@ -24,5 +24,5 @@ Also, it is a bit quicker as it doesn't have to wait for Docker and Kafka to sta
 - Create the topics listed in the topics.txt file
 - Run the following command with appropriate Kafka address:
 ```
-pytest -s --file-writer-binary=../_ninja/bin/kafka-to-nexus --use-local-kafka=localhost:9092
+pytest -s --file-writer-binary=../_ninja/bin/kafka-to-nexus --kafka-broker=localhost:9092
 ```

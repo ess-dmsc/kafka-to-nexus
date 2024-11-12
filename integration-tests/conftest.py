@@ -6,8 +6,8 @@ import pytest
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 
-BINARY_PATH = "--file-writer-binary"
-LOCAL_KAFKA = "--use-local-kafka"
+BINARY_PATH_OPT = "--file-writer-binary"
+KAFKA_BROKER_OPT = "--kafka-broker"
 BROKER = "kafka:9093"
 POOL_TOPIC = "test_filewriter_pool"
 POOL_STATUS_TOPIC = "test_filewriter_status"
@@ -22,16 +22,16 @@ def get_brokers():
 
 def pytest_addoption(parser):
     parser.addoption(
-        BINARY_PATH,
+        BINARY_PATH_OPT,
         action="store",
         default=None,
         help="Path to file-writer binary (executable).",
     )
     parser.addoption(
-        LOCAL_KAFKA,
+        KAFKA_BROKER_OPT,
         action="store",
         default=None,
-        help="Skip running Kafka in Docker because it is running locally",
+        help="Set Kafka address",
     )
 
 
@@ -87,9 +87,9 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
 @pytest.fixture(scope="session", autouse=True)
 def set_broker(request):
     global BROKER
-    if request.config.getoption(LOCAL_KAFKA):
+    if request.config.getoption(KAFKA_BROKER_OPT):
         # Set custom broker
-        BROKER = request.config.getoption(LOCAL_KAFKA)
+        BROKER = request.config.getoption(KAFKA_BROKER_OPT)
     print(f"BROKER set to {BROKER}")
     return request
 
@@ -99,7 +99,7 @@ def file_writer(request):
     print("Started preparing test environment...", flush=True)
     proc = Popen(
         [
-            request.config.getoption(BINARY_PATH),
+            request.config.getoption(BINARY_PATH_OPT),
             "--brokers",
             f"{BROKER}",
             "-c",
