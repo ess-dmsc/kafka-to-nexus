@@ -14,14 +14,8 @@ from streaming_data_types.logdata_f144 import serialise_f144
 from streaming_data_types.run_start_pl72 import serialise_pl72
 from streaming_data_types.run_stop_6s4t import serialise_6s4t
 
-from conftest import (
-    BROKERS,
-    DETECTOR_TOPIC,
-    INST_CONTROL_TOPIC,
-    MOTION_TOPIC,
-    POOL_STATUS_TOPIC,
-    POOL_TOPIC,
-)
+from conftest import (DETECTOR_TOPIC, INST_CONTROL_TOPIC, MOTION_TOPIC,
+                      POOL_STATUS_TOPIC, POOL_TOPIC, get_brokers)
 
 NEXUS_STRUCTURE = {
     "children": [
@@ -46,7 +40,7 @@ NEXUS_STRUCTURE = {
                     "children": [
                         {
                             "module": "ev44",
-                            "config": {"topic": "local_detector", "source": "grace"},
+                            "config": {"topic": DETECTOR_TOPIC, "source": "grace"},
                         }
                     ],
                 },
@@ -60,7 +54,7 @@ NEXUS_STRUCTURE = {
                         {
                             "module": "f144",
                             "config": {
-                                "topic": "local_motion",
+                                "topic": MOTION_TOPIC,
                                 "source": "axis",
                                 "dtype": "double",
                             },
@@ -92,6 +86,7 @@ def extract_time_from_status_message(buffer):
 def start_filewriter(
     producer, file_name, job_id, start_time_s, stop_time_s=None, metadata=""
 ):
+    print(f"\nStarting writing file: {file_name}")
     buffer = serialise_pl72(
         job_id=job_id,
         filename=file_name,
@@ -123,7 +118,7 @@ def stop_filewriter(producer, job_id):
 
 def create_consumer(topic):
     consumer_conf = {
-        "bootstrap.servers": ",".join(BROKERS),
+        "bootstrap.servers": ",".join(get_brokers()),
         "group.id": uuid.uuid4(),
         "auto.offset.reset": "latest",
     }
@@ -173,7 +168,7 @@ class TestFileWriter:
         and the "data" tests separate, so a blank file is fine.
         """
         consumer, topic_partitions = create_consumer(INST_CONTROL_TOPIC)
-        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
+        producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
         job_id = str(uuid.uuid4())
@@ -233,7 +228,7 @@ class TestFileWriter:
         """
         Test that the data in the file is what is expected
         """
-        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
+        producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
         job_id = str(uuid.uuid4())
@@ -282,7 +277,7 @@ class TestFileWriter:
 
     def test_rejoins_pool_after_writing_done(self, file_writer):
         consumer, topic_partitions = create_consumer(POOL_STATUS_TOPIC)
-        producer = Producer({"bootstrap.servers": ",".join(BROKERS)})
+        producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         approximate_write_time = 15
 
         messages = []

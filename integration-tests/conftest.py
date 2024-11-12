@@ -30,12 +30,16 @@ common_options = {
 
 BINARY_PATH = "--file-writer-binary"
 LOCAL_KAFKA = "--use-local-kafka"
-BROKERS = ["localhost:9093"]
+BROKER = "localhost:9092"
 POOL_TOPIC = "test_filewriter_pool"
 POOL_STATUS_TOPIC = "test_filewriter_status"
 INST_CONTROL_TOPIC = "test_filewriter"
 MOTION_TOPIC = "test_motion"
 DETECTOR_TOPIC = "test_detector"
+
+
+def get_brokers():
+    return [BROKER]
 
 
 def pytest_addoption(parser):
@@ -48,14 +52,14 @@ def pytest_addoption(parser):
     parser.addoption(
         LOCAL_KAFKA,
         action="store",
-        default=False,
+        default=None,
         help="Skip running Kafka in Docker because it is running locally",
     )
 
 
 def wait_until_kafka_ready(docker_cmd, docker_options):
     print("Waiting for Kafka broker to be ready for integration tests...")
-    conf = {"bootstrap.servers": ",".join(BROKERS)}
+    conf = {"bootstrap.servers": ",".join(get_brokers())}
     producer = Producer(conf)
     kafka_ready = False
 
@@ -84,7 +88,13 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
     n_polls = 0
     while n_polls < 10 and not topics_ready:
         topics = set(client.list_topics().topics.keys())
-        topics_needed = [POOL_TOPIC, POOL_STATUS_TOPIC, INST_CONTROL_TOPIC, DETECTOR_TOPIC, MOTION_TOPIC]
+        topics_needed = [
+            POOL_TOPIC,
+            POOL_STATUS_TOPIC,
+            INST_CONTROL_TOPIC,
+            DETECTOR_TOPIC,
+            MOTION_TOPIC,
+        ]
         present = [t in topics for t in topics_needed]
         if all(present):
             topics_ready = True
@@ -102,6 +112,9 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
 def start_kafka(request):
     if request.config.getoption(LOCAL_KAFKA):
         # Skip running kafka in docker
+        global BROKER
+        BROKER = request.config.getoption(LOCAL_KAFKA)
+        print(f"BROKER set to {BROKER}")
         return request
     print("Starting zookeeper and kafka", flush=True)
     options = common_options
@@ -130,6 +143,8 @@ def file_writer(request):
     proc = Popen(
         [
             request.config.getoption(BINARY_PATH),
+            "--brokers",
+            f"{BROKER}",
             "-c",
             "config.ini",
         ],
