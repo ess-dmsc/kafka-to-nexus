@@ -66,22 +66,18 @@ class TestPool:
         stop_filewriter(producer, job_id_3, INST_CONTROL_TOPIC_1)
 
         start_time = time.time()
-        messages_1 = []
-        messages_2 = []
+        messages = []
         while time.time() < start_time + 15:
             msg = consumer_1.poll(0.005)
             if msg:
-                messages_1.append(msg)
+                messages.append(msg)
             msg = consumer_2.poll(0.005)
             if msg:
-                messages_2.append(msg)
+                messages.append(msg)
 
         # Go through the messages and find the "wrdn" ones
         wrdn_files = []
-        for msg in messages_1:
-            if msg.value()[4:8] == b"wrdn":
-                wrdn_files.append(deserialise_wrdn(msg.value()).file_name.split("/")[1])
-        for msg in messages_2:
+        for msg in messages:
             if msg.value()[4:8] == b"wrdn":
                 wrdn_files.append(deserialise_wrdn(msg.value()).file_name.split("/")[1])
 

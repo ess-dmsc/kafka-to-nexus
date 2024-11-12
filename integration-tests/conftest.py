@@ -37,7 +37,7 @@ def pytest_addoption(parser):
     )
 
 
-def wait_until_kafka_ready(docker_cmd, docker_options):
+def wait_until_kafka_ready():
     print("Waiting for Kafka broker to be ready for integration tests...")
     conf = {"bootstrap.servers": ",".join(get_brokers())}
     producer = Producer(conf)
@@ -99,6 +99,7 @@ def set_broker(request):
 
 @pytest.fixture(scope="module")
 def file_writer(request):
+    wait_until_kafka_ready()
     print("Started preparing test environment...", flush=True)
     proc = Popen(
         [
@@ -118,6 +119,7 @@ def file_writer(request):
     print(f"File-writer is running on process id {proc.pid}")
 
     def fin():
+        print(f"Killing file-writer {proc.pid}")
         proc.kill()
 
     # Using a finalizer rather than yield in the fixture means
@@ -127,6 +129,7 @@ def file_writer(request):
 
 @pytest.fixture(scope="module")
 def job_pool(request):
+    wait_until_kafka_ready()
     print("Started preparing test environment...", flush=True)
     proc1 = Popen(
         [
@@ -158,6 +161,7 @@ def job_pool(request):
     print(f"File-writer 2 is running on process id {proc2.pid}")
 
     def fin():
+        print(f"Killing file-writers {proc1.pid} {proc2.pid}")
         proc1.kill()
         proc2.kill()
 
