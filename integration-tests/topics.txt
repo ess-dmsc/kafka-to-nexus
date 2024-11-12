@@ -1,5 +1,5 @@
 test_filewriter_pool
 test_filewriter_status
 test_filewriter
-test_local_motion
-test_local_detector
+test_motion
+test_detector

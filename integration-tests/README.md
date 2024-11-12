@@ -9,6 +9,7 @@ docker-compose up
 ```
 - Create the required topics listed in the topics.txt file:
 ```
+docker exec kafka bash -c "kafka-topics --bootstrap-server localhost:9092 --create --topic <topic_name>"
 ```
 - Run the following command:
 ```

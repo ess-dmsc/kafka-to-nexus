@@ -6,30 +6,9 @@ import pytest
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
 
-common_options = {
-    "--no-deps": False,
-    "--always-recreate-deps": False,
-    "--scale": "",
-    "--abort-on-container-exit": False,
-    "SERVICE": "",
-    "--remove-orphans": False,
-    "--no-recreate": True,
-    "--force-recreate": False,
-    "--no-build": False,
-    "--no-color": False,
-    "--rmi": "none",
-    "--volumes": True,  # Remove volumes when docker-compose down (don't persist kafka and zk data)
-    "--follow": False,
-    "--timestamps": False,
-    "--tail": "all",
-    "--detach": True,
-    "--build": False,
-    "--no-log-prefix": False,
-}
-
 BINARY_PATH = "--file-writer-binary"
 LOCAL_KAFKA = "--use-local-kafka"
-BROKER = "localhost:9092"
+BROKER = "kafka:9093"
 POOL_TOPIC = "test_filewriter_pool"
 POOL_STATUS_TOPIC = "test_filewriter_status"
 INST_CONTROL_TOPIC = "test_filewriter"
@@ -107,11 +86,11 @@ def wait_until_kafka_ready(docker_cmd, docker_options):
 
 @pytest.fixture(scope="session", autouse=True)
 def set_broker(request):
+    global BROKER
     if request.config.getoption(LOCAL_KAFKA):
-        # Skip running kafka in docker
-        global BROKER
+        # Set custom broker
         BROKER = request.config.getoption(LOCAL_KAFKA)
-        print(f"BROKER set to {BROKER}")
+    print(f"BROKER set to {BROKER}")
     return request
 
 
