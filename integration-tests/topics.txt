@@ -1,8 +1,5 @@
-TEST_epicsConnectionStatus
-TEST_sampleEnv
-TEST_writer_jobs
-TEST_writer_commands
-TEST_writer_commands_alternative
-TEST_forwarderConfig
-TEST_forwarderStatusLR
-TEST_forwarderDataLR
+test_filewriter_pool
+test_filewriter_status
+test_filewriter
+test_local_motion
+test_local_detector

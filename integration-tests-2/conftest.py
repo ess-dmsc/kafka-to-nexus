@@ -30,12 +30,12 @@ common_options = {
 
 BINARY_PATH = "--file-writer-binary"
 LOCAL_KAFKA = "--use-local-kafka"
-BROKERS = ["localhost:9092"]
-POOL_TOPIC = "local_filewriter_pool"
-POOL_STATUS_TOPIC = "local_filewriter_status"
-INST_CONTROL_TOPIC = "local_filewriter"
-MOTION_TOPIC = "local_motion"
-DETECTOR_TOPIC = "local_detector"
+BROKERS = ["localhost:9093"]
+POOL_TOPIC = "test_filewriter_pool"
+POOL_STATUS_TOPIC = "test_filewriter_status"
+INST_CONTROL_TOPIC = "test_filewriter"
+MOTION_TOPIC = "test_motion"
+DETECTOR_TOPIC = "test_detector"
 
 
 def pytest_addoption(parser):

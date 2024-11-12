@@ -1,28 +1,41 @@
 import os
-import os.path
-import time
-from subprocess import Popen
-from datetime import datetime
+from subprocess import PIPE, Popen
+from time import sleep
 
 import pytest
+from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient
-from file_writer_control import WorkerJobPool
-from typing import Optional
 
-from helpers.writer import stop_all_jobs
-from helpers.nexushelpers import NEXUS_FILES_DIR
+common_options = {
+    "--no-deps": False,
+    "--always-recreate-deps": False,
+    "--scale": "",
+    "--abort-on-container-exit": False,
+    "SERVICE": "",
+    "--remove-orphans": False,
+    "--no-recreate": True,
+    "--force-recreate": False,
+    "--no-build": False,
+    "--no-color": False,
+    "--rmi": "none",
+    "--volumes": True,  # Remove volumes when docker-compose down (don't persist kafka and zk data)
+    "--follow": False,
+    "--timestamps": False,
+    "--tail": "all",
+    "--detach": True,
+    "--build": False,
+    "--no-log-prefix": False,
+}
 
-
-BINARY_PATH = "--writer-binary"
-START_NO_FW = "--start-no-filewriter"
-KAFKA_BROKER = "--kafka-broker"
-DEFAULT_KAFKA_BROKER = "kafka:9093"
-START_NR_OF_WRITERS = 2
-
-
-def pytest_runtest_protocol(item, nextitem):
-    print(f"\n\n{datetime.now()} - Starting test: {item.nodeid}")
+BINARY_PATH = "--file-writer-binary"
+LOCAL_KAFKA = "--use-local-kafka"
+BROKERS = ["localhost:9093"]
+POOL_TOPIC = "test_filewriter_pool"
+POOL_STATUS_TOPIC = "test_filewriter_status"
+INST_CONTROL_TOPIC = "test_filewriter"
+MOTION_TOPIC = "test_motion"
+DETECTOR_TOPIC = "test_detector"
 
 
 def pytest_addoption(parser):
@@ -30,54 +43,24 @@ def pytest_addoption(parser):
         BINARY_PATH,
         action="store",
         default=None,
-        help="Path to filewriter binary (executable).",
+        help="Path to file-writer binary (executable).",
     )
     parser.addoption(
-        KAFKA_BROKER,
-        type=str,
-        action="store",
-        default="",
-        help="Use custom Kafka broker.",
-    )
-    parser.addoption(
-        START_NO_FW,
-        type=bool,
+        LOCAL_KAFKA,
         action="store",
         default=False,
-        help="Use this flag prevent the starting of a filewriter instance. Used for debugging.",
+        help="Skip running Kafka in Docker because it is running locally",
     )
 
 
-def pytest_collection_modifyitems(items, config):
-    """
-    If we are running against a local build then don't try to run the tests
-    involving multiple instances of the file writer
-    """
-    if config.option.start_no_filewriter is True:
-        avoid_fixture_name = "multiple_writers"
-        selected_items = []
-        deselected_items = []
-
-        for item in items:
-            if avoid_fixture_name in getattr(item, "fixturenames", ()):
-                deselected_items.append(item)
-            else:
-                selected_items.append(item)
-        config.hook.pytest_deselected(items=deselected_items)
-        items[:] = selected_items
-        print(
-            "\nRunning system tests without starting (multiple) file-writers. De-selecting tests requiring multiple filewriters."
-        )
-
-
-def wait_until_kafka_ready(kafka_address):
-    print("Waiting for Kafka broker to be ready for system tests...")
-    conf = {"bootstrap.servers": kafka_address}
+def wait_until_kafka_ready(docker_cmd, docker_options):
+    print("Waiting for Kafka broker to be ready for integration tests...")
+    conf = {"bootstrap.servers": ",".join(BROKERS)}
     producer = Producer(conf)
-
     kafka_ready = False
 
     def delivery_callback(err, msg):
+        nonlocal n_polls
         nonlocal kafka_ready
         if not err:
             print("Kafka is ready!")
@@ -92,126 +75,76 @@ def wait_until_kafka_ready(kafka_address):
         n_polls += 1
 
     if not kafka_ready:
+        docker_cmd.down(docker_options)  # Bring down containers cleanly
         raise Exception("Kafka broker was not ready after 100 seconds, aborting tests.")
 
     client = AdminClient(conf)
-    topic_ready = False
+    topics_ready = False
 
     n_polls = 0
-    while n_polls < 10 and not topic_ready:
-        all_topics = client.list_topics().topics.keys()
-        if (
-            "TEST_writer_jobs" in all_topics
-            and "TEST_writer_commands" in all_topics
-            and "TEST_writer_commands_alternative" in all_topics
-        ):
-            topic_ready = True
-            print("Topic is ready!", flush=True)
+    while n_polls < 10 and not topics_ready:
+        topics = set(client.list_topics().topics.keys())
+        topics_needed = [POOL_TOPIC, POOL_STATUS_TOPIC, INST_CONTROL_TOPIC, DETECTOR_TOPIC, MOTION_TOPIC]
+        present = [t in topics for t in topics_needed]
+        if all(present):
+            topics_ready = True
+            print("Topics are ready!", flush=True)
             break
-        time.sleep(6)
+        sleep(6)
         n_polls += 1
 
-    if not topic_ready:
-        raise Exception("Kafka topic was not ready after 60 seconds, aborting tests.")
+    if not topics_ready:
+        docker_cmd.down(docker_options)  # Bring down containers cleanly
+        raise Exception("Kafka topics were not ready after 60 seconds, aborting tests.")
 
 
-def run_writers(
-    request,
-    kafka_address,
-    binary_path: Optional[str] = None,
-):
-    wait_until_kafka_ready(kafka_address)
-    list_of_writers = []
+@pytest.fixture(scope="session", autouse=True)
+def start_kafka(request):
+    if request.config.getoption(LOCAL_KAFKA):
+        # Skip running kafka in docker
+        return request
+    print("Starting zookeeper and kafka", flush=True)
+    options = common_options
+    options["--project-name"] = "kafka"
+    options["--file"] = ["docker-compose.yml"]
+    project = project_from_options(os.path.dirname(__file__), options)
+    cmd = TopLevelCommand(project)
 
-    if binary_path is not None:
-        file_writer_path = os.path.join(binary_path, "bin", "kafka-to-nexus")
-        c_path = os.path.abspath(".")
-        for i in range(START_NR_OF_WRITERS):
-            log_file = open(f"logs/file-writer_{i}.txt", "w")
-            proc = Popen(
-                [
-                    file_writer_path,
-                    f"--brokers={kafka_address}",
-                    f"--config-file={c_path}/config-files/file_writer_config.ini",
-                    f"--job-pool-topic=TEST_writer_jobs",
-                    f"--command-status-topic=TEST_writer_commands",
-                    f"--service-name=filewriter_{i}",
-                ],
-                stdout=log_file,
-            )
-            list_of_writers.append(proc)
-        time.sleep(10)
+    cmd.up(options)
+    print("Started kafka containers", flush=True)
+    wait_until_kafka_ready(cmd, options)
 
     def fin():
-        print("Stopping file-writers")
-        for fw in list_of_writers:
-            fw.terminate()
-        for fw in list_of_writers:
-            fw.wait()
-        print("File-writers stopped")
+        print("Stopping zookeeper and kafka", flush=True)
+        options["--timeout"] = 30
+        options["--project-name"] = "kafka"
+        options["--file"] = ["docker-compose-kafka.yml"]
+        cmd.down(options)
 
-    # Using a finalizer rather than yield in the fixture means
-    # that the containers will be brought down even if tests fail
     request.addfinalizer(fin)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def remove_logs_from_previous_run(request):
-    print("Removing previous NeXus files", flush=True)
-    output_dir_name = os.path.join(NEXUS_FILES_DIR, "output-files")
-    output_dirlist = os.listdir(output_dir_name)
-    for filename in output_dirlist:
-        if filename.endswith(".nxs"):
-            os.remove(os.path.join(output_dir_name, filename))
-    print("Removing previous log files", flush=True)
-    log_dir_name = os.path.join(os.getcwd(), "logs")
-    dirlist = os.listdir(log_dir_name)
-    for filename in dirlist:
-        if filename.endswith(".log") or filename.endswith(".txt"):
-            os.remove(os.path.join(log_dir_name, filename))
-
-
-@pytest.fixture(scope="session", autouse=True)
-def start_file_writer(request, kafka_address):
-    """
-    :type request: _pytest.python.FixtureRequest
-    """
-    if request.config.getoption(BINARY_PATH) is None and not request.config.getoption(
-        START_NO_FW
-    ):
-        raise RuntimeError(
-            f'You must set either a path to a file-writer executable ("{BINARY_PATH}") or the "{START_NO_FW}=true" flag.'
-        )
-    file_writer_path = None
-    if not request.config.getoption(START_NO_FW):
-        print("Starting the file-writer", flush=True)
-        file_writer_path = request.config.getoption(BINARY_PATH)
-    return run_writers(request, kafka_address, file_writer_path)
-
-
-@pytest.fixture(scope="function", autouse=True)
-def worker_pool(kafka_address, request):
-    worker = WorkerJobPool(
-        job_topic_url=f"{kafka_address}/TEST_writer_jobs",
-        command_topic_url=f"{kafka_address}/TEST_writer_commands",
-        max_message_size=1048576 * 500,
+@pytest.fixture(scope="module")
+def file_writer(request):
+    print("Started preparing test environment...", flush=True)
+    proc = Popen(
+        [
+            request.config.getoption(BINARY_PATH),
+            "-c",
+            "config.ini",
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
     )
 
-    def stop_current_jobs():
-        stop_all_jobs(worker)
+    # Give process time to start up
+    sleep(10)
 
-    request.addfinalizer(stop_current_jobs)
-    return worker
+    print(f"File-writer is running on process id {proc.pid}")
 
+    def fin():
+        proc.kill()
 
-@pytest.fixture(scope="session", autouse=True)
-def kafka_address(request):
-    addr = request.config.getoption(KAFKA_BROKER)
-    if addr == "":
-        return DEFAULT_KAFKA_BROKER
-    return addr
-
-
-@pytest.fixture(scope="session", autouse=False)
-def multiple_writers(request):
-    pass
+    # Using a finalizer rather than yield in the fixture means
+    # that the process will be brought down even if tests fail.
+    request.addfinalizer(fin)
