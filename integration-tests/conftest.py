@@ -14,6 +14,7 @@ POOL_STATUS_TOPIC = "test_filewriter_status"
 INST_CONTROL_TOPIC = "test_filewriter_inst1"
 MOTION_TOPIC = "test_motion"
 DETECTOR_TOPIC = "test_detector"
+OUTPUT_DIR = "output-files"
 
 
 def get_brokers():

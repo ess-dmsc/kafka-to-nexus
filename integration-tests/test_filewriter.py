@@ -19,6 +19,7 @@ from conftest import (
     DETECTOR_TOPIC,
     INST_CONTROL_TOPIC,
     MOTION_TOPIC,
+    OUTPUT_DIR,
     POOL_STATUS_TOPIC,
     POOL_TOPIC,
     get_brokers,
@@ -230,7 +231,7 @@ class TestFileWriter:
         # Check the metadata is forwarded to the wrdn
         assert deserialise_wrdn(messages[~0].value()).metadata == metadata
         # Finally check file exists
-        assert os.path.exists(file_name)
+        assert os.path.exists(os.path.join(OUTPUT_DIR, file_name))
 
     def test_data_written_to_file_is_correct(self, file_writer):
         """
@@ -265,7 +266,7 @@ class TestFileWriter:
         # Give the file time to stop writing
         time.sleep(10)
 
-        with h5py.File(file_name, "r") as f:
+        with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
             # Check data is as expected
             assert len(f["/entry/detector/event_time_zero"]) == messages_sent
             assert len(f["/entry/detector/event_index"]) == messages_sent
@@ -336,7 +337,7 @@ class TestFileWriter:
         # Give file time to write and finish
         time.sleep(30)
 
-        with h5py.File(file_name, "r") as f:
+        with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
             # Check start and stop time are what we expect
             assert datetime.strptime(
                 f["/entry/start_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
