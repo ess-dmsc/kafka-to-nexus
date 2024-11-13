@@ -2,6 +2,8 @@
 Tests that check the basic functionality of the file-writer including Kafka integration.
 
 ### Running locally
+Might not work on MacOs due to Docker issues, to run locally with Docker see below.
+
 - Create a Python environment with all the requirements installed.
 - Start docker:
 ```

@@ -1,16 +1,9 @@
 import json
-import os.path
-import time
 import uuid
-from collections import Counter
-from datetime import datetime
 
-import h5py
-import numpy as np
-from confluent_kafka import OFFSET_END, Consumer, Producer, TopicPartition
+from confluent_kafka import OFFSET_END, Consumer, TopicPartition
 from streaming_data_types import deserialise_x5f2
 from streaming_data_types.eventdata_ev44 import serialise_ev44
-from streaming_data_types.finished_writing_wrdn import deserialise_wrdn
 from streaming_data_types.logdata_f144 import serialise_f144
 from streaming_data_types.run_start_pl72 import serialise_pl72
 from streaming_data_types.run_stop_6s4t import serialise_6s4t
@@ -18,10 +11,7 @@ from streaming_data_types.run_stop_6s4t import serialise_6s4t
 from conftest import (
     DETECTOR_TOPIC,
     INST_CONTROL_TOPIC_1,
-    INST_CONTROL_TOPIC_2,
     MOTION_TOPIC,
-    OUTPUT_DIR,
-    POOL_STATUS_TOPIC,
     POOL_TOPIC,
     get_brokers,
 )

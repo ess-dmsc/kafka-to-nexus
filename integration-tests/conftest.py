@@ -38,7 +38,7 @@ def pytest_addoption(parser):
 
 
 def wait_until_kafka_ready():
-    print("Waiting for Kafka broker to be ready for integration tests...")
+    print("\nWaiting for Kafka broker to be ready for integration tests...", flush=True)
     conf = {"bootstrap.servers": ",".join(get_brokers())}
     producer = Producer(conf)
     kafka_ready = False
@@ -47,7 +47,7 @@ def wait_until_kafka_ready():
         nonlocal n_polls
         nonlocal kafka_ready
         if not err:
-            print("Kafka is ready!")
+            print("\nKafka is ready!")
             kafka_ready = True
 
     n_polls = 0
@@ -78,7 +78,7 @@ def wait_until_kafka_ready():
         present = [t in topics for t in topics_needed]
         if all(present):
             topics_ready = True
-            print("Topics are ready!", flush=True)
+            print("\nTopics are ready!", flush=True)
             break
         sleep(6)
         n_polls += 1
@@ -93,14 +93,14 @@ def set_broker(request):
     if request.config.getoption(KAFKA_BROKER_OPT):
         # Set custom broker
         BROKER = request.config.getoption(KAFKA_BROKER_OPT)
-    print(f"\nBROKER set to {BROKER}")
+    print(f"\nBROKER set to {BROKER}", flush=True)
     return request
 
 
 @pytest.fixture(scope="module")
 def file_writer(request):
     wait_until_kafka_ready()
-    print("Started preparing test environment...", flush=True)
+    print("\nStarted preparing test environment...", flush=True)
     proc = Popen(
         [
             request.config.getoption(BINARY_PATH_OPT),
@@ -116,10 +116,10 @@ def file_writer(request):
     # Give process time to start up
     sleep(10)
 
-    print(f"File-writer is running on process id {proc.pid}")
+    print(f"\nFile-writer is running on process id {proc.pid}", flush=True)
 
     def fin():
-        print(f"Killing file-writer {proc.pid}")
+        print(f"\nKilling file-writer {proc.pid}", flush=True)
         proc.kill()
 
     # Using a finalizer rather than yield in the fixture means
@@ -127,11 +127,11 @@ def file_writer(request):
     request.addfinalizer(fin)
 
 
-@pytest.fixture(scope="module")
-def job_pool(request):
+@pytest.fixture(scope="function")
+def second_filewriter(request):
     wait_until_kafka_ready()
-    print("Started preparing test environment...", flush=True)
-    proc1 = Popen(
+    print("\nStarted second filewriter...", flush=True)
+    proc = Popen(
         [
             request.config.getoption(BINARY_PATH_OPT),
             "--brokers",
@@ -142,28 +142,14 @@ def job_pool(request):
         stdout=PIPE,
         stderr=PIPE,
     )
-    proc2 = Popen(
-        [
-            request.config.getoption(BINARY_PATH_OPT),
-            "--brokers",
-            f"{BROKER}",
-            "-c",
-            "config.ini",
-        ],
-        stdout=PIPE,
-        stderr=PIPE,
-    )
-
     # Give processes time to start up
     sleep(10)
 
-    print(f"File-writer 1 is running on process id {proc1.pid}")
-    print(f"File-writer 2 is running on process id {proc2.pid}")
+    print(f"\nSecond file-writer is running on process id {proc.pid}", flush=True)
 
     def fin():
-        print(f"Killing file-writers {proc1.pid} {proc2.pid}")
-        proc1.kill()
-        proc2.kill()
+        print(f"\nKilling second file-writer {proc.pid}", flush=True)
+        proc.kill()
 
     # Using a finalizer rather than yield in the fixture means
     # that the process will be brought down even if tests fail.
