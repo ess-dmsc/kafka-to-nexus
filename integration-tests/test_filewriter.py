@@ -308,6 +308,3 @@ class TestFileWriter:
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_1))
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_2))
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_3))
-
-    def test_this(self, file_writer):
-        pass
