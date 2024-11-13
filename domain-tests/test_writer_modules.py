@@ -9,7 +9,7 @@ from conftest import write_file
 def local_file(request):
     return write_file(
         request,
-        "writer_modules.hdf",
+        "output_files/writer_modules.hdf",
         "nexus_templates/writer_modules_template.json",
         "data_files/writer_modules_data.json",
     )
