@@ -50,7 +50,7 @@
   {
     "schema": "f144",
     "topic": "local_choppers",
-    "kafka_timestamp": 10110,
+    "kafka_timestamp": 10200,
     "source_name": "local:choppers:delay",
     "timestamp": 10200,
     "value": 15
