@@ -29,6 +29,31 @@ from conftest import (
 )
 
 
+def wait_for_file_to_finish_writing(filename, timeout_s=60):
+    """Wait for the file to appear, if it doesn't appear within the time limit then raise"""
+    filename = os.path.join(OUTPUT_DIR, filename)
+    start_time = time.time()
+    # First wait for file to appear
+    while time.time() < start_time + timeout_s:
+        if os.path.exists(filename):
+            break
+    # Then check if writing has finished
+    while time.time() < start_time + timeout_s:
+        try:
+            with h5py.File(filename, "r") as f:
+                # Opening raises if the file is still being written
+                print(f"File {filename} is ready!")
+            # Add a short delay just to be sure it closes
+            time.sleep(5)
+            return
+        except OSError:
+            print(f"Could not open file {filename} as it still being written...")
+            time.sleep(2)
+    raise RuntimeError(
+        f"File {filename} not ready after {timeout_s} seconds - something must have gone wrong!"
+    )
+
+
 class TestFileWriter:
     def test_idle_status_messages_sent(self, file_writer):
         """
@@ -84,6 +109,8 @@ class TestFileWriter:
             if msg:
                 messages.append(msg)
 
+        wait_for_file_to_finish_writing(file_name)
+
         # Go through the messages and see what we have
         message_types = []
         for msg in messages:
@@ -112,8 +139,6 @@ class TestFileWriter:
         assert deserialise_wrdn(messages[~0].value()).file_name.endswith(file_name)
         # Check the metadata is forwarded to the wrdn
         assert deserialise_wrdn(messages[~0].value()).metadata == metadata
-        # Finally check file exists
-        assert os.path.exists(os.path.join(OUTPUT_DIR, file_name))
 
     def test_data_written_to_file_is_correct(self, file_writer):
         """
@@ -136,17 +161,17 @@ class TestFileWriter:
                 [i * 10 + messages_sent * 50 for i in range(5)],
                 [i + messages_sent * 5 for i in range(5)],
             )
-            producer.produce(DETECTOR_TOPIC, buffer)
+            # Use keys to keep data in order
+            producer.produce(DETECTOR_TOPIC, buffer, key="a")
             buffer = generate_f144(messages_sent, times[~0])
-            producer.produce(MOTION_TOPIC, buffer)
+            producer.produce(MOTION_TOPIC, buffer, key="b")
             producer.flush()
             messages_sent += 1
             time.sleep(1)
 
         stop_filewriter(producer, job_id)
 
-        # Give the file time to stop writing
-        time.sleep(10)
+        wait_for_file_to_finish_writing(file_name)
 
         with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
             # Check data is as expected
@@ -216,8 +241,7 @@ class TestFileWriter:
 
         start_filewriter(producer, file_name, job_id, start_time, stop_time_s=end_time)
 
-        # Give file time to write and finish
-        time.sleep(30)
+        wait_for_file_to_finish_writing(file_name)
 
         with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
             # Check start and stop time are what we expect
@@ -293,6 +317,8 @@ class TestFileWriter:
             if msg:
                 messages.append(msg)
 
+        wait_for_file_to_finish_writing(file_name_3)
+
         # Go through the messages and find the "wrdn" ones
         wrdn_files = []
         for msg in messages:
@@ -308,3 +334,51 @@ class TestFileWriter:
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_1))
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_2))
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_3))
+
+    def test_data_before_and_after(self, file_writer):
+        """
+        Test that when writing in the past:
+         - the last value before the start time is written
+         - the first value after the stop time is written
+         - all values inbetween are written
+        """
+        producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
+
+        # Send some data to Kafka before starting writing
+        messages_sent = 0
+        times_ns = []
+        while messages_sent < 15:
+            times_ns.append(time.time_ns())
+            buffer = generate_ev44(
+                times_ns[~0],
+                [i * 10 + messages_sent * 50 for i in range(5)],
+                [i + messages_sent * 5 for i in range(5)],
+            )
+            # Use keys to keep data in order
+            producer.produce(DETECTOR_TOPIC, buffer, key="a")
+            buffer = generate_f144(messages_sent, times_ns[~0])
+            producer.produce(MOTION_TOPIC, buffer, key="b")
+            producer.flush()
+            messages_sent += 1
+            time.sleep(1)
+
+        start_time_s = times_ns[4] // 10**9
+        end_time_s = times_ns[10] // 10**9
+        file_name = f"{start_time_s}.nxs"
+        job_id = str(uuid.uuid4())
+
+        start_filewriter(
+            producer, file_name, job_id, start_time_s, stop_time_s=end_time_s
+        )
+
+        # Give the file time to stop writing
+        wait_for_file_to_finish_writing(file_name)
+
+        with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
+            # Check data is as expected
+            assert len(f["/entry/detector/event_time_zero"]) == 8
+            assert f["/entry/detector/event_id"][0] == 15
+            assert f["/entry/detector/event_id"][~0] == 54
+            assert len(f["/entry/motion/time"]) == 8
+            assert f["/entry/motion/value"][0] == 3
+            assert f["/entry/motion/value"][~0] == 10
