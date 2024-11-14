@@ -330,7 +330,7 @@ class TestFileWriter:
         assert file_name_1 in wrdn_files
         assert file_name_2 in wrdn_files
         assert file_name_3 in wrdn_files
-        # Finally check files exists
+        # Finally check files exist
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_1))
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_2))
         assert os.path.exists(os.path.join(OUTPUT_DIR, file_name_3))
@@ -382,3 +382,30 @@ class TestFileWriter:
             assert len(f["/entry/motion/time"]) == 8
             assert f["/entry/motion/value"][0] == 3
             assert f["/entry/motion/value"][~0] == 10
+
+    def test_start_and_stop_in_the_future(self, file_writer):
+        """
+        Tests that we get a file when the start and stop times are in the future
+        """
+        producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
+        file_time_s = 10
+        start_time = int(time.time()) + 30
+        end_time = start_time + file_time_s
+        file_name = f"{start_time}.nxs"
+        job_id = str(uuid.uuid4())
+
+        start_filewriter(producer, file_name, job_id, start_time, stop_time_s=end_time)
+
+        # Wait for the future to catch up
+        time.sleep(40)
+
+        wait_for_file_to_finish_writing(file_name)
+
+        with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
+            # Check start and stop time are what we expect
+            assert datetime.strptime(
+                f["/entry/start_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
+            ) == datetime.utcfromtimestamp(start_time)
+            assert datetime.strptime(
+                f["/entry/end_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
+            ) == datetime.utcfromtimestamp(end_time)
