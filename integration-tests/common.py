@@ -87,6 +87,7 @@ def start_filewriter(
     stop_time_s=None,
     metadata="",
     inst_control_topic=INST_CONTROL_TOPIC_1,
+    nexus_structure=json.dumps(NEXUS_STRUCTURE),
 ):
     print(f"\nRequesting start writing for file: {file_name}")
     buffer = serialise_pl72(
@@ -95,7 +96,7 @@ def start_filewriter(
         start_time=start_time_s * 1000,
         stop_time=stop_time_s * 1000 if stop_time_s else None,
         run_name="test_run",
-        nexus_structure=json.dumps(NEXUS_STRUCTURE),
+        nexus_structure=nexus_structure,
         service_id="",
         instrument_name="",
         broker="localhost:9092",

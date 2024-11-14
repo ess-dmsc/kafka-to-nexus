@@ -8,9 +8,12 @@ from datetime import datetime
 import h5py
 import numpy as np
 from confluent_kafka import Producer
+from streaming_data_types import deserialise_answ
+from streaming_data_types.action_response_answ import ActionOutcome
 from streaming_data_types.finished_writing_wrdn import deserialise_wrdn
 
 from common import (
+    NEXUS_STRUCTURE,
     create_consumer,
     extract_state_from_status_message,
     generate_ev44,
@@ -409,3 +412,38 @@ class TestFileWriter:
             assert datetime.strptime(
                 f["/entry/end_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
             ) == datetime.utcfromtimestamp(end_time)
+
+    def test_writing_does_not_start_on_invalid_input(self, file_writer):
+        """
+        Tests that if the input is invalid then it responds on the pool status topic that it could not start.
+        For this example, we just break the JSON but there are other ways to break it but the behaviour is the same.
+        """
+        consumer, topic_partitions = create_consumer(POOL_STATUS_TOPIC)
+        producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
+        time_stamp = int(time.time())
+        file_name = f"{time_stamp}.nxs"
+        job_id = str(uuid.uuid4())
+
+        # Mess the json up
+        nexus_structure = json.dumps(NEXUS_STRUCTURE).replace("{", "", 1)
+
+        start_filewriter(
+            producer, file_name, job_id, time_stamp, nexus_structure=nexus_structure
+        )
+
+        # Collect messages on pool status topic
+        messages = []
+        start_time = time.time()
+        while time.time() < start_time + 15:
+            msg = consumer.poll(0.005)
+            if msg:
+                messages.append(msg.value())
+
+        answer = None
+        for msg in messages:
+            if msg[4:8] == b"answ":
+                answer = deserialise_answ(msg)
+                break
+
+        assert answer
+        assert answer.outcome == ActionOutcome.Failure
