@@ -3,7 +3,7 @@ Tests that check the basic functionality of the file-writer including Kafka inte
 
 *Don't add new tests unless you are certain you need to!*
 Prefer to test via Domain tests or unit tests.
-Integration tests should only be used when testing something that needs a real Kafka instance, e.g. testing the job pool.
+Integration tests should only be used when testing something that needs a real Kafka instance, e.g. testing the job pool or status messages.
 
 ### Running locally
 Might not work on MacOs due to Docker issues, to run locally with Docker see below.
