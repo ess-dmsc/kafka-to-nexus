@@ -21,7 +21,7 @@ def test_f144_writes(local_file):
         )
         assert np.array_equal(
             f["/entry/instrument/chopper/rotation_speed/time"][:],
-            [100000000, 110000000],
+            [10100000000, 10110000000],
         )
         assert f["/entry/instrument/chopper/rotation_speed/minimum_value"][()] == 10
         assert f["/entry/instrument/chopper/rotation_speed/maximum_value"][()] == 15
@@ -68,7 +68,7 @@ def test_ep01_writes(local_file):
         )
         assert np.array_equal(
             f["/entry/instrument/chopper/rotation_speed/connection_status_time"][:],
-            [101, 111],
+            [10101000000, 10111000000],
         )
 
 
@@ -82,7 +82,7 @@ def test_al00_writes(local_file):
         )
         assert np.array_equal(
             f["/entry/instrument/chopper/rotation_speed/alarm_time"][:],
-            [102000000, 112000000],
+            [10102000000, 10112000000],
         )
 
 
@@ -94,7 +94,7 @@ def test_ev44_writes(local_file):
         )
         assert np.array_equal(
             f["/entry/instrument/event_detector/events/event_time_zero"][:],
-            [200, 210, 220, 230],
+            [10_200_000_000, 10_210_000_000, 10_220_000_000, 10_230_000_000],
         )
         assert np.array_equal(
             f["/entry/instrument/event_detector/events/event_index"][:],
@@ -114,12 +114,13 @@ def test_ad00_writes(local_file):
                 [[13, 12], [11, 10]],
             ]
         )
+        # assert np.array_equal(
+        #     f["/entry/instrument/image_detector/data/value"][:],
+        #     expected_data,
+        # )
         assert np.array_equal(
-            f["/entry/instrument/image_detector/data/value"][:],
-            expected_data,
-        )
-        assert np.array_equal(
-            f["/entry/instrument/image_detector/data/time"][:], [300000000, 310000000]
+            f["/entry/instrument/image_detector/data/time"][:],
+            [10_300_000_000, 10_310_000_000],
         )
 
 

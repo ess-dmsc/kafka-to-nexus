@@ -2,132 +2,132 @@
   {
     "schema": "f144",
     "topic": "local_choppers",
-    "kafka_timestamp": 100,
+    "kafka_timestamp": 10100,
     "source_name": "local:choppers:rotation_speed",
-    "timestamp": 100,
+    "timestamp": 10100,
     "value": 10
   },
   {
     "schema": "ep01",
     "topic": "local_choppers",
-    "kafka_timestamp": 101,
+    "kafka_timestamp": 10101,
     "source_name": "local:choppers:rotation_speed",
     "connection_status": "ConnectionInfo::CONNECTED",
-    "timestamp": 101
+    "timestamp": 10101
   },
   {
     "schema": "al00",
     "topic": "local_choppers",
-    "kafka_timestamp": 102,
+    "kafka_timestamp": 10102,
     "source_name": "local:choppers:rotation_speed",
-    "timestamp": 102,
+    "timestamp": 10102,
     "severity": "Severity::MINOR",
     "message": "Chopper speed is too low"
   },
   {
     "schema": "f144",
     "topic": "local_choppers",
-    "kafka_timestamp": 150,
+    "kafka_timestamp": 10150,
     "source_name": "local:choppers:delay",
-    "timestamp": 150,
+    "timestamp": 10150,
     "value": 1000000000
   },
   {
       "schema": "ep01",
       "topic": "local_choppers",
-      "kafka_timestamp": 151,
+      "kafka_timestamp": 10151,
       "source_name": "local:choppers:delay",
       "connection_status": "ConnectionInfo::CONNECTED",
-      "timestamp": 151
+      "timestamp": 10151
   },
   {
       "schema": "al00",
       "topic": "local_choppers",
-      "kafka_timestamp": 152,
+      "kafka_timestamp": 10152,
       "source_name": "local:choppers:delay",
-      "timestamp": 152,
+      "timestamp": 10152,
       "severity": "Severity::MINOR",
       "message": "Chopper delay is too low"
   },
   {
     "schema": "f144",
     "topic": "local_choppers",
-    "kafka_timestamp": 110,
+    "kafka_timestamp": 10110,
     "source_name": "local:choppers:rotation_speed",
-    "timestamp": 110,
+    "timestamp": 10110,
     "value": 15
   },
   {
     "schema": "ep01",
     "topic": "local_choppers",
-    "kafka_timestamp": 111,
+    "kafka_timestamp": 10111,
     "source_name": "local:choppers:rotation_speed",
     "connection_status": "ConnectionInfo::CONNECTED",
-    "timestamp": 111
+    "timestamp": 10111
   },
     {
     "schema": "al00",
     "topic": "local_choppers",
-    "kafka_timestamp": 112,
+    "kafka_timestamp": 10112,
     "source_name": "local:choppers:rotation_speed",
-    "timestamp": 112,
+    "timestamp": 10112,
     "severity": "Severity::OK",
     "message": "Chopper speed is perfect"
   },
   {
     "schema": "ev44",
     "topic": "local_detector",
-    "kafka_timestamp": 200,
+    "kafka_timestamp": 10200,
     "source_name": "detector_events",
     "message_id": 666,
-    "reference_time": 200,
+    "reference_time": 10200,
     "time_of_flight": [10, 20, 30, 40],
     "pixel_ids": [1, 2, 3, 4]
   },
   {
     "schema": "ev44",
     "topic": "local_detector",
-    "kafka_timestamp": 210,
+    "kafka_timestamp": 10210,
     "source_name": "detector_events",
     "message_id": 667,
-    "reference_time": 210,
+    "reference_time": 10210,
     "time_of_flight": [50, 60, 70, 80],
     "pixel_ids": [1, 2, 3, 4]
   },
   {
     "schema": "ev44",
     "topic": "local_detector",
-    "kafka_timestamp": 220,
+    "kafka_timestamp": 10220,
     "source_name": "detector_events",
     "message_id": 668,
-    "reference_time": 220,
+    "reference_time": 10220,
     "time_of_flight": [90, 100, 110, 120],
     "pixel_ids": [1, 2, 3, 4]
   },
   {
     "schema": "ev44",
     "topic": "local_detector",
-    "kafka_timestamp": 230,
+    "kafka_timestamp": 10230,
     "source_name": "detector_events",
     "message_id": 669,
-    "reference_time": 230,
+    "reference_time": 10230,
     "time_of_flight": [130, 140, 150, 160],
     "pixel_ids": [1, 2, 3, 4]
   },
   {
     "schema": "ad00",
     "topic": "local_detector",
-    "kafka_timestamp": 300,
+    "kafka_timestamp": 10300,
     "source_name": "image_data",
-    "timestamp": 300,
+    "timestamp": 10300,
     "data": [[10, 11], [12, 13]]
   },
   {
   "schema": "ad00",
   "topic": "local_detector",
-  "kafka_timestamp": 310,
+  "kafka_timestamp": 10310,
   "source_name": "image_data",
-  "timestamp": 310,
+  "timestamp": 10310,
   "data": [[13, 12], [11, 10]]
   }
 ]

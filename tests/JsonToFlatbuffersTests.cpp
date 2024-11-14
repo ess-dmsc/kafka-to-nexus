@@ -55,7 +55,7 @@ TEST(json_to_fb, can_create_ev44_buffer) {
   auto fb = GetEvent44Message(buffer);
   ASSERT_EQ("test_source", fb->source_name()->str());
   ASSERT_EQ(666, fb->message_id());
-  ASSERT_EQ(123456, fb->reference_time()->Get(0));
+  ASSERT_EQ(123456000000, fb->reference_time()->Get(0));
   ASSERT_EQ(10, fb->time_of_flight()->Get(0));
   ASSERT_EQ(20, fb->time_of_flight()->Get(1));
   ASSERT_EQ(30, fb->time_of_flight()->Get(2));
