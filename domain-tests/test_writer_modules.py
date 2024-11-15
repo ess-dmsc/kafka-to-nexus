@@ -117,10 +117,10 @@ def test_ad00_writes(local_file):
                 [[13, 12], [11, 10]],
             ]
         )
-        # assert np.array_equal(
-        #     f["/entry/instrument/image_detector/data/value"][:],
-        #     expected_data,
-        # )
+        assert np.array_equal(
+            f["/entry/instrument/image_detector/data/value"][:],
+            expected_data,
+        )
         assert np.array_equal(
             f["/entry/instrument/image_detector/data/time"][:],
             [10_300_000_000, 10_310_000_000],
