@@ -15,7 +15,7 @@ def local_file(request):
     )
 
 
-def test_f144_skips_repeated_data(local_file):
+def test_can_create_links(local_file):
     with h5py.File(local_file, "r") as f:
         assert len(f["/entry/instrument/links/linked_value"]) == 4
         assert len(f["/entry/instrument/links/linked_time"]) == 4
