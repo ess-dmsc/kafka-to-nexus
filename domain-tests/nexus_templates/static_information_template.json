@@ -1,0 +1,222 @@
+{
+  "children": [
+    {
+      "name": "entry",
+      "type": "group",
+      "attributes": [
+        {
+          "name": "NX_class",
+          "dtype": "string",
+          "values": "NXentry"
+        }
+      ],
+      "children": [
+        {
+          "module": "dataset",
+          "config": {
+            "name": "title",
+            "values": "This is a title",
+            "dtype": "string"
+          }
+        },
+        {
+          "module": "mdat",
+          "config": {
+            "items": [
+              "start_time",
+              "end_time"
+            ]
+          }
+        },
+        {
+          "name": "instrument",
+          "type": "group",
+          "attributes": [
+            {
+              "name": "NX_class",
+              "dtype": "string",
+              "values": "NXinstrument"
+            }
+          ],
+          "children": [
+            {
+              "name": "chopper",
+              "type": "group",
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "dtype": "string",
+                  "values": "NXdisk_chopper"
+                }
+              ],
+              "children": [
+                {
+                  "name": "delay",
+                  "type": "group",
+                  "attributes": [
+                    {
+                      "name": "NX_class",
+                      "dtype": "string",
+                      "values": "NXlog"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "module": "f144",
+                      "config": {
+                        "source": "local:choppers:delay",
+                        "topic": "local_choppers",
+                        "dtype": "double"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "values": ".",
+                    "dtype": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "links",
+              "type": "group",
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "dtype": "string",
+                  "values": "NXdisk_chopper"
+                }
+              ],
+              "children": [
+                {
+                  "module": "link",
+                  "config": {
+                    "name": "linked_value",
+                    "source": "/entry/instrument/chopper/delay/value"
+                  }
+                },
+                {
+                  "module": "link",
+                  "config": {
+                    "name": "linked_time",
+                    "source": "/entry/instrument/chopper/delay/time"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "example_detector",
+              "type": "group",
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "dtype": "string",
+                  "values": "NXdetector"
+                }
+              ],
+              "children": [
+                {
+                  "name": "pixel_shape",
+                  "type": "group",
+                  "attributes": [
+                    {
+                      "name": "NX_class",
+                      "dtype": "string",
+                      "values": "NXcylindrical_geometry"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "module": "dataset",
+                      "config": {
+                        "name": "cylinders",
+                        "values": [
+                          [
+                            0,
+                            1,
+                            2
+                          ]
+                        ],
+                        "type": "int32"
+                      }
+                    },
+                    {
+                      "module": "dataset",
+                      "config": {
+                        "name": "vertices",
+                        "values": [
+                          [
+                            0.0,
+                            0.0,
+                            0.0
+                          ],
+                          [
+                            0.0,
+                            0.05,
+                            0.0
+                          ],
+                          [
+                            0.002,
+                            0.0,
+                            0.0
+                          ]
+                        ],
+                        "type": "float"
+                      },
+                      "attributes": [
+                        {
+                          "name": "units",
+                          "dtype": "string",
+                          "values": "m"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "detector_number",
+                    "values": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5
+                    ],
+                    "type": "int32"
+                  }
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "x_pixel_offset",
+                    "values": [
+                      10,
+                      20,
+                      30,
+                      40,
+                      50
+                    ],
+                    "type": "float"
+                  },
+                  "attributes": [
+                    {
+                      "name": "units",
+                      "dtype": "string",
+                      "values": "m"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -8,7 +8,10 @@ from conftest import write_file
 @pytest.fixture(scope="module")
 def local_file(request):
     return write_file(
-        request, "writer_modules.hdf", "nexus_template.json", "data_file.json"
+        request,
+        "output_files/writer_modules.hdf",
+        "nexus_templates/writer_modules_template.json",
+        "data_files/writer_modules_data.json",
     )
 
 
@@ -114,10 +117,10 @@ def test_ad00_writes(local_file):
                 [[13, 12], [11, 10]],
             ]
         )
-        # assert np.array_equal(
-        #     f["/entry/instrument/image_detector/data/value"][:],
-        #     expected_data,
-        # )
+        assert np.array_equal(
+            f["/entry/instrument/image_detector/data/value"][:],
+            expected_data,
+        )
         assert np.array_equal(
             f["/entry/instrument/image_detector/data/time"][:],
             [10_300_000_000, 10_310_000_000],

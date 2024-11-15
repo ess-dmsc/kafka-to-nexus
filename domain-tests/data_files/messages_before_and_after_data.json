@@ -1,0 +1,82 @@
+[
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 5000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 5000,
+    "value": 2
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 9000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 9000,
+    "value": 3
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 9999,
+    "source_name": "local:choppers:delay",
+    "timestamp": 9999,
+    "value": 5
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 10000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 10000,
+    "value": 9
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 10100,
+    "source_name": "local:choppers:delay",
+    "timestamp": 10100,
+    "value": 10
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 10150,
+    "source_name": "local:choppers:delay",
+    "timestamp": 10150,
+    "value": 12
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 10110,
+    "source_name": "local:choppers:delay",
+    "timestamp": 10200,
+    "value": 15
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 15000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 15000,
+    "value": 16
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 16000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 16000,
+    "value": 17
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 17000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 17000,
+    "value": 20
+  }
+]
