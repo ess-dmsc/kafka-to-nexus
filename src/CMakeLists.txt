@@ -88,7 +88,6 @@ set(kafka_to_nexus_SRC
         WriterModule/da00/da00_Writer.cpp
         WriterModule/da00/da00_Type.cpp
         HDFVersionCheck.cpp
-        CLIOptions.cpp
         MetaData/Tracker.cpp
         MetaData/HDF5DataWriter.cpp
         HDFAttributes.cpp
