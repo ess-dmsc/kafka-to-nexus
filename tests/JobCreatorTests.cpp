@@ -10,7 +10,6 @@
 #include "JobCreator.h"
 #include "ModuleHDFInfo.h"
 #include "WriterModule/f142/f142_Writer.h"
-#include "WriterModule/hs00/hs00_Writer.h"
 #include "WriterRegistrar.h"
 #include "helpers/HDFFileTestHelper.h"
 #include <gtest/gtest.h>
@@ -21,8 +20,6 @@ public:
     WriterModule::Registry::clear();
     WriterModule::Registry::Registrar<WriterModule::f142::f142_Writer>
         RegisterIt1("f142", "f142");
-    WriterModule::Registry::Registrar<WriterModule::hs00::hs00_Writer>
-        RegisterIt2("hs00", "hs00");
   }
 };
 
@@ -85,12 +82,12 @@ TEST_F(JobCreator, GenerateWriterFailWithBadId) {
 }
 
 TEST_F(JobCreator, GenerateWriterFailWithMissingFields) {
-  std::string ModuleId{"hs00"};
+  std::string ModuleId{"f142"};
   std::string HDF5Parent{"/entry/"};
   std::string Config{R""({
               "source": "my_test_pv",
   "topic": "my_test_topic"})""};
-  // Fields are missing in the JSON structure above for the hs00 module
+  // Fields are missing in the JSON structure above for the module
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
   auto Result =
       FileWriter::extractModuleInformationFromJsonForSource(TestConfig);

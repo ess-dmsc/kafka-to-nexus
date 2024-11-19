@@ -45,7 +45,6 @@ set(UnitTests_SRC
         AccessMessageMetadata/TemplateExtractorTests.cpp
         AccessMessageMetadata/NDAr_ExtractorTests.cpp
         AccessMessageMetadata/ReaderRegistrationTests.cpp
-        WriterModule/hs00_WriterTests.cpp
         WriterModule/ep01_WriterTests.cpp
         WriterModule/se00_WriterTests.cpp
         WriterModule/ns10_WriterTests.cpp

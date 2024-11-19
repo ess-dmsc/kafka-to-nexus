@@ -63,12 +63,6 @@ set(kafka_to_nexus_SRC
         AccessMessageMetadata/ep01/ep01_Extractor.cpp
         AccessMessageMetadata/da00/da00_Extractor.cpp
         WriterModule/NDAr/NDAr_Writer.cpp
-        WriterModule/hs00/hs00_Writer.cpp
-        WriterModule/hs00/WriterTyped.cpp
-        WriterModule/hs00/Slice.cpp
-        WriterModule/hs00/HistogramRecord.cpp
-        WriterModule/hs00/Shape.cpp
-        WriterModule/hs00/Dimension.cpp
         WriterModule/ns10/ns10_Writer.cpp
         WriterModule/tdct/tdct_Writer.cpp
         WriterModule/template/TemplateWriter.cpp
