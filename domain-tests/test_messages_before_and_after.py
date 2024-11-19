@@ -9,8 +9,8 @@ from conftest import write_file
 def local_file(request):
     return write_file(
         request,
-        "output_files/data_before_and_after.hdf",
-        "nexus_templates/data_before_and_after_template.json",
+        "output_files/messages_before_and_after.hdf",
+        "nexus_templates/messages_before_and_after_template.json",
         "data_files/messages_before_and_after_data.json",
     )
 
