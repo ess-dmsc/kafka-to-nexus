@@ -231,7 +231,6 @@ int main(int argc, char **argv) {
       wrap_lines("Relative or absolute path to directory which gets "
                  "prepended to the HDF template filenames in the file write "
                  "commands. Default: current working directory"));
-  app.add_option("--log-file", options->LogFilename, "Specify file to log to");
   app.add_option("--server-status-port", options->ServerStatusPort, "TCP Port");
   app.add_option(
       "--max-queued-writes", options->StreamerConfiguration.MaxQueuedWrites,
