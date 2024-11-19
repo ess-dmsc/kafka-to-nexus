@@ -262,7 +262,7 @@ void msgTypeIsConfigType(f142_Writer::Type ConfigType, Value MsgType) {
   }
 }
 
-void f142_Writer::writeImpl(FlatbufferMessage const &Message) {
+void f142_Writer::writeImpl(FlatbufferMessage const &Message, [[maybe_unused]] bool is_buffered_message) {
   auto LogDataMessage = GetLogData(Message.data());
   size_t NrOfElements{1};
   Timestamp.appendElement(LogDataMessage->timestamp());

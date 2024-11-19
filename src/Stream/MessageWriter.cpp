@@ -51,16 +51,16 @@ MessageWriter::~MessageWriter() {
   }
 }
 
-void MessageWriter::addMessage(Message const &Msg) {
-  WriteJobs.enqueue([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg); });
+void MessageWriter::addMessage(Message const &Msg, bool is_buffered_message) {
+  WriteJobs.enqueue([=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg, is_buffered_message); });
 }
 
 void MessageWriter::stop() { RunThread.store(false); }
 
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
-                                 FileWriter::FlatbufferMessage const &Msg) {
+                                 FileWriter::FlatbufferMessage const &Msg, bool is_buffered_message) {
   try {
-    ModulePtr->write(Msg);
+    ModulePtr->write(Msg, is_buffered_message);
     WritesDone++;
   } catch (WriterModule::WriterException &E) {
     WriteErrors++;

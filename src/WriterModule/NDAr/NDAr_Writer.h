@@ -36,7 +36,7 @@ public:
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  void writeImpl(FlatbufferMessage const &Message) override;
+  void writeImpl(FlatbufferMessage const &Message, bool is_buffered_message) override;
 
   static std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
 

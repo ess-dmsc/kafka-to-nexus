@@ -87,7 +87,7 @@ TEST_F(EPICS_ConStatusWriter, WriteDataOnce) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto ConStatusTimeDataset = UsedGroup.get_dataset("connection_status_time");
   auto ConStatusDataset = UsedGroup.get_dataset("connection_status");
   auto FbPointer = GetEpicsPVConnectionInfo(TestMsg.data());

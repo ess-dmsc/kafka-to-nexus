@@ -194,7 +194,7 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
   }
 }
 
-void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
+void f144_Writer::writeImpl(FlatbufferMessage const &Message, [[maybe_unused]] bool is_buffered_message) {
   auto LogDataMessage = Getf144_LogData(Message.data());
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();

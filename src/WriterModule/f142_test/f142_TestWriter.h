@@ -25,7 +25,7 @@ public:
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.
-  void writeImpl(FlatbufferMessage const &Message) override;
+  void writeImpl(FlatbufferMessage const &Message, bool is_buffered_message) override;
 
   f142_TestWriter() : WriterModule::Base("t142", false, "NXlog") {}
   ~f142_TestWriter() override = default;

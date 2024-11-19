@@ -35,7 +35,7 @@ InitResult ep01_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-void ep01_Writer::writeImpl(FileWriter::FlatbufferMessage const &Message) {
+void ep01_Writer::writeImpl(FileWriter::FlatbufferMessage const &Message, [[maybe_unused]] bool is_buffered_message) {
   auto FlatBuffer = GetEpicsPVConnectionInfo(Message.data());
   std::int16_t Status = static_cast<std::int16_t>(FlatBuffer->status());
   StatusDataset.appendElement(Status);

@@ -44,7 +44,7 @@ WriterModule::InitResult hs00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-void hs00_Writer::writeImpl(FlatbufferMessage const &Message) {
+void hs00_Writer::writeImpl(FlatbufferMessage const &Message, [[maybe_unused]] bool is_buffered_message) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");

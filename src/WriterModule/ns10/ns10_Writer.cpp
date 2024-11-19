@@ -65,7 +65,7 @@ WriterModule::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
+void ns10_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message, [[maybe_unused]] bool is_buffered_message) {
   auto Entry = GetCacheEntry(Message.data());
   auto CurrentTimestamp = Entry->time();
   auto Source = Entry->key();

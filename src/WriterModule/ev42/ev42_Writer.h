@@ -24,7 +24,7 @@ public:
         EventsWrittenMetadataField("", "events") {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup) override;
   WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
-  void writeImpl(FlatbufferMessage const &Message) override;
+  void writeImpl(FlatbufferMessage const &Message, bool is_buffered_message) override;
 
   NeXusDataset::EventTimeOffset EventTimeOffset;
   NeXusDataset::EventId EventId;

@@ -36,7 +36,7 @@ public:
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  void writeImpl(FileWriter::FlatbufferMessage const &Message) override;
+  void writeImpl(FileWriter::FlatbufferMessage const &Message, bool is_buffered_message) override;
 
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueIndex;

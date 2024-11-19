@@ -138,7 +138,7 @@ void msgTypeIsConfigType(ADAr_Writer::Type ConfigType, DType MsgType) {
   }
 }
 
-void ADAr_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
+void ADAr_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message, [[maybe_unused]] bool is_buffered_message) {
   auto ADAr = GetADArray(Message.data());
   auto DataShape =
       hdf5::Dimensions(ADAr->dimensions()->begin(), ADAr->dimensions()->end());

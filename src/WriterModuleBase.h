@@ -111,15 +111,15 @@ public:
   /// \brief Increment write counter and call the subclass-specific write logic.
   ///
   /// \param msg The message to process
-  void write(FileWriter::FlatbufferMessage const &Message) {
-    writeImpl(Message);
+  void write(FileWriter::FlatbufferMessage const &message, bool is_buffered_message) {
+    writeImpl(message, is_buffered_message);
     WriteCount++;
   }
 
   /// \brief Process the message in some way, for example write to the HDF file.
   ///
   /// \param msg The message to process
-  virtual void writeImpl(FileWriter::FlatbufferMessage const &Message) = 0;
+  virtual void writeImpl(FileWriter::FlatbufferMessage const &message, bool is_buffered_message) = 0;
 
   void registerField(JsonConfig::FieldBase *Ptr) {
     ConfigHandler.registerField(Ptr);

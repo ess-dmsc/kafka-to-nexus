@@ -139,7 +139,7 @@ void msgTypeIsConfigType(ad00_Writer::Type ConfigType, DType MsgType) {
   }
 }
 
-void ad00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
+void ad00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message, [[maybe_unused]] bool is_buffered_message) {
   auto ad00 = Getad00_ADArray(Message.data());
   auto DataShape =
       hdf5::Dimensions(ad00->dimensions()->begin(), ad00->dimensions()->end());
