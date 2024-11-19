@@ -47,12 +47,6 @@ struct MainOpt {
 
   uri::URI GrafanaCarbonAddress;
 
-  /// Used for logging to file
-  std::string LogFilename;
-
-  /// TCP port number for querying application status
-  int ServerStatusPort{8888};
-
   /// Kafka topic where file writer commands are published.
   std::string command_topic;
 
