@@ -17,7 +17,6 @@
 #include "RunState.h"
 #include "Status/StatusInfo.h"
 #include "Status/StatusReporter.h"
-#include "Status/StatusService.h"
 #include "Version.h"
 #include "WriterRegistrar.h"
 #include <CLI/CLI.hpp>
@@ -231,7 +230,6 @@ int main(int argc, char **argv) {
       wrap_lines("Relative or absolute path to directory which gets "
                  "prepended to the HDF template filenames in the file write "
                  "commands. Default: current working directory"));
-  app.add_option("--server-status-port", options->ServerStatusPort, "TCP Port");
   app.add_option(
       "--max-queued-writes", options->StreamerConfiguration.MaxQueuedWrites,
       wrap_lines(
@@ -356,9 +354,6 @@ int main(int argc, char **argv) {
         create_status_reporter(*options, app_name, app_version),
         std::move(registrar));
   };
-
-  Status::StatusService status(options->ServerStatusPort);
-  status.startThread();
 
   bool find_topic_mode{true};
   duration metadata_timeout{

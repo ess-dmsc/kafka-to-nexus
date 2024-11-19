@@ -24,7 +24,6 @@ set(kafka_to_nexus_SRC
         HDFOperations.cpp
         Status/StatusReporter.cpp
         Status/StatusReporterBase.cpp
-        Status/StatusService.cpp
         Master.cpp
         JobCreator.cpp
         CommandSystem/JobListener.cpp
