@@ -9,8 +9,7 @@
 
 #include "JobCreator.h"
 #include "ModuleHDFInfo.h"
-#include "WriterModule/f142/f142_Writer.h"
-#include "WriterModule/hs00/hs00_Writer.h"
+#include "WriterModule/f144/f144_Writer.h"
 #include "WriterRegistrar.h"
 #include "helpers/HDFFileTestHelper.h"
 #include <gtest/gtest.h>
@@ -19,10 +18,8 @@ class JobCreator : public ::testing::Test {
 public:
   void SetUp() override {
     WriterModule::Registry::clear();
-    WriterModule::Registry::Registrar<WriterModule::f142::f142_Writer>
-        RegisterIt1("f142", "f142");
-    WriterModule::Registry::Registrar<WriterModule::hs00::hs00_Writer>
-        RegisterIt2("hs00", "hs00");
+    WriterModule::Registry::Registrar<WriterModule::f144::f144_Writer>
+        RegisterIt1("f144", "f144");
   }
 };
 
@@ -40,7 +37,7 @@ TEST_F(JobCreator, ExtractStreamSettingsEmptyModule) {
 }
 
 TEST_F(JobCreator, ExtractStreamSettings) {
-  std::string ModuleId{"f142"};
+  std::string ModuleId{"f144"};
   std::string HDF5Parent{"/entry/"};
   std::string Config{R""({
               "dtype": "double",
@@ -56,8 +53,8 @@ TEST_F(JobCreator, ExtractStreamSettings) {
             nlohmann::json::parse(Config));
 }
 
-TEST_F(JobCreator, Generatef142Writer) {
-  std::string ModuleId{"f142"};
+TEST_F(JobCreator, Generatef144Writer) {
+  std::string ModuleId{"f144"};
   std::string HDF5Parent{"/entry/"};
   std::string Config{R""({
               "dtype": "double",
@@ -67,7 +64,7 @@ TEST_F(JobCreator, Generatef142Writer) {
   auto Result =
       FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
   auto WriterInstance = FileWriter::generateWriterInstance(Result);
-  EXPECT_TRUE(dynamic_cast<WriterModule::f142::f142_Writer *>(
+  EXPECT_TRUE(dynamic_cast<WriterModule::f144::f144_Writer *>(
                   WriterInstance.get()) != nullptr);
 }
 
@@ -84,23 +81,22 @@ TEST_F(JobCreator, GenerateWriterFailWithBadId) {
   EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
 }
 
-TEST_F(JobCreator, GenerateWriterFailWithMissingFields) {
-  std::string ModuleId{"hs00"};
+TEST_F(JobCreator, ExtractingInformationFromJsonFailWithMissingFields) {
+  std::string ModuleId{"f144"};
   std::string HDF5Parent{"/entry/"};
   std::string Config{R""({
-              "source": "my_test_pv",
   "topic": "my_test_topic"})""};
-  // Fields are missing in the JSON structure above for the hs00 module
+  // The source field is missing from the JSON
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
-  auto Result =
-      FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
-  EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
+  EXPECT_THROW(
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig),
+      std::runtime_error);
 }
 
 TEST_F(JobCreator, SetWriterAttributes) {
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("testFile.hdf5", false);
-  std::string ModuleId{"f142"};
+  std::string ModuleId{"f144"};
   std::string HDF5Parent{"/entry/"};
   std::string Config{R""({
               "dtype": "double",
@@ -157,7 +153,7 @@ TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
   })"""};
 
   ModuleHDFInfo Info;
-  Info.WriterModule = "f142";
+  Info.WriterModule = "f144";
   Info.ConfigStream = Command;
 
   ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
@@ -171,7 +167,7 @@ TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
   })"""};
 
   ModuleHDFInfo Info;
-  Info.WriterModule = "f142";
+  Info.WriterModule = "f144";
   Info.ConfigStream = Command;
 
   ASSERT_THROW(FileWriter::extractModuleInformationFromJsonForSource(Info),
@@ -200,13 +196,13 @@ TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {
   })"""};
 
   ModuleHDFInfo Info;
-  Info.WriterModule = "f142";
+  Info.WriterModule = "f144";
   Info.ConfigStream = Command;
 
   auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
 
   ASSERT_EQ("my_test_topic", Settings.Topic);
-  ASSERT_EQ("f142", Settings.Module);
+  ASSERT_EQ("f144", Settings.Module);
   ASSERT_EQ("my_test_pv", Settings.Source);
 }
 
@@ -221,7 +217,7 @@ TEST(ExtractStreamSettings, NoAttributesExtracted) {
   })"""};
 
   ModuleHDFInfo Info;
-  Info.WriterModule = "f142";
+  Info.WriterModule = "f144";
   Info.ConfigStream = Command;
 
   auto Settings = FileWriter::extractModuleInformationFromJsonForSource(Info);
