@@ -40,10 +40,7 @@ set(UnitTests_SRC
         HelperTests.cpp
         AccessMessageMetadata/ev42_ExtractorTests.cpp
         AccessMessageMetadata/tdct_ExtractorTests.cpp
-        AccessMessageMetadata/ns10_ExtractorTests.cpp
-        AccessMessageMetadata/senv_ExtractorTests.cpp
         AccessMessageMetadata/TemplateExtractorTests.cpp
-        AccessMessageMetadata/NDAr_ExtractorTests.cpp
         AccessMessageMetadata/ReaderRegistrationTests.cpp
         WriterModule/ep01_WriterTests.cpp
         WriterModule/se00_WriterTests.cpp

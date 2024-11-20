@@ -46,20 +46,15 @@ set(kafka_to_nexus_SRC
         StreamController.cpp
         logger.cpp
         WriterRegistrar.cpp
-        AccessMessageMetadata/NDAr/NDAr_Extractor.cpp
-        AccessMessageMetadata/hs00/hs00_Extractor.cpp
-        AccessMessageMetadata/ns10/ns10_Extractor.cpp
         AccessMessageMetadata/tdct/tdct_Extractor.cpp
         AccessMessageMetadata/template/TemplateExtractor.cpp
         AccessMessageMetadata/ad00/ad00_Extractor.cpp
-        AccessMessageMetadata/ADAr/ADAr_Extractor.cpp
         AccessMessageMetadata/ev44/ev44_Extractor.cpp
         AccessMessageMetadata/ev42/ev42_Extractor.cpp
         AccessMessageMetadata/f144/f144_Extractor.cpp
         AccessMessageMetadata/f142/f142_Extractor.cpp
         AccessMessageMetadata/se00/se00_Extractor.cpp
         AccessMessageMetadata/al00/al00_Extractor.cpp
-        AccessMessageMetadata/senv/senv_Extractor.cpp
         AccessMessageMetadata/ep01/ep01_Extractor.cpp
         AccessMessageMetadata/da00/da00_Extractor.cpp
         WriterModule/tdct/tdct_Writer.cpp
