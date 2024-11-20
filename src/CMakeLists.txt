@@ -63,11 +63,9 @@ set(kafka_to_nexus_SRC
         AccessMessageMetadata/ep01/ep01_Extractor.cpp
         AccessMessageMetadata/da00/da00_Extractor.cpp
         WriterModule/NDAr/NDAr_Writer.cpp
-        WriterModule/ns10/ns10_Writer.cpp
         WriterModule/tdct/tdct_Writer.cpp
         WriterModule/template/TemplateWriter.cpp
         WriterModule/ad00/ad00_Writer.cpp
-        WriterModule/ADAr/ADAr_Writer.cpp
         WriterModule/ev44/ev44_Writer.cpp
         WriterModule/ev42/ev42_Writer.cpp
         WriterModule/f144/f144_Writer.cpp

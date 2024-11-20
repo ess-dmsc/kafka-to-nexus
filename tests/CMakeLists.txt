@@ -47,7 +47,6 @@ set(UnitTests_SRC
         AccessMessageMetadata/ReaderRegistrationTests.cpp
         WriterModule/ep01_WriterTests.cpp
         WriterModule/se00_WriterTests.cpp
-        WriterModule/ns10_WriterTests.cpp
         WriterModule/tdct_WriterTests.cpp
         WriterModule/TemplateWriterTests.cpp
         WriterModule/senv_WriterTests.cpp
