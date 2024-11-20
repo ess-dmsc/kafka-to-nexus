@@ -38,28 +38,18 @@ set(UnitTests_SRC
         NeXusDataset/NeXusDatasetTests.cpp
         NeXusDataset/ExtensibleDatasetTests.cpp
         HelperTests.cpp
-        AccessMessageMetadata/ev42_ExtractorTests.cpp
         AccessMessageMetadata/tdct_ExtractorTests.cpp
-        AccessMessageMetadata/ns10_ExtractorTests.cpp
-        AccessMessageMetadata/senv_ExtractorTests.cpp
         AccessMessageMetadata/TemplateExtractorTests.cpp
-        AccessMessageMetadata/NDAr_ExtractorTests.cpp
         AccessMessageMetadata/ReaderRegistrationTests.cpp
-        WriterModule/hs00_WriterTests.cpp
         WriterModule/ep01_WriterTests.cpp
         WriterModule/se00_WriterTests.cpp
-        WriterModule/ns10_WriterTests.cpp
         WriterModule/tdct_WriterTests.cpp
         WriterModule/TemplateWriterTests.cpp
-        WriterModule/senv_WriterTests.cpp
-        WriterModule/NDAr_WriterTests.cpp
         WriterModule/al00_WriterTests.cpp
         WriterModule/ev44_WriterTests.cpp
         WriterModule/f144_WriterTests.cpp
         WriterModule/WriterRegistrationTests.cpp
-        WriterModule/f142_WriterTests.cpp
         WriterModule/mdat_WriterTests.cpp
-        WriterModule/ev42_WriterTests.cpp
         WriterModule/da00_WriterTests.cpp
         TimeUtilityTest.cpp
         MetaData/TrackerTest.cpp

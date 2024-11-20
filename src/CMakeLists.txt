@@ -46,42 +46,22 @@ set(kafka_to_nexus_SRC
         StreamController.cpp
         logger.cpp
         WriterRegistrar.cpp
-        AccessMessageMetadata/NDAr/NDAr_Extractor.cpp
-        AccessMessageMetadata/hs00/hs00_Extractor.cpp
-        AccessMessageMetadata/ns10/ns10_Extractor.cpp
         AccessMessageMetadata/tdct/tdct_Extractor.cpp
         AccessMessageMetadata/template/TemplateExtractor.cpp
         AccessMessageMetadata/ad00/ad00_Extractor.cpp
-        AccessMessageMetadata/ADAr/ADAr_Extractor.cpp
         AccessMessageMetadata/ev44/ev44_Extractor.cpp
-        AccessMessageMetadata/ev42/ev42_Extractor.cpp
         AccessMessageMetadata/f144/f144_Extractor.cpp
-        AccessMessageMetadata/f142/f142_Extractor.cpp
         AccessMessageMetadata/se00/se00_Extractor.cpp
         AccessMessageMetadata/al00/al00_Extractor.cpp
-        AccessMessageMetadata/senv/senv_Extractor.cpp
         AccessMessageMetadata/ep01/ep01_Extractor.cpp
         AccessMessageMetadata/da00/da00_Extractor.cpp
-        WriterModule/NDAr/NDAr_Writer.cpp
-        WriterModule/hs00/hs00_Writer.cpp
-        WriterModule/hs00/WriterTyped.cpp
-        WriterModule/hs00/Slice.cpp
-        WriterModule/hs00/HistogramRecord.cpp
-        WriterModule/hs00/Shape.cpp
-        WriterModule/hs00/Dimension.cpp
-        WriterModule/ns10/ns10_Writer.cpp
         WriterModule/tdct/tdct_Writer.cpp
         WriterModule/template/TemplateWriter.cpp
         WriterModule/ad00/ad00_Writer.cpp
-        WriterModule/ADAr/ADAr_Writer.cpp
         WriterModule/ev44/ev44_Writer.cpp
-        WriterModule/ev42/ev42_Writer.cpp
         WriterModule/f144/f144_Writer.cpp
-        WriterModule/f142_test/f142_TestWriter.cpp
-        WriterModule/f142/f142_Writer.cpp
         WriterModule/se00/se00_Writer.cpp
         WriterModule/al00/al00_Writer.cpp
-        WriterModule/senv/senv_Writer.cpp
         WriterModule/ep01/ep01_Writer.cpp
         WriterModule/mdat/mdat_Writer.cpp
         WriterModule/da00/da00_Writer.cpp

@@ -104,7 +104,7 @@ The (stream/writer) module definition instructs the file-writer that there is da
         "name": "my_test_group",
         "children": [
           {
-            "module": "f142",
+            "module": "f144",
             "config": {
               "dtype": "double",
               "source": "my_test_pv",
