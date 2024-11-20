@@ -267,9 +267,9 @@ generateWriterInstance(ModuleSettings const &StreamInfo) {
   try {
     HDFWriterModule->parse_config(StreamInfo.ConfigStreamJson);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(fmt::format(
+    std::runtime_error(fmt::format(
         R"(Exception encountered in WriterModule::Base::parse_config()  Module: "{}" Source: "{}"  Error message: {})",
-        StreamInfo.Module, StreamInfo.Source, E.what())));
+        StreamInfo.Module, StreamInfo.Source, E.what()));
   }
   return HDFWriterModule;
 }

@@ -81,17 +81,16 @@ TEST_F(JobCreator, GenerateWriterFailWithBadId) {
   EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
 }
 
-TEST_F(JobCreator, GenerateWriterFailWithMissingFields) {
-  std::string ModuleId{"f142"};
+TEST_F(JobCreator, ExtractingInformationFromJsonFailWithMissingFields) {
+  std::string ModuleId{"f144"};
   std::string HDF5Parent{"/entry/"};
   std::string Config{R""({
-              "source": "my_test_pv",
   "topic": "my_test_topic"})""};
-  // Fields are missing in the JSON structure above for the module
+  // The source field is missing from the JSON
   ModuleHDFInfo TestConfig{ModuleId, HDF5Parent, Config};
-  auto Result =
-      FileWriter::extractModuleInformationFromJsonForSource(TestConfig);
-  EXPECT_THROW(FileWriter::generateWriterInstance(Result), std::runtime_error);
+  EXPECT_THROW(
+      FileWriter::extractModuleInformationFromJsonForSource(TestConfig),
+      std::runtime_error);
 }
 
 TEST_F(JobCreator, SetWriterAttributes) {
