@@ -70,7 +70,7 @@ TEST_F(HDFFile, SimpleNexusStructure) {
           ],
           "children": [
             {
-              "module": "f142",
+              "module": "f144",
               "config": {
                 "dtype": "double",
                 "source": "my_test_pv",
@@ -105,7 +105,7 @@ TEST_F(HDFFile, WithTemplatePathNoInstrumentName) {
           ],
           "children": [
             {
-              "module": "f142",
+              "module": "f144",
               "config": {
                 "dtype": "double",
                 "source": "my_test_pv",
@@ -146,7 +146,7 @@ TEST_F(HDFFile, NoTemplatePathWithInstrumentName) {
           ],
           "children": [
             {
-              "module": "f142",
+              "module": "f144",
               "config": {
                 "dtype": "double",
                 "source": "my_test_pv",
@@ -187,7 +187,7 @@ TEST_F(HDFFile, WithTemplatePathWithInstrumentName) {
           ],
           "children": [
             {
-              "module": "f142",
+              "module": "f144",
               "config": {
                 "dtype": "double",
                 "source": "my_test_pv",

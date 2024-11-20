@@ -49,7 +49,6 @@ set(UnitTests_SRC
         WriterModule/ev44_WriterTests.cpp
         WriterModule/f144_WriterTests.cpp
         WriterModule/WriterRegistrationTests.cpp
-        WriterModule/f142_WriterTests.cpp
         WriterModule/mdat_WriterTests.cpp
         WriterModule/da00_WriterTests.cpp
         TimeUtilityTest.cpp

@@ -33,7 +33,7 @@ if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
   include(CodeCoverage)
   append_coverage_compiler_flags()
   # Exclude tests and Metric sink implementations that do network IO from test coverage
-  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log* src/WriterModule/f142_test/)
+  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log*)
   if (HTML_COVERAGE_REPORT)
     setup_target_for_coverage_gcovr_html(NAME coverage
             EXECUTABLE UnitTests

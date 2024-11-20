@@ -77,8 +77,7 @@ public:
   /// error is to write a log message (see logger.h"). The configurations are
   /// in the base of the JSON object and you should thus be able to extract
   /// relevant settings without navigating a JSON tree, unless the settings are
-  /// by design in a tree structure. Examples of extracting settings from the
-  /// JSON structure can be found in the files ev42_rw.cpp and f142_rw.cpp.
+  /// by design in a tree structure.
   ///
   /// \note This call is executed in a catch-all block (which re-throws)
   /// relatively high up in call hierarchy the first time it is called for a
