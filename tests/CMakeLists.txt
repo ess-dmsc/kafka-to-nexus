@@ -49,8 +49,6 @@ set(UnitTests_SRC
         WriterModule/se00_WriterTests.cpp
         WriterModule/tdct_WriterTests.cpp
         WriterModule/TemplateWriterTests.cpp
-        WriterModule/senv_WriterTests.cpp
-        WriterModule/NDAr_WriterTests.cpp
         WriterModule/al00_WriterTests.cpp
         WriterModule/ev44_WriterTests.cpp
         WriterModule/f144_WriterTests.cpp
