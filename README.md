@@ -32,8 +32,8 @@ Conan is a package manager and, thus, will install all the other required packag
 We have our own Conan repositories for some of the packages required.
 Follow the README [here](https://github.com/ess-dmsc/conan-configuration) for instructions on how to include these.
 
-Depending on your system, you might need to run the following command.
-However, try without first.
+Then run this:
+
 ```bash
 # Assuming profile is named "default"
 conan profile update settings.compiler.libcxx=libstdc++11 default
