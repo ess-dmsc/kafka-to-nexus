@@ -86,9 +86,9 @@ The tests can be run like so:
 $ cd domain-tests
 $ pytest --file-maker-binary=<path to file-maker binary>
 ```
-The "data" for writing is specified via JSON; for an example see`domain-tests/data_file.json`. 
+The "data" for writing is specified via JSON; for examples see`domain-tests/data_files`. 
 Correspondingly, there is a NeXus template file that defines the layout of the produced file. 
-See `domain-tests/nexus_template.json` for an example.
+See `domain-tests/nexus_templates` for examples.
 
 The tests work by first generating a NeXus file using the file-maker and then run tests against the file to check it is correct.
 
