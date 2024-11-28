@@ -30,7 +30,6 @@ using GetJobIdFuncType = std::function<std::string()>;
 struct CmdResponse {
   LogSeverity LogLevel;
   int StatusCode{0};
-  bool SendResponse;
   std::string Message;
 };
 
@@ -38,26 +37,28 @@ class HandlerBase {
 public:
   HandlerBase() = default;
   virtual ~HandlerBase() = default;
-  virtual void registerStartFunction(StartFuncType StartFunction) = 0;
+  virtual void registerStartFunction(StartFuncType start_function) = 0;
   virtual void
-  registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) = 0;
-  virtual void registerStopNowFunction(StopNowFuncType StopNowFunction) = 0;
+  registerSetStopTimeFunction(StopTimeFuncType set_stop_time_function) = 0;
+  virtual void registerStopNowFunction(StopNowFuncType stop_now_function) = 0;
   virtual void
-  registerIsWritingFunction(IsWritingFuncType IsWritingFunction) = 0;
-  virtual void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) = 0;
+  registerIsWritingFunction(IsWritingFuncType is_writing_function) = 0;
+  virtual void
+  registerGetJobIdFunction(GetJobIdFuncType get_job_id_function) = 0;
 
-  virtual void sendHasStoppedMessage(std::filesystem::path const &FilePath,
-                                     std::string const &Metadata) = 0;
-  virtual void sendErrorEncounteredMessage(std::string const &FileName,
-                                           std::string const &Metadata,
-                                           std::string const &ErrorMessage) = 0;
+  virtual void sendHasStoppedMessage(std::filesystem::path const &file_path,
+                                     std::string const &metadata) = 0;
+  virtual void
+  sendErrorEncounteredMessage(std::string const &filename,
+                              std::string const &metadata,
+                              std::string const &error_message) = 0;
   virtual void loopFunction() {}
 };
 
 class Handler : public HandlerBase {
 public:
-  static std::unique_ptr<Handler> create(std::string const &ServiceIdentifier,
-                                         Kafka::BrokerSettings const &Settings,
+  static std::unique_ptr<Handler> create(std::string const &service_id,
+                                         Kafka::BrokerSettings const &settings,
                                          std::string const &job_pool_topic,
                                          std::string const &command_topic);
 
@@ -67,17 +68,19 @@ public:
           std::unique_ptr<CommandListener> command_listener,
           std::unique_ptr<FeedbackProducer> command_response);
 
-  void registerStartFunction(StartFuncType StartFunction) override;
-  void registerSetStopTimeFunction(StopTimeFuncType StopTimeFunction) override;
-  void registerStopNowFunction(StopNowFuncType StopNowFunction) override;
-  void registerIsWritingFunction(IsWritingFuncType IsWritingFunction) override;
-  void registerGetJobIdFunction(GetJobIdFuncType GetJobIdFunction) override;
+  void registerStartFunction(StartFuncType start_function) override;
+  void
+  registerSetStopTimeFunction(StopTimeFuncType set_stop_time_function) override;
+  void registerStopNowFunction(StopNowFuncType stop_now_function) override;
+  void
+  registerIsWritingFunction(IsWritingFuncType is_writing_function) override;
+  void registerGetJobIdFunction(GetJobIdFuncType get_job_id_function) override;
 
-  void sendHasStoppedMessage(std::filesystem::path const &FilePath,
-                             std::string const &Metadata) override;
-  void sendErrorEncounteredMessage(std::string const &FileName,
-                                   std::string const &Metadata,
-                                   std::string const &ErrorMessage) override;
+  void sendHasStoppedMessage(std::filesystem::path const &file_path,
+                             std::string const &meta_data) override;
+  void sendErrorEncounteredMessage(std::string const &filename,
+                                   std::string const &metadata,
+                                   std::string const &error_message) override;
 
   void loopFunction() override;
 
@@ -90,25 +93,25 @@ private:
 
   /// \brief Validate command and start writing.
   ///
-  /// \param CommandMsg Kafka message.
-  /// \param StartJob Returns the parsed start message as a StartMessage struct.
+  /// \param command_message Kafka message.
+  /// \param start_message Returns the parsed start message as a StartMessage struct.
   /// pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse startWritingProcess(const FileWriter::Msg &CommandMsg,
-                                  StartMessage &StartJob);
+  CmdResponse startWritingProcess(const FileWriter::Msg &command_message,
+                                  StartMessage &start_message);
 
   /// \brief Handle stop command.
   ///
-  /// \param CommandMsg Kafka message.
-  void handleStopCommand(FileWriter::Msg CommandMsg);
+  /// \param command_message Kafka message.
+  void handleStopCommand(FileWriter::Msg command_message);
 
   /// \brief Validate command and start writing.
   ///
-  /// \param CommandMsg Kafka message.
-  /// \param StopJob Returns the parsed stop message as a StopMessage struct.
+  /// \param command_message Kafka message.
+  /// \param stop_message Returns the parsed stop message as a StopMessage struct.
   /// \return Metadata about the success/failure after processing the command.
-  CmdResponse stopWritingProcess(const FileWriter::Msg &CommandMsg,
-                                 StopMessage &StopJob);
+  CmdResponse stopWritingProcess(const FileWriter::Msg &command_message,
+                                 StopMessage &stop_message);
 
   std::string const ServiceId;
   StartFuncType DoStart{[](auto) {
@@ -127,8 +130,8 @@ private:
   }};
 
   /// \brief Switch to an alternative command topic.
-  void switchCommandTopic(std::string const &ControlTopic,
-                          time_point const StartTime);
+  void switchCommandTopic(std::string const &control_topic,
+                          time_point start_time);
 
   /// \brief Revert to the default command topic if an alternative topic
   /// has been configured.
