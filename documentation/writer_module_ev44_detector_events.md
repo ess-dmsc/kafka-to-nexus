@@ -1,4 +1,4 @@
-amthewar# *ev44* Detector event
+# *ev44* Detector event
 
 ## Stream configuration fields
 
