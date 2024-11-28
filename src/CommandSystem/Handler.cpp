@@ -176,7 +176,7 @@ void Handler::handleStartCommand(FileWriter::Msg start_message) {
 
     CommandResponse->echo_message(start_message);
 
-    if (ValidationResponse.SendResponse) {
+    if (true) {
       CommandResponse->publishResponse(
           ActionResponse::StartJob, SendResult, StartJob.JobID, StartJob.JobID,
           StartJob.StopTime, ValidationResponse.StatusCode,
@@ -271,7 +271,7 @@ void Handler::handleStopCommand(FileWriter::Msg CommandMsg) {
     }
 
     Logger::Log(ValidationResponse.LogLevel, ValidationResponse.Message);
-    if (ValidationResponse.SendResponse) {
+    if (true) {
       CommandResponse->publishResponse(
           ActionResponse::SetStopTime, SendResult, StopJob.JobID,
           StopJob.CommandID, StopJob.StopTime, ValidationResponse.StatusCode,
