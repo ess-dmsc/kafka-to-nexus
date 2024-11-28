@@ -131,7 +131,7 @@ private:
 
   /// \brief Switch to an alternative command topic.
   void switchCommandTopic(std::string const &control_topic,
-                          time_point const start_time);
+                          time_point start_time);
 
   /// \brief Revert to the default command topic if an alternative topic
   /// has been configured.
