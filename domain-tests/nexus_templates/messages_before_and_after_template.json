@@ -40,6 +40,39 @@
           ],
           "children": [
             {
+              "name": "event_detector",
+              "type": "group",
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "dtype": "string",
+                  "values": "NXdetector"
+                }
+              ],
+              "children": [
+                {
+                  "name": "events",
+                  "type": "group",
+                  "attributes": [
+                    {
+                      "name": "NX_class",
+                      "dtype": "string",
+                      "values": "NXevent_data"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "module": "ev44",
+                      "config": {
+                        "source": "detector_events",
+                        "topic": "local_detector"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
               "name": "chopper",
               "type": "group",
               "attributes": [
