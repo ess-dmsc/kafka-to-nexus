@@ -173,14 +173,14 @@ std::unique_ptr<StreamController> createFileWritingJob(
           R"(Could not initialise stream at path "{}" with configuration JSON "{}". Error was: {})",
           Item.ModuleHDFInfoObj.HDFParentName,
           Item.ModuleHDFInfoObj.ConfigStream, E.what());
-      std::throw_with_nested(std::runtime_error(ErrorMsg));
+      throw std::runtime_error(ErrorMsg);
     }
     try {
       Item.WriterModule->register_meta_data(StreamGroup, Tracker);
     } catch (std::exception const &E) {
-      std::throw_with_nested(std::runtime_error(fmt::format(
+      throw std::runtime_error(fmt::format(
           R"(Exception encountered in WriterModule::Base::register_meta_data(). Module: "{}" Source: "{}"  Error message: {})",
-          Item.Module, Item.Source, E.what())));
+          Item.Module, Item.Source, E.what()));
     }
     std::transform(TemporaryStreamSettings.begin(),
                    TemporaryStreamSettings.end(),
@@ -301,7 +301,7 @@ void setWriterHDFAttributes(hdf5::node::Group &RootNode,
       {"source", StreamInfo.Source},
       {"writer_module", StreamInfo.Module},
   });
-  if (not StreamInfo.Attributes.empty()) {
+  if (!StreamInfo.Attributes.empty()) {
     Logger::Info(
         "Writing of writer module attributes to parent group has been "
         "removed. Attributes should be assigned directly to group. The "

@@ -137,7 +137,7 @@ public:
   }
 
   /// \brief Determine if this writer module can spawn extra writer modules.
-  auto hasExtraModules() const { return not FoundExtraModules.empty(); }
+  auto hasExtraModules() const { return !FoundExtraModules.empty(); }
 
   /// \brief Get the number of writes performed by the module.
   auto getWriteCount() const { return WriteCount; }

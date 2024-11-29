@@ -39,18 +39,18 @@ void FileWriterTask::InitialiseHdf(nlohmann::json const &NexusStructure,
         _filepath.string(),
         "a file with that filename already exists in that directory. Delete "
         "the existing file or provide another filename");
-    std::throw_with_nested(std::runtime_error(ErrorString));
-  } else if (not _filepath.has_filename()) {
+    throw std::runtime_error(ErrorString);
+  } else if (!_filepath.has_filename()) {
     ErrorString =
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: "{}".)",
                     _filepath.string(), "filename is empty");
-    std::throw_with_nested(std::runtime_error(ErrorString));
+    throw std::runtime_error(ErrorString);
   } else if (_filepath.has_parent_path() and
-             not std::filesystem::exists(_filepath.parent_path())) {
+             !std::filesystem::exists(_filepath.parent_path())) {
     ErrorString = fmt::format(
         R"(Failed to initialize HDF file "{}". Error was: The parent directory does not exist.)",
         _filepath.string());
-    std::throw_with_nested(std::runtime_error(ErrorString));
+    throw std::runtime_error(ErrorString);
   }
 
   try {
@@ -63,7 +63,7 @@ void FileWriterTask::InitialiseHdf(nlohmann::json const &NexusStructure,
         fmt::format(R"(Failed to initialize HDF file "{}". Error was: {})",
                     _filepath.string(), E.what());
     Logger::Critical(ErrorString);
-    std::throw_with_nested(std::runtime_error(ErrorString));
+    throw std::runtime_error(ErrorString);
   }
 }
 

@@ -43,7 +43,7 @@ std::string jsonElementConverter<std::string>(nlohmann::json const &JsonObj) {
 }
 
 Shape determineArrayDimensions(nlohmann::json const &Values) {
-  if (not Values.is_array()) {
+  if (!Values.is_array()) {
     return {1};
   }
   Shape ReturnDimensions;
@@ -62,9 +62,9 @@ static void writeAttr(hdf5::node::Node const &Node, std::string const &Name,
       HDFAttributes::writeAttribute(Node, Name, Value.get<T>());
     }
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
+    throw std::runtime_error(
         fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
-                    std::string(Node.link().path()), E.what())));
+                    std::string(Node.link().path()), E.what()));
   }
 }
 
@@ -113,12 +113,12 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
                       CurrentAttribute.Name.get_value());
       }
       if (CurrentAttribute.Type.hasDefaultValue() and
-          not CurrentAttribute.Value.get_value().is_array()) {
+          !CurrentAttribute.Value.get_value().is_array()) {
         writeScalarAttribute(Node, CurrentAttribute.Name,
                              CurrentAttribute.Value);
       } else {
         auto CValue = CurrentAttribute.Value.get_value();
-        if (CurrentAttribute.Type.hasDefaultValue() and CValue.is_array()) {
+        if (CurrentAttribute.Type.hasDefaultValue() && CValue.is_array()) {
           if (std::any_of(CValue.begin(), CValue.end(),
                           [](auto &A) { return A.is_string(); })) {
             CurrentAttribute.Type.setValue(std::string("dtype"),
@@ -162,7 +162,7 @@ void writeAttrOfSpecifiedType(std::string const &DType,
     auto ErrorStr = fmt::format(
         "Failed attribute write in {}/{} with data type {}. Message was: {}",
         std::string(Node.link().path()), Name, DType, e.what());
-    std::throw_with_nested(std::runtime_error(ErrorStr));
+    throw std::runtime_error(ErrorStr);
   }
 }
 

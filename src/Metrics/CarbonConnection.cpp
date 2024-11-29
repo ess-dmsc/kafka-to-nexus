@@ -109,7 +109,7 @@ void Connection::Impl::receiveHandler(
 }
 
 void Connection::Impl::trySendMessage() {
-  if (not Socket.is_open()) {
+  if (!Socket.is_open()) {
     return;
   }
   auto HandlerGlue = [this](auto const &Err, auto Size) {
@@ -151,7 +151,7 @@ void Connection::Impl::sentMessageHandler(asio::error_code const &Error,
 }
 
 void Connection::Impl::waitForMessage() {
-  if (not Socket.is_open()) {
+  if (!Socket.is_open()) {
     return;
   }
   if (Messages.peek() != nullptr) {

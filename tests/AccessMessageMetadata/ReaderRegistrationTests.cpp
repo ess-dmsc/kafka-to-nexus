@@ -80,5 +80,5 @@ TEST_F(ReaderRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
   { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
   std::string FailKey("trump");
-  EXPECT_THROW(FlatbufferReaderRegistry::find(FailKey), std::nested_exception);
+  EXPECT_THROW(FlatbufferReaderRegistry::find(FailKey), std::exception);
 }

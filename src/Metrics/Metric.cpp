@@ -13,7 +13,7 @@ void Metric::setDeregistrationDetails(
 
 Metric::~Metric() {
   for (auto const &CReporter : Reporters) {
-    if (CReporter != nullptr and not CReporter->tryRemoveMetric(FullName)) {
+    if (CReporter != nullptr && !CReporter->tryRemoveMetric(FullName)) {
       Logger::Error("Failed to (self) remove metric: {}", FullName);
     }
   }
