@@ -65,7 +65,7 @@
     "connection_status": "ConnectionInfo::CONNECTED",
     "timestamp": 10111
   },
-    {
+  {
     "schema": "al00",
     "topic": "local_choppers",
     "kafka_timestamp": 10112,
