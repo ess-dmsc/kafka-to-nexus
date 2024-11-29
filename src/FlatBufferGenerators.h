@@ -172,16 +172,18 @@ create_ad00_message_uint16(std::string const &source,
   return {std::move(buffer), buffer_size};
 }
 
+/// \brief Creates a 1D data array message of int32s.
 inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
-create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
+create_da00_message_int32s(std::string const &source, std::string const &name,
+                           std::string const &axis_name, int64_t timestamp_ns,
                            const std::vector<int32_t> &data) {
   auto builder = flatbuffers::FlatBufferBuilder();
   builder.ForceDefaults(true);
 
   auto source_name_offset = builder.CreateString(source);
-  auto var_name_offset = builder.CreateString("value");
+  auto var_name_offset = builder.CreateString(name);
 
-  auto var_axis = builder.CreateString("x");
+  auto var_axis = builder.CreateString(axis_name);
   std::vector<flatbuffers::Offset<flatbuffers::String>> var_axes_offset = {
       var_axis};
   auto var_axes = builder.CreateVector(var_axes_offset);
@@ -201,8 +203,8 @@ create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
       variable_offset};
   auto variables = builder.CreateVector(variable_offsets);
 
-  auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ms,
-                                   variables);
+  auto da00 = Createda00_DataArray(builder, source_name_offset,
+                                   timestamp_ns * 1000000, variables);
   builder.Finish(da00, "da00");
 
   auto verifier =
@@ -263,6 +265,13 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
         FlatBuffers::create_ad00_message_uint16(item["source_name"], data,
                                                 item["timestamp"]);
     return ad00_message;
+  } else if (schema == "da00") {
+    std::vector<int32_t> data = item["data"];
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> da00_message =
+        FlatBuffers::create_da00_message_int32s(item["source_name"],
+                                                item["name"], item["axis_name"],
+                                                item["timestamp"], data);
+    return da00_message;
   }
   throw std::runtime_error("Unknown schema");
 }
