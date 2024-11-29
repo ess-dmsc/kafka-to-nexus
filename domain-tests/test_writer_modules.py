@@ -133,3 +133,15 @@ def test_ad00_units_attributes_if_not_in_json(local_file):
 
         assert f["/entry/instrument/image_detector/data/value"].attrs["units"] == ""
         assert f["/entry/instrument/image_detector/data/time"].attrs["units"] == "ns"
+
+
+def test_da00_writes(local_file):
+    with h5py.File(local_file, "r") as f:
+        assert np.array_equal(
+            f["/entry/instrument/beam_monitor/signal"][:],
+            [[1, 2, 3, 4, 3, 2, 1], [4, 3, 2, 1, 2, 3, 4]],
+        )
+        assert np.array_equal(
+            f["/entry/instrument/beam_monitor/time"][:],
+            [10_500_000_000, 10_600_000_000],
+        )
