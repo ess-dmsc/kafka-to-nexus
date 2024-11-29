@@ -85,7 +85,7 @@ void StatusReporterBase::reportStatus() {
 void StatusReporterBase::useAlternativeStatusTopic(
     std::string const &AltTopicName) {
 
-  if (not UsingAlternativeStatusTopic) {
+  if (!UsingAlternativeStatusTopic) {
     AltStatusProducerTopic =
         std::make_unique<Kafka::ProducerTopic>(Producer, AltTopicName);
     std::swap(StatusProducerTopic, AltStatusProducerTopic);

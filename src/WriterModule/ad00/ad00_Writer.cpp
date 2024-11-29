@@ -146,7 +146,7 @@ void ad00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto CurrentTimestamp = ad00->timestamp();
   DType Type = ad00->data_type();
 
-  if (not HasCheckedMessageType) {
+  if (!HasCheckedMessageType) {
     msgTypeIsConfigType(ElementType, Type);
     HasCheckedMessageType = true;
   }

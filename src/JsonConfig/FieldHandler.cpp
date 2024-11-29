@@ -51,11 +51,11 @@ void FieldHandler::processConfigData(nlohmann::json const &JsonObj) {
   }
   std::set<FieldBase *> MissingFields;
   for (auto &Field : FieldMap) {
-    if (Field.second->isRequired() and Field.second->hasDefaultValue()) {
+    if (Field.second->isRequired() && Field.second->hasDefaultValue()) {
       MissingFields.emplace(Field.second);
     }
   }
-  if (not MissingFields.empty()) {
+  if (!MissingFields.empty()) {
     int Ctr{1};
     auto ListOfKeys = std::accumulate(
         std::next(MissingFields.begin()), MissingFields.end(),

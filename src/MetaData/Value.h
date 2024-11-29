@@ -36,7 +36,7 @@ public:
   }
   bool isValid() const { return ValueObj != nullptr; }
   void throwIfInvalid() const {
-    if (not isValid()) {
+    if (!isValid()) {
       throw std::runtime_error("Unable to set or get meta data value as it has "
                                "not been initialised.");
     }

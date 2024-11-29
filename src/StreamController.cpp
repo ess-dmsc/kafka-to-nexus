@@ -68,11 +68,11 @@ using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
   auto Now = std::chrono::system_clock::now();
   auto IsDoneWriting =
-      HasError or StopNow or
+      HasError || StopNow or
       (!StreamersRemaining.load() and
        StreamerOptions.StopTimestamp != time_point(duration(0)) and
        Now > StreamerOptions.StopTimestamp);
-  if (not IsDoneWriting) {
+  if (!IsDoneWriting) {
     auto TimeDiffPeriods = (Now - LastFileSizeCalcTime) / FileSizeCalcInterval;
     if (TimeDiffPeriods >= 1) {
       WriterTask->updateApproximateFileSize();

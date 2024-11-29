@@ -190,5 +190,5 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, SendUpdate) {
   std::regex Regex(TestName + " " + std::to_string(Ctr) + " \\d+\n");
   std::smatch Matches;
   std::regex_match(LastCarbonString, Matches, Regex);
-  EXPECT_TRUE(not Matches.empty());
+  EXPECT_TRUE(!Matches.empty());
 }

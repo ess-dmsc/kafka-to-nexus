@@ -114,7 +114,7 @@ void MessageWriter::threadFunction() {
   while (RunThread.load()) {
     WriteOperation();
     FlushOperation();
-    if (not RunThread.load()) {
+    if (!RunThread.load()) {
       break;
     }
     std::this_thread::sleep_for(SleepTime);

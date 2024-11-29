@@ -71,7 +71,7 @@ bool shouldStop(std::unique_ptr<FileWriter::Master> &MasterPtr,
   if (RunState == RunStates::SIGINT_Received) {
     if (FindTopicMode) {
       return true;
-    } else if (not MasterPtr->writingIsFinished()) {
+    } else if (!MasterPtr->writingIsFinished()) {
       MasterPtr->stopNow();
       RunState = RunStates::SIGINT_Waiting;
       SIGINTStart = system_clock::now();
