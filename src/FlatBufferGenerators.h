@@ -203,8 +203,8 @@ create_da00_message_int32s(std::string const &source, std::string const &name,
       variable_offset};
   auto variables = builder.CreateVector(variable_offsets);
 
-  auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ns * 1000000,
-                                   variables);
+  auto da00 = Createda00_DataArray(builder, source_name_offset,
+                                   timestamp_ns * 1000000, variables);
   builder.Finish(da00, "da00");
 
   auto verifier =
