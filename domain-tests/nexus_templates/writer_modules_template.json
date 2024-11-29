@@ -327,6 +327,35 @@
                   }
                 }
               ]
+            },
+            {
+              "name": "beam_monitor",
+              "type": "group",
+              "attributes": [
+                {
+                  "name": "NX_class",
+                  "dtype": "string",
+                  "values": "NXmonitor"
+                }
+              ],
+              "children": [
+                {
+                  "module": "da00",
+                  "config": {
+                    "source": "monitor_data",
+                    "topic": "local_detector",
+                    "dtype": "int32"
+                  }
+                },
+                {
+                  "module": "dataset",
+                  "config": {
+                    "name": "depends_on",
+                    "values": ".",
+                    "dtype": "string"
+                  }
+                }
+              ]
             }
           ]
         }
