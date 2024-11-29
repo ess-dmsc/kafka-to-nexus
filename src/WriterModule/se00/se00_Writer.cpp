@@ -137,7 +137,7 @@ void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
   auto CueIndexValue = Value->current_size();
   auto ValuesType = FbPointer->values_type();
 
-  if (not HasCheckedMessageType) {
+  if (!HasCheckedMessageType) {
     msgTypeIsConfigType(ElementType, ValuesType);
     HasCheckedMessageType = true;
   }

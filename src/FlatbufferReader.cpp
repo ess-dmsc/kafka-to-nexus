@@ -23,7 +23,7 @@ FlatbufferReaderRegistry::ReaderPtr &find(std::string const &Key) {
     return _items.at(Key);
   } catch (std::out_of_range &E) {
     auto s = fmt::format(R"(No such Reader in registry: "{}")", E.what());
-    std::throw_with_nested(std::out_of_range(s));
+    throw std::out_of_range(s);
   }
 }
 

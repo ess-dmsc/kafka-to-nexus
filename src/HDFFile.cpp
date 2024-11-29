@@ -106,7 +106,7 @@ void HDFFileBase::init(const nlohmann::json &NexusStructure,
     Logger::Critical("Failed to initialize  file={}  trace:\n{}",
                      hdfFile().id().file_name().string(),
                      hdf5::error::print_nested(E));
-    std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
+    throw std::runtime_error("HDFFile failed to initialize!");
   }
 }
 
@@ -178,10 +178,10 @@ void HDFFile::closeFile() {
     auto Trace = hdf5::error::print_nested(E);
     Logger::Critical(R"(Got error when closing file "{}". Failure was: {})",
                      hdfFile().id().file_name().string(), Trace);
-    std::throw_with_nested(std::runtime_error(fmt::format(
+    throw std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
         fs::current_path().string(), hdfFile().id().file_name().string(),
-        Trace)));
+        Trace));
   }
 }
 
@@ -201,8 +201,8 @@ void HDFFileBase::flush() {
       Logger::Critical("Unable to flush file due to it being invalid.");
     }
   } catch (const std::runtime_error &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("HDFFile failed to flush  what: {}", E.what())));
+    throw std::runtime_error(
+        fmt::format("HDFFile failed to flush  what: {}", E.what()));
   }
 }
 
@@ -239,7 +239,7 @@ void HDFFile::addMetaData() {
 }
 
 void HDFFile::openInSWMRMode() {
-  if (not SWMRMode) {
+  if (!SWMRMode) {
     closeFile();
     openFileInSWMRMode();
     SWMRMode = true;
@@ -256,6 +256,6 @@ void HDFFile::openInRegularMode() {
 
 bool HDFFile::isSWMRMode() const { return SWMRMode; }
 
-bool HDFFile::isRegularMode() const { return not SWMRMode; }
+bool HDFFile::isRegularMode() const { return !SWMRMode; }
 
 } // namespace FileWriter
