@@ -10,6 +10,7 @@
 #include <FlatBufferGenerators.h>
 #include <ad00_area_detector_array_generated.h>
 #include <da00_dataarray_generated.h>
+#include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
 #include <gtest/gtest.h>
@@ -50,6 +51,14 @@ std::string const example_json = R"(
   "source_name": "image_data",
   "timestamp": 10310,
   "data": [[13, 12], [11, 10]]
+  },
+  {
+    "schema": "ep01",
+    "topic": "local_choppers",
+    "kafka_timestamp": 10111,
+    "source_name": "local:choppers:rotation_speed",
+    "connection_status": "ConnectionInfo::CONNECTED",
+    "timestamp": 10111
   }
 ]
 )";
@@ -119,6 +128,19 @@ TEST(json_to_fb, can_create_ad00_buffer) {
   ASSERT_EQ(12, data_array[1]);
   ASSERT_EQ(11, data_array[2]);
   ASSERT_EQ(10, data_array[3]);
+}
+
+TEST(json_to_fb, can_create_ep01_buffer) {
+  json data = json::parse(example_json);
+  json item = data[4];
+  std::pair<std::unique_ptr<uint8_t[]>, size_t> raw_flatbuffer =
+      FlatBuffers::convert_to_raw_flatbuffer(item);
+  uint8_t *buffer = raw_flatbuffer.first.get();
+  auto fb = GetEpicsPVConnectionInfo(buffer);
+  ASSERT_EQ("local:choppers:rotation_speed", fb->source_name()->str());
+  ASSERT_EQ(10111000000, fb->timestamp());
+  ASSERT_EQ(ConnectionInfo::CONNECTED, fb->status());
+  ASSERT_EQ("local:choppers:rotation_speed", fb->source_name()->str());
 }
 
 // TODO: ep00, al00 tests needed
