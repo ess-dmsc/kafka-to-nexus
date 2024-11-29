@@ -175,7 +175,7 @@ create_ad00_message_uint16(std::string const &source,
 /// \brief Creates a 1D data array message of int32s.
 inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_da00_message_int32s(std::string const &source, std::string const &name,
-                           std::string const &axis_name, int64_t timestamp_ms,
+                           std::string const &axis_name, int64_t timestamp_ns,
                            const std::vector<int32_t> &data) {
   auto builder = flatbuffers::FlatBufferBuilder();
   builder.ForceDefaults(true);
@@ -203,7 +203,7 @@ create_da00_message_int32s(std::string const &source, std::string const &name,
       variable_offset};
   auto variables = builder.CreateVector(variable_offsets);
 
-  auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ms,
+  auto da00 = Createda00_DataArray(builder, source_name_offset, timestamp_ns * 1000000,
                                    variables);
   builder.Finish(da00, "da00");
 
