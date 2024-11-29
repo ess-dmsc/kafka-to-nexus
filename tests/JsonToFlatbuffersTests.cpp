@@ -9,6 +9,7 @@
 
 #include <FlatBufferGenerators.h>
 #include <ad00_area_detector_array_generated.h>
+#include <al00_alarm_generated.h>
 #include <da00_dataarray_generated.h>
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
@@ -59,6 +60,15 @@ std::string const example_json = R"(
     "source_name": "local:choppers:rotation_speed",
     "connection_status": "ConnectionInfo::CONNECTED",
     "timestamp": 10111
+  },
+  {
+    "schema": "al00",
+    "topic": "local_choppers",
+    "kafka_timestamp": 10112,
+    "source_name": "local:choppers:rotation_speed",
+    "timestamp": 10112,
+    "severity": "Severity::OK",
+    "message": "Chopper speed is perfect"
   }
 ]
 )";
@@ -140,7 +150,17 @@ TEST(json_to_fb, can_create_ep01_buffer) {
   ASSERT_EQ("local:choppers:rotation_speed", fb->source_name()->str());
   ASSERT_EQ(10111000000, fb->timestamp());
   ASSERT_EQ(ConnectionInfo::CONNECTED, fb->status());
-  ASSERT_EQ("local:choppers:rotation_speed", fb->source_name()->str());
 }
 
-// TODO: ep00, al00 tests needed
+TEST(json_to_fb, can_create_al00_buffer) {
+  json data = json::parse(example_json);
+  json item = data[5];
+  std::pair<std::unique_ptr<uint8_t[]>, size_t> raw_flatbuffer =
+      FlatBuffers::convert_to_raw_flatbuffer(item);
+  uint8_t *buffer = raw_flatbuffer.first.get();
+  auto fb = GetAlarm(buffer);
+  ASSERT_EQ("local:choppers:rotation_speed", fb->source_name()->str());
+  ASSERT_EQ(10112000000, fb->timestamp());
+  ASSERT_EQ(Severity::OK, fb->severity());
+  ASSERT_EQ("Chopper speed is perfect", fb->message()->str());
+}
