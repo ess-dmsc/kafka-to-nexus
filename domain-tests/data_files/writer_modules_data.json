@@ -136,6 +136,8 @@
     "kafka_timestamp": 10500,
     "source_name": "monitor_data",
     "timestamp": 10500,
+    "name": "signal",
+    "axis_name": "x",
     "data": [1, 2, 3, 4, 3, 2, 1]
   }
 ]

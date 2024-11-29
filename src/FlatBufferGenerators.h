@@ -172,16 +172,18 @@ create_ad00_message_uint16(std::string const &source,
   return {std::move(buffer), buffer_size};
 }
 
+/// \brief Creates a 1D data array message of int32s.
 inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
-create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
+create_da00_message_int32s(std::string const &source, std::string const &name,
+                           std::string const &axis_name, int64_t timestamp_ms,
                            const std::vector<int32_t> &data) {
   auto builder = flatbuffers::FlatBufferBuilder();
   builder.ForceDefaults(true);
 
   auto source_name_offset = builder.CreateString(source);
-  auto var_name_offset = builder.CreateString("signal");
+  auto var_name_offset = builder.CreateString(name);
 
-  auto var_axis = builder.CreateString("x");
+  auto var_axis = builder.CreateString(axis_name);
   std::vector<flatbuffers::Offset<flatbuffers::String>> var_axes_offset = {
       var_axis};
   auto var_axes = builder.CreateVector(var_axes_offset);
@@ -267,6 +269,7 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
     std::vector<int32_t> data = item["data"];
     std::pair<std::unique_ptr<uint8_t[]>, size_t> da00_message =
         FlatBuffers::create_da00_message_int32s(item["source_name"],
+                                                item["name"], item["axis_name"],
                                                 item["timestamp"], data);
     return da00_message;
   }
