@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include <FlatBufferGenerators.h>
+#include <ad00_area_detector_array_generated.h>
 #include <da00_dataarray_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
@@ -41,6 +42,14 @@ std::string const example_json = R"(
     "name": "signal",
     "axis_name": "x",
     "data": [4, 3, 2, 1, 2, 3, 4]
+  },
+  {
+  "schema": "ad00",
+  "topic": "local_detector",
+  "kafka_timestamp": 10310,
+  "source_name": "image_data",
+  "timestamp": 10310,
+  "data": [[13, 12], [11, 10]]
   }
 ]
 )";
@@ -96,4 +105,20 @@ TEST(json_to_fb, can_create_da00_buffer) {
   ASSERT_EQ(4, data_array[6]);
 }
 
-// TODO: ep00, al00 and ad00 tests needed
+TEST(json_to_fb, can_create_ad00_buffer) {
+  json data = json::parse(example_json);
+  json item = data[3];
+  std::pair<std::unique_ptr<uint8_t[]>, size_t> raw_flatbuffer =
+      FlatBuffers::convert_to_raw_flatbuffer(item);
+  uint8_t *buffer = raw_flatbuffer.first.get();
+  auto fb = Getad00_ADArray(buffer);
+  ASSERT_EQ("image_data", fb->source_name()->str());
+  ASSERT_EQ(10310000000, fb->timestamp());
+  auto data_array = reinterpret_cast<const uint16_t *>(fb->data()->data());
+  ASSERT_EQ(13, data_array[0]);
+  ASSERT_EQ(12, data_array[1]);
+  ASSERT_EQ(11, data_array[2]);
+  ASSERT_EQ(10, data_array[3]);
+}
+
+// TODO: ep00, al00 tests needed
