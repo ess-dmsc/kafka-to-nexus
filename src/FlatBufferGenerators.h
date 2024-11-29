@@ -179,7 +179,7 @@ create_da00_message_int32s(std::string const &source, int64_t timestamp_ms,
   builder.ForceDefaults(true);
 
   auto source_name_offset = builder.CreateString(source);
-  auto var_name_offset = builder.CreateString("value");
+  auto var_name_offset = builder.CreateString("signal");
 
   auto var_axis = builder.CreateString("x");
   std::vector<flatbuffers::Offset<flatbuffers::String>> var_axes_offset = {

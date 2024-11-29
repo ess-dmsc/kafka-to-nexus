@@ -313,7 +313,7 @@
                           2,
                           2
                         ],
-                        "dtype": "int16"
+                        "dtype": "uint16"
                       }
                     }
                   ]
@@ -344,7 +344,16 @@
                   "config": {
                     "source": "monitor_data",
                     "topic": "local_detector",
-                    "dtype": "int32"
+                    "variables": [
+                      {
+                        "name": "signal",
+                        "unit": "counts",
+                        "label": "some label",
+                        "data_type": "int32",
+                        "axes": ["x"],
+                        "shape": [7]
+                      }
+                    ]
                   }
                 },
                 {
