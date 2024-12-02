@@ -15,6 +15,7 @@
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
+#include <fmt/core.h>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <ostream>
@@ -273,7 +274,7 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
                                                 item["timestamp"], data);
     return da00_message;
   }
-  throw std::runtime_error("Unknown schema");
+  throw std::runtime_error(fmt::format("Unknown schema {}", schema));
 }
 
 } // namespace FlatBuffers
