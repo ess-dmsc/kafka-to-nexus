@@ -25,7 +25,8 @@ public:
   ~WriterModuleStandIn() = default;
   MAKE_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);
-  MAKE_MOCK2(writeImpl, void(FileWriter::FlatbufferMessage const &, bool), override);
+  MAKE_MOCK2(writeImpl, void(FileWriter::FlatbufferMessage const &, bool),
+             override);
 };
 
 class DataMessageWriterTest : public ::testing::Test {

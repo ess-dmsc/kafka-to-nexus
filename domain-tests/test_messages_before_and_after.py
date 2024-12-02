@@ -35,9 +35,9 @@ def test_ev44_data_before_start_is_not_written(local_file):
         )
 
 
-def test_first_ev44_data_after_stop_written_but_later_values_ignored(local_file):
+def test_ev44_data_after_stop_not_written(local_file):
     with h5py.File(local_file, "r") as f:
         assert (
             f["/entry/instrument/event_detector/events/event_time_zero"][~0]
-            == 16_000_000_000
+            == 15_000_000_000
         )
