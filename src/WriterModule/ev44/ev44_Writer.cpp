@@ -90,7 +90,11 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
 }
 
 void ev44_Writer::writeImpl(FlatbufferMessage const &Message,
-                            [[maybe_unused]] bool is_buffered_message) {
+                            bool is_buffered_message) {
+  if (is_buffered_message) {
+    // Ignore buffered data for event data
+    return;
+  }
   auto EventMsgFlatbuffer = GetEvent44Message(Message.data());
   auto CurrentNumberOfEvents = EventMsgFlatbuffer->time_of_flight()->size();
   if (EventMsgFlatbuffer->pixel_id()->size() > 0 &&
