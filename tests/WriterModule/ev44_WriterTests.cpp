@@ -163,7 +163,7 @@ TEST_F(Event44WriterTests,
     WriterModule::ev44::ev44_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage));
+    EXPECT_NO_THROW(Writer.write(TestMessage, false));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file
@@ -217,7 +217,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataWithoutPixelIds) {
     WriterModule::ev44::ev44_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage));
+    EXPECT_NO_THROW(Writer.write(TestMessage, false));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file
@@ -280,8 +280,8 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
     WriterModule::ev44::ev44_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage1));
-    EXPECT_NO_THROW(Writer.write(TestMessage2));
+    EXPECT_NO_THROW(Writer.write(TestMessage1, false));
+    EXPECT_NO_THROW(Writer.write(TestMessage2, false));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file
@@ -369,9 +369,9 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
     WriterModule::ev44::ev44_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage1));
-    EXPECT_NO_THROW(Writer.write(TestMessage2));
-    EXPECT_NO_THROW(Writer.write(TestMessage3));
+    EXPECT_NO_THROW(Writer.write(TestMessage1, false));
+    EXPECT_NO_THROW(Writer.write(TestMessage2, false));
+    EXPECT_NO_THROW(Writer.write(TestMessage3, false));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file
@@ -445,7 +445,7 @@ TEST_F(Event44WriterTests, PulseTimeIsRepeatedWithinSameMessage) {
     WriterModule::ev44::ev44_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage));
+    EXPECT_NO_THROW(Writer.write(TestMessage, false));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file
@@ -510,8 +510,8 @@ TEST_F(Event44WriterTests, LastPulseTimeIsRepeatedInSubsequentMessage) {
     WriterModule::ev44::ev44_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage1));
-    EXPECT_NO_THROW(Writer.write(TestMessage2));
+    EXPECT_NO_THROW(Writer.write(TestMessage1, false));
+    EXPECT_NO_THROW(Writer.write(TestMessage2, false));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file
@@ -581,8 +581,8 @@ TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
     Writer.setCueInterval(1);
     EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-    EXPECT_NO_THROW(Writer.write(TestMessage1));
-    EXPECT_NO_THROW(Writer.write(TestMessage2));
+    EXPECT_NO_THROW(Writer.write(TestMessage1, false));
+    EXPECT_NO_THROW(Writer.write(TestMessage2, false));
   } // These braces are required due to "h5.cpp"
 
   // Read data from the file

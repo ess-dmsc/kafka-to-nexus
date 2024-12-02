@@ -330,7 +330,8 @@ InitResult da00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
+void da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message,
+                            [[maybe_unused]] bool is_buffered_message) {
   const auto da00_obj = Getda00_DataArray(Message.data());
   if (isFirstMessage) {
     handle_first_message(da00_obj);

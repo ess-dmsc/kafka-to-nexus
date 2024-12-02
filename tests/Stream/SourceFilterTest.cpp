@@ -17,8 +17,8 @@ class StubMessageWriter : public Stream::MessageWriter {
 public:
   StubMessageWriter()
       : MessageWriter([]() {}, 1s, std::make_unique<Metrics::Registrar>("")) {}
-  void addMessage(Stream::Message const &Msg) override {
-    messages_received.emplace_back(Msg);
+  void addMessage(Stream::Message const &message, [[maybe_unused]] bool is_buffered_message) override {
+    messages_received.emplace_back(message);
   }
   std::vector<Stream::Message> messages_received;
 };

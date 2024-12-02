@@ -186,7 +186,7 @@ public:
   /// \param Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
   // cppcheck-suppress functionStatic
-  void writeImpl(FileWriter::FlatbufferMessage const &/*Message*/) override {
+  void writeImpl([[maybe_unused]] FileWriter::FlatbufferMessage const &message, [[maybe_unused]]bool is_buffered_message) override {
     std::cout << "WriterClass::writeImpl()\n";
   }
 };

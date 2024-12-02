@@ -109,7 +109,7 @@ TEST_F(se00Writer, WriteDataOnce) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
@@ -151,8 +151,8 @@ TEST_F(se00Writer, WriteDataTwice) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
@@ -190,7 +190,7 @@ TEST_F(se00Writer, WriteNoElements) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
@@ -209,7 +209,7 @@ TEST_F(se00Writer, WriteDataWithNoTimestampsInFB) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto RawValuesDataset = UsedGroup.get_dataset("value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
