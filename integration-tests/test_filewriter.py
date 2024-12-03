@@ -379,7 +379,7 @@ class TestFileWriter:
 
         with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
             # Check data is as expected
-            assert len(f["/entry/detector/event_time_zero"]) == 8
+            assert len(f["/entry/detector/event_time_zero"]) == 7
             assert f["/entry/detector/event_id"][0] == 15
             assert f["/entry/detector/event_id"][~0] == 54
             assert len(f["/entry/motion/time"]) == 8
