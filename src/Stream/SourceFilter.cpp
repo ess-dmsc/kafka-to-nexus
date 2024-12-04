@@ -86,6 +86,8 @@ bool SourceFilter::filter_message(
   }
   if (message_time > _stop_time) {
     _is_finished = true;
+    forward_buffered_message();
+    return false;
   }
   forward_buffered_message();
   forward_message(message);

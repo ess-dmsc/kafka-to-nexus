@@ -341,9 +341,10 @@ class TestFileWriter:
     def test_data_before_and_after(self, file_writer):
         """
         Test that when writing in the past:
-         - the last value before the start time is written
-         - the first value after the stop time is written
-         - all values inbetween are written
+         - the last value before the start time is written for f144
+         - the first value after the stop time is written for f144
+         - all f144 values inbetween are written
+         - ev44 only writes the values inbetween the start and stop times
         """
         producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
 
@@ -379,12 +380,12 @@ class TestFileWriter:
 
         with h5py.File(os.path.join(OUTPUT_DIR, file_name), "r") as f:
             # Check data is as expected
-            assert len(f["/entry/detector/event_time_zero"]) == 7
-            assert f["/entry/detector/event_id"][0] == 15
-            assert f["/entry/detector/event_id"][~0] == 54
-            assert len(f["/entry/motion/time"]) == 8
+            assert len(f["/entry/detector/event_time_zero"]) == 6
+            assert f["/entry/detector/event_id"][0] == 20
+            assert f["/entry/detector/event_id"][~0] == 49
+            assert len(f["/entry/motion/time"]) == 7
             assert f["/entry/motion/value"][0] == 3
-            assert f["/entry/motion/value"][~0] == 10
+            assert f["/entry/motion/value"][~0] == 9
 
     def test_start_and_stop_in_the_future(self, file_writer):
         """
