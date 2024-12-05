@@ -25,7 +25,7 @@ public:
   ~WriterModuleStandIn() = default;
   MAKE_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);
-  MAKE_MOCK2(writeImpl, void(FileWriter::FlatbufferMessage const &, bool),
+  MAKE_MOCK2(writeImpl, bool(FileWriter::FlatbufferMessage const &, bool),
              override);
 };
 
@@ -80,7 +80,7 @@ TEST_F(DataMessageWriterTest, EnableExtraModule) {
 }
 
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
-  REQUIRE_CALL(WriterModule, writeImpl(_, _)).TIMES(1);
+  REQUIRE_CALL(WriterModule, writeImpl(_, _)).TIMES(1).RETURN(true);
   auto InitialWriteCount = WriterModule.getWriteCount();
   FileWriter::FlatbufferMessage Msg;
   Stream::Message SomeMessage(

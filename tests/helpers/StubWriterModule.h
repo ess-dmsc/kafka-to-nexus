@@ -22,6 +22,8 @@ public:
   InitResult reopen(hdf5::node::Group & /*HDFGroup*/) override {
     return InitResult::OK;
   }
-  void writeImpl([[maybe_unused]] FileWriter::FlatbufferMessage const &message,
-                 [[maybe_unused]] bool is_buffered_message) override {}
+  bool writeImpl([[maybe_unused]] FileWriter::FlatbufferMessage const &message,
+                 [[maybe_unused]] bool is_buffered_message) override {
+    return true;
+  }
 };

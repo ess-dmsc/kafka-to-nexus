@@ -113,14 +113,15 @@ public:
   /// \param msg The message to process
   void write(FileWriter::FlatbufferMessage const &Message,
              bool is_buffered_message) {
-    writeImpl(Message, is_buffered_message);
-    WriteCount++;
+    if (writeImpl(Message, is_buffered_message)) {
+      WriteCount++;
+    }
   }
 
   /// \brief Process the message in some way, for example write to the HDF file.
   ///
   /// \param msg The message to process
-  virtual void writeImpl(FileWriter::FlatbufferMessage const &Message,
+  virtual bool writeImpl(FileWriter::FlatbufferMessage const &Message,
                          bool is_buffered_message) = 0;
 
   void registerField(JsonConfig::FieldBase *Ptr) {

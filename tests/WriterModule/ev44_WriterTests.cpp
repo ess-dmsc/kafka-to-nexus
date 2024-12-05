@@ -603,3 +603,30 @@ TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
       << "Expected cue_index dataset to contain the indices of the last event "
          "of every message";
 }
+
+TEST_F(Event44WriterTests, buffered_data_not_written) {
+  std::vector<int32_t> TimeOfFlight1 = {101, 102, 201};
+  std::vector<int32_t> DetectorID1 = {101, 102, 201};
+  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
+  auto MessageBuffer1 =
+      generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
+                             ReferenceTime1, ReferenceTimeIndex1);
+  FileWriter::FlatbufferMessage TestMessage1(MessageBuffer1.data(),
+                                             MessageBuffer1.size());
+
+  // Create writer and give it the message to write
+  {
+    WriterModule::ev44::ev44_Writer Writer;
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage1, true));
+  } // These braces are required due to "h5.cpp"
+
+  // Read data from the file
+  auto EventTimeOffsetDataset = TestGroup.get_dataset("event_time_offset");
+  auto EventTimeZeroDataset = TestGroup.get_dataset("event_time_zero");
+
+  EXPECT_EQ(0, EventTimeOffsetDataset.dataspace().size());
+  EXPECT_EQ(0, EventTimeZeroDataset.dataspace().size());
+}
