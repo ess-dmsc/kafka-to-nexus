@@ -14,7 +14,9 @@ def local_file(request):
     )
 
 
-def test_f144_data_before_start_is_written_when_no_data_between_start_and_stop(local_file):
+def test_f144_data_before_start_is_written_when_no_data_between_start_and_stop(
+    local_file,
+):
     with h5py.File(local_file, "r") as f:
         assert f["/entry/instrument/chopper/delay/value"][0] == 3
         assert f["/entry/instrument/chopper/delay/time"][0] == 9_000_000_000
