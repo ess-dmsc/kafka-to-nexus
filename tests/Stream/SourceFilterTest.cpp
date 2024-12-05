@@ -116,15 +116,13 @@ TEST(SourceFilter, message_on_start_is_allowed_through) {
   EXPECT_EQ(1u, harness.writer->messages_received.size());
 }
 
-TEST(SourceFilter, first_message_after_stop_is_allowed_through) {
+TEST(SourceFilter, messages_after_stop_are_not_allowed_through) {
   auto harness = create_filter_for_tests(time_point{0ms}, time_point{1000ms});
 
   harness.filter->filter_message(create_f144_message("::source::", 1, 1001));
   harness.filter->filter_message(create_f144_message("::source::", 2, 1002));
 
-  EXPECT_EQ(1u, harness.writer->messages_received.size());
-  auto first = harness.writer->messages_received.at(0).FbMsg;
-  EXPECT_EQ(1001000000, first.getTimestamp()); // timestamp is in ns
+  EXPECT_EQ(0u, harness.writer->messages_received.size());
 }
 
 TEST(SourceFilter, message_after_stop_sets_filter_to_finished) {
@@ -164,11 +162,13 @@ TEST(SourceFilter, can_change_stop_time_after_construction) {
 
   harness.filter->set_stop_time(time_point{1000ms});
 
-  // First message after stop is allowed
+  // Messages after stop are not allowed
+  harness.filter->filter_message(create_f144_message("::source::", 1, 999));
+  harness.filter->filter_message(create_f144_message("::source::", 1, 1000));
   harness.filter->filter_message(create_f144_message("::source::", 1, 1001));
   harness.filter->filter_message(create_f144_message("::source::", 2, 1002));
 
-  EXPECT_EQ(1u, harness.writer->messages_received.size());
+  EXPECT_EQ(2u, harness.writer->messages_received.size());
 }
 
 TEST(SourceFilter,
