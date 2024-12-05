@@ -120,7 +120,7 @@ That file-writer will switch to a new topic specified via start message. It will
 writing to that topic. The request to stop writing will also come to that topic.
 Once the file-writer has finished writing it will disconnect from the topic and return to the job pool topic.
 
-Note: all file-writers belong to the same consumer group, so only one will consumer the start message.
+Note: all file-writers belong to the same consumer group, so only one will consume the start message.
 
 This [flow-chart](documentation/file-writer-command-handler-state-machine.png) shows this information pictorially.
 
