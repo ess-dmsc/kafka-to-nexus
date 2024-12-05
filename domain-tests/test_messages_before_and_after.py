@@ -1,5 +1,4 @@
 import h5py
-import numpy as np
 import pytest
 from conftest import write_file
 
