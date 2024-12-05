@@ -19,7 +19,7 @@ docker exec kafka bash -c "kafka-topics --bootstrap-server localhost:9092 --crea
 ```
 - Run the following command:
 ```
-pytest -s --file-writer-binary=../_ninja/bin/kafka-to-nexus 
+pytest -s --file-writer-binary=../_build/bin/kafka-to-nexus 
 ```
 ### Running locally without Docker
 Can be more convenient as Kafka remains running between tests runs, so other tools can be used to probe data.
@@ -30,5 +30,5 @@ Also, it is a bit quicker as it doesn't have to wait for Docker and Kafka to sta
 - Create the topics listed in the `topics.txt` file
 - Run the following command with appropriate Kafka address:
 ```
-pytest -s --file-writer-binary=../_ninja/bin/kafka-to-nexus --kafka-broker=localhost:9092
+pytest -s --file-writer-binary=../_build/bin/kafka-to-nexus --kafka-broker=localhost:9092
 ```
