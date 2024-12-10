@@ -89,7 +89,12 @@ WriterModule::InitResult ev44_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
+bool ev44_Writer::writeImpl(FlatbufferMessage const &Message,
+                            bool is_buffered_message) {
+  if (is_buffered_message) {
+    // Ignore buffered data for event data
+    return false;
+  }
   auto EventMsgFlatbuffer = GetEvent44Message(Message.data());
   auto CurrentNumberOfEvents = EventMsgFlatbuffer->time_of_flight()->size();
   if (EventMsgFlatbuffer->pixel_id()->size() > 0 &&
@@ -129,6 +134,7 @@ void ev44_Writer::writeImpl(FlatbufferMessage const &Message) {
     }
     EventsWrittenMetadataField.setValue(EventsWritten);
   }
+  return true;
 }
 
 void ev44_Writer::register_meta_data(const hdf5::node::Group &HDFGroup,

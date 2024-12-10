@@ -38,7 +38,7 @@ public:
 
   virtual ~MessageWriter();
 
-  virtual void addMessage(Message const &Msg);
+  virtual void addMessage(Message const &Msg, bool is_buffered_message);
 
   /// \brief Tell the writer thread to stop.
   ///
@@ -60,7 +60,8 @@ public:
 
 protected:
   virtual void writeMsgImpl(WriterModule::Base *ModulePtr,
-                            FileWriter::FlatbufferMessage const &Msg);
+                            FileWriter::FlatbufferMessage const &Msg,
+                            bool is_buffered_message);
   virtual void threadFunction();
 
   virtual void flushData() { FlushDataFunction(); };

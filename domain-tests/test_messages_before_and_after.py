@@ -1,5 +1,4 @@
 import h5py
-import numpy as np
 import pytest
 from conftest import write_file
 
@@ -21,23 +20,23 @@ def test_last_f144_data_before_start_is_written_but_earlier_values_ignored(local
         assert f["/entry/instrument/chopper/delay/time"][0] == 9_999_000_000
 
 
-def test_first_f144_data_after_stop_written_but_later_values_ignored(local_file):
+def test_f144_data_after_stop_not_written(local_file):
     with h5py.File(local_file, "r") as f:
-        assert f["/entry/instrument/chopper/delay/value"][~0] == 17
-        assert f["/entry/instrument/chopper/delay/time"][~0] == 16_000_000_000
+        assert f["/entry/instrument/chopper/delay/value"][~0] == 16
+        assert f["/entry/instrument/chopper/delay/time"][~0] == 15_000_000_000
 
 
-def test_last_ev44_data_before_start_is_written_but_earlier_values_ignored(local_file):
+def test_ev44_data_before_start_is_not_written(local_file):
     with h5py.File(local_file, "r") as f:
         assert (
             f["/entry/instrument/event_detector/events/event_time_zero"][0]
-            == 9_000_000_000
+            == 10_000_000_000
         )
 
 
-def test_first_ev44_data_after_stop_written_but_later_values_ignored(local_file):
+def test_ev44_data_after_stop_not_written(local_file):
     with h5py.File(local_file, "r") as f:
         assert (
             f["/entry/instrument/event_detector/events/event_time_zero"][~0]
-            == 16_000_000_000
+            == 15_000_000_000
         )

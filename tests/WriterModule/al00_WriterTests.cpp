@@ -89,7 +89,7 @@ TEST_F(EPICS_AlarmWriter, WriteDataOnce) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto AlarmMsgDataset = UsedGroup.get_dataset("alarm_message");
   auto AlarmSeverityDataset = UsedGroup.get_dataset("alarm_severity");
   auto AlarmTimeDataset = UsedGroup.get_dataset("alarm_time");

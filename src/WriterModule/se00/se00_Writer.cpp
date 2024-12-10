@@ -132,7 +132,8 @@ void msgTypeIsConfigType(se00_Writer::Type ConfigType, ValueUnion MsgType) {
   }
 }
 
-void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
+bool se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message,
+                            [[maybe_unused]] bool is_buffered_message) {
   auto FbPointer = Getse00_SampleEnvironmentData(Message.data());
   auto CueIndexValue = Value->current_size();
   auto ValuesType = FbPointer->values_type();
@@ -199,7 +200,7 @@ void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
     Logger::Info("Unknown data type in flatbuffer.");
   }
   if (NrOfElements == 0) {
-    return;
+    return false;
   }
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
   CueTimestamp.appendElement(FbPointer->packet_timestamp());
@@ -216,6 +217,7 @@ void se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
         FbPointer->packet_timestamp(), FbPointer->time_delta(), NrOfElements));
     Timestamp.appendArray(TempTimeStamps);
   }
+  return true;
 }
 
 template <typename Type>

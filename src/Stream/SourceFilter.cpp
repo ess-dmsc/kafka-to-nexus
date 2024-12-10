@@ -36,7 +36,7 @@ bool SourceFilter::has_finished() const { return _is_finished; }
 
 void SourceFilter::forward_buffered_message() {
   if (_buffered_message.isValid()) {
-    forward_message(_buffered_message);
+    forward_message(_buffered_message, true);
     _buffered_message = FileWriter::FlatbufferMessage();
   }
 }
@@ -86,17 +86,19 @@ bool SourceFilter::filter_message(
   }
   if (message_time > _stop_time) {
     _is_finished = true;
+    forward_buffered_message();
+    return false;
   }
   forward_buffered_message();
   forward_message(message);
   return true;
 }
 
-void SourceFilter::forward_message(
-    FileWriter::FlatbufferMessage const &message) {
+void SourceFilter::forward_message(FileWriter::FlatbufferMessage const &message,
+                                   bool is_buffered_message) {
   ++MessagesTransmitted;
   for (auto const &writer_module : _destination_writer_modules) {
-    _writer->addMessage({writer_module, message});
+    _writer->addMessage({writer_module, message}, is_buffered_message);
   }
 }
 

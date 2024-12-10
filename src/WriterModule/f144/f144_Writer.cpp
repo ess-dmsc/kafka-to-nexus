@@ -194,7 +194,8 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
   }
 }
 
-void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
+bool f144_Writer::writeImpl(FlatbufferMessage const &Message,
+                            [[maybe_unused]] bool is_buffered_message) {
   auto LogDataMessage = Getf144_LogData(Message.data());
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();
@@ -273,6 +274,7 @@ void f144_Writer::writeImpl(FlatbufferMessage const &Message) {
     MetaDataMax.setValue(Max);
     MetaDataMean.setValue(Sum / TotalNrOfElementsWritten);
   }
+  return true;
 }
 
 void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,

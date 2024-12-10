@@ -54,7 +54,8 @@ InitResult al00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return InitResult::OK;
 }
 
-void al00_Writer::writeImpl(FlatbufferMessage const &Message) {
+bool al00_Writer::writeImpl(FlatbufferMessage const &Message,
+                            [[maybe_unused]] bool is_buffered_message) {
   auto AlarmMessage = GetAlarm(Message.data());
 
   AlarmTime.appendElement(AlarmMessage->timestamp());
@@ -65,6 +66,7 @@ void al00_Writer::writeImpl(FlatbufferMessage const &Message) {
     AlarmMessageString = "NO ALARM MESSAGE";
   }
   AlarmMsg.appendStringElement(AlarmMessageString);
+  return true;
 }
 
 /// Register the writer module.

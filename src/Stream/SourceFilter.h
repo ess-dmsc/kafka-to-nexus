@@ -58,7 +58,8 @@ public:
   }
 
 private:
-  void forward_message(FileWriter::FlatbufferMessage const &message);
+  void forward_message(FileWriter::FlatbufferMessage const &message,
+                       bool is_buffered_message = false);
   void forward_buffered_message();
   time_point _start_time;
   time_point _stop_time;

@@ -747,7 +747,7 @@ TEST_F(da00_WriterTestFixture, da00_WriterWriteExtendsShape) {
     writer.init_hdf(_group);
     writer.reopen(_group);
     for (int i = 0; i < write_count; ++i)
-      EXPECT_NO_THROW(writer.write(message));
+      EXPECT_NO_THROW(writer.write(message, false));
     EXPECT_EQ(write_count, writer.Timestamp.current_size());
   }
   for (const auto &name :
@@ -774,7 +774,7 @@ TEST_F(da00_WriterTestFixture, da00_WriterWriteCopiesData) {
     writer.reopen(_group);
     constexpr int write_count{10};
     for (int i = 0; i < write_count; ++i)
-      EXPECT_NO_THROW(writer.write(message));
+      EXPECT_NO_THROW(writer.write(message, false));
     EXPECT_EQ(write_count, writer.Timestamp.current_size());
   }
   const auto shape = Simple(_group.get_dataset("signal").dataspace());
@@ -797,7 +797,7 @@ TEST_F(da00_WriterTestFixture, da00_WriterFillsInAttributes) {
     writer.reopen(_group);
     constexpr int write_count{10};
     for (int i = 0; i < write_count; ++i)
-      EXPECT_NO_THROW(writer.write(message));
+      EXPECT_NO_THROW(writer.write(message, false));
     EXPECT_EQ(write_count, writer.Timestamp.current_size());
   }
   for (const auto &name : {"signal", "signal_error", "gain", "x", "y", "time",

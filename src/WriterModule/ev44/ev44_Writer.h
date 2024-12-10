@@ -27,7 +27,8 @@ public:
   /// \brief Write flatbuffer message.
   ///
   /// \param FlatBufferMessage
-  void writeImpl(FlatbufferMessage const &Message) override;
+  bool writeImpl(FlatbufferMessage const &Message,
+                 bool is_buffered_message) override;
 
   NeXusDataset::EventTimeOffset EventTimeOffset;
   NeXusDataset::EventId EventId;
