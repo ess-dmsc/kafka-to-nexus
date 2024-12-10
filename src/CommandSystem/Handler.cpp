@@ -197,15 +197,6 @@ CmdResponse Handler::startWritingProcess(const FileWriter::Msg &command_message,
                         exception_message)};
   }
 
-  if (!start_message.ServiceID.empty() &&
-      start_message.ServiceID != ServiceId) {
-    return {
-        LogLevel::Debug, 400,
-        fmt::format(
-            R"(Rejected start command as the service id was wrong. It should be "{}", it was "{}".)",
-            ServiceId, start_message.ServiceID)};
-  }
-
   /// \note This test should never return false as consumption of new jobs
   /// should only be possible when the current one is finished. However, there
   /// is an indication that in some cases jobs will be consumed regardless.
@@ -292,16 +283,6 @@ CmdResponse Handler::stopWritingProcess(const FileWriter::Msg &command_message,
   }
 
   std::string ResponseMessage;
-
-  if (!(stop_message.ServiceID.empty()) &&
-      ServiceId != stop_message.ServiceID) {
-    return {
-        LogLevel::Debug, 0,
-        fmt::format(
-            "Rejected stop command as the service ID did not match. Local ID "
-            "is {}, command ID was {}.",
-            ServiceId, stop_message.ServiceID)};
-  }
 
   if (!IsWritingNow()) {
     return {LogLevel::Warn, 400,

@@ -130,22 +130,6 @@ TEST_F(StartHandlerTest, start_command_with_no_service_id_starts) {
   EXPECT_EQ(true, start_called);
 }
 
-TEST_F(StartHandlerTest, start_command_with_mismatched_service_id_is_rejected) {
-  bool start_called = false;
-  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return false; });
-  _handlerUnderTest->registerStartFunction(
-      [&start_called]([[maybe_unused]] auto startMessage) -> void {
-        start_called = true;
-      });
-  queue_start_message("new_command_topic", _valid_job_id, {"wrong_service_id"});
-  // First poll connects the consumer
-  _handlerUnderTest->loopFunction();
-
-  _handlerUnderTest->loopFunction();
-
-  EXPECT_EQ(false, start_called);
-}
-
 TEST_F(StartHandlerTest,
        start_command_with_invalid_uuid_for_job_id_is_rejected) {
   bool start_called = false;
@@ -349,22 +333,6 @@ TEST_F(StopHandlerTest, stop_actioned_if_service_id_in_message_is_empty) {
   _handlerUnderTest->loopFunction();
 
   EXPECT_EQ(true, stop_called);
-}
-
-TEST_F(StopHandlerTest, stop_ignored_if_service_id_is_wrong) {
-  bool stop_called = false;
-  _handlerUnderTest->registerIsWritingFunction([]() -> bool { return true; });
-  _handlerUnderTest->registerStopNowFunction(
-      [&stop_called]() -> void { stop_called = true; });
-  _handlerUnderTest->registerGetJobIdFunction(
-      [this]() -> std::string { return this->_valid_job_id; });
-  queue_stop_message(0, _valid_job_id, {"wrong_service_id"}, _valid_command_id);
-  // First poll connects the consumer
-  _handlerUnderTest->loopFunction();
-
-  _handlerUnderTest->loopFunction();
-
-  EXPECT_EQ(false, stop_called);
 }
 
 TEST_F(StopHandlerTest, stop_ignored_if_command_id_is_not_uuid) {
