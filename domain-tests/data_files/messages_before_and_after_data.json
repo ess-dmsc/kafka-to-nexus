@@ -102,11 +102,31 @@
   {
     "schema": "ev44",
     "topic": "local_detector",
-    "kafka_timestamp": 11000,
+    "kafka_timestamp": 10000,
     "source_name": "detector_events",
     "message_id": 667,
-    "reference_time": 11000,
+    "reference_time": 10000,
     "time_of_flight": [50, 60, 70, 80],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 12000,
+    "source_name": "detector_events",
+    "message_id": 668,
+    "reference_time": 12000,
+    "time_of_flight": [90, 100, 110, 120],
+    "pixel_ids": [1, 2, 3, 4]
+  },
+  {
+    "schema": "ev44",
+    "topic": "local_detector",
+    "kafka_timestamp": 15000,
+    "source_name": "detector_events",
+    "message_id": 669,
+    "reference_time": 15000,
+    "time_of_flight": [130, 140, 150, 160],
     "pixel_ids": [1, 2, 3, 4]
   },
   {
@@ -114,19 +134,9 @@
     "topic": "local_detector",
     "kafka_timestamp": 16000,
     "source_name": "detector_events",
-    "message_id": 668,
+    "message_id": 670,
     "reference_time": 16000,
-    "time_of_flight": [90, 100, 110, 120],
-    "pixel_ids": [1, 2, 3, 4]
-  },
-  {
-    "schema": "ev44",
-    "topic": "local_detector",
-    "kafka_timestamp": 17000,
-    "source_name": "detector_events",
-    "message_id": 669,
-    "reference_time": 17000,
-    "time_of_flight": [130, 140, 150, 160],
+    "time_of_flight": [170, 180, 190, 200],
     "pixel_ids": [1, 2, 3, 4]
   }
 ]

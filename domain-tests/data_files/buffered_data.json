@@ -1,0 +1,18 @@
+[
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 5000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 5000,
+    "value": 2
+  },
+  {
+    "schema": "f144",
+    "topic": "local_choppers",
+    "kafka_timestamp": 9000,
+    "source_name": "local:choppers:delay",
+    "timestamp": 9000,
+    "value": 3
+  }
+]

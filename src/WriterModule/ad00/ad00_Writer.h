@@ -33,7 +33,8 @@ public:
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  void writeImpl(FileWriter::FlatbufferMessage const &Message) override;
+  bool writeImpl(FileWriter::FlatbufferMessage const &Message,
+                 bool is_buffered_message) override;
 
   enum class Type {
     int8,

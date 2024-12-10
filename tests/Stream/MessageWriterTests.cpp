@@ -25,7 +25,8 @@ public:
   ~WriterModuleStandIn() = default;
   MAKE_MOCK1(init_hdf, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);
-  MAKE_MOCK1(writeImpl, void(FileWriter::FlatbufferMessage const &), override);
+  MAKE_MOCK2(writeImpl, bool(FileWriter::FlatbufferMessage const &, bool),
+             override);
 };
 
 class DataMessageWriterTest : public ::testing::Test {
@@ -79,7 +80,7 @@ TEST_F(DataMessageWriterTest, EnableExtraModule) {
 }
 
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
-  REQUIRE_CALL(WriterModule, writeImpl(_)).TIMES(1);
+  REQUIRE_CALL(WriterModule, writeImpl(_, _)).TIMES(1).RETURN(true);
   auto InitialWriteCount = WriterModule.getWriteCount();
   FileWriter::FlatbufferMessage Msg;
   Stream::Message SomeMessage(
@@ -87,7 +88,7 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   {
     Stream::MessageWriter Writer{
         []() {}, 1s, std::make_unique<Metrics::Registrar>("some_prefix")};
-    Writer.addMessage(SomeMessage);
+    Writer.addMessage(SomeMessage, false);
     Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 1);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 0);
@@ -97,7 +98,7 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
 }
 
 TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
-  REQUIRE_CALL(WriterModule, writeImpl(_))
+  REQUIRE_CALL(WriterModule, writeImpl(_, _))
       .TIMES(1)
       .THROW(WriterModule::WriterException("Some error."));
   auto InitialWriteCount = WriterModule.getWriteCount();
@@ -110,7 +111,7 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
     Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWriterModulesWithErrors() == 1);
     });
-    Writer.addMessage(SomeMessage);
+    Writer.addMessage(SomeMessage, false);
     Writer.runJob([&Writer]() {
       EXPECT_TRUE(Writer.nrOfWritesDone() == 0);
       EXPECT_TRUE(Writer.nrOfWriteErrors() == 1);

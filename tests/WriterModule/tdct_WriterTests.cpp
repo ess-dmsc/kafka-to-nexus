@@ -89,7 +89,7 @@ TEST_F(ChopperTimeStampWriter, WriteDataOnce) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
@@ -119,8 +119,8 @@ TEST_F(ChopperTimeStampWriter, WriteDataTwice) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup) == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(Buffer.get(), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
+  EXPECT_NO_THROW(Writer.write(TestMsg, false));
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");

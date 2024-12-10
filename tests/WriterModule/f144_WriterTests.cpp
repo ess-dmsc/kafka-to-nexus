@@ -313,7 +313,7 @@ TEST_F(f144Init, write_one_element) {
   EXPECT_EQ(FlatbufferMsg.getFlatbufferID(), "f144");
   EXPECT_EQ(TestWriter.Values.size(), 0u);
   EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
-  TestWriter.write(FlatbufferMsg);
+  TestWriter.write(FlatbufferMsg, false);
   EXPECT_EQ(TestWriter.Values.size(), 1u);
   ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
@@ -338,7 +338,8 @@ TEST_F(f144Init, write_one_default_value_element) {
   EXPECT_EQ(TestWriter.Values.size(), 0u);
   EXPECT_EQ(TestWriter.Timestamp.current_size(), 0);
   TestWriter.write(FileWriter::FlatbufferMessage(FlatbufferData.first.get(),
-                                                 FlatbufferData.second));
+                                                 FlatbufferData.second),
+                   false);
   EXPECT_EQ(TestWriter.Values.size(), 1u);
   ASSERT_EQ(TestWriter.Timestamp.current_size(), 1);
   std::vector<double> WrittenValues(1);
@@ -360,7 +361,7 @@ TEST_F(f144Init, write_multiple_elements) {
     auto [buffer, size] =
         f144_schema::generateFlatbufferMessage(values[i], timestamps[i]);
     FileWriter::FlatbufferMessage FlatbufferMsg(buffer.get(), size);
-    TestWriter.write(FlatbufferMsg);
+    TestWriter.write(FlatbufferMsg, false);
   }
 
   std::vector<double> WrittenValues(values.size());

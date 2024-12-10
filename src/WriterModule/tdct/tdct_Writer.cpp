@@ -64,20 +64,22 @@ WriterModule::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return WriterModule::InitResult::OK;
 }
 
-void tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message) {
+bool tdct_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message,
+                            [[maybe_unused]] bool is_buffered_message) {
   auto FbPointer = Gettimestamp(Message.data());
   auto TempTimePtr = FbPointer->timestamps()->data();
   auto TempTimeSize = FbPointer->timestamps()->size();
   if (TempTimeSize == 0) {
     Logger::Info(
         "Received a flatbuffer with zero (0) timestamps elements in it.");
-    return;
+    return false;
   }
   hdf5::ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);
   auto CueIndexValue = Timestamp.current_size();
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
   CueTimestamp.appendElement(FbPointer->timestamps()->operator[](0));
   Timestamp.appendArray(CArray);
+  return true;
 }
 
 } // namespace WriterModule::tdct

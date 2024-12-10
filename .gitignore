@@ -10,7 +10,8 @@ pipeline.gdsl
 *.j2~
 *.h~
 *.cxx~
-/integration-tests/output-files/*.nxs
+/integration-tests/output-files/*.*
+/domain-tests/output_files/*.*
 venv
 *.log
 *.DS_Store
