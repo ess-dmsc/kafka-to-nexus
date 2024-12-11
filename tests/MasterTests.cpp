@@ -79,23 +79,46 @@ public:
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
         std::make_unique<Metrics::Registrar>("some_prefix"));
 
-    std::filesystem::path FullFilePath = Config.getHDFOutputPrefix();
-    FullFilePath.append(StartCmd.Filename);
-    if (!StartCmd.Filename.empty() && std::filesystem::exists(FullFilePath)) {
-      std::filesystem::remove(FullFilePath);
-    }
-    FullFilePath =
-        std::filesystem::path(Config.getHDFOutputPrefix()) /
-        std::filesystem::path(StartCmdAbsoluteFilename).relative_path();
-    if (std::filesystem::exists(FullFilePath)) {
-      std::filesystem::remove(FullFilePath);
-    }
-    if (!std::filesystem::exists(FullFilePath.parent_path())) {
-      std::filesystem::create_directory(FullFilePath.parent_path());
+    remove_relative_file();
+    remove_absolute_file();
+    auto file_path = absolute_file_path();
+    if (!std::filesystem::exists(file_path.parent_path())) {
+      std::filesystem::create_directory(file_path.parent_path());
     }
   }
 
-  void TearDown() override { UnderTest.reset(); }
+  void TearDown() override {
+    remove_relative_file();
+    remove_absolute_file();
+    UnderTest.reset();
+  }
+
+  void remove_relative_file() {
+    auto file_path = relative_file_path();
+    if (!StartCmd.Filename.empty() && std::filesystem::exists(file_path)) {
+      std::filesystem::remove(file_path);
+    }
+  }
+
+  void remove_absolute_file() {
+    auto file_path = absolute_file_path();
+    if (std::filesystem::exists(file_path)) {
+      std::filesystem::remove(file_path);
+    }
+  }
+
+  std::filesystem::path relative_file_path() {
+    std::filesystem::path file_path = Config.getHDFOutputPrefix();
+    file_path.append(StartCmd.Filename);
+    return file_path;
+  }
+
+  std::filesystem::path absolute_file_path() {
+    std::filesystem::path file_path =
+        Config.getHDFOutputPrefix() /
+        std::filesystem::path(StartCmdAbsoluteFilename).relative_path();
+    return file_path;
+  }
 
   MainOpt Config;
   StatusReporterStandIn *StatusReporter;
