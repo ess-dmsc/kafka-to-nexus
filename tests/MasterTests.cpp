@@ -94,14 +94,16 @@ public:
       std::filesystem::create_directory(FullFilePath.parent_path());
     }
   }
-  MainOpt Config;
 
   void TearDown() override { UnderTest.reset(); }
+
+  MainOpt Config;
   StatusReporterStandIn *StatusReporter;
   std::unique_ptr<FileWriter::Master> UnderTest;
   time_point StartTime{system_clock::now()};
+  std::string filename = "master_tests_file";
   Command::StartMessage StartCmd{"job_id",
-                                 "some_file_name",
+                                 filename,
                                  R"({"nexus_structure":5})",
                                  R"({"meta_data":54})",
                                  StartTime,
@@ -110,7 +112,7 @@ public:
                                  "",
                                  "service_id"};
   std::string StartCmdAbsoluteFilename{
-      std::filesystem::temp_directory_path().append("some_file_name")};
+      std::filesystem::temp_directory_path().append(filename)};
   Command::StartMessage StartCmdAbsolute{"job_id",
                                          StartCmdAbsoluteFilename,
                                          R"({"nexus_structure":5})",
