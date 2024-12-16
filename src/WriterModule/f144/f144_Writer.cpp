@@ -91,7 +91,7 @@ InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
                            ChunkSize); // NOLINT(bugprone-unused-raii)
     initValueDataset(HDFGroup, ElementType);
 
-    HDFGroup["value"].attributes.create_from<std::string>("units", Unit);
+    HDFGroup["value"].attributes.create_from<std::string>("units", Unit.get_value());
 
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
