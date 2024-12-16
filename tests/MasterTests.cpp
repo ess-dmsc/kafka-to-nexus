@@ -83,8 +83,8 @@ public:
   }
 
   void TearDown() override {
-    remove_relative_file();
     UnderTest.reset();
+    remove_relative_file();
   }
 
   void remove_relative_file() {
@@ -132,6 +132,11 @@ TEST_F(MasterTest, DestinationFilenameFromRelativePath) {
   std::filesystem::path FullFilePath =
       std::filesystem::path(Config.getHDFOutputPrefix()) / StartCmd.Filename;
   EXPECT_EQ(UnderTest->getCurrentFilePath(), FullFilePath);
+  //  UnderTest->stopNow();
+  //  while (!UnderTest->writingIsFinished()) {
+  //    puts("waiting");
+  //  }
+  //  puts("232");
 }
 
 TEST_F(MasterTest, StartWritingSuccess) {
