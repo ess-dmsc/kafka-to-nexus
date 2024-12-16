@@ -3,7 +3,7 @@ import os.path
 import time
 import uuid
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 
 import h5py
 import numpy as np
@@ -250,10 +250,14 @@ class TestFileWriter:
             # Check start and stop time are what we expect
             assert datetime.strptime(
                 f["/entry/start_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
-            ) == datetime.utcfromtimestamp(start_time)
+            ).replace(tzinfo=timezone.utc) == datetime.fromtimestamp(
+                start_time, timezone.utc
+            )
             assert datetime.strptime(
                 f["/entry/end_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
-            ) == datetime.utcfromtimestamp(end_time)
+            ).replace(tzinfo=timezone.utc) == datetime.fromtimestamp(
+                end_time, timezone.utc
+            )
 
     def test_two_writers_write_three_files(self, file_writer, second_filewriter):
         """
@@ -409,10 +413,14 @@ class TestFileWriter:
             # Check start and stop time are what we expect
             assert datetime.strptime(
                 f["/entry/start_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
-            ) == datetime.utcfromtimestamp(start_time)
+            ).replace(tzinfo=timezone.utc) == datetime.fromtimestamp(
+                start_time, timezone.utc
+            )
             assert datetime.strptime(
                 f["/entry/end_time"][()].decode(), "%Y-%m-%dT%H:%M:%S.%fZ"
-            ) == datetime.utcfromtimestamp(end_time)
+            ).replace(tzinfo=timezone.utc) == datetime.fromtimestamp(
+                end_time, timezone.utc
+            )
 
     def test_writing_does_not_start_on_invalid_input(self, file_writer):
         """
