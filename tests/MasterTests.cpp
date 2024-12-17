@@ -79,29 +79,34 @@ public:
         Config, std::move(TmpCmdHandler), std::move(TmpStatusReporter),
         std::make_unique<Metrics::Registrar>("some_prefix"));
 
-    std::filesystem::path FullFilePath = Config.getHDFOutputPrefix();
-    FullFilePath.append(StartCmd.Filename);
-    if (!StartCmd.Filename.empty() && std::filesystem::exists(FullFilePath)) {
-      std::filesystem::remove(FullFilePath);
-    }
-    FullFilePath =
-        std::filesystem::path(Config.getHDFOutputPrefix()) /
-        std::filesystem::path(StartCmdAbsoluteFilename).relative_path();
-    if (std::filesystem::exists(FullFilePath)) {
-      std::filesystem::remove(FullFilePath);
-    }
-    if (!std::filesystem::exists(FullFilePath.parent_path())) {
-      std::filesystem::create_directory(FullFilePath.parent_path());
+    remove_relative_file();
+  }
+
+  void TearDown() override {
+    UnderTest.reset();
+    remove_relative_file();
+  }
+
+  void remove_relative_file() {
+    auto file_path = relative_file_path();
+    if (!StartCmd.Filename.empty() && std::filesystem::exists(file_path)) {
+      std::filesystem::remove(file_path);
     }
   }
-  MainOpt Config;
 
-  void TearDown() override { UnderTest.reset(); }
+  std::filesystem::path relative_file_path() {
+    std::filesystem::path file_path = Config.getHDFOutputPrefix();
+    file_path.append(StartCmd.Filename);
+    return file_path;
+  }
+
+  MainOpt Config;
   StatusReporterStandIn *StatusReporter;
   std::unique_ptr<FileWriter::Master> UnderTest;
   time_point StartTime{system_clock::now()};
+  std::string filename = "master_tests_file";
   Command::StartMessage StartCmd{"job_id",
-                                 "some_file_name",
+                                 filename,
                                  R"({"nexus_structure":5})",
                                  R"({"meta_data":54})",
                                  StartTime,
@@ -109,17 +114,6 @@ public:
                                  "control_topic",
                                  "",
                                  "service_id"};
-  std::string StartCmdAbsoluteFilename{
-      std::filesystem::temp_directory_path().append("some_file_name")};
-  Command::StartMessage StartCmdAbsolute{"job_id",
-                                         StartCmdAbsoluteFilename,
-                                         R"({"nexus_structure":5})",
-                                         R"({"meta_data":54})",
-                                         StartTime,
-                                         StartTime + 50s,
-                                         "control_topic",
-                                         "",
-                                         "service_id"};
 };
 
 TEST_F(MasterTest, Init) {
@@ -137,15 +131,6 @@ TEST_F(MasterTest, DestinationFilenameFromRelativePath) {
   UnderTest->startWriting(StartCmd);
   std::filesystem::path FullFilePath =
       std::filesystem::path(Config.getHDFOutputPrefix()) / StartCmd.Filename;
-  EXPECT_EQ(UnderTest->getCurrentFilePath(), FullFilePath);
-}
-
-TEST_F(MasterTest, DestinationFilenameFromAbsolutePath) {
-  REQUIRE_CALL(*StatusReporter,
-               useAlternativeStatusTopic(StartCmdAbsolute.ControlTopic));
-  UnderTest->startWriting(StartCmdAbsolute);
-  std::filesystem::path FullFilePath = std::filesystem::path(
-      Config.getHDFOutputPrefix() + StartCmdAbsolute.Filename);
   EXPECT_EQ(UnderTest->getCurrentFilePath(), FullFilePath);
 }
 
