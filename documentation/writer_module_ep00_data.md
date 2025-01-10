@@ -13,7 +13,7 @@ chunk_size|int|No|The HDF5 chunk size in nr of elements. Defaults to 1024.|
 
 ## Example
 
-Example `nexus_structure` to write status messages from `ExampleTopic`:
+Example `nexus_structure`:
 
 ```json
 {

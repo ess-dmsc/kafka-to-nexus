@@ -13,7 +13,7 @@ enable_epics_con_info|bool|No|Enable or disable EPICS connection status writing.
 
 ## Example
 
-Example `nexus_structure` to write chopper TDC timestamps:
+Example `nexus_structure`:
 
 ```json
 {

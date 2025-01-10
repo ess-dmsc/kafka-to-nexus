@@ -10,7 +10,7 @@ ignored.
 Currently, it only supports start and stop times.
 
 ## Example
-Example `nexus_structure` to write start and stop times:
+Example `nexus_structure`:
 
 ```json
 {
