@@ -23,11 +23,18 @@ RUN apt-get update \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . . 
+WORKDIR /opt/filewriter/
+
+EXPOSE 9092
+
+COPY . /opt/filewriter
 
 RUN python3 -m venv .venv
-RUN . .venv/bin/activate && pip install "conan<2" && conan profile new default --detect && conan profile update settings.compiler.libcxx=libstdc++11 default && conan profile update settings.compiler.version=11 default && conan config install http://github.com/ess-dmsc/conan-configuration.git && mkdir _build && cd _build && conan install .. --build=missing
-RUN . .venv/bin/activate && cmake .. -DRUN_DOXYGEN=OFF -DHTML_COVERAGE_REPORT=OFF
-RUN cmake --build . --parallel
 
-ENTRYPOINT ["bin/kafka-to-nexus"]
+RUN . .venv/bin/activate && pip install "conan<2" && conan profile new default --detect && conan profile update settings.compiler.libcxx=libstdc++11 default && conan profile update settings.compiler.version=11 default && conan config install http://github.com/ess-dmsc/conan-configuration.git 
+
+RUN . .venv/bin/activate && mkdir _build && cd _build && conan install .. --build=missing
+
+RUN . .venv/bin/activate && cd _build && cmake .. -DRUN_DOXYGEN=OFF -DHTML_COVERAGE_REPORT=OFF && cmake --build . --parallel
+
+ENTRYPOINT ["_build/bin/kafka-to-nexus"]
