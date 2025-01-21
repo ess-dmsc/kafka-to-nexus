@@ -65,6 +65,11 @@ public:
   /// pollForJob().
   virtual void disconnectFromPool();
 
+  void commit_pool_offset() {
+    if (!Consumer->commit_offset()) {
+      Logger::Error("Could not commit offset for CommandListener");
+    }
+  }
 private:
   // Do not change the ConsumerGroupId variable, it is vital to the workings of
   // the worker pool

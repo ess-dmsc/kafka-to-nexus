@@ -47,6 +47,7 @@ void Handler::loopFunction() {
     auto [poll_status, message] = JobPool->pollForJob();
     if (poll_status == Kafka::PollStatus::Message &&
         Parser::isStartCommand(message)) {
+      JobPool->commit_pool_offset();
       handleStartCommand(std::move(message));
       JobPool->disconnectFromPool();
     }

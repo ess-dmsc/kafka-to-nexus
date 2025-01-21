@@ -34,6 +34,7 @@ public:
   virtual void addTopic(std::string const &Topic) = 0;
   virtual void assignAllPartitions(std::string const &Topic,
                                    time_point const &StartTimestamp) = 0;
+  virtual bool commit_offset() = 0;
   virtual const RdKafka::TopicMetadata *
   getTopicMetadata(const std::string &Topic,
                    RdKafka::Metadata *MetadataPtr) = 0;
@@ -79,6 +80,11 @@ public:
   const RdKafka::TopicMetadata *
   getTopicMetadata(const std::string &Topic,
                    RdKafka::Metadata *MetadataPtr) override;
+
+  bool commit_offset() override {
+    auto error = KafkaConsumer->commitSync();
+    return error == RdKafka::ERR_NO_ERROR;
+  }
 
 private:
   std::unique_ptr<RdKafka::Conf> Conf;
@@ -142,6 +148,10 @@ public:
       throw std::runtime_error("Could not assign all partitions");
     }
     _topic = Topic;
+  }
+
+  bool commit_offset() override {
+    return true;
   }
 
   const RdKafka::TopicMetadata *
