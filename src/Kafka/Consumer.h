@@ -150,9 +150,7 @@ public:
     _topic = Topic;
   }
 
-  bool commit_offset() override {
-    return true;
-  }
+  bool commit_offset() override { return true; }
 
   const RdKafka::TopicMetadata *
   getTopicMetadata([[maybe_unused]] const std::string &Topic,
