@@ -44,7 +44,9 @@ public:
 
   f144_Writer()
       : WriterModule::Base("f144", false, "NXlog",
-                           {"epics_con_info", "alarm_info"}) {}
+                           {"epics_con_info", "alarm_info"}) {
+    Logger::Warn("f144_Writer constructor called");
+  }
   ~f144_Writer() override = default;
 
   enum class Type {
