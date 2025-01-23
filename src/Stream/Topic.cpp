@@ -176,11 +176,11 @@ void Topic::createStreams(
 }
 
 void Topic::checkIfDone() {
-  auto const is_done =
-      std::all_of(ConsumerThreads.begin(), ConsumerThreads.end(),
-                  [](auto const &thread) { return thread->has_finished(); });
-  if (is_done) {
-    Logger::Info("Topic {} has finished consuming.", TopicName);
+  ConsumerThreads.erase(
+      std::remove_if(ConsumerThreads.begin(), ConsumerThreads.end(),
+                     [](auto const &Elem) { return Elem->has_finished(); }),
+      ConsumerThreads.end());
+  if (ConsumerThreads.empty()) {
     IsDone.store(true);
   }
   std::this_thread::sleep_for(50ms);
