@@ -25,9 +25,7 @@ StreamController::StreamController(
                    Registrar->getNewRegistrar("stream.writer")),
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
       _metadata_enquirer(std::move(metadata_enquirer)),
-      _consumer_factory(std::move(consumer_factory)) {
-  Logger::Error("streamcontroller constructed");
-}
+      _consumer_factory(std::move(consumer_factory)) {}
 
 StreamController::~StreamController() {
   Logger::Error("streamcontroller destructor start");
@@ -40,14 +38,12 @@ StreamController::~StreamController() {
 }
 
 void StreamController::start() {
-  Logger::Error("streamcontroller start start");
   MdatWriter->set_start_time(StreamerOptions.StartTimestamp);
   MdatWriter->set_stop_time(StreamerOptions.StopTimestamp);
   Executor.sendLowPriorityWork([=]() {
     CurrentMetadataTimeOut = StreamerOptions.BrokerSettings.MinMetadataTimeout;
     getTopicNames();
   });
-  Logger::Error("streamcontroller start end");
 }
 
 void StreamController::setStopTime(time_point const &StopTime) {
@@ -99,7 +95,6 @@ bool StreamController::isDoneWriting() {
 std::string StreamController::getJobId() const { return WriterTask->jobID(); }
 
 void StreamController::getTopicNames() {
-  Logger::Error("streamcontroller gettopicnames start");
   try {
     auto TopicNames = _metadata_enquirer->getTopicList(
         StreamerOptions.BrokerSettings.Address, CurrentMetadataTimeOut,
@@ -118,11 +113,9 @@ void StreamController::getTopicNames() {
                      .count());
     Executor.sendLowPriorityWork([=]() { getTopicNames(); });
   }
-  Logger::Error("streamcontroller gettopicnames end");
 }
 
 void StreamController::initStreams(std::set<std::string> known_topic_names) {
-  Logger::Error("streamcontroller initstreams start");
   std::map<std::string, Stream::SrcToDst> topic_src_map;
   std::string errors_collector;
   for (auto &src : WriterTask->sources()) {
@@ -164,7 +157,6 @@ void StreamController::initStreams(std::set<std::string> known_topic_names) {
     Streamers.emplace_back(std::move(topic));
   }
   Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
-  Logger::Error("streamcontroller initstreams end");
 }
 
 bool StreamController::hasErrorState() const { return HasError; }
@@ -175,16 +167,13 @@ std::string StreamController::errorMessage() {
 }
 
 void StreamController::performPeriodicChecks() {
-  Logger::Error("streamcontroller performperiodicchecks start");
   checkIfStreamsAreDone();
   throttleIfWriteQueueIsFull();
   std::this_thread::sleep_for(PeriodicChecksInterval);
   Executor.sendLowPriorityWork([=]() { performPeriodicChecks(); });
-  Logger::Error("streamcontroller performperiodicchecks end");
 }
 
 void StreamController::checkIfStreamsAreDone() {
-  Logger::Error("streamcontroller checkifstreamsaredone start");
   try {
     Streamers.erase(
         std::remove_if(Streamers.begin(), Streamers.end(),
@@ -201,11 +190,9 @@ void StreamController::checkIfStreamsAreDone() {
     stop();
     StreamersRemaining.store(false);
   }
-  Logger::Error("streamcontroller checkifstreamsaredone end");
 }
 
 void StreamController::throttleIfWriteQueueIsFull() {
-  Logger::Error("streamcontroller throttle start");
   auto QueuedWrites = WriterThread.nrOfWritesQueued();
   if (QueuedWrites > StreamerOptions.MaxQueuedWrites &&
       !StreamersPaused.load()) {
@@ -220,7 +207,6 @@ void StreamController::throttleIfWriteQueueIsFull() {
                   QueuedWrites);
     resumeStreamers();
   }
-  Logger::Error("streamcontroller throttle end");
 }
 
 } // namespace FileWriter

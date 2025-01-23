@@ -30,15 +30,12 @@ struct ValuesInformation {
 };
 
 template <typename Type> void makeIt(hdf5::node::Group const &Parent) {
-  Logger::Error("f144_Writer makeIt start");
   NeXusDataset::ExtensibleDataset<Type>( // NOLINT(bugprone-unused-raii)
       Parent, "value",
       NeXusDataset::Mode::Create); // NOLINT(bugprone-unused-raii)
-  Logger::Error("f144_Writer makeIt end");
 }
 
 void initValueDataset(hdf5::node::Group const &Parent, Type ElementType) {
-  Logger::Error("f144_Writer initValueDataset start");
   using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::int8, [&]() { makeIt<std::int8_t>(Parent); }},
@@ -53,12 +50,10 @@ void initValueDataset(hdf5::node::Group const &Parent, Type ElementType) {
       {Type::float64, [&]() { makeIt<std::double_t>(Parent); }},
   };
   CreateValuesMap.at(ElementType)();
-  Logger::Error("f144_Writer initValueDataset end");
 }
 
 /// Parse the configuration for this stream.
 void f144_Writer::config_post_processing() {
-  Logger::Error("f144_Writer config_post_processing start");
   auto ToLower = [](auto InString) {
     std::transform(InString.begin(), InString.end(), InString.begin(),
                    [](auto C) { return std::tolower(C); });
@@ -80,14 +75,12 @@ void f144_Writer::config_post_processing() {
     Logger::Info(R"(Unknown data type with name "{}". Using double.)",
                  DataType.get_value());
   }
-  Logger::Error("f144_Writer config_post_processing end");
 }
 
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
 InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
-  Logger::Error("f144_Writer init_hdf start");
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -104,18 +97,15 @@ InitResult f144_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
     auto message = hdf5::error::print_nested(E);
     Logger::Error("f144 writer could not init_hdf hdf_parent: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
-    Logger::Error("f144_Writer init_hdf end");
     return InitResult::ERROR;
   }
 
-  Logger::Error("f144_Writer init_hdf end");
   return InitResult::OK;
 }
 
 /// \brief Implement the writer module interface, forward to the OPEN case of
 /// `init_hdf`.
 InitResult f144_Writer::reopen(hdf5::node::Group &HDFGroup) {
-  Logger::Error("f144_Writer reopen start");
   auto Open = NeXusDataset::Mode::Open;
   try {
     Timestamp = NeXusDataset::Time(HDFGroup, Open);
@@ -126,33 +116,26 @@ InitResult f144_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
         std::string(E.what()));
-    Logger::Error("f144_Writer reopen end");
     return InitResult::ERROR;
   }
-  Logger::Error("f144_Writer reopen end");
   return InitResult::OK;
 }
 
 template <typename FBValueType, typename ReturnType>
 ReturnType extractScalarValue(const f144_LogData *LogDataMessage) {
-  Logger::Error("f144_Writer extractScalarValue start");
   auto LogValue = LogDataMessage->value_as<FBValueType>();
-  Logger::Error("f144_Writer extractScalarValue end");
   return LogValue->value();
 }
 
 template <typename DataType, typename ValueType, class DatasetType>
 ValuesInformation appendScalarData(DatasetType &Dataset,
                                    const f144_LogData *LogDataMessage) {
-  Logger::Error("f144_Writer appendScalarData start");
   auto ScalarValue = extractScalarValue<ValueType, DataType>(LogDataMessage);
   Dataset.template appendElement<DataType>(ScalarValue);
-  Logger::Error("f144_Writer appendScalarData end");
   return {double(ScalarValue), double(ScalarValue), double(ScalarValue), 1};
 }
 
 void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
-  Logger::Error("f144_Writer msgTypeIsConfigType start");
   std::unordered_map<Value, f144_Writer::Type> TypeComparison{
       {Value::ArrayByte, f144_Writer::Type::int8},
       {Value::Byte, f144_Writer::Type::int8},
@@ -209,12 +192,10 @@ void msgTypeIsConfigType(f144_Writer::Type ConfigType, Value MsgType) {
   } catch (std::out_of_range const &) {
     Logger::Error("Got out of range error when comparing types.");
   }
-  Logger::Error("f144_Writer msgTypeIsConfigType end");
 }
 
 bool f144_Writer::writeImpl(FlatbufferMessage const &Message,
                             [[maybe_unused]] bool is_buffered_message) {
-  Logger::Error("f144_Writer writeImpl start");
   auto LogDataMessage = Getf144_LogData(Message.data());
   Timestamp.appendElement(LogDataMessage->timestamp());
   auto Type = LogDataMessage->value_type();
@@ -293,13 +274,11 @@ bool f144_Writer::writeImpl(FlatbufferMessage const &Message,
     MetaDataMax.setValue(Max);
     MetaDataMean.setValue(Sum / TotalNrOfElementsWritten);
   }
-  Logger::Error("f144_Writer writeImpl end");
   return true;
 }
 
 void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
                                      const MetaData::TrackerPtr &Tracker) {
-  Logger::Error("f144_Writer register_meta_data start");
   if (MetaData.get_value()) {
     MetaDataMin = MetaData::Value<double>(
         HDFGroup, "minimum_value", MetaData::basicDatasetWriter<double>,
@@ -319,7 +298,6 @@ void f144_Writer::register_meta_data(hdf5::node::Group const &HDFGroup,
     MetaDataMean.setAttribute("units", Unit.get_value());
     Tracker->registerMetaData(MetaDataMean);
   }
-  Logger::Error("f144_Writer register_meta_data end");
 }
 
 /// Register the writer module.
