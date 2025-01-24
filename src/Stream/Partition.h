@@ -79,6 +79,7 @@ public:
   auto getPartitionID() const { return _partition_id; }
   auto getTopicName() const { return _topic_name; }
   virtual void pollForMessage();
+  void forceStop();
 
 protected:
   Metrics::Metric KafkaTimeouts{"timeouts",
@@ -121,7 +122,7 @@ protected:
 
   virtual bool hasStopBeenRequested() const;
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
-  void forceStop();
+
   /// \brief Checks for occurrence for time out and logs it once for each time
   /// out occurrence.
   void checkAndLogPartitionTimeOut();
@@ -165,43 +166,35 @@ public:
   }
 
   explicit PartitionThreaded(std::unique_ptr<Partition> partition)
-      : _partition(std::move(partition)),
-        _worker_thread(&PartitionThreaded::process, this) {}
+      : _partition(std::move(partition)) {}
 
-  ~PartitionThreaded() {
-    _exit.store(true);
-    _worker_thread.join();
+  ~PartitionThreaded() = default;
+
+  void addPollTask() {
+    _executor.sendLowPriorityWork([=]() { poll(); });
   }
 
-  void stop() { _immediate_stop_requested.store(true); }
+  void start() { addPollTask(); }
+
+  void stop() {
+    _executor.sendLowPriorityWork([=]() { _partition->forceStop(); });
+    _executor.sendWork([=]() { _partition->forceStop(); });
+  }
 
   void set_stop_time(time_point stop_time) {
-    _requested_stop_time.store(stop_time);
+    _executor.sendWork([=]() { _partition->setStopTime(stop_time); });
   }
 
   bool has_finished() const { return _partition->hasFinished(); }
 
 private:
-  void process() {
-    while (!_partition->hasFinished() && !_exit) {
-      if (_immediate_stop_requested.load()) {
-        _partition->stop();
-        _immediate_stop_requested.store(false);
-      }
-      if (_requested_stop_time.load() != time_point::max()) {
-        _partition->setStopTime(_requested_stop_time);
-        _requested_stop_time.store(time_point::max());
-      }
-      _partition->pollForMessage();
-      std::this_thread::sleep_for(5ms);
-    }
+  void poll() {
+    _partition->pollForMessage();
+    addPollTask();
   }
 
-  std::atomic<bool> _exit{false};
-  std::atomic<time_point> _requested_stop_time{time_point::max()};
   std::unique_ptr<Partition> _partition;
-  std::atomic<bool> _immediate_stop_requested{false};
-  std::thread _worker_thread;
+  ThreadedExecutor _executor{false, "partition"}; // Must be last
 };
 
 } // namespace Stream

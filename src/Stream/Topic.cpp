@@ -170,6 +170,7 @@ void Topic::createStreams(
         std::move(Consumer), partition, Topic, DataMap, WriterPtr,
         CRegistrar.get(), StartConsumeTime, StopConsumeTime, StopLeeway,
         Settings.KafkaErrorTimeout, AreStreamersPausedFunction);
+    TempPartition->start();
     ConsumerThreads.emplace_back(std::move(TempPartition));
   }
   checkIfDoneTask();
