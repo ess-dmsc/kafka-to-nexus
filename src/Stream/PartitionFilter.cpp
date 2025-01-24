@@ -20,10 +20,11 @@ PartitionFilter::PartitionFilter(time_point stop_time,
                                  std::unique_ptr<Clock> clock)
     : _stop_time(stop_time), _stop_leeway(stop_time_leeway),
       _time_limit(time_limit), _clock(std::move(clock)) {
-  // Deal with potential overflow problem
+  // Deal with potential overflow problems
   if (time_point::max() - _stop_time <= stop_time_leeway) {
     _stop_time -= stop_time_leeway;
   }
+  _status_occurrence_time = time_point::max() - _time_limit;
 }
 
 bool PartitionFilter::hasExceededTimeLimit() const {
