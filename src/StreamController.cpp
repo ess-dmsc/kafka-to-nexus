@@ -28,13 +28,10 @@ StreamController::StreamController(
       _consumer_factory(std::move(consumer_factory)) {}
 
 StreamController::~StreamController() {
-  Logger::Error("streamcontroller destructor start");
   stop();
-  Logger::Error("streamcontroller destructor calls mdat");
   MdatWriter->write_metadata(*WriterTask);
   Logger::Info("Stopped StreamController for file with id : {}",
                StreamController::getJobId());
-  Logger::Error("streamcontroller destructor end");
 }
 
 void StreamController::start() {
@@ -47,7 +44,6 @@ void StreamController::start() {
 }
 
 void StreamController::setStopTime(time_point const &StopTime) {
-  Logger::Error("streamcontroller setstoptime start");
   StreamerOptions.StopTimestamp = StopTime;
   MdatWriter->set_stop_time(StopTime);
   Executor.sendWork([=]() {
@@ -55,7 +51,6 @@ void StreamController::setStopTime(time_point const &StopTime) {
       s->setStopTime(StopTime);
     }
   });
-  Logger::Error("streamcontroller setstoptime end");
 }
 
 void StreamController::pauseStreamers() { StreamersPaused.store(true); }
@@ -63,17 +58,14 @@ void StreamController::pauseStreamers() { StreamersPaused.store(true); }
 void StreamController::resumeStreamers() { StreamersPaused.store(false); }
 
 void StreamController::stop() {
-  Logger::Error("streamcontroller stop start");
   for (auto &Stream : Streamers)
     Stream->stop();
   WriterThread.stop();
   StopNow = true;
-  Logger::Error("streamcontroller stop end");
 }
 
 using duration = std::chrono::system_clock::duration;
 bool StreamController::isDoneWriting() {
-  Logger::Error("streamcontroller isdonewriting start");
   auto Now = std::chrono::system_clock::now();
   auto IsDoneWriting =
       HasError || StopNow or
@@ -88,7 +80,6 @@ bool StreamController::isDoneWriting() {
           FileSizeCalcInterval * int(std::round(TimeDiffPeriods));
     }
   }
-  Logger::Error("streamcontroller isdonewriting end");
   return IsDoneWriting;
 }
 
