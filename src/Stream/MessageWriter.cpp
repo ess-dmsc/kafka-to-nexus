@@ -56,7 +56,12 @@ void MessageWriter::addMessage(Message const &Msg, bool is_buffered_message) {
       [=]() { writeMsgImpl(Msg.DestPtr, Msg.FbMsg, is_buffered_message); });
 }
 
-void MessageWriter::stop() { RunThread.store(false); }
+void MessageWriter::stop() {
+  RunThread.store(false);
+  if (WriterThread.joinable()) {
+    WriterThread.join();
+  }
+}
 
 void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
                                  FileWriter::FlatbufferMessage const &Msg,

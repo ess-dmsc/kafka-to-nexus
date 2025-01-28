@@ -42,7 +42,7 @@ public:
 
   /// \brief Tell the writer thread to stop.
   ///
-  /// Non blocking. The thread might take a while to stop.
+  /// Blocking. The thread might take a while to stop.
   void stop();
 
   using ModuleHash = size_t;
