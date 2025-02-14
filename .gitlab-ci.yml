@@ -222,10 +222,11 @@ coda-pulls-latest-changes:
   stage: coda
   before_script:
     - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - echo "$SSH_CODA_PRIVATE_KEY" | base64 --decode > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan "$CODA_REMOTE_IP_ADDRESS" >> ~/.ssh/known_hosts
   script:
     - ssh gitlab@"$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
   needs:
-    - release
+    - job: keep-artifacts 
+      optional: false
