@@ -229,4 +229,4 @@ coda-pulls-latest-changes:
     - ssh gitlab@"$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
   needs:
     - job: keep-artifacts 
-      optional: false
+      optional: true
