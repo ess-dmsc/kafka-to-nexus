@@ -221,11 +221,7 @@ keep-artifacts:
 coda-pulls-latest-changes:
   stage: coda
   script:
-    - mkdir -p ~/.ssh
-    - echo "$SSH_CODA_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan "$CODA_REMOTE_IP_ADDRESS" >> ~/.ssh/known_hosts || true
-    - ssh gitlab@"$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
+    - ssh gitlab_runner@"$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
   needs:
     - job: keep-artifacts 
       optional: true
