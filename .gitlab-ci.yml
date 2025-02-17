@@ -226,7 +226,7 @@ coda-pulls-latest-changes:
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan "$CODA_REMOTE_IP_ADDRESS" >> ~/.ssh/known_hosts
   script:
-    - ssh gitlab@"$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
+    - ssh -o ProxyJump=ssh4.esss.dk gitlab@"$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
   needs:
     - job: keep-artifacts 
       optional: true
