@@ -11,6 +11,9 @@
 #include <librdkafka/rdkafkacpp.h>
 #include <trompeloeil.hpp>
 
+// cannot use trmpeloeil::mock_interface<T> since headers() is overloaded
+// so ensure override is included for useful compiler warnings and
+// ensure to mock all methods in abstract base
 class MockMessage : public RdKafka::Message {
 public:
   MAKE_CONST_MOCK0(errstr, std::string(), override);
