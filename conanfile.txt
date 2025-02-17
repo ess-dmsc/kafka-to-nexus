@@ -3,7 +3,7 @@ gtest/1.11.0
 fmt/8.1.1
 h5cpp/9486a26@ess-dmsc/stable
 zlib/1.2.12
-librdkafka/2.0.2
+librdkafka/2.8.0
 nlohmann_json/3.10.5
 streaming-data-types/13dd32d@ess-dmsc/stable
 cli11/2.2.0
