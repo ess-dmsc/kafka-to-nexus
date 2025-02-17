@@ -16,6 +16,7 @@ stages:
   - domain
   - integration
   - release
+  - who
   - coda
 
 .check:
@@ -219,7 +220,7 @@ keep-artifacts:
     - if: $CI_COMMIT_TAG
 
 whoami-check:
-  stage: check
+  stage: who
   script:
     - whoami
     - id
