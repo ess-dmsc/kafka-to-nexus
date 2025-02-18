@@ -222,7 +222,6 @@ keep-artifacts:
 coda-pulls-latest-changes:
   stage: coda
   script:
-    - ping 10.102.10.225
     - nc -zv 10.102.10.225 22
     - traceroute 10.102.10.225
     - systemctl status sshd
