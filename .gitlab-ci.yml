@@ -227,7 +227,7 @@ coda-pulls-latest-changes:
     - echo "$SSH_CODA_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - echo "Host 10.102.10.225" > ~/.ssh/config
-    - echo "  ProxyCommand ssh -q -W %h:%p -o StrictHostKeyChecking=no $HTTP_PROXY" >> ~/.ssh/config
+    - echo "  ProxyCommand ssh -q -W %h:%p -o StrictHostKeyChecking=no $ESS_HTTP_PROXY" >> ~/.ssh/config
     - chmod 600 ~/.ssh/config
   script:
     - ssh -F ~/.ssh/config -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@10.102.10.225 "sudo -u nicos bash -c 'cd /ess/ecdc/nicos-core/nexus-json-templates && git pull https://$GIT_READ_TOKEN@github.com/your-repo/your-project.git main'"
