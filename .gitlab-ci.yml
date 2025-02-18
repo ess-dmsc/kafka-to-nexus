@@ -222,7 +222,11 @@ keep-artifacts:
 coda-pulls-latest-changes:
   stage: coda
   script:
-    - ssh andrecosta@"$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
+    - ping 10.102.10.225
+    - nc -zv 10.102.10.225 22
+    - traceroute 10.102.10.225
+    - systemctl status sshd
+    - ssh "$CODA_REMOTE_IP_ADDRESS" "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
   needs:
     - job: keep-artifacts 
       optional: true
