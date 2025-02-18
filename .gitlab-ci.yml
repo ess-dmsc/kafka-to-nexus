@@ -221,12 +221,11 @@ keep-artifacts:
 
 coda-pulls-latest-changes:
   stage: coda
-  before_script:
+  script:
     - mkdir -p ~/.ssh
     - echo "$SSH_CODA_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan 10.102.10.225 >> ~/.ssh/known_hosts
-  script:
     - ssh -i ~/.ssh/id_rsa root@10.102.10.225 "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
   needs:
     - job: keep-artifacts 
