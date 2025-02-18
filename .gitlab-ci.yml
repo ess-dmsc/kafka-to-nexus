@@ -230,9 +230,7 @@ coda-pulls-latest-changes:
     - echo "  StrictHostKeyChecking=no" >> ~/.ssh/config
     - chmod 600 ~/.ssh/config
   script:
-    - echo "Testing SSH connection without proxy"
-    - ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@10.102.10.225 "sudo -u nicos bash -c 'cd /ess/ecdc/nicos-core/nexus-json-templates && git pull https://$GIT_READ_TOKEN@github.com/your-repo/your-project.git main'"
-    - echo "SSH without proxy successful, now testing with proxy"
+    - echo "Testing with proxy"
     - ssh -o ProxyCommand="ssh -q -W %h:%p -o StrictHostKeyChecking=no $ESS_HTTP_PROXY" -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@10.102.10.225 "sudo -u nicos bash -c 'cd /ess/ecdc/nicos-core/nexus-json-templates && git pull https://$GIT_READ_TOKEN@github.com/your-repo/your-project.git main'"
   needs:
     - job: keep-artifacts 
