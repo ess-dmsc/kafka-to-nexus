@@ -225,8 +225,10 @@ coda-pulls-latest-changes:
   script:
     - mkdir -p ~/.ssh
     - echo "$SSH_CODA_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh -t -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@10.102.10.225 "sudo -u nicos bash -c 'cd /ess/ecdc/nicos-core/nexus-json-templates && git -c http.proxy="http://10.100.1.2:8123" pull https://oauth2:$ECDC_READ_REPO_ACCESS_TOKEN@gitlab.com/your-namespace/your-repo.git main'"
+    - chmod 600 ~/.ssh/id_rsa- echo "Host 10.102.10.225" > ~/.ssh/config
+    - echo "  ProxyCommand nc -X connect -x $HTTP_PROXY %h %p" >> ~/.ssh/config
+    - chmod 600 ~/.ssh/config
+    - ssh -F ~/.ssh/config -t -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@10.102.10.225 "sudo -u nicos bash -c 'cd /ess/ecdc/nicos-core/nexus-json-templates && git pull https://$GIT_READ_TOKEN@github.com/your-repo/your-project.git main'"
   needs:
     - job: keep-artifacts 
       optional: true    
