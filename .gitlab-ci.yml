@@ -223,12 +223,11 @@ coda-pulls-latest-changes:
   stage: coda
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   before_script:
-    - yum install -y nc
     - mkdir -p ~/.ssh
     - echo "$SSH_CODA_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - echo "Host 10.102.10.225" > ~/.ssh/config
-    - echo "  ProxyCommand nc -X connect -x $HTTP_PROXY %h %p" >> ~/.ssh/config
+    - echo "  ProxyJump $HTTP_PROXY" >> ~/.ssh/config
     - chmod 600 ~/.ssh/config
   script:
     - ssh -F ~/.ssh/config -t -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@10.102.10.225 "sudo -u nicos bash -c 'cd /ess/ecdc/nicos-core/nexus-json-templates && git pull https://$GIT_READ_TOKEN@github.com/your-repo/your-project.git main'"
