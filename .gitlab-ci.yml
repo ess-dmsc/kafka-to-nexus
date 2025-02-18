@@ -222,9 +222,6 @@ keep-artifacts:
 coda-pulls-latest-changes:
   stage: coda
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  coda-pulls-latest-changes:
-  stage: coda
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   before_script:
     - mkdir -p ~/.ssh
     - echo "$SSH_CODA_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
