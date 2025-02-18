@@ -226,6 +226,7 @@ coda-pulls-latest-changes:
     - echo "$SSH_CODA_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan 10.102.10.225 >> ~/.ssh/known_hosts
+    - cat ~/.ssh/known_hosts
     - ssh -i ~/.ssh/id_rsa root@10.102.10.225 "cd /ess/ecdc/nicos-core/nexus-json-templates && git pull origin main"
   needs:
     - job: keep-artifacts 
