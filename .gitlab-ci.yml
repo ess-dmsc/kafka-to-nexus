@@ -221,11 +221,11 @@ keep-artifacts:
 
 coda-pulls-latest-changes:
   stage: coda
+  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   script:
     - mkdir -p ~/.ssh
     - echo "$SSH_CODA_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - whoami
     - ssh -t -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa root@10.102.10.225 "sudo -u nicos bash -c 'cd /ess/ecdc/nicos-core/nexus-json-templates && git -c http.proxy="http://10.100.1.2:8123" pull https://oauth2:$ECDC_READ_REPO_ACCESS_TOKEN@gitlab.com/your-namespace/your-repo.git main'"
   needs:
     - job: keep-artifacts 
