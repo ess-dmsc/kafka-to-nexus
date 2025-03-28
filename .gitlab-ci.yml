@@ -155,7 +155,7 @@ build-alt-distro:
       - DISTRO: almalinux8
         SCL: scl enable gcc-toolset-12 --
 
-publish_tar_job:
+publish:
   stage: publish
   image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
   before_script:
