@@ -208,7 +208,7 @@ integration-tests:
     HTTP_PROXY: $ESS_HTTP_PROXY
     HTTPS_PROXY: $ESS_HTTP_PROXY
   dependencies:
-    - archive
+    - publish
   artifacts:
     when: always
     paths:
