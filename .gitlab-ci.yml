@@ -157,7 +157,9 @@ build-alt-distro:
 
 publish:
   stage: publish
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  image: alpine/curl:latest
+  dependencies:
+  - build-release
   before_script:
     - curl -fL https://install-cli.jfrog.io | sh
     - jf config add $ESS_ARTIFACTORY_ID --url=$ESS_ARTIFACTORY_URL --user=$ESS_ARTIFACTORY_ECDC_USER --password=$ESS_ARTIFACTORY_ECDC_GENERIC_TOKEN
@@ -172,8 +174,6 @@ publish:
     - cd archive
     - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
     - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_JOB_ID} kafka-to-nexus-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
-  dependencies:
-    - build-release
   artifacts:
     paths:
       - build/archive/kafka-to-nexus.tar.gz
