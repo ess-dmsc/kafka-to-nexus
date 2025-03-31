@@ -170,8 +170,7 @@ archive:
     - cp ./CONAN_INFO archive/kafka-to-nexus/
 
 
-    - cd archive
-    - tar czf kafka-to-nexus-centos7.tar.gz kafka-to-nexus
+    - tar czf kafka-to-nexus-centos7.tar.gz -C archive kafka-to-nexus
   artifacts:
     paths:
       - build/archive/kafka-to-nexus-centos7.tar.gz
