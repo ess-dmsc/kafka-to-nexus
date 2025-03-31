@@ -13,10 +13,9 @@ stages:
   - check
   - build
   - archive
-  - publish
   - domain
   - integration
-  - release
+  - publish
 
 .check:
   stage: check
@@ -58,23 +57,10 @@ cppcheck:
   before_script:
     - mkdir build
     - cd build
-    - >
-      conan remote add \
-        --insert 0 \
-        ecdc-conan-virtual \
-        $ESS_ARTIFACTORY_ECDC_CONAN_VIRTUAL_REMOTE_URL
+    - conan config install http://github.com/ess-dmsc/conan-configuration.git
     - $SCL conan install --build missing ..
     - $SCL conan info ../conanfile.txt > CONAN_INFO
   after_script:
-    - >
-      conan remote add \
-        ecdc-conan-external \
-        $ESS_ARTIFACTORY_ECDC_CONAN_EXTERNAL_REMOTE_URL
-    - >
-      conan user \
-        --password $ESS_ARTIFACTORY_ECDC_CONAN_TOKEN \
-        --remote ecdc-conan-external \
-        $ESS_ARTIFACTORY_ECDC_CONAN_USER
     # Store built packages to save build time on subsequent builds
     - conan upload '*' --all --confirm --remote ecdc-conan-external
 
@@ -175,27 +161,6 @@ archive:
     paths:
       - build/archive/kafka-to-nexus-centos7.tar.gz
 
-publish:
-  stage: publish
-  image: alpine/curl:latest
-  dependencies:
-    - archive
-  before_script:
-    - curl -fL https://install-cli.jfrog.io | sh
-    - jf config add $ESS_ARTIFACTORY_ID --url=$ESS_ARTIFACTORY_URL --user=$ESS_ARTIFACTORY_ECDC_USER --password=$ESS_ARTIFACTORY_ECDC_GENERIC_TOKEN
-    - jf config show
-  script:
-    - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      variables:
-        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/${CI_DEFAULT_BRANCH}/${CI_PIPELINE_IID}/"
-    - if: $CI_COMMIT_TAG
-      variables:
-        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/tags/${CI_COMMIT_TAG}/"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-
 integration-tests:
   stage: integration
   image: docker:latest
@@ -226,16 +191,23 @@ integration-tests:
     reports:
       junit: integration-tests/IntegrationTestsOutput.xml
 
-keep-artifacts:
-  stage: release
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  script:
-    - ls build/archive/kafka-to-nexus-centos7.tar.gz
+publish:
+  stage: publish
+  image: alpine/curl:latest
   dependencies:
     - archive
-  artifacts:
-    paths:
-      - build/archive/kafka-to-nexus-centos7.tar.gz
-    expire_in: never
+  before_script:
+    - curl -fL https://install-cli.jfrog.io | sh
+    - jf config add $ESS_ARTIFACTORY_ID --url=$ESS_ARTIFACTORY_URL --user=$ESS_ARTIFACTORY_ECDC_USER --password=$ESS_ARTIFACTORY_ECDC_GENERIC_TOKEN
+    - jf config show
+  script:
+    - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
   rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/${CI_DEFAULT_BRANCH}/${CI_PIPELINE_IID}/"
     - if: $CI_COMMIT_TAG
+      variables:
+        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/tags/${CI_COMMIT_TAG}/"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
