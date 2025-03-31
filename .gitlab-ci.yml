@@ -192,10 +192,7 @@ publish:
       variables:
         ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/tags/${CI_COMMIT_TAG}/"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      variables:
-        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/${CI_DEFAULT_BRANCH}/${CI_PIPELINE_IID}/"
-      # when: never
-
+      when: never
 
 
 integration-tests:
