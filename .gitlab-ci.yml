@@ -60,9 +60,6 @@ cppcheck:
     - conan config install http://github.com/ess-dmsc/conan-configuration.git
     - $SCL conan install --build missing ..
     - $SCL conan info ../conanfile.txt > CONAN_INFO
-  after_script:
-    # Store built packages to save build time on subsequent builds
-    - conan upload '*' --all --confirm --remote ecdc-conan-external
 
 build-debug:
   extends: .build
