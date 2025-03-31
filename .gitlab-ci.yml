@@ -169,11 +169,6 @@ archive:
     - cp -r ./licenses archive/kafka-to-nexus/
     - cp ./CONAN_INFO archive/kafka-to-nexus/
 
-    # Create file with build information
-    - touch archive/kafka-to-nexus/BUILD_INFO
-    - echo 'Repository replace_real_repo_name' >> archive/kafka-to-nexus/BUILD_INFO
-    - echo 'Commit replace_git_commit' >> archive/kafka-to-nexus/BUILD_INFO
-    - echo 'Jenkins build replace_build_id' >> archive/kafka-to-nexus/BUILD_INFO
 
     - cd archive
     - tar czf kafka-to-nexus-centos7.tar.gz kafka-to-nexus
