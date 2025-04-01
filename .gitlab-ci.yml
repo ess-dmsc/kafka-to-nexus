@@ -57,7 +57,7 @@ cppcheck:
   before_script:
     - mkdir build
     - cd build
-    - conan config install http://github.com/ess-dmsc/conan-configuration.git
+    - conan config install $ESS_CONAN_CONFIG_URL
     - $SCL conan install --build missing ..
     - $SCL conan info ../conanfile.txt > CONAN_INFO
 
