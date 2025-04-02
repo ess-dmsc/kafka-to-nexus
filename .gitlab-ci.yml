@@ -3,31 +3,40 @@ default:
     - docker
   artifacts:
     expire_in: 1 week
+  cache:
+    key: conan-cache
+    policy: pull
+    paths:
+      - $CONAN_USER_HOME/.conan/
 
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
+variables:
+  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux8-build-node:latest"
+  CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
+  UBUNTU2204: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest"
+  BUILD_DIR: "build"
+
 stages:
-  - check
+  - test
   - build
   - archive
   - domain
   - integration
   - publish
 
-.check:
-  stage: check
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
-
 clang-format:
-  extends: .check
+  stage: test
+  image: $UBUNTU2204
   script:
     - ci/check-formatting.sh
 
 black:
-  extends: .check
+  stage: test
+  image: $UBUNTU2204
   script:
     - python3 -m venv .venv
     - .venv/bin/python -m pip install -r integration-tests/requirements.txt
@@ -37,7 +46,8 @@ black:
     - .venv/bin/python -m black --check domain-tests
 
 cppcheck:
-  extends: .check
+  stage: test
+  image: $UBUNTU2204
   script:
     - cppcheck --version
     - >
@@ -52,24 +62,38 @@ cppcheck:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
-.build:
-  stage: build
+.build_template: &build_template
   before_script:
-    - mkdir build
-    - cd build
-    - conan config install $ESS_CONAN_CONFIG_URL
-    - $SCL conan install --build missing .. --profile="linux_x86_64_gcc11_legacy"
-    - $SCL conan info ../conanfile.txt > CONAN_INFO
+    - |
+      CONAN_PROFILE=linux_x86_64_gcc11
+      if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [[ "$ID" == "centos" ]]; then
+            CONAN_PROFILE=linux_x86_64_gcc11_legacy
+            echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
+            source ~/.bashrc
+        fi
+      fi
+    - |
+      conan config install $ESS_CONAN_CONFIG_URL
+    - gcc --version
+    - g++ --version
+    - cppcheck --version
+
+    - git config --global --add safe.directory '*'
 
 build-debug:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
+  <<: *build_template
+  stage: build
+  image: $CENTOS7_IMAGE
   script:
-    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-    - $SCL ninja all UnitTests docs
-    - $SCL ninja coverage
+    - mkdir build
+    - cd build
+    - conan install --build missing ..
+    - conan info ../conanfile.txt > CONAN_INFO
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+    - ninja all UnitTests docs
+    - ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
@@ -81,13 +105,16 @@ build-debug:
         path: build/coverage.xml
 
 build-release:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
+  <<: *build_template
+  stage: build
+  image: $CENTOS7_IMAGE
   script:
-    - $SCL ../ci/configure-release.sh .. .
-    - $SCL ninja all UnitTests docs
+    - mkdir build
+    - cd build
+    - conan install --build missing ..
+    - conan info ../conanfile.txt > CONAN_INFO
+    - ../ci/configure-release.sh .. .
+    - ninja all UnitTests docs
     - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
@@ -100,44 +127,21 @@ build-release:
     reports:
       junit: build/test-output.xml
 
-domain_tests:
-  stage: domain
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  dependencies:
-    - build-release
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
-  before_script:
-    - ls
-    - cd domain-tests
-  script:
-    - $SCL python -m venv venv
-    - source venv/bin/activate
-    - python -m pip install -r requirements.txt
-    - pytest --file-maker-binary=../build/bin/file-maker --junitxml=DomainTestsOutput.xml
-  artifacts:
-    when: always
-    paths:
-      - domain-tests/DomainTestsOutput.xml
-    reports:
-      junit: Domain-tests/DomainTestsOutput.xml
-
 build-alt-distro:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
+  <<: *build_template
+  stage: build
+  image: $ALMALINUX9_IMAGE
+  variables:
+    SCL: scl enable gcc-toolset-12 --
   script:
+    - mkdir build
+    - cd build
+    - conan install --build missing .. 
+    - conan info ../conanfile.txt > CONAN_INFO
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests docs
     - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests
-
-  parallel:
-    matrix:
-      - DISTRO:
-          - debian11
-          - ubuntu2204
-      - DISTRO: almalinux8
-        SCL: scl enable gcc-toolset-12 --
 
 archive:
   stage: archive
@@ -145,6 +149,7 @@ archive:
   dependencies:
     - build-release
   script:
+    - mkdir build
     - cd build
     - mkdir -p archive/kafka-to-nexus/bin
     - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
@@ -155,6 +160,29 @@ archive:
   artifacts:
     paths:
       - build/kafka-to-nexus-centos7.tar.gz
+  cache:
+    key: conan-cache
+    policy: push
+
+domain_tests:
+  stage: domain
+  image: $CENTOS7_IMAGE
+  dependencies:
+    - build-release
+  before_script:
+    - ls
+    - cd domain-tests
+  script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - python -m pip install -r requirements.txt
+    - pytest --file-maker-binary=../build/bin/file-maker --junitxml=DomainTestsOutput.xml
+  artifacts:
+    when: always
+    paths:
+      - domain-tests/DomainTestsOutput.xml
+    reports:
+      junit: Domain-tests/DomainTestsOutput.xml
 
 integration-tests:
   stage: integration
