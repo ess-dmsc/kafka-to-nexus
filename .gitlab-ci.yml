@@ -58,7 +58,7 @@ cppcheck:
     - mkdir build
     - cd build
     - conan config install $ESS_CONAN_CONFIG_URL
-    - $SCL conan install --build missing ..
+    - $SCL conan install --build missing .. --profile="linux_x86_64_gcc11_legacy"
     - $SCL conan info ../conanfile.txt > CONAN_INFO
 
 build-debug:
