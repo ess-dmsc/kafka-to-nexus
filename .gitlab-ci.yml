@@ -127,19 +127,19 @@ build-release:
     reports:
       junit: build/test-output.xml
 
-# build-alt-distro:
-#   <<: *build_template
-#   stage: build
-#   image: $ALMALINUX9_IMAGE
-#   script:
-#     - mkdir build
-#     - cd build
-#     - conan install --build missing .. 
-#     - conan info ../conanfile.txt > CONAN_INFO
-#     - cmake -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-#     - cmake --build . --target all UnitTests docs
-#     - ./bin/kafka-to-nexus --version
-#     - ./bin/UnitTests
+build-alt-distro:
+  <<: *build_template
+  stage: build
+  image: $ALMALINUX9_IMAGE
+  script:
+    - mkdir build
+    - cd build
+    - conan install --build missing .. 
+    - conan info ../conanfile.txt > CONAN_INFO
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+    - cmake --build . --target all UnitTests docs
+    - ./bin/kafka-to-nexus --version
+    - ./bin/UnitTests
 
 archive:
   stage: archive
@@ -169,10 +169,10 @@ domain_tests:
   before_script:
     - ls
     - cd domain-tests
-  script:
-    - python -m venv venv
+    - python3.8 -m venv venv
     - source venv/bin/activate
     - python -m pip install -r requirements.txt
+  script:
     - pytest --file-maker-binary=../build/bin/file-maker --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
