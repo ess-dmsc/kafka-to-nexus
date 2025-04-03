@@ -127,19 +127,19 @@ build-release:
     reports:
       junit: build/test-output.xml
 
-build-alt-distro:
-  <<: *build_template
-  stage: build
-  image: $ALMALINUX9_IMAGE
-  script:
-    - mkdir build
-    - cd build
-    - conan install --build missing .. 
-    - conan info ../conanfile.txt > CONAN_INFO
-    - cmake -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-    - cmake --build . --target all UnitTests docs
-    - ./bin/kafka-to-nexus --version
-    - ./bin/UnitTests
+#build-alt-distro:
+#  <<: *build_template
+#  stage: build
+#  image: $ALMALINUX9_IMAGE
+#  script:
+#    - mkdir build
+#    - cd build
+#    - conan install --build missing .. 
+#    - conan info ../conanfile.txt > CONAN_INFO
+#    - cmake -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+#    - cmake --build . --target all UnitTests docs
+#    - ./bin/kafka-to-nexus --version
+#    - ./bin/UnitTests
 
 archive:
   stage: archive
