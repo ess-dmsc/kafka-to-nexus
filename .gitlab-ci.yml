@@ -166,13 +166,14 @@ domain_tests:
   image: $CENTOS7_IMAGE
   dependencies:
     - build-release
+  variables:
+    SCL: scl enable devtoolset-11 rh-python38 --
   before_script:
-    - ls
     - cd domain-tests
-    - python3.8 -m venv venv
+  script:
+    - $SCL python -m venv venv
     - source venv/bin/activate
     - python -m pip install -r requirements.txt
-  script:
     - pytest --file-maker-binary=../build/bin/file-maker --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
