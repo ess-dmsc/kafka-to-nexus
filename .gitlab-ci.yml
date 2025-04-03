@@ -15,6 +15,7 @@ workflow:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 variables:
+  # ALMALINUX8_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.1.0"
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux8-build-node:latest"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   UBUNTU2204: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest"
@@ -131,15 +132,17 @@ build-alt-distro:
   <<: *build_template
   stage: build
   image: $ALMALINUX9_IMAGE
-  variables:
-    SCL: scl enable gcc-toolset-12 --
+  # variables:
+  #   SCL: scl enable gcc-toolset-12 --
   script:
     - mkdir build
     - cd build
     - conan install --build missing .. 
     - conan info ../conanfile.txt > CONAN_INFO
-    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
-    - $SCL ninja all UnitTests docs
+    # - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
+    # - $SCL ninja all UnitTests docs
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
+    - ninja all UnitTests docs
     - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests
 
@@ -149,8 +152,6 @@ archive:
   dependencies:
     - build-release
   script:
-    - mkdir build
-    - cd build
     - mkdir -p archive/kafka-to-nexus/bin
     - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
     - cp -r ./lib archive/kafka-to-nexus/
