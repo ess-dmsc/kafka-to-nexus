@@ -89,7 +89,7 @@ build-debug:
   script:
     - mkdir build
     - cd build
-    - conan install --build=missing  --build=outdated .. --profile="${CONAN_PROFILE}"
+    - conan install --build=missing  ..
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - ninja all UnitTests docs
@@ -111,7 +111,7 @@ build-release:
   script:
     - mkdir build
     - cd build
-    - conan install --build=missing  --build=outdated .. --profile="${CONAN_PROFILE}"
+    - conan install --build=missing  ..
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
     - ninja all UnitTests docs
@@ -136,7 +136,7 @@ build-alt-distro:
   script:
     - mkdir build
     - cd build
-    - conan install --build=missing  --build=outdated .. --profile="${CONAN_PROFILE}"
+    - conan install --build=missing  ..
     - conan info ../conanfile.txt > CONAN_INFO
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests docs
