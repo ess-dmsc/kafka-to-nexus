@@ -15,6 +15,7 @@ stduuid/1.2.2
 spdlog/1.14.1
 asio/1.22.1
 openssl/3.3.1  # override as workaround
+libpq/13.3
 
 [generators]
 cmake
