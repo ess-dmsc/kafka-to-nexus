@@ -15,7 +15,7 @@ workflow:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 variables:
-  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.1.0"
+  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux8-build-node:latest"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   UBUNTU2204: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest"
   BUILD_DIR: "build"
@@ -64,8 +64,18 @@ cppcheck:
 
 .build_template: &build_template
   before_script:
-    - CONAN_PROFILE=linux_x86_64_gcc11
-    - conan config install $ESS_CONAN_CONFIG_URL
+    - |
+      CONAN_PROFILE=linux_x86_64_gcc11
+      if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [[ "$ID" == "centos" ]]; then
+            CONAN_PROFILE=linux_x86_64_gcc11_legacy
+            echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
+            source ~/.bashrc
+        fi
+      fi
+    - |
+      conan config install $ESS_CONAN_CONFIG_URL
     - gcc --version
     - g++ --version
     - cppcheck --version
@@ -79,7 +89,7 @@ build-debug:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing .. --profile="linux_x86_64_gcc11_legacy"
+    - conan install --build=missing  --build=outdated .. --profile="${CONAN_PROFILE}"
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - ninja all UnitTests docs
@@ -101,7 +111,7 @@ build-release:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing .. --profile="${CONAN_PROFILE}"
+    - conan install --build=missing  --build=outdated .. --profile="${CONAN_PROFILE}"
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
     - ninja all UnitTests docs
@@ -117,20 +127,6 @@ build-release:
     reports:
       junit: build/test-output.xml
 
-#build-alt-distro:
-#  <<: *build_template
-#  stage: build
-#  image: $ALMALINUX9_IMAGE
-#  script:
-#    - mkdir build
-#    - cd build
-#    - conan install --build missing .. 
-#    - conan info ../conanfile.txt > CONAN_INFO
-#    - cmake -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-#    - cmake --build . --target all UnitTests docs
-#    - ./bin/kafka-to-nexus --version
-#    - ./bin/UnitTests
-
 build-alt-distro:
   <<: *build_template
   stage: build
@@ -140,14 +136,12 @@ build-alt-distro:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing .. 
+    - conan install --build=missing  --build=outdated .. --profile="${CONAN_PROFILE}"
     - conan info ../conanfile.txt > CONAN_INFO
-    - cmake -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests docs
     - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests
-
 
 archive:
   stage: archive
