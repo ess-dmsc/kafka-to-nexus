@@ -64,18 +64,8 @@ cppcheck:
 
 .build_template: &build_template
   before_script:
-    - |
-      CONAN_PROFILE=linux_x86_64_gcc11
-      if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        if [[ "$ID" == "centos" ]]; then
-            CONAN_PROFILE=linux_x86_64_gcc11_legacy
-            echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
-            source ~/.bashrc
-        fi
-      fi
-    - |
-      conan config install $ESS_CONAN_CONFIG_URL
+    - CONAN_PROFILE=linux_x86_64_gcc11
+    - conan config install $ESS_CONAN_CONFIG_URL
     - gcc --version
     - g++ --version
     - cppcheck --version
@@ -89,7 +79,7 @@ build-debug:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing ..
+    - conan install --build missing .. --profile="linux_x86_64_gcc11_legacy"
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - ninja all UnitTests docs
@@ -111,7 +101,7 @@ build-release:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing ..
+    - conan install --build missing .. --profile="${CONAN_PROFILE}"
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
     - ninja all UnitTests docs
