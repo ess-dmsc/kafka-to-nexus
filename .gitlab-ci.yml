@@ -16,7 +16,7 @@ workflow:
       when: never
 
 variables:
-  ALMALINUX8_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux8-build-node:latest"
+  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.2"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   UBUNTU2204: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest"
   BUILD_DIR: "build"
@@ -90,7 +90,7 @@ build-debug:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing .. 
+    - conan install --build missing .. --profile="linux_x86_64_gcc11_legacy"
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - ninja all UnitTests docs
@@ -112,7 +112,7 @@ build-release:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing ..
+    - conan install --build missing .. --profile="linux_x86_64_gcc11_legacy"
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
     - ninja all UnitTests docs
@@ -131,16 +131,14 @@ build-release:
 build-alt-distro:
   <<: *build_template
   stage: build
-  image: $ALMALINUX8_IMAGE
-  variables:
-    SCL: scl enable gcc-toolset-12 --
+  image: $ALMALINUX9_IMAGE
   script:
     - mkdir build
     - cd build
-    - conan install --build=missing  ..
+    - conan install --build=missing  .. --profile="linux_x86_64_gcc11"
     - conan info ../conanfile.txt > CONAN_INFO
-    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
-    - $SCL ninja all UnitTests docs
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
+    - ninja all UnitTests docs
     - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests
 
