@@ -16,7 +16,7 @@ workflow:
       when: never
 
 variables:
-  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.2"
+  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.3"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   UBUNTU2204: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest"
   BUILD_DIR: "build"
