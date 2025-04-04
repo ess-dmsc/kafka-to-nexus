@@ -13,9 +13,10 @@ workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
 
 variables:
-  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.1.0"
+  ALMALINUX8_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux8-build-node:latest"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   UBUNTU2204: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest"
   BUILD_DIR: "build"
@@ -89,7 +90,7 @@ build-debug:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing .. --profile="linux_x86_64_gcc11_legacy"
+    - conan install --build missing .. 
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - ninja all UnitTests docs
@@ -111,7 +112,7 @@ build-release:
   script:
     - mkdir build
     - cd build
-    - conan install --build missing .. --profile="${CONAN_PROFILE}"
+    - conan install --build missing ..
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
     - ninja all UnitTests docs
@@ -130,15 +131,14 @@ build-release:
 build-alt-distro:
   <<: *build_template
   stage: build
-  image: $ALMALINUX9_IMAGE
+  image: $ALMALINUX8_IMAGE
   variables:
     SCL: scl enable gcc-toolset-12 --
   script:
     - mkdir build
     - cd build
-    - conan install --build missing .. 
+    - conan install --build=missing  ..
     - conan info ../conanfile.txt > CONAN_INFO
-    - cmake -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - $SCL ninja all UnitTests docs
     - ./bin/kafka-to-nexus --version
