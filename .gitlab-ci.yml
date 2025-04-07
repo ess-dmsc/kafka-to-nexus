@@ -19,6 +19,7 @@ variables:
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.4"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   BUILD_DIR: "build"
+  CONAN_USER_HOME: "$CI_PROJECT_DIR"
 
 stages:
   - setup
@@ -40,6 +41,8 @@ conan-config:
   cache:
     key: conan-cache
     policy: push
+    paths:
+      - $CONAN_USER_HOME/.conan/
 
 centos7-debug:
   stage: build
