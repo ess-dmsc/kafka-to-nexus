@@ -18,10 +18,10 @@ workflow:
 variables:
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.3"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
-  UBUNTU2204: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest"
   BUILD_DIR: "build"
 
 stages:
+  - setup
   - test
   - build
   - archive
@@ -29,32 +29,40 @@ stages:
   - integration
   - publish
 
-.build_template: &build_template
-  before_script:
-    - |
-      CONAN_PROFILE=linux_x86_64_gcc11
-      if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        if [[ "$ID" == "centos" ]]; then
-            CONAN_PROFILE=linux_x86_64_gcc11_legacy
-            echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
-            source ~/.bashrc
-        fi
-      fi
-    - conan config install $ESS_CONAN_CONFIG_URL
-    - gcc --version
-    - g++ --version
-    - cppcheck --version
-
-    - git config --global --add safe.directory '*'
-
-unit-tests:
-  <<: *build_template
-  stage: test
+gitlab-ci-configure-conan-centos7:
+  stage: setup
   image: $CENTOS7_IMAGE
   script:
-    - mkdir build
-    - cd build
+    - conan config install $ESS_CONAN_CONFIG_URL
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing
+  artifacts:
+    paths:
+      - $BUILD_DIR/
+  cache:
+    key: conan-cache-centos7
+    policy: push
+
+gitlab-ci-configure-conan-almalinux9:
+  stage: setup
+  image: $ALMALINUX9_IMAGE
+  script:
+    - conan config install $ESS_CONAN_CONFIG_URL
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --profile=linux_x86_64_gcc11 --build=missing
+  artifacts:
+    paths:
+      - $BUILD_DIR/
+  cache:
+    key: conan-cache-almalinux9
+    policy: push
+
+centos7-debug:
+  stage: build
+  image: $CENTOS7_IMAGE
+  dependencies:
+    - gitlab-ci-configure-conan-centos7
+  script:
     - conan install .. --build missing
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
@@ -72,13 +80,13 @@ unit-tests:
 
 clang-format:
   stage: test
-  image: $UBUNTU2204
+  image: $ALMALINUX9_IMAGE
   script:
     - ci/check-formatting.sh
 
 black:
   stage: test
-  image: $UBUNTU2204
+  image: $ALMALINUX9_IMAGE
   script:
     - python3 -m venv .venv
     - .venv/bin/python -m pip install -r integration-tests/requirements.txt
@@ -89,7 +97,7 @@ black:
 
 cppcheck:
   stage: test
-  image: $UBUNTU2204
+  image: $ALMALINUX9_IMAGE
   script:
     - cppcheck --version
     - >
@@ -102,13 +110,12 @@ cppcheck:
         --inconclusive \
         src/ 2> cppcheck.xml
 
-
-build-release:
-  <<: *build_template
+centos7-release:
   stage: build
   image: $CENTOS7_IMAGE
+  dependencies:
+  - gitlab-ci-configure-conan-centos7
   script:
-    - cd build
     - conan install .. --build missing
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
@@ -126,11 +133,11 @@ build-release:
       junit: build/test-output.xml
 
 almalinux9-debug:
-  <<: *build_template
   stage: build
   image: $ALMALINUX9_IMAGE
+  dependencies:
+    - gitlab-ci-configure-conan-almalinux9
   script:
-    - cd build
     - conan install --build=missing  .. --profile=linux_x86_64_gcc11
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
@@ -142,9 +149,8 @@ archive:
   stage: archive
   image: alpine:latest
   dependencies:
-    - build-release
+    - centos7-release
   script:
-    - cd build
     - mkdir -p archive/kafka-to-nexus/bin
     - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
     - cp -r ./lib archive/kafka-to-nexus/
@@ -162,7 +168,7 @@ domain_tests:
   stage: domain
   image: $CENTOS7_IMAGE
   dependencies:
-    - build-release
+    - centos7-release
   variables:
     SCL: scl enable devtoolset-11 rh-python38 --
   before_script:
@@ -219,7 +225,6 @@ publish:
     - jf config add $ESS_ARTIFACTORY_ID --url=$ESS_ARTIFACTORY_URL --user=$ESS_ARTIFACTORY_ECDC_USER --password=$ESS_ARTIFACTORY_ECDC_GENERIC_TOKEN
     - jf config show
   script:
-    - cd build
     - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
