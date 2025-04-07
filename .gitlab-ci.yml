@@ -11,9 +11,9 @@ default:
 
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
 
 variables:
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.3"
@@ -101,8 +101,6 @@ cppcheck:
         --enable=all \
         --inconclusive \
         src/ 2> cppcheck.xml
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 
 build-release:
@@ -127,13 +125,13 @@ build-release:
     reports:
       junit: build/test-output.xml
 
-build-alt-distro:
+almalinux9-debug:
   <<: *build_template
   stage: build
   image: $ALMALINUX9_IMAGE
   script:
     - cd build
-    - conan install --build=missing  .. --profile="$CONAN_PROFILE"
+    - conan install --build=missing  .. --profile=linux_x86_64_gcc11
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - ninja all UnitTests docs
@@ -224,12 +222,9 @@ publish:
     - cd build
     - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       variables:
         ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/${CI_DEFAULT_BRANCH}/${CI_PIPELINE_IID}/"
     - if: $CI_COMMIT_TAG
       variables:
         ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/tags/${CI_COMMIT_TAG}/${CI_PIPELINE_IID}/"
-    - if: $CI_COMMIT_BRANCH
-      variables:
-        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/branches/${CI_COMMIT_BRANCH}/${CI_PIPELINE_IID}/"
