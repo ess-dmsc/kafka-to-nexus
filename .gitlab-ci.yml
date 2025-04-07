@@ -3,11 +3,6 @@ default:
     - docker
   artifacts:
     expire_in: 1 week
-  cache:
-    key: $CI_COMMIT_REF_SLUG
-    policy: pull
-    paths:
-      - $CONAN_USER_HOME/.conan/
 
 workflow:
   rules:
@@ -19,54 +14,14 @@ variables:
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.4"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   BUILD_DIR: "build"
-  CONAN_USER_HOME: "$CI_PROJECT_DIR"
 
 stages:
-  - setup
   - test
   - build
   - archive
   - domain
   - integration
   - publish
-
-conan-config:
-  stage: setup
-  image: $ALMALINUX9_IMAGE
-  script:
-    - conan config install $ESS_CONAN_CONFIG_URL
-  artifacts:
-    paths:
-      - $BUILD_DIR/
-  cache:
-    key: $CI_COMMIT_REF_SLUG
-    policy: push
-    paths:
-      - $CONAN_USER_HOME/.conan/
-
-centos7-debug:
-  stage: build
-  image: $CENTOS7_IMAGE
-  dependencies:
-    - conan-config
-  script:
-    - echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
-    - source ~/.bashrc
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing
-    - conan info ../conanfile.txt > CONAN_INFO
-    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-    - ninja all UnitTests docs
-    - ninja coverage
-    - cat coverage.txt
-  coverage: '/^TOTAL.*\s+(\d+\%)$/'
-  artifacts:
-    paths:
-      - $BUILD_DIR/coverage.xml
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: $BUILD_DIR/coverage.xml
 
 clang-format:
   stage: test
@@ -101,14 +56,46 @@ cppcheck:
         --inconclusive \
         src/ 2> cppcheck.xml
 
+.conan-config: &conan-config
+  before_script:
+    - |
+      if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [[ "$ID" == "centos" ]]; then
+            CONAN_PROFILE=linux_x86_64_gcc11_legacy
+            echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
+            source ~/.bashrc
+        fi
+      fi
+    - conan config install $ESS_CONAN_CONFIG_URL
+
+centos7-debug:
+  stage: build
+  image: $CENTOS7_IMAGE
+  <<: *conan-config
+  script:
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing
+    - conan info ../conanfile.txt > CONAN_INFO
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+    - ninja all UnitTests docs
+    - ninja coverage
+    - cat coverage.txt
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+  artifacts:
+    paths:
+      - $BUILD_DIR/coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: $BUILD_DIR/coverage.xml
+
+
 centos7-release:
   stage: build
   image: $CENTOS7_IMAGE
-  dependencies:
-    - conan-config
+  <<: *conan-config
   script:
-    - echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
-    - source ~/.bashrc
     - mkdir -p $BUILD_DIR && cd $BUILD_DIR
     - conan install .. --build=missing
     - conan info ../conanfile.txt > CONAN_INFO
@@ -129,8 +116,7 @@ centos7-release:
 almalinux9-debug:
   stage: build
   image: $ALMALINUX9_IMAGE
-  dependencies:
-    - conan-config
+  <<: *conan-config
   script:
     - mkdir -p $BUILD_DIR && cd $BUILD_DIR
     - conan install .. --build=missing --profile=linux_x86_64_gcc11
@@ -146,6 +132,7 @@ archive:
   dependencies:
     - centos7-release
   script:
+    - cd $BUILD_DIR
     - mkdir -p archive/kafka-to-nexus/bin
     - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
     - cp -r ./lib archive/kafka-to-nexus/

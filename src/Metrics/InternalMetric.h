@@ -23,7 +23,7 @@ struct InternalMetric {
         Counter(MetricToGetDetailsFrom.getCounterPtr()),
         DescriptionString(MetricToGetDetailsFrom.getDescription()),
         LastValue(MetricToGetDetailsFrom.getCounterPtr()->load()),
-        ValueSeverity(MetricToGetDetailsFrom.getSeverity()){};
+        ValueSeverity(MetricToGetDetailsFrom.getSeverity()) {};
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};

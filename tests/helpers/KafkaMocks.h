@@ -17,7 +17,7 @@ class MockConsumer
     : public trompeloeil::mock_interface<Kafka::ConsumerInterface> {
 public:
   explicit MockConsumer(
-      [[maybe_unused]] const Kafka::BrokerSettings &Settings){};
+      [[maybe_unused]] const Kafka::BrokerSettings &Settings) {};
   using PollReturnType = std::pair<Kafka::PollStatus, FileWriter::Msg>;
   IMPLEMENT_MOCK0(poll);
   IMPLEMENT_MOCK3(addPartitionAtOffset);
