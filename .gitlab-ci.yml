@@ -16,7 +16,7 @@ workflow:
     - if: $CI_COMMIT_TAG
 
 variables:
-  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.3"
+  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0-rc.4"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
   BUILD_DIR: "build"
 
@@ -40,7 +40,7 @@ gitlab-ci-configure-conan-centos7:
     paths:
       - $BUILD_DIR/
   cache:
-    key: conan-cache-centos7
+    key: conan-cache
     policy: push
 
 gitlab-ci-configure-conan-almalinux9:
@@ -54,7 +54,7 @@ gitlab-ci-configure-conan-almalinux9:
     paths:
       - $BUILD_DIR/
   cache:
-    key: conan-cache-almalinux9
+    key: conan-cache
     policy: push
 
 centos7-debug:
