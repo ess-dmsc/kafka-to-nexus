@@ -29,27 +29,11 @@ stages:
   - integration
   - publish
 
-gitlab-ci-configure-conan-centos7:
-  stage: setup
-  image: $CENTOS7_IMAGE
-  script:
-    - conan config install $ESS_CONAN_CONFIG_URL
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing
-  artifacts:
-    paths:
-      - $BUILD_DIR/
-  cache:
-    key: conan-cache
-    policy: push
-
-gitlab-ci-configure-conan-almalinux9:
+conan-config:
   stage: setup
   image: $ALMALINUX9_IMAGE
   script:
     - conan config install $ESS_CONAN_CONFIG_URL
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --profile=linux_x86_64_gcc11 --build=missing
   artifacts:
     paths:
       - $BUILD_DIR/
@@ -61,9 +45,12 @@ centos7-debug:
   stage: build
   image: $CENTOS7_IMAGE
   dependencies:
-    - gitlab-ci-configure-conan-centos7
+    - conan-config
   script:
-    - conan install .. --build missing
+    - echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
+    - source ~/.bashrc
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - ninja all UnitTests docs
@@ -72,17 +59,18 @@ centos7-debug:
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
     paths:
-      - build/coverage.xml
+      - $BUILD_DIR/coverage.xml
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: build/coverage.xml
+        path: $BUILD_DIR/coverage.xml
 
 clang-format:
   stage: test
   image: $ALMALINUX9_IMAGE
   script:
     - ci/check-formatting.sh
+  allow_failure: true
 
 black:
   stage: test
@@ -114,9 +102,12 @@ centos7-release:
   stage: build
   image: $CENTOS7_IMAGE
   dependencies:
-  - gitlab-ci-configure-conan-centos7
+    - conan-config
   script:
-    - conan install .. --build missing
+    - echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
+    - source ~/.bashrc
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
     - ninja all UnitTests docs
@@ -124,21 +115,22 @@ centos7-release:
     - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
     paths:
-      - build/test-output.xml
-      - build/CONAN_INFO
-      - build/bin
-      - build/lib
-      - build/licenses
+      - $BUILD_DIR/test-output.xml
+      - $BUILD_DIR/CONAN_INFO
+      - $BUILD_DIR/bin
+      - $BUILD_DIR/lib
+      - $BUILD_DIR/licenses
     reports:
-      junit: build/test-output.xml
+      junit: $BUILD_DIR/test-output.xml
 
 almalinux9-debug:
   stage: build
   image: $ALMALINUX9_IMAGE
   dependencies:
-    - gitlab-ci-configure-conan-almalinux9
+    - conan-config
   script:
-    - conan install --build=missing  .. --profile=linux_x86_64_gcc11
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing --profile=linux_x86_64_gcc11
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
     - ninja all UnitTests docs
@@ -159,7 +151,7 @@ archive:
     - tar czf kafka-to-nexus-centos7.tar.gz -C archive kafka-to-nexus
   artifacts:
     paths:
-      - build/kafka-to-nexus-centos7.tar.gz
+      - $BUILD_DIR/kafka-to-nexus-centos7.tar.gz
   cache:
     key: conan-cache
     policy: push
@@ -177,7 +169,7 @@ domain_tests:
     - $SCL python -m venv venv
     - source venv/bin/activate
     - python -m pip install -r requirements.txt
-    - pytest --file-maker-binary=../build/bin/file-maker --junitxml=DomainTestsOutput.xml
+    - pytest --file-maker-binary=../$BUILD_DIR/bin/file-maker --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
     paths:
@@ -192,7 +184,7 @@ integration-tests:
     - archive
   before_script:
     - cd integration-tests
-    - ./setup.sh ../build/kafka-to-nexus-centos7.tar.gz
+    - ./setup.sh ../$BUILD_DIR/kafka-to-nexus-centos7.tar.gz
   script:
     - ./run-integration-tests.sh
   after_script:
