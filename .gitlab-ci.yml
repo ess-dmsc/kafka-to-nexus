@@ -179,7 +179,7 @@ domain_tests:
     paths:
       - domain-tests/DomainTestsOutput.xml
     reports:
-      junit: Domain-tests/DomainTestsOutput.xml
+      junit: domain-tests/DomainTestsOutput.xml
 
 integration-tests:
   stage: integration
