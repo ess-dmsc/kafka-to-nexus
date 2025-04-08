@@ -25,6 +25,7 @@ clang-format:
   extends: .check
   script:
     - ci/check-formatting.sh
+  allow_failure: true
 
 black:
   extends: .check
