@@ -74,7 +74,7 @@ public:
   /// example: converting a string to an enum, it should
   /// be done in this function. This function is called by the application right
   /// after the constructor and parse_config().
-  virtual void config_post_processing(){};
+  virtual void config_post_processing() {};
 
   /// \brief Override this function to register meta data values/fields.
   ///
@@ -88,7 +88,7 @@ public:
   /// class that is used to keep track of known meta-data fields.
   virtual void
   register_meta_data([[maybe_unused]] hdf5::node::Group const &HDFGroup,
-                     [[maybe_unused]] MetaData::TrackerPtr const &Tracker){};
+                     [[maybe_unused]] MetaData::TrackerPtr const &Tracker) {};
 
   /// \brief Initialise the writer instance for writing.
   ///

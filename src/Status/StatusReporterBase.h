@@ -77,7 +77,7 @@ protected:
   void reportStatus();
 
 private:
-  virtual void postReportStatusActions(){};
+  virtual void postReportStatusActions() {};
   mutable std::shared_mutex StatusMutex;
   std::shared_ptr<Kafka::Producer> Producer;
   std::unique_ptr<Kafka::IProducerTopic> StatusProducerTopic;

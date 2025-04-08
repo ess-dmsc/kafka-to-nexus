@@ -59,7 +59,9 @@ public:
 };
 
 TEST_F(MessageClassTest, Success) {
-  { FlatbufferReaderRegistry::Registrar<MsgDummyReader1> RegisterIt(TestKey); }
+  {
+    FlatbufferReaderRegistry::Registrar<MsgDummyReader1> RegisterIt(TestKey);
+  }
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   auto CurrentMessage = FlatbufferMessage(TestData.get(), 8);
   EXPECT_TRUE(CurrentMessage.isValid());
@@ -78,14 +80,18 @@ TEST_F(MessageClassTest, WrongFlatbufferID) {
 }
 
 TEST_F(MessageClassTest, SizeTooSmall) {
-  { FlatbufferReaderRegistry::Registrar<MsgDummyReader1> RegisterIt(TestKey); }
+  {
+    FlatbufferReaderRegistry::Registrar<MsgDummyReader1> RegisterIt(TestKey);
+  }
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 7),
                FileWriter::BufferTooSmallError);
 }
 
 TEST_F(MessageClassTest, InvalidFlatbuffer) {
-  { FlatbufferReaderRegistry::Registrar<InvalidReader> RegisterIt(TestKey); }
+  {
+    FlatbufferReaderRegistry::Registrar<InvalidReader> RegisterIt(TestKey);
+  }
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 8),
                FileWriter::NotValidFlatbuffer);

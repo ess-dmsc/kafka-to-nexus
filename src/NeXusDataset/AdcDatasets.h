@@ -20,7 +20,7 @@ public:
   Amplitude(hdf5::node::Group const &Parent, Mode CMode,
             size_t ChunkSize = 1024)
       : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_amplitude", CMode,
-                                         ChunkSize){};
+                                         ChunkSize) {};
 };
 
 /// \brief Represents a NeXus dataset with the name "adc_pulse_peak_area".
@@ -29,7 +29,7 @@ public:
   PeakArea() = default;
   PeakArea(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024)
       : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_peak_area", CMode,
-                                         ChunkSize){};
+                                         ChunkSize) {};
 };
 
 /// \brief Represents a NeXus dataset with the name "adc_pulse_background".
@@ -39,7 +39,7 @@ public:
   Background(hdf5::node::Group const &Parent, Mode CMode,
              size_t ChunkSize = 1024)
       : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_background", CMode,
-                                         ChunkSize){};
+                                         ChunkSize) {};
 };
 
 /// \brief Represents a NeXus dataset with the name "adc_pulse_threshold_time".

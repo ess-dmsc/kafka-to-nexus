@@ -16,7 +16,7 @@
 class ProducerStandIn : public Kafka::Producer {
 public:
   explicit ProducerStandIn(Kafka::BrokerSettings &Settings)
-      : Producer(Settings){};
+      : Producer(Settings) {};
   using Producer::ProducerID;
   using Producer::ProducerPtr;
 };
@@ -25,7 +25,7 @@ class ProducerTopicStandIn : public Kafka::ProducerTopic {
 public:
   ProducerTopicStandIn(std::shared_ptr<Kafka::Producer> ProducerPtr,
                        std::string TopicName)
-      : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
+      : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)) {};
   int produce(
       [[maybe_unused]] std::unique_ptr<Kafka::ProducerMessage> Msg) override {
     return 0;

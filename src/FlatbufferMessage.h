@@ -22,25 +22,25 @@ public:
 class BufferTooSmallError : public FlatbufferError {
 public:
   explicit BufferTooSmallError(const std::string &what)
-      : FlatbufferError(what){};
+      : FlatbufferError(what) {};
 };
 
 class UnknownFlatbufferID : public FlatbufferError {
 public:
   explicit UnknownFlatbufferID(const std::string &what)
-      : FlatbufferError(what){};
+      : FlatbufferError(what) {};
 };
 
 class InvalidFlatbufferTimestamp : public FlatbufferError {
 public:
   explicit InvalidFlatbufferTimestamp(const std::string &what)
-      : FlatbufferError(what){};
+      : FlatbufferError(what) {};
 };
 
 class NotValidFlatbuffer : public FlatbufferError {
 public:
   explicit NotValidFlatbuffer(const std::string &what)
-      : FlatbufferError(what){};
+      : FlatbufferError(what) {};
 };
 
 /// \brief A wrapper around a databuffer which holds a flatbuffer.

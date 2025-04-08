@@ -13,7 +13,7 @@ namespace Metrics {
 class MockUnhealthySink : public Sink {
 public:
   explicit MockUnhealthySink(LogTo LogToSink = LogTo::LOG_MSG)
-      : SinkType(LogToSink){};
+      : SinkType(LogToSink) {};
   MAKE_MOCK1(reportMetric, void(InternalMetric &), override);
   LogTo getType() const override { return SinkType; };
   bool isHealthy() const override { return false; };
