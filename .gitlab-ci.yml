@@ -134,7 +134,7 @@ archive:
   script:
     - cd $BUILD_DIR
     - mkdir -p archive/kafka-to-nexus
-    - cp -a ./bin archive/kafka-to-nexus
+    - cp ./bin/file-maker ./bin/kafka-to-nexus ./bin/template-maker archive/kafka-to-nexus/bin/
     - cp -a ./lib archive/kafka-to-nexus
     - cp -a ./licenses archive/kafka-to-nexus
     - cp ./CONAN_INFO archive/kafka-to-nexus
