@@ -132,6 +132,7 @@ archive:
   dependencies:
     - centos7-release
   script:
+    - cd $BUILD_DIR
     - mkdir -p archive/kafka-to-nexus
     - cp -a ./bin archive/kafka-to-nexus
     - cp -a ./lib archive/kafka-to-nexus
