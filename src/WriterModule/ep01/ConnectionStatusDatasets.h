@@ -39,6 +39,6 @@ public:
   ConnectionStatus(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize = 1024)
       : ExtensibleDataset<std::int16_t>(Parent, "connection_status", CMode,
-                                        ChunkSize){};
+                                        ChunkSize) {};
 };
 } // namespace NeXusDataset

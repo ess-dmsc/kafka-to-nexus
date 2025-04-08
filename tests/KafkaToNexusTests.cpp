@@ -23,7 +23,7 @@ public:
                        std::unique_ptr<Status::StatusReporterBase> Reporter)
       : FileWriter::Master(
             Config, std::move(Listener), std::move(Reporter),
-            std::make_unique<Metrics::Registrar>("some_prefix")){};
+            std::make_unique<Metrics::Registrar>("some_prefix")) {};
   MAKE_MOCK0(stopNow, void(), override);
   MAKE_MOCK0(writingIsFinished, bool(), override);
 };

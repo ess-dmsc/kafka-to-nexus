@@ -15,7 +15,7 @@ namespace Metrics {
 
 class MockSink : public Sink {
 public:
-  explicit MockSink(LogTo LogToSink = LogTo::LOG_MSG) : SinkType(LogToSink){};
+  explicit MockSink(LogTo LogToSink = LogTo::LOG_MSG) : SinkType(LogToSink) {};
   MAKE_MOCK1(reportMetric, void(InternalMetric &), override);
   LogTo getType() const override { return SinkType; };
   bool isHealthy() const override { return true; };

@@ -19,7 +19,7 @@ namespace Kafka {
 
 class ProducerDeliveryCb : public RdKafka::DeliveryReportCb {
 public:
-  explicit ProducerDeliveryCb(ProducerStats &Stats) : Stats(Stats){};
+  explicit ProducerDeliveryCb(ProducerStats &Stats) : Stats(Stats) {};
 
   void dr_cb(RdKafka::Message &Message) override {
     if (Message.err() != RdKafka::ERR_NO_ERROR) {

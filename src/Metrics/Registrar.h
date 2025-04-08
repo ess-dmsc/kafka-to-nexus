@@ -28,7 +28,7 @@ public:
   explicit Registrar(
       std::string MetricsPrefix,
       std::vector<std::shared_ptr<Reporter>> const &Reporters = {})
-      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters){};
+      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) {};
   ~Registrar() override = default;
 
   void registerMetric(Metric &NewMetric,

@@ -24,7 +24,7 @@ protected:
 class ProducerStandIn : public Kafka::Producer {
 public:
   explicit ProducerStandIn(Kafka::BrokerSettings &Settings)
-      : Producer(Settings){};
+      : Producer(Settings) {};
   using Producer::ProducerID;
   using Producer::ProducerPtr;
 };
@@ -43,9 +43,7 @@ public:
                                   int64_t /*offset*/) override {
     return RdKafka::ERR_NO_ERROR;
   };
-  struct rd_kafka_topic_s *c_ptr() override {
-    return {};
-  };
+  struct rd_kafka_topic_s *c_ptr() override { return {}; };
 };
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {

@@ -19,7 +19,7 @@ namespace Metrics {
 class CarbonSink : public Sink {
 public:
   CarbonSink(std::string Host, uint16_t const Port)
-      : CarbonConnection(std::move(Host), Port){};
+      : CarbonConnection(std::move(Host), Port) {};
   void reportMetric(InternalMetric &MetricToBeReported) override;
   LogTo getType() const override { return LogTo::CARBON; };
   bool isHealthy() const override;
