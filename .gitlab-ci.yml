@@ -6,28 +6,33 @@ default:
 
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+variables:
+  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0"
+  CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
+  BUILD_DIR: "build"
 
 stages:
-  - check
+  - test
   - build
   - archive
   - domain
   - integration
-  - release
-
-.check:
-  stage: check
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-build-node:latest
+  - publish
 
 clang-format:
-  extends: .check
+  stage: test
+  image: $ALMALINUX9_IMAGE
   script:
     - ci/check-formatting.sh
+  allow_failure: true
 
 black:
-  extends: .check
+  stage: test
+  image: $ALMALINUX9_IMAGE
   script:
     - python3 -m venv .venv
     - .venv/bin/python -m pip install -r integration-tests/requirements.txt
@@ -37,7 +42,8 @@ black:
     - .venv/bin/python -m black --check domain-tests
 
 cppcheck:
-  extends: .check
+  stage: test
+  image: $ALMALINUX9_IMAGE
   script:
     - cppcheck --version
     - >
@@ -49,136 +55,123 @@ cppcheck:
         --enable=all \
         --inconclusive \
         src/ 2> cppcheck.xml
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
-.build:
-  stage: build
+.conan-config: &conan-config
   before_script:
-    - mkdir build
-    - cd build
-    - >
-      conan remote add \
-        --insert 0 \
-        ecdc-conan-virtual \
-        $ESS_ARTIFACTORY_ECDC_CONAN_VIRTUAL_REMOTE_URL
-    - $SCL conan install --build missing ..
-    - $SCL conan info ../conanfile.txt > CONAN_INFO
-  after_script:
-    - >
-      conan remote add \
-        ecdc-conan-external \
-        $ESS_ARTIFACTORY_ECDC_CONAN_EXTERNAL_REMOTE_URL
-    - >
-      conan user \
-        --password $ESS_ARTIFACTORY_ECDC_CONAN_TOKEN \
-        --remote ecdc-conan-external \
-        $ESS_ARTIFACTORY_ECDC_CONAN_USER
-    # Store built packages to save build time on subsequent builds
-    - conan upload '*' --all --confirm --remote ecdc-conan-external
+    - |
+      if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [[ "$ID" == "centos" ]]; then
+            CONAN_PROFILE=linux_x86_64_gcc11_legacy
+            echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
+            source ~/.bashrc
+        fi
+      fi
+    - conan config install $ESS_CONAN_CONFIG_URL
 
-build-debug:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
+centos7-debug:
+  stage: build
+  image: $CENTOS7_IMAGE
+  <<: *conan-config
   script:
-    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-    - $SCL ninja all UnitTests docs
-    - $SCL ninja coverage
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing
+    - conan info ../conanfile.txt > CONAN_INFO
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
+    - ninja all UnitTests docs
+    - ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
     paths:
-      - build/coverage.xml
+      - $BUILD_DIR/coverage.xml
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: build/coverage.xml
+        path: $BUILD_DIR/coverage.xml
 
-build-release:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
+
+centos7-release:
+  stage: build
+  image: $CENTOS7_IMAGE
+  <<: *conan-config
   script:
-    - $SCL ../ci/configure-release.sh .. .
-    - $SCL ninja all UnitTests docs
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing
+    - conan info ../conanfile.txt > CONAN_INFO
+    - ../ci/configure-release.sh .. .
+    - ninja all UnitTests docs
     - ./bin/kafka-to-nexus --version
     - ./bin/UnitTests --gtest_output=xml:test-output.xml
   artifacts:
     paths:
-      - build/test-output.xml
-      - build/CONAN_INFO
-      - build/bin
-      - build/lib
-      - build/licenses
+      - $BUILD_DIR/test-output.xml
+      - $BUILD_DIR/CONAN_INFO
+      - $BUILD_DIR/bin
+      - $BUILD_DIR/lib
+      - $BUILD_DIR/licenses
     reports:
-      junit: build/test-output.xml
+      junit: $BUILD_DIR/test-output.xml
+
+almalinux9-debug:
+  stage: build
+  image: $ALMALINUX9_IMAGE
+  <<: *conan-config
+  script:
+    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+    - conan install .. --build=missing --profile=linux_x86_64_gcc11
+    - conan info ../conanfile.txt > CONAN_INFO
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
+    - ninja all UnitTests docs
+    - ./bin/kafka-to-nexus --version
+    - ./bin/UnitTests
+
+archive:
+  stage: archive
+  image: alpine:latest
+  dependencies:
+    - centos7-release
+  script:
+    - cd $BUILD_DIR
+    - mkdir -p archive/kafka-to-nexus/bin
+    - cp ./bin/file-maker ./bin/kafka-to-nexus ./bin/template-maker archive/kafka-to-nexus/bin/
+    - cp -a ./lib archive/kafka-to-nexus
+    - cp -a ./licenses archive/kafka-to-nexus
+    - cp ./CONAN_INFO archive/kafka-to-nexus
+    - tar czf kafka-to-nexus-centos7.tar.gz -C archive kafka-to-nexus
+  artifacts:
+    paths:
+      - $BUILD_DIR/kafka-to-nexus-centos7.tar.gz
 
 domain_tests:
   stage: domain
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
+  image: $CENTOS7_IMAGE
   dependencies:
-    - build-release
+    - centos7-release
   variables:
     SCL: scl enable devtoolset-11 rh-python38 --
   before_script:
-    - ls
     - cd domain-tests
   script:
     - $SCL python -m venv venv
     - source venv/bin/activate
     - python -m pip install -r requirements.txt
-    - pytest --file-maker-binary=../build/bin/file-maker --junitxml=DomainTestsOutput.xml
+    - pytest --file-maker-binary=../$BUILD_DIR/bin/file-maker --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
     paths:
       - domain-tests/DomainTestsOutput.xml
     reports:
-      junit: Domain-tests/DomainTestsOutput.xml
-
-build-alt-distro:
-  extends: .build
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-$DISTRO-build-node:latest
-  script:
-    - $SCL cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
-    - $SCL ninja all UnitTests docs
-    - ./bin/kafka-to-nexus --version
-    - ./bin/UnitTests
-
-  parallel:
-    matrix:
-      - DISTRO:
-          - debian11
-          - ubuntu2204
-      - DISTRO: almalinux8
-        SCL: scl enable gcc-toolset-12 --
-
-archive:
-  stage: archive
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  script:
-    - cd build
-    - mkdir -p archive/kafka-to-nexus/bin
-    - cp ./bin/kafka-to-nexus archive/kafka-to-nexus/bin/
-    - cp -r ./lib archive/kafka-to-nexus/
-    - cp -r ./licenses archive/kafka-to-nexus/
-    - cp ./CONAN_INFO archive/kafka-to-nexus/
-    - cd archive
-    - tar czf kafka-to-nexus.tar.gz kafka-to-nexus
-  dependencies:
-    - build-release
-  artifacts:
-    paths:
-      - build/archive/kafka-to-nexus.tar.gz
+      junit: domain-tests/DomainTestsOutput.xml
 
 integration-tests:
   stage: integration
   image: docker:latest
+  dependencies:
+    - archive
   before_script:
     - cd integration-tests
-    - ./setup.sh ../build/archive/kafka-to-nexus.tar.gz
+    - ./setup.sh ../$BUILD_DIR/kafka-to-nexus-centos7.tar.gz
   script:
     - ./run-integration-tests.sh
   after_script:
@@ -192,8 +185,6 @@ integration-tests:
     FILEWRITER_FILEWRITER_CONTAINER_NAME: filewriter-$CI_JOB_ID
     HTTP_PROXY: $ESS_HTTP_PROXY
     HTTPS_PROXY: $ESS_HTTP_PROXY
-  dependencies:
-    - archive
   artifacts:
     when: always
     paths:
@@ -203,16 +194,24 @@ integration-tests:
     reports:
       junit: integration-tests/IntegrationTestsOutput.xml
 
-keep-artifacts:
-  stage: release
-  image: registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-build-node:latest
-  script:
-    - ls build/archive/kafka-to-nexus.tar.gz
+publish:
+  stage: publish
+  image: alpine/curl:latest
   dependencies:
     - archive
-  artifacts:
-    paths:
-      - build/archive/kafka-to-nexus.tar.gz
-    expire_in: never
+  before_script:
+    - cp $BUILD_DIR/kafka-to-nexus-centos7.tar.gz .
+    - curl -fL https://install-cli.jfrog.io | sh
+    - jf config add $ESS_ARTIFACTORY_ID --url=$ESS_ARTIFACTORY_URL --user=$ESS_ARTIFACTORY_ECDC_USER --password=$ESS_ARTIFACTORY_ECDC_GENERIC_TOKEN
+    - jf config show
+  script:
+    - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
   rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      variables:
+        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/${CI_DEFAULT_BRANCH}/${CI_PIPELINE_IID}/"
     - if: $CI_COMMIT_TAG
+      variables:
+        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/tags/${CI_COMMIT_TAG}/"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
