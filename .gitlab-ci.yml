@@ -12,7 +12,7 @@ workflow:
 
 variables:
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.2.0"
-  CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/build-nodes/centos7:1.0"
+  CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-conan:1.0.0"
   BUILD_DIR: "build"
 
 stages:
@@ -34,12 +34,13 @@ black:
   stage: test
   image: $ALMALINUX9_IMAGE
   script:
-    - python3 -m venv .venv
-    - .venv/bin/python -m pip install -r integration-tests/requirements.txt
-    - .venv/bin/python -m pip install -r domain-tests/requirements.txt
-    - .venv/bin/python -m black --version
-    - .venv/bin/python -m black --check integration-tests
-    - .venv/bin/python -m black --check domain-tests
+    - python3 -m venv venv
+    - source venv/bin/activate
+    - pip install -r integration-tests/requirements.txt
+    - pip install -r domain-tests/requirements.txt
+    - black --version
+    - black --check integration-tests
+    - black --check domain-tests
 
 cppcheck:
   stage: test
@@ -56,26 +57,13 @@ cppcheck:
         --inconclusive \
         src/ 2> cppcheck.xml
 
-.conan-config: &conan-config
-  before_script:
-    - |
-      if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        if [[ "$ID" == "centos" ]]; then
-            CONAN_PROFILE=linux_x86_64_gcc11_legacy
-            echo 'source /opt/rh/devtoolset-11/enable' >> ~/.bashrc
-            source ~/.bashrc
-        fi
-      fi
-    - conan config install $ESS_CONAN_CONFIG_URL
-
 centos7-debug:
   stage: build
   image: $CENTOS7_IMAGE
-  <<: *conan-config
   script:
+    - conan config install $ESS_CONAN_CONFIG_URL
     - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing
+    - conan install .. --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
     - conan info ../conanfile.txt > CONAN_INFO
     - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
     - ninja all UnitTests docs
@@ -94,10 +82,10 @@ centos7-debug:
 centos7-release:
   stage: build
   image: $CENTOS7_IMAGE
-  <<: *conan-config
   script:
+    - conan config install $ESS_CONAN_CONFIG_URL
     - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing
+    - conan install .. --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
     - conan info ../conanfile.txt > CONAN_INFO
     - ../ci/configure-release.sh .. .
     - ninja all UnitTests docs
@@ -116,8 +104,8 @@ centos7-release:
 almalinux9-debug:
   stage: build
   image: $ALMALINUX9_IMAGE
-  <<: *conan-config
   script:
+    - conan config install $ESS_CONAN_CONFIG_URL
     - mkdir -p $BUILD_DIR && cd $BUILD_DIR
     - conan install .. --build=missing --profile=linux_x86_64_gcc11
     - conan info ../conanfile.txt > CONAN_INFO
@@ -148,14 +136,12 @@ domain_tests:
   image: $CENTOS7_IMAGE
   dependencies:
     - centos7-release
-  variables:
-    SCL: scl enable devtoolset-11 rh-python38 --
   before_script:
     - cd domain-tests
   script:
-    - $SCL python -m venv venv
+    - python3 -m venv venv
     - source venv/bin/activate
-    - python -m pip install -r requirements.txt
+    - pip install -r requirements.txt
     - pytest --file-maker-binary=../$BUILD_DIR/bin/file-maker --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
