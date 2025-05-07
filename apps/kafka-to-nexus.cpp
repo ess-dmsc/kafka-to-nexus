@@ -360,6 +360,9 @@ int main(int argc, char **argv) {
       options->StreamerConfiguration.BrokerSettings.MinMetadataTimeout};
   Logger::Debug("Starting run loop.");
   Logger::Debug("Retrieving topic names from broker.");
+  extern int server_thread(int x);
+  std::thread first(server_thread, 42);
+
   while (!shouldStop(master, find_topic_mode, RUN_STATE)) {
     try {
       if (find_topic_mode) {

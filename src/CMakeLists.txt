@@ -13,6 +13,7 @@ set(kafka_to_nexus_SRC
         JsonConfig/Field.cpp
         JsonConfig/FieldHandler.cpp
         FileWriterTask.cpp
+        Server.cpp
         Stream/PartitionFilter.cpp
         Stream/MessageWriter.cpp
         Stream/Topic.cpp
