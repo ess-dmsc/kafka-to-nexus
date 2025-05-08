@@ -21,7 +21,12 @@
 #include "WriterRegistrar.h"
 #include <CLI/CLI.hpp>
 #include <regex>
+#include <StatusServer.h>
 #include <utility>
+
+
+
+StatusServer TcpStatusServer;
 
 // This should only be visible in this translation unit
 static std::atomic<RunStates> RUN_STATE{RunStates::Running};
@@ -354,6 +359,8 @@ int main(int argc, char **argv) {
         create_status_reporter(*options, app_name, app_version),
         std::move(registrar));
   };
+
+  TcpStatusServer.Start();
 
   bool find_topic_mode{true};
   duration metadata_timeout{
