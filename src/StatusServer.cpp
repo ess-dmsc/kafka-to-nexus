@@ -1,4 +1,5 @@
 #include <StatusServer.h>
+#include <inttypes.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,7 +104,7 @@ void StatusServer::ThreadMain() {
         if (!fork()) { // this is the child process
             close(sockfd); // child doesn't need the listener
             char buffer[1024];
-            int len = snprintf(buffer, 1024, "State %llu, WritesDone %llu\n", GlobalState, GlobalWritesDone);
+            int len = snprintf(buffer, 1024, "State %" PRIu64 ", WritesDone %" PRIu64 "\n", GlobalState, GlobalWritesDone);
             if (send(new_fd, buffer, len, 0) == -1)
                 perror("send");
             close(new_fd);
