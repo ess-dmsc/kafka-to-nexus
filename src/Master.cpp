@@ -195,6 +195,7 @@ void Master::resetStatusInfo() {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = {};
   CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
+  GlobalState = (uint64_t)CurrentStateMetric;
 }
 
 } // namespace FileWriter
