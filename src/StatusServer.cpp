@@ -97,10 +97,27 @@ void StatusServer::ThreadMain() {
             perror("accept");
             continue;
         }
+    // Check that we have free slot to handle this connection.
+    // This aims to limit and prevent malfunctioning frequent connection request,
+    // to exhaust system resources.
+    if (active_threads.load() >= MAX_ACTIVE_THREADS) {
+        // Too many active threads, reject connection
+        close(new_fd);
+        fprintf(stderr, "Too many active connections, rejecting\n");
+        continue;
+    }
 
+    // Set socket send/receive timeouts (5 seconds) to prevent unfinished malfunctioning
+    // connections consume resource and hanging forever.
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+    setsockopt(new_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+    setsockopt(new_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
         inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
         printf("server: got connection from %s\n", s);
-
+// Register that we start a new con handler thread
+active_threads++;
         std::thread([new_fd]() { // thread to handle the connection
             char buffer[1024];
 
@@ -110,6 +127,8 @@ void StatusServer::ThreadMain() {
             if (send(new_fd, buffer, len, 0) == -1)
                 perror("send");
             close(new_fd);
+            // De-register con handler thread, since it's finished.
+            active_threads--;
         }).detach();
     }
     return;
