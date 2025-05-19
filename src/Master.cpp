@@ -14,7 +14,7 @@
 #include <functional>
 
 
-extern uint64_t GlobalState;
+extern std::atomic<uint64_t> GlobalState;
 
 namespace FileWriter {
 

@@ -1,10 +1,12 @@
+#pragma once
 
 #include <cstdint>
 #include <thread>
+#include <atomic>
 
 // warning global variables
-uint64_t GlobalWritesDone{0};
-uint64_t GlobalState{0};
+std::atomic<uint64_t> GlobalState;
+std::atomic<uint64_t> GlobalWritesDone;
 
 
 const char * tcp_port = "3490";

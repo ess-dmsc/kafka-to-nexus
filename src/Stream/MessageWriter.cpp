@@ -17,8 +17,7 @@
 #include <utility>
 
 
-extern uint64_t GlobalWritesDone;
-
+extern std::atomic<uint64_t> GlobalWritesDone;
 
 namespace Stream {
 
