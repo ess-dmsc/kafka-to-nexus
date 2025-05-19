@@ -90,7 +90,7 @@ void StatusServer::ThreadMain() {
 
     printf("server: waiting for connections...\n");
 
-    while(1) {  // main accept() loop
+    while (!StopThread) { // main accept() loop
         sin_size = sizeof their_addr;
         new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
         if (new_fd == -1) {
@@ -101,16 +101,16 @@ void StatusServer::ThreadMain() {
         inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
         printf("server: got connection from %s\n", s);
 
-        if (!fork()) { // this is the child process
-            close(sockfd); // child doesn't need the listener
+        std::thread([new_fd]() { // thread to handle the connection
             char buffer[1024];
-            int len = snprintf(buffer, 1024, "State %" PRIu64 ", WritesDone %" PRIu64 "\n", GlobalState, GlobalWritesDone);
+
+            uint64_t global_state = GlobalState.load();
+            uint64_t writes_done = GlobalWritesDone.load();
+            int len = snprintf(buffer, 1024, "State %" PRIu64 ", WritesDone %" PRIu64 "\n", global_state, writes_done);
             if (send(new_fd, buffer, len, 0) == -1)
                 perror("send");
             close(new_fd);
-            exit(0);
-        }
-        close(new_fd);  // parent doesn't need this
+        }).detach();
     }
     return;
 }
