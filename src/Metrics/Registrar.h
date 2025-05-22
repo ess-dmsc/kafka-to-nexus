@@ -37,9 +37,9 @@ public:
   [[nodiscard]] std::unique_ptr<IRegistrar>
   getNewRegistrar(std::string const &MetricsPrefix) const override;
 
-	void Registrar::initServer();
-	void Registrar::killServer();
-	std::string Registrar::queryMetric(Metric &Metric) const;
+	void initServer();
+	void killServer();
+	std::string queryMetric(Metric &Metric) const;
 
 private:
   [[nodiscard]] std::string prependPrefix(std::string const &Name) const;
