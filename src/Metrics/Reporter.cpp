@@ -54,6 +54,12 @@ void Reporter::waitForStop() {
   ReporterThread.join();
 }
 
+void Reporter::server() {
+    for (auto &MetricNameValue : MetricsToReportOn) {
+      MetricNameValue.second.Name + ": " + MetricNameValue.second.Value;
+    }
+}
+
 Reporter::~Reporter() {
   {
     std::lock_guard<std::mutex> Lock(MetricsMapMutex);
