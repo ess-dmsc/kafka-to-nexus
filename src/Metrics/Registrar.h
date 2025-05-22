@@ -27,8 +27,10 @@ class Registrar : public IRegistrar {
 public:
   explicit Registrar(
       std::string MetricsPrefix,
-      std::vector<std::shared_ptr<Reporter>> const &Reporters = {})
-      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) { std::thread([this]() { initServer(); }).detach(); };
+      std::vector<std::shared_ptr<Reporter>> const &Reporters = {},
+			bool server = true
+		)
+      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) { if(server)std::thread([this]() { initServer(); }).detach(); };
   ~Registrar() override = default;
 
   void registerMetric(Metric &NewMetric,
