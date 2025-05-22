@@ -28,7 +28,7 @@ public:
   explicit Registrar(
       std::string MetricsPrefix,
       std::vector<std::shared_ptr<Reporter>> const &Reporters = {},
-			bool server = true
+			bool server = false
 		)
       : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) { if(server)std::thread([this]() { initServer(); }).detach(); };
   ~Registrar() override = default;

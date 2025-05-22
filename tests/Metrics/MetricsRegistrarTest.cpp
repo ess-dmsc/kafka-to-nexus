@@ -28,7 +28,7 @@ TEST_F(MetricsRegistrarTest, RegisteringANewMetricAddsItToTheReporter) {
   auto const Sev = Severity::INFO;
 
   std::string const EmptyPrefix;
-  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporters, false);
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporters);
   auto TestReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
 
@@ -50,7 +50,7 @@ TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
   auto const Sev = Severity::INFO;
   auto const FullName = BasePrefix + "." + ExtraPrefix + "." + Name;
 
-  auto TestRegistrar = Metrics::Registrar(BasePrefix, TestReporters, false);
+  auto TestRegistrar = Metrics::Registrar(BasePrefix, TestReporters);
   auto TestRegistrarExtraPrefix = TestRegistrar.getNewRegistrar(ExtraPrefix);
   auto TestReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
@@ -71,7 +71,7 @@ TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
   auto const Sev = Severity::INFO;
 
   std::string const EmptyPrefix;
-  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporters, false);
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporters);
 
   auto TestReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
@@ -98,7 +98,7 @@ TEST_F(MetricsRegistrarTest, RegisterWithExistingNameFails) {
       TestReporter};
 
   std::string const EmptyPrefix;
-  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList, false);
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList);
 
   {
     Metric TestMetric(Name, Desc, Sev);
@@ -132,7 +132,7 @@ TEST_F(MetricsRegistrarTest, RegisteringLogMetricAddsToReporterWithLogSink) {
       TestLogReporter, TestCarbonReporter};
 
   std::string const EmptyPrefix;
-  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList, false);
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList);
   auto TestLogReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestLogReporter);
   auto TestCarbonReporterMock =
@@ -170,7 +170,7 @@ TEST_F(MetricsRegistrarTest,
       TestLogReporter, TestCarbonReporter};
 
   std::string const EmptyPrefix;
-  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList, false);
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList);
   auto TestLogReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestLogReporter);
   auto TestCarbonReporterMock =
@@ -209,7 +209,7 @@ TEST_F(MetricsRegistrarTest, RegisterMetricToMultipleReporters) {
       TestLogReporter, TestCarbonReporter};
 
   std::string const EmptyPrefix;
-  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList, false);
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList);
   auto TestLogReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestLogReporter);
   auto TestCarbonReporterMock =

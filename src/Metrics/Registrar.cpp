@@ -68,7 +68,7 @@ std::string Registrar::queryMetric(Metric &Metric) const {
 std::unique_ptr<IRegistrar>
 Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
   return std::make_unique<Registrar>(prependPrefix(MetricsPrefix),
-                                     ReporterList, false);
+                                     ReporterList);
 }
 
 std::string Registrar::prependPrefix(std::string const &Name) const {
