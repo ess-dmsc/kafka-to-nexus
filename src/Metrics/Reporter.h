@@ -29,6 +29,7 @@ public:
 
   virtual ~Reporter();
   void reportMetrics();
+	void server();
   virtual bool addMetric(Metric &NewMetric, std::string const &NewName);
   virtual bool tryRemoveMetric(std::string const &MetricName);
   LogTo getSinkType() const;
