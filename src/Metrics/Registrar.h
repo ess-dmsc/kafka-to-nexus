@@ -28,7 +28,7 @@ public:
   explicit Registrar(
       std::string MetricsPrefix,
       std::vector<std::shared_ptr<Reporter>> const &Reporters = {})
-      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) {};
+      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) { initServer(); };
   ~Registrar() override = default;
 
   void registerMetric(Metric &NewMetric,
@@ -36,10 +36,14 @@ public:
 
   [[nodiscard]] std::unique_ptr<IRegistrar>
   getNewRegistrar(std::string const &MetricsPrefix) const override;
+
+	void Registrar::initServer();
+	void Registrar::killServer();
 	std::string Registrar::queryMetric(Metric &Metric) const;
 
 private:
   [[nodiscard]] std::string prependPrefix(std::string const &Name) const;
+	int server_fd, client_fd;
   std::string Prefix;
   /// List of reporters we might want to add a metric to
   std::vector<std::shared_ptr<Reporter>> ReporterList;
