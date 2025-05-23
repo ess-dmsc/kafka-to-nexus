@@ -93,8 +93,6 @@ void FileWriterTask::writeLinks(
   File->addLinks(LinkSettingsList);
 }
 
-void FileWriterTask::writeMetaData() { File->addMetaData(); }
-
 void FileWriterTask::flushDataToFile() {
   if (File != nullptr) {
     File->flush();
