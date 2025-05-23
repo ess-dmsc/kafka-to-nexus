@@ -36,7 +36,13 @@ HDFFile::HDFFile(std::filesystem::path const &FileName,
   StoredNexusStructure = NexusStructure;
 }
 
-HDFFile::~HDFFile() { addMetaData(); }
+HDFFile::~HDFFile() {
+  addMetaData();
+  std::filesystem::permissions(H5FileName,
+                               std::filesystem::perms::owner_read |
+                                   std::filesystem::perms::group_read,
+                               std::filesystem::perm_options::replace);
+}
 
 void HDFFile::createFileInRegularMode(
     std::filesystem::path const &template_path, bool const &is_legacy_writing) {
@@ -167,14 +173,9 @@ std::string HDFFileBase::read_template_version_if_present(
 void HDFFile::closeFile() {
   try {
     if (hdfFile().is_valid()) {
-      std::string filename = hdfFile().id().file_name().string();
-      Logger::Debug(R"(Closing file "{}".)", filename);
+      Logger::Debug(R"(Closing file "{}".)",
+                    hdfFile().id().file_name().string());
       hdfFile().close();
-      if (SWMRMode)
-        std::filesystem::permissions(filename,
-                                     std::filesystem::perms::owner_read |
-                                         std::filesystem::perms::group_read,
-                                     std::filesystem::perm_options::replace);
       hdfFile() = hdf5::file::File();
     } else {
       Logger::Critical("File is not valid, unable to close.");
