@@ -62,7 +62,7 @@ public:
   std::string getDescription() const { return MDesc; }
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
-  std::string getStringValue();
+  std::string *getStringPtr();
 
   void setDeregistrationDetails(std::string const &NameWithPrefix,
                                 std::shared_ptr<Reporter> const &Reporter);
@@ -80,6 +80,7 @@ private:
   Severity const SevLvl;
   CounterType Counter{0};
 	std::string Value = "";
+  std::string CounterStr;
 };
 
 } // namespace Metrics
