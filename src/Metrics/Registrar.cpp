@@ -59,12 +59,6 @@ void Registrar::killServer(){	//	where/when/should we even need to call this?
 	close(server_fd);
 }
 
-std::string Registrar::queryMetric(Metric &Metric) const {
-	std::string StrValue = Metric.getStringValue();
-	if(StrValue != "") return StrValue;
-	else return std::to_string(Metric.getCounterPtr()->load());
-}
-
 std::unique_ptr<IRegistrar>
 Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
   return std::make_unique<Registrar>(prependPrefix(MetricsPrefix),
