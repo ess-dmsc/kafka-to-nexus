@@ -42,6 +42,7 @@ HDFFile::~HDFFile() {
                                std::filesystem::perms::owner_read |
                                    std::filesystem::perms::group_read,
                                std::filesystem::perm_options::replace);
+	hdfFile().close();
 }
 
 void HDFFile::createFileInRegularMode(
