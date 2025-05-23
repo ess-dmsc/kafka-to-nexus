@@ -41,7 +41,6 @@ public:
 
 	void initServer();
 	void killServer();
-	std::string queryMetric(Metric &Metric) const;
 
 private:
   [[nodiscard]] std::string prependPrefix(std::string const &Name) const;

@@ -62,7 +62,7 @@ public:
   std::string getDescription() const { return MDesc; }
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
-  std::string getStringValue() const { return Value; }
+  std::string getStringValue();
 
   void setDeregistrationDetails(std::string const &NameWithPrefix,
                                 std::shared_ptr<Reporter> const &Reporter);
