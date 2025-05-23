@@ -16,6 +16,7 @@ std::string* Metric::getStringPtr(){
 	else{
 	  CounterStr = std::to_string(getCounterPtr()->load(std::memory_order_relaxed));
 		return &CounterStr;
+  }
 }
 
 Metric::~Metric() {
