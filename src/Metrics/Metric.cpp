@@ -13,7 +13,7 @@ void Metric::setDeregistrationDetails(
 
 std::string Metric::getStringValue(){
 	if(Value != "") return Value;
-	else return std::to_string(getCounterPtr()->load());
+	else return std::to_string(getCounterPtr()->load(std::memory_order_relaxed));
 }
 
 Metric::~Metric() {
