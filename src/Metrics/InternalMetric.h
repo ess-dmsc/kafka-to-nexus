@@ -11,6 +11,7 @@
 
 #include "Metric.h"
 #include <chrono>
+#include <functional>
 
 namespace Metrics {
 
