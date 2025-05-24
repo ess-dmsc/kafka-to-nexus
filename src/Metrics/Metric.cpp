@@ -11,12 +11,9 @@ void Metric::setDeregistrationDetails(
   Reporters.emplace_back(Reporter);
 }
 
-std::string* Metric::getStringPtr(){
-	if(Value != "") return &Value;
-	else{
-	  CounterStr = std::to_string(getCounterPtr()->load(std::memory_order_relaxed));
-		return &CounterStr;
-  }
+std::string Metric::getStringValue() const {
+  if (Value != "") return Value;
+  else return std::to_string(Counter.load(std::memory_order_relaxed));
 }
 
 Metric::~Metric() {
