@@ -47,7 +47,7 @@ void Registrar::initServer(){
 		std::string response = "";
 		for (auto const &reporter : ReporterList) {
 			for (auto const &MetricNameValue : reporter->getMetrics()) {
-				response += MetricNameValue.second.Name + ": " + MetricNameValue.second.Value + "\n";
+				response += MetricNameValue.second.Name + ": " + MetricNameValue.second.Value() + "\n";
 			}
 		}
 		send(client_fd, response.c_str(), response.size(), 0);
