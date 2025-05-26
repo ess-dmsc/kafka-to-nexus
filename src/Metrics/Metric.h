@@ -80,7 +80,6 @@ private:
   Severity const SevLvl;
   CounterType Counter{0};
 	std::string Value = "";
-  std::string CounterStr;
 };
 
 } // namespace Metrics
