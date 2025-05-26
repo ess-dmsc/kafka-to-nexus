@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
   }
   metric_prefix += "." + prefix_service_component;
   std::unique_ptr<Metrics::IRegistrar> registrar =
-      std::make_unique<Metrics::Registrar>(metric_prefix, metric_reporters);
+      std::make_unique<Metrics::Registrar>(metric_prefix, metric_reporters, true);
 
   std::signal(SIGHUP, [](int signal) { signal_handler(signal, RUN_STATE); });
   std::signal(SIGINT, [](int signal) { signal_handler(signal, RUN_STATE); });
