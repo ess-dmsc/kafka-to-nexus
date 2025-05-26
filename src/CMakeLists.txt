@@ -1,4 +1,3 @@
-
 set(kafka_to_nexus_SRC
         FlatbufferReader.cpp
         Metrics/CarbonSink.cpp
@@ -26,7 +25,6 @@ set(kafka_to_nexus_SRC
         Status/StatusReporter.cpp
         Status/StatusReporterBase.cpp
         Master.cpp
-        StatusServer.cpp
         JobCreator.cpp
         CommandSystem/JobListener.cpp
         CommandSystem/CommandListener.cpp
@@ -78,4 +76,3 @@ set(kafka_to_nexus_SRC
 add_library(filewriter_lib SHARED ${kafka_to_nexus_SRC})
 target_link_libraries(filewriter_lib PRIVATE  ${CONAN_LIBS})
 target_include_directories(filewriter_lib PUBLIC .)
-target_compile_options(filewriter_lib PRIVATE -Wno-cast-align)

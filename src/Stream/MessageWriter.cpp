@@ -16,9 +16,6 @@
 #include "WriterModuleBase.h"
 #include <utility>
 
-
-extern std::atomic<uint64_t> GlobalWritesDone;
-
 namespace Stream {
 
 using ModuleHash = MessageWriter::ModuleHash;
@@ -72,7 +69,6 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
   try {
     ModulePtr->write(Msg, is_buffered_message);
     WritesDone++;
-    GlobalWritesDone++;
   } catch (WriterModule::WriterException &E) {
     WriteErrors++;
     auto UsedHash = UnknownModuleHash;
