@@ -79,7 +79,7 @@ private:
   std::string const MDesc;
   Severity const SevLvl;
   CounterType Counter{0};
-	std::string Value = "";
+  std::string Value = "";
 };
 
 } // namespace Metrics

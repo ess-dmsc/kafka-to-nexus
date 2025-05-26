@@ -24,7 +24,9 @@ struct InternalMetric {
         Counter(MetricToGetDetailsFrom.getCounterPtr()),
         DescriptionString(MetricToGetDetailsFrom.getDescription()),
         LastValue(MetricToGetDetailsFrom.getCounterPtr()->load()),
-				Value([&MetricToGetDetailsFrom](){return MetricToGetDetailsFrom.getStringValue();}),
+        Value([&MetricToGetDetailsFrom]() {
+          return MetricToGetDetailsFrom.getStringValue();
+        }),
         ValueSeverity(MetricToGetDetailsFrom.getSeverity()) {};
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
@@ -33,7 +35,7 @@ struct InternalMetric {
   std::int64_t LastValue{0};
   std::chrono::system_clock::time_point LastTime{
       std::chrono::system_clock::now()};
-	std::function<std::string()> Value;
-	Severity const ValueSeverity;
+  std::function<std::string()> Value;
+  Severity const ValueSeverity;
 };
 } // namespace Metrics
