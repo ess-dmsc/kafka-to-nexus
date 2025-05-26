@@ -30,7 +30,9 @@ public:
   virtual ~Reporter();
   void reportMetrics();
   virtual bool addMetric(Metric &NewMetric, std::string const &NewName);
-	std::map<std::string, InternalMetric> getMetrics(){return MetricsToReportOn;}
+  std::map<std::string, InternalMetric> getMetrics() {
+    return MetricsToReportOn;
+  }
   virtual bool tryRemoveMetric(std::string const &MetricName);
   LogTo getSinkType() const;
 
