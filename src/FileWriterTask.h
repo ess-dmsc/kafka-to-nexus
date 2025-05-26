@@ -95,8 +95,6 @@ public:
 
   void writeLinks(std::vector<ModuleSettings> const &LinkSettingsList);
 
-  void writeMetaData();
-
   void flushDataToFile();
 
   /// \brief Updates the "arpproximate file size" meta data status field.
