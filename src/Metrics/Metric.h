@@ -49,6 +49,10 @@ public:
     Counter.store(NewValue, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
+  std::string operator=(std::string NewValue) {
+    Value = NewValue;
+    return Value;
+  };
   int64_t operator+=(int64_t AddValue) {
     Counter.store(AddValue + Counter.load(MemoryOrder), MemoryOrder);
     return Counter.load(MemoryOrder);
@@ -58,6 +62,7 @@ public:
   std::string getDescription() const { return MDesc; }
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
+  std::string getStringValue() const;
 
   void setDeregistrationDetails(std::string const &NameWithPrefix,
                                 std::shared_ptr<Reporter> const &Reporter);
@@ -74,6 +79,8 @@ private:
   std::string const MDesc;
   Severity const SevLvl;
   CounterType Counter{0};
+	std::string Value = "";
+  std::string CounterStr;
 };
 
 } // namespace Metrics
