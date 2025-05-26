@@ -12,10 +12,6 @@
 #include "Status/StatusReporter.h"
 #include "logger.h"
 #include <functional>
-
-
-extern std::atomic<uint64_t> GlobalState;
-
 namespace FileWriter {
 
 Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
@@ -188,14 +184,12 @@ void Master::setCurrentStatus(Status::JobStatusInfo const &NewStatus) {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = NewStatus;
   CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
-  GlobalState = (uint64_t)CurrentStateMetric;
 }
 
 void Master::resetStatusInfo() {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = {};
   CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
-  GlobalState = (uint64_t)CurrentStateMetric;
 }
 
 } // namespace FileWriter
