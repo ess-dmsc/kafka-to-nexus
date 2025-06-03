@@ -45,14 +45,14 @@ void Registrar::initServer() {
   while (true) { //	threaded connections?
     client_fd =
         accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-    std::string response = "[";
+    std::string response = "[\n";
     for (auto const &reporter : ReporterList) {
       for (auto const &MetricNameValue : reporter->getMetrics()) {
         response += "{\"" + MetricNameValue.first + "\": \"" +
                     MetricNameValue.second.Value() + "\"},\n";
       }
     }
-    response += "{}]"; //	pad with an empty group so JSON is always valid
+    response += "{}\n]"; //	pad with an empty group so JSON is always valid
     send(client_fd, response.c_str(), response.size(), 0);
 		shutdown(client_fd, SHUT_WR);
     close(client_fd);
