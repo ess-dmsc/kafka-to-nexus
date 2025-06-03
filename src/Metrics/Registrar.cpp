@@ -48,7 +48,7 @@ void Registrar::initServer() {
     std::string response = "[";
     for (auto const &reporter : ReporterList) {
       for (auto const &MetricNameValue : reporter->getMetrics()) {
-        response += "{\"" + MetricNameValue.second.Name + "\": \"" +
+        response += "{\"" + MetricNameValue.first + "\": \"" +
                     MetricNameValue.second.Value() + "\"},\n";
       }
     }

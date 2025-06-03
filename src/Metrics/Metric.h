@@ -20,8 +20,9 @@ using CounterType = std::atomic<int64_t>;
 class Metric {
 public:
   Metric(std::string Name, std::string Description,
-         Severity Level = Severity::DEBUG)
-      : MName(std::move(Name)), MDesc(std::move(Description)), SevLvl(Level) {}
+         Severity Level = Severity::DEBUG, std::string TopicName = "")
+      : MName(std::move(Name)), MDesc(std::move(Description)), SevLvl(Level),
+        LongName(std::move(TopicName)) {}
 
   ~Metric();
   int64_t operator++() {
@@ -78,6 +79,7 @@ private:
   std::string const MName;
   std::string const MDesc;
   Severity const SevLvl;
+  std::string const LongName;
   CounterType Counter{0};
   std::string Value = "";
 };
