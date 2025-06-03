@@ -72,6 +72,7 @@ private:
   mutable std::mutex StatusMutex;
   Status::JobStatusInfo CurrentStatus;
   Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};
+  Metrics::Metric GlobalWritesMetric{"total_writes_finished", "finished writes done since start"};
   std::string metadata_from_start_msg;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();

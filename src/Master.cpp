@@ -36,6 +36,8 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   CurrentStateMetric = static_cast<int64_t>(getCurrentState());
   MasterMetricsRegistrar->registerMetric(CurrentStateMetric,
                                          {Metrics::LogTo::CARBON});
+  MasterMetricsRegistrar->registerMetric(GlobalWritesMetric,
+                                         {Metrics::LogTo::CARBON});
 }
 
 void Master::startWriting(Command::StartMessage const &StartInfo) {
@@ -143,6 +145,7 @@ void Master::setToIdle() {
     CommandAndControl->sendHasStoppedMessage(writtenFilePath,
                                              metadata_from_start_msg);
   }
+	GlobalWritesMetric += CurrentStreamController->writesDone();
   CurrentStreamController.reset(nullptr);
   MetaDataTracker->clearMetaData();
   resetStatusInfo();
