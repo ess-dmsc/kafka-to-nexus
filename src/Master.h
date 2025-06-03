@@ -21,6 +21,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <chrono>
 
 namespace Status {
 class StatusReporterBase;
@@ -71,8 +72,10 @@ private:
   std::unique_ptr<Metrics::IRegistrar> MasterMetricsRegistrar;
   mutable std::mutex StatusMutex;
   Status::JobStatusInfo CurrentStatus;
+	std::chrono::steady_clock::time_point timeStarted;
   Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};
   Metrics::Metric GlobalWritesMetric{"total_writes_finished", "finished writes done since start"};
+  Metrics::Metric UptimeMetric{"filewriter_uptime", "seconds since filewriter started"};
   std::string metadata_from_start_msg;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();
