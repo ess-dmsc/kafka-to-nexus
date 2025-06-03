@@ -52,8 +52,9 @@ void Registrar::initServer() {
                     MetricNameValue.second.Value() + "\"},\n";
       }
     }
-    response += "{}]\n"; //	pad with an empty group so JSON is always valid
+    response += "{}]"; //	pad with an empty group so JSON is always valid
     send(client_fd, response.c_str(), response.size(), 0);
+		shutdown(client_fd, SHUT_WR);
     close(client_fd);
   }
 }
