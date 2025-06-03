@@ -58,8 +58,7 @@ void Registrar::initServer() {
   }
 }
 
-void Registrar::killServer() { //	where/when/should we even need to call
-                               //this?
+void Registrar::killServer() { //	where/when/should we ever call this?
   close(server_fd);
 }
 
