@@ -73,6 +73,7 @@ std::string Registrar::prependPrefix(std::string const &Name) const {
   if (Prefix.empty()) {
     return Name;
   }
+	if (Name == "") return Prefix;
   return {Prefix + "." + Name};
 }
 } // namespace Metrics
