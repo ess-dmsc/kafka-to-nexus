@@ -7,8 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "JsonConfig/Field.h"
 #include "JsonConfig/FieldHandler.h"
+#include "JsonConfig/Field.h"
 #include <gtest/gtest.h>
 
 using namespace JsonConfig;

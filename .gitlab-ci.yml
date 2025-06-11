@@ -11,7 +11,7 @@ workflow:
     - if: $CI_COMMIT_TAG
 
 variables:
-  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.3.0"
+  ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.3.1"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-conan:1.1.0"
   BUILD_DIR: "build"
   CONAN_USER_HOME: "$CI_PROJECT_DIR"

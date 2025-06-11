@@ -10,9 +10,9 @@
 /// \brief Test partition filtering.
 ///
 
+#include "Stream/PartitionFilter.h"
 #include "Kafka/PollStatus.h"
 #include "Stream/Clock.h"
-#include "Stream/PartitionFilter.h"
 #include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
