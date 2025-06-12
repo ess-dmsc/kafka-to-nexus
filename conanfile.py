@@ -1,12 +1,15 @@
+from conan import ConanFile
+from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.files import copy
 import os
-from conans import ConanFile
+
 
 class KafkaToNexusConan(ConanFile):
     name = "kafka-to-nexus"
-    version = "0.1"
+    version = "6.2.2"
     settings = "os", "arch", "compiler", "build_type"
     generators = "CMakeToolchain", "CMakeDeps"
-    exports_sources = "*"
+    exports_sources = "CMakeLists.txt", "src/*", "apps/*", "LICENSE.md"
 
     requires = (
         "spdlog/1.14.1",
@@ -38,5 +41,39 @@ class KafkaToNexusConan(ConanFile):
         "date:use_system_tz_db": True
     }
 
+    def layout(self):
+        cmake_layout(self)
+
     def configure(self):
         self.conf_info.define("tools.cmake.cmaketoolchain:generator", "Ninja")
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
+
+    def package(self):
+        # Copy kafka-to-nexus license
+        copy(self, "LICENSE*", dst=os.path.join(self.package_folder, "licenses"), src=self.source_folder, keep_path=False)
+
+        # Copy executables
+        apps_bin_dir = os.path.join(self.build_folder, "apps")
+        copy(self, "kafka-to-nexus", dst="bin", src=apps_bin_dir, keep_path=False)
+        copy(self, "file-maker", dst="bin", src=apps_bin_dir, keep_path=False)
+        copy(self, "template-maker", dst="bin", src=apps_bin_dir, keep_path=False)
+
+        # Copy licenses of dependencies
+        for dep in self.deps_cpp_info.deps:
+            license_dir = os.path.join(self.deps_cpp_info[dep].rootpath, "licenses")
+            if os.path.exists(license_dir):
+                copy(self, "*", dst=os.path.join(self.package_folder, "licenses", dep), src=license_dir)
+
+        # Copy libs of deps
+        for dep in self.deps_cpp_info.deps:
+            lib_dir = os.path.join(self.deps_cpp_info[dep].rootpath, "lib")
+            if os.path.exists(lib_dir):
+                copy(self, "*.so*", dst=os.path.join(self.package_folder, "lib"), src=lib_dir, keep_path=False)
+                copy(self, "*.a", dst=os.path.join(self.package_folder, "lib"), src=lib_dir, keep_path=False)
+
+    def package_info(self):
+        self.cpp_info.libs = ["filewriter_lib"]

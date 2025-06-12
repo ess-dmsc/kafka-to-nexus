@@ -10,10 +10,10 @@
       "displayName": "Release Build (Ninja)",
       "description": "Release configuration using Ninja and Conan toolchain",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/release",
+      "binaryDir": "${sourceDir}/build/Release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/release/conan_toolchain.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Release/generators/conan_toolchain.cmake"
       }
     },
     {
@@ -21,10 +21,10 @@
       "displayName": "Debug Build (Ninja)",
       "description": "Debug configuration using Ninja and Conan toolchain",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/debug",
+      "binaryDir": "${sourceDir}/build/Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/debug/conan_toolchain.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake",
         "COV": "ON",
         "RUN_DOXYGEN": "ON"
       }

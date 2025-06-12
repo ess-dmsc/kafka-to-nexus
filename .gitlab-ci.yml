@@ -77,11 +77,10 @@ centos7-debug:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/debug -s build_type=Debug --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy 
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy 
     - rm CMakeUserPresets.json
     - cmake --preset=debug
     - cmake --build --preset=debug
-
 
 centos7-release:
   stage: build
@@ -89,13 +88,14 @@ centos7-release:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/release -s build_type=Release --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
+    - conan install . -if=build/Release -s build_type=Release --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
     - rm CMakeUserPresets.json
     - cmake --preset=release
     - cmake --build --preset=release
   artifacts:
     paths:
       - $BUILD_DIR/
+      - $CI_PROJECT_DIR/.conan/data/kafka-to-nexus/
 
 almalinux9-debug:
   stage: build
@@ -103,7 +103,7 @@ almalinux9-debug:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
     - rm CMakeUserPresets.json
     - cmake --preset=debug
     - cmake --build --preset=debug
@@ -117,30 +117,13 @@ almalinux9-release:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
+    - conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
     - rm CMakeUserPresets.json # workaround, will be removed once we switch to conan 2
     - cmake --preset=release
     - cmake --build --preset=release
   artifacts:
     paths:
       - $BUILD_DIR/
-
-archive:
-  stage: archive
-  image: alpine:latest
-  dependencies:
-    - centos7-release
-  script:
-    - cd $BUILD_DIR
-    - mkdir -p archive/kafka-to-nexus/bin
-    - cp ./bin/file-maker ./bin/kafka-to-nexus ./bin/template-maker archive/kafka-to-nexus/bin/
-    - cp -a ./lib archive/kafka-to-nexus
-    - cp -a ./licenses archive/kafka-to-nexus
-    - cp ./CONAN_INFO archive/kafka-to-nexus
-    - tar czf kafka-to-nexus-centos7.tar.gz -C archive kafka-to-nexus
-  artifacts:
-    paths:
-      - $BUILD_DIR/kafka-to-nexus-centos7.tar.gz
 
 domain_tests:
   stage: domain
