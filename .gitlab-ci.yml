@@ -92,6 +92,7 @@ centos7-release:
     - rm CMakeUserPresets.json
     - cmake --preset=release
     - cmake --build --preset=release
+    - conan export-pkg . -pr linux_x86_64_gcc11 -f -bf=build/Release
   artifacts:
     paths:
       - $BUILD_DIR/
