@@ -12,7 +12,7 @@ workflow:
 
 variables:
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.3.1"
-  CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-conan:1.1.0"
+  CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-conan:1.2.0-dev.1"
   BUILD_DIR: "build"
   CONAN_USER_HOME: "$CI_PROJECT_DIR"
 
@@ -77,20 +77,10 @@ centos7-debug:
   dependencies:
     - conan_setup
   script:
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy -s build_type=Debug
-    - cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug -DRUN_DOXYGEN=ON -DCOV=ON
-    - ninja all UnitTests docs
-    - ninja coverage
-    - cat coverage.txt
-  coverage: '/^TOTAL.*\s+(\d+\%)$/'
-  artifacts:
-    paths:
-      - $BUILD_DIR/coverage.xml
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: $BUILD_DIR/coverage.xml
+    - conan install . -if=build/debug -s build_type=Debug --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy 
+    - rm CMakeUserPresets.json
+    - cmake --preset=debug
+    - cmake --build --preset=debug
 
 
 centos7-release:
@@ -99,10 +89,10 @@ centos7-release:
   dependencies:
     - conan_setup
   script:
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy -s build_type=Release
-    - cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release
-    - ninja all docs
+    - conan install . -if=build/release -s build_type=Release --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
+    - rm CMakeUserPresets.json
+    - cmake --preset=release
+    - cmake --build --preset=release
   artifacts:
     paths:
       - $BUILD_DIR/
@@ -113,10 +103,10 @@ almalinux9-debug:
   dependencies:
     - conan_setup
   script:
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing --profile=linux_x86_64_gcc11 -s build_type=Debug
-    - cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug -DRUN_DOXYGEN=ON
-    - ninja all
+    - conan install . -if=build/debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
+    - rm CMakeUserPresets.json
+    - cmake --preset=debug
+    - cmake --build --preset=debug
   artifacts:
     paths:
       - $BUILD_DIR/
@@ -127,10 +117,10 @@ almalinux9-release:
   dependencies:
     - conan_setup
   script:
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing --profile=linux_x86_64_gcc11 -s build_type=Release
-    - cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release
-    - ninja all docs
+    - conan install . -if=build/release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
+    - rm CMakeUserPresets.json # workaround, will be removed once we switch to conan 2
+    - cmake --preset=release
+    - cmake --build --preset=release
   artifacts:
     paths:
       - $BUILD_DIR/

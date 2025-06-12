@@ -21,3 +21,4 @@ venv
 exampleconfig.ini
 compile_commands.json
 Version.h
+/CMakeUserPresets.json
