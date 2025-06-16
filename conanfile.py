@@ -6,7 +6,6 @@ import os
 
 class KafkaToNexusConan(ConanFile):
     name = "kafka-to-nexus"
-    version = "6.2.2"
     settings = "os", "arch", "compiler", "build_type"
     generators = "CMakeToolchain", "CMakeDeps"
     exports_sources = "CMakeLists.txt", "src/*", "apps/*", "LICENSE.md"
@@ -53,27 +52,30 @@ class KafkaToNexusConan(ConanFile):
         cmake.build()
 
     def package(self):
-        # Copy kafka-to-nexus license
-        copy(self, "LICENSE*", dst=os.path.join(self.package_folder, "licenses"), src=self.source_folder, keep_path=False)
+        # Copy main project license
+        copy(self, "LICENSE*", dst=os.path.join(self.package_folder, "licenses"),
+            src=self.source_folder, keep_path=False)
 
-        # Copy executables
+        # Copy built executables
         apps_bin_dir = os.path.join(self.build_folder, "apps")
-        copy(self, "kafka-to-nexus", dst="bin", src=apps_bin_dir, keep_path=False)
-        copy(self, "file-maker", dst="bin", src=apps_bin_dir, keep_path=False)
-        copy(self, "template-maker", dst="bin", src=apps_bin_dir, keep_path=False)
+        for exe in ["kafka-to-nexus", "file-maker", "template-maker"]:
+            copy(self, exe, dst=os.path.join(self.package_folder, "bin"),
+                src=apps_bin_dir, keep_path=False)
 
-        # Copy licenses of dependencies
+        # Copy dependency licenses
         for dep in self.deps_cpp_info.deps:
             license_dir = os.path.join(self.deps_cpp_info[dep].rootpath, "licenses")
-            if os.path.exists(license_dir):
-                copy(self, "*", dst=os.path.join(self.package_folder, "licenses", dep), src=license_dir)
+            if os.path.isdir(license_dir):
+                copy(self, "*", dst=os.path.join(self.package_folder, "licenses", dep),
+                    src=license_dir, keep_path=False)
 
-        # Copy libs of deps
+        # Copy dependency libs
         for dep in self.deps_cpp_info.deps:
             lib_dir = os.path.join(self.deps_cpp_info[dep].rootpath, "lib")
-            if os.path.exists(lib_dir):
-                copy(self, "*.so*", dst=os.path.join(self.package_folder, "lib"), src=lib_dir, keep_path=False)
-                copy(self, "*.a", dst=os.path.join(self.package_folder, "lib"), src=lib_dir, keep_path=False)
+            if os.path.isdir(lib_dir):
+                for pattern in ["*.so*", "*.a", "*.dylib"]:
+                    copy(self, pattern, dst=os.path.join(self.package_folder, "lib"),
+                        src=lib_dir, keep_path=False)
 
     def package_info(self):
         self.cpp_info.libs = ["filewriter_lib"]

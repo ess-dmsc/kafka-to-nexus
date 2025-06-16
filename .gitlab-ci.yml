@@ -92,11 +92,26 @@ centos7-release:
     - rm CMakeUserPresets.json
     - cmake --preset=release
     - cmake --build --preset=release
-    - conan export-pkg . -pr linux_x86_64_gcc11 -f -bf=build/Release
+
+    # Creating tar archive
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
+    - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-centos7.tar.gz"
+    - tar czfv $ARCHIVE_NAME -C $PKG_PATH .
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      variables:
+        VERSION: ${CI_COMMIT_SHORT_SHA}
+    - if: $CI_COMMIT_TAG
+      variables:
+        VERSION: ${CI_COMMIT_TAG}
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        VERSION: ${CI_COMMIT_SHORT_SHA}
   artifacts:
     paths:
       - $BUILD_DIR/
-      - $CI_PROJECT_DIR/.conan/data/kafka-to-nexus/
+      - $ARCHIVE_NAME
 
 almalinux9-debug:
   stage: build
@@ -108,9 +123,6 @@ almalinux9-debug:
     - rm CMakeUserPresets.json
     - cmake --preset=debug
     - cmake --build --preset=debug
-  artifacts:
-    paths:
-      - $BUILD_DIR/
 
 almalinux9-release:
   stage: build
@@ -122,6 +134,47 @@ almalinux9-release:
     - rm CMakeUserPresets.json # workaround, will be removed once we switch to conan 2
     - cmake --preset=release
     - cmake --build --preset=release
+    
+    # Creating tar archive
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
+    - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-almalinux9.tar.gz"
+    - tar czfv $ARCHIVE_NAME -C $PKG_PATH .
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      variables:
+        VERSION: ${CI_COMMIT_SHORT_SHA}
+    - if: $CI_COMMIT_TAG
+      variables:
+        VERSION: ${CI_COMMIT_TAG}
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        VERSION: ${CI_COMMIT_SHORT_SHA}
   artifacts:
     paths:
       - $BUILD_DIR/
+      - $ARCHIVE_NAME
+
+publish-tar-archives:
+  stage: publish
+  image: alpine/curl:latest
+  dependencies:
+    - centos7-release
+    - almalinux9-release
+  before_script:
+    - curl -fL https://install-cli.jfrog.io | sh
+    - jf config add $ESS_ARTIFACTORY_ID --url=$ESS_ARTIFACTORY_URL --user=$ESS_ARTIFACTORY_ECDC_USER --password=$ESS_ARTIFACTORY_ECDC_GENERIC_TOKEN
+  script:
+    - jf rt u --build-name="kafka-to-nexus-almalinux9" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-${VERSION}-almalinux9.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
+    - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-${VERSION}-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      variables:
+        VERSION: ${CI_COMMIT_SHORT_SHA}
+        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/${CI_DEFAULT_BRANCH}/${CI_PIPELINE_IID}/"
+    - if: $CI_COMMIT_TAG
+      variables:
+        VERSION: ${CI_COMMIT_TAG}
+        ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/tags/${CI_COMMIT_TAG}/"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
