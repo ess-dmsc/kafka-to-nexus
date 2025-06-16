@@ -20,7 +20,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
     : MainConfig(Config), CommandAndControl(std::move(Listener)),
       Reporter(std::move(Reporter)),
       MasterMetricsRegistrar(std::move(Registrar)) {
-	timeStarted = std::chrono::steady_clock::now();
+  timeStarted = std::chrono::steady_clock::now();
   CommandAndControl->registerGetJobIdFunction(
       [&]() { return this->getCurrentStatus().JobId; });
   CommandAndControl->registerStartFunction(
@@ -28,8 +28,12 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   CommandAndControl->registerSetStopTimeFunction(
       [this](auto StopTime) { this->setStopTime(StopTime); });
   CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
-  CommandAndControl->registerIsWritingFunction(
-      [this]() { UptimeMetric = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - timeStarted).count(); return Status::WorkerState::Writing == getCurrentState(); });
+  CommandAndControl->registerIsWritingFunction([this]() {
+    UptimeMetric = std::chrono::duration_cast<std::chrono::seconds>(
+                       std::chrono::steady_clock::now() - timeStarted)
+                       .count();
+    return Status::WorkerState::Writing == getCurrentState();
+  });
   Logger::Info("file-writer service id: {}", Config.getServiceId());
   this->Reporter->setJSONMetaDataGenerator(
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
@@ -37,7 +41,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   CurrentStateMetric = static_cast<int64_t>(getCurrentState());
   MasterMetricsRegistrar->registerMetric(CurrentStateMetric,
                                          {Metrics::LogTo::CARBON});
-	MasterMetricsRegistrar->registerMetric(UptimeMetric,
+  MasterMetricsRegistrar->registerMetric(UptimeMetric,
                                          {Metrics::LogTo::CARBON});
   MasterMetricsRegistrar->registerMetric(GlobalWritesMetric,
                                          {Metrics::LogTo::CARBON});
@@ -148,7 +152,7 @@ void Master::setToIdle() {
     CommandAndControl->sendHasStoppedMessage(writtenFilePath,
                                              metadata_from_start_msg);
   }
-	GlobalWritesMetric += CurrentStreamController->writesDone();
+  GlobalWritesMetric += CurrentStreamController->writesDone();
   CurrentStreamController.reset(nullptr);
   MetaDataTracker->clearMetaData();
   resetStatusInfo();

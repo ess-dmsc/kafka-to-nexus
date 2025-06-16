@@ -54,7 +54,7 @@ void Registrar::initServer() {
     }
     response += "{}\n]"; //	pad with an empty group so JSON is always valid
     send(client_fd, response.c_str(), response.size(), 0);
-		shutdown(client_fd, SHUT_WR);
+    shutdown(client_fd, SHUT_WR);
     close(client_fd);
   }
 }
@@ -73,7 +73,8 @@ std::string Registrar::prependPrefix(std::string const &Name) const {
   if (Prefix.empty()) {
     return Name;
   }
-	if (Name == "") return Prefix;
+  if (Name == "")
+    return Prefix;
   return {Prefix + "." + Name};
 }
 } // namespace Metrics

@@ -98,11 +98,10 @@ public:
   /// \return The job id.
   std::string getJobId() const;
 
-	/// \brief Returns writes done in this job
-	///
-	/// \return A number of writes done
-	int64_t writesDone();
-
+  /// \brief Returns writes done in this job
+  ///
+  /// \return A number of writes done
+  int64_t writesDone();
 
 private:
   bool StopNow{false};

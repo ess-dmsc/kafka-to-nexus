@@ -200,8 +200,6 @@ void StreamController::throttleIfWriteQueueIsFull() {
   }
 }
 
-int64_t StreamController::writesDone() {
-		return WriterThread.nrOfWritesDone();
-}
+int64_t StreamController::writesDone() { return WriterThread.nrOfWritesDone(); }
 
 } // namespace FileWriter

@@ -7,8 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "FlatBufferGenerators.h"
 #include "Stream/SourceFilter.h"
+#include "FlatBufferGenerators.h"
 #include "WriterModule/f144/f144_Writer.h"
 #include <chrono>
 #include <gtest/gtest.h>
