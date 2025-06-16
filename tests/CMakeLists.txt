@@ -63,9 +63,18 @@ set(UnitTests_SRC
         CommandSystem/JobListenerTests.cpp
 )
 
+find_package(trompeloeil REQUIRED)
+find_package(GTest REQUIRED)
+
 add_executable(UnitTests ${UnitTests_SRC})
 target_include_directories(UnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(UnitTests PRIVATE filewriter_lib ${CONAN_LIBS})
+target_link_libraries(UnitTests 
+  PRIVATE 
+    filewriter_lib 
+    ${COMMON_LIBS}
+    trompeloeil::trompeloeil
+    GTest::gtest
+)
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
 
 enable_testing()

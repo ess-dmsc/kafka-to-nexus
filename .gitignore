@@ -1,5 +1,6 @@
 _build/
 /build*/
+dist/
 /cmake-build-*/
 _ninja/
 .idea/
@@ -12,6 +13,7 @@ pipeline.gdsl
 *.cxx~
 /integration-tests/output-files/*.*
 /domain-tests/output_files/*.*
+/domain-tests/DomainTestsOutput.xml
 venv
 *.log
 *.DS_Store
@@ -21,3 +23,4 @@ venv
 exampleconfig.ini
 compile_commands.json
 Version.h
+CMakeUserPresets.json

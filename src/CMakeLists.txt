@@ -74,5 +74,8 @@ set(kafka_to_nexus_SRC
         )
 
 add_library(filewriter_lib SHARED ${kafka_to_nexus_SRC})
-target_link_libraries(filewriter_lib PRIVATE  ${CONAN_LIBS})
+target_link_libraries(filewriter_lib
+  PRIVATE
+    ${COMMON_LIBS} 
+)
 target_include_directories(filewriter_lib PUBLIC .)

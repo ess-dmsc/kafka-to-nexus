@@ -16,12 +16,34 @@ variables:
   CONAN_USER_HOME: "$CI_PROJECT_DIR"
 
 stages:
+  - setup
   - check
   - build
-  - archive
-  - domain
-  - integration
+  - test
   - publish
+
+.versioning_rules:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      variables:
+        VERSION: ${CI_COMMIT_SHORT_SHA}
+    - if: $CI_COMMIT_TAG
+      variables:
+        VERSION: ${CI_COMMIT_TAG}
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        VERSION: ${CI_COMMIT_SHORT_SHA}
+
+conan_setup:
+  stage: setup
+  image: $ALMALINUX9_IMAGE
+  script:
+    - conan config install http://github.com/ess-dmsc/conan-configuration.git
+  artifacts:
+    paths:
+      - .conan/
+    expire_in: 1 hour
+    when: always
 
 clang-format:
   stage: check
@@ -60,89 +82,94 @@ cppcheck:
 centos7-debug:
   stage: build
   image: $CENTOS7_IMAGE
+  dependencies:
+    - conan_setup
   script:
-    - conan config install $ESS_CONAN_CONFIG_URL
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
-    - conan info ../conanfile.txt > CONAN_INFO
-    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON -DCOV=ON ..
-    - ninja all UnitTests docs
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy 
+    - rm CMakeUserPresets.json
+    - cmake --preset=debug
+    - cmake --build --preset=debug
+  artifacts:
+    paths:
+      - build/
+
+centos7-release:
+  stage: build
+  image: $CENTOS7_IMAGE
+  dependencies:
+    - conan_setup
+  script:
+    - conan install . -if=build/Release -s build_type=Release --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
+    - rm CMakeUserPresets.json
+    - cmake --preset=release
+    - cmake --build --preset=release
+
+    # Creating distribution files
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
+    - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
+    - mkdir -p dist/kafka-to-nexus
+    - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-centos7.tar.gz"
+    - tar -C dist -czf dist/$ARCHIVE_NAME kafka-to-nexus
+  extends: .versioning_rules
+  artifacts:
+    paths:
+      - build/
+      - dist/
+
+almalinux9-debug:
+  stage: build
+  image: $ALMALINUX9_IMAGE
+  dependencies:
+    - conan_setup
+  script:
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
+    - rm CMakeUserPresets.json
+    - cmake --preset=debug
+    - cmake --build --preset=debug
+    - cd build/Debug
     - ninja coverage
     - cat coverage.txt
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
     paths:
-      - $BUILD_DIR/coverage.xml
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: $BUILD_DIR/coverage.xml
+      - build/
 
-
-centos7-release:
-  stage: build
-  image: $CENTOS7_IMAGE
-  script:
-    - conan config install $ESS_CONAN_CONFIG_URL
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
-    - conan info ../conanfile.txt > CONAN_INFO
-    - ../ci/configure-release.sh .. .
-    - ninja all UnitTests docs
-    - ./bin/kafka-to-nexus --version
-    - ./bin/UnitTests --gtest_output=xml:test-output.xml
-  artifacts:
-    paths:
-      - $BUILD_DIR/test-output.xml
-      - $BUILD_DIR/CONAN_INFO
-      - $BUILD_DIR/bin
-      - $BUILD_DIR/lib
-      - $BUILD_DIR/licenses
-    reports:
-      junit: $BUILD_DIR/test-output.xml
-
-almalinux9-debug:
+almalinux9-release:
   stage: build
   image: $ALMALINUX9_IMAGE
-  script:
-    - conan config install $ESS_CONAN_CONFIG_URL
-    - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-    - conan install .. --build=missing --profile=linux_x86_64_gcc11
-    - conan info ../conanfile.txt > CONAN_INFO
-    - cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DCONAN=MANUAL -DRUN_DOXYGEN=ON ..
-    - ninja all UnitTests docs
-    - ./bin/kafka-to-nexus --version
-    - ./bin/UnitTests
-
-archive:
-  stage: archive
-  image: alpine:latest
   dependencies:
-    - centos7-release
+    - conan_setup
   script:
-    - cd $BUILD_DIR
-    - mkdir -p archive/kafka-to-nexus/bin
-    - cp ./bin/file-maker ./bin/kafka-to-nexus ./bin/template-maker archive/kafka-to-nexus/bin/
-    - cp -a ./lib archive/kafka-to-nexus
-    - cp -a ./licenses archive/kafka-to-nexus
-    - cp ./CONAN_INFO archive/kafka-to-nexus
-    - tar czf kafka-to-nexus-centos7.tar.gz -C archive kafka-to-nexus
+    - conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
+    - rm CMakeUserPresets.json # workaround, will be removed once we switch to conan 2
+    - cmake --preset=release
+    - cmake --build --preset=release
+    
+    # Creating distribution files
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
+    - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
+    - mkdir -p dist/kafka-to-nexus
+    - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-almalinux9.tar.gz"
+    - tar -C dist -czf dist/$ARCHIVE_NAME kafka-to-nexus
+  extends: .versioning_rules
   artifacts:
     paths:
-      - $BUILD_DIR/kafka-to-nexus-centos7.tar.gz
+      - build/
+      - dist/
 
-domain_tests:
-  stage: domain
+domain-tests:
+  stage: test
   image: $CENTOS7_IMAGE
   dependencies:
     - centos7-release
-  before_script:
-    - cd domain-tests
   script:
+    - cd domain-tests
     - python3 -m venv venv
     - source venv/bin/activate
     - pip install -r requirements.txt
-    - pytest --file-maker-binary=../$BUILD_DIR/bin/file-maker --junitxml=DomainTestsOutput.xml
+    - pytest --file-maker-binary=../dist/kafka-to-nexus/bin/file-maker --junitxml=DomainTestsOutput.xml
   artifacts:
     when: always
     paths:
@@ -151,13 +178,14 @@ domain_tests:
       junit: domain-tests/DomainTestsOutput.xml
 
 integration-tests:
-  stage: integration
+  stage: test
   image: docker:latest
   dependencies:
-    - archive
+    - centos7-release
   before_script:
     - cd integration-tests
-    - ./setup.sh ../$BUILD_DIR/kafka-to-nexus-centos7.tar.gz
+    - ARCHIVE_PATH=$(find ../dist -mindepth 1 -maxdepth 1 -type f | head -n 1)
+    - ./setup.sh $ARCHIVE_PATH
   script:
     - ./run-integration-tests.sh
   after_script:
@@ -180,18 +208,17 @@ integration-tests:
     reports:
       junit: integration-tests/IntegrationTestsOutput.xml
 
-publish:
+publish-tar-archives:
   stage: publish
   image: alpine/curl:latest
   dependencies:
-    - archive
+    - centos7-release
+    - almalinux9-release
   before_script:
-    - cp $BUILD_DIR/kafka-to-nexus-centos7.tar.gz .
     - curl -fL https://install-cli.jfrog.io | sh
     - jf config add $ESS_ARTIFACTORY_ID --url=$ESS_ARTIFACTORY_URL --user=$ESS_ARTIFACTORY_ECDC_USER --password=$ESS_ARTIFACTORY_ECDC_GENERIC_TOKEN
-    - jf config show
   script:
-    - jf rt u --build-name="kafka-to-nexus-centos7" --build-number=${CI_PIPELINE_IID} kafka-to-nexus-centos7.tar.gz ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH}
+    - jf rt u --build-name="kafka-to-nexus-gitlab-ci" --build-number=${CI_PIPELINE_IID} "dist/*.tar.gz" ecdc-generic-release/${ARTIFACTORY_UPLOAD_PATH} --flat=true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       variables:
