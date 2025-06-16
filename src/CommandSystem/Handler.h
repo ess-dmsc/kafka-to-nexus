@@ -94,8 +94,8 @@ private:
   /// \brief Validate command and start writing.
   ///
   /// \param command_message Kafka message.
-  /// \param start_message Returns the parsed start message as a StartMessage struct.
-  /// pool or the command topic.
+  /// \param start_message Returns the parsed start message as a StartMessage
+  /// struct. pool or the command topic.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse startWritingProcess(const FileWriter::Msg &command_message,
                                   StartMessage &start_message);
@@ -108,7 +108,8 @@ private:
   /// \brief Validate command and start writing.
   ///
   /// \param command_message Kafka message.
-  /// \param stop_message Returns the parsed stop message as a StopMessage struct.
+  /// \param stop_message Returns the parsed stop message as a StopMessage
+  /// struct.
   /// \return Metadata about the success/failure after processing the command.
   CmdResponse stopWritingProcess(const FileWriter::Msg &command_message,
                                  StopMessage &stop_message);

@@ -180,7 +180,8 @@ private:
 ///
 /// When processed by the FieldHandler, an exception will be thrown if this
 /// field (key) is not found.
-/// \param FieldType The data type stored in the field. Need not be a primitive type.
+/// \param FieldType The data type stored in the field. Need not be a primitive
+/// type.
 template <class FieldType> class RequiredField : public Field<FieldType> {
 public:
   template <class FieldRegistrarType>
