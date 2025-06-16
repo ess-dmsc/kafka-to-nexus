@@ -6,7 +6,6 @@ import os
 
 class KafkaToNexusConan(ConanFile):
     name = "kafka-to-nexus"
-    version = "6.2.2"
     settings = "os", "arch", "compiler", "build_type"
     generators = "CMakeToolchain", "CMakeDeps"
     exports_sources = "CMakeLists.txt", "src/*", "apps/*", "LICENSE.md"
