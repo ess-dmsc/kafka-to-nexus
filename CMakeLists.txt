@@ -1,22 +1,63 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.21)
 project("kafka-to-nexus")
 
 set(CMAKE_CXX_STANDARD 17)
 
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
-  message(STATUS "CMAKE_BUILD_TYPE was not specified so defaulting to DEBUG")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators")
+
+# Set output directories
+include(GNUInstallDirs)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Add Conan dependencies
+find_package(asio REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(RdKafka REQUIRED)
+find_package(readerwriterqueue REQUIRED)
+find_package(HDF5 REQUIRED)
+find_package(h5cpp REQUIRED)
+find_package(concurrentqueue REQUIRED)
+find_package(date REQUIRED)
+find_package(flatbuffers REQUIRED)
+find_package(streaming-data-types REQUIRED)
+find_package(stduuid REQUIRED)
+find_package(spdlog REQUIRED)
+
+# Common dependency group
+set(COMMON_LIBS
+    asio::asio
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
+    RdKafka::rdkafka
+    RdKafka::rdkafka++
+    readerwriterqueue::readerwriterqueue
+    HDF5::HDF5
+    h5cpp::h5cpp
+    concurrentqueue::concurrentqueue
+    date::date
+    flatbuffers::flatbuffers_shared
+    streaming-data-types::streaming-data-types
+    stduuid::stduuid
+)
+
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+if(APPLE)
+    set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+elseif(UNIX)
+    set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
 endif()
 
-set(SRC_CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-list(APPEND CMAKE_MODULE_PATH ${SRC_CMAKE_MODULE_PATH})
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-include(${SRC_CMAKE_MODULE_PATH}/Versioning.cmake)
+include("${CMAKE_SOURCE_DIR}/cmake/Versioning.cmake")
+
 set_version()
 create_version_header(
-  ${SRC_CMAKE_MODULE_PATH}/templates/Version.h.in
-  ${PROJECT_SOURCE_DIR}/src/Version.h
+  "${CMAKE_SOURCE_DIR}/cmake/templates/Version.h.in"
+  "${CMAKE_SOURCE_DIR}/src/Version.h"
 )
 
 # Extra warnings and treat warnings as errors
@@ -55,31 +96,6 @@ if (UNIX AND NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
   endif()
-endif()
-
-set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
-set(CONAN_FILE "conanfile.txt" CACHE STRING "Name of the conanfile to use, must be placed in the project's conan directory")
-set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
-
-if(${CONAN} MATCHES "AUTO")
-  include(${SRC_CMAKE_MODULE_PATH}/conan.cmake)
-  conan_cmake_run(CONANFILE ${CONAN_FILE}
-          PROFILE ${CONAN_PROFILE}
-          BASIC_SETUP ${OUTPUT_DIRS}
-          BUILD_TYPE "None"
-          BUILD outdated
-          KEEP_RPATHS)
-elseif(${CONAN} MATCHES "MANUAL")
-  if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-    conan_basic_setup(${OUTPUT_DIRS} KEEP_RPATHS)
-  else()
-    message(FATAL_ERROR "CONAN set to MANUAL but no file named conanbuildinfo.cmake found in build directory")
-  endif()
-elseif(${CONAN} MATCHES "DISABLE")
-  message(WARNING "Conan is disabled so you will need to put your own cmake find modules in the project's \"cmake\" directory")
-else()
-  message(FATAL_ERROR "Unrecognised option for CONAN, use AUTO, MANUAL or DISABLE")
 endif()
 
 set(SANITIZER "none" CACHE STRING "Sanitizer used to compile code with")

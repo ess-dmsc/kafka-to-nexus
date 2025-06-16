@@ -21,38 +21,34 @@ The following minimum software is required to get started:
 
 - Linux or MacOS
 - Conan < 2.0.0
-- CMake >= 3.1.0
+- CMake >= 3.21
 - Git
-- A C++17 compatible compiler 
+- A C++17 compatible compiler
 - Doxygen (only required if you would like to generate the documentation)
+- Ninja
 
 Conan is a package manager and, thus, will install all the other required packages.
 
-### Configuring Conan
-We have our own Conan repositories for some of the packages required.
-Follow the README [here](https://github.com/ess-dmsc/conan-configuration) for instructions on how to include these.
-
-Then run this:
+### Install Conan config
+Use ECDC's common Conan config for supported profiles and settings
 
 ```bash
-# Assuming profile is named "default"
-conan profile update settings.compiler.libcxx=libstdc++11 default
+conan config install https://github.com/ess-dmsc/conan-configuration.git
 ```
 
-### Building the applications
+### Build Release
 From within the top-most directory:
 
 ```bash
-mkdir _build
-cd _build
-conan install .. --build=missing
-cmake ..
-make
+conan install . -if=build/Release --build=missing
+cmake --preset=release
+cmake --build --preset=release
 ```
 
-There are additional optional CMake flags for adjusting the build:
-* `-DRUN_DOXYGEN=ON` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
-* `-DHTML_COVERAGE_REPORT=ON` to generate a html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
+### Generate docs:
+```bash
+cmake --build --preset=docs
+```
 
 ## Tests
 We have three levels of tests:
@@ -68,14 +64,14 @@ make UnitTests
 ./bin/UnitTests
 ```
 
-Note: some of the tests may fail on MacOS but as Linux is our production system this doesn't matter. 
+Note: some of the tests may fail on MacOS but as Linux is our production system this doesn't matter.
 Instead the tests can be run on the build server - if they fail there then there is definitely a problem!
 
 ### Running the domain tests
 These tests run the core functionality of the program but without Kafka. This means the tests are more stable than the integration
 tests as they do not require Docker and Kafka to be running.
 
-The domain tests are implemented in Python but use the file-maker to generate a file. 
+The domain tests are implemented in Python but use the file-maker to generate a file.
 
 Inside the domain tests folder there is a `requirements.txt` file; these requirements need to be install before running the domain tests.
 ```bash
@@ -86,8 +82,8 @@ The tests can be run like so:
 $ cd domain-tests
 $ pytest --file-maker-binary=<path to file-maker binary>
 ```
-The "data" for writing is specified via JSON; for examples see `domain-tests/data_files`. 
-Correspondingly, there is a NeXus template file that defines the layout of the produced file. 
+The "data" for writing is specified via JSON; for examples see `domain-tests/data_files`.
+Correspondingly, there is a NeXus template file that defines the layout of the produced file.
 See `domain-tests/nexus_templates` for examples.
 
 The tests work by first generating a NeXus file using the file-maker and then run tests against the file to check it is correct.
@@ -116,7 +112,7 @@ hdf-output-prefix=output
 ### The job pool
 The file-writer is designed to run in a system where multiple other file-writers are present.
 When a request to start writing a file is sent to the job pool one of the file-writers will pick it up.
-That file-writer will switch to a new topic specified via start message. It will then send a message indicating that it has started 
+That file-writer will switch to a new topic specified via start message. It will then send a message indicating that it has started
 writing to that topic. The request to stop writing will also come to that topic.
 Once the file-writer has finished writing it will disconnect from the topic and return to the job pool topic.
 
@@ -130,7 +126,7 @@ For more information on the commands send to and from the file-writer see [comma
 To reduce the size of the start messages sent to Kafka, it is possible to use pre-created template NeXus files.
 These usually contain the static (rarely changed) information for a particular instruments, e.g. the geometry of the instrument.
 When file-writing starts, the template file is copied and then populated with the dynamic data.
-Each instrument has its own unique template. 
+Each instrument has its own unique template.
 
 The source of truth for the static and dynamic configurations is a large JSON file. The template-maker generates
 the configurations from this file and then the templates are deployed for use.
