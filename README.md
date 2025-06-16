@@ -21,38 +21,33 @@ The following minimum software is required to get started:
 
 - Linux or MacOS
 - Conan < 2.0.0
-- CMake >= 3.1.0
+- CMake >= 3.21
 - Git
 - A C++17 compatible compiler 
 - Doxygen (only required if you would like to generate the documentation)
 
 Conan is a package manager and, thus, will install all the other required packages.
 
-### Configuring Conan
-We have our own Conan repositories for some of the packages required.
-Follow the README [here](https://github.com/ess-dmsc/conan-configuration) for instructions on how to include these.
-
-Then run this:
+### Install Conan config
+Use ECDC's common Conan config for supported profiles and settings
 
 ```bash
-# Assuming profile is named "default"
-conan profile update settings.compiler.libcxx=libstdc++11 default
+conan config install https://github.com/ess-dmsc/conan-configuration
 ```
 
-### Building the applications
+### Build Release
 From within the top-most directory:
 
 ```bash
-mkdir _build
-cd _build
-conan install .. --build=missing
-cmake ..
-make
+conan install . -if=build/Release --build=missing
+cmake --preset=release
+cmake --build --preset=release
 ```
 
-There are additional optional CMake flags for adjusting the build:
-* `-DRUN_DOXYGEN=ON` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
-* `-DHTML_COVERAGE_REPORT=ON` to generate a html unit test coverage report, output to `<BUILD_DIR>/coverage/index.html`
+### Generate docs:
+```bash
+cmake --build --preset=docs
+```
 
 ## Tests
 We have three levels of tests:
