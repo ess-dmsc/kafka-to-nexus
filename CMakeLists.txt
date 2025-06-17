@@ -120,8 +120,22 @@ add_subdirectory(src)
 add_subdirectory(apps)
 add_subdirectory(tests)
 
-option(RUN_DOXYGEN "Run doxygen" TRUE)
-if (RUN_DOXYGEN)
-  configure_file(Doxygen.conf dg.conf)
-  add_custom_target(docs COMMAND doxygen "${PROJECT_BINARY_DIR}/dg.conf" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+option(RUN_DOXYGEN "Run doxygen" ON)
+if(RUN_DOXYGEN)
+    find_package(Doxygen REQUIRED)
+
+    set(DOXYGEN_INPUT_DIR "${CMAKE_SOURCE_DIR}/src")
+    set(DOXYGEN_OUTPUT_DIR "${CMAKE_BINARY_DIR}/docs")
+
+    set(DOXYGEN_CONFIG_FILE_IN "${CMAKE_SOURCE_DIR}/Doxygen.conf")
+    set(DOXYGEN_CONFIG_FILE_OUT "${CMAKE_BINARY_DIR}/dg.conf")
+
+    configure_file(${DOXYGEN_CONFIG_FILE_IN} ${DOXYGEN_CONFIG_FILE_OUT} @ONLY)
+
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG_FILE_OUT}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
 endif()
