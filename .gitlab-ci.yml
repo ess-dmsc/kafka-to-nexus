@@ -67,20 +67,6 @@ cppcheck:
         --inconclusive \
         src/ 2> cppcheck.xml
 
-centos7-debug:
-  stage: build
-  image: $CENTOS7_IMAGE
-  dependencies:
-    - conan_setup
-  script:
-    - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy 
-    - rm CMakeUserPresets.json
-    - cmake --preset=debug
-    - cmake --build --preset=debug
-  artifacts:
-    paths:
-      - build/
-
 centos7-release:
   stage: build
   image: $CENTOS7_IMAGE
