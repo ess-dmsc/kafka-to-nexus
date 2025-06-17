@@ -27,8 +27,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_PREFIX_PATH": "${sourceDir}/build/Debug/generators",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake",
-        "COV": "ON",
-        "RUN_DOXYGEN": "ON"
+        "COV": "ON"
       }
     }
   ],
@@ -40,6 +39,11 @@
     {
       "name": "debug",
       "configurePreset": "debug"
+    },
+    {
+      "name": "docs",
+      "configurePreset": "release",
+      "targets": ["docs"]
     }
   ]
 }
