@@ -52,7 +52,8 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-include("${CMAKE_SOURCE_DIR}/cmake/Versioning.cmake")
+include(Versioning)
+include(CodeCoverage)
 
 set_version()
 create_version_header(
@@ -67,25 +68,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (APPLE)
   message(STATUS "Temporary suppressing deprecated warning (asio)")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
-endif()
-
-set(HTML_COVERAGE_REPORT OFF CACHE BOOL "Generate test coverage report as html, find in <BUILD_DIR>/coverage/index.html")
-if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
-  include(CodeCoverage)
-  append_coverage_compiler_flags()
-  # Exclude tests and Metric sink implementations that do network IO from test coverage
-  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log*)
-  if (HTML_COVERAGE_REPORT)
-    setup_target_for_coverage_gcovr_html(NAME coverage
-            EXECUTABLE UnitTests
-            EXCLUDE ${COVERAGE_EXCLUDE}
-            DEPENDENCIES UnitTests)
-  else()
-    setup_target_for_coverage_gcovr_xml(NAME coverage
-            EXECUTABLE UnitTests
-            EXCLUDE ${COVERAGE_EXCLUDE}
-            DEPENDENCIES UnitTests)
-  endif()
 endif()
 
 # Use gold linker if available on system (it is faster than default GNU linker)
@@ -118,6 +100,8 @@ endif()
 
 add_subdirectory(src)
 add_subdirectory(apps)
+
+enable_testing()
 add_subdirectory(tests)
 
 option(RUN_DOXYGEN "Run doxygen" ON)

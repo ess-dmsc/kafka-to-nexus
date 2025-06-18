@@ -103,24 +103,6 @@ centos7-release:
       - build/
       - dist/
 
-almalinux9-debug:
-  stage: build
-  image: $ALMALINUX9_IMAGE
-  dependencies:
-    - conan_setup
-  script:
-    - conan install . -if=build/Debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
-    - rm CMakeUserPresets.json
-    - cmake --preset=debug
-    - cmake --build --preset=debug
-    - cd build/Debug
-    - ninja coverage
-    - cat coverage.txt
-  coverage: '/^TOTAL.*\s+(\d+\%)$/'
-  artifacts:
-    paths:
-      - build/
-
 almalinux9-release:
   stage: build
   image: $ALMALINUX9_IMAGE
@@ -144,6 +126,28 @@ almalinux9-release:
     paths:
       - build/
       - dist/
+
+unit-tests:
+  stage: test
+  image: $ALMALINUX9_IMAGE
+  dependencies:
+    - conan_setup
+  script:
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
+    - rm CMakeUserPresets.json
+    - cmake --preset=debug
+    - cmake --build --preset=debug
+    - ctest --preset debug --output-on-failure
+    - cmake --build --preset=debug --target coverage
+  coverage: '/lines:\s+(\d+\.\d+)%/'
+  artifacts:
+    paths:
+      - build/Debug/coverage/
+    reports:
+      junit: build/Debug/tests/junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: build/Debug/coverage/coverage.xml
 
 domain-tests:
   stage: test

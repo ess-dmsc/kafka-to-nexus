@@ -79,3 +79,4 @@ target_link_libraries(filewriter_lib
     ${COMMON_LIBS} 
 )
 target_include_directories(filewriter_lib PUBLIC .)
+enable_coverage_for_target(filewriter_lib)
