@@ -69,23 +69,28 @@ if (APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 endif()
 
-set(HTML_COVERAGE_REPORT OFF CACHE BOOL "Generate test coverage report as html, find in <BUILD_DIR>/coverage/index.html")
-if(CMAKE_COMPILER_IS_GNUCXX AND COV OR HTML_COVERAGE_REPORT)
-  include(CodeCoverage)
-  append_coverage_compiler_flags()
-  # Exclude tests and Metric sink implementations that do network IO from test coverage
-  set(COVERAGE_EXCLUDE src/tests src/CLIOptions.cpp src/Metrics/Carbon* src/Metrics/Log*)
-  if (HTML_COVERAGE_REPORT)
-    setup_target_for_coverage_gcovr_html(NAME coverage
-            EXECUTABLE UnitTests
-            EXCLUDE ${COVERAGE_EXCLUDE}
-            DEPENDENCIES UnitTests)
-  else()
-    setup_target_for_coverage_gcovr_xml(NAME coverage
-            EXECUTABLE UnitTests
-            EXCLUDE ${COVERAGE_EXCLUDE}
-            DEPENDENCIES UnitTests)
-  endif()
+option(COV "Enable code coverage reporting with gcov/gcovr" OFF)
+if(COV)
+    find_program(GCOVR_PATH gcovr REQUIRED)
+
+    add_custom_target(coverage
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
+        COMMAND ${GCOVR_PATH} -r ${CMAKE_SOURCE_DIR}
+            --gcov-executable gcov
+            --filter ${CMAKE_SOURCE_DIR}/src
+            --exclude ${CMAKE_SOURCE_DIR}/apps
+            --exclude ${CMAKE_SOURCE_DIR}/tests
+            --exclude ${CMAKE_SOURCE_DIR}/.conan
+            --exclude-unreachable-branches
+            --exclude-throw-branches
+            --print-summary
+            --xml ${CMAKE_BINARY_DIR}/coverage/coverage.xml
+            --xml-pretty
+            --html ${CMAKE_BINARY_DIR}/coverage/coverage.html
+            --html-details ${CMAKE_BINARY_DIR}/coverage/
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Generating code coverage report in coverage/ using gcovr"
+    )
 endif()
 
 # Use gold linker if available on system (it is faster than default GNU linker)
@@ -118,6 +123,8 @@ endif()
 
 add_subdirectory(src)
 add_subdirectory(apps)
+
+enable_testing()
 add_subdirectory(tests)
 
 option(RUN_DOXYGEN "Run doxygen" ON)

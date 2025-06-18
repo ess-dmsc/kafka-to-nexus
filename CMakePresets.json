@@ -45,5 +45,14 @@
       "configurePreset": "release",
       "targets": ["docs"]
     }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
   ]
 }
