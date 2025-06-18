@@ -81,10 +81,10 @@ centos7-release:
     # Creating distribution files
     - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
     - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
-    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-centos7.tar.gz"
     - mkdir -p dist/kafka-to-nexus
     - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
-    - tar czf dist/$ARCHIVE_NAME -C $PKG_PATH .
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-centos7.tar.gz"
+    - tar -C dist -czf dist/$ARCHIVE_NAME kafka-to-nexus
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       variables:
@@ -114,10 +114,10 @@ almalinux9-release:
     # Creating distribution files
     - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
     - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
-    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-almalinux9.tar.gz"
     - mkdir -p dist/kafka-to-nexus
     - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
-    - tar czf dist/$ARCHIVE_NAME -C $PKG_PATH .
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-almalinux9.tar.gz"
+    - tar -C dist -czf dist/$ARCHIVE_NAME kafka-to-nexus
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       variables:
