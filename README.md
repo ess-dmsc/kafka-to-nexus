@@ -56,12 +56,14 @@ We have three levels of tests:
 - domain tests: mid-level tests that exercise the codebase but without Kafka
 - integration tests: high level tests that confirm that the basic function of the application including Kafka
 
-### Building and running the unit tests
-From the build directory:
+### Building and running the unit tests (Debug)
 
 ```bash
-make UnitTests
-./bin/UnitTests
+conan install . -if=build/Debug -s build_type=Debug --build=missing
+cmake --preset=debug
+cmake --build --preset=debug
+
+ctest --preset debug --output-on-failure
 ```
 
 Note: some of the tests may fail on MacOS but as Linux is our production system this doesn't matter.
