@@ -1,0 +1,14 @@
+{
+  "name": "Remote CI Container",
+  "image": "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.3.1",
+  "remoteUser": "root",
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+  ],
+  "runArgs": [
+    "--env", "http_proxy=http://10.100.1.2:8123",
+    "--env", "https_proxy=http://10.100.1.2:8123"
+  ],
+  "postStartCommand": "conan config install http://github.com/ess-dmsc/conan-configuration.git"
+}
