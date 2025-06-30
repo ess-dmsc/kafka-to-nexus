@@ -53,7 +53,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   Command::StartMessage start_info;
 
-
   if (json_file.empty()) {
     throw std::runtime_error("A JSON file must be provided");
   }
