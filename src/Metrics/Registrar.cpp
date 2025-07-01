@@ -47,13 +47,16 @@ void Registrar::initServer() {
         accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
     std::string response = "";
     for (auto const &reporter : ReporterList) {
-			response = "[{\"" + Prefix + "\"},{\"worker_state\": \"" + reporter->getMetrics()[Prefix + "worker_state"].Value() + "\"}]\n\n";
-/*      for (auto const &MetricNameValue : reporter->getMetrics()) {
-        response += "{\"" + MetricNameValue.first + "\": \"" +
-                    MetricNameValue.second.Value() + "\"},\n";
-      }*/
+      response = "[{\"" + Prefix + "\"},{\"worker_state\": \"" +
+                 reporter->getMetrics()[Prefix + "worker_state"].Value() +
+                 "\"}]\n\n";
+      /*      for (auto const &MetricNameValue : reporter->getMetrics()) {
+              response += "{\"" + MetricNameValue.first + "\": \"" +
+                          MetricNameValue.second.Value() + "\"},\n";
+            }*/
     }
-//    response += "{}\n]\n\n"; //	pad with an empty group so JSON is always valid
+    //    response += "{}\n]\n\n"; //	pad with an empty group so JSON is
+    //    always valid
     send(client_fd, response.c_str(), response.size(), 0);
     shutdown(client_fd, SHUT_WR);
     close(client_fd);
