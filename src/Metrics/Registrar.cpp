@@ -43,17 +43,35 @@ void Registrar::initServer() {
     throw std::runtime_error("Failed to listen");
 
   while (true) { //	threaded connections?
-    client_fd =
+    int client_fd =
         accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-    std::string response = "[\n";
+
+    std::string response_body;
+
+    // Find worker_state metric
     for (auto const &reporter : ReporterList) {
-      for (auto const &MetricNameValue : reporter->getMetrics()) {
-        response += "{\"" + MetricNameValue.first + "\": \"" +
-                    MetricNameValue.second.Value() + "\"},\n";
+      for (auto const &metric_pair : reporter->getMetrics()) {
+        const std::string &name = metric_pair.first;
+
+        if (name.length() >= 13 && name.substr(name.length() - 13) == ".worker_state") {
+          response_body = "{\"" + name + "\": " + metric_pair.second.Value() + "}";
+          break;
+        }
+      }
+      if (!response_body.empty()) {
+        break;
       }
     }
-    response += "{}\n]"; //	pad with an empty group so JSON is always valid
-    send(client_fd, response.c_str(), response.size(), 0);
+
+    // Build a valid JSON array string
+    std::string response;
+    if (!response_body.empty()) {
+      response = "[" + response_body + "]";
+    } else {
+      response = "[]";
+    }
+
+    send(client_fd, response.c_str(), response.length(), 0);
     shutdown(client_fd, SHUT_WR);
     close(client_fd);
   }
