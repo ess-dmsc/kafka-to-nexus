@@ -41,6 +41,18 @@ std::string getHostName() {
   return Buffer.data();
 }
 
+std::string getHostNameWithUnderscore() {
+  std::vector<char> Buffer(1024);
+  int Result = gethostname(Buffer.data(), Buffer.size());
+  Buffer.back() = '\0';
+  if (Result != 0) {
+    return "unknown_host";
+  }
+  std::string Host(Buffer.data());
+  std::replace(Host.begin(), Host.end(), '.', '_');
+  return Host;
+}
+
 std::string getFQDN() {
   auto const HostName = getHostName();
 
