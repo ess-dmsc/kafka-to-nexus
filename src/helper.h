@@ -21,6 +21,10 @@ int getPID();
 // \return The hostname.
 std::string getHostName();
 
+// \brief Get the hostname with underscores instead of dots.
+// \return The hostname using underscores.
+std::string getHostNameWithUnderscore();
+
 // \brief Get a hex string.
 // \return A string with characters in the range 0-f. No prefix or suffix.
 std::string randomHexString(size_t Length);
