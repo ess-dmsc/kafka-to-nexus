@@ -1,5 +1,6 @@
 #include "Registrar.h"
 #include "Metric.h"
+#include "helper.h"
 #include <algorithm>
 
 namespace Metrics {
@@ -43,24 +44,21 @@ void Registrar::initServer() {
     throw std::runtime_error("Failed to listen");
 
   while (true) { //	threaded connections?
-    int client_fd =
+    client_fd =
         accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
 
     std::string response_body;
 
-    // Find worker_state metric
-    for (auto const &reporter : ReporterList) {
-      for (auto const &metric_pair : reporter->getMetrics()) {
-        const std::string &name = metric_pair.first;
+    // Build the metric key using ApplicationStatusInfo
+    std::string metric_key =
+        "kafka-to-nexus" + "." + getHostName() + ".0.worker_state";
 
-        if (name.length() >= 13 &&
-            name.substr(name.length() - 13) == ".worker_state") {
-          response_body =
-              "{\"" + name + "\": " + metric_pair.second.Value() + "}";
-          break;
-        }
-      }
-      if (!response_body.empty()) {
+    // Find worker_state metric directly by key
+    for (auto const &reporter : ReporterList) {
+      auto metrics = reporter->getMetrics();
+      auto it = metrics.find(metric_key);
+      if (it != metrics.end()) {
+        response_body = "{\"" + metric_key + "\": " + it->second.Value() + "}";
         break;
       }
     }
