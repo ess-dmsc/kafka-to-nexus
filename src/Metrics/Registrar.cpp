@@ -2,6 +2,7 @@
 #include "Metric.h"
 #include "helper.h"
 #include <algorithm>
+#include <iostream>
 
 namespace Metrics {
 
@@ -47,11 +48,13 @@ void Registrar::initServer() {
     client_fd =
         accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
 
+    // TODO: Remove helper functions
+    std::cout << "MetricPrefix: " << MetricPrefix << std::endl;
+
     std::string response_body;
 
     // Build the metric key using ApplicationStatusInfo
-    std::string metric_key = AppName + "." + getHostNameWithUnderscore() + "." +
-                             ServiceId + ".worker_state";
+    std::string metric_key = MetricPrefix + ".worker_state";
 
     // Find worker_state metric directly by key
     for (auto const &reporter : ReporterList) {
