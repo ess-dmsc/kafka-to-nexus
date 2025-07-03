@@ -1,6 +1,8 @@
 #include "Registrar.h"
 #include "Metric.h"
+#include "helper.h"
 #include <algorithm>
+#include <iostream>
 
 namespace Metrics {
 
@@ -45,14 +47,30 @@ void Registrar::initServer() {
   while (true) { //	threaded connections?
     client_fd =
         accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-    std::string response = "[\n";
+
+    std::string response_body;
+
+    // Build the metric key using ApplicationStatusInfo
+    std::string metric_key = Prefix + ".worker_state";
+
+    // Find worker_state metric directly by key
     for (auto const &reporter : ReporterList) {
-      for (auto const &MetricNameValue : reporter->getMetrics()) {
-        response += "{\"" + MetricNameValue.first + "\": \"" +
-                    MetricNameValue.second.Value() + "\"},\n";
+      auto metrics = reporter->getMetrics();
+      auto it = metrics.find(metric_key);
+      if (it != metrics.end()) {
+        response_body = "{\"" + metric_key + "\": " + it->second.Value() + "}";
+        break;
       }
     }
-    response += "{}\n]"; //	pad with an empty group so JSON is always valid
+
+    // Build a valid JSON array string
+    std::string response;
+    if (!response_body.empty()) {
+      response = "[" + response_body + "]";
+    } else {
+      response = "[ ]";
+    }
+
     send(client_fd, response.c_str(), response.size(), 0);
     shutdown(client_fd, SHUT_WR);
     close(client_fd);
