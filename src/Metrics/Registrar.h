@@ -28,9 +28,8 @@ public:
   explicit Registrar(
       std::string MetricsPrefix,
       std::vector<std::shared_ptr<Reporter>> const &Reporters = {},
-      bool server = false, std::string AppName = "", std::string ServiceId = "")
-      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters),
-        AppName(std::move(AppName)), ServiceId(std::move(ServiceId)) {
+      bool server = false)
+      : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) {
     if (server)
       std::thread([this]() { initServer(); }).detach();
   };
@@ -51,8 +50,6 @@ private:
   std::string Prefix;
   /// List of reporters we might want to add a metric to
   std::vector<std::shared_ptr<Reporter>> ReporterList;
-  std::string AppName;
-  std::string ServiceId;
 };
 
 } // namespace Metrics
