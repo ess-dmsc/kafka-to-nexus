@@ -50,8 +50,8 @@ void Registrar::initServer() {
     std::string response_body;
 
     // Build the metric key using ApplicationStatusInfo
-    std::string metric_key = std::string("kafka-to-nexus") + "." +
-                             getHostNameWithUnderscore() + ".0.worker_state";
+    std::string metric_key = AppName + "." + getHostNameWithUnderscore() + "." +
+                             ServiceId + ".worker_state";
 
     // Find worker_state metric directly by key
     for (auto const &reporter : ReporterList) {
