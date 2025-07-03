@@ -41,6 +41,12 @@ std::string getHostName() {
   return Buffer.data();
 }
 
+std::string getHostNameWithUnderscore() {
+  std::string Host = getHostName();
+  std::replace(Host.begin(), Host.end(), '.', '_');
+  return Host;
+}
+
 std::string getFQDN() {
   auto const HostName = getHostName();
 
