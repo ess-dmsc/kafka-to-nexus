@@ -41,6 +41,11 @@ From within the top-most directory:
 
 ```bash
 conan install . -if=build/Release --build=missing
+
+# Remove the auto-generated presets file since it doesn't support Ninja.
+# Temporary workaround until we migrate to Conan 2.
+rm CMakeUserPresets.json
+
 cmake --preset=release
 cmake --build --preset=release
 ```
@@ -60,6 +65,11 @@ We have three levels of tests:
 
 ```bash
 conan install . -if=build/Debug -s build_type=Debug --build=missing
+
+# Remove the auto-generated presets file since it doesn't support Ninja.
+# Temporary workaround until we migrate to Conan 2.
+rm CMakeUserPresets.json
+
 cmake --preset=debug
 cmake --build --preset=debug
 
