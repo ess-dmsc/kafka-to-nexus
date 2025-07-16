@@ -85,13 +85,13 @@ centos7-release:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/Release -s build_type=Release --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 -o kafka-to-nexus:sanitizer=address --profile=linux_x86_64_gcc11_legacy
     - rm CMakeUserPresets.json
-    - cmake --preset=release
-    - cmake --build --preset=release
+    - cmake --preset=debug
+    - cmake --build --preset=debug
 
     # Creating distribution files
-    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Debug
     - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
     - mkdir -p dist/kafka-to-nexus
     - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
