@@ -70,16 +70,6 @@ if (APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 endif()
 
-# Use gold linker if available on system (it is faster than default GNU linker)
-if (UNIX AND NOT APPLE)
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=gold -Wl,--version ERROR_QUIET OUTPUT_VARIABLE ld_version)
-  if ("${ld_version}" MATCHES "GNU gold")
-    message(STATUS "Using gold linker")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
-  endif()
-endif()
-
 set(SANITIZER "none" CACHE STRING "Sanitizer used to compile code with")
 set_property(CACHE SANITIZER PROPERTY STRINGS none address thread)
 if(SANITIZER STREQUAL "none")
@@ -96,6 +86,22 @@ elseif(SANITIZER STREQUAL "address")
   set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address,undefined -fno-omit-frame-pointer -g")
 else()
   message(FATAL_ERROR "Unknown sanitizer (${SANITIZER}) selected.")
+endif()
+
+# Only use gold linker if no sanitizer is active
+if(UNIX AND NOT APPLE AND SANITIZER STREQUAL "none")
+  execute_process(
+    COMMAND ${CMAKE_C_COMPILER} -fuse-ld=gold -Wl,--version
+    ERROR_QUIET OUTPUT_VARIABLE ld_version
+  )
+  if("${ld_version}" MATCHES "GNU gold")
+    message(STATUS "Using gold linker")
+    add_link_options(-fuse-ld=gold -Wl,--disable-new-dtags)
+  else()
+    message(STATUS "Gold linker not available or not detected")
+  endif()
+else()
+  message(STATUS "Gold linker disabled due to sanitizer or platform")
 endif()
 
 add_subdirectory(src)
