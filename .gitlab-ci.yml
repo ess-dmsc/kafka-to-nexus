@@ -45,14 +45,14 @@ conan_setup:
     expire_in: 1 hour
     when: always
 
-clang-format:
+.clang-format:
   stage: check
   image: $ALMALINUX9_IMAGE
   script:
     - find apps/ src/ tests/ -type f \( -name '*.cpp' -o -name '*.cxx' -o -name '*.c' -o -name '*.h' \) > clang_format_files.txt
     - xargs clang-format --dry-run --Werror < clang_format_files.txt
 
-black:
+.black:
   stage: check
   image: $ALMALINUX9_IMAGE
   script:
@@ -64,7 +64,7 @@ black:
     - black --check integration-tests
     - black --check domain-tests
 
-cppcheck:
+.cppcheck:
   stage: check
   image: $ALMALINUX9_IMAGE
   script:
@@ -127,7 +127,7 @@ almalinux9-release:
       - build/
       - dist/
 
-unit-tests:
+.unit-tests:
   stage: test
   image: $ALMALINUX9_IMAGE
   dependencies:
@@ -149,7 +149,7 @@ unit-tests:
         coverage_format: cobertura
         path: build/Debug/coverage/coverage.xml
 
-domain-tests:
+.domain-tests:
   stage: test
   image: $CENTOS7_IMAGE
   dependencies:
@@ -167,7 +167,7 @@ domain-tests:
     reports:
       junit: domain-tests/DomainTestsOutput.xml
 
-integration-tests:
+.integration-tests:
   stage: test
   image: docker:latest
   dependencies:
