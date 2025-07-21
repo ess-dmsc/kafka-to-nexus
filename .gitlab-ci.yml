@@ -87,7 +87,7 @@ centos7-release:
   script:
     - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
     - rm CMakeUserPresets.json
-    - cmake --preset=debug -DSANITIZER=thread
+    - cmake --preset=debug -DSANITIZER=address -DSANITIZER_CAN_USE_ALLOCATOR64=0
     - cmake --build --preset=debug
 
     # Creating distribution files
