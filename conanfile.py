@@ -30,6 +30,7 @@ class KafkaToNexusConan(ConanFile):
     )
 
     options = {
+        "with_coverage": [True, False],
         "sanitizer": ["none", "address", "thread", "undefined"],
     }
 
@@ -43,12 +44,15 @@ class KafkaToNexusConan(ConanFile):
         "librdkafka:sasl": True,
         "date:use_system_tz_db": True,
         "sanitizer": "none",
+        "with_coverage": False,
     }
 
     def layout(self):
         cmake_layout(self)
 
     def generate(self):
+        self.conf.define("tools.cmake.cmaketoolchain:generator", "Ninja")
+
         sanitizer = str(self.options.sanitizer)
         flags = ""
 
@@ -67,6 +71,10 @@ class KafkaToNexusConan(ConanFile):
             self.conf.append("tools.build:exelinkflags", flags)
 
         tc = CMakeToolchain(self)
+
+        if self.options.get_safe("with_coverage", False):
+            tc.cache_variables["COV"] = True
+
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -77,9 +85,6 @@ class KafkaToNexusConan(ConanFile):
             for libdir in dep.cpp_info.libdirs:
                 copy(self, "*.so*", libdir, lib_dest)
                 copy(self, "*.dylib", libdir, lib_dest)
-
-    def configure(self):
-        self.conf_info.define("tools.cmake.cmaketoolchain:generator", "Ninja")
 
     def build(self):
         cmake = CMake(self)

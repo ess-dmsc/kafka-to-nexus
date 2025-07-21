@@ -86,7 +86,6 @@ centos7-release:
     - conan_setup
   script:
     - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 -o kafka-to-nexus:sanitizer=address --profile=linux_x86_64_gcc11_legacy
-    - rm CMakeUserPresets.json
     - cmake --preset=debug
     - cmake --build --preset=debug
 
@@ -110,7 +109,6 @@ almalinux9-release:
     - conan_setup
   script:
     - conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
-    - rm CMakeUserPresets.json # workaround, will be removed once we switch to conan 2
     - cmake --preset=release
     - cmake --build --preset=release --target all docs
     
@@ -133,8 +131,7 @@ almalinux9-release:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/Debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
-    - rm CMakeUserPresets.json
+    - conan install . -if=build/Debug -s build_type=Debug -o kafka-to-nexus:with_coverage=True --build=missing --profile=linux_x86_64_gcc11
     - cmake --preset=debug
     - cmake --build --preset=debug
     - ctest --preset debug --output-on-failure
