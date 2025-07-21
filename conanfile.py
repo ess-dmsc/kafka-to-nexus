@@ -30,6 +30,7 @@ class KafkaToNexusConan(ConanFile):
     )
 
     options = {
+        "with_coverage": [True, False],
         "sanitizer": ["none", "address", "thread", "undefined"],
     }
 
@@ -43,6 +44,7 @@ class KafkaToNexusConan(ConanFile):
         "librdkafka:sasl": True,
         "date:use_system_tz_db": True,
         "sanitizer": "none",
+        "with_coverage": False,
     }
 
     def layout(self):
@@ -69,6 +71,10 @@ class KafkaToNexusConan(ConanFile):
             self.conf.append("tools.build:exelinkflags", flags)
 
         tc = CMakeToolchain(self)
+
+        if self.options.get_safe("with_coverage", False):
+            tc.cache_variables["COV"] = True
+
         tc.generate()
 
         deps = CMakeDeps(self)
