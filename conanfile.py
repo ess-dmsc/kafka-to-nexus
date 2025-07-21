@@ -1,5 +1,5 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain, CMakeDeps
 from conan.tools.files import copy
 import os
 
@@ -29,6 +29,10 @@ class KafkaToNexusConan(ConanFile):
         "fmt/8.1.1"
     )
 
+    options = {
+        "sanitizer": ["none", "address", "thread", "undefined"],
+    }
+
     default_options = {
         "flatbuffers:shared": True,
         "gtest:shared": False,
@@ -37,13 +41,37 @@ class KafkaToNexusConan(ConanFile):
         "librdkafka:shared": True,
         "librdkafka:ssl": True,
         "librdkafka:sasl": True,
-        "date:use_system_tz_db": True
+        "date:use_system_tz_db": True,
+        "sanitizer": "none",
     }
 
     def layout(self):
         cmake_layout(self)
 
     def generate(self):
+        sanitizer = str(self.options.sanitizer)
+        flags = ""
+
+        # Set sanitizer flags based on the option
+        if sanitizer == "address":
+            flags = "-fsanitize=address,undefined -fno-omit-frame-pointer -DSANITIZER_CAN_USE_ALLOCATOR64=0"
+        elif sanitizer == "thread":
+            flags = "-fsanitize=thread"
+        elif sanitizer == "undefined":
+            flags = "-fsanitize=undefined -fno-omit-frame-pointer"
+
+        if flags:
+            self.conf.append("tools.build:cxxflags", flags)
+            self.conf.append("tools.build:cflags", flags)
+            self.conf.append("tools.build:sharedlinkflags", flags)
+            self.conf.append("tools.build:exelinkflags", flags)
+
+        tc = CMakeToolchain(self)
+        tc.generate()
+
+        deps = CMakeDeps(self)
+        deps.generate()
+
         lib_dest = os.path.join(self.build_folder, "lib")
         for dep in self.dependencies.values():
             for libdir in dep.cpp_info.libdirs:
