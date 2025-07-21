@@ -49,6 +49,8 @@ class KafkaToNexusConan(ConanFile):
         cmake_layout(self)
 
     def generate(self):
+        self.conf.define("tools.cmake.cmaketoolchain:generator", "Ninja")
+
         sanitizer = str(self.options.sanitizer)
         flags = ""
 
@@ -77,9 +79,6 @@ class KafkaToNexusConan(ConanFile):
             for libdir in dep.cpp_info.libdirs:
                 copy(self, "*.so*", libdir, lib_dest)
                 copy(self, "*.dylib", libdir, lib_dest)
-
-    def configure(self):
-        self.conf_info.define("tools.cmake.cmaketoolchain:generator", "Ninja")
 
     def build(self):
         cmake = CMake(self)
