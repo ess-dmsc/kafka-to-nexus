@@ -39,11 +39,11 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
   *CurrentStateMetric = static_cast<int64_t>(getCurrentState());
-  MasterMetricsRegistrar->registerMetric(std::make_shared<Metrics::Metric>(CurrentStateMetric),
+  MasterMetricsRegistrar->registerMetric(CurrentStateMetric,
                                          {Metrics::LogTo::CARBON});
-  MasterMetricsRegistrar->registerMetric(std::make_shared<Metrics::Metric>(UptimeMetric,
+  MasterMetricsRegistrar->registerMetric(UptimeMetric,
                                          {Metrics::LogTo::CARBON});
-  MasterMetricsRegistrar->registerMetric(std::make_shared<Metrics::Metric>(GlobalWritesMetric,
+  MasterMetricsRegistrar->registerMetric(GlobalWritesMetric,
                                          {Metrics::LogTo::CARBON});
 }
 
@@ -176,7 +176,7 @@ Status::WorkerState Master::getCurrentState() const {
 
 const Metrics::Metric &Master::getCurrentStateMetric() const {
   std::lock_guard LockGuard(StatusMutex);
-  return CurrentStateMetric;
+  return *CurrentStateMetric;
 }
 
 std::filesystem::path Master::getCurrentFilePath() const {
@@ -193,13 +193,13 @@ void Master::setStopTimeInternal(time_point NewStopTime) {
 void Master::setCurrentStatus(Status::JobStatusInfo const &NewStatus) {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = NewStatus;
-  CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
+  *CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
 }
 
 void Master::resetStatusInfo() {
   std::lock_guard LockGuard(StatusMutex);
   CurrentStatus = {};
-  CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
+  *CurrentStateMetric = static_cast<int64_t>(CurrentStatus.State);
 }
 
 } // namespace FileWriter
