@@ -50,8 +50,8 @@ public:
   /// \brief Return the approximate number of writes queued.
   auto nrOfWritesQueued() const { return WriteJobs.size_approx(); };
 
-  auto nrOfWritesDone() const { return int64_t(WritesDone); };
-  auto nrOfWriteErrors() const { return int64_t(WriteErrors); };
+  auto nrOfWritesDone() const { return WritesDone ? int64_t(*WritesDone) : 0; };
+  auto nrOfWriteErrors() const { return WriteErrors ? int64_t(*WriteErrors) : 0; };
   auto nrOfWriterModulesWithErrors() const {
     return ModuleErrorCounters.size();
   }

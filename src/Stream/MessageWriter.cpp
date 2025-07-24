@@ -77,9 +77,9 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
                                  bool is_buffered_message) {
   try {
     ModulePtr->write(Msg, is_buffered_message);
-    WritesDone++;
+    (*WritesDone)++;
   } catch (WriterModule::WriterException &E) {
-    WriteErrors++;
+    (*WriteErrors)++;
     auto UsedHash = UnknownModuleHash;
     if (Msg.isValid()) {
       UsedHash = generateSrcHash(Msg.getSourceName(), Msg.getFlatbufferID());
@@ -97,7 +97,7 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
     }
     (*ModuleErrorCounters[UsedHash])++;
   } catch (std::exception &E) {
-    WriteErrors++;
+    (*WriteErrors)++;
     Logger::Error("Unknown file writing error: {}", E.what());
   }
 }
@@ -110,7 +110,7 @@ void MessageWriter::threadFunction() {
   auto FlushOperation = [&]() {
     auto Now = system_clock::now();
     if (Now >= NextFlushTime) {
-      ApproxQueuedWrites = WriteJobs.size_approx();
+      *ApproxQueuedWrites = WriteJobs.size_approx();
       flushData();
       auto FlushPeriods = int((Now - NextFlushTime) / FlushInterval) + 1;
       NextFlushTime += FlushPeriods * FlushInterval;
