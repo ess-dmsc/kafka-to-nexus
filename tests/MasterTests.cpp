@@ -122,7 +122,7 @@ TEST_F(MasterTest, Init) {
 
 TEST_F(MasterTest, WorkerStateStartsAtIdle) {
   EXPECT_EQ(UnderTest->getCurrentState(), Status::WorkerState::Idle);
-  EXPECT_EQ(UnderTest->getCurrentStateMetric(), 0);
+  EXPECT_EQ(*UnderTest->getCurrentStateMetric(), 0);
 }
 
 TEST_F(MasterTest, DestinationFilenameFromRelativePath) {
@@ -140,7 +140,7 @@ TEST_F(MasterTest, StartWritingSuccess) {
       .TIMES(1);
   UnderTest->startWriting(StartCmd);
   EXPECT_EQ(UnderTest->getCurrentState(), Status::WorkerState::Writing);
-  EXPECT_EQ(UnderTest->getCurrentStateMetric(), 1);
+  EXPECT_EQ(*UnderTest->getCurrentStateMetric(), 1);
 }
 
 TEST_F(MasterTest, StartWritingFailureWhenWriting) {
@@ -149,7 +149,7 @@ TEST_F(MasterTest, StartWritingFailureWhenWriting) {
       .TIMES(1);
   UnderTest->startWriting(StartCmd);
   ASSERT_EQ(UnderTest->getCurrentState(), Status::WorkerState::Writing);
-  EXPECT_EQ(UnderTest->getCurrentStateMetric(), 1);
+  EXPECT_EQ(*UnderTest->getCurrentStateMetric(), 1);
   EXPECT_THROW(UnderTest->startWriting(StartCmd), std::runtime_error);
 }
 

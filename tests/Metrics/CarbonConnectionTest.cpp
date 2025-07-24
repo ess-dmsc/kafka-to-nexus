@@ -181,7 +181,7 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, SendUpdate) {
   std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
   auto TestRegistrar =
       std::make_shared<Metrics::Registrar>("Test", TestReporters);
-  Metrics::Metric TestMetric(TestName, Description, Metrics::Severity::ERROR);
+  auto TestMetric = std::make_shared<Metrics::Metric>(TestName, Description, Metrics::Severity::ERROR);
 
   TestRegistrar->registerMetric(TestMetric, {Metrics::LogTo::CARBON});
   std::this_thread::sleep_for(200ms);

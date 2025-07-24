@@ -13,7 +13,7 @@ class Registrar;
 
 class IRegistrar {
 public:
-  virtual void registerMetric(std::shared_ptr<Metric> NewMetric,
+  virtual void registerMetric(std::shared_ptr<Metrics::Metric> NewMetric,
                               std::vector<LogTo> const &SinkTypes) const = 0;
   [[nodiscard]] virtual std::unique_ptr<IRegistrar>
   getNewRegistrar(std::string const &MetricsPrefix) const = 0;
@@ -35,7 +35,7 @@ public:
   };
   ~Registrar() override = default;
 
-  void registerMetric(std::shared_ptr<Metric> NewMetric,
+  void registerMetric(std::shared_ptr<Metrics::Metric> NewMetric,
                       std::vector<LogTo> const &SinkTypes) const override;
 
   [[nodiscard]] std::unique_ptr<IRegistrar>

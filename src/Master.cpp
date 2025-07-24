@@ -173,10 +173,9 @@ Status::WorkerState Master::getCurrentState() const {
   std::lock_guard LockGuard(StatusMutex);
   return CurrentStatus.State;
 }
-
-const Metrics::Metric &Master::getCurrentStateMetric() const {
+std::shared_ptr<Metrics::Metric> Master::getCurrentStateMetric() const {
   std::lock_guard LockGuard(StatusMutex);
-  return *CurrentStateMetric;
+  return CurrentStateMetric;
 }
 
 std::filesystem::path Master::getCurrentFilePath() const {

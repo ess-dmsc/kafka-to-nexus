@@ -25,7 +25,7 @@ private:
 // cppcheck-suppress syntaxError
 TEST(MetricsReporterTest,
      MetricSuccessfullyAddedCanBeRemovedUsingSameFullName) {
-  Metric TestMetric("some_name", "Description", Severity::INFO);
+  auto TestMetric = std::make_shared<Metric>("some_name", "Description", Severity::INFO);
   auto TestSink = std::unique_ptr<Sink>(new MockSink());
   auto TestMockSink = dynamic_cast<MockSink *>(TestSink.get());
   Reporter TestReporter(std::move(TestSink), 10ms);
@@ -38,8 +38,8 @@ TEST(MetricsReporterTest,
 }
 
 TEST(MetricsReporterTest, TryingToAddMetricWithSameFullNameTwiceFails) {
-  Metric TestMetric1("some_name", "Description", Severity::INFO);
-  Metric TestMetric2("some_name", "Different description", Severity::DEBUG);
+  auto TestMetric1 = std::make_shared<Metric>("some_name", "Description", Severity::INFO);
+  auto TestMetric2 = std::make_shared<Metric>("some_name", "Different description", Severity::DEBUG);
 
   auto TestSink = std::unique_ptr<Sink>(new MockSink());
   auto TestMockSink = dynamic_cast<MockSink *>(TestSink.get());
@@ -49,7 +49,7 @@ TEST(MetricsReporterTest, TryingToAddMetricWithSameFullNameTwiceFails) {
 
   std::string const FullName = "some_prefix.some_name";
   ASSERT_TRUE(TestReporter.addMetric(TestMetric1, FullName));
-  ASSERT_FALSE(TestReporter.addMetric(TestMetric2, FullName));
+  ASSERT_FALSE(TestReporter.addMetric(TestMetric1, FullName));
   TestReporter.tryRemoveMetric(FullName);
 }
 
@@ -63,7 +63,7 @@ TEST(MetricsReporterTest, TryingToRemoveMetricWhichWasNotAddedFails) {
 
 TEST(MetricsReporterTest, AddedMetricIsReportedOn) {
   std::string const TestMetricName = "some_name";
-  Metric TestMetric(TestMetricName, "Description", Severity::INFO);
+  auto TestMetric = std::make_shared<Metric>(TestMetricName, "Description", Severity::INFO);
   auto TestSink = std::unique_ptr<Sink>(new MockSink());
   auto TestMockSink = dynamic_cast<MockSink *>(TestSink.get());
   Reporter TestReporter(std::move(TestSink), 10ms);
@@ -84,7 +84,7 @@ TEST(MetricsReporterTest, AddedMetricIsReportedOn) {
 }
 
 TEST(MetricsReporterTest, DoesNotReportMetricsIfSinkIsNotHealthy) {
-  Metric TestMetric("some_name", "Description", Severity::INFO);
+  auto TestMetric = std::make_shared<Metric>("some_name", "Description", Severity::INFO);
   auto TestSink = std::unique_ptr<Sink>(new MockUnhealthySink());
   auto TestMockSink = dynamic_cast<MockUnhealthySink *>(TestSink.get());
   Reporter TestReporter(std::move(TestSink), 10ms);

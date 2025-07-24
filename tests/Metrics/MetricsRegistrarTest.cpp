@@ -37,7 +37,7 @@ TEST_F(MetricsRegistrarTest, RegisteringANewMetricAddsItToTheReporter) {
   ALLOW_CALL(*TestReporterMock, tryRemoveMetric(Name)).RETURN(true);
 
   {
-    Metric TestMetric(Name, Desc, Sev);
+    auto TestMetric = std::make_shared<Metrics::Metric>(Name, Desc, Sev);
     TestRegistrar.registerMetric(TestMetric, {LogTo::LOG_MSG});
   }
 }
@@ -60,7 +60,7 @@ TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
       .TIMES(1)
       .RETURN(true);
   {
-    Metric Ctr(Name, Desc, Sev);
+    auto Ctr = std::make_shared<Metric>(Name, Desc, Sev);
     TestRegistrarExtraPrefix->registerMetric(Ctr, {LogTo::LOG_MSG});
   }
 }
@@ -79,7 +79,7 @@ TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
   FORBID_CALL(*TestReporterMock, addMetric(_, _));
   FORBID_CALL(*TestReporterMock, tryRemoveMetric(_));
   {
-    Metric Ctr(EmptyName, Desc, Sev);
+    auto Ctr = std::make_shared<Metric>(EmptyName, Desc, Sev);
     EXPECT_THROW(TestRegistrar.registerMetric(Ctr, {LogTo::LOG_MSG}),
                  std::runtime_error)
         << "Expect registering metric with empty name to fail";
@@ -101,9 +101,9 @@ TEST_F(MetricsRegistrarTest, RegisterWithExistingNameFails) {
   auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList);
 
   {
-    Metric TestMetric(Name, Desc, Sev);
+    auto TestMetric = std::make_shared<Metric>(Name, Desc, Sev);
     TestRegistrar.registerMetric(TestMetric, {LogTo::LOG_MSG});
-    Metric TestMetricWithSameName(Name, Desc, Sev);
+    auto TestMetricWithSameName = std::make_shared<Metric>(Name, Desc, Sev);
     EXPECT_THROW(
         TestRegistrar.registerMetric(TestMetricWithSameName, {LogTo::LOG_MSG}),
         std::runtime_error)
@@ -143,7 +143,7 @@ TEST_F(MetricsRegistrarTest, RegisteringLogMetricAddsToReporterWithLogSink) {
   ALLOW_CALL(*TestLogReporterMock, tryRemoveMetric(Name)).RETURN(true);
   FORBID_CALL(*TestCarbonReporterMock, addMetric(_, Name));
   {
-    Metric TestMetric(Name, Desc, Sev);
+    auto TestMetric = std::make_shared<Metric>(Name, Desc, Sev);
     TestRegistrar.registerMetric(TestMetric, {LogTo::LOG_MSG});
   }
 }
@@ -183,7 +183,7 @@ TEST_F(MetricsRegistrarTest,
   ALLOW_CALL(*TestCarbonReporterMock, tryRemoveMetric(Name)).RETURN(true);
   FORBID_CALL(*TestLogReporterMock, addMetric(_, Name));
   {
-    Metric TestMetric(Name, Desc, Sev);
+    auto TestMetric = std::make_shared<Metric>(Name, Desc, Sev);
     TestRegistrar.registerMetric(TestMetric, {LogTo::CARBON});
   }
 }
@@ -223,7 +223,7 @@ TEST_F(MetricsRegistrarTest, RegisterMetricToMultipleReporters) {
   ALLOW_CALL(*TestCarbonReporterMock, tryRemoveMetric(Name)).RETURN(true);
   ALLOW_CALL(*TestLogReporterMock, tryRemoveMetric(Name)).RETURN(true);
   {
-    Metric TestMetric(Name, Desc, Sev);
+    auto TestMetric = std::make_shared<Metric>(Name, Desc, Sev);
     TestRegistrar.registerMetric(TestMetric, {LogTo::CARBON, LogTo::LOG_MSG});
   }
 }

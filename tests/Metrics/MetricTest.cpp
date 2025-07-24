@@ -87,7 +87,7 @@ TEST(MetricTest, Deregister) {
   ALLOW_CALL(*TestReporterMock, addMetric(_, _)).RETURN(true);
 
   {
-    Metric UnderTest(NameStr, DescStr, TestSeverity);
+    auto UnderTest = std::make_shared<Metric>(NameStr, DescStr, TestSeverity);
     TestRegistrar.registerMetric(UnderTest, {LogTo::LOG_MSG});
   } // When UnderTest Metric goes out of scope it should get deregistered
 }
