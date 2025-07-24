@@ -26,7 +26,7 @@ void Reporter::reportMetrics() {
   });
 }
 
-bool Reporter::addMetric(Metric &NewMetric, std::string const &NewName) {
+bool Reporter::addMetric(std::shared_ptr<Metric> NewMetric, std::string const &NewName) {
   std::lock_guard<std::mutex> Lock(MetricsMapMutex);
   auto Result =
       MetricsToReportOn.emplace(NewName, InternalMetric(NewMetric, NewName));
