@@ -18,12 +18,36 @@ SourceFilter::SourceFilter(time_point start_time, time_point stop_time,
     : _start_time(start_time), _stop_time(stop_time),
       _allow_repeated_timestamps(allow_repeated_timestamps), _writer(writer),
       _registrar(std::move(registrar)) {
-  _registrar->registerMetric(FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
-  _registrar->registerMetric(UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
-  _registrar->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
-  _registrar->registerMetric(MessagesTransmitted, {Metrics::LogTo::CARBON});
-  _registrar->registerMetric(MessagesDiscarded, {Metrics::LogTo::CARBON});
-  _registrar->registerMetric(RepeatedTimestamp, {Metrics::LogTo::CARBON});
+
+  FlatbufferInvalid = std::make_shared<Metrics::Metric>(
+      "flatbuffer_invalid", "Flatbuffer failed validation.",
+      Metrics::Severity::ERROR);
+  _registrar->registerMetric(*FlatbufferInvalid, {Metrics::LogTo::LOG_MSG});
+
+  UnorderedTimestamp = std::make_shared<Metrics::Metric>(
+      "unordered_timestamp", "Timestamp of message not in chronological order.",
+      Metrics::Severity::WARNING);
+  _registrar->registerMetric(*UnorderedTimestamp, {Metrics::LogTo::LOG_MSG});
+
+  RepeatedTimestamp = std::make_shared<Metrics::Metric>(
+      "repeated_timestamp", "Got message with repeated timestamp.",
+      Metrics::Severity::DEBUG);
+  _registrar->registerMetric(*RepeatedTimestamp, {Metrics::LogTo::CARBON});
+
+  MessagesReceived = std::make_shared<Metrics::Metric>(
+      "received", "Number of messages received/processed.",
+      Metrics::Severity::DEBUG);
+  _registrar->registerMetric(*MessagesReceived, {Metrics::LogTo::CARBON});
+
+  MessagesTransmitted = std::make_shared<Metrics::Metric>(
+      "sent", "Number of messages queued up for writing.",
+      Metrics::Severity::DEBUG);
+  _registrar->registerMetric(*MessagesTransmitted, {Metrics::LogTo::CARBON});
+
+  MessagesDiscarded = std::make_shared<Metrics::Metric>(
+      "discarded", "Number of messages discarded for whatever reason.",
+      Metrics::Severity::DEBUG);
+  _registrar->registerMetric(*MessagesDiscarded, {Metrics::LogTo::CARBON});
 }
 
 SourceFilter::~SourceFilter() { forward_buffered_message(); }

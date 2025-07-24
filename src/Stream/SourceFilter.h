@@ -71,24 +71,12 @@ private:
   std::vector<Message::DestPtrType> _destination_writer_modules;
   std::unique_ptr<Metrics::IRegistrar> _registrar;
   FileWriter::FlatbufferMessage::SrcHash _source_hash{0};
-  Metrics::Metric FlatbufferInvalid{"flatbuffer_invalid",
-                                    "Flatbuffer failed validation.",
-                                    Metrics::Severity::ERROR};
-  Metrics::Metric UnorderedTimestamp{
-      "unordered_timestamp", "Timestamp of message not in chronological order.",
-      Metrics::Severity::WARNING};
-  Metrics::Metric RepeatedTimestamp{"repeated_timestamp",
-                                    "Got message with repeated timestamp.",
-                                    Metrics::Severity::DEBUG};
-  Metrics::Metric MessagesReceived{"received",
-                                   "Number of messages received/processed.",
-                                   Metrics::Severity::DEBUG};
-  Metrics::Metric MessagesTransmitted{
-      "sent", "Number of messages queued up for writing.",
-      Metrics::Severity::DEBUG};
-  Metrics::Metric MessagesDiscarded{
-      "discarded", "Number of messages discarded for whatever reason.",
-      Metrics::Severity::DEBUG};
+	std::shared_ptr<Metrics::Metric> FlatbufferInvalid;
+  std::shared_ptr<Metrics::Metric> UnorderedTimestamp;
+  std::shared_ptr<Metrics::Metric> RepeatedTimestamp;
+  std::shared_ptr<Metrics::Metric> MessagesReceived;
+  std::shared_ptr<Metrics::Metric> MessagesTransmitted;
+  std::shared_ptr<Metrics::Metric> MessagesDiscarded;
 };
 
 } // namespace Stream
