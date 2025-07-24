@@ -67,14 +67,10 @@ protected:
   virtual void flushData() { FlushDataFunction(); };
   std::function<void()> FlushDataFunction;
 
-  Metrics::Metric WritesDone{"writes_done",
-                             "Number of completed writes to HDF file."};
-  Metrics::Metric WriteErrors{"write_errors",
-                              "Number of failed HDF file writes.",
-                              Metrics::Severity::ERROR};
-  Metrics::Metric ApproxQueuedWrites{"approx_queued_writes",
-                                     "Approximate number of writes queued up."};
-  std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
+	std::shared_ptr<Metrics::Metric> WritesDone;
+	std::shared_ptr<Metrics::Metric> WriteErrors;
+	std::shared_ptr<Metrics::Metric> ApproxQueuedWrites;
+	std::map<ModuleHash, std::shared_ptr<Metrics::Metric>> ModuleErrorCounters;
   std::unique_ptr<Metrics::IRegistrar> _registrar;
 
   using JobType = std::function<void()>;

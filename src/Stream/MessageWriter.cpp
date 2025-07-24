@@ -32,16 +32,25 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
                              duration FlushIntervalTime,
                              std::unique_ptr<Metrics::IRegistrar> registrar)
     : FlushDataFunction(std::move(FlushFunction)),
-      _registrar(std::move(registrar)), FlushInterval(FlushIntervalTime),
+      _registrar(std::move(registrar)),
+      FlushInterval(FlushIntervalTime),
       WriterThread(&MessageWriter::threadFunction, this) {
+
+  WritesDone = std::make_shared<Metrics::Metric>(
+      "writes_done", "Number of completed writes to HDF file.");
   _registrar->registerMetric(WritesDone, {Metrics::LogTo::CARBON});
-  _registrar->registerMetric(WriteErrors,
-                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+
+  WriteErrors = std::make_shared<Metrics::Metric>(
+      "write_errors", "Number of failed HDF file writes.", Metrics::Severity::ERROR);
+  _registrar->registerMetric(WriteErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+
+  ApproxQueuedWrites = std::make_shared<Metrics::Metric>(
+      "approx_queued_writes", "Approximate number of writes queued up.");
   _registrar->registerMetric(ApproxQueuedWrites, {Metrics::LogTo::CARBON});
-  ModuleErrorCounters[UnknownModuleHash] = std::make_unique<Metrics::Metric>(
+
+  ModuleErrorCounters[UnknownModuleHash] = std::make_shared<Metrics::Metric>(
       "error_unknown", "Unknown flatbuffer message.", Metrics::Severity::ERROR);
-  _registrar->registerMetric(*ModuleErrorCounters[UnknownModuleHash],
-                             {Metrics::LogTo::LOG_MSG});
+  _registrar->registerMetric(ModuleErrorCounters[UnknownModuleHash], {Metrics::LogTo::LOG_MSG});
 }
 
 MessageWriter::~MessageWriter() {
@@ -80,9 +89,9 @@ void MessageWriter::writeMsgImpl(WriterModule::Base *ModulePtr,
             Msg.getSourceName(), Msg.getFlatbufferID());
         auto Name =
             "error_" + Msg.getSourceName() + "_" + Msg.getFlatbufferID();
-        ModuleErrorCounters[UsedHash] = std::make_unique<Metrics::Metric>(
+        ModuleErrorCounters[UsedHash] = std::make_shared<Metrics::Metric>(
             Name, Description, Metrics::Severity::ERROR);
-        _registrar->registerMetric(*ModuleErrorCounters[UsedHash],
+        _registrar->registerMetric(ModuleErrorCounters[UsedHash],
                                    {Metrics::LogTo::LOG_MSG});
       }
     }
