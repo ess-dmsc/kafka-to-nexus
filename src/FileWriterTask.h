@@ -44,7 +44,9 @@ public:
                           MetaData::TrackerPtr Tracker)
       : _job_id(std::move(job_id)), _filepath(std::move(filepath)),
         MetaDataTracker(std::move(Tracker)) {
-    Registrar->registerMetric(FileSizeMBMetric, {Metrics::LogTo::CARBON});
+    Registrar->registerMetric(
+        std::make_shared<Metrics::Metric>(FileSizeMBMetric),
+        {Metrics::LogTo::CARBON});
     MetaDataTracker->registerMetaData(FileSizeMB);
   }
 
