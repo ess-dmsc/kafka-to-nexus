@@ -19,16 +19,18 @@ namespace Metrics {
 /// InternalMetric contains details we need from a Metric instance in order for
 /// the Reporter to report on the Metric
 struct InternalMetric {
-  explicit InternalMetric(Metric &MetricToGetDetailsFrom, std::string Name)
-      : Name(MetricToGetDetailsFrom.getName()),
-			  FullName(std::move(Name)),
-        Counter(MetricToGetDetailsFrom.getCounterPtr()),
-        DescriptionString(MetricToGetDetailsFrom.getDescription()),
-        LastValue(MetricToGetDetailsFrom.getCounterPtr()->load()),
-        Value([&MetricToGetDetailsFrom]() {
-          return MetricToGetDetailsFrom.getStringValue();
+  explicit InternalMetric(std::shared_ptr<Metric> MetricToGetDetailsFrom,
+                          std::string Name)
+      : Name(MetricToGetDetailsFrom->getName()), FullName(std::move(Name)),
+        Counter(MetricToGetDetailsFrom->getCounterPtr()),
+        DescriptionString(MetricToGetDetailsFrom->getDescription()),
+        LastValue(MetricToGetDetailsFrom->getCounterPtr()->load()),
+        MetricStore(std::move(MetricToGetDetailsFrom)), Value([this]() {
+          if (auto MetricLocked = MetricStore.lock())
+            return MetricLocked->getStringValue();
+          return std::string{};
         }),
-        ValueSeverity(MetricToGetDetailsFrom.getSeverity()) {};
+        ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {};
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};
@@ -36,7 +38,10 @@ struct InternalMetric {
   std::int64_t LastValue{0};
   std::chrono::system_clock::time_point LastTime{
       std::chrono::system_clock::now()};
-  std::function<std::string()> Value;
+  std::string Value;
   Severity const ValueSeverity;
+
+private:
+  std::weak_ptr<Metric> MetricStore;
 };
 } // namespace Metrics
