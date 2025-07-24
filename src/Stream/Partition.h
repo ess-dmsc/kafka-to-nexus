@@ -81,43 +81,43 @@ public:
   virtual void pollForMessage();
 
 protected:
-  Metrics::Metric KafkaTimeouts{"timeouts",
-                                "Timeouts when polling for messages."};
-  Metrics::Metric KafkaErrors{"kafka_errors",
-                              "Errors received when polling for messages.",
-                              Metrics::Severity::ERROR};
-  Metrics::Metric MessagesReceived{"received",
-                                   "Number of messages received from broker."};
-  Metrics::Metric MessagesProcessed{
-      "processed", "Number of messages queued up for writing."};
-  Metrics::Metric BadOffsets{"bad_offsets",
-                             "Number of messages received with bad offsets.",
-                             Metrics::Severity::ERROR};
-  Metrics::Metric EndOfPartition{
-      "end_of_partition",
-      "Number of times we reached the end of the partition."};
+  std::shared_ptr<Metrics::Metric> KafkaTimeouts = std::make_shared<Metrics::Metric>(
+      "timeouts", "Timeouts when polling for messages.");
 
-  Metrics::Metric FlatbufferErrors{
-      "flatbuffer_errors",
-      "Errors when creating flatbuffer message from Kafka message.",
-      Metrics::Severity::ERROR};
+  std::shared_ptr<Metrics::Metric> KafkaErrors = std::make_shared<Metrics::Metric>(
+      "kafka_errors", "Errors received when polling for messages.", Metrics::Severity::ERROR);
 
-  Metrics::Metric BufferTooSmallErrors{"flatbuffer_errors.small_buffer",
-                                       "Message smaller than 8 bytes errors.",
-                                       Metrics::Severity::ERROR};
+  std::shared_ptr<Metrics::Metric> MessagesReceived = std::make_shared<Metrics::Metric>(
+      "received", "Number of messages received from broker.");
 
-  Metrics::Metric NotValidFlatbufferErrors{
-      "flatbuffer_errors.invalid_flatbuffer",
-      "Failed flatbuffer validation errors.", Metrics::Severity::ERROR};
+  std::shared_ptr<Metrics::Metric> MessagesProcessed = std::make_shared<Metrics::Metric>(
+      "processed", "Number of messages queued up for writing.");
 
-  Metrics::Metric UnknownFlatbufferIdErrors{
+  std::shared_ptr<Metrics::Metric> BadOffsets = std::make_shared<Metrics::Metric>(
+      "bad_offsets", "Number of messages received with bad offsets.", Metrics::Severity::ERROR);
+
+  std::shared_ptr<Metrics::Metric> EndOfPartition = std::make_shared<Metrics::Metric>(
+      "end_of_partition", "Number of times we reached the end of the partition.");
+
+  std::shared_ptr<Metrics::Metric> FlatbufferErrors = std::make_shared<Metrics::Metric>(
+      "flatbuffer_errors", "Errors when creating flatbuffer message from Kafka message.",
+      Metrics::Severity::ERROR);
+
+  std::shared_ptr<Metrics::Metric> BufferTooSmallErrors = std::make_shared<Metrics::Metric>(
+      "flatbuffer_errors.small_buffer", "Message smaller than 8 bytes errors.",
+      Metrics::Severity::ERROR);
+
+  std::shared_ptr<Metrics::Metric> NotValidFlatbufferErrors = std::make_shared<Metrics::Metric>(
+      "flatbuffer_errors.invalid_flatbuffer", "Failed flatbuffer validation errors.",
+      Metrics::Severity::ERROR);
+
+  std::shared_ptr<Metrics::Metric> UnknownFlatbufferIdErrors = std::make_shared<Metrics::Metric>(
       "flatbuffer_errors.unknown_flatbuffer", "Flatbuffer id unknown errors.",
-      Metrics::Severity::ERROR};
+      Metrics::Severity::ERROR);
 
-  Metrics::Metric BadFlatbufferTimestampErrors{
-      "flatbuffer_errors.bad_timestamps",
-      "Number of messages received with bad timestamps.",
-      Metrics::Severity::ERROR};
+  std::shared_ptr<Metrics::Metric> BadFlatbufferTimestampErrors = std::make_shared<Metrics::Metric>(
+      "flatbuffer_errors.bad_timestamps", "Number of messages received with bad timestamps.",
+      Metrics::Severity::ERROR);
 
   virtual bool hasStopBeenRequested() const;
   virtual bool shouldStopBasedOnPollStatus(Kafka::PollStatus CStatus);
