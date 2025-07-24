@@ -98,20 +98,6 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
 
-// Old constructor - to be removed
-Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
-                     int partition, std::string const &topic_name,
-                     SrcToDst const &map, MessageWriter *writer,
-                     Metrics::IRegistrar *registrar, time_point start_time,
-                     time_point stop_time, duration stop_leeway,
-                     duration kafka_error_timeout,
-                     std::function<bool()> const &streamers_paused_function)
-    : Partition(std::move(consumer), partition, topic_name,
-                create_filters(map, start_time, stop_time, writer, registrar),
-                std::make_unique<PartitionFilter>(stop_time, stop_leeway,
-                                                  kafka_error_timeout),
-                registrar, stop_time, stop_leeway, streamers_paused_function) {}
-
 void Partition::forceStop() { _force_stop = true; }
 
 void Partition::sleep(const duration Duration) const {
