@@ -109,8 +109,8 @@ private:
   std::filesystem::path _filepath;
   MetaData::TrackerPtr MetaDataTracker;
   MetaData::Value<uint32_t> FileSizeMB{"", "approx_file_size_mb"};
-  Metrics::Metric FileSizeMBMetric{"approx_file_size_mb",
-                                   "Approximate size of file in MB."};
+  std::shared_ptr<Metrics::Metric> FileSizeMBMetric = std::make_shared<Metrics::Metric>({"approx_file_size_mb",
+                                   "Approximate size of file in MB."});
 
   /// \brief The HDF5 file object
   /// \note Must be located before the "source to module map" to guarantee that

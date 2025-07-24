@@ -110,7 +110,7 @@ void FileWriterTask::updateApproximateFileSize() {
   }
   auto SizeValue = int(std::ceil(size / (1024 * 1024)));
   FileSizeMB.setValue(SizeValue);
-  FileSizeMBMetric = SizeValue;
+  FileSizeMBMetric->Set(SizeValue);
 }
 
 } // namespace FileWriter
