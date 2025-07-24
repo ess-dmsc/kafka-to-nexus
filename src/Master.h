@@ -50,7 +50,7 @@ public:
   time_point getStopTime() const;
   Status::JobStatusInfo getCurrentStatus() const;
   Status::WorkerState getCurrentState() const;
-  const Metrics::Metric &getCurrentStateMetric() const;
+  std::shared_ptr<Metrics::Metric> getCurrentStateMetric() const;
   std::filesystem::path getCurrentFilePath() const;
   std::filesystem::path construct_filepath(std::filesystem::path const &prefix,
                                            std::string const &filename);
@@ -73,11 +73,14 @@ private:
   mutable std::mutex StatusMutex;
   Status::JobStatusInfo CurrentStatus;
   std::chrono::steady_clock::time_point timeStarted;
-  Metrics::Metric CurrentStateMetric{"worker_state", "idle/writing"};
-  Metrics::Metric GlobalWritesMetric{"total_writes_finished",
-                                     "finished writes done since start"};
-  Metrics::Metric UptimeMetric{"filewriter_uptime",
-                               "seconds since filewriter started"};
+  std::shared_ptr<Metrics::Metric> CurrentStateMetric =
+    std::make_shared<Metrics::Metric>({"worker_state", "idle/writing"});
+  std::shared_ptr<Metrics::Metric> GlobalWritesMetric =
+    std::make_shared<Metrics::Metric>({"total_writes_finished",
+                                     "finished writes done since start"});
+  std::shared_ptr<Metrics::Metric> UptimeMetric =
+    std::make_shared<Metrics::Metric>({"filewriter_uptime",
+                               "seconds since filewriter started"});
   std::string metadata_from_start_msg;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();
