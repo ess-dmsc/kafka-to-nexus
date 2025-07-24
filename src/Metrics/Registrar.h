@@ -35,7 +35,7 @@ public:
   };
   ~Registrar() override = default;
 
-  void registerMetric(Metric &NewMetric,
+  void registerMetric(std::shared_ptr<Metric> NewMetric,
                       std::vector<LogTo> const &SinkTypes) const override;
 
   [[nodiscard]] std::unique_ptr<IRegistrar>
