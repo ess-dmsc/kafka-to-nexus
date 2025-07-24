@@ -25,7 +25,7 @@ std::string readJsonFromFile(const std::string &filePath) {
 
 class FakeRegistrar : public Metrics::IRegistrar {
 public:
-  void registerMetric([[maybe_unused]] Metrics::Metric &NewMetric,
+  void registerMetric([[maybe_unused]] std::shared_ptr<Metric> NewMetric,
                       [[maybe_unused]] std::vector<Metrics::LogTo> const
                           &SinkTypes) const override {}
 
