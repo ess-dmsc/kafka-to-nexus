@@ -182,16 +182,16 @@ void Partition::pollForMessage() {
     auto Msg = _consumer->poll();
     switch (Msg.first) {
     case Kafka::PollStatus::Message:
-      MessagesReceived++;
+      (*MessagesReceived)++;
       break;
     case Kafka::PollStatus::EndOfPartition:
-      EndOfPartition++;
+      (*EndOfPartition)++;
       break;
     case Kafka::PollStatus::TimedOut:
-      KafkaTimeouts++;
+      (*KafkaTimeouts)++;
       break;
     case Kafka::PollStatus::Error:
-      KafkaErrors++;
+      (*KafkaErrors)++;
       break;
     default:
       // Do nothing
@@ -225,30 +225,30 @@ void Partition::pollForMessage() {
 void Partition::processMessage(FileWriter::Msg const &Message) {
   if (_current_offset != 0 &&
       _current_offset + 1 != Message.getMetaData().Offset) {
-    BadOffsets++;
+    (*BadOffsets)++;
   }
   _current_offset = Message.getMetaData().Offset;
   FileWriter::FlatbufferMessage FbMsg;
   try {
     FbMsg = FileWriter::FlatbufferMessage(Message);
   } catch (FileWriter::BufferTooSmallError &) {
-    BufferTooSmallErrors++;
-    FlatbufferErrors++;
+    (*BufferTooSmallErrors)++;
+    (*FlatbufferErrors)++;
     return;
   } catch (FileWriter::InvalidFlatbufferTimestamp &) {
-    BadFlatbufferTimestampErrors++;
-    FlatbufferErrors++;
+    (*BadFlatbufferTimestampErrors)++;
+    (*FlatbufferErrors)++;
     return;
   } catch (FileWriter::UnknownFlatbufferID &) {
-    UnknownFlatbufferIdErrors++;
-    FlatbufferErrors++;
+    (*UnknownFlatbufferIdErrors)++;
+    (*FlatbufferErrors)++;
     return;
   } catch (FileWriter::NotValidFlatbuffer &) {
-    NotValidFlatbufferErrors++;
-    FlatbufferErrors++;
+    (*NotValidFlatbufferErrors)++;
+    (*FlatbufferErrors)++;
     return;
   } catch (std::exception &) {
-    FlatbufferErrors++;
+    (*FlatbufferErrors)++;
     return;
   }
 
@@ -260,7 +260,7 @@ void Partition::processMessage(FileWriter::Msg const &Message) {
   }
 
   if (processed) {
-    MessagesProcessed++;
+    (*MessagesProcessed)++;
   }
 
   _source_filters.erase(
