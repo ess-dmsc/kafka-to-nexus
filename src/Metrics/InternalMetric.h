@@ -44,7 +44,7 @@ private:
 
 public:
   std::function<std::string()> Value; //	these MUST be declared AFTER
-                                      //MetricStore to ensure memory safety!
+                                      // MetricStore to ensure memory safety!
   Severity const ValueSeverity;
 };
 } // namespace Metrics
