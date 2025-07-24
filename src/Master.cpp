@@ -29,7 +29,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
       [this](auto StopTime) { this->setStopTime(StopTime); });
   CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
   CommandAndControl->registerIsWritingFunction([this]() {
-    UptimeMetric = std::chrono::duration_cast<std::chrono::seconds>(
+    *UptimeMetric = std::chrono::duration_cast<std::chrono::seconds>(
                        std::chrono::steady_clock::now() - timeStarted)
                        .count();
     return Status::WorkerState::Writing == getCurrentState();
@@ -38,12 +38,12 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   this->Reporter->setJSONMetaDataGenerator(
       [&](auto &JsonObject) { MetaDataTracker->writeToJSONDict(JsonObject); });
   this->Reporter->setStatusGetter([&]() { return getCurrentStatus(); });
-  CurrentStateMetric = static_cast<int64_t>(getCurrentState());
-  MasterMetricsRegistrar->registerMetric(CurrentStateMetric,
+  *CurrentStateMetric = static_cast<int64_t>(getCurrentState());
+  MasterMetricsRegistrar->registerMetric(std::make_shared<Metrics::Metric>(CurrentStateMetric),
                                          {Metrics::LogTo::CARBON});
-  MasterMetricsRegistrar->registerMetric(UptimeMetric,
+  MasterMetricsRegistrar->registerMetric(std::make_shared<Metrics::Metric>(UptimeMetric,
                                          {Metrics::LogTo::CARBON});
-  MasterMetricsRegistrar->registerMetric(GlobalWritesMetric,
+  MasterMetricsRegistrar->registerMetric(std::make_shared<Metrics::Metric>(GlobalWritesMetric,
                                          {Metrics::LogTo::CARBON});
 }
 
@@ -152,7 +152,7 @@ void Master::setToIdle() {
     CommandAndControl->sendHasStoppedMessage(writtenFilePath,
                                              metadata_from_start_msg);
   }
-  GlobalWritesMetric += CurrentStreamController->writesDone();
+  *GlobalWritesMetric += CurrentStreamController->writesDone();
   CurrentStreamController.reset(nullptr);
   MetaDataTracker->clearMetaData();
   resetStatusInfo();
