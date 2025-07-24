@@ -25,9 +25,10 @@ struct InternalMetric {
         Counter(MetricToGetDetailsFrom->getCounterPtr()),
         DescriptionString(MetricToGetDetailsFrom->getDescription()),
         LastValue(MetricToGetDetailsFrom->getCounterPtr()->load()),
-        MetricStore(std::move(MetricToGetDetailsFrom)), Value([this]() {
-          if (auto MetricLocked = MetricStore.lock())
-            return MetricLocked->getStringValue();
+				MetricStore(MetricToGetDetailsFrom),
+        Value([this]() {
+          if (auto metricShared = MetricStore.lock())
+            return metricShared->getStringValue();
           return std::string{};
         }),
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {};
@@ -38,10 +39,11 @@ struct InternalMetric {
   std::int64_t LastValue{0};
   std::chrono::system_clock::time_point LastTime{
       std::chrono::system_clock::now()};
-  std::string Value;
-  Severity const ValueSeverity;
-
 private:
   std::weak_ptr<Metric> MetricStore;
+public:
+  std::function<std::string()> Value;	//	these MUST be declared AFTER MetricStore to ensure memory safety!
+  Severity const ValueSeverity;
+
 };
 } // namespace Metrics

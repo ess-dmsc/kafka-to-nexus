@@ -78,23 +78,23 @@ Partition::Partition(std::shared_ptr<Kafka::ConsumerInterface> consumer,
   _stop_time = sanitise_stop_time(stop_time);
   _partition_filter->setStopTime(_stop_time);
 
-  registrar->registerMetric(*KafkaTimeouts, {Metrics::LogTo::CARBON});
-  registrar->registerMetric(*KafkaErrors,
+  registrar->registerMetric(KafkaTimeouts, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(KafkaErrors,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  registrar->registerMetric(*EndOfPartition, {Metrics::LogTo::CARBON});
-  registrar->registerMetric(*MessagesReceived, {Metrics::LogTo::CARBON});
-  registrar->registerMetric(*MessagesProcessed, {Metrics::LogTo::CARBON});
-  registrar->registerMetric(*BadOffsets,
+  registrar->registerMetric(EndOfPartition, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(MessagesReceived, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(MessagesProcessed, {Metrics::LogTo::CARBON});
+  registrar->registerMetric(BadOffsets,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  registrar->registerMetric(*FlatbufferErrors,
+  registrar->registerMetric(FlatbufferErrors,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  registrar->registerMetric(*BadFlatbufferTimestampErrors,
+  registrar->registerMetric(BadFlatbufferTimestampErrors,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  registrar->registerMetric(*UnknownFlatbufferIdErrors,
+  registrar->registerMetric(UnknownFlatbufferIdErrors,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  registrar->registerMetric(*NotValidFlatbufferErrors,
+  registrar->registerMetric(NotValidFlatbufferErrors,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
-  registrar->registerMetric(*BufferTooSmallErrors,
+  registrar->registerMetric(BufferTooSmallErrors,
                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 }
 
