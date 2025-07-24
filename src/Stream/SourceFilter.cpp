@@ -76,25 +76,25 @@ bool SourceFilter::filter_message(
     // Not intended for this filter
     return false;
   }
-  MessagesReceived++;
+  (*MessagesReceived)++;
   if (_is_finished) {
-    MessagesDiscarded++;
+    (*MessagesDiscarded)++;
     return false;
   }
   if (!message.isValid()) {
-    MessagesDiscarded++;
-    FlatbufferInvalid++;
+    (*MessagesDiscarded)++;
+    (*FlatbufferInvalid)++;
     return false;
   }
 
   if (message.getTimestamp() == _last_seen_timestamp) {
-    RepeatedTimestamp++;
+    (*RepeatedTimestamp)++;
     if (!_allow_repeated_timestamps) {
-      MessagesDiscarded++;
+      (*MessagesDiscarded)++;
       return false;
     }
   } else if (message.getTimestamp() < _last_seen_timestamp) {
-    UnorderedTimestamp++;
+    (*UnorderedTimestamp)++;
   }
   _last_seen_timestamp = message.getTimestamp();
 
@@ -102,7 +102,7 @@ bool SourceFilter::filter_message(
   if (message_time < _start_time) {
     if (_buffered_message.isValid() &&
         message_time < to_timepoint(_buffered_message.getTimestamp())) {
-      MessagesDiscarded++;
+      (*MessagesDiscarded)++;
       return false;
     }
     _buffered_message = message;
@@ -120,7 +120,7 @@ bool SourceFilter::filter_message(
 
 void SourceFilter::forward_message(FileWriter::FlatbufferMessage const &message,
                                    bool is_buffered_message) {
-  ++MessagesTransmitted;
+  ++(*MessagesTransmitted);
   for (auto const &writer_module : _destination_writer_modules) {
     _writer->addMessage({writer_module, message}, is_buffered_message);
   }
