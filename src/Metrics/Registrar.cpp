@@ -4,21 +4,21 @@
 
 namespace Metrics {
 
-void Registrar::registerMetric(Metric &NewMetric,
+void Registrar::registerMetric(std::shared_ptr<Metric> NewMetric,
                                std::vector<LogTo> const &SinkTypes) const {
-  if (NewMetric.getName().empty()) {
+  if (NewMetric->getName().empty()) {
     throw std::runtime_error("Metrics cannot be registered with an empty name");
   }
   for (auto const &reporter : ReporterList) {
     if (std::find(SinkTypes.begin(), SinkTypes.end(),
                   reporter->getSinkType()) != SinkTypes.end()) {
-      std::string NewName = prependPrefix(NewMetric.getName());
+      std::string NewName = prependPrefix(NewMetric->getName());
 
       if (!reporter->addMetric(NewMetric, NewName)) {
         throw std::runtime_error(
             "Metric with same full name is already registered");
       }
-      NewMetric.setDeregistrationDetails(NewName, reporter);
+      NewMetric->setDeregistrationDetails(NewName, reporter);
     }
   }
 }

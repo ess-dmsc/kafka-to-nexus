@@ -13,7 +13,7 @@ class Registrar;
 
 class IRegistrar {
 public:
-  virtual void registerMetric(Metric &NewMetric,
+  virtual void registerMetric(std::shared_ptr<Metric> NewMetric,
                               std::vector<LogTo> const &SinkTypes) const = 0;
   [[nodiscard]] virtual std::unique_ptr<IRegistrar>
   getNewRegistrar(std::string const &MetricsPrefix) const = 0;
