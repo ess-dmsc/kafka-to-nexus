@@ -32,8 +32,7 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
                              duration FlushIntervalTime,
                              std::unique_ptr<Metrics::IRegistrar> registrar)
     : FlushDataFunction(std::move(FlushFunction)),
-      _registrar(std::move(registrar)),
-      FlushInterval(FlushIntervalTime),
+      _registrar(std::move(registrar)), FlushInterval(FlushIntervalTime),
       WriterThread(&MessageWriter::threadFunction, this) {
 
   WritesDone = std::make_shared<Metrics::Metric>(
@@ -41,8 +40,10 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
   _registrar->registerMetric(WritesDone, {Metrics::LogTo::CARBON});
 
   WriteErrors = std::make_shared<Metrics::Metric>(
-      "write_errors", "Number of failed HDF file writes.", Metrics::Severity::ERROR);
-  _registrar->registerMetric(WriteErrors, {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
+      "write_errors", "Number of failed HDF file writes.",
+      Metrics::Severity::ERROR);
+  _registrar->registerMetric(WriteErrors,
+                             {Metrics::LogTo::CARBON, Metrics::LogTo::LOG_MSG});
 
   ApproxQueuedWrites = std::make_shared<Metrics::Metric>(
       "approx_queued_writes", "Approximate number of writes queued up.");
@@ -50,7 +51,8 @@ MessageWriter::MessageWriter(std::function<void()> FlushFunction,
 
   ModuleErrorCounters[UnknownModuleHash] = std::make_shared<Metrics::Metric>(
       "error_unknown", "Unknown flatbuffer message.", Metrics::Severity::ERROR);
-  _registrar->registerMetric(ModuleErrorCounters[UnknownModuleHash], {Metrics::LogTo::LOG_MSG});
+  _registrar->registerMetric(ModuleErrorCounters[UnknownModuleHash],
+                             {Metrics::LogTo::LOG_MSG});
 }
 
 MessageWriter::~MessageWriter() {

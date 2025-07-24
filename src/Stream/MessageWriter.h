@@ -51,7 +51,9 @@ public:
   auto nrOfWritesQueued() const { return WriteJobs.size_approx(); };
 
   auto nrOfWritesDone() const { return WritesDone ? int64_t(*WritesDone) : 0; };
-  auto nrOfWriteErrors() const { return WriteErrors ? int64_t(*WriteErrors) : 0; };
+  auto nrOfWriteErrors() const {
+    return WriteErrors ? int64_t(*WriteErrors) : 0;
+  };
   auto nrOfWriterModulesWithErrors() const {
     return ModuleErrorCounters.size();
   }
@@ -67,10 +69,10 @@ protected:
   virtual void flushData() { FlushDataFunction(); };
   std::function<void()> FlushDataFunction;
 
-	std::shared_ptr<Metrics::Metric> WritesDone;
-	std::shared_ptr<Metrics::Metric> WriteErrors;
-	std::shared_ptr<Metrics::Metric> ApproxQueuedWrites;
-	std::map<ModuleHash, std::shared_ptr<Metrics::Metric>> ModuleErrorCounters;
+  std::shared_ptr<Metrics::Metric> WritesDone;
+  std::shared_ptr<Metrics::Metric> WriteErrors;
+  std::shared_ptr<Metrics::Metric> ApproxQueuedWrites;
+  std::map<ModuleHash, std::shared_ptr<Metrics::Metric>> ModuleErrorCounters;
   std::unique_ptr<Metrics::IRegistrar> _registrar;
 
   using JobType = std::function<void()>;

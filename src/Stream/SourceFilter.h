@@ -71,7 +71,7 @@ private:
   std::vector<Message::DestPtrType> _destination_writer_modules;
   std::unique_ptr<Metrics::IRegistrar> _registrar;
   FileWriter::FlatbufferMessage::SrcHash _source_hash{0};
-	std::shared_ptr<Metrics::Metric> FlatbufferInvalid;
+  std::shared_ptr<Metrics::Metric> FlatbufferInvalid;
   std::shared_ptr<Metrics::Metric> UnorderedTimestamp;
   std::shared_ptr<Metrics::Metric> RepeatedTimestamp;
   std::shared_ptr<Metrics::Metric> MessagesReceived;

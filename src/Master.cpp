@@ -30,8 +30,8 @@ Master::Master(MainOpt &Config, std::unique_ptr<Command::HandlerBase> Listener,
   CommandAndControl->registerStopNowFunction([this]() { this->stopNow(); });
   CommandAndControl->registerIsWritingFunction([this]() {
     *UptimeMetric = std::chrono::duration_cast<std::chrono::seconds>(
-                       std::chrono::steady_clock::now() - timeStarted)
-                       .count();
+                        std::chrono::steady_clock::now() - timeStarted)
+                        .count();
     return Status::WorkerState::Writing == getCurrentState();
   });
   Logger::Info("file-writer service id: {}", Config.getServiceId());

@@ -291,24 +291,29 @@ void writeGenericDataset(const std::string &DataType,
                          const std::string &Name,
                          nlohmann::json const &Values) {
   try {
-		std::map<std::string, std::function<void()>> WriteDatasetMap{
-				{"uint8", [&]() { writeNumericDataset<uint8_t>(Parent, Name, Values); }},
-				{"uint16",
-				[&]() { writeNumericDataset<uint16_t>(Parent, Name, Values); }},
-				{"uint32",
-				[&]() { writeNumericDataset<uint32_t>(Parent, Name, Values); }},
-				{"uint64",
-				[&]() { writeNumericDataset<uint64_t>(Parent, Name, Values); }},
-				{"int8", [&]() { writeNumericDataset<int8_t>(Parent, Name, Values); }},
-				{"int16", [&]() { writeNumericDataset<int16_t>(Parent, Name, Values); }},
-				{"int32", [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
-				{"int", [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
-				{"int64", [&]() { writeNumericDataset<int64_t>(Parent, Name, Values); }},
-				{"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},
-				{"double", [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
-				{"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
-		};
-		WriteDatasetMap.at(DataType)();
+    std::map<std::string, std::function<void()>> WriteDatasetMap{
+        {"uint8",
+         [&]() { writeNumericDataset<uint8_t>(Parent, Name, Values); }},
+        {"uint16",
+         [&]() { writeNumericDataset<uint16_t>(Parent, Name, Values); }},
+        {"uint32",
+         [&]() { writeNumericDataset<uint32_t>(Parent, Name, Values); }},
+        {"uint64",
+         [&]() { writeNumericDataset<uint64_t>(Parent, Name, Values); }},
+        {"int8", [&]() { writeNumericDataset<int8_t>(Parent, Name, Values); }},
+        {"int16",
+         [&]() { writeNumericDataset<int16_t>(Parent, Name, Values); }},
+        {"int32",
+         [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
+        {"int", [&]() { writeNumericDataset<int32_t>(Parent, Name, Values); }},
+        {"int64",
+         [&]() { writeNumericDataset<int64_t>(Parent, Name, Values); }},
+        {"float", [&]() { writeNumericDataset<float>(Parent, Name, Values); }},
+        {"double",
+         [&]() { writeNumericDataset<double>(Parent, Name, Values); }},
+        {"string", [&]() { writeStringDatasetFromJson(Parent, Name, Values); }},
+    };
+    WriteDatasetMap.at(DataType)();
   } catch (std::exception const &e) {
     auto ErrorStr = fmt::format(
         "Failed attribute write in {}/{} with data type {}. Message was: {}",

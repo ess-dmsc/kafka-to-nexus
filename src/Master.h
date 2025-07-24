@@ -74,13 +74,13 @@ private:
   Status::JobStatusInfo CurrentStatus;
   std::chrono::steady_clock::time_point timeStarted;
   std::shared_ptr<Metrics::Metric> CurrentStateMetric =
-    std::make_shared<Metrics::Metric>("worker_state", "idle/writing");
+      std::make_shared<Metrics::Metric>("worker_state", "idle/writing");
   std::shared_ptr<Metrics::Metric> GlobalWritesMetric =
-    std::make_shared<Metrics::Metric>("total_writes_finished",
-                                     "finished writes done since start");
+      std::make_shared<Metrics::Metric>("total_writes_finished",
+                                        "finished writes done since start");
   std::shared_ptr<Metrics::Metric> UptimeMetric =
-    std::make_shared<Metrics::Metric>("filewriter_uptime",
-                               "seconds since filewriter started");
+      std::make_shared<Metrics::Metric>("filewriter_uptime",
+                                        "seconds since filewriter started");
   std::string metadata_from_start_msg;
   MetaData::TrackerPtr MetaDataTracker{std::make_shared<MetaData::Tracker>()};
   void setToIdle();

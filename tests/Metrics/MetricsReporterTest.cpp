@@ -25,7 +25,8 @@ private:
 // cppcheck-suppress syntaxError
 TEST(MetricsReporterTest,
      MetricSuccessfullyAddedCanBeRemovedUsingSameFullName) {
-  auto TestMetric = std::make_shared<Metric>("some_name", "Description", Severity::INFO);
+  auto TestMetric =
+      std::make_shared<Metric>("some_name", "Description", Severity::INFO);
   auto TestSink = std::unique_ptr<Sink>(new MockSink());
   auto TestMockSink = dynamic_cast<MockSink *>(TestSink.get());
   Reporter TestReporter(std::move(TestSink), 10ms);
@@ -38,8 +39,10 @@ TEST(MetricsReporterTest,
 }
 
 TEST(MetricsReporterTest, TryingToAddMetricWithSameFullNameTwiceFails) {
-  auto TestMetric1 = std::make_shared<Metric>("some_name", "Description", Severity::INFO);
-  auto TestMetric2 = std::make_shared<Metric>("some_name", "Different description", Severity::DEBUG);
+  auto TestMetric1 =
+      std::make_shared<Metric>("some_name", "Description", Severity::INFO);
+  auto TestMetric2 = std::make_shared<Metric>(
+      "some_name", "Different description", Severity::DEBUG);
 
   auto TestSink = std::unique_ptr<Sink>(new MockSink());
   auto TestMockSink = dynamic_cast<MockSink *>(TestSink.get());
@@ -63,7 +66,8 @@ TEST(MetricsReporterTest, TryingToRemoveMetricWhichWasNotAddedFails) {
 
 TEST(MetricsReporterTest, AddedMetricIsReportedOn) {
   std::string const TestMetricName = "some_name";
-  auto TestMetric = std::make_shared<Metric>(TestMetricName, "Description", Severity::INFO);
+  auto TestMetric =
+      std::make_shared<Metric>(TestMetricName, "Description", Severity::INFO);
   auto TestSink = std::unique_ptr<Sink>(new MockSink());
   auto TestMockSink = dynamic_cast<MockSink *>(TestSink.get());
   Reporter TestReporter(std::move(TestSink), 10ms);
@@ -84,7 +88,8 @@ TEST(MetricsReporterTest, AddedMetricIsReportedOn) {
 }
 
 TEST(MetricsReporterTest, DoesNotReportMetricsIfSinkIsNotHealthy) {
-  auto TestMetric = std::make_shared<Metric>("some_name", "Description", Severity::INFO);
+  auto TestMetric =
+      std::make_shared<Metric>("some_name", "Description", Severity::INFO);
   auto TestSink = std::unique_ptr<Sink>(new MockUnhealthySink());
   auto TestMockSink = dynamic_cast<MockUnhealthySink *>(TestSink.get());
   Reporter TestReporter(std::move(TestSink), 10ms);
