@@ -27,12 +27,14 @@ struct InternalMetric {
         DescriptionString(MetricToGetDetailsFrom->getDescription()),
         LastValue(MetricToGetDetailsFrom->getCounterPtr()->load()),
         MetricStore(MetricToGetDetailsFrom), Value([this]() {
-          if (auto metricShared = MetricStore.lock())
-            return metricShared->getStringValue();
+          if (MetricStore)
+            return MetricStore->getStringValue();
           return std::string{};
         }),
-        ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {};
-  ~InternalMetric() { Logger::Warn("Deleting InternalMetric: {})", FullName); }
+        ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {
+    Logger::Warn("Creating InternalMetric: {}", FullName);
+  };
+  ~InternalMetric() { Logger::Warn("Deleting InternalMetric: {}", FullName); }
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};
@@ -42,7 +44,7 @@ struct InternalMetric {
       std::chrono::system_clock::now()};
 
 private:
-  std::weak_ptr<Metric> MetricStore;
+  std::shared_ptr<Metric> MetricStore;
 
 public:
   std::function<std::string()> Value; //	these MUST be declared AFTER
