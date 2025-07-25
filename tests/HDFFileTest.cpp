@@ -209,8 +209,16 @@ TEST_F(HDFFile, WithTemplatePathWithInstrumentName) {
     FAIL() << "Expected std::exception";
   } catch (const std::exception &e) {
     std::string error_message = e.what();
-    EXPECT_EQ(error_message, "filesystem error: cannot copy: No such file or "
-                             "directory [templateFile.hdf] [someFileName.hdf]");
+    std::string linux_error = "filesystem error: cannot copy: No such file or "
+                              "directory [templateFile.hdf] [someFileName.hdf]";
+    std::string macos_error =
+        "filesystem error: in copy: No such file or "
+        "directory [\"templateFile.hdf\"] [\"someFileName.hdf\"]";
+    EXPECT_PRED3(
+        [](auto error_message, auto linux_error, auto macos_error) {
+          return error_message == linux_error || error_message == macos_error;
+        },
+        error_message, linux_error, macos_error);
   } catch (...) {
     FAIL() << "Expected std::exception";
   }
