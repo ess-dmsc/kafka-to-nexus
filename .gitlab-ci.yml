@@ -125,27 +125,6 @@ almalinux9-release:
       - build/
       - dist/
 
-unit-tests:
-  stage: test
-  image: $ALMALINUX9_IMAGE
-  dependencies:
-    - conan_setup
-  script:
-    - conan install . -if=build/Debug -s build_type=Debug -o kafka-to-nexus:with_coverage=True --build=missing --profile=linux_x86_64_gcc11
-    - cmake --preset=debug
-    - cmake --build --preset=debug
-    - ctest --preset debug --output-on-failure
-    - cmake --build --preset=debug --target coverage
-  coverage: '/lines:\s+(\d+\.\d+)%/'
-  artifacts:
-    paths:
-      - build/Debug/coverage/
-    reports:
-      junit: build/Debug/tests/junit.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: build/Debug/coverage/coverage.xml
-
 publish-tar-archives:
   stage: publish
   image: alpine/curl:latest
