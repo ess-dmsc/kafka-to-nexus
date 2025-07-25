@@ -12,6 +12,7 @@
 #include "Metric.h"
 #include <chrono>
 #include <functional>
+#include "logger.h"
 
 namespace Metrics {
 
@@ -32,7 +33,7 @@ struct InternalMetric {
         }),
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {};
   ~InternalMetric() {
-    Logger::Warn("Deleting InternalMetric: " + Name + " (" + this + ")");
+    Logger::Warn("Deleting InternalMetric: {})", FullName);
   }
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
