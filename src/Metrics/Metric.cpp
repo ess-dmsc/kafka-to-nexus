@@ -19,6 +19,7 @@ std::string Metric::getStringValue() const {
 }
 
 Metric::~Metric() {
+  Logger::Warn("Deleting Metric: " + Name + " (" + this + ")");
   for (auto const &CReporter : Reporters) {
     if (CReporter != nullptr && !CReporter->tryRemoveMetric(FullName)) {
       Logger::Error("Failed to (self) remove metric: {}", FullName);

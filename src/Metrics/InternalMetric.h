@@ -31,6 +31,9 @@ struct InternalMetric {
           return std::string{};
         }),
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {};
+  ~InternalMetric() {
+    Logger::Warn("Deleting InternalMetric: " + Name + " (" + this + ")");
+  }
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};
