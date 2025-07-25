@@ -111,7 +111,7 @@ almalinux9-release:
     - conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
     - cmake --preset=release
     - cmake --build --preset=release --target all docs
-    
+
     # Creating distribution files
     - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
     - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
@@ -150,7 +150,7 @@ domain-tests:
   stage: test
   image: $CENTOS7_IMAGE
   dependencies:
-    - centos7-release
+    - almalinux9-release # the debug centos thing makes this fail otherwise
   script:
     - cd domain-tests
     - python3 -m venv venv
