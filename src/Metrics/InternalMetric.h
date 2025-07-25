@@ -10,9 +10,9 @@
 #pragma once
 
 #include "Metric.h"
+#include "logger.h"
 #include <chrono>
 #include <functional>
-#include "logger.h"
 
 namespace Metrics {
 
@@ -32,9 +32,7 @@ struct InternalMetric {
           return std::string{};
         }),
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {};
-  ~InternalMetric() {
-    Logger::Warn("Deleting InternalMetric: {})", FullName);
-  }
+  ~InternalMetric() { Logger::Warn("Deleting InternalMetric: {})", FullName); }
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};
