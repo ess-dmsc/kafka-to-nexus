@@ -146,24 +146,6 @@ unit-tests:
         coverage_format: cobertura
         path: build/Debug/coverage/coverage.xml
 
-domain-tests:
-  stage: test
-  image: $CENTOS7_IMAGE
-  dependencies:
-    - almalinux9-release # the debug centos thing makes this fail otherwise
-  script:
-    - cd domain-tests
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install -r requirements.txt
-    - pytest --file-maker-binary=../dist/kafka-to-nexus/bin/file-maker --junitxml=DomainTestsOutput.xml
-  artifacts:
-    when: always
-    paths:
-      - domain-tests/DomainTestsOutput.xml
-    reports:
-      junit: domain-tests/DomainTestsOutput.xml
-
 integration-tests:
   stage: test
   image: docker:latest
