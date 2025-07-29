@@ -6,6 +6,8 @@ namespace Metrics {
 
 void Metric::setDeregistrationDetails(std::string const &NameWithPrefix,
                                       std::weak_ptr<Reporter> const &Reporter) {
+  Logger::Warning("Writing out MName {} with NameWithPrefix {}", MName,
+                  NameWithPrefix);
   FullName = NameWithPrefix;
   Reporters.emplace_back(Reporter);
 }
@@ -18,7 +20,7 @@ std::string Metric::getStringValue() const {
 }
 
 Metric::~Metric() {
-  Logger::Warn("Deleting Metric: {}", FullName);
+  Logger::Warn("Deleting Metric: {} (Mname {})", FullName, MName);
   for (auto const &CReporter : Reporters) {
     if (auto Reporter = CReporter.lock()) {
       if (!Reporter->tryRemoveMetric(FullName)) {
