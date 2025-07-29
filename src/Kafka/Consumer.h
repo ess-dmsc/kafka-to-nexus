@@ -37,7 +37,7 @@ public:
   virtual bool commit_offset() = 0;
   virtual const RdKafka::TopicMetadata *
   getTopicMetadata(const std::string &Topic,
-                   RdKafka::Metadata *MetadataPtr) = 0;
+                   RdKafka::Metadata *&MetadataPtr) = 0;
 };
 
 class Consumer : public ConsumerInterface {
@@ -79,7 +79,7 @@ public:
   /// \param Topic Topic. \param MetadataPtr Pointer to store the metadata.
   const RdKafka::TopicMetadata *
   getTopicMetadata(const std::string &Topic,
-                   RdKafka::Metadata *MetadataPtr) override;
+                   RdKafka::Metadata *&MetadataPtr) override;
 
   bool commit_offset() override {
     auto error = KafkaConsumer->commitSync();
@@ -154,7 +154,7 @@ public:
 
   const RdKafka::TopicMetadata *
   getTopicMetadata([[maybe_unused]] const std::string &Topic,
-                   [[maybe_unused]] RdKafka::Metadata *MetadataPtr) override {
+                   [[maybe_unused]] RdKafka::Metadata *&MetadataPtr) override {
     return nullptr;
   }
 

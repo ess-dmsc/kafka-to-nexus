@@ -96,6 +96,7 @@ void Consumer::assignAllPartitions(std::string const &Topic,
   const RdKafka::TopicMetadata *TopicMetadata =
       getTopicMetadata(Topic, MetadataPtr);
   if (TopicMetadata == nullptr) {
+		delete MetadataPtr;
     throw std::runtime_error(fmt::format(
         R"(Could not assign partitions in topic "{}" for the provided timestamp "{}". Topic metadata not found)",
         Topic, StartTimestamp));
@@ -130,12 +131,12 @@ void Consumer::assignAllPartitions(std::string const &Topic,
                     err2str(ErrorCode)));
   }
   RdKafka::TopicPartition::destroy(TopicPartitions);
-  delete MetadataPtr;
+	delete MetadataPtr;
 }
 
 const RdKafka::TopicMetadata *
 Consumer::getTopicMetadata(const std::string &Topic,
-                           RdKafka::Metadata *MetadataPtr) {
+                           RdKafka::Metadata *&MetadataPtr) {
   std::string ErrorStr;
   auto TopicObj = std::unique_ptr<RdKafka::Topic>(
       RdKafka::Topic::create(KafkaConsumer.get(), Topic, nullptr, ErrorStr));
