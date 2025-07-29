@@ -15,8 +15,8 @@ void Registrar::registerMetric(std::shared_ptr<Metric> NewMetric,
       std::string NewName = prependPrefix(NewMetric->getName());
 
       if (!reporter->addMetric(NewMetric, NewName)) {
-        throw std::runtime_error(
-            "Metric with full name " + NewName + " is already registered");
+        throw std::runtime_error("Metric with full name " + NewName +
+                                 " is already registered");
       }
       NewMetric->setDeregistrationDetails(NewName, reporter);
     }
