@@ -85,9 +85,9 @@ centos7-release:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
+    - conan install . -if=build/Release -s build_type=Release --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
     - cmake --preset=release
-    - cmake --build --preset=release --target all docs
+    - cmake --build --preset=release
 
     # Creating distribution files
     - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
