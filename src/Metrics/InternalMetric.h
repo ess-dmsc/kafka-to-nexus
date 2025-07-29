@@ -34,6 +34,7 @@ struct InternalMetric {
           return std::string{};
         }),
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {
+    std::cout << "Creating InternalMetric: " << this << std::endl;
     Logger::Warn("Creating InternalMetric: {}", FullName);
   };
   ~InternalMetric() {
