@@ -4,9 +4,8 @@
 
 namespace Metrics {
 
-void Metric::setDeregistrationDetails(
-    std::string const &NameWithPrefix,
-    std::shared_ptr<Reporter> const &Reporter) {
+void Metric::setDeregistrationDetails(std::string const &NameWithPrefix,
+                                      std::weak_ptr<Reporter> const &Reporter) {
   FullName = NameWithPrefix;
   Reporters.emplace_back(Reporter);
 }
@@ -21,8 +20,10 @@ std::string Metric::getStringValue() const {
 Metric::~Metric() {
   Logger::Warn("Deleting Metric: {}", FullName);
   for (auto const &CReporter : Reporters) {
-    if (CReporter != nullptr && !CReporter->tryRemoveMetric(FullName)) {
-      Logger::Error("Failed to (self) remove metric: {}", MName);
+    if (auto Reporter = CReporter.lock()) {
+      if (!Reporter->tryRemoveMetric(FullName)) {
+        Logger::Error("Failed to (self) remove metric: {}", MName);
+      }
     }
   }
 }
