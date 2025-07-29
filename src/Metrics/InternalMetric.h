@@ -35,26 +35,10 @@ struct InternalMetric {
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {
     auto LockedMetric = MetricStore.lock();
     Counter = LockedMetric ? LockedMetric->getCounterPtr() : nullptr;
-
-    std::cout << "Creating InternalMetric: " << this << std::endl;
-    Logger::Warn("Creating InternalMetric: {}", FullName);
+    Logger::Trace("Creating InternalMetric: {}", FullName);
   }
 
-  ~InternalMetric() {
-    std::cout << "Deleting InternalMetric: " << this << std::endl;
-    Logger::Warn("with FullName: {}", FullName);
-
-    const int max_frames = 20;
-    void *frames[max_frames];
-    int frame_count = backtrace(frames, max_frames);
-    char **symbols = backtrace_symbols(frames, frame_count);
-    if (symbols) {
-      for (int i = 0; i < frame_count; ++i) {
-        Logger::Warn("{}: {}", i, symbols[i]);
-      }
-      free(symbols);
-    }
-  }
+  ~InternalMetric() { Logger::Trace("Deleting InternalMetric: {}", FullName); }
 
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
