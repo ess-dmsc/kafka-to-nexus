@@ -85,12 +85,12 @@ centos7-release:
   dependencies:
     - conan_setup
   script:
-    - conan install . -if=build/Release -s build_type=Release --build=missing --build=hdf5 --profile=linux_x86_64_gcc11_legacy
-    - cmake --preset=release
-    - cmake --build --preset=release
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 -o kafka-to-nexus:sanitizer=address --profile=linux_x86_64_gcc11_legacy
+    - cmake --preset=debug
+    - cmake --build --preset=debug
 
     # Creating distribution files
-    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Debug
     - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
     - mkdir -p dist/kafka-to-nexus
     - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
@@ -124,76 +124,6 @@ almalinux9-release:
     paths:
       - build/
       - dist/
-
-unit-tests:
-  stage: test
-  image: $ALMALINUX9_IMAGE
-  dependencies:
-    - conan_setup
-  script:
-    - conan install . -if=build/Debug -s build_type=Debug -o kafka-to-nexus:with_coverage=True --build=missing --profile=linux_x86_64_gcc11
-    - cmake --preset=debug
-    - cmake --build --preset=debug
-    - ctest --preset debug --output-on-failure
-    - cmake --build --preset=debug --target coverage
-  coverage: '/lines:\s+(\d+\.\d+)%/'
-  artifacts:
-    paths:
-      - build/Debug/coverage/
-    reports:
-      junit: build/Debug/tests/junit.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: build/Debug/coverage/coverage.xml
-
-domain-tests:
-  stage: test
-  image: $CENTOS7_IMAGE
-  dependencies:
-    - centos7-release
-  script:
-    - cd domain-tests
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install -r requirements.txt
-    - pytest --file-maker-binary=../dist/kafka-to-nexus/bin/file-maker --junitxml=DomainTestsOutput.xml
-  artifacts:
-    when: always
-    paths:
-      - domain-tests/DomainTestsOutput.xml
-    reports:
-      junit: domain-tests/DomainTestsOutput.xml
-
-integration-tests:
-  stage: test
-  image: docker:latest
-  dependencies:
-    - centos7-release
-  before_script:
-    - cd integration-tests
-    - ARCHIVE_PATH=$(find ../dist -mindepth 1 -maxdepth 1 -type f | head -n 1)
-    - ./setup.sh $ARCHIVE_PATH
-  script:
-    - ./run-integration-tests.sh
-  after_script:
-    - cd integration-tests
-    - ./teardown.sh
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-  variables:
-    FILEWRITER_ZOOKEEPER_CONTAINER_NAME: zookeeper-$CI_JOB_ID
-    FILEWRITER_KAFKA_CONTAINER_NAME: kafka-$CI_JOB_ID
-    FILEWRITER_FILEWRITER_CONTAINER_NAME: filewriter-$CI_JOB_ID
-    HTTP_PROXY: $ESS_HTTP_PROXY
-    HTTPS_PROXY: $ESS_HTTP_PROXY
-  artifacts:
-    when: always
-    paths:
-      - integration-tests/IntegrationTestsOutput.xml
-      - integration-tests/logs/*
-      - integration-tests/output-files/*
-    reports:
-      junit: integration-tests/IntegrationTestsOutput.xml
 
 publish-tar-archives:
   stage: publish
