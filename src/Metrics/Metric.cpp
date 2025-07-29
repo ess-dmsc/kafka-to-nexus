@@ -6,7 +6,7 @@ namespace Metrics {
 
 void Metric::setDeregistrationDetails(std::string const &NameWithPrefix,
                                       std::weak_ptr<Reporter> const &Reporter) {
-  Logger::Warning("Writing out MName {} with NameWithPrefix {}", MName,
+  Logger::Warn("Writing out MName {} with NameWithPrefix {}", MName,
                   NameWithPrefix);
   FullName = NameWithPrefix;
   Reporters.emplace_back(Reporter);
