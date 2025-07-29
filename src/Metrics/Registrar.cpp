@@ -16,7 +16,7 @@ void Registrar::registerMetric(std::shared_ptr<Metric> NewMetric,
 
       if (!reporter->addMetric(NewMetric, NewName)) {
         throw std::runtime_error(
-            "Metric with same full name is already registered");
+            "Metric with full name " + NewName + " is already registered");
       }
       NewMetric->setDeregistrationDetails(NewName, reporter);
     }
