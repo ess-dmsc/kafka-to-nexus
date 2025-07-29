@@ -14,6 +14,7 @@
 #include <chrono>
 #include <execinfo.h>
 #include <functional>
+#include <iostream>
 
 namespace Metrics {
 
@@ -36,7 +37,7 @@ struct InternalMetric {
     Logger::Warn("Creating InternalMetric: {}", FullName);
   };
   ~InternalMetric() {
-    Logger::Warn("Deleting InternalMetric: {}", this);
+    std::cout << "Deleting InternalMetric: " << this << std::endl;
     Logger::Warn("with FullName: {}", FullName);
 
     const int max_frames = 20;
