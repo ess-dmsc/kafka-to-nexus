@@ -15,6 +15,7 @@
 #include <execinfo.h>
 #include <functional>
 #include <iostream>
+#include <memory>
 
 namespace Metrics {
 
@@ -25,18 +26,20 @@ struct InternalMetric {
   explicit InternalMetric(std::shared_ptr<Metric> MetricToGetDetailsFrom,
                           std::string Name)
       : Name(MetricToGetDetailsFrom->getName()), FullName(std::move(Name)),
-        Counter(MetricToGetDetailsFrom->getCounterPtr()),
         DescriptionString(MetricToGetDetailsFrom->getDescription()),
         LastValue(MetricToGetDetailsFrom->getCounterPtr()->load()),
         MetricStore(MetricToGetDetailsFrom), Value([this]() {
-          if (MetricStore)
-            return MetricStore->getStringValue();
-          return std::string{};
+          auto LockedMetric = MetricStore.lock();
+          return LockedMetric ? LockedMetric->getStringValue() : std::string{};
         }),
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {
+    auto LockedMetric = MetricStore.lock();
+    Counter = LockedMetric ? LockedMetric->getCounterPtr() : nullptr;
+
     std::cout << "Creating InternalMetric: " << this << std::endl;
     Logger::Warn("Creating InternalMetric: {}", FullName);
-  };
+  }
+
   ~InternalMetric() {
     std::cout << "Deleting InternalMetric: " << this << std::endl;
     Logger::Warn("with FullName: {}", FullName);
@@ -52,6 +55,7 @@ struct InternalMetric {
       free(symbols);
     }
   }
+
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};
@@ -61,11 +65,11 @@ struct InternalMetric {
       std::chrono::system_clock::now()};
 
 private:
-  std::shared_ptr<Metric> MetricStore;
+  std::weak_ptr<Metric> MetricStore;
 
 public:
-  std::function<std::string()> Value; //	these MUST be declared AFTER
-                                      // MetricStore to ensure memory safety!
+  std::function<std::string()> Value; // MUST be declared AFTER MetricStore!
   Severity const ValueSeverity;
 };
+
 } // namespace Metrics
