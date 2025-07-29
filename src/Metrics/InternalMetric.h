@@ -12,6 +12,7 @@
 #include "Metric.h"
 #include "logger.h"
 #include <chrono>
+#include <execinfo.h>
 #include <functional>
 
 namespace Metrics {
@@ -34,7 +35,21 @@ struct InternalMetric {
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {
     Logger::Warn("Creating InternalMetric: {}", FullName);
   };
-  ~InternalMetric() { Logger::Warn("Deleting InternalMetric: {}", FullName); }
+  ~InternalMetric() {
+    Logger::Warn("Deleting InternalMetric: {}", this);
+    Logger::Warn("with FullName: {}", FullName);
+
+    const int max_frames = 20;
+    void *frames[max_frames];
+    int frame_count = backtrace(frames, max_frames);
+    char **symbols = backtrace_symbols(frames, frame_count);
+    if (symbols) {
+      for (int i = 0; i < frame_count; ++i) {
+        Logger::Warn("{}: {}", i, symbols[i]);
+      }
+      free(symbols);
+    }
+  }
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};
