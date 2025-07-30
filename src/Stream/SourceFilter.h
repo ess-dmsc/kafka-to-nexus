@@ -14,6 +14,7 @@
 #include "Metrics/Registrar.h"
 #include "Stream/MessageWriter.h"
 #include "TimeUtility.h"
+#include "logger.h"
 #include <iostream>
 
 namespace Stream {
