@@ -64,6 +64,11 @@ void FlatbufferMessage::extractPacketInfo() {
     throw UnknownFlatbufferID(fmt::format(
         R"(Unable to locate reader with the ID "{}" in the registry.)",
         FlatbufferID));
+  } catch (std::exception &E) {
+    Valid = false;
+    Logger::Warn("we have an exception {} uncaught!", E.what());
+    throw FlatbufferError(
+        fmt::format("we have an exception {} uncaught!", E.what()));
   }
   Valid = true;
 }
