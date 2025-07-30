@@ -102,6 +102,30 @@ centos7-release:
       - build/
       - dist/
 
+centos7-debug:
+  stage: build
+  image: $CENTOS7_IMAGE
+  dependencies:
+    - conan_setup
+  script:
+    - conan install . -if=build/Debug -s build_type=Debug --build=missing --build=hdf5 -o kafka-to-nexus:sanitizer=address --profile=linux_x86_64_gcc11_legacy
+    - cmake --preset=debug
+    - cmake --build --preset=debug
+
+    # Creating distribution files
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Debug
+    - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
+    - mkdir -p dist/kafka-to-nexus
+    - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-centos7.tar.gz"
+    - tar -C dist -czf dist/$ARCHIVE_NAME kafka-to-nexus
+  extends: .versioning_rules
+  artifacts:
+    paths:
+      - build/
+      - dist/
+    expire_in: 1 week
+
 almalinux9-release:
   stage: build
   image: $ALMALINUX9_IMAGE
