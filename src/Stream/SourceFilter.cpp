@@ -109,6 +109,8 @@ bool SourceFilter::filter_message(
     return false;
   }
   if (message_time > _stop_time) {
+		std::cout << "We are about to call forward_buffered_message!" << std::endl;
+		Logger::Warn("We are about to call forward_buffered_message!");
     _is_finished = true;
     forward_buffered_message();
     return false;
