@@ -27,7 +27,7 @@ void Reporter::reportMetrics() {
 }
 
 bool Reporter::addMetric(std::shared_ptr<Metric> NewMetric,
-                         std::string const &NewName) {
+                         std::string const NewName) {
   std::lock_guard<std::mutex> Lock(MetricsMapMutex);
   auto Result = MetricsToReportOn.emplace(
       std::piecewise_construct, std::forward_as_tuple(NewName),
@@ -35,7 +35,7 @@ bool Reporter::addMetric(std::shared_ptr<Metric> NewMetric,
   return Result.second;
 }
 
-bool Reporter::tryRemoveMetric(std::string const &MetricName) {
+bool Reporter::tryRemoveMetric(std::string const MetricName) {
   std::lock_guard<std::mutex> Lock(MetricsMapMutex);
   return static_cast<bool>(MetricsToReportOn.erase(MetricName));
 }

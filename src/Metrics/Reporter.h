@@ -30,11 +30,11 @@ public:
   virtual ~Reporter();
   void reportMetrics();
   virtual bool addMetric(std::shared_ptr<Metric> NewMetric,
-                         std::string const &NewName);
+                         std::string const NewName = "");
   std::map<std::string, InternalMetric> getMetrics() {
     return MetricsToReportOn;
   }
-  virtual bool tryRemoveMetric(std::string const &MetricName);
+  virtual bool tryRemoveMetric(std::string const MetricName);
   LogTo getSinkType() const;
 
 private:

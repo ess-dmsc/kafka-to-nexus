@@ -16,8 +16,8 @@ namespace Metrics {
 class MockReporter : public Reporter {
 public:
   using Reporter::Reporter;
-  MAKE_MOCK2(addMetric, bool(std::shared_ptr<Metric>, std::string const &),
+  MAKE_MOCK2(addMetric, bool(std::shared_ptr<Metric>, std::string const),
              override);
-  MAKE_MOCK1(tryRemoveMetric, bool(std::string const &), override);
+  MAKE_MOCK1(tryRemoveMetric, bool(std::string const), override);
 };
 } // namespace Metrics
