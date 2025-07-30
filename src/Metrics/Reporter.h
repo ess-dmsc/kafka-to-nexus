@@ -32,6 +32,7 @@ public:
   virtual bool addMetric(std::shared_ptr<Metric> NewMetric,
                          std::string const NewName = "");
   std::map<std::string, InternalMetric> getMetrics() {
+    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
     return MetricsToReportOn;
   }
   virtual bool tryRemoveMetric(std::string const MetricName);
