@@ -117,6 +117,7 @@ void Consumer::assignAllPartitions(std::string const &Topic,
     Logger::Error(
         R"(Could not get offsets in topic "{}" for the provided timestamp "{}". RdKafka error: "{}")",
         Topic, StartTimestamp, err2str(ErrorCode));
+    delete MetadataPtr;
     throw std::runtime_error(fmt::format(
         R"(Could not get offsets in topic "{}" for the provided timestamp "{}". RdKafka error: "{}")",
         Topic, StartTimestamp, err2str(ErrorCode)));
@@ -126,6 +127,7 @@ void Consumer::assignAllPartitions(std::string const &Topic,
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     Logger::Error(R"(Could not assign topic-partitions. RdKafka error: "{}")",
                   err2str(ErrorCode));
+    delete MetadataPtr;
     throw std::runtime_error(
         fmt::format(R"(Could not assign topic-partitions. RdKafka error: "{}")",
                     err2str(ErrorCode)));

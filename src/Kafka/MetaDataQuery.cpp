@@ -116,6 +116,7 @@ std::vector<int> MetadataEnquirer::getPartitionsForTopic(
   auto ReturnCode =
       Handle->metadata(true, TopicObj.get(), &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
+    delete MetadataPtr;
     throw MetadataException(fmt::format(
         "Failed to query broker {} for available partitions on topic "
         "{}. Error was: {}",
@@ -136,6 +137,7 @@ MetadataEnquirer::getTopicList(std::string const &Broker, duration TimeOut,
   RdKafka::Metadata *MetadataPtr{nullptr};
   auto ReturnCode = Handle->metadata(true, nullptr, &MetadataPtr, TimeOutInMs);
   if (ReturnCode != RdKafka::ERR_NO_ERROR) {
+    delete MetadataPtr;
     throw MetadataException(fmt::format(
         "Failed to query broker for available partitions. Error code was: {}",
         ReturnCode));
