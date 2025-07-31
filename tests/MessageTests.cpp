@@ -94,5 +94,5 @@ TEST_F(MessageClassTest, InvalidFlatbuffer) {
   }
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 8),
-               FileWriter::NotValidFlatbuffer);
+               FileWriter::FlatbufferError);
 }
