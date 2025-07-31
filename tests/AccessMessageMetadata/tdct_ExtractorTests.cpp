@@ -75,5 +75,5 @@ TEST_F(ChopperTimeStampGuard, VerifyFail) {
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[3] = 'h';
   EXPECT_THROW(FileWriter::FlatbufferMessage(TempData.get(), BufferSize),
-               FileWriter::NotValidFlatbuffer);
+               FileWriter::FlatbufferError);
 }
