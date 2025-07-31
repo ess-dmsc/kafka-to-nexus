@@ -43,7 +43,8 @@ HDFFile::~HDFFile() {
                                    std::filesystem::perms::group_read |
                                    std::filesystem::perms::others_read,
                                std::filesystem::perm_options::replace);
-  hdfFile().close();
+  Logger::Debug("Closing file from destructor.");
+  safeClose();
 }
 
 void HDFFile::createFileInRegularMode(
@@ -173,14 +174,19 @@ std::string HDFFileBase::read_template_version_if_present(
 }
 
 void HDFFile::closeFile() {
+  Logger::Debug("Closing file from closeFile().");
+  safeClose();
+  hdfFile() = hdf5::file::File();
+}
+
+void HDFFile::safeClose() {
   try {
     if (hdfFile().is_valid()) {
       Logger::Debug(R"(Closing file "{}".)",
                     hdfFile().id().file_name().string());
       hdfFile().close();
-      hdfFile() = hdf5::file::File();
     } else {
-      Logger::Critical("File is not valid, unable to close.");
+      Logger::Debug("File is not valid, unable to close.");
     }
   } catch (const std::runtime_error &E) {
     auto Trace = hdf5::error::print_nested(E);
