@@ -81,6 +81,7 @@ private:
                                bool const &is_legacy_writing);
   void openFileInRegularMode();
   void openFileInSWMRMode();
+  void safeClose();
   void closeFile();
 
   hdf5::property::FileAccessList FileAccessList;
