@@ -49,8 +49,13 @@ HDFFile::~HDFFile() {
 
 void HDFFile::createFileInRegularMode(
     std::filesystem::path const &template_path, bool const &is_legacy_writing) {
-  Logger::Debug("Closing file from createFileInRegularMode(...).");
-  safeClose();
+  if (hdfFile().is_valid()) { //	in case the last file handle was not
+                              // destroyed properly
+    // (if we don't add this 99% of files will complain that there was no valid
+    // file to begin with)
+    Logger::Debug("Closing file from createFileInRegularMode(...).");
+    safeClose();
+  }
   if (template_path.empty() || is_legacy_writing) {
     Logger::Info("Creating new file: {}", H5FileName.string());
     hdfFile() = hdf5::file::create(H5FileName,
