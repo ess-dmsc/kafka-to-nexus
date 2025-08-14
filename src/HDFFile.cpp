@@ -189,7 +189,7 @@ void HDFFile::closeFile() {
 void HDFFile::safeClose() {
   try {
     if (hdfFile().is_valid()) {
-      hdfFile.flush();
+      flush();
       Logger::Debug(R"(Closing file "{}".)",
                     hdfFile().id().file_name().string());
       hdfFile().close();
