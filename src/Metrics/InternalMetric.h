@@ -35,7 +35,6 @@ struct InternalMetric {
         ValueSeverity(MetricToGetDetailsFrom->getSeverity()) {
     auto LockedMetric = MetricStore.lock();
     Counter = LockedMetric ? LockedMetric->getCounterPtr() : nullptr;
-    Logger::Trace("Creating InternalMetric: {}", FullName);
   }
 
   ~InternalMetric() {}

@@ -61,7 +61,6 @@ bool SourceFilter::has_finished() const { return _is_finished; }
 void SourceFilter::forward_buffered_message() {
   if (_buffered_message.isValid()) {
     forward_message(_buffered_message, true);
-    Logger::Trace("Resetting _buffered_message");
     _buffered_message = FileWriter::FlatbufferMessage();
   }
 }
