@@ -38,7 +38,7 @@ struct InternalMetric {
     Logger::Trace("Creating InternalMetric: {}", FullName);
   }
 
-  ~InternalMetric() { Logger::Trace("Deleting InternalMetric: {}", FullName); }
+  ~InternalMetric() {}
 
   std::string const Name;
   std::string const FullName; // Including prefix from local registrar
