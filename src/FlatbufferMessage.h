@@ -86,11 +86,9 @@ public:
 
   FlatbufferMessage &operator=(FlatbufferMessage const &Other) {
     if (Other.DataPtr) {
-      Logger::Trace("About to assign new flatbuffer");
       DataPtr = std::make_unique<uint8_t[]>(Other.DataSize);
       std::memcpy(DataPtr.get(), Other.DataPtr.get(), Other.DataSize);
     } else {
-      Logger::Trace("About to reset flatbuffer");
       DataPtr.reset();
     }
     DataSize = Other.DataSize;
