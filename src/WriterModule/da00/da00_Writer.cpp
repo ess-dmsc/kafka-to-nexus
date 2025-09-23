@@ -351,12 +351,12 @@ bool da00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message,
       }
       VariableConfigMap[name].variable_append(f->second, ptr);
       variable_order.push_back(name);
-    } else {
-      Logger::Debug(
-          "Buffer Variable {} is not a configured dataset. Buffered data "
-          "is ignored",
-          name);
-    }
+    } /* else {
+       Logger::Trace(
+           "Buffer Variable {} is not a configured dataset. Buffered data "
+           "is ignored",
+           name);
+     }*/
   }
   if (variable_order.size() != VariablePtrs.size()) {
     std::stringstream message;
