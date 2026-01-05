@@ -185,7 +185,7 @@ domain-tests:
 
 integration-tests:
   stage: test
-  image: docker:latest
+  image: docker:28
   dependencies:
     - centos7-release
   before_script:
