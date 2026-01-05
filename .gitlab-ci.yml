@@ -234,3 +234,23 @@ publish-tar-archives:
         ARTIFACTORY_UPLOAD_PATH: "${CI_PROJECT_NAME}/tags/${CI_COMMIT_TAG}/"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
+
+publish-docker-image:
+  stage: publish
+  image: docker:28-cli
+  dependencies:
+    - almalinux9-release
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - |
+      docker build \
+          --build-arg https_proxy="http://172.20.72.11:8888" \
+          --build-arg http_proxy="http://172.20.72.11:8888" \
+          -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
