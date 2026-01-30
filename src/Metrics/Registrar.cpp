@@ -23,9 +23,9 @@ void Registrar::registerMetric(std::shared_ptr<Metric> NewMetric,
   }
 }
 
-void Registrar::initServer() {
+void Registrar::initServer(int port) {
   sockaddr_in address{};
-  int opt = 1, addrlen = sizeof(address), htons(sinport);
+  int opt = 1, addrlen = sizeof(address), sinport = htons(port);
 
   server_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0)
@@ -35,7 +35,7 @@ void Registrar::initServer() {
   setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY; //	restrict to 10.100.x.y?
-  address.sin_port = sinport; //htons(sinport);
+  address.sin_port = sinport;
 
   if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
     Logger::Log(LogSeverity::Warn, "Metrics server failed to bind to port {}!  Skipping initServer...", sinport);
