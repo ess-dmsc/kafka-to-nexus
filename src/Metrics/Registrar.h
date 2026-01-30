@@ -41,7 +41,7 @@ public:
   [[nodiscard]] std::unique_ptr<IRegistrar>
   getNewRegistrar(std::string const &MetricsPrefix) const override;
 
-  void initServer();
+  void initServer(int port = 0);
   void killServer();
 
 private:
