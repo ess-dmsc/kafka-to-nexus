@@ -284,11 +284,12 @@ int main(int argc, char **argv) {
       R"((Max) amount of time between flushing of data to file, in seconds.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
   app.add_option("--metric-server-port", options->msport,
-                 "Port to run the metrics server on")
-      add_kafka_option(
-          app, "-X,--kafka-config",
-          options->StreamerConfiguration.BrokerSettings.KafkaConfiguration,
-          "LibRDKafka options");
+                 "Port to run the metrics server on");
+
+  add_kafka_option(
+      app, "-X,--kafka-config",
+      options->StreamerConfiguration.BrokerSettings.KafkaConfiguration,
+      "LibRDKafka options");
   app.set_config("-c,--config-file", "", "Read configuration from an ini file");
 
   try {
@@ -336,7 +337,7 @@ int main(int argc, char **argv) {
   metric_prefix += "." + prefix_service_component;
   std::unique_ptr<Metrics::IRegistrar> registrar =
       std::make_unique<Metrics::Registrar>(metric_prefix, metric_reporters,
-                                           options.msport);
+                                           options->msport);
 
   std::signal(SIGHUP, [](int signal) { signal_handler(signal, RUN_STATE); });
   std::signal(SIGINT, [](int signal) { signal_handler(signal, RUN_STATE); });
