@@ -29,8 +29,9 @@ void Registrar::initServer(int port) {
 
   server_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0)
-    Logger::Log(LogSeverity::Warn, "Metrics server socket init failed!  Skipping initServer...");
-    return;
+    Logger::Log(LogSeverity::Warn,
+                "Metrics server socket init failed!  Skipping initServer...");
+  return;
 
   setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
   address.sin_family = AF_INET;
@@ -38,12 +39,16 @@ void Registrar::initServer(int port) {
   address.sin_port = sinport;
 
   if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
-    Logger::Log(LogSeverity::Warn, "Metrics server failed to bind to port {}!  Skipping initServer...", sinport);
-    return;
+    Logger::Log(
+        LogSeverity::Warn,
+        "Metrics server failed to bind to port {}!  Skipping initServer...",
+        sinport);
+  return;
 
   if (listen(server_fd, 3) < 0)
-    Logger::Log(LogSeverity::Warn, "Metrics server failed to listen!  Skipping initServer...");
-    return;
+    Logger::Log(LogSeverity::Warn,
+                "Metrics server failed to listen!  Skipping initServer...");
+  return;
 
   while (true) { //	threaded connections?
     client_fd =
