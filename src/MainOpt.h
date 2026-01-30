@@ -68,6 +68,9 @@ struct MainOpt {
   /// Used for command line argument.
   bool ListWriterModules = false;
 
+  /// Port to run the metrics server on
+  int msport = 0;
+
   /// \brief Interval to publish status of `Master`
   /// (e.g. list of current file writings).
   duration StatusMasterInterval{2000ms};
