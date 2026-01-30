@@ -31,7 +31,7 @@ public:
       int port = 0)
       : Prefix(std::move(MetricsPrefix)), ReporterList(Reporters) {
     if (port > 0)
-      std::thread([this]() { initServer(port); }).detach();
+      std::thread([this, port]() { initServer(port); }).detach();
   };
   ~Registrar() override = default;
 
