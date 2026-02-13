@@ -107,7 +107,7 @@ public:
 
 /// \brief Represents the (radiation) detector event timestamp offset from zero
 /// time in a NXevent_data.
-class EventTimeOffset : public ExtensibleDataset<std::uint32_t> {
+class EventTimeOffset : public ExtensibleDataset<std::int32_t> {
 public:
   EventTimeOffset() = default;
   /// \brief Create the event_time_offset dataset of NXevent_data.

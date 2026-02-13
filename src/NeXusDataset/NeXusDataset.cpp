@@ -52,8 +52,8 @@ EventId::EventId(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
 
 EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
                                  size_t ChunkSize)
-    : ExtensibleDataset<std::uint32_t>(Parent, "event_time_offset", CMode,
-                                       ChunkSize) {
+    : ExtensibleDataset<std::int32_t>(Parent, "event_time_offset", CMode,
+                                      ChunkSize) {
   if (Mode::Create == CMode) {
     auto UnitAttr = _dataset.attributes.create<std::string>("units");
     UnitAttr.write("ns");

@@ -199,6 +199,35 @@ TEST_F(Event44WriterTests,
          "values from the message";
 }
 
+TEST_F(Event44WriterTests,
+       WriterPreservesNegativeTimeOfFlightValues) {
+  std::vector<int32_t> const TimeOfFlight = {101, -1, 201, -1, 301};
+  std::vector<int32_t> const DetectorID = {10, 20, 30, 40, 50};
+  std::vector<int64_t> const ReferenceTime = {1000};
+  std::vector<int32_t> const ReferenceTimeIndex = {0};
+  auto MessageBuffer =
+      generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
+                             ReferenceTime, ReferenceTimeIndex);
+  FileWriter::FlatbufferMessage TestMessage(MessageBuffer.data(),
+                                            MessageBuffer.size());
+
+  {
+    WriterModule::ev44::ev44_Writer Writer;
+    EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage, false));
+  }
+
+  auto EventTimeOffsetDataset = TestGroup.get_dataset("event_time_offset");
+  std::vector<int32_t> EventTimeOffset(
+      EventTimeOffsetDataset.dataspace().size());
+  EventTimeOffsetDataset.read(EventTimeOffset);
+
+  EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
+      << "Expected negative time_of_flight values (e.g. -1) to be preserved, "
+         "not silently converted to 0";
+}
+
 TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataWithoutPixelIds) {
   // in ev44 time_of_flight is mandatory if events are present, but pixel_id
   // can be empty

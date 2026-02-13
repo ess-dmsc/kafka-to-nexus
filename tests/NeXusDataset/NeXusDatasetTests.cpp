@@ -186,7 +186,7 @@ TEST_F(NeXusDatasetCreation, EventIndexOpen) {
 TEST_F(NeXusDatasetCreation, EventTimeOffsetOpen) {
   using TypeUnderTest = NeXusDataset::EventTimeOffset;
   std::string DatasetName{"event_time_offset"};
-  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::int32_t>(RootGroup, DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
