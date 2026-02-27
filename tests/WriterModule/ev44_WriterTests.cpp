@@ -199,8 +199,7 @@ TEST_F(Event44WriterTests,
          "values from the message";
 }
 
-TEST_F(Event44WriterTests,
-       WriterPreservesNegativeTimeOfFlightValues) {
+TEST_F(Event44WriterTests, WriterPreservesNegativeTimeOfFlightValues) {
   std::vector<int32_t> const TimeOfFlight = {101, -1, 201, -1, 301};
   std::vector<int32_t> const DetectorID = {10, 20, 30, 40, 50};
   std::vector<int64_t> const ReferenceTime = {1000};
