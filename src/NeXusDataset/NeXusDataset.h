@@ -78,7 +78,7 @@ public:
 
 /// \brief Represents the timestamp register for searching a large NXlog
 /// (relatively) quickly.
-class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
+class CueTimestampZero : public ExtensibleDataset<std::int64_t> {
 public:
   CueTimestampZero() = default;
   /// \brief Create the cue_timestamp_zero dataset of NXLog and NXevent_data.

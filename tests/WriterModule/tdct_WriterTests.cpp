@@ -140,7 +140,7 @@ TEST_F(ChopperTimeStampWriter, WriteDataTwice) {
   EXPECT_EQ(CueIndex.at(0), 0u);
   EXPECT_EQ(CueIndex.at(1), FbPointer->timestamps()->size());
 
-  std::vector<std::uint32_t> CueTimestamp(2);
+  std::vector<std::int32_t> CueTimestamp(2);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->timestamps()->operator[](0));
   EXPECT_EQ(CueTimestamp.at(1), FbPointer->timestamps()->operator[](0));
