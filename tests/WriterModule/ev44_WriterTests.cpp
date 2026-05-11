@@ -27,7 +27,7 @@ flatbuffers::DetachedBuffer generateFlatbufferData(
     std::vector<int32_t> const &TimeOfFlight = {101, 102, 201},
     std::vector<int32_t> const &DetectorID = {101, 102, 201},
     std::vector<int64_t> const &ReferenceTime = {1000, 2000},
-    std::vector<int32_t> const &ReferenceTimeIndex = {0, 2}) {
+    std::vector<int64_t> const &ReferenceTimeIndex = {0, 2}) {
   flatbuffers::FlatBufferBuilder builder;
 
   auto FBSourceNameOffset = builder.CreateString(SourceName);
@@ -151,7 +151,7 @@ TEST_F(Event44WriterTests,
   std::vector<int32_t> const TimeOfFlight = {101, 102, 201};
   std::vector<int32_t> const DetectorID = {101, 102, 201};
   std::vector<int64_t> const ReferenceTime = {1000, 2000};
-  std::vector<int32_t> const ReferenceTimeIndex = {0, 2};
+  std::vector<int64_t> const ReferenceTimeIndex = {0, 2};
   auto MessageBuffer =
       generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
                              ReferenceTime, ReferenceTimeIndex);
@@ -174,7 +174,7 @@ TEST_F(Event44WriterTests,
   std::vector<int32_t> EventTimeOffset(
       EventTimeOffsetDataset.dataspace().size());
   std::vector<int64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
-  std::vector<int32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<int64_t> EventIndex(EventIndexDataset.dataspace().size());
   std::vector<int32_t> EventID(EventIDDataset.dataspace().size());
   EventTimeOffsetDataset.read(EventTimeOffset);
   EventTimeZeroDataset.read(EventTimeZero);
@@ -203,7 +203,7 @@ TEST_F(Event44WriterTests, WriterPreservesNegativeTimeOfFlightValues) {
   std::vector<int32_t> const TimeOfFlight = {101, -1, 201, -1, 301};
   std::vector<int32_t> const DetectorID = {10, 20, 30, 40, 50};
   std::vector<int64_t> const ReferenceTime = {1000};
-  std::vector<int32_t> const ReferenceTimeIndex = {0};
+  std::vector<int64_t> const ReferenceTimeIndex = {0};
   auto MessageBuffer =
       generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
                              ReferenceTime, ReferenceTimeIndex);
@@ -233,7 +233,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataWithoutPixelIds) {
   std::vector<int32_t> const TimeOfFlight = {101, 102, 201};
   std::vector<int32_t> const DetectorID = {};
   std::vector<int64_t> const ReferenceTime = {1000, 2000};
-  std::vector<int32_t> const ReferenceTimeIndex = {0, 2};
+  std::vector<int64_t> const ReferenceTimeIndex = {0, 2};
   auto MessageBuffer =
       generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
                              ReferenceTime, ReferenceTimeIndex);
@@ -256,7 +256,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataWithoutPixelIds) {
   std::vector<int32_t> EventTimeOffset(
       EventTimeOffsetDataset.dataspace().size());
   std::vector<int64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
-  std::vector<int32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<int64_t> EventIndex(EventIndexDataset.dataspace().size());
   std::vector<int32_t> EventID(EventIDDataset.dataspace().size());
   EventTimeOffsetDataset.read(EventTimeOffset);
   EventTimeZeroDataset.read(EventTimeZero);
@@ -290,8 +290,8 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
   std::vector<int64_t> ReferenceTime1 = {1000, 2000};
   std::vector<int64_t> ReferenceTime2 = {3000, 4000, 5000};
-  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
-  std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
+  std::vector<int64_t> ReferenceTimeIndex1 = {0, 2};
+  std::vector<int64_t> ReferenceTimeIndex2 = {0, 3, 4};
   auto MessageBuffer1 =
       generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
                              ReferenceTime1, ReferenceTimeIndex1);
@@ -320,7 +320,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   std::vector<int32_t> EventTimeOffset(
       EventTimeOffsetDataset.dataspace().size());
   std::vector<int64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
-  std::vector<int32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<int64_t> EventIndex(EventIndexDataset.dataspace().size());
   std::vector<int32_t> EventID(EventIDDataset.dataspace().size());
   EventTimeOffsetDataset.read(EventTimeOffset);
   EventTimeZeroDataset.read(EventTimeZero);
@@ -334,13 +334,13 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
       concatenateVectors(DetectorID1, DetectorID2);
   std::vector<int64_t> ExpectedReferenceTime =
       concatenateVectors(ReferenceTime1, ReferenceTime2);
-  std::vector<int32_t> ExpectedReferenceTimeIndex;
+  std::vector<int64_t> ExpectedReferenceTimeIndex;
   int32_t numberOfEventsInFirstMessage =
       static_cast<int32_t>(DetectorID1.size());
-  for (int32_t value : ReferenceTimeIndex1) {
+  for (int64_t value : ReferenceTimeIndex1) {
     ExpectedReferenceTimeIndex.push_back(value);
   }
-  for (int32_t value : ReferenceTimeIndex2) {
+  for (int64_t value : ReferenceTimeIndex2) {
     ExpectedReferenceTimeIndex.push_back(value + numberOfEventsInFirstMessage);
   }
 
@@ -373,9 +373,9 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
   std::vector<int64_t> ReferenceTime1 = {1000, 2000};
   std::vector<int64_t> ReferenceTime2 = {2500}; // pulse time is present
   std::vector<int64_t> ReferenceTime3 = {3000, 4000, 5000};
-  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
-  std::vector<int32_t> ReferenceTimeIndex2 = {-1};
-  std::vector<int32_t> ReferenceTimeIndex3 = {0, 3, 4};
+  std::vector<int64_t> ReferenceTimeIndex1 = {0, 2};
+  std::vector<int64_t> ReferenceTimeIndex2 = {-1};
+  std::vector<int64_t> ReferenceTimeIndex3 = {0, 3, 4};
   auto MessageBuffer1 =
       generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
                              ReferenceTime1, ReferenceTimeIndex1);
@@ -410,7 +410,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
   std::vector<int32_t> EventTimeOffset(
       EventTimeOffsetDataset.dataspace().size());
   std::vector<int64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
-  std::vector<int32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<int64_t> EventIndex(EventIndexDataset.dataspace().size());
   std::vector<int32_t> EventID(EventIDDataset.dataspace().size());
   EventTimeOffsetDataset.read(EventTimeOffset);
   EventTimeZeroDataset.read(EventTimeZero);
@@ -424,13 +424,13 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
       concatenateVectors(DetectorID1, DetectorID3);
   std::vector<int64_t> ExpectedReferenceTime =
       concatenateVectors(ReferenceTime1, ReferenceTime3);
-  std::vector<int32_t> ExpectedReferenceTimeIndex;
+  std::vector<int64_t> ExpectedReferenceTimeIndex;
   int32_t numberOfEventsInFirstMessage =
       static_cast<int32_t>(DetectorID1.size());
-  for (int32_t value : ReferenceTimeIndex1) {
+  for (int64_t value : ReferenceTimeIndex1) {
     ExpectedReferenceTimeIndex.push_back(value);
   }
-  for (int32_t value : ReferenceTimeIndex3) {
+  for (int64_t value : ReferenceTimeIndex3) {
     ExpectedReferenceTimeIndex.push_back(value + numberOfEventsInFirstMessage);
   }
 
@@ -457,10 +457,10 @@ TEST_F(Event44WriterTests, PulseTimeIsRepeatedWithinSameMessage) {
   std::vector<int32_t> const TimeOfFlight = {101, 102, 201, 301, 401, 402, 403};
   std::vector<int32_t> const DetectorID = {101, 102, 201, 301, 401, 402, 403};
   std::vector<int64_t> const ReferenceTime = {1000, 1000, 2000, 2000};
-  std::vector<int32_t> const ReferenceTimeIndex = {0, 2, 3, 4};
+  std::vector<int64_t> const ReferenceTimeIndex = {0, 2, 3, 4};
   // Repeated pulse times are currently not consolidated into a single value
   std::vector<int64_t> ExpectedReferenceTime = {1000, 1000, 2000, 2000};
-  std::vector<int32_t> ExpectedReferenceTimeIndex = {0, 2, 3, 4};
+  std::vector<int64_t> ExpectedReferenceTimeIndex = {0, 2, 3, 4};
 
   auto MessageBuffer =
       generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
@@ -484,7 +484,7 @@ TEST_F(Event44WriterTests, PulseTimeIsRepeatedWithinSameMessage) {
   std::vector<int32_t> EventTimeOffset(
       EventTimeOffsetDataset.dataspace().size());
   std::vector<int64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
-  std::vector<int32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<int64_t> EventIndex(EventIndexDataset.dataspace().size());
   std::vector<int32_t> EventID(EventIDDataset.dataspace().size());
   EventTimeOffsetDataset.read(EventTimeOffset);
   EventTimeZeroDataset.read(EventTimeZero);
@@ -516,11 +516,11 @@ TEST_F(Event44WriterTests, LastPulseTimeIsRepeatedInSubsequentMessage) {
   std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
   std::vector<int64_t> ReferenceTime1 = {1000, 2000};
   std::vector<int64_t> ReferenceTime2 = {2000, 3000, 4000};
-  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
-  std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
+  std::vector<int64_t> ReferenceTimeIndex1 = {0, 2};
+  std::vector<int64_t> ReferenceTimeIndex2 = {0, 3, 4};
   // Repeated pulse times are currently not consolidated into a single value
   std::vector<int64_t> ExpectedReferenceTime = {1000, 2000, 2000, 3000, 4000};
-  std::vector<int32_t> ExpectedReferenceTimeIndex = {0, 2, 3, 6, 7};
+  std::vector<int64_t> ExpectedReferenceTimeIndex = {0, 2, 3, 6, 7};
 
   auto MessageBuffer1 =
       generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
@@ -550,7 +550,7 @@ TEST_F(Event44WriterTests, LastPulseTimeIsRepeatedInSubsequentMessage) {
   std::vector<int32_t> EventTimeOffset(
       EventTimeOffsetDataset.dataspace().size());
   std::vector<int64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
-  std::vector<int32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<int64_t> EventIndex(EventIndexDataset.dataspace().size());
   std::vector<int32_t> EventID(EventIDDataset.dataspace().size());
   EventTimeOffsetDataset.read(EventTimeOffset);
   EventTimeZeroDataset.read(EventTimeZero);
@@ -590,8 +590,8 @@ TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
   std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
   std::vector<int64_t> ReferenceTime1 = {1000, 2000};
   std::vector<int64_t> ReferenceTime2 = {3000, 4000, 5000};
-  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
-  std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
+  std::vector<int64_t> ReferenceTimeIndex1 = {0, 2};
+  std::vector<int64_t> ReferenceTimeIndex2 = {0, 3, 4};
   auto MessageBuffer1 =
       generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
                              ReferenceTime1, ReferenceTimeIndex1);
@@ -618,7 +618,7 @@ TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
   auto CueIndexDataset = TestGroup.get_dataset("cue_index");
   std::vector<int32_t> CueTimestampZero(
       CueTimestampZeroDataset.dataspace().size());
-  std::vector<int32_t> CueIndex(CueIndexDataset.dataspace().size());
+  std::vector<int64_t> CueIndex(CueIndexDataset.dataspace().size());
   CueTimestampZeroDataset.read(CueTimestampZero);
   CueIndexDataset.read(CueIndex);
 
@@ -626,7 +626,7 @@ TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
   EXPECT_THAT(CueTimestampZero, testing::ContainerEq(ExpectedCueTimestampZero))
       << "Expected cue_timestamp_zero dataset to contain the timestamps "
          "calculated from pulse time plus offset";
-  std::vector<int32_t> ExpectedCueIndex = {2, 8};
+  std::vector<int64_t> ExpectedCueIndex = {2, 8};
   EXPECT_THAT(CueIndex, testing::ContainerEq(ExpectedCueIndex))
       << "Expected cue_index dataset to contain the indices of the last event "
          "of every message";
@@ -636,7 +636,7 @@ TEST_F(Event44WriterTests, buffered_data_not_written) {
   std::vector<int32_t> TimeOfFlight1 = {101, 102, 201};
   std::vector<int32_t> DetectorID1 = {101, 102, 201};
   std::vector<int64_t> ReferenceTime1 = {1000, 2000};
-  std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
+  std::vector<int64_t> ReferenceTimeIndex1 = {0, 2};
   auto MessageBuffer1 =
       generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
                              ReferenceTime1, ReferenceTimeIndex1);
