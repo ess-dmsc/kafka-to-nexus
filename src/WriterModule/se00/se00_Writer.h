@@ -27,8 +27,8 @@ using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = WriterModule::Base;
 
 std::vector<std::int64_t> GenerateTimeStamps(std::int64_t OriginTimeStamp,
-                                              double TimeDelta,
-                                              int NumberOfElements);
+                                             double TimeDelta,
+                                             int NumberOfElements);
 
 /// See parent class for documentation.
 class se00_Writer : public FileWriterBase {
