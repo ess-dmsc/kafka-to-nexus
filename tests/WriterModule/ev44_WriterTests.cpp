@@ -27,7 +27,7 @@ flatbuffers::DetachedBuffer generateFlatbufferData(
     std::vector<int32_t> const &TimeOfFlight = {101, 102, 201},
     std::vector<int32_t> const &DetectorID = {101, 102, 201},
     std::vector<int64_t> const &ReferenceTime = {1000, 2000},
-    std::vector<int64_t> const &ReferenceTimeIndex = {0, 2}) {
+    std::vector<int32_t> const &ReferenceTimeIndex = {0, 2}) {
   flatbuffers::FlatBufferBuilder builder;
 
   auto FBSourceNameOffset = builder.CreateString(SourceName);
