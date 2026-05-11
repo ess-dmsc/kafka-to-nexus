@@ -130,7 +130,7 @@ public:
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
   // cppcheck-suppress functionStatic
-  uint64_t timestamp(FileWriter::FlatbufferMessage const &/*Message*/) const override {
+  int64_t timestamp(FileWriter::FlatbufferMessage const &/*Message*/) const override {
     std::cout << "ReaderClass::timestamp()\n";
     return 0;
   }
