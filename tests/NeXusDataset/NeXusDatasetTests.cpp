@@ -153,7 +153,7 @@ TEST_F(NeXusDatasetCreation, CueTimestampZeroOpen) {
   using TypeUnderTest = NeXusDataset::CueTimestampZero;
   std::string DatasetName{"cue_timestamp_zero"};
   defaultTimeDatasetCreation<TypeUnderTest, std::int64_t>(RootGroup,
-                                                           DatasetName);
+                                                          DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
