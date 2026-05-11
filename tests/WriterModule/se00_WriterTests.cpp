@@ -22,7 +22,7 @@ GenerateFlatbufferData(size_t &DataSize, size_t NrOfElements = 6,
                        bool CreateTimestamps = true) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint16_t> TestValues(NrOfElements);
-  std::vector<std::uint32_t> TestTimestamps(NrOfElements);
+  std::vector<std::int64_t> TestTimestamps(NrOfElements);
   for (size_t i = 0; i < NrOfElements; i++) {
     float value = (i + 1) / 10.;
     TestValues.push_back(value);
