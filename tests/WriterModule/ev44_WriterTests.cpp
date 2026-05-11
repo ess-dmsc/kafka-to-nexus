@@ -288,8 +288,8 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   std::vector<int32_t> TimeOfFlight2 = {301, 302, 303, 401, 501, 502};
   std::vector<int32_t> DetectorID1 = {101, 102, 201};
   std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
-  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
-  std::vector<int64_t> ReferenceTime2 = {3000, 4000, 5000};
+  std::vector<int32_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int32_t> ReferenceTime2 = {3000, 4000, 5000};
   std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
   std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
   auto MessageBuffer1 =
@@ -370,9 +370,9 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
   std::vector<int32_t> DetectorID1 = {101, 102, 201};
   std::vector<int32_t> DetectorID2 = {}; // no events in this message
   std::vector<int32_t> DetectorID3 = {301, 302, 303, 401, 501, 502};
-  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
-  std::vector<int64_t> ReferenceTime2 = {2500}; // pulse time is present
-  std::vector<int64_t> ReferenceTime3 = {3000, 4000, 5000};
+  std::vector<int32_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int32_t> ReferenceTime2 = {2500}; // pulse time is present
+  std::vector<int32_t> ReferenceTime3 = {3000, 4000, 5000};
   std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
   std::vector<int32_t> ReferenceTimeIndex2 = {-1};
   std::vector<int32_t> ReferenceTimeIndex3 = {0, 3, 4};
@@ -422,7 +422,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
       concatenateVectors(TimeOfFlight1, TimeOfFlight3);
   std::vector<int32_t> ExpectedDetectorID =
       concatenateVectors(DetectorID1, DetectorID3);
-  std::vector<int64_t> ExpectedReferenceTime =
+  std::vector<int32_t> ExpectedReferenceTime =
       concatenateVectors(ReferenceTime1, ReferenceTime3);
   std::vector<int32_t> ExpectedReferenceTimeIndex;
   int32_t numberOfEventsInFirstMessage =
@@ -514,8 +514,8 @@ TEST_F(Event44WriterTests, LastPulseTimeIsRepeatedInSubsequentMessage) {
   std::vector<int32_t> TimeOfFlight2 = {301, 302, 303, 401, 501, 502};
   std::vector<int32_t> DetectorID1 = {101, 102, 201};
   std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
-  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
-  std::vector<int64_t> ReferenceTime2 = {2000, 3000, 4000};
+  std::vector<int32_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int32_t> ReferenceTime2 = {2000, 3000, 4000};
   std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
   std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
   // Repeated pulse times are currently not consolidated into a single value
@@ -588,8 +588,8 @@ TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
   std::vector<int32_t> TimeOfFlight2 = {301, 302, 303, 401, 501, 502};
   std::vector<int32_t> DetectorID1 = {101, 102, 201};
   std::vector<int32_t> DetectorID2 = {301, 302, 303, 401, 501, 502};
-  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
-  std::vector<int64_t> ReferenceTime2 = {3000, 4000, 5000};
+  std::vector<int32_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int32_t> ReferenceTime2 = {3000, 4000, 5000};
   std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
   std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
   auto MessageBuffer1 =
@@ -635,7 +635,7 @@ TEST_F(Event44WriterTests, CuesFromTwoMessagesAreRecorded) {
 TEST_F(Event44WriterTests, buffered_data_not_written) {
   std::vector<int32_t> TimeOfFlight1 = {101, 102, 201};
   std::vector<int32_t> DetectorID1 = {101, 102, 201};
-  std::vector<int64_t> ReferenceTime1 = {1000, 2000};
+  std::vector<int32_t> ReferenceTime1 = {1000, 2000};
   std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
   auto MessageBuffer1 =
       generateFlatbufferData("TestSource", 1, TimeOfFlight1, DetectorID1,
