@@ -26,7 +26,7 @@ flatbuffers::DetachedBuffer generateFlatbufferData(
     std::string const &SourceName = "TestSource", uint64_t const MessageID = 0,
     std::vector<int32_t> const &TimeOfFlight = {101, 102, 201},
     std::vector<int32_t> const &DetectorID = {101, 102, 201},
-    std::vector<int64_t> const &ReferenceTime = {1000, 2000},
+    std::vector<int32_t> const &ReferenceTime = {1000, 2000},
     std::vector<int32_t> const &ReferenceTimeIndex = {0, 2}) {
   flatbuffers::FlatBufferBuilder builder;
 
@@ -150,7 +150,7 @@ TEST_F(Event44WriterTests,
   // the file
   std::vector<int32_t> const TimeOfFlight = {101, 102, 201};
   std::vector<int32_t> const DetectorID = {101, 102, 201};
-  std::vector<int64_t> const ReferenceTime = {1000, 2000};
+  std::vector<int32_t> const ReferenceTime = {1000, 2000};
   std::vector<int32_t> const ReferenceTimeIndex = {0, 2};
   auto MessageBuffer =
       generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
@@ -202,7 +202,7 @@ TEST_F(Event44WriterTests,
 TEST_F(Event44WriterTests, WriterPreservesNegativeTimeOfFlightValues) {
   std::vector<int32_t> const TimeOfFlight = {101, -1, 201, -1, 301};
   std::vector<int32_t> const DetectorID = {10, 20, 30, 40, 50};
-  std::vector<int64_t> const ReferenceTime = {1000};
+  std::vector<int32_t> const ReferenceTime = {1000};
   std::vector<int32_t> const ReferenceTimeIndex = {0};
   auto MessageBuffer =
       generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
@@ -232,7 +232,7 @@ TEST_F(Event44WriterTests, WriterSuccessfullyRecordsEventDataWithoutPixelIds) {
   // can be empty
   std::vector<int32_t> const TimeOfFlight = {101, 102, 201};
   std::vector<int32_t> const DetectorID = {};
-  std::vector<int64_t> const ReferenceTime = {1000, 2000};
+  std::vector<int32_t> const ReferenceTime = {1000, 2000};
   std::vector<int32_t> const ReferenceTimeIndex = {0, 2};
   auto MessageBuffer =
       generateFlatbufferData("TestSource", 0, TimeOfFlight, DetectorID,
@@ -456,10 +456,10 @@ TEST_F(Event44WriterTests, WriterSuccessfullyHandlesMessageWithNoEvents) {
 TEST_F(Event44WriterTests, PulseTimeIsRepeatedWithinSameMessage) {
   std::vector<int32_t> const TimeOfFlight = {101, 102, 201, 301, 401, 402, 403};
   std::vector<int32_t> const DetectorID = {101, 102, 201, 301, 401, 402, 403};
-  std::vector<int64_t> const ReferenceTime = {1000, 1000, 2000, 2000};
+  std::vector<int32_t> const ReferenceTime = {1000, 1000, 2000, 2000};
   std::vector<int32_t> const ReferenceTimeIndex = {0, 2, 3, 4};
   // Repeated pulse times are currently not consolidated into a single value
-  std::vector<int64_t> ExpectedReferenceTime = {1000, 1000, 2000, 2000};
+  std::vector<int32_t> ExpectedReferenceTime = {1000, 1000, 2000, 2000};
   std::vector<int32_t> ExpectedReferenceTimeIndex = {0, 2, 3, 4};
 
   auto MessageBuffer =
@@ -519,7 +519,7 @@ TEST_F(Event44WriterTests, LastPulseTimeIsRepeatedInSubsequentMessage) {
   std::vector<int32_t> ReferenceTimeIndex1 = {0, 2};
   std::vector<int32_t> ReferenceTimeIndex2 = {0, 3, 4};
   // Repeated pulse times are currently not consolidated into a single value
-  std::vector<int64_t> ExpectedReferenceTime = {1000, 2000, 2000, 3000, 4000};
+  std::vector<int32_t> ExpectedReferenceTime = {1000, 2000, 2000, 3000, 4000};
   std::vector<int32_t> ExpectedReferenceTimeIndex = {0, 2, 3, 6, 7};
 
   auto MessageBuffer1 =
