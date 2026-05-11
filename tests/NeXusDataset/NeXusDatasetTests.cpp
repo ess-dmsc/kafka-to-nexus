@@ -141,7 +141,7 @@ TEST_F(NeXusDatasetCreation, TimeOpen) {
 TEST_F(NeXusDatasetCreation, CueIndexOpen) {
   using TypeUnderTest = NeXusDataset::CueIndex;
   std::string DatasetName{"cue_index"};
-  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::int64_t>(RootGroup, DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
@@ -152,7 +152,7 @@ TEST_F(NeXusDatasetCreation, CueIndexOpen) {
 TEST_F(NeXusDatasetCreation, CueTimestampZeroOpen) {
   using TypeUnderTest = NeXusDataset::CueTimestampZero;
   std::string DatasetName{"cue_timestamp_zero"};
-  defaultTimeDatasetCreation<TypeUnderTest, std::uint64_t>(RootGroup,
+  defaultTimeDatasetCreation<TypeUnderTest, std::int64_t>(RootGroup,
                                                            DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
@@ -164,7 +164,7 @@ TEST_F(NeXusDatasetCreation, CueTimestampZeroOpen) {
 TEST_F(NeXusDatasetCreation, EventIdOpen) {
   using TypeUnderTest = NeXusDataset::EventId;
   std::string DatasetName{"event_id"};
-  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::int32_t>(RootGroup, DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
@@ -175,7 +175,7 @@ TEST_F(NeXusDatasetCreation, EventIdOpen) {
 TEST_F(NeXusDatasetCreation, EventIndexOpen) {
   using TypeUnderTest = NeXusDataset::EventIndex;
   std::string DatasetName{"event_index"};
-  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::int64_t>(RootGroup, DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
