@@ -20,6 +20,6 @@ class da00_Extractor : public FBReaderBase {
 public:
   [[nodiscard]] bool verify(FBMessage const &Message) const override;
   [[nodiscard]] std::string source_name(FBMessage const &) const override;
-  [[nodiscard]] uint64_t timestamp(FBMessage const &Message) const override;
+  [[nodiscard]] int64_t timestamp(FBMessage const &Message) const override;
 };
 } // namespace AccessMessageMetadata

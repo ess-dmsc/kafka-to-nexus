@@ -21,7 +21,7 @@ public:
   [[nodiscard]] bool verify(FlatbufferMessage const &Message) const override;
   [[nodiscard]] std::string
   source_name(FlatbufferMessage const &) const override;
-  [[nodiscard]] uint64_t
+  [[nodiscard]] int64_t
   timestamp(FlatbufferMessage const &Message) const override;
 };
 } // namespace AccessMessageMetadata

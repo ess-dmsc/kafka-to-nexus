@@ -22,7 +22,7 @@ bool ad00_Extractor::verify(FlatbufferMessage const &Message) const {
   return Verifyad00_ADArrayBuffer(Verifier);
 }
 
-uint64_t ad00_Extractor::timestamp(FlatbufferMessage const &Message) const {
+int64_t ad00_Extractor::timestamp(FlatbufferMessage const &Message) const {
   auto FbPointer = Getad00_ADArray(Message.data());
   return FbPointer->timestamp();
 }

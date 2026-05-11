@@ -33,7 +33,7 @@ DoubleValue::DoubleValue(hdf5::node::Group const &Parent,
 
 CueIndex::CueIndex(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize)
-    : ExtensibleDataset<std::uint64_t>(Parent, "cue_index", CMode, ChunkSize) {}
+    : ExtensibleDataset<std::int64_t>(Parent, "cue_index", CMode, ChunkSize) {}
 
 CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
                                    size_t ChunkSize)
@@ -48,7 +48,7 @@ CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
 }
 
 EventId::EventId(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
-    : ExtensibleDataset<std::uint64_t>(Parent, "event_id", CMode, ChunkSize) {}
+    : ExtensibleDataset<std::int32_t>(Parent, "event_id", CMode, ChunkSize) {}
 
 EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
                                  size_t ChunkSize)
@@ -62,7 +62,7 @@ EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
 
 EventIndex::EventIndex(hdf5::node::Group const &Parent, Mode CMode,
                        size_t ChunkSize)
-    : ExtensibleDataset<std::uint64_t>(Parent, "event_index", CMode,
+    : ExtensibleDataset<std::int64_t>(Parent, "event_index", CMode,
                                        ChunkSize) {}
 
 EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,

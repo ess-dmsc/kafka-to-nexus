@@ -112,7 +112,7 @@ create_ev44_message(std::string const &source, int64_t message_id,
 
   std::vector<int64_t> reference_times = {timestamp_ns * 1000000};
   auto reference_time_offset = builder.CreateVector(reference_times);
-  std::vector<int32_t> reference_index = {0};
+  std::vector<int32_t> reference_index = {0}; //  goes to event_id but each set of reference_time_index is < int32_max
   auto reference_index_offset = builder.CreateVector(reference_index);
 
   auto time_of_flight_offset = builder.CreateVector(time_of_flight);

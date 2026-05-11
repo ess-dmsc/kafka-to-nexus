@@ -44,7 +44,7 @@ public:
   ///
   /// \param Message The message from which the timestamp should be extracted.
   /// \return The timestamp of the flatbuffer message.
-  virtual uint64_t timestamp(FlatbufferMessage const &Message) const = 0;
+  virtual int64_t timestamp(FlatbufferMessage const &Message) const = 0;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.

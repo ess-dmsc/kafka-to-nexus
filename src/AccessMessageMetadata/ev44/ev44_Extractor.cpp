@@ -29,7 +29,7 @@ ev44_Extractor::source_name(FlatbufferMessage const &Message) const {
   return NamePtr->str();
 }
 
-uint64_t ev44_Extractor::timestamp(FlatbufferMessage const &Message) const {
+int64_t ev44_Extractor::timestamp(FlatbufferMessage const &Message) const {
   auto fbuf = GetEvent44Message(Message.data());
   return fbuf->reference_time()->Get(0);
 }

@@ -63,7 +63,7 @@ public:
 
 /// \brief Represents the index register for searching a large NXlog
 /// (relatively) quickly based on timestamp.
-class CueIndex : public ExtensibleDataset<std::uint64_t> {
+class CueIndex : public ExtensibleDataset<std::int64_t> {
 public:
   CueIndex() = default;
   /// \brief Create the cue_index dataset of NXLog and NXevent_data.
@@ -93,7 +93,7 @@ public:
 
 /// \brief Represents the (radiation) detector event id dataset in a
 /// NXevent_data.
-class EventId : public ExtensibleDataset<std::uint32_t> {
+class EventId : public ExtensibleDataset<std::int32_t> {
 public:
   EventId() = default;
   /// \brief Create the event_id dataset of NXevent_data.
@@ -122,7 +122,7 @@ public:
 
 /// \brief Represents the (radiation) detector event index that ties
 /// EventTimeZero to event id and offset in a NXevent_data.
-class EventIndex : public ExtensibleDataset<std::uint64_t> {
+class EventIndex : public ExtensibleDataset<std::int64_t> {
 public:
   EventIndex() = default;
   /// \brief Create the event_index dataset of NXevent_data.

@@ -22,7 +22,7 @@ bool da00_Extractor::verify(FBMessage const &Message) const {
   return Verifyda00_DataArrayBuffer(Verifier);
 }
 
-uint64_t da00_Extractor::timestamp(FBMessage const &Message) const {
+int64_t da00_Extractor::timestamp(FBMessage const &Message) const {
   auto FbPointer = Getda00_DataArray(Message.data());
   return FbPointer->timestamp();
 }

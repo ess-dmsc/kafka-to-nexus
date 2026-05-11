@@ -20,7 +20,7 @@ std::string al00_Extractor::source_name(
   return SourceName->str();
 }
 
-uint64_t
+int64_t
 al00_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
   auto FBuffer = GetAlarm(Message.data());
   return FBuffer->timestamp();
