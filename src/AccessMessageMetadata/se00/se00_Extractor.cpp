@@ -27,7 +27,7 @@ bool se00_Extractor::verify(FlatbufferMessage const &Message) const {
   return Verifyse00_SampleEnvironmentDataBuffer(Verifier);
 }
 
-uint64_t se00_Extractor::timestamp(FlatbufferMessage const &Message) const {
+int64_t se00_Extractor::timestamp(FlatbufferMessage const &Message) const {
   auto FbPointer = Getse00_SampleEnvironmentData(Message.data());
   return FbPointer->packet_timestamp();
 }

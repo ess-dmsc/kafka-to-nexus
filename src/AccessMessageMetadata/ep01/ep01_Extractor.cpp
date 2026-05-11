@@ -20,7 +20,7 @@ std::string ep01_Extractor::source_name(
   return SourceName->str();
 }
 
-uint64_t
+int64_t
 ep01_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
   auto FBuffer = GetEpicsPVConnectionInfo(Message.data());
   return FBuffer->timestamp();

@@ -27,7 +27,7 @@ bool tdct_Extractor::verify(FlatbufferMessage const &Message) const {
   return VerifytimestampBuffer(Verifier);
 }
 
-uint64_t tdct_Extractor::timestamp(FlatbufferMessage const &Message) const {
+int64_t tdct_Extractor::timestamp(FlatbufferMessage const &Message) const {
   auto FbPointer = Gettimestamp(Message.data());
   if (FbPointer->timestamps()->size() == 0) {
     throw std::runtime_error(

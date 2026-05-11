@@ -20,7 +20,7 @@ std::string f144_Extractor::source_name(
   return SourceName->str();
 }
 
-uint64_t
+int64_t
 f144_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
   auto FBuffer = Getf144_LogData(Message.data());
   return FBuffer->timestamp();
