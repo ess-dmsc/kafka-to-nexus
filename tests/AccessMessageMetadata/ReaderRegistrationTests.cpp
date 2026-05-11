@@ -32,7 +32,7 @@ public:
   source_name(FlatbufferMessage const & /*Message*/) const override {
     return std::string();
   }
-  std::uint64_t
+  std::int64_t
   timestamp(FlatbufferMessage const & /*Message*/) const override {
     return 0;
   }

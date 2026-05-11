@@ -19,7 +19,7 @@
 static std::unique_ptr<std::uint8_t[]>
 GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
-  std::vector<std::uint64_t> TestTimestamps{11, 22, 33, 44, 55, 66};
+  std::vector<std::int64_t> TestTimestamps{11, 22, 33, 44, 55, 66};
   auto FBTimestampOffset = builder.CreateVector(TestTimestamps);
   auto FBNameStringOffset = builder.CreateString("SomeTestString");
   timestampBuilder MessageBuilder(builder);

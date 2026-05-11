@@ -26,7 +26,7 @@ namespace se00 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = WriterModule::Base;
 
-std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
+std::vector<std::int64_t> GenerateTimeStamps(std::int64_t OriginTimeStamp,
                                               double TimeDelta,
                                               int NumberOfElements);
 

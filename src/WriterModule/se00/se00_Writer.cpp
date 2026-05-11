@@ -79,7 +79,7 @@ void se00_Writer::config_post_processing() {
   }
 }
 
-std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
+std::vector<std::int64_t> GenerateTimeStamps(std::int64_t OriginTimeStamp,
                                               double TimeDelta,
                                               int NumberOfElements) {
   std::vector<std::uint64_t> ReturnVector(NumberOfElements);
@@ -213,7 +213,7 @@ bool se00_Writer::writeImpl(const FileWriter::FlatbufferMessage &Message,
     hdf5::ArrayAdapter<const std::int64_t> TSArray(TimestampPtr, TimestampSize);
     Timestamp.appendArray(TSArray);
   } else { // If timestamps are not available, generate them
-    std::vector<std::uint64_t> TempTimeStamps(GenerateTimeStamps(
+    std::vector<std::int64_t> TempTimeStamps(GenerateTimeStamps(
         FbPointer->packet_timestamp(), FbPointer->time_delta(), NrOfElements));
     Timestamp.appendArray(TempTimeStamps);
   }
