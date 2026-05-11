@@ -38,7 +38,7 @@ CueIndex::CueIndex(hdf5::node::Group const &Parent, Mode CMode,
 CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
                                    size_t ChunkSize)
     : ExtensibleDataset<std::int64_t>(Parent, "cue_timestamp_zero", CMode,
-                                       ChunkSize) {
+                                      ChunkSize) {
   if (Mode::Create == CMode) {
     auto StartAttr = _dataset.attributes.create<std::string>("start");
     StartAttr.write("1970-01-01T00:00:00Z");

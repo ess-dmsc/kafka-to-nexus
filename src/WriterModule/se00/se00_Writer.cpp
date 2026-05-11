@@ -80,8 +80,8 @@ void se00_Writer::config_post_processing() {
 }
 
 std::vector<std::int64_t> GenerateTimeStamps(std::int64_t OriginTimeStamp,
-                                              double TimeDelta,
-                                              int NumberOfElements) {
+                                             double TimeDelta,
+                                             int NumberOfElements) {
   std::vector<std::uint64_t> ReturnVector(NumberOfElements);
   for (int i = 0; i < NumberOfElements; i++) {
     ReturnVector[i] = OriginTimeStamp + std::llround(i * TimeDelta);

@@ -37,8 +37,7 @@ public:
   source_name(FlatbufferMessage const & /*Message*/) const override {
     return "SomeSourceName";
   }
-  std::int64_t
-  timestamp(FlatbufferMessage const & /*Message*/) const override {
+  std::int64_t timestamp(FlatbufferMessage const & /*Message*/) const override {
     return 42;
   }
 };
@@ -52,8 +51,7 @@ public:
   source_name(FlatbufferMessage const & /*Message*/) const override {
     return "SomeSourceName";
   }
-  std::int64_t
-  timestamp(FlatbufferMessage const & /*Message*/) const override {
+  std::int64_t timestamp(FlatbufferMessage const & /*Message*/) const override {
     return 42;
   }
 };
