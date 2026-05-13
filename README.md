@@ -21,7 +21,7 @@ The following minimum software is required to get started:
 
 - Linux or MacOS
 - Conan < 2.0.0
-- CMake >= 3.21
+- CMake >= 3.23 (CMakePresets version 4 support)
 - Git
 - A C++17 compatible compiler
 - Doxygen (only required if you would like to generate the documentation)
@@ -40,7 +40,7 @@ conan config install https://github.com/ess-dmsc/conan-configuration.git
 From within the top-most directory:
 
 ```bash
-conan install . -if=build/Release --build=missing
+conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
 
 cmake --preset=release
 cmake --build --preset=release
@@ -60,7 +60,7 @@ We have three levels of tests:
 ### Building and running the unit tests (Debug)
 
 ```bash
-conan install . -if=build/Debug -s build_type=Debug --build=missing
+conan install . -if=build/Debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
 
 cmake --preset=debug
 cmake --build --preset=debug
