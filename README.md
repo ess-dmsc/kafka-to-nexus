@@ -36,11 +36,17 @@ Use ECDC's common Conan config for supported profiles and settings
 conan config install https://github.com/ess-dmsc/conan-configuration.git
 ```
 
+For Linux builds, we recommend using the `linux_x86_64_gcc11` Conan profile.
+
+If you're building on macOS or using a different compiler, see the Conan configuration for other supported profiles.
+
+Alternatively, you can omit the `--profile` argument and use your default Conan profile.
+
 ### Build Release
 From within the top-most directory:
 
 ```bash
-conan install . -if=build/Release --build=missing
+conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
 
 cmake --preset=release
 cmake --build --preset=release
@@ -60,7 +66,7 @@ We have three levels of tests:
 ### Building and running the unit tests (Debug)
 
 ```bash
-conan install . -if=build/Debug -s build_type=Debug --build=missing
+conan install . -if=build/Debug -s build_type=Debug --build=missing --profile=linux_x86_64_gcc11
 
 cmake --preset=debug
 cmake --build --preset=debug
