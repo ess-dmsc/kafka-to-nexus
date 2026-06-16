@@ -120,7 +120,7 @@ bool ev44_Writer::writeImpl(FlatbufferMessage const &Message,
     std::transform(
         ReferenceTimeIndex->begin(), ReferenceTimeIndex->end(),
         ShiftedReferenceTimeIndex.begin(),
-        [this](const int32_t elem) { return elem + this->EventsWritten; });
+        [this](const int64_t elem) { return elem + this->EventsWritten; });
     EventIndex.appendArray(ShiftedReferenceTimeIndex);
 
     EventsWritten += CurrentNumberOfEvents;

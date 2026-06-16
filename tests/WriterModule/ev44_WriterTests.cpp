@@ -13,6 +13,7 @@
 #include <ev44_events_generated.h>
 #include <gmock/gmock.h>
 
+#include <limits>
 #include <utility>
 
 #include "AccessMessageMetadata/ev44/ev44_Extractor.h"
@@ -27,6 +28,7 @@ flatbuffers::DetachedBuffer generateFlatbufferData(
     std::vector<int32_t> const &TimeOfFlight = {101, 102, 201},
     std::vector<int32_t> const &DetectorID = {101, 102, 201},
     std::vector<int64_t> const &ReferenceTime = {1000, 2000},
+    // this might need to be 64 bit for the actual type in the file but will need to be 32 bit for the flatbuffer
     std::vector<int32_t> const &ReferenceTimeIndex = {0, 2}) {
   flatbuffers::FlatBufferBuilder builder;
 
@@ -657,4 +659,22 @@ TEST_F(Event44WriterTests, buffered_data_not_written) {
 
   EXPECT_EQ(0, EventTimeOffsetDataset.dataspace().size());
   EXPECT_EQ(0, EventTimeZeroDataset.dataspace().size());
+}
+
+TEST_F(Event44WriterTests,
+       EventIdDatasetCanExtendBeyondInt32MaxEventCount) {
+  WriterModule::ev44::ev44_Writer Writer;
+  Writer.parse_config("{}");
+  EXPECT_TRUE(Writer.init_hdf(TestGroup) == InitResult::OK);
+  EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+
+  auto const &EventIdDataset = Writer.EventId.dataset();
+  auto &MutableEventIdDataset = const_cast<hdf5::node::Dataset &>(EventIdDataset);
+  size_t const LargeEventCount =
+      static_cast<size_t>(std::numeric_limits<int32_t>::max()) + 1u;
+
+  EXPECT_NO_THROW(MutableEventIdDataset.extent(0, LargeEventCount))
+      << "EventId dataset should allow extension beyond int32 max count";
+  EXPECT_EQ(MutableEventIdDataset.dataspace().size(), LargeEventCount)
+      << "EventId dataset should report a dataspace size larger than int32 max";
 }

@@ -54,6 +54,6 @@ private:
   // Buffer where ReferenceTimeIndex of every message is shifted by the number
   // of EventsWritten before storing it on file. Using a member variable to
   // reduce memory allocations.
-  std::vector<int32_t> ShiftedReferenceTimeIndex;
+  std::vector<int64_t> ShiftedReferenceTimeIndex;
 };
 } // namespace WriterModule::ev44
