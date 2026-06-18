@@ -210,16 +210,15 @@ int main(int argc, char **argv) {
   add_uri_option(
       app, "--grafana-carbon-address", options->GrafanaCarbonAddress,
       "<host:port> Address to the Grafana (Carbon) metrics service.");
-  std::string log_level_info =
-      R"*(Set log message level. Set to 0 - 5 or one of
-      `Critical`, `Error`, `Warning`, `Info`, `Debug` or `Trace`.
-      Ex: "-v Debug". Default: `Info`)*";
   app.add_option(
       "-v,--verbosity",
-      [&options, log_level_info](std::vector<std::string> input) {
+      [&options](std::vector<std::string> input) {
         return parse_log_level(std::move(input), options->LoggingLevel);
       },
-      log_level_info, true);
+      wrap_lines("Set log message level. Set to 0 - 5 or one of "
+                 "`Critical`, `Error`, `Warning`, `Info`, `Debug` or `Trace`. "
+                 "Ex: '-v Debug'. Default: `Info`"),
+      true);
   app.add_option(
       "--hdf-output-prefix", options->HDFOutputPrefix,
       wrap_lines("Relative or absolute path to directory which gets "
