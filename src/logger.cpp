@@ -8,9 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "logger.h"
-#include "URI.h"
 #include <date/date.h>
-#include <string>
 
 void setUpLogging(LogSeverity const &logging_level) {
   auto logger = Logger::instance();
@@ -34,5 +32,4 @@ void setUpLogging(LogSeverity const &logging_level) {
     logger->set_level(spdlog::level::trace);
     break;
   }
-  logger->set_level(spdlog::level::trace);
 }

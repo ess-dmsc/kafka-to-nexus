@@ -212,8 +212,8 @@ int main(int argc, char **argv) {
       "<host:port> Address to the Grafana (Carbon) metrics service.");
   std::string log_level_info =
       R"*(Set log message level. Set to 0 - 5 or one of
-  `Debug`, `Info`, `Warning`, `Error`
-  or `Critical`. Ex: "-v Debug". Default: `Error`)*";
+      `Critical`, `Error`, `Warning`, `Info`, `Debug` or `Trace`.
+      Ex: "-v Debug". Default: `Info`)*";
   app.add_option(
       "-v,--verbosity",
       [&options, log_level_info](std::vector<std::string> input) {
