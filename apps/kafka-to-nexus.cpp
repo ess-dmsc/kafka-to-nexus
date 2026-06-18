@@ -282,13 +282,12 @@ int main(int argc, char **argv) {
       options->StreamerConfiguration.DataFlushInterval,
       R"((Max) amount of time between flushing of data to file, in seconds.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
-  app.add_option("--metric-server-port", options->msport,
-                 "Port to run the metrics server on");
-
   add_kafka_option(
       app, "-X,--kafka-config",
       options->StreamerConfiguration.BrokerSettings.KafkaConfiguration,
       "LibRDKafka options");
+  app.add_option("--metric-server-port", options->msport,
+                 "Port to run the metrics server on");
   app.set_config("-c,--config-file", "", "Read configuration from an ini file");
 
   try {
