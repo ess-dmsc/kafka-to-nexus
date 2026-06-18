@@ -21,7 +21,7 @@ The following minimum software is required to get started:
 
 - Linux or MacOS
 - Conan < 2.0.0
-- CMake >= 3.21
+- CMake >= 3.26
 - Git
 - A C++17 compatible compiler
 - Doxygen (only required if you would like to generate the documentation)
