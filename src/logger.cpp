@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "logger.h"
-#include <date/date.h>
 
 void setUpLogging(LogSeverity const &logging_level) {
   auto logger = Logger::instance();
