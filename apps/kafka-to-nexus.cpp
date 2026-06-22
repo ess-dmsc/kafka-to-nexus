@@ -210,16 +210,15 @@ int main(int argc, char **argv) {
   add_uri_option(
       app, "--grafana-carbon-address", options->GrafanaCarbonAddress,
       "<host:port> Address to the Grafana (Carbon) metrics service.");
-  std::string log_level_info =
-      R"*(Set log message level. Set to 0 - 5 or one of
-  `Debug`, `Info`, `Warning`, `Error`
-  or `Critical`. Ex: "-v Debug". Default: `Error`)*";
   app.add_option(
       "-v,--verbosity",
-      [&options, log_level_info](std::vector<std::string> input) {
+      [&options](std::vector<std::string> input) {
         return parse_log_level(std::move(input), options->LoggingLevel);
       },
-      log_level_info, true);
+      wrap_lines("Set log message level. Set to 0 - 5 or one of "
+                 "`Critical`, `Error`, `Warning`, `Info`, `Debug` or `Trace`. "
+                 "Ex: '-v Debug'. Default: `Info`"),
+      true);
   app.add_option(
       "--hdf-output-prefix", options->HDFOutputPrefix,
       wrap_lines("Relative or absolute path to directory which gets "
@@ -283,13 +282,12 @@ int main(int argc, char **argv) {
       options->StreamerConfiguration.DataFlushInterval,
       R"((Max) amount of time between flushing of data to file, in seconds.  Ex. "10s". Accepts "h", "m", "s" and "ms".)",
       true);
-  app.add_option("--metric-server-port", options->msport,
-                 "Port to run the metrics server on");
-
   add_kafka_option(
       app, "-X,--kafka-config",
       options->StreamerConfiguration.BrokerSettings.KafkaConfiguration,
       "LibRDKafka options");
+  app.add_option("--metric-server-port", options->msport,
+                 "Port to run the metrics server on");
   app.set_config("-c,--config-file", "", "Read configuration from an ini file");
 
   try {
