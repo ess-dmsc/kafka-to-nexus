@@ -61,7 +61,11 @@ class KafkaToNexusConan(ConanFile):
             flags = "-fsanitize=address,undefined -fno-omit-frame-pointer -DSANITIZER_CAN_USE_ALLOCATOR64=0"
         elif sanitizer == "thread":
             flags = "-fsanitize=thread"
-        elif sanitizer == "undefined":
+        elif sanitizer == "none":
+            pass
+        else:
+            # Default to using undefined behaviour sanitizer by default.
+            # It has a minimal affect on performance and binary size.
             flags = "-fsanitize=undefined -fno-omit-frame-pointer"
 
         if flags:
