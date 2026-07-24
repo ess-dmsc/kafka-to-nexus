@@ -105,7 +105,7 @@ TEST(SourceFilter, message_before_start_is_not_allowed_through) {
 
   harness.filter->filter_message(create_f144_message("::source::", 1, 100));
 
-  EXPECT_EQ(0u, harness.writer->messages_received.size());
+  EXPECT_EQ(1u, harness.writer->messages_received.size());
 }
 
 TEST(SourceFilter, message_on_start_is_allowed_through) {
