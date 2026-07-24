@@ -97,6 +97,7 @@ public:
     ID = Other.ID;
     Timestamp = Other.Timestamp;
     Valid = Other.Valid;
+    Written = Other.Written;
     return *this;
   }
 
@@ -104,6 +105,16 @@ public:
   ///
   /// \return `true` if valid, `false` if not.
   bool isValid() const { return Valid; };
+
+  /// \brief Check if FlatbufferMessage writing has been attempted.
+  ///
+  /// \return `true` if written, `false` if not.
+  bool isWritten() const { return Written; };
+
+  /// \brief Change state of FlatbufferMessage writing flag.
+  ///
+  /// \return None
+  void setWritten(bool state) { Written = state; };
 
   /// \brief Get the source name of the flatbuffer.
   ///
@@ -154,6 +165,7 @@ private:
   std::string ID;
   std::int64_t Timestamp{0};
   bool Valid{false};
+  bool Written{false};
 };
 
 FlatbufferMessage::SrcHash calcSourceHash(std::string const &ID,
