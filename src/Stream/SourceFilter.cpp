@@ -59,7 +59,7 @@ void SourceFilter::set_stop_time(time_point stop_time) {
 bool SourceFilter::has_finished() const { return _is_finished; }
 
 void SourceFilter::forward_buffered_message() {
-  if (_buffered_message.isValid()) {
+  if (_buffered_message.isValid() && !_buffered_message.isWritten()) {
     forward_message(_buffered_message, true);
     _buffered_message = FileWriter::FlatbufferMessage();
   }
@@ -106,6 +106,7 @@ bool SourceFilter::filter_message(
       return false;
     }
     forward_message(message); //  sent it first time so it appears in the file
+    message.setWritten(true);
     _buffered_message = message;
     return true;
   }
