@@ -105,8 +105,9 @@ bool SourceFilter::filter_message(
       (*MessagesDiscarded)++;
       return false;
     }
+    forward_message(message); //  sent it first time so it appears in the file
     _buffered_message = message;
-    return false;
+    return true;
   }
   if (message_time > _stop_time) {
     _is_finished = true;
