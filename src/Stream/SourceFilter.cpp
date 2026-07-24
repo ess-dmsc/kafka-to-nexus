@@ -100,16 +100,23 @@ bool SourceFilter::filter_message(
 
   auto message_time = to_timepoint(message.getTimestamp());
   if (message_time < _start_time) {
-    if (_buffered_message.isValid() &&
-        message_time < to_timepoint(_buffered_message.getTimestamp())) {
-      (*MessagesDiscarded)++;
-      return false;
+    if (_buffered_message.isValid()) {
+      if (message_time < to_timepoint(_buffered_message.getTimestamp())) {
+        (*MessagesDiscarded)++;
+        return false;
+      } else if (message_time ==
+                 to_timepoint(
+                     _buffered_message
+                         .getTimestamp())) { //  repeated from forwarder
+        forward_buffered_message();
+        _buffered_message = message;
+        _buffered_message.setWritten(
+            true); //  this is mutable so we can mark it as written
+        return true;
+      }
     }
-    forward_message(message); //  sent it first time so it appears in the file
     _buffered_message = message;
-    _buffered_message.setWritten(
-        true); //  this is mutable so we can mark it as written
-    return true;
+    return false;
   }
   if (message_time > _stop_time) {
     _is_finished = true;
