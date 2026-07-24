@@ -106,8 +106,8 @@ bool SourceFilter::filter_message(
       return false;
     }
     forward_message(message); //  sent it first time so it appears in the file
-    message.setWritten(true);
     _buffered_message = message;
+    _buffered_message.setWritten(true); //  this is mutable so we can mark it as written
     return true;
   }
   if (message_time > _stop_time) {
