@@ -13,6 +13,7 @@ workflow:
 variables:
   ALMALINUX9_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-almalinux9-conan:1.4.0"
   CENTOS7_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-centos7-conan:1.4.0"
+  UBUNTU2204_IMAGE: "registry.esss.lu.se/ecdc/ess-dmsc/docker-ubuntu2204-conan:1.0.0"
   CONAN_USER_HOME: "$CI_PROJECT_DIR"
 
 stages:
@@ -137,6 +138,29 @@ almalinux9-release:
     - mkdir -p dist/kafka-to-nexus
     - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
     - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-almalinux9.tar.gz"
+    - tar -C dist -czf dist/$ARCHIVE_NAME kafka-to-nexus
+  extends: .versioning_rules
+  artifacts:
+    paths:
+      - build/
+      - dist/
+
+ubuntu2204-release:
+  stage: build
+  image: $UBUNTU2204_IMAGE
+  dependencies:
+    - conan_setup
+  script:
+    - conan install . -if=build/Release -s build_type=Release --build=missing --profile=linux_x86_64_gcc11
+    - cmake --preset=release
+    - cmake --build --preset=release
+
+    # Creating distribution files
+    - conan export-pkg . kafka-to-nexus/$VERSION@ -f -bf=build/Release
+    - PKG_PATH=$(find .conan/data/kafka-to-nexus/$VERSION/_/_/package -mindepth 1 -maxdepth 1 -type d | head -n 1)
+    - mkdir -p dist/kafka-to-nexus
+    - cp -r ${PKG_PATH}/* dist/kafka-to-nexus/ # unpacked
+    - ARCHIVE_NAME="kafka-to-nexus-${VERSION}-ubuntu2204.tar.gz"
     - tar -C dist -czf dist/$ARCHIVE_NAME kafka-to-nexus
   extends: .versioning_rules
   artifacts:
