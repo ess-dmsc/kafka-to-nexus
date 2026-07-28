@@ -93,7 +93,7 @@ bool SourceFilter::filter_message(
   if (message.getTimestamp() == _last_seen_timestamp) {
     (*RepeatedTimestamp)++;
     if (!_allow_repeated_timestamps) {
-      if (_buffered_message.isValid() &&
+      if (_buffered_message.isValid() && !_buffered_message.isWritten() &&
           message.getTimestamp() ==
               _buffered_message
                   .getTimestamp()) { //  must be repeated from forwarder
