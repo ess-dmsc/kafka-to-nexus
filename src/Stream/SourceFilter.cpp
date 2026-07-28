@@ -72,15 +72,18 @@ time_point to_timepoint(int64_t timestamp) {
 
 bool SourceFilter::filter_message(
     FileWriter::FlatbufferMessage const &message) {
+
   if (message.getSourceHash() != _source_hash) {
     // Not intended for this filter
     return false;
   }
   (*MessagesReceived)++;
+
   if (_is_finished) {
     (*MessagesDiscarded)++;
     return false;
   }
+
   if (!message.isValid()) {
     (*MessagesDiscarded)++;
     (*FlatbufferInvalid)++;
@@ -90,6 +93,16 @@ bool SourceFilter::filter_message(
   if (message.getTimestamp() == _last_seen_timestamp) {
     (*RepeatedTimestamp)++;
     if (!_allow_repeated_timestamps) {
+      if (_buffered_message.isValid() &&
+          message.getTimestamp() ==
+              _buffered_message
+                  .getTimestamp()) { //  must be repeated from forwarder
+        forward_buffered_message();
+        _buffered_message = message;
+        _buffered_message.setWritten(
+            true); //  this is mutable so we can mark it as written
+        return true;
+      }
       (*MessagesDiscarded)++;
       return false;
     }
@@ -104,25 +117,18 @@ bool SourceFilter::filter_message(
       if (message_time < to_timepoint(_buffered_message.getTimestamp())) {
         (*MessagesDiscarded)++;
         return false;
-      } else if (message_time ==
-                 to_timepoint(
-                     _buffered_message
-                         .getTimestamp())) { //  repeated from forwarder
-        forward_buffered_message();
-        _buffered_message = message;
-        _buffered_message.setWritten(
-            true); //  this is mutable so we can mark it as written
-        return true;
       }
     }
     _buffered_message = message;
     return false;
   }
+
   if (message_time > _stop_time) {
     _is_finished = true;
     forward_buffered_message();
     return false;
   }
+
   forward_buffered_message();
   forward_message(message);
   return true;
