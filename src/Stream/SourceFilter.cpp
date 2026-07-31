@@ -113,9 +113,10 @@ bool SourceFilter::filter_message(
 
   auto message_time = to_timepoint(message.getTimestamp());
   if (message_time < _start_time) {
-    if (_buffered_message.isValid() && message_time < to_timepoint(_buffered_message.getTimestamp())) {
-        (*MessagesDiscarded)++;
-        return false;
+    if (_buffered_message.isValid() &&
+        message_time < to_timepoint(_buffered_message.getTimestamp())) {
+      (*MessagesDiscarded)++;
+      return false;
     }
     _buffered_message = message;
     return false;
