@@ -94,13 +94,12 @@ bool SourceFilter::filter_message(
     (*RepeatedTimestamp)++;
     if (!_allow_repeated_timestamps) {
       if (_buffered_message.isValid() && !_buffered_message.isWritten() &&
-          message.getTimestamp() ==
-              _buffered_message
-                  .getTimestamp()) { //  must be repeated from forwarder
+          message.getTimestamp() == _buffered_message.getTimestamp()) {
+        // if we have a buffered message with the same timestamp, we can safely
+        // assume it's a periodic message from the forwarder
         forward_buffered_message();
         _buffered_message = message;
-        _buffered_message.setWritten(
-            true); //  this is mutable so we can mark it as written
+        _buffered_message.setWritten(true);
         return true;
       }
       (*MessagesDiscarded)++;
