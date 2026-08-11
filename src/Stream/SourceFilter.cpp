@@ -59,7 +59,7 @@ void SourceFilter::set_stop_time(time_point stop_time) {
 bool SourceFilter::has_finished() const { return _is_finished; }
 
 void SourceFilter::forward_buffered_message() {
-  if (_buffered_message.isValid()) {
+  if (_buffered_message.isValid() && !_buffered_message.isWritten()) {
     forward_message(_buffered_message, true);
     _buffered_message = FileWriter::FlatbufferMessage();
   }
@@ -72,15 +72,18 @@ time_point to_timepoint(int64_t timestamp) {
 
 bool SourceFilter::filter_message(
     FileWriter::FlatbufferMessage const &message) {
+
   if (message.getSourceHash() != _source_hash) {
     // Not intended for this filter
     return false;
   }
   (*MessagesReceived)++;
+
   if (_is_finished) {
     (*MessagesDiscarded)++;
     return false;
   }
+
   if (!message.isValid()) {
     (*MessagesDiscarded)++;
     (*FlatbufferInvalid)++;
@@ -90,6 +93,15 @@ bool SourceFilter::filter_message(
   if (message.getTimestamp() == _last_seen_timestamp) {
     (*RepeatedTimestamp)++;
     if (!_allow_repeated_timestamps) {
+      if (_buffered_message.isValid() && !_buffered_message.isWritten() &&
+          message.getTimestamp() == _buffered_message.getTimestamp()) {
+        // if we have a buffered message with the same timestamp, we can safely
+        // assume it's a periodic message from the forwarder
+        forward_buffered_message();
+        _buffered_message = message;
+        _buffered_message.setWritten(true);
+        return true;
+      }
       (*MessagesDiscarded)++;
       return false;
     }
@@ -108,11 +120,13 @@ bool SourceFilter::filter_message(
     _buffered_message = message;
     return false;
   }
+
   if (message_time > _stop_time) {
     _is_finished = true;
     forward_buffered_message();
     return false;
   }
+
   forward_buffered_message();
   forward_message(message);
   return true;
