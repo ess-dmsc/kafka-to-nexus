@@ -27,7 +27,7 @@ namespace WriterModule::da00 {
 /// See parent class for documentation.
 class da00_Writer : public WriterModule::Base {
 public:
-  da00_Writer() : WriterModule::Base("da00", false, "NXdata") {}
+  da00_Writer() : WriterModule::Base("da00", true, "NXdata") {}
   ~da00_Writer() override = default;
 
   void config_post_processing() override;
