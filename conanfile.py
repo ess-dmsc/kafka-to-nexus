@@ -19,7 +19,7 @@ class KafkaToNexusConan(ConanFile):
         "concurrentqueue/1.0.3",
         "date/3.0.1",
         "flatbuffers/1.12.0",
-        "streaming-data-types/13dd32d@ess-dmsc/stable",
+        "streaming-data-types/827577c@ess-dmsc/stable",
         "stduuid/1.2.2",
         "gtest/1.15.0",
         "cli11/2.2.0",
@@ -105,7 +105,7 @@ class KafkaToNexusConan(ConanFile):
         for exe in ["kafka-to-nexus", "file-maker", "template-maker"]:
             copy(self, exe, dst=os.path.join(self.package_folder, "bin"),
                  src=bin_dir, keep_path=False)
-            
+
         # Copy libs
         for pattern in ("*.dylib", "*.so*"):
             copy(self, pattern, dst=os.path.join(self.package_folder, "lib"),
