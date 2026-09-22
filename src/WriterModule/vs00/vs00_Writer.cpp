@@ -12,9 +12,9 @@
 #include "WriterRegistrar.h"
 #include "json.h"
 #include "logger.h"
-#include <vs00_stringdata_generated.h>
 #include <algorithm>
 #include <cctype>
+#include <vs00_stringdata_generated.h>
 
 namespace WriterModule::vs00 {
 
@@ -66,7 +66,7 @@ bool vs00_Writer::writeImpl(FlatbufferMessage const &Message,
 }
 
 /// Register the writer module.
-static WriterModule::Registry::Registrar<vs00_Writer>
-    RegisterWriter("vs00", "vs00");
+static WriterModule::Registry::Registrar<vs00_Writer> RegisterWriter("vs00",
+                                                                     "vs00");
 
 } // namespace WriterModule::vs00
