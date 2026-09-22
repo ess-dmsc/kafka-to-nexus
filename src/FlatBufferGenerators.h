@@ -104,6 +104,26 @@ create_al00_message_double(std::string const &source, int64_t timestamp_ms,
 }
 
 inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_vs00_message(std::string const &source, int64_t timestamp_ms,
+                    std::string value) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+  auto value_offset = builder.CreateString(value);
+
+  vs00_StringDataBuilder vs00_builder(builder);
+  vs00_builder.add_source_name(source_name_offset);
+  vs00_builder.add_value(value_offset);
+  vs00_builder.add_timestamp(timestamp_ms * 1000000);
+
+  Finishvs00_StringDataBuffer(builder, vs00_builder.Finish());
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_ev44_message(std::string const &source, int64_t message_id,
                     int64_t timestamp_ns,
                     std::vector<int32_t> const &time_of_flight,
@@ -276,6 +296,11 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
                                                 item["name"], item["axis_name"],
                                                 item["timestamp"], data);
     return da00_message;
+  } else if (schema == "vs00") {
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> vs00_message =
+        FlatBuffers::create_vs00_message_double(
+            item["source_name"], item["timestamp"], item["value"]);
+    return vs00_message;
   }
   throw std::runtime_error(fmt::format("Unknown schema {}", schema));
 }
