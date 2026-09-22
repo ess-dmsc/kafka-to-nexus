@@ -55,6 +55,7 @@ set(kafka_to_nexus_SRC
         AccessMessageMetadata/al00/al00_Extractor.cpp
         AccessMessageMetadata/ep01/ep01_Extractor.cpp
         AccessMessageMetadata/da00/da00_Extractor.cpp
+        AccessMessageMetadata/vs00/vs00_Extractor.cpp
         WriterModule/tdct/tdct_Writer.cpp
         WriterModule/template/TemplateWriter.cpp
         WriterModule/ad00/ad00_Writer.cpp
@@ -66,6 +67,7 @@ set(kafka_to_nexus_SRC
         WriterModule/mdat/mdat_Writer.cpp
         WriterModule/da00/da00_Writer.cpp
         WriterModule/da00/da00_Type.cpp
+        WriterModule/vs00/vs00_Writer.cpp
         HDFVersionCheck.cpp
         MetaData/Tracker.cpp
         MetaData/HDF5DataWriter.cpp
@@ -76,7 +78,7 @@ set(kafka_to_nexus_SRC
 add_library(filewriter_lib SHARED ${kafka_to_nexus_SRC})
 target_link_libraries(filewriter_lib
   PRIVATE
-    ${COMMON_LIBS} 
+    ${COMMON_LIBS}
 )
 target_include_directories(filewriter_lib PUBLIC .)
 enable_coverage_for_target(filewriter_lib)

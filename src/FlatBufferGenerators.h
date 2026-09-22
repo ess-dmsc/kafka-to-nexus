@@ -15,6 +15,7 @@
 #include <ep01_epics_connection_generated.h>
 #include <ev44_events_generated.h>
 #include <f144_logdata_generated.h>
+#include <vs00_stringdata_generated.h>
 #include <fmt/core.h>
 #include <iostream>
 #include <nlohmann/json.hpp>
