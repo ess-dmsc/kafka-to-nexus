@@ -10,18 +10,15 @@
 #pragma once
 
 #include "CommandSystem/Handler.h"
-#include "Kafka/PollStatus.h"
 #include "MainOpt.h"
 #include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
-#include "Msg.h"
+#include "StreamController.h"
 #include "Status/StatusInfo.h"
-#include <atomic>
 #include <chrono>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <vector>
 
 namespace Status {
 class StatusReporterBase;
