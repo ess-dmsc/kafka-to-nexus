@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.26)
 project("kafka-to-nexus")
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators")
 
@@ -76,22 +77,3 @@ add_subdirectory(apps)
 enable_testing()
 add_subdirectory(tests)
 
-option(RUN_DOXYGEN "Run doxygen" ON)
-if(RUN_DOXYGEN)
-    find_package(Doxygen REQUIRED)
-
-    set(DOXYGEN_INPUT_DIR "${CMAKE_SOURCE_DIR}/src")
-    set(DOXYGEN_OUTPUT_DIR "${CMAKE_BINARY_DIR}/docs")
-
-    set(DOXYGEN_CONFIG_FILE_IN "${CMAKE_SOURCE_DIR}/Doxygen.conf")
-    set(DOXYGEN_CONFIG_FILE_OUT "${CMAKE_BINARY_DIR}/dg.conf")
-
-    configure_file(${DOXYGEN_CONFIG_FILE_IN} ${DOXYGEN_CONFIG_FILE_OUT} @ONLY)
-
-    add_custom_target(docs
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG_FILE_OUT}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM
-    )
-endif()
