@@ -13,8 +13,8 @@
 #include "MainOpt.h"
 #include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
-#include "StreamController.h"
 #include "Status/StatusInfo.h"
+#include "StreamController.h"
 #include <chrono>
 #include <memory>
 #include <mutex>
