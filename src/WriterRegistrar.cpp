@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "WriterRegistrar.h"
+#include "ArrayGenerators.h"
 
 namespace WriterModule::Registry {
 
@@ -69,9 +70,10 @@ void addWriterModule(ModuleFlatbufferID const &ID, ModuleFactory Value) {
     throw std::runtime_error(
         "The number of characters in the Flatbuffer id string must be 4.");
   }
-  if (ID.Name == "dataset") {
-    throw std::runtime_error(
-        R"(The writer module name "dataset" has been reserved and can not be used.)");
+  if (ID.Name == "dataset" || ArrayGenerators::isGenerator(ID.Name)) {
+    throw std::runtime_error(fmt::format(
+        R"(The writer module name "{}" has been reserved and can not be used.)",
+        ID.Name));
   }
   auto ModuleHash = getWriterModuleHash(ID);
   if (Factories.find(ModuleHash) != Factories.end()) {

@@ -59,6 +59,7 @@ set(UnitTests_SRC
     helpers/StatusHelpers.cpp
     helpers/HDFFileTestHelper.cpp
     HDFOperationsTests.cpp
+    ArrayGeneratorsTests.cpp
     CommandSystem/FeedbackProducerTests.cpp
     CommandSystem/JobListenerTests.cpp
 )

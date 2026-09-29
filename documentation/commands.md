@@ -169,6 +169,68 @@ The parameters for the dataset definition are:
 
 In this example, attributes are assigned to the dataset on the same level in the hierarchy.
 
+#### Generated datasets
+
+Static datasets can also be generated from a few parameters, instead of listing all values, using the `arange`, `linspace` and `meshgrid` modules.
+These are prototypes for possible NeXus array-generator classes.
+Each follows the semantics of the [numpy](https://numpy.org/doc/stable/reference/routines.array-creation.html#numerical-ranges) function of the same name, and the generated values are written to the file as an ordinary dataset.
+As for static datasets, attributes are assigned on the same level in the hierarchy as `config`, and an already existing dataset (e.g. from a template file) is not overwritten.
+
+```JSON
+{
+  "module": "arange",
+  "config": {"name": "x", "start": 1, "stop": 11, "step": 1},
+  "attributes": {"units": "mm"}
+}
+```
+
+writes `x` containing `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`: as in numpy, `stop` is excluded.
+
+The parameters for `arange` are:
+- name: The name of the dataset in the NeXus file.
+- start: The first value. Defaults to 0.
+- stop: The end of the interval, which is not included.
+- step: The spacing between values, which may be negative but not zero. Defaults to 1.
+- dtype: The data type of the dataset. Defaults to int64 if start, stop and step are all integers, otherwise to double.
+
+The parameters for `linspace` are:
+- name: The name of the dataset in the NeXus file.
+- start: The first value.
+- stop: The last value, unless `endpoint` is false.
+- num: The number of values. Defaults to 50.
+- endpoint: Whether `stop` is the last value. Defaults to true.
+- dtype: The data type of the dataset. Defaults to double.
+
+`meshgrid` writes one N-dimensional dataset per input vector, where the vectors are `arange` or `linspace` nodes:
+
+```JSON
+{
+  "module": "meshgrid",
+  "config": {
+    "indexing": "xy",
+    "vectors": [
+      {"module": "arange", "config": {"name": "x", "stop": 3}, "attributes": {"units": "mm"}},
+      {"module": "linspace", "config": {"name": "y", "start": 0, "stop": 1, "num": 2}}
+    ]
+  },
+  "attributes": {"units": "m"}
+}
+```
+
+writes `x` containing `[[0, 1, 2], [0, 1, 2]]` and `y` containing `[[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]`.
+
+The parameters for `meshgrid` are:
+- vectors: The list of `arange` or `linspace` nodes. Each output dataset takes its name and data type from its vector.
+- indexing: `"xy"` (Cartesian) or `"ij"` (matrix) indexing, as for numpy. Defaults to `"xy"`.
+- sparse: If true, each output has length 1 along all but its own axis. Defaults to false.
+
+Attributes of the `meshgrid` node are written to every output dataset, and then those of each vector node, which replace any with the same name.
+
+Numeric data types are supported, i.e. not `string`.
+Values written to an integer data type are rounded down, as by numpy's `linspace`, and a value outside the range of the data type is an error.
+A generated dataset may have at most 2<sup>27</sup> elements.
+If the configuration is invalid, an error is logged and the dataset is not written.
+
 #### Links
 
 In HDF5 links are used to link a group to objects in other groups in a manner similar to links on a filesystem.

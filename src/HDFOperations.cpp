@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFOperations.h"
+#include "ArrayGenerators.h"
 #include "HDFAttributes.h"
 #include "JsonConfig/Field.h"
 #include "JsonConfig/FieldHandler.h"
@@ -446,6 +447,16 @@ void createHDFStructures(
               "{}. HDF5 Path: {}",
               CNode.Name.get_value(), e.what(),
               std::string(Parent.link().path()));
+        }
+      } else if (ArrayGenerators::isGenerator(CNode.Type.get_value())) {
+        try {
+          ArrayGenerators::writeGeneratedDatasets(
+              Parent, CNode.Type.get_value(), Value);
+        } catch (const std::exception &e) {
+          Logger::Error("Failed to create {} dataset(s). Message: {}. HDF5 "
+                        "Path: {}",
+                        CNode.Type.get_value(), e.what(),
+                        std::string(Parent.link().path()));
         }
       } else {
         std::string pathstr = std::accumulate(

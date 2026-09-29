@@ -22,6 +22,7 @@ set(kafka_to_nexus_SRC
         helper.cpp
         URI.cpp
         HDFOperations.cpp
+        ArrayGenerators.cpp
         Status/StatusReporter.cpp
         Status/StatusReporterBase.cpp
         Master.cpp
