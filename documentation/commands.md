@@ -171,9 +171,9 @@ In this example, attributes are assigned to the dataset on the same level in the
 
 #### Generated datasets
 
-Static datasets can also be generated from a few parameters, instead of listing all values, using the `arange`, `linspace` and `meshgrid` modules.
+Static datasets can also be generated from a few parameters, instead of listing all values, using the `arange`, `linspace`, `meshgrid` and `strided` modules.
 These are prototypes for possible NeXus array-generator classes.
-Each follows the semantics of the [numpy](https://numpy.org/doc/stable/reference/routines.array-creation.html#numerical-ranges) function of the same name, and the generated values are written to the file as an ordinary dataset.
+The first three follow the semantics of the [numpy](https://numpy.org/doc/stable/reference/routines.array-creation.html#numerical-ranges) function of the same name, and the generated values are written to the file as an ordinary dataset.
 As for static datasets, attributes are assigned on the same level in the hierarchy as `config`, and an already existing dataset (e.g. from a template file) is not overwritten.
 
 ```JSON
@@ -225,6 +225,28 @@ The parameters for `meshgrid` are:
 - sparse: If true, each output has length 1 along all but its own axis. Defaults to false.
 
 Attributes of the `meshgrid` node are written to every output dataset, and then those of each vector node, which replace any with the same name.
+
+`strided` writes an N-dimensional dataset whose values are a linear function of their indices, `start + strides[0]*i0 + strides[1]*i1 + ...`, e.g. detector numbers which run contiguously along a tube but jump between tubes:
+
+```JSON
+{
+  "module": "strided",
+  "config": {"name": "detector_number", "start": 1801, "shape": [3, 100], "strides": [900, 1], "dtype": "int32"}
+}
+```
+
+writes `detector_number` containing `[[1801, ..., 1900], [2701, ..., 2800], [3601, ..., 3700]]`, as would numpy's `1801 + np.add.outer(np.arange(3) * 900, np.arange(100))`.
+A zero stride repeats values along its axis, so pixel offsets can be given one dataset at a time, e.g. `"shape": [3, 100], "strides": [0, -0.002]` for positions which vary along the tubes only.
+
+The parameters for `strided` are:
+- name: The name of the dataset in the NeXus file.
+- start: The first value, at index zero along every axis. Defaults to 0.
+- shape: The length of each axis, as a non-empty list.
+- strides: The change in value per step along each axis, as a list of the same length as `shape`. Strides may be negative or zero.
+- dtype: The data type of the dataset. Defaults to int64 if start and all strides are integers, otherwise to double.
+
+Each value is calculated from its own indices, so rounding errors do not accumulate over the array.
+Unlike for `linspace`, the last value along an axis is the result of a calculation rather than given, so it may differ from an intended value by a rounding error.
 
 Numeric data types are supported, i.e. not `string`.
 Values written to an integer data type are rounded down, as by numpy's `linspace`, and a value outside the range of the data type is an error.

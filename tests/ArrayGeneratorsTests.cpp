@@ -114,6 +114,89 @@ TEST(Linspace, invalidNumThrows) {
   }
 }
 
+TEST(Strided, bifrostTripletDetectorNumbers) {
+  // numpy: 1801 + np.add.outer(np.arange(3) * 9 * 4, np.arange(4))
+  auto Array = ArrayGenerators::strided(json::parse(
+      R"({"name": "detector_number", "start": 1801, "shape": [3, 4],
+          "strides": [36, 1]})"));
+  EXPECT_EQ(Array.Name, "detector_number");
+  EXPECT_EQ(Array.Dimensions, Shape({3, 4}));
+  EXPECT_EQ(valuesOf<int64_t>(Array),
+            (std::vector<int64_t>{1801, 1802, 1803, 1804, 1837, 1838, 1839,
+                                  1840, 1873, 1874, 1875, 1876}));
+}
+
+TEST(Strided, oneDimensionIsLikeArange) {
+  auto Array = ArrayGenerators::strided(
+      json::parse(R"({"name": "x", "shape": [4], "strides": [-3]})"));
+  EXPECT_EQ(valuesOf<int64_t>(Array), (std::vector<int64_t>{0, -3, -6, -9}));
+}
+
+TEST(Strided, zeroStrideRepeatsAlongAnAxis) {
+  auto Array = ArrayGenerators::strided(json::parse(
+      R"({"name": "x", "start": 5, "shape": [2, 3], "strides": [10, 0]})"));
+  EXPECT_EQ(valuesOf<int64_t>(Array),
+            (std::vector<int64_t>{5, 5, 5, 15, 15, 15}));
+}
+
+TEST(Strided, threeDimensions) {
+  auto Array = ArrayGenerators::strided(json::parse(
+      R"({"name": "x", "shape": [2, 2, 2], "strides": [100, 10, 1]})"));
+  EXPECT_EQ(valuesOf<int64_t>(Array),
+            (std::vector<int64_t>{0, 1, 10, 11, 100, 101, 110, 111}));
+}
+
+TEST(Strided, anyFloatGivesFloatValues) {
+  auto Array = ArrayGenerators::strided(json::parse(
+      R"({"name": "x", "start": -0.5, "shape": [2, 3], "strides": [0.25, 1]})"));
+  EXPECT_EQ(valuesOf<double>(Array),
+            (std::vector<double>{-0.5, 0.5, 1.5, -0.25, 0.75, 1.75}));
+}
+
+TEST(Strided, valuesDoNotAccumulateRoundingErrors) {
+  auto Array = ArrayGenerators::strided(
+      json::parse(R"({"name": "x", "shape": [100001], "strides": [0.1]})"));
+  EXPECT_EQ(valuesOf<double>(Array).back(), 100000 * 0.1);
+}
+
+TEST(Strided, emptyAxisGivesEmptyArray) {
+  auto Array = ArrayGenerators::strided(
+      json::parse(R"({"name": "x", "shape": [3, 0], "strides": [1, 1]})"));
+  EXPECT_EQ(Array.Dimensions, Shape({3, 0}));
+  EXPECT_TRUE(valuesOf<int64_t>(Array).empty());
+}
+
+TEST(Strided, int64LimitsAreReachable) {
+  auto Array = ArrayGenerators::strided(json::parse(
+      R"({"name": "x", "start": 9223372036854775806, "shape": [2],
+          "strides": [1]})"));
+  EXPECT_EQ(valuesOf<int64_t>(Array).back(),
+            std::numeric_limits<int64_t>::max());
+}
+
+TEST(Strided, invalidConfigThrows) {
+  for (auto const &Config : {
+           R"({"name": "x", "shape": [2, 3], "strides": [1]})",
+           R"({"name": "x", "shape": [], "strides": []})",
+           R"({"name": "x", "shape": [-1], "strides": [1]})",
+           R"({"name": "x", "shape": [2.5], "strides": [1]})",
+           R"({"name": "x", "shape": 3, "strides": 1})",
+           R"({"name": "x", "shape": [2], "strides": ["one"]})",
+           R"({"name": "x", "start": "zero", "shape": [2], "strides": [1]})",
+           R"({"name": "x", "shape": [2]})",
+           R"({"shape": [2], "strides": [1]})",
+           R"({"name": "x", "shape": [65536, 65536], "strides": [1, 1]})",
+           R"({"name": "x", "start": 9223372036854775807, "shape": [2],
+               "strides": [1]})",
+           R"({"name": "x", "start": -9223372036854775807, "shape": [2, 2],
+               "strides": [-1, -1]})",
+       }) {
+    EXPECT_THROW(ArrayGenerators::strided(json::parse(Config)),
+                 std::runtime_error)
+        << Config;
+  }
+}
+
 class Meshgrid : public ::testing::Test {
 public:
   json config(std::string const &Extra = "") {
@@ -270,6 +353,28 @@ TEST_F(ArrayGeneratorsFile, meshgridIsWritten) {
   EXPECT_EQ(read<double>("/y"), (std::vector<double>{0, 0, 0, 1, 1, 1}));
 }
 
+TEST_F(ArrayGeneratorsFile, stridedIsWritten) {
+  init(R"({"module": "strided",
+           "config": {"name": "detector_number", "start": 1, "shape": [2, 3],
+                      "strides": [30, 1], "dtype": "int32"}},
+          {"module": "strided",
+           "config": {"name": "y_pixel_offset", "start": 0.5, "shape": [2, 3],
+                      "strides": [0, -0.25]},
+           "attributes": {"units": "m"}})");
+  auto Dimensions =
+      hdf5::dataspace::Simple(dataset("/detector_number").dataspace())
+          .current_dimensions();
+  EXPECT_EQ(Dimensions, hdf5::Dimensions({2, 3}));
+  EXPECT_EQ(dataset("/detector_number").datatype(),
+            hdf5::datatype::create<int32_t>());
+  EXPECT_EQ(read<int32_t>("/detector_number"),
+            (std::vector<int32_t>{1, 2, 3, 31, 32, 33}));
+  EXPECT_EQ(dataset("/y_pixel_offset").datatype(),
+            hdf5::datatype::create<double>());
+  EXPECT_EQ(read<double>("/y_pixel_offset"),
+            (std::vector<double>{0.5, 0.25, 0, 0.5, 0.25, 0}));
+}
+
 TEST_F(ArrayGeneratorsFile, outOfRangeValuesAreNotWritten) {
   init(R"({"module": "arange",
            "config": {"name": "x", "start": 250, "stop": 260, "dtype": "uint8"}})");
@@ -290,7 +395,7 @@ TEST_F(ArrayGeneratorsFile, invalidConfigDoesNotStopOtherDatasets) {
 }
 
 TEST(ArrayGeneratorNames, areReservedForWriterModules) {
-  for (auto const &Name : {"arange", "linspace", "meshgrid"}) {
+  for (auto const &Name : {"arange", "linspace", "meshgrid", "strided"}) {
     EXPECT_THROW(WriterModule::Registry::addWriterModule(
                      {"abcd", Name}, []() { return nullptr; }),
                  std::runtime_error)

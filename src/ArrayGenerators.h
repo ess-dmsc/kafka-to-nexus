@@ -57,6 +57,14 @@ GeneratedArray arange(nlohmann::json const &Config);
 /// stop, including stop unless endpoint is false.
 GeneratedArray linspace(nlohmann::json const &Config);
 
+/// \brief An N-dimensional array whose values are a linear function of their
+/// indices: value[i0, i1, ...] = start + sum(strides[k] * ik).
+///
+/// Equivalent to numpy.lib.stride_tricks.as_strided applied to an arange, but
+/// with strides in values rather than bytes. The data type defaults to int64
+/// when start and all strides are integers, otherwise to double.
+GeneratedArray strided(nlohmann::json const &Config);
+
 /// \brief numpy.meshgrid: one N-dimensional array per input vector.
 ///
 /// The vectors are given as a list of arange or linspace nodes, e.g.

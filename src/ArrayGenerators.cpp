@@ -46,6 +46,16 @@ public:
   JsonConfig::Field<std::string> DataType{this, {"dtype", "type"}, ""};
 };
 
+class StridedConfig : public JsonConfig::FieldHandler {
+public:
+  explicit StridedConfig(json const &JsonObj) { processConfigData(JsonObj); }
+  JsonConfig::RequiredField<std::string> Name{this, "name"};
+  JsonConfig::Field<json> Start{this, "start", 0};
+  JsonConfig::RequiredField<json> Shape{this, "shape"};
+  JsonConfig::RequiredField<json> Strides{this, "strides"};
+  JsonConfig::Field<std::string> DataType{this, {"dtype", "type"}, ""};
+};
+
 class MeshgridConfig : public JsonConfig::FieldHandler {
 public:
   explicit MeshgridConfig(json const &JsonObj) { processConfigData(JsonObj); }
@@ -57,6 +67,7 @@ public:
 std::string const Arange{"arange"};
 std::string const Linspace{"linspace"};
 std::string const Meshgrid{"meshgrid"};
+std::string const Strided{"strided"};
 
 double toFiniteDouble(json const &Value, std::string const &Key) {
   if (!Value.is_number()) {
@@ -108,6 +119,49 @@ std::vector<double> floatArange(double Start, double Stop, double Step) {
     Values[i] = Start + static_cast<double>(i) * Step;
   }
   return Values;
+}
+
+/// Values of Start + sum(Strides[k] * Index[k]) in row-major order. Each value
+/// is calculated from its own indices, so that rounding errors do not
+/// accumulate over the array.
+template <typename T>
+std::vector<T> stridedValues(T Start, std::vector<T> const &Strides,
+                             Shape const &Dimensions) {
+  std::vector<T> Values(extentToSize(Dimensions));
+  Shape Index(Dimensions.size(), 0);
+  for (auto &Value : Values) {
+    Value = Start;
+    for (size_t k = 0; k < Index.size(); ++k) {
+      Value += Strides[k] * static_cast<T>(Index[k]);
+    }
+    for (size_t k = Index.size(); k-- > 0;) {
+      if (++Index[k] < Dimensions[k]) {
+        break;
+      }
+      Index[k] = 0;
+    }
+  }
+  return Values;
+}
+
+/// Throw unless every value of an integer strided array fits in an int64.
+/// The values are linear in the indices, so the extremes are at corners.
+void checkIntegerStridedRange(int64_t Start,
+                              std::vector<int64_t> const &Strides,
+                              Shape const &Dimensions) {
+  __int128 Lowest{Start};
+  __int128 Highest{Start};
+  for (size_t k = 0; k < Strides.size(); ++k) {
+    auto const Extent =
+        static_cast<__int128>(Strides[k]) *
+        static_cast<__int128>(Dimensions[k] > 0 ? Dimensions[k] - 1 : 0);
+    (Extent < 0 ? Lowest : Highest) += Extent;
+  }
+  if (Lowest < std::numeric_limits<int64_t>::min() ||
+      Highest > std::numeric_limits<int64_t>::max()) {
+    throw std::runtime_error(
+        "Generated strided values would be out of range for int64.");
+  }
 }
 
 size_t length(GeneratedArray const &Array) {
@@ -220,7 +274,7 @@ json configOf(json const &Node) {
 
 bool isGenerator(std::string const &ModuleName) {
   return ModuleName == Arange || ModuleName == Linspace ||
-         ModuleName == Meshgrid;
+         ModuleName == Meshgrid || ModuleName == Strided;
 }
 
 GeneratedArray arange(json const &Config) {
@@ -271,6 +325,57 @@ GeneratedArray linspace(json const &Config) {
     Values.back() = Stop;
   }
   return {Parsed.Name, Parsed.DataType, {Count}, std::move(Values), {}};
+}
+
+GeneratedArray strided(json const &Config) {
+  StridedConfig Parsed(Config);
+  auto const &Start = Parsed.Start.get_value();
+  auto const &ShapeNode = Parsed.Shape.get_value();
+  auto const &StridesNode = Parsed.Strides.get_value();
+  toFiniteDouble(Start, "start");
+  if (!ShapeNode.is_array() || ShapeNode.empty()) {
+    throw std::runtime_error(
+        R"(strided "shape" must be a non-empty list of lengths.)");
+  }
+  if (!StridesNode.is_array() || StridesNode.size() != ShapeNode.size()) {
+    throw std::runtime_error(
+        R"(strided "strides" must be a list with one value per "shape" axis.)");
+  }
+  Shape Dimensions;
+  double Elements{1};
+  for (auto const &Length : ShapeNode) {
+    if (!Length.is_number_integer() || Length.get<int64_t>() < 0) {
+      throw std::runtime_error(fmt::format(
+          R"(strided "shape" lengths must be non-negative integers, not {})",
+          Length.dump()));
+    }
+    Dimensions.push_back(Length.get<size_t>());
+    Elements *= static_cast<double>(Dimensions.back());
+  }
+  checkElementCount(Elements);
+  auto const IsInt64 = [](json const &Value) {
+    return Value.is_number_integer() &&
+           !(Value.is_number_unsigned() &&
+             Value.get<uint64_t>() >
+                 static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
+  };
+  bool IsInteger = IsInt64(Start);
+  for (auto const &Stride : StridesNode) {
+    toFiniteDouble(Stride, "strides");
+    IsInteger = IsInteger && IsInt64(Stride);
+  }
+
+  GeneratedArray Result{Parsed.Name, Parsed.DataType, Dimensions, {}, {}};
+  if (IsInteger) {
+    auto const Strides = StridesNode.get<std::vector<int64_t>>();
+    checkIntegerStridedRange(Start.get<int64_t>(), Strides, Dimensions);
+    Result.Values = stridedValues(Start.get<int64_t>(), Strides, Dimensions);
+  } else {
+    Result.Values =
+        stridedValues(Start.get<double>(),
+                      StridesNode.get<std::vector<double>>(), Dimensions);
+  }
+  return Result;
 }
 
 std::vector<GeneratedArray> meshgrid(json const &Config) {
@@ -348,6 +453,8 @@ std::vector<GeneratedArray> generate(std::string const &ModuleName,
     Arrays.push_back(linspace(Config));
   } else if (ModuleName == Meshgrid) {
     Arrays = meshgrid(Config);
+  } else if (ModuleName == Strided) {
+    Arrays.push_back(strided(Config));
   } else {
     throw std::runtime_error(
         fmt::format(R"("{}" is not an array generator.)", ModuleName));
