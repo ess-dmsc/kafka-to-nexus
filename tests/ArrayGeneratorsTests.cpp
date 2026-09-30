@@ -73,6 +73,28 @@ TEST(Arange, invalidConfigThrows) {
   }
 }
 
+TEST(Arange, integersBeyondInt64Throw) {
+  // Previously these wrapped around to negative values.
+  for (auto const &Config : {
+           R"({"name": "x", "start": 9223372036854775808, "stop": 1})",
+           R"({"name": "x", "stop": 18446744073709551615})",
+           R"({"name": "x", "stop": 1, "step": 9223372036854775808})",
+           R"({"name": "x", "start": 0.5, "stop": 9223372036854775808})",
+       }) {
+    EXPECT_THROW(ArrayGenerators::arange(json::parse(Config)),
+                 std::runtime_error)
+        << Config;
+  }
+}
+
+TEST(Arange, int64LimitsAreReachable) {
+  auto Array = ArrayGenerators::arange(json::parse(
+      R"({"name": "x", "start": 9223372036854775806,
+          "stop": 9223372036854775807})"));
+  EXPECT_EQ(valuesOf<int64_t>(Array),
+            (std::vector<int64_t>{std::numeric_limits<int64_t>::max() - 1}));
+}
+
 TEST(Linspace, includesEndpointByDefault) {
   auto Array = ArrayGenerators::linspace(
       json::parse(R"({"name": "x", "start": 0, "stop": 1, "num": 5})"));
@@ -190,6 +212,9 @@ TEST(Strided, invalidConfigThrows) {
                "strides": [1]})",
            R"({"name": "x", "start": -9223372036854775807, "shape": [2, 2],
                "strides": [-1, -1]})",
+           R"({"name": "x", "start": 9223372036854775808, "shape": [1],
+               "strides": [0.5]})",
+           R"({"name": "x", "shape": [2], "strides": [18446744073709551615]})",
        }) {
     EXPECT_THROW(ArrayGenerators::strided(json::parse(Config)),
                  std::runtime_error)

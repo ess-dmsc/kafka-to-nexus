@@ -81,6 +81,19 @@ double toFiniteDouble(json const &Value, std::string const &Key) {
   return Result;
 }
 
+/// True if Value is an integer, which then fits in an int64. Integers
+/// outside the int64 range are an error, rather than wrapping around or
+/// losing precision as doubles.
+bool isInt64(json const &Value, std::string const &Key) {
+  if (Value.is_number_unsigned() &&
+      Value.get<uint64_t>() >
+          static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+    throw std::runtime_error(fmt::format(
+        R"("{}" is out of range for int64: {})", Key, Value.dump()));
+  }
+  return Value.is_number_integer();
+}
+
 void checkElementCount(double Count) {
   if (Count > static_cast<double>(MaxElements)) {
     throw std::runtime_error(
@@ -289,8 +302,10 @@ GeneratedArray arange(json const &Config) {
     throw std::runtime_error(R"(arange "step" must not be zero.)");
   }
   GeneratedArray Result{Parsed.Name, Parsed.DataType, {}, {}, {}};
-  if (Start.is_number_integer() && Stop.is_number_integer() &&
-      Step.is_number_integer()) {
+  bool const StartIsInteger = isInt64(Start, "start");
+  bool const StopIsInteger = isInt64(Stop, "stop");
+  bool const StepIsInteger = isInt64(Step, "step");
+  if (StartIsInteger && StopIsInteger && StepIsInteger) {
     Result.Values = integerArange(Start.get<int64_t>(), Stop.get<int64_t>(),
                                   Step.get<int64_t>());
   } else {
@@ -353,16 +368,10 @@ GeneratedArray strided(json const &Config) {
     Elements *= static_cast<double>(Dimensions.back());
   }
   checkElementCount(Elements);
-  auto const IsInt64 = [](json const &Value) {
-    return Value.is_number_integer() &&
-           !(Value.is_number_unsigned() &&
-             Value.get<uint64_t>() >
-                 static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
-  };
-  bool IsInteger = IsInt64(Start);
+  bool IsInteger = isInt64(Start, "start");
   for (auto const &Stride : StridesNode) {
     toFiniteDouble(Stride, "strides");
-    IsInteger = IsInteger && IsInt64(Stride);
+    IsInteger = isInt64(Stride, "strides") && IsInteger;
   }
 
   GeneratedArray Result{Parsed.Name, Parsed.DataType, Dimensions, {}, {}};
