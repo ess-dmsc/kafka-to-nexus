@@ -20,13 +20,12 @@ class KafkaToNexusConan(ConanFile):
         "date/3.0.1",
         "flatbuffers/1.12.0",
         "streaming-data-types/13dd32d@ess-dmsc/stable",
-        "stduuid/1.2.2",
         "gtest/1.15.0",
         "cli11/2.2.0",
         "trompeloeil/42",
         "h5cpp/0.7.1@ess-dmsc/stable",
         "openssl/3.3.1",
-        "fmt/8.1.1"
+        "fmt/8.1.1",
     )
 
     options = {
@@ -97,26 +96,48 @@ class KafkaToNexusConan(ConanFile):
 
     def package(self):
         # Copy kafka-to-nexus project license
-        copy(self, "LICENSE*", dst=os.path.join(self.package_folder, "licenses"),
-             src=self.source_folder, keep_path=False)
+        copy(
+            self,
+            "LICENSE*",
+            dst=os.path.join(self.package_folder, "licenses"),
+            src=self.source_folder,
+            keep_path=False,
+        )
 
         # Copy executables from bin/
         bin_dir = os.path.join(self.build_folder, "bin")
         for exe in ["kafka-to-nexus", "file-maker", "template-maker"]:
-            copy(self, exe, dst=os.path.join(self.package_folder, "bin"),
-                 src=bin_dir, keep_path=False)
-            
+            copy(
+                self,
+                exe,
+                dst=os.path.join(self.package_folder, "bin"),
+                src=bin_dir,
+                keep_path=False,
+            )
+
         # Copy libs
         for pattern in ("*.dylib", "*.so*"):
-            copy(self, pattern, dst=os.path.join(self.package_folder, "lib"),
-                    src=os.path.join(self.build_folder, "lib"), keep_path=False)
+            copy(
+                self,
+                pattern,
+                dst=os.path.join(self.package_folder, "lib"),
+                src=os.path.join(self.build_folder, "lib"),
+                keep_path=False,
+            )
 
         # Copy all dependency licenses
         for dep in self.deps_cpp_info.deps:
-            license_dir = os.path.join(self.deps_cpp_info[dep].rootpath, "licenses")
+            license_dir = os.path.join(
+                self.deps_cpp_info[dep].rootpath, "licenses"
+            )
             if os.path.isdir(license_dir):
-                copy(self, "*", dst=os.path.join(self.package_folder, "licenses", dep),
-                     src=license_dir, keep_path=False)
+                copy(
+                    self,
+                    "*",
+                    dst=os.path.join(self.package_folder, "licenses", dep),
+                    src=license_dir,
+                    keep_path=False,
+                )
 
     def package_info(self):
         self.cpp_info.libs = ["filewriter_lib"]

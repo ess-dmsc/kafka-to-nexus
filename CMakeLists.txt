@@ -24,7 +24,6 @@ find_package(concurrentqueue REQUIRED)
 find_package(date REQUIRED)
 find_package(flatbuffers REQUIRED)
 find_package(streaming-data-types REQUIRED)
-find_package(stduuid REQUIRED)
 find_package(spdlog REQUIRED)
 
 # Common dependency group
@@ -41,7 +40,6 @@ set(COMMON_LIBS
     date::date
     flatbuffers::flatbuffers_shared
     streaming-data-types::streaming-data-types
-    stduuid::stduuid
 )
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
