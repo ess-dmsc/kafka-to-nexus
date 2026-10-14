@@ -11,7 +11,6 @@
 #include "FeedbackProducer.h"
 #include "Parser.h"
 #include <iostream>
-#include <uuid.h>
 
 #include <utility>
 
@@ -135,14 +134,33 @@ bool extractStartMessage(FileWriter::Msg const &command_message,
   }
 }
 
-bool isValidUUID(std::string const &uuid) {
-  try {
-    auto const Id = uuids::uuid::from_string(uuid);
-    return !Id->is_nil() && Id->version() != uuids::uuid_version::none &&
-           Id->variant() == uuids::uuid_variant::rfc;
-  } catch (std::system_error const &) {
+bool isValidUUID(const std::string &uuid) {
+
+  if (uuid.size() != 36 || uuid == "00000000-0000-0000-0000-000000000000" ||
+      uuid == "ffffffff-ffff-ffff-ffff-ffffffffffff" ||
+      uuid == "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")
     return false;
+
+  // valid UUID versions: 1–8
+  // and matches uuids::uuid_variant::rfc
+  if ((uuid[14] < '1' || uuid[14] > '8') ||
+      (uuid[19] != '8' && uuid[19] != '9' && uuid[19] != 'a' &&
+       uuid[19] != 'A' && uuid[19] != 'b' && uuid[19] != 'B'))
+    return false;
+
+  for (std::size_t i = 0; i < 36; ++i) {
+    if (i == 8 || i == 13 || i == 18 || i == 23) {
+      if (uuid[i] != '-')
+        return false;
+    } else {
+      const char c = uuid[i];
+      if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+            (c >= 'A' && c <= 'F')))
+        return false;
+    }
   }
+
+  return true;
 }
 
 /// Warn if the Kafka message time is not from the immediate past.
