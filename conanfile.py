@@ -127,9 +127,7 @@ class KafkaToNexusConan(ConanFile):
 
         # Copy all dependency licenses
         for dep in self.deps_cpp_info.deps:
-            license_dir = os.path.join(
-                self.deps_cpp_info[dep].rootpath, "licenses"
-            )
+            license_dir = os.path.join(self.deps_cpp_info[dep].rootpath, "licenses")
             if os.path.isdir(license_dir):
                 copy(
                     self,
