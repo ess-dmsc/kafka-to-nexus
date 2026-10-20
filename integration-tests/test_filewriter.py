@@ -1,7 +1,6 @@
 import json
 import os.path
 import time
-import uuid
 from collections import Counter
 from datetime import datetime, timezone
 
@@ -50,7 +49,9 @@ def wait_for_file_to_finish_writing(filename, timeout_s=60):
             time.sleep(5)
             return
         except OSError:
-            print(f"Could not open file {filename} as it still being written...")
+            print(
+                f"Could not open file {filename} as it still being written..."
+            )
             time.sleep(2)
     raise RuntimeError(
         f"File {filename} not ready after {timeout_s} seconds - something must have gone wrong!"
@@ -90,10 +91,12 @@ class TestFileWriter:
         producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ab"
         metadata = json.dumps({"hello": 123})
 
-        start_filewriter(producer, file_name, job_id, time_stamp, metadata=metadata)
+        start_filewriter(
+            producer, file_name, job_id, time_stamp, metadata=metadata
+        )
 
         # Collect messages while writing
         start_time = time.time()
@@ -139,7 +142,9 @@ class TestFileWriter:
             == "writing"
         )
         # Check the filename in the wrdn matches
-        assert deserialise_wrdn(messages[~0].value()).file_name.endswith(file_name)
+        assert deserialise_wrdn(messages[~0].value()).file_name.endswith(
+            file_name
+        )
         # Check the metadata is forwarded to the wrdn
         assert deserialise_wrdn(messages[~0].value()).metadata == metadata
 
@@ -150,7 +155,7 @@ class TestFileWriter:
         producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ac"
 
         start_filewriter(producer, file_name, job_id, time_stamp)
 
@@ -180,9 +185,12 @@ class TestFileWriter:
             # Check data is as expected
             assert len(f["/entry/detector/event_time_zero"]) == messages_sent
             assert len(f["/entry/detector/event_index"]) == messages_sent
-            assert np.array_equal(f["/entry/detector/event_time_zero"][:], times)
             assert np.array_equal(
-                f["/entry/detector/event_id"][:], [i for i in range(messages_sent * 5)]
+                f["/entry/detector/event_time_zero"][:], times
+            )
+            assert np.array_equal(
+                f["/entry/detector/event_id"][:],
+                [i for i in range(messages_sent * 5)],
             )
             assert np.array_equal(
                 f["/entry/detector/event_time_offset"][:],
@@ -208,7 +216,7 @@ class TestFileWriter:
 
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ad"
 
         start_filewriter(producer, file_name, job_id, time_stamp)
 
@@ -240,9 +248,11 @@ class TestFileWriter:
         start_time = int(time.time())
         end_time = start_time + file_time_s
         file_name = f"{start_time}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ae"
 
-        start_filewriter(producer, file_name, job_id, start_time, stop_time_s=end_time)
+        start_filewriter(
+            producer, file_name, job_id, start_time, stop_time_s=end_time
+        )
 
         wait_for_file_to_finish_writing(file_name)
 
@@ -259,7 +269,9 @@ class TestFileWriter:
                 end_time, timezone.utc
             )
 
-    def test_two_writers_write_three_files(self, file_writer, second_filewriter):
+    def test_two_writers_write_three_files(
+        self, file_writer, second_filewriter
+    ):
         """
         Tests that the pool system works as designed.
         Requests three jobs but can only write two as only two file-writers, so the third one gets queued.
@@ -272,7 +284,7 @@ class TestFileWriter:
         # Start job 1
         time_stamp_1 = int(time.time())
         file_name_1 = f"{time_stamp_1}.nxs"
-        job_id_1 = str(uuid.uuid4())
+        job_id_1 = "12345600-0001-5abc-8def-1234567890af"
         start_filewriter(
             producer,
             file_name_1,
@@ -284,7 +296,7 @@ class TestFileWriter:
         # Start job 2
         time_stamp_2 = time_stamp_1 + 1
         file_name_2 = f"{time_stamp_2}.nxs"
-        job_id_2 = str(uuid.uuid4())
+        job_id_2 = "12345600-0001-5abc-8def-1234567890a0"
         start_filewriter(
             producer,
             file_name_2,
@@ -296,7 +308,7 @@ class TestFileWriter:
         # Start job 3 - won't get picked up immediately as all file-writers are busy
         time_stamp_3 = time_stamp_1 + 2
         file_name_3 = f"{time_stamp_3}.nxs"
-        job_id_3 = str(uuid.uuid4())
+        job_id_3 = "12345600-0001-5abc-8def-1234567890a1"
         start_filewriter(
             producer,
             file_name_3,
@@ -330,7 +342,9 @@ class TestFileWriter:
         wrdn_files = []
         for msg in messages:
             if msg.value()[4:8] == b"wrdn":
-                wrdn_files.append(deserialise_wrdn(msg.value()).file_name.split("/")[1])
+                wrdn_files.append(
+                    deserialise_wrdn(msg.value()).file_name.split("/")[1]
+                )
 
         assert len(wrdn_files) == 3
         # Check the filename in the wrdn matches
@@ -373,7 +387,7 @@ class TestFileWriter:
         start_time_s = times_ns[4] // 10**9
         end_time_s = times_ns[10] // 10**9
         file_name = f"{start_time_s}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890a2"
 
         start_filewriter(
             producer, file_name, job_id, start_time_s, stop_time_s=end_time_s
@@ -400,9 +414,11 @@ class TestFileWriter:
         start_time = int(time.time()) + 30
         end_time = start_time + file_time_s
         file_name = f"{start_time}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890a3"
 
-        start_filewriter(producer, file_name, job_id, start_time, stop_time_s=end_time)
+        start_filewriter(
+            producer, file_name, job_id, start_time, stop_time_s=end_time
+        )
 
         # Wait for the future to catch up
         time.sleep(40)
@@ -431,13 +447,17 @@ class TestFileWriter:
         producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890a4"
 
         # Mess the json up
         nexus_structure = json.dumps(NEXUS_STRUCTURE).replace("{", "", 1)
 
         start_filewriter(
-            producer, file_name, job_id, time_stamp, nexus_structure=nexus_structure
+            producer,
+            file_name,
+            job_id,
+            time_stamp,
+            nexus_structure=nexus_structure,
         )
 
         # Collect messages on pool status topic
