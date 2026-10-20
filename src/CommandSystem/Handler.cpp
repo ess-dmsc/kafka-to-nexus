@@ -136,16 +136,14 @@ bool extractStartMessage(FileWriter::Msg const &command_message,
 
 bool isValidUUID(const std::string &uuid) {
 
-  if (uuid.size() != 36 || uuid == "00000000-0000-0000-0000-000000000000" ||
-      uuid == "ffffffff-ffff-ffff-ffff-ffffffffffff" ||
-      uuid == "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")
+  if (uuid.size() != 36)
     return false;
 
   // valid UUID versions: 1–8
   // and matches uuids::uuid_variant::rfc
+  const char variant = std::tolower(static_cast<unsigned char>(uuid[19]));
   if ((uuid[14] < '1' || uuid[14] > '8') ||
-      (uuid[19] != '8' && uuid[19] != '9' && uuid[19] != 'a' &&
-       uuid[19] != 'A' && uuid[19] != 'b' && uuid[19] != 'B'))
+      (variant != '8' && variant != '9' && variant != 'a' && variant != 'b'))
     return false;
 
   for (std::size_t i = 0; i < 36; ++i) {
@@ -153,9 +151,8 @@ bool isValidUUID(const std::string &uuid) {
       if (uuid[i] != '-')
         return false;
     } else {
-      const char c = uuid[i];
-      if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
-            (c >= 'A' && c <= 'F')))
+      const char c = std::tolower(static_cast<unsigned char>(uuid[i]));
+      if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
         return false;
     }
   }
