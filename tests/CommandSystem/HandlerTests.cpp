@@ -216,7 +216,7 @@ protected:
   std::unique_ptr<Handler> _handlerUnderTest;
   Kafka::StubProducerTopic *_producer_topic;
   std::string const _valid_job_id = "12345600-0001-5abc-8def-1234567890ff";
-  std::string const _valid_command_id = "dda7c081-737d-42b5-996c-f45a4a957536";
+  std::string const _valid_command_id = "12345600-0001-5012-8345-67890abcdeff";
   std::string const _serviceId = "service_id_123";
   std::string const _default_command_topic = "command_topic";
 
@@ -293,7 +293,7 @@ TEST_F(StopHandlerTest, stop_ignored_if_job_id_wrong) {
       [&stop_called]() -> void { stop_called = true; });
   _handlerUnderTest->registerGetJobIdFunction(
       [this]() -> std::string { return this->_valid_job_id; });
-  std::string wrong_job_id = "43e86e91-75dd-4c87-996b-fd7a22d0e726";
+  std::string wrong_job_id = "12345600-1234-4c87-896b-fd7a22d0e726";
   queue_stop_message(0, wrong_job_id, {_serviceId}, _valid_command_id);
   // First poll connects the consumer
   _handlerUnderTest->loopFunction();
