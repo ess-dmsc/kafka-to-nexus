@@ -139,11 +139,9 @@ bool isValidUUID(const std::string &uuid) {
   if (uuid.size() != 36)
     return false;
 
-  // valid UUID versions: 1–8
-  // and matches uuids::uuid_variant::rfc
-  const char variant = std::tolower(static_cast<unsigned char>(uuid[19]));
-  if ((uuid[14] < '1' || uuid[14] > '8') ||
-      (variant != '8' && variant != '9' && variant != 'a' && variant != 'b'))
+  // All NICOS UUIDs look like this
+  if (uuid[14] != '5' ||
+      std::tolower(static_cast<unsigned char>(uuid[19])) != '8')
     return false;
 
   for (std::size_t i = 0; i < 36; ++i) {
@@ -152,7 +150,7 @@ bool isValidUUID(const std::string &uuid) {
         return false;
     } else {
       const char c = std::tolower(static_cast<unsigned char>(uuid[i]));
-      if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
+      if (!((c >= '0' && c <= '9') || (i > 14 && (c >= 'a' && c <= 'f'))))
         return false;
     }
   }
