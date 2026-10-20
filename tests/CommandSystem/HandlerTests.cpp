@@ -42,7 +42,7 @@ protected:
   std::shared_ptr<Kafka::StubConsumerFactory> _consumer_factory;
   std::unique_ptr<Handler> _handlerUnderTest;
   Kafka::StubProducerTopic *_producer_topic;
-  std::string const _valid_job_id = "123e4567-e89b-12d3-a456-426614174000";
+  std::string const _valid_job_id = "12345600-0001-5012-8345-67890fffffff";
   std::string const _serviceId = "service_id_123";
   std::string const _default_command_topic = "command_topic";
 
