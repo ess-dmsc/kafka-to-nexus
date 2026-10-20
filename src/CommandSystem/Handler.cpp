@@ -140,8 +140,7 @@ bool isValidUUID(const std::string &uuid) {
     return false;
 
   // All NICOS UUIDs look like this
-  if (uuid[14] != '5' ||
-      std::tolower(static_cast<unsigned char>(uuid[19])) != '8')
+  if (uuid[14] != '5' || uuid[19] != '8')
     return false;
 
   for (std::size_t i = 0; i < 36; ++i) {
