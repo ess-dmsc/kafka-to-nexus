@@ -22,7 +22,10 @@ NEXUS_STRUCTURE = {
             "type": "group",
             "name": "entry",
             "children": [
-                {"module": "mdat", "config": {"items": ["start_time", "end_time"]}},
+                {
+                    "module": "mdat",
+                    "config": {"items": ["start_time", "end_time"]},
+                },
                 {
                     "module": "dataset",
                     "config": {
@@ -35,12 +38,19 @@ NEXUS_STRUCTURE = {
                     "name": "detector",
                     "type": "group",
                     "attributes": [
-                        {"name": "NX_class", "dtype": "string", "values": "NXdata"}
+                        {
+                            "name": "NX_class",
+                            "dtype": "string",
+                            "values": "NXdata",
+                        }
                     ],
                     "children": [
                         {
                             "module": "ev44",
-                            "config": {"topic": DETECTOR_TOPIC, "source": "grace"},
+                            "config": {
+                                "topic": DETECTOR_TOPIC,
+                                "source": "grace",
+                            },
                         }
                     ],
                 },
@@ -48,7 +58,11 @@ NEXUS_STRUCTURE = {
                     "name": "motion",
                     "type": "group",
                     "attributes": [
-                        {"name": "NX_class", "dtype": "string", "values": "NXlog"}
+                        {
+                            "name": "NX_class",
+                            "dtype": "string",
+                            "values": "NXlog",
+                        }
                     ],
                     "children": [
                         {
@@ -113,7 +127,7 @@ def stop_filewriter(producer, job_id, inst_control_topic=INST_CONTROL_TOPIC_1):
         run_name="test_run",
         service_id="",
         stop_time=None,
-        command_id=str(uuid.uuid4()),
+        command_id="12345600-0001-5012-8345-67890abcdeff",
     )
     producer.produce(inst_control_topic, buffer)
     producer.flush()

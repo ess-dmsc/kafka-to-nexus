@@ -11,7 +11,6 @@
 #include "FeedbackProducer.h"
 #include "Parser.h"
 #include <iostream>
-#include <uuid.h>
 
 #include <utility>
 
@@ -135,14 +134,27 @@ bool extractStartMessage(FileWriter::Msg const &command_message,
   }
 }
 
-bool isValidUUID(std::string const &uuid) {
-  try {
-    auto const Id = uuids::uuid::from_string(uuid);
-    return !Id->is_nil() && Id->version() != uuids::uuid_version::none &&
-           Id->variant() == uuids::uuid_variant::rfc;
-  } catch (std::system_error const &) {
+bool isValidUUID(const std::string &uuid) {
+
+  if (uuid.size() != 36)
     return false;
+
+  // All NICOS UUIDs look like this
+  if (uuid[14] != '5' || uuid[19] != '8')
+    return false;
+
+  for (std::size_t i = 0; i < 36; ++i) {
+    if (i == 8 || i == 13 || i == 18 || i == 23) {
+      if (uuid[i] != '-')
+        return false;
+    } else {
+      const char c = std::tolower(static_cast<unsigned char>(uuid[i]));
+      if (!((c >= '0' && c <= '9') || (i > 14 && (c >= 'a' && c <= 'f'))))
+        return false;
+    }
   }
+
+  return true;
 }
 
 /// Warn if the Kafka message time is not from the immediate past.

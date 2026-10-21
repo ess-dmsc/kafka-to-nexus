@@ -1,7 +1,6 @@
 import json
 import os.path
 import time
-import uuid
 from collections import Counter
 from datetime import datetime, timezone
 
@@ -43,7 +42,7 @@ def wait_for_file_to_finish_writing(filename, timeout_s=60):
     # Then check if writing has finished
     while time.time() < start_time + timeout_s:
         try:
-            with h5py.File(filename, "r") as f:
+            with h5py.File(filename, "r"):
                 # Opening raises if the file is still being written
                 print(f"File {filename} is ready!")
             # Add a short delay just to be sure it closes
@@ -90,7 +89,7 @@ class TestFileWriter:
         producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ab"
         metadata = json.dumps({"hello": 123})
 
         start_filewriter(producer, file_name, job_id, time_stamp, metadata=metadata)
@@ -150,7 +149,7 @@ class TestFileWriter:
         producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ac"
 
         start_filewriter(producer, file_name, job_id, time_stamp)
 
@@ -182,7 +181,8 @@ class TestFileWriter:
             assert len(f["/entry/detector/event_index"]) == messages_sent
             assert np.array_equal(f["/entry/detector/event_time_zero"][:], times)
             assert np.array_equal(
-                f["/entry/detector/event_id"][:], [i for i in range(messages_sent * 5)]
+                f["/entry/detector/event_id"][:],
+                [i for i in range(messages_sent * 5)],
             )
             assert np.array_equal(
                 f["/entry/detector/event_time_offset"][:],
@@ -208,7 +208,7 @@ class TestFileWriter:
 
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ad"
 
         start_filewriter(producer, file_name, job_id, time_stamp)
 
@@ -240,7 +240,7 @@ class TestFileWriter:
         start_time = int(time.time())
         end_time = start_time + file_time_s
         file_name = f"{start_time}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890ae"
 
         start_filewriter(producer, file_name, job_id, start_time, stop_time_s=end_time)
 
@@ -272,7 +272,7 @@ class TestFileWriter:
         # Start job 1
         time_stamp_1 = int(time.time())
         file_name_1 = f"{time_stamp_1}.nxs"
-        job_id_1 = str(uuid.uuid4())
+        job_id_1 = "12345600-0001-5abc-8def-1234567890af"
         start_filewriter(
             producer,
             file_name_1,
@@ -284,7 +284,7 @@ class TestFileWriter:
         # Start job 2
         time_stamp_2 = time_stamp_1 + 1
         file_name_2 = f"{time_stamp_2}.nxs"
-        job_id_2 = str(uuid.uuid4())
+        job_id_2 = "12345600-0001-5abc-8def-1234567890a0"
         start_filewriter(
             producer,
             file_name_2,
@@ -296,7 +296,7 @@ class TestFileWriter:
         # Start job 3 - won't get picked up immediately as all file-writers are busy
         time_stamp_3 = time_stamp_1 + 2
         file_name_3 = f"{time_stamp_3}.nxs"
-        job_id_3 = str(uuid.uuid4())
+        job_id_3 = "12345600-0001-5abc-8def-1234567890a1"
         start_filewriter(
             producer,
             file_name_3,
@@ -373,7 +373,7 @@ class TestFileWriter:
         start_time_s = times_ns[4] // 10**9
         end_time_s = times_ns[10] // 10**9
         file_name = f"{start_time_s}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890a2"
 
         start_filewriter(
             producer, file_name, job_id, start_time_s, stop_time_s=end_time_s
@@ -400,7 +400,7 @@ class TestFileWriter:
         start_time = int(time.time()) + 30
         end_time = start_time + file_time_s
         file_name = f"{start_time}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890a3"
 
         start_filewriter(producer, file_name, job_id, start_time, stop_time_s=end_time)
 
@@ -431,13 +431,17 @@ class TestFileWriter:
         producer = Producer({"bootstrap.servers": ",".join(get_brokers())})
         time_stamp = int(time.time())
         file_name = f"{time_stamp}.nxs"
-        job_id = str(uuid.uuid4())
+        job_id = "12345600-0001-5abc-8def-1234567890a4"
 
         # Mess the json up
         nexus_structure = json.dumps(NEXUS_STRUCTURE).replace("{", "", 1)
 
         start_filewriter(
-            producer, file_name, job_id, time_stamp, nexus_structure=nexus_structure
+            producer,
+            file_name,
+            job_id,
+            time_stamp,
+            nexus_structure=nexus_structure,
         )
 
         # Collect messages on pool status topic
