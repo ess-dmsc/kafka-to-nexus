@@ -7,9 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "FlatbufferReader.h"
 #include "HDFVersionCheck.h"
-#include "JobCreator.h"
 #include "Metrics/CarbonSink.h"
 #include "Metrics/LogSink.h"
 #include "Metrics/Registrar.h"
@@ -18,7 +16,6 @@
 #include "Status/StatusInfo.h"
 #include "Status/StatusReporter.h"
 #include "Version.h"
-#include "WriterRegistrar.h"
 #include <CLI/CLI.hpp>
 #include <regex>
 #include <utility>

@@ -19,10 +19,10 @@ StreamController::StreamController(
     std::shared_ptr<Kafka::MetadataEnquirer> metadata_enquirer,
     std::shared_ptr<Kafka::ConsumerFactoryInterface> consumer_factory)
     : WriterTask(std::move(FileWriterTask)), MdatWriter(std::move(mdatWriter)),
-      StreamMetricRegistrar(Registrar->getNewRegistrar("")),
       WriterThread([this]() { WriterTask->flushDataToFile(); },
                    Settings.DataFlushInterval,
                    Registrar->getNewRegistrar("stream.writer")),
+      StreamMetricRegistrar(Registrar->getNewRegistrar("")),
       StreamerOptions(Settings), MetaDataTracker(std::move(Tracker)),
       _metadata_enquirer(std::move(metadata_enquirer)),
       _consumer_factory(std::move(consumer_factory)) {}

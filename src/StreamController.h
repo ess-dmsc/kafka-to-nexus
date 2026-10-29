@@ -14,11 +14,10 @@
 
 #include "FileWriterTask.h"
 #include "Kafka/MetaDataQuery.h"
-#include "MainOpt.h"
-#include "MetaData/HDF5DataWriter.h"
 #include "MetaData/Tracker.h"
 #include "Metrics/Registrar.h"
 #include "Stream/Topic.h"
+#include "StreamerOptions.h"
 #include "ThreadedExecutor.h"
 #include "TimeUtility.h"
 #include "WriterModule/mdat/mdat_Writer.h"
@@ -134,9 +133,9 @@ private:
   /// been de-allocated.
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<WriterModule::mdat::mdat_Writer> MdatWriter{nullptr};
+  Stream::MessageWriter WriterThread;
   std::vector<std::unique_ptr<Stream::Topic>> Streamers;
   std::unique_ptr<Metrics::IRegistrar> StreamMetricRegistrar;
-  Stream::MessageWriter WriterThread;
   FileWriter::StreamerOptions StreamerOptions;
   MetaData::TrackerPtr MetaDataTracker;
   std::shared_ptr<Kafka::MetadataEnquirer> _metadata_enquirer;
