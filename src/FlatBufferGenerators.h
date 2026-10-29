@@ -215,8 +215,8 @@ create_da00_message_int32s(std::string const &source, std::string const &name,
   std::vector<int64_t> var_shape = {static_cast<int64_t>(data.size())};
   auto var_shape_offset = builder.CreateVector(var_shape);
   std::uint8_t *p_data = nullptr;
-  auto payload =
-      builder.CreateUninitializedVector(data.size(), &p_data, sizeof(data[0]));
+  auto payload = builder.CreateUninitializedVector(
+      data.size(), sizeof(data[0]), alignof(std::int32_t), &p_data);
 
   if (!data.empty())
     std::memcpy(p_data, data.data(), sizeof(data[0]) * data.size());
