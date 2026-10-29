@@ -24,8 +24,8 @@ namespace WriterModule::vs00 {
 InitResult vs00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
-    NeXusDataset::FixedSizeString(HDFGroup, Create);
-    NeXusDataset::Time(HDFGroup, "value", Create);
+    NeXusDataset::FixedSizeString(HDFGroup, "value", Create);
+    NeXusDataset::Time(HDFGroup, Create);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     Logger::Error("vs00 could not init_hdf hdf_parent: {}  trace: {}",
