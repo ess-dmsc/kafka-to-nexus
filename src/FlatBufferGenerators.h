@@ -105,14 +105,14 @@ create_al00_message_double(std::string const &source, int64_t timestamp_ms,
 
 inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
 create_vs00_message(std::string const &source, int64_t timestamp_ms,
-                    std::string value) {
+                    std::string data) {
   auto builder = flatbuffers::FlatBufferBuilder();
   auto source_name_offset = builder.CreateString(source);
-  auto value_offset = builder.CreateString(value);
+  auto data_offset = builder.CreateString(data);
 
   vs00_StringDataBuilder vs00_builder(builder);
   vs00_builder.add_source_name(source_name_offset);
-  vs00_builder.add_value(value_offset);
+  vs00_builder.add_data(data_offset);
   vs00_builder.add_timestamp(timestamp_ms * 1000000);
 
   Finishvs00_StringDataBuffer(builder, vs00_builder.Finish());
@@ -214,11 +214,12 @@ create_da00_message_int32s(std::string const &source, std::string const &name,
 
   std::vector<int64_t> var_shape = {static_cast<int64_t>(data.size())};
   auto var_shape_offset = builder.CreateVector(var_shape);
-
-  std::uint8_t *p_data;
+  std::uint8_t *p_data = nullptr;
   auto payload =
-      builder.CreateUninitializedVector(data.size(), sizeof(data[0]), &p_data);
-  std::memcpy(p_data, data.data(), sizeof(data[0]) * data.size());
+      builder.CreateUninitializedVector(data.size(), &p_data, sizeof(data[0]));
+
+  if (!data.empty())
+    std::memcpy(p_data, data.data(), sizeof(data[0]) * data.size());
 
   auto variable_offset =
       Createda00_Variable(builder, var_name_offset, 0, 0, 0, da00_dtype::int32,
@@ -298,8 +299,8 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
     return da00_message;
   } else if (schema == "vs00") {
     std::pair<std::unique_ptr<uint8_t[]>, size_t> vs00_message =
-        FlatBuffers::create_vs00_message_double(
-            item["source_name"], item["timestamp"], item["value"]);
+        FlatBuffers::create_vs00_message(item["source_name"], item["timestamp"],
+                                         item["value"]);
     return vs00_message;
   }
   throw std::runtime_error(fmt::format("Unknown schema {}", schema));

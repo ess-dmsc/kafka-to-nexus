@@ -25,7 +25,7 @@ InitResult vs00_Writer::init_hdf(hdf5::node::Group &HDFGroup) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::FixedSizeString(HDFGroup, Create);
-    NeXusDataset::Time(HDFGroup, Create);
+    NeXusDataset::Time(HDFGroup, "value", Create);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     Logger::Error("vs00 could not init_hdf hdf_parent: {}  trace: {}",
@@ -42,7 +42,7 @@ InitResult vs00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     Timestamp = NeXusDataset::Time(HDFGroup, Open);
-    Valie = NeXusDataset::FixedSizeString(HDFGroup, Open);
+    Value = NeXusDataset::FixedSizeString(HDFGroup, "value", Open);
   } catch (std::exception &E) {
     Logger::Error(
         R"(Failed to reopen datasets in HDF file with error message: "{}")",
@@ -57,7 +57,11 @@ bool vs00_Writer::writeImpl(FlatbufferMessage const &Message,
   auto vs00Message = Getvs00_StringData(Message.data());
 
   Timestamp.appendElement(vs00Message->timestamp());
-  std::string vs00MessageValue = vs00Message->message()->str();
+  const auto *data = vs00Message->data();
+  std::string vs00MessageValue = "";
+  if (data != nullptr) {
+    vs00MessageValue = data->str();
+  }
   if (vs00MessageValue.empty()) {
     return false;
   }
