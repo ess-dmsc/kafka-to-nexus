@@ -11,21 +11,21 @@ class KafkaToNexusConan(ConanFile):
     exports_sources = "CMakeLists.txt", "src/*", "apps/*", "LICENSE.md"
 
     requires = (
-        "spdlog/1.17.0",
-        "asio/1.38.2",
-        "nlohmann_json/3.12.0",
-        "librdkafka/2.14.2",
+        "spdlog/1.14.1",
+        "asio/1.32.0",
+        "nlohmann_json/3.11.3",
+        "librdkafka/2.8.0",
         "readerwriterqueue/1.0.6",
-        "concurrentqueue/1.0.5",
-        "date/3.0.1",
-        "flatbuffers/25.12.19",
+        "concurrentqueue/1.0.4",
+        "date/3.0.3",
+        "flatbuffers/24.3.25",
         "streaming-data-types/bdb12d3@ess-dmsc/stable",
-        "gtest/1.18.0",
-        "cli11/2.6.2",
-        "trompeloeil/49",
+        "gtest/1.15.0",
+        "cli11/2.4.2",
+        "trompeloeil/48",
         "h5cpp/0.8.0@ess-dmsc/stable",
-        "openssl/4.1.0",
-        "fmt/12.2.0",
+        "openssl/3.3.2",
+        "fmt/11.0.2",
     )
 
     options = {
