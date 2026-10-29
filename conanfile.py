@@ -25,7 +25,7 @@ class KafkaToNexusConan(ConanFile):
         "trompeloeil/48",
         "h5cpp/0.8.0@ess-dmsc/stable",
         "openssl/3.3.2",
-        "fmt/11.0.2",
+        "fmt/8.1.1",
     )
 
     options = {
