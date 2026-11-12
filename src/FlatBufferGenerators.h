@@ -19,6 +19,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <ostream>
+#include <vs00_stringdata_generated.h>
 
 namespace FlatBuffers {
 
@@ -95,6 +96,26 @@ create_al00_message_double(std::string const &source, int64_t timestamp_ms,
   al00_builder.add_severity(severity);
 
   FinishAlarmBuffer(builder, al00_builder.Finish());
+
+  size_t buffer_size = builder.GetSize();
+  auto buffer = std::make_unique<uint8_t[]>(buffer_size);
+  std::memcpy(buffer.get(), builder.GetBufferPointer(), buffer_size);
+  return {std::move(buffer), buffer_size};
+}
+
+inline std::pair<std::unique_ptr<uint8_t[]>, size_t>
+create_vs00_message(std::string const &source, int64_t timestamp_ms,
+                    std::string data) {
+  auto builder = flatbuffers::FlatBufferBuilder();
+  auto source_name_offset = builder.CreateString(source);
+  auto data_offset = builder.CreateString(data);
+
+  vs00_StringDataBuilder vs00_builder(builder);
+  vs00_builder.add_source_name(source_name_offset);
+  vs00_builder.add_data(data_offset);
+  vs00_builder.add_timestamp(timestamp_ms * 1000000);
+
+  Finishvs00_StringDataBuffer(builder, vs00_builder.Finish());
 
   size_t buffer_size = builder.GetSize();
   auto buffer = std::make_unique<uint8_t[]>(buffer_size);
@@ -193,11 +214,12 @@ create_da00_message_int32s(std::string const &source, std::string const &name,
 
   std::vector<int64_t> var_shape = {static_cast<int64_t>(data.size())};
   auto var_shape_offset = builder.CreateVector(var_shape);
+  std::uint8_t *p_data = nullptr;
+  auto payload = builder.CreateUninitializedVector(
+      data.size(), sizeof(data[0]), alignof(std::int32_t), &p_data);
 
-  std::uint8_t *p_data;
-  auto payload =
-      builder.CreateUninitializedVector(data.size(), sizeof(data[0]), &p_data);
-  std::memcpy(p_data, data.data(), sizeof(data[0]) * data.size());
+  if (!data.empty())
+    std::memcpy(p_data, data.data(), sizeof(data[0]) * data.size());
 
   auto variable_offset =
       Createda00_Variable(builder, var_name_offset, 0, 0, 0, da00_dtype::int32,
@@ -275,6 +297,11 @@ convert_to_raw_flatbuffer(nlohmann::json const &item) {
                                                 item["name"], item["axis_name"],
                                                 item["timestamp"], data);
     return da00_message;
+  } else if (schema == "vs00") {
+    std::pair<std::unique_ptr<uint8_t[]>, size_t> vs00_message =
+        FlatBuffers::create_vs00_message(item["source_name"], item["timestamp"],
+                                         item["value"]);
+    return vs00_message;
   }
   throw std::runtime_error(fmt::format("Unknown schema {}", schema));
 }

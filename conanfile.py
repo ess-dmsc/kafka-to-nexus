@@ -12,19 +12,19 @@ class KafkaToNexusConan(ConanFile):
 
     requires = (
         "spdlog/1.14.1",
-        "asio/1.22.1",
-        "nlohmann_json/3.10.5",
+        "asio/1.32.0",
+        "nlohmann_json/3.11.3",
         "librdkafka/2.8.0",
         "readerwriterqueue/1.0.6",
-        "concurrentqueue/1.0.3",
-        "date/3.0.1",
-        "flatbuffers/1.12.0",
-        "streaming-data-types/13dd32d@ess-dmsc/stable",
+        "concurrentqueue/1.0.4",
+        "date/3.0.3",
+        "flatbuffers/24.3.25",
+        "streaming-data-types/bdb12d3@ess-dmsc/stable",
         "gtest/1.15.0",
-        "cli11/2.2.0",
-        "trompeloeil/42",
-        "h5cpp/0.7.1@ess-dmsc/stable",
-        "openssl/3.3.1",
+        "cli11/2.4.2",
+        "trompeloeil/48",
+        "h5cpp/0.8.0@ess-dmsc/stable",
+        "openssl/3.3.2",
         "fmt/8.1.1",
     )
 
@@ -127,7 +127,9 @@ class KafkaToNexusConan(ConanFile):
 
         # Copy all dependency licenses
         for dep in self.deps_cpp_info.deps:
-            license_dir = os.path.join(self.deps_cpp_info[dep].rootpath, "licenses")
+            license_dir = os.path.join(
+                self.deps_cpp_info[dep].rootpath, "licenses"
+            )
             if os.path.isdir(license_dir):
                 copy(
                     self,
