@@ -1,6 +1,6 @@
 # _vs00_ Logdata
 
-Used for string messages, e.g. alarm statuses or explicit positions of devices.
+Used for string data, e.g. explicit positions of devices with values like 'in beam', 'out of beam'.
 
 ## Stream configuration fields
 
